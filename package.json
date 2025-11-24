@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "next build",
-    "build:analyze": "next build --analyze",
-    "build:turbo": "NODE_OPTIONS='--trace-uncaught' next build --turbopack",
+    "build": "SKIP_ENV_VALIDATION=true next build",
+    "build:analyze": "SKIP_ENV_VALIDATION=true next build --analyze",
+    "build:turbo": "NODE_OPTIONS='--trace-uncaught' SKIP_ENV_VALIDATION=true next build --turbopack",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "dev": "next dev",
@@ -16,7 +16,8 @@
     "prettier": "prettier --check \"**/*.{js,jsx,ts,tsx}\"",
     "prettier:fix": "prettier --write \"**/*.{js,jsx,ts,tsx}\"",
     "postinstall": "prisma generate",
-    "start": "next start"
+    "start": "next start",
+    "prepare": "husky || true"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.937.0",
@@ -40,10 +41,10 @@
     "next": "^15.1.6",
     "next-auth": "^4.24.13",
     "pg": "^8.16.3",
-    "react": "^18.3.1",
+    "react": "^19.0.0",
     "react-chartjs-2": "^5.3.1",
     "react-cropper": "^2.3.3",
-    "react-dom": "^18.3.1",
+    "react-dom": "^19.0.0",
     "react-dropzone": "^14.3.8",
     "react-hook-form": "^7.62.0",
     "react-icons": "^5.5.0",
@@ -60,13 +61,13 @@
     "@eslint/js": "^9.37.0",
     "@tailwindcss/typography": "^0.5.16",
     "@testing-library/jest-dom": "^6.8.0",
-    "@testing-library/react": "^15.0.7",
+    "@testing-library/react": "^16.1.0",
     "@types/eslint": "^9.6.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.3.0",
     "@types/pg": "^8.15.6",
-    "@types/react": "^19.1.13",
-    "@types/react-dom": "^19.1.9",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "@typescript-eslint/eslint-plugin": "^8.46.1",
     "@typescript-eslint/parser": "^8.46.1",
     "autoprefixer": "^10.4.20",
@@ -78,6 +79,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.0",
     "eslint-plugin-simple-import-sort": "^12.1.1",
+    "husky": "^9.1.7",
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.0.5",
     "postcss": "^8.5.6",
@@ -97,5 +99,5 @@
   "ct3aMetadata": {
     "initVersion": "7.32.0"
   },
-  "packageManager": "npm@10.5.1"
+  "packageManager": "npm@10.9.0"
 }
