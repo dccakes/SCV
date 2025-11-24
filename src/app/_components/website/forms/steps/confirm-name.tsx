@@ -18,11 +18,11 @@ export default function ConfirmNameForm({ goNext, goBack }: StepFormProps) {
   const [selectedHouseholdId, setSelectedHouseholdId] = useState<string>();
 
   const onContinue = () => {
-    const selectedHousehold = matchedHouseholds?.find(
-      (household: HouseholdSearch[0]) => household.id === selectedHouseholdId,
+    const selectedHousehold: any = matchedHouseholds?.find(
+      (household: any) => household.id === selectedHouseholdId,
     );
-    const primaryContact = selectedHousehold?.guests.find(
-      (guest: Guest) => guest.isPrimaryContact,
+    const primaryContact = selectedHousehold?.guests?.find(
+      (guest: any) => guest.isPrimaryContact,
     );
     updateRsvpForm({
       selectedHousehold: Object.assign({ primaryContact }, selectedHousehold),
@@ -36,7 +36,7 @@ export default function ConfirmNameForm({ goNext, goBack }: StepFormProps) {
         we&apos;ve found you in the guest list. please confirm your name below
         to continue with your rsvp
       </h2>
-      {matchedHouseholds?.map((household: HouseholdSearch[0]) => {
+      {matchedHouseholds?.map((household: any) => {
         return (
           <div key={household.id} className="flex gap-5">
             <input
@@ -47,7 +47,7 @@ export default function ConfirmNameForm({ goNext, goBack }: StepFormProps) {
             />
             <label htmlFor={household.id}>
               {household.guests
-                .map((guest: Guest) => `${guest.firstName} ${guest.lastName}`)
+                ?.map((guest: any) => `${guest.firstName} ${guest.lastName}`)
                 .join(", ")}
             </label>
           </div>
