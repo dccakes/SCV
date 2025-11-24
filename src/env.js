@@ -18,11 +18,13 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
-    CLERK_SECRET_KEY: z.string().min(1),
-    AWS_S3_BUCKET_NAME: z.string().min(1),
-    AWS_S3_REGION: z.string().min(1),
-    AWS_S3_ACCESS_KEY_ID: z.string().min(1),
-    AWS_S3_SECRET_ACCESS_KEY: z.string().min(1),
+    // Optional: Clerk Authentication (can be disabled for local dev)
+    CLERK_SECRET_KEY: z.string().min(1).optional(),
+    // Optional: AWS S3 Storage (can be disabled for local dev)
+    AWS_S3_BUCKET_NAME: z.string().min(1).optional(),
+    AWS_S3_REGION: z.string().min(1).optional(),
+    AWS_S3_ACCESS_KEY_ID: z.string().min(1).optional(),
+    AWS_S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
   },
 
   /**
@@ -31,7 +33,8 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
-    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
+    // Optional: Clerk Authentication (can be disabled for local dev)
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1).optional(),
   },
 
   /**

@@ -10,18 +10,36 @@ import {
 
 import Dashboard from "../_components/dashboard";
 
+// Check if S3 is configured
+const isS3Enabled = !!(
+  process.env.AWS_S3_BUCKET_NAME &&
+  process.env.AWS_S3_REGION &&
+  process.env.AWS_S3_ACCESS_KEY_ID &&
+  process.env.AWS_S3_SECRET_ACCESS_KEY
+);
+
 const Bucket = process.env.AWS_S3_BUCKET_NAME;
 const region = process.env.AWS_S3_REGION;
-const s3 = new S3Client({
-  region,
-  credentials: {
-    accessKeyId: process.env.AWS_S3_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_S3_SECRET_ACCESS_KEY!,
-  },
-});
+
+// Only initialize S3 client if configured
+const s3 = isS3Enabled
+  ? new S3Client({
+      region,
+      credentials: {
+        accessKeyId: process.env.AWS_S3_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_S3_SECRET_ACCESS_KEY!,
+      },
+    })
+  : null;
 
 const uploadImage = async (formData: FormData): Promise<{ ok: boolean }> => {
   "use server";
+
+  if (!isS3Enabled || !s3) {
+    console.log("S3 is not configured. Image upload disabled.");
+    return { ok: false };
+  }
+
   const files = formData.getAll("file") as File[];
   const fileType = formData.get("type") as string;
 
@@ -58,6 +76,12 @@ const uploadImage = async (formData: FormData): Promise<{ ok: boolean }> => {
 
 const deleteImage = async (imageKey: string): Promise<{ ok: boolean }> => {
   "use server";
+
+  if (!isS3Enabled || !s3) {
+    console.log("S3 is not configured. Image deletion disabled.");
+    return { ok: false };
+  }
+
   return new Promise((resolve) => {
     s3.send(
       new DeleteObjectCommand({
