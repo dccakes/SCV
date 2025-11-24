@@ -88,7 +88,7 @@ export const householdRouter = createTRPCRouter({
                   data: Object.entries(guest.invites).map(
                     ([eventId, rsvp]) => ({
                       eventId,
-                      rsvp,
+                      rsvp: rsvp as string,
                       userId,
                     }),
                   ),
@@ -209,7 +209,7 @@ export const householdRouter = createTRPCRouter({
                   data: Object.entries(guest.invites).map(
                     ([eventId, rsvp]) => ({
                       eventId,
-                      rsvp,
+                      rsvp: rsvp as string,
                       userId,
                     }),
                   ),
