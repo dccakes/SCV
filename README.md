@@ -82,20 +82,260 @@ And... that's it! I know there's a lot more to what TheKnot offers than what was
 
 ### *With that said, here's a more exhaustive list of the technologies that were involved in making this happen:*
 
-- [Next.js](https://nextjs.org) v16
-- [React](https://react.dev/) v19
+- [Next.js](https://nextjs.org) v15
+- [React](https://react.dev/) v18
 - [TypeScript](https://www.typescriptlang.org/)
 - [Tailwind CSS](https://tailwindcss.com)
 - [tRPC](https://trpc.io) v11
-- [Clerk](https://clerk.com/) v6
+- [Clerk](https://clerk.com/) v6 (optional)
 - [shadcn/radix-ui](https://ui.shadcn.com/)
 - [Prisma ORM](https://prisma.io) v7
 - [PostgreSQL](https://www.postgresql.org/) hosted on [Supabase](https://supabase.com/)
 - [Zod](https://zod.dev/)
-- [AWS S3](https://aws.amazon.com/s3/) via `@aws-sdk/client-s3`
+- [AWS S3](https://aws.amazon.com/s3/) via `@aws-sdk/client-s3` (optional)
 - `react-dropzone` & `react-cropper` for image handling
 - `react-chartjs-2` for analytics visualizations
 
+---
 
-### *License:*
+## 🚀 Getting Started - Local Development
+
+### Prerequisites
+
+Before you begin, ensure you have the following installed:
+- **Node.js** v18 or higher
+- **npm** or **yarn**
+- **PostgreSQL** database (local or hosted)
+  - Recommended: [Supabase](https://supabase.com/) (free tier)
+  - Alternative: Local PostgreSQL installation
+
+### Step 1: Clone the Repository
+
+```bash
+git clone https://github.com/Kenford20/wedding-approuter.git
+cd wedding-approuter
+```
+
+### Step 2: Install Dependencies
+
+```bash
+npm install
+```
+
+### Step 3: Set Up Environment Variables
+
+Create a `.env` file in the root directory:
+
+```bash
+cp .env.example .env
+```
+
+Open `.env` and configure the following **required** variables:
+
+```bash
+# Database (REQUIRED)
+DATABASE_URL="postgresql://user:password@host:port/database"
+DIRECT_URL="postgresql://user:password@host:port/database"  # Optional, for connection pooling
+```
+
+#### Optional: Clerk Authentication
+
+If you want user authentication, uncomment and configure:
+
+```bash
+# Clerk (OPTIONAL - comment out to disable)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."
+CLERK_SECRET_KEY="sk_test_..."
+```
+
+Get your Clerk keys from: https://clerk.com/
+
+#### Optional: AWS S3 Storage
+
+If you want image upload functionality, uncomment and configure:
+
+```bash
+# AWS S3 (OPTIONAL - comment out to disable)
+AWS_S3_BUCKET_NAME="your-bucket-name"
+AWS_S3_REGION="us-east-1"
+AWS_S3_ACCESS_KEY_ID="your-access-key"
+AWS_S3_SECRET_ACCESS_KEY="your-secret-key"
+```
+
+### Step 4: Set Up Database
+
+#### 4a. Push Prisma Schema
+
+```bash
+npx prisma db push
+```
+
+This will create all the necessary tables in your PostgreSQL database.
+
+#### 4b. (Optional) Seed the Database
+
+If you want sample data:
+
+```bash
+npx prisma db seed
+```
+
+#### 4c. Generate Prisma Client
+
+```bash
+npx prisma generate
+```
+
+### Step 5: Run Development Server
+
+```bash
+npm run dev
+```
+
+Your application will be available at **http://localhost:3000** 🎉
+
+---
+
+## 📚 Additional Commands
+
+### Build for Production
+
+```bash
+npm run build
+```
+
+### Start Production Server
+
+```bash
+npm start
+```
+
+### Open Prisma Studio (Database GUI)
+
+```bash
+npx prisma studio
+```
+
+This opens a visual editor for your database at http://localhost:5555
+
+### Database Migrations
+
+```bash
+npx prisma migrate dev --name your_migration_name
+```
+
+---
+
+## 🔧 Configuration Guide
+
+### Running Without Authentication (Clerk)
+
+The app is configured to work **without** Clerk if you don't need authentication:
+
+1. Leave the Clerk environment variables commented out in `.env`
+2. The middleware will automatically detect this and skip authentication
+3. You can still use all features except user-specific data
+
+### Running Without Image Uploads (AWS S3)
+
+The app will work without S3:
+
+1. Leave the AWS environment variables commented out in `.env`
+2. Image upload functionality will be disabled
+3. Dashboard will show an appropriate message when attempting to upload
+
+---
+
+## 🐛 Troubleshooting
+
+### Prisma Client Not Found
+
+If you see: `Module '"@prisma/client"' has no exported member 'PrismaClient'`
+
+**Solution:**
+```bash
+npx prisma generate
+```
+
+### Database Connection Issues
+
+**Error:** `Can't reach database server`
+
+**Solutions:**
+1. Verify your `DATABASE_URL` is correct
+2. Check if PostgreSQL is running (if local)
+3. Verify firewall/network settings
+4. For Supabase: Use the "Connection Pooling" URL
+
+### Port Already in Use
+
+**Error:** `Port 3000 is already in use`
+
+**Solution:**
+```bash
+# Find and kill the process
+lsof -ti:3000 | xargs kill -9
+
+# Or use a different port
+PORT=3001 npm run dev
+```
+
+### TypeScript Errors
+
+If you encounter type errors during build:
+
+```bash
+# Clear Next.js cache
+rm -rf .next
+
+# Reinstall dependencies
+rm -rf node_modules package-lock.json
+npm install
+
+# Regenerate Prisma Client
+npx prisma generate
+
+# Try building again
+npm run build
+```
+
+---
+
+## 📝 Database Schema Overview
+
+The application uses the following main models:
+
+- **User** - User account information
+- **Website** - Custom wedding website settings
+- **Event** - Wedding events (ceremony, reception, etc.)
+- **Household** - Group of guests at the same address
+- **Guest** - Individual guests
+- **Invitation** - Links guests to events with RSVP status
+- **Question** - Custom questions for RSVP forms
+- **Answer** - Guest responses to questions
+- **Gift** - Gift tracking per household
+
+View the full schema in `prisma/schema.prisma`
+
+---
+
+## 🌐 Deployment
+
+This project is optimized for deployment on [Vercel](https://vercel.com/):
+
+1. Push your code to GitHub
+2. Import project in Vercel
+3. Add environment variables in Vercel dashboard
+4. Deploy!
+
+Vercel will automatically:
+- Run `npm install`
+- Generate Prisma Client
+- Build the Next.js application
+- Deploy to production
+
+---
+
+## 📄 License
+
 MIT © [Kenny Zhou](https://github.com/kenford20)
