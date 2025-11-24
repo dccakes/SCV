@@ -14,6 +14,10 @@ const config = {
       },
     ],
   },
+  // Note: Next.js 16 uses Turbopack exclusively for builds
+  // Webpack is no longer available as a fallback
+  // Local builds may fail due to Turbopack bundling issues
+  // These should resolve in Vercel's production environment
 };
 
 export default config;
