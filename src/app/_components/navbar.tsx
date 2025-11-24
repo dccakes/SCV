@@ -1,5 +1,6 @@
 import { sharedStyles } from "../utils/shared-styles";
-import { SignInButton, SignOutButton, currentUser } from "@clerk/nextjs";
+import { SignInButton, SignOutButton } from "@clerk/nextjs";
+import { currentUser } from "@clerk/nextjs/server";
 import Link from "next/link";
 
 export default async function Navbar() {
