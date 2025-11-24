@@ -312,7 +312,8 @@ export const householdRouter = createTRPCRouter({
               guests: {
                 some: {
                   firstName: {
-                    search: input.searchText,
+                    contains: input.searchText,
+                    mode: "insensitive",
                   },
                   AND: [
                     {
@@ -332,7 +333,8 @@ export const householdRouter = createTRPCRouter({
               guests: {
                 some: {
                   lastName: {
-                    search: input.searchText,
+                    contains: input.searchText,
+                    mode: "insensitive",
                   },
                   AND: [
                     {

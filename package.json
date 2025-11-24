@@ -1,15 +1,21 @@
 {
-  "name": "wedding-approuter",
+  "name": "scv-app",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "next build",
+    "build:analyze": "next build --analyze",
+    "build:turbo": "NODE_OPTIONS='--trace-uncaught' next build --turbopack",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "dev": "next dev",
+    "dev:turbo": "NODE_OPTIONS='--trace-uncaught' next dev --turbopack",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "prettier": "prettier --check \"**/*.{js,jsx,ts,tsx}\"",
+    "prettier:fix": "prettier --write \"**/*.{js,jsx,ts,tsx}\"",
     "postinstall": "prisma generate",
-    "lint": "next lint",
     "start": "next start"
   },
   "dependencies": {
@@ -27,6 +33,7 @@
     "@trpc/next": "^11.7.2",
     "@trpc/react-query": "^11.7.2",
     "@trpc/server": "^11.7.2",
+    "chart.js": "^4.5.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.554.0",
@@ -38,6 +45,7 @@
     "react-cropper": "^2.3.3",
     "react-dom": "^18.3.1",
     "react-dropzone": "^14.3.8",
+    "react-hook-form": "^7.62.0",
     "react-icons": "^5.5.0",
     "server-only": "^0.0.1",
     "superjson": "^2.2.5",
@@ -46,25 +54,48 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "@eslint/compat": "^1.4.0",
+    "@eslint/js": "^9.37.0",
+    "@tailwindcss/typography": "^0.5.16",
+    "@testing-library/jest-dom": "^6.8.0",
+    "@testing-library/react": "^15.0.7",
     "@types/eslint": "^9.6.1",
-    "@types/node": "^22.10.5",
-    "@types/pg": "^8.11.5",
-    "@types/react": "^18.3.18",
-    "@types/react-dom": "^18.3.5",
-    "@typescript-eslint/eslint-plugin": "^8.20.0",
-    "@typescript-eslint/parser": "^8.20.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.3.0",
+    "@types/pg": "^8.15.6",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "@typescript-eslint/eslint-plugin": "^8.46.1",
+    "@typescript-eslint/parser": "^8.46.1",
     "autoprefixer": "^10.4.20",
-    "eslint": "^9.19.0",
-    "eslint-config-next": "^15.1.6",
-    "postcss": "^8.4.49",
-    "prettier": "^3.4.2",
-    "prettier-plugin-tailwindcss": "^0.6.9",
+    "eslint": "^9.37.0",
+    "eslint-config-next": "^15.5.5",
+    "eslint-plugin-jest": "^29.0.1",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-playwright": "^2.2.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.0",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "jest": "^30.0.5",
+    "jest-environment-jsdom": "^30.0.5",
+    "postcss": "^8.5.6",
+    "prettier": "^3.6.2",
+    "prettier-plugin-tailwindcss": "^0.6.14",
     "prisma": "7.0.0",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.7.3"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  },
+  "lint-staged": {
+    "**/*.{ts,tsx}": [
+      "npx eslint --fix",
+      "npx prettier --write"
+    ]
   },
   "ct3aMetadata": {
-    "initVersion": "7.25.2"
+    "initVersion": "7.32.0"
   },
-  "packageManager": "npm@10.2.4"
+  "packageManager": "npm@10.5.1"
 }

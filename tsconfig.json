@@ -26,17 +26,18 @@
     /* Path Aliases */
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./src/*"],
-    },
+      "@/*": ["./src/*"],
+      "~/*": ["./src/*"]
+    }
   },
-  "typeRoots": ["./node_modules/@types", "./typings"],
   "include": [
+    ".eslintrc.cjs",
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
     "**/*.cjs",
     "**/*.js",
-    ".next/types/**/*.ts",
+    ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules", ".eslintrc.cjs"]
+  "exclude": ["node_modules", "tests/unit/coverage"]
 }

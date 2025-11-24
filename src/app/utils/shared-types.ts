@@ -26,8 +26,12 @@ interface EventWithResponses extends Event {
 }
 
 type Invitation = {
+  guestId: number;
   eventId: string;
+  invitedAt: Date;
+  updatedAt: Date;
   rsvp: string | null;
+  userId: string;
 };
 
 type Household = {
@@ -62,6 +66,8 @@ type Guest = {
   isPrimaryContact: boolean;
   userId: string;
   householdId: string;
+  createdAt: Date;
+  updatedAt: Date;
   invitations?: Invitation[];
 };
 

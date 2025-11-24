@@ -174,8 +174,12 @@ export const dashboardRouter = createTRPCRouter({
                 (acc: Invitation[], invitation: any) => {
                   if (guest.id === invitation.guestId) {
                     acc.push({
+                      guestId: invitation.guestId,
                       eventId: invitation.eventId,
+                      invitedAt: invitation.invitedAt,
+                      updatedAt: invitation.updatedAt,
                       rsvp: invitation.rsvp,
+                      userId: invitation.userId,
                     });
                   }
                   return acc;
