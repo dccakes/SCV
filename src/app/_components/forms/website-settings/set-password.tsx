@@ -62,10 +62,10 @@ export default function SetPasswordView({
         className={`fixed bottom-0 flex flex-col gap-3 border-t px-8 py-5 ${sharedStyles.sidebarFormWidth}`}
       >
         <button
-          disabled={updateWebsite.isLoading}
+          disabled={updateWebsite.isPending}
           className={`w-[100%] ${sharedStyles.primaryButton({
             py: "py-2",
-            isLoading: updateWebsite.isLoading,
+            isLoading: updateWebsite.isPending,
           })}`}
           onClick={() =>
             updateWebsite.mutate({
@@ -74,7 +74,7 @@ export default function SetPasswordView({
             })
           }
         >
-          {updateWebsite.isLoading ? "Processing..." : "Save Changes"}
+          {updateWebsite.isPending ? "Processing..." : "Save Changes"}
         </button>
       </div>
     </div>

@@ -109,7 +109,7 @@ export const householdRouter = createTRPCRouter({
       const householdData: Household = {
         ...household,
         guests: await Promise.all(
-          newGuests.map(async (guest) => {
+          newGuests.map(async (guest: any) => {
             return {
               ...guest,
               invitations: await ctx.db.invitation.findMany({
@@ -189,7 +189,7 @@ export const householdRouter = createTRPCRouter({
       });
 
       const updatedGuestParty = await Promise.all(
-        input.guestParty.map(async (guest) => {
+        input.guestParty.map(async (guest: any) => {
           const updatedGuest = await ctx.db.guest.upsert({
             where: {
               id: guest.guestId ?? -1, // db throws error if trying to upsert with undefined id - use unreachable integer as id to bring execution to the create block
@@ -220,16 +220,16 @@ export const householdRouter = createTRPCRouter({
 
           const updatedInvitations: Invitation[] = await Promise.all(
             Object.entries(guest.invites).map(
-              async ([inviteEventId, inputRsvp]: string[]) => {
+              async ([inviteEventId, inputRsvp]) => {
                 return await ctx.db.invitation.update({
                   where: {
                     invitationId: {
-                      eventId: inviteEventId!,
+                      eventId: inviteEventId,
                       guestId: guest.guestId ?? updatedGuest.id, // if guest is added to existing party, use that id here upserted from above
                     },
                   },
                   data: {
-                    rsvp: inputRsvp ?? undefined,
+                    rsvp: inputRsvp as string ?? undefined,
                   },
                 });
               },
@@ -254,7 +254,7 @@ export const householdRouter = createTRPCRouter({
       }
 
       const updatedGifts = await Promise.all(
-        input.gifts.map(async (gift) => {
+        input.gifts.map(async (gift: any) => {
           const updatedGuest = await ctx.db.gift.upsert({
             where: {
               GiftId: {

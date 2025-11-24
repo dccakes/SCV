@@ -49,7 +49,7 @@ export default function NamesForm() {
       </div>
       <div className="flex min-h-screen flex-col items-center justify-center">
         <div className="container flex flex-col items-center justify-center gap-6 px-4 py-16 ">
-          {createWebsite.isLoading && (
+          {createWebsite.isPending && (
             <div className="flex items-center justify-center">
               <LoadingSpinner />
             </div>
@@ -81,7 +81,7 @@ export default function NamesForm() {
           />
           <button
             type="button"
-            disabled={createWebsite.isLoading}
+            disabled={createWebsite.isPending}
             onClick={() =>
               createWebsite.mutate({
                 ...nameData,

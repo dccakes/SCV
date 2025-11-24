@@ -1,6 +1,7 @@
 import "~/styles/globals.css";
 
-import { Inter } from "next/font/google";
+// Temporarily disabled due to network restrictions in sandbox
+// import { Inter } from "next/font/google";
 
 import { TRPCReactProvider } from "~/trpc/react";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -9,10 +10,10 @@ import { GuestFormProvider } from "./_components/contexts/guest-form-context";
 import { Toaster } from "~/components/ui/toaster";
 import { type Viewport } from "next/types";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
+// const inter = Inter({
+//   subsets: ["latin"],
+//   variable: "--font-sans",
+// });
 
 export const viewport: Viewport = {
   initialScale: 1,
@@ -32,7 +33,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={`font-sans ${inter.variable}`}>
+        <body className="font-sans">
           <TRPCReactProvider>
             <EventFormProvider>
               <GuestFormProvider>

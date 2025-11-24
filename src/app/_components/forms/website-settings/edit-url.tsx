@@ -64,10 +64,10 @@ export default function EditUrlView({
         className={`fixed bottom-0 flex flex-col gap-3 border-t px-8 py-5 ${sharedStyles.sidebarFormWidth}`}
       >
         <button
-          disabled={updateWebsite.isLoading}
+          disabled={updateWebsite.isPending}
           className={`w-[100%] ${sharedStyles.primaryButton({
             py: "py-2",
-            isLoading: updateWebsite.isLoading,
+            isLoading: updateWebsite.isPending,
           })}`}
           onClick={() =>
             updateWebsite.mutate({
@@ -76,7 +76,7 @@ export default function EditUrlView({
             })
           }
         >
-          {updateWebsite.isLoading ? "Processing..." : "Save"}
+          {updateWebsite.isPending ? "Processing..." : "Save"}
         </button>
       </div>
     </div>

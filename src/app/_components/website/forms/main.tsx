@@ -18,7 +18,11 @@ import MultistepRsvpForm from "./multi-step-form";
 import RsvpConfirmation from "../rsvp-confirmation";
 
 import { type ReactNode } from "react";
-import { type RsvpPageData } from "~/app/utils/shared-types";
+import {
+  type Event,
+  type Question,
+  type RsvpPageData,
+} from "~/app/utils/shared-types";
 
 type MainRsvpFormProps = {
   weddingData: RsvpPageData;
@@ -51,8 +55,8 @@ export default function MainRsvpForm({
   });
   const progress = (currentStep / numSteps.current) * 100;
 
-  const generateDynamicStepForms = useCallback(() => {
-    const newSteps = weddingData?.events?.reduce((acc: ReactNode[], event) => {
+  const generateDynamicStepForms = useCallback((): ReactNode[] => {
+    const newSteps = weddingData?.events?.reduce((acc: ReactNode[], event: Event) => {
       if (!event.collectRsvp) return acc;
       // TODO: invitedGuests need to be filtered based on rsvp selection - shouldnt show question step forms for those who declined rsvp
       const invitedGuests = rsvpFormData.selectedHousehold?.guests.filter(
@@ -81,14 +85,15 @@ export default function MainRsvpForm({
       return acc;
     }, []);
 
-    weddingData?.website.generalQuestions.forEach((question) => {
+    weddingData?.website.generalQuestions.forEach((question: Question) => {
       question.type === "Text"
-        ? newSteps.push(<QuestionShortAnswer question={question} />)
-        : newSteps.push(<QuestionMultipleChoice question={question} />);
+        ? newSteps?.push(<QuestionShortAnswer question={question} />)
+        : newSteps?.push(<QuestionMultipleChoice question={question} />);
     });
 
-    numSteps.current = newSteps.length + NUM_STATIC_STEPS;
-    return newSteps;
+    const steps = newSteps ?? [];
+    numSteps.current = steps.length + NUM_STATIC_STEPS;
+    return steps;
   }, [weddingData, rsvpFormData.selectedHousehold]);
 
   return (
@@ -113,7 +118,7 @@ export default function MainRsvpForm({
           <FindYourInvitationForm />
           <ConfirmNameForm />
           {...generateDynamicStepForms()}
-          <SendRsvp isFetching={submitRsvpForm.isLoading} />
+          <SendRsvp isFetching={submitRsvpForm.isPending} />
           <RsvpConfirmation
             basePath={basePath}
             setCurrentStep={setCurrentStep}

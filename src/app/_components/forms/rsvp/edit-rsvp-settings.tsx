@@ -134,11 +134,11 @@ export default function EditRsvpSettingsForm({
         >
           <div className="flex gap-3 text-sm">
             <button
-              disabled={updateIsRsvpEnabled.isLoading}
+              disabled={updateIsRsvpEnabled.isPending}
               onClick={() => toggleEditRsvpSettingsForm()}
               className={`w-1/2 ${sharedStyles.secondaryButton({
                 py: "py-2",
-                isLoading: updateIsRsvpEnabled.isLoading,
+                isLoading: updateIsRsvpEnabled.isPending,
               })}`}
             >
               Cancel
@@ -147,14 +147,14 @@ export default function EditRsvpSettingsForm({
               id="edit-save"
               name="edit-button"
               type="submit"
-              disabled={updateIsRsvpEnabled.isLoading}
+              disabled={updateIsRsvpEnabled.isPending}
               className={`w-1/2 ${sharedStyles.primaryButton({
                 px: "px-2",
                 py: "py-2",
-                isLoading: updateIsRsvpEnabled.isLoading,
+                isLoading: updateIsRsvpEnabled.isPending,
               })}`}
             >
-              {updateIsRsvpEnabled.isLoading ? "Processing..." : "Save"}
+              {updateIsRsvpEnabled.isPending ? "Processing..." : "Save"}
             </button>
           </div>
         </div>

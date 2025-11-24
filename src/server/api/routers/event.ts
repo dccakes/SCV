@@ -51,7 +51,7 @@ export const eventRouter = createTRPCRouter({
       });
 
       await Promise.all(
-        guests.map(async (guest) => {
+        guests.map(async (guest: any) => {
           await ctx.db.invitation.create({
             data: {
               userId,

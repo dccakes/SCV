@@ -47,9 +47,9 @@ const useGuestFormActions = (closeForm: boolean, resetForm: () => void) => {
     createGuests: createGuests.mutate,
     updateHousehold: updateHousehold.mutate,
     deleteHousehold: deleteHousehold.mutate,
-    isCreatingGuests: createGuests.isLoading,
-    isUpdatingHousehold: updateHousehold.isLoading,
-    isDeletingHousehold: deleteHousehold.isLoading,
+    isCreatingGuests: createGuests.isPending,
+    isUpdatingHousehold: updateHousehold.isPending,
+    isDeletingHousehold: deleteHousehold.isPending,
   };
 };
 

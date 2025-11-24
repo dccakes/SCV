@@ -408,7 +408,7 @@ const SingleEventTableRow = ({
 
       <td>{selectedEventGift?.description ?? "-"}</td>
 
-      {updateGift.isLoading ? (
+      {updateGift.isPending ? (
         <LoadingSpinner />
       ) : (
         <td>
@@ -462,7 +462,7 @@ const InvitationDropdown = ({
           rsvp,
         )}`}
       ></span>
-      {updateInvitation.isLoading ? (
+      {updateInvitation.isPending ? (
         <div className="m-auto w-[65%]">
           <LoadingSpinner />
         </div>

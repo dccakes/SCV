@@ -30,7 +30,7 @@ export default function PageSectionsTemplate({
   const [showMenu, setShowMenu] = useState(false);
 
   useEffect(() => {
-    setShowSection(!collapse ?? true);
+    setShowSection(!collapse);
   }, [collapse]);
 
   return (

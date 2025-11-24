@@ -10,11 +10,11 @@ import EventForm from "../forms/event-form";
 import EventsTabs from "./event-tabs";
 import NoGuestsView from "./no-guests-view";
 import GuestsView from "./guests-view";
-import SomethingWentWrongPage from "../500";
 
 import {
   type DashboardData,
   type EventFormData,
+  type Household,
   type HouseholdFormData,
 } from "../../utils/shared-types";
 
@@ -37,7 +37,7 @@ export default function GuestList({
     () =>
       selectedEventId === "all"
         ? dashboardData?.households ?? []
-        : dashboardData?.households?.map((household) => {
+        : dashboardData?.households?.map((household: Household) => {
             return {
               ...household,
               guests: household.guests.filter((guest) => {
@@ -57,13 +57,22 @@ export default function GuestList({
     useMemo(
       () =>
         filteredHouseholdsByEvent?.reduce(
-          (acc, household) => acc + household.guests.length,
+          (acc: number, household: Household) => acc + household.guests.length,
           0,
         ),
       [filteredHouseholdsByEvent],
     ) ?? 0;
 
-  if (dashboardData === null) return <SomethingWentWrongPage />;
+  if (dashboardData === null) {
+    return (
+      <div className="flex min-h-96 items-center justify-center">
+        <div className="flex flex-col gap-5 text-center">
+          <h1 className="text-3xl">Something went wrong!</h1>
+          <p>Sorry about that. Please refresh the page in a moment.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

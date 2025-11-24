@@ -127,7 +127,7 @@ const Main = ({
           <Label htmlFor="password-toggle" className="text-md">
             Require a Password
           </Label>
-          {updateWebsite.isLoading ? (
+          {updateWebsite.isPending ? (
             <LoadingSpinner size={20} />
           ) : (
             <Switch

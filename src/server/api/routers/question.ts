@@ -45,7 +45,7 @@ export const questionRouter = createTRPCRouter({
       }
 
       const upsertOptions = {
-        upsert: input.options?.map((option) => {
+        upsert: input.options?.map((option: any) => {
           return {
             where: {
               id: option.id ?? "-1",
@@ -64,7 +64,7 @@ export const questionRouter = createTRPCRouter({
       };
 
       const createOptions = {
-        create: input?.options?.map((option) => {
+        create: input?.options?.map((option: any) => {
           return {
             text: option.text,
             description: option.description ?? "",

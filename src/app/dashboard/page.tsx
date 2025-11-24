@@ -45,7 +45,8 @@ const uploadImage = async (formData: FormData): Promise<{ ok: boolean }> => {
 
   return Promise.all(
     files.map(async (file) => {
-      const Body = (await file.arrayBuffer()) as Buffer;
+      const arrayBuffer = await file.arrayBuffer();
+      const Body = Buffer.from(arrayBuffer);
       await s3.send(
         new PutObjectCommand({
           Bucket,

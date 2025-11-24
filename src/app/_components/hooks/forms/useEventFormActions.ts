@@ -46,9 +46,9 @@ const useEventFormActions = () => {
     createEvent: createEvent.mutate,
     updateEvent: updateEvent.mutate,
     deleteEvent: deleteEvent.mutate,
-    isCreatingEvent: createEvent.isLoading,
-    isUpdatingEvent: updateEvent.isLoading,
-    isDeletingEvent: deleteEvent.isLoading,
+    isCreatingEvent: createEvent.isPending,
+    isUpdatingEvent: updateEvent.isPending,
+    isDeletingEvent: deleteEvent.isPending,
   };
 };
 

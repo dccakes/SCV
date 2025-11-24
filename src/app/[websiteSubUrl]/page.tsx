@@ -14,14 +14,15 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 type RootRouteHandlerProps = {
-  params: {
+  params: Promise<{
     websiteSubUrl: string;
-  };
+  }>;
 };
 
 export default async function RootRouteHandler({
-  params: { websiteSubUrl },
+  params,
 }: RootRouteHandlerProps) {
+  const { websiteSubUrl } = await params;
   const website = await api.website.getBySubUrl.query({
     subUrl: websiteSubUrl,
   });
@@ -29,11 +30,13 @@ export default async function RootRouteHandler({
   if (website === null) return notFound();
   if (!website.isPasswordEnabled) return <WeddingWebsite />;
 
-  const hasPassword = cookies().get("wws_password")?.value === website.password;
+  const cookieStore = await cookies();
+  const hasPassword = cookieStore.get("wws_password")?.value === website.password;
 
   const setPasswordCookie = async (value: string) => {
     "use server";
-    cookies().set("wws_password", value);
+    const cookieStore = await cookies();
+    cookieStore.set("wws_password", value);
   };
 
   return (

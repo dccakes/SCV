@@ -95,12 +95,12 @@ export default function QuestionForm({
     });
   };
 
-  const isProcessing = upsertQuestion.isLoading || deleteQuestion.isLoading;
+  const isProcessing = upsertQuestion.isPending || deleteQuestion.isPending;
 
   if (showDeleteConfirmation) {
     return (
       <DeleteConfirmation
-        isProcessing={deleteQuestion.isLoading}
+        isProcessing={deleteQuestion.isPending}
         disclaimerText={
           "This will permanently delete the question and any answers you've already received."
         }

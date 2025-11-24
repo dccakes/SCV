@@ -31,7 +31,6 @@
   },
   "typeRoots": ["./node_modules/@types", "./typings"],
   "include": [
-    ".eslintrc.cjs",
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
@@ -39,5 +38,5 @@
     "**/*.js",
     ".next/types/**/*.ts",
   ],
-  "exclude": ["node_modules"],
+  "exclude": ["node_modules", ".eslintrc.cjs"]
 }

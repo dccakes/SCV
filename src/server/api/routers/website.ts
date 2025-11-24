@@ -248,7 +248,7 @@ export const websiteRouter = createTRPCRouter({
       });
 
       const weddingDate = events.find(
-        (event) => event.name === "Wedding Day",
+        (event: any) => event.name === "Wedding Day",
       )?.date;
 
       const weddingData = {
@@ -298,9 +298,9 @@ export const websiteRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      await ctx.db.$transaction(async (prisma) => {
+      await ctx.db.$transaction(async (prisma: any) => {
         await Promise.all(
-          input.rsvpResponses.map(async (response) => {
+          input.rsvpResponses.map(async (response: any) => {
             await prisma.invitation.update({
               where: {
                 invitationId: {
@@ -313,7 +313,7 @@ export const websiteRouter = createTRPCRouter({
           }),
         );
         await Promise.all(
-          input.answersToQuestions.map(async (answer) => {
+          input.answersToQuestions.map(async (answer: any) => {
             if (answer.questionType === "Option") {
               const optionResponse = await prisma.optionResponse.findFirst({
                 where: {

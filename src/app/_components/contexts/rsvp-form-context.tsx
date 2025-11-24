@@ -8,6 +8,7 @@ import {
   type RsvpFormResponse,
   type Answer,
   type Guest,
+  type Invitation,
 } from "~/app/utils/shared-types";
 
 interface AnswerWithType extends Answer {
@@ -16,7 +17,9 @@ interface AnswerWithType extends Answer {
 
 type H = HouseholdSearch[0];
 interface SelectedHousehold extends H {
+  id: string;
   primaryContact: Guest | undefined;
+  guests: Array<Guest & { invitations: Invitation[] }>;
 }
 
 type RsvpFormState = {

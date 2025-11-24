@@ -1,7 +1,14 @@
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { calculateDaysRemaining, formatDateNumber } from "~/app/utils/helpers";
 
-import { type Invitation, type User } from "~/app/utils/shared-types";
+import {
+  type Event,
+  type Guest,
+  type Household,
+  type Invitation,
+  type Question,
+  type User,
+} from "~/app/utils/shared-types";
 
 export const dashboardRouter = createTRPCRouter({
   getByUserId: publicProcedure.query(async ({ ctx }) => {
@@ -102,14 +109,14 @@ export const dashboardRouter = createTRPCRouter({
     if (!currentUser || !website) return null;
 
     const weddingDate = events.find(
-      (event) => event.name === "Wedding Day",
+      (event: Event) => event.name === "Wedding Day",
     )?.date;
 
     const weddingData = {
       website: {
         ...website,
         generalQuestions: await Promise.all(
-          website.generalQuestions.map(async (question) => {
+          website.generalQuestions.map(async (question: Question) => {
             return {
               ...question,
               recentAnswer: await ctx.db.answer.findFirst({
@@ -157,14 +164,14 @@ export const dashboardRouter = createTRPCRouter({
         },
       }),
       totalEvents: events.length,
-      households: households.map((household) => {
+      households: households.map((household: Household) => {
         return {
           ...household,
-          guests: household.guests.map((guest) => {
+          guests: household.guests.map((guest: Guest) => {
             return {
               ...guest,
               invitations: invitations.reduce(
-                (acc: Invitation[], invitation) => {
+                (acc: Invitation[], invitation: any) => {
                   if (guest.id === invitation.guestId) {
                     acc.push({
                       eventId: invitation.eventId,
@@ -181,7 +188,7 @@ export const dashboardRouter = createTRPCRouter({
       }),
 
       events: await Promise.all(
-        events.map(async (event) => {
+        events.map(async (event: Event) => {
           const guestResponses = {
             invited: 0,
             attending: 0,
@@ -189,7 +196,7 @@ export const dashboardRouter = createTRPCRouter({
             notInvited: 0,
           };
 
-          invitations.forEach((rsvp) => {
+          invitations.forEach((rsvp: any) => {
             if (event.id === rsvp.eventId) {
               switch (rsvp.rsvp) {
                 case "Invited":
@@ -211,7 +218,7 @@ export const dashboardRouter = createTRPCRouter({
           return {
             ...event,
             questions: await Promise.all(
-              event.questions.map(async (question) => {
+              event.questions.map(async (question: any) => {
                 return {
                   ...question,
                   recentAnswer: await ctx.db.answer.findFirst({

@@ -66,7 +66,7 @@ export default function RsvpFormSettings({
           </p>
         </div>
         <ul>
-          {dashboardData?.events.map((event) => {
+          {dashboardData?.events.map((event: EventWithResponses) => {
             const { attending, invited, declined } = event.guestResponses;
             const numGuests = attending + invited + declined;
             return (
@@ -134,7 +134,7 @@ const EventRsvpSection = ({
         <h2 className="text-2xl font-bold">{event.name}</h2>
         <div className="flex items-center gap-3">
           <span>Collect RSVPs</span>
-          {updateEventRsvpSetting.isLoading ? (
+          {updateEventRsvpSetting.isPending ? (
             <LoadingSpinner size={20} />
           ) : (
             <Switch

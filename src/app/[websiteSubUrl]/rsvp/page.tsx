@@ -7,7 +7,7 @@ import MainRsvpForm from "~/app/_components/website/forms/main";
 import { type Metadata } from "next";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const headersList = headers();
+  const headersList = await headers();
   const path = headersList.get("x-url");
   const websiteSubUrl = path?.replace("/", "").replace("/rsvp", "") ?? "";
   const website = await api.website.getBySubUrl.query({
@@ -22,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RsvpPage() {
-  const headersList = headers();
+  const headersList = await headers();
   const path = headersList.get("x-url");
   const websiteSubUrl = path?.replace("/", "").replace("/rsvp", "") ?? "";
 

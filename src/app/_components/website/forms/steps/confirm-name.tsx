@@ -6,7 +6,11 @@ import {
   useUpdateRsvpForm,
 } from "~/app/_components/contexts/rsvp-form-context";
 
-import { type StepFormProps } from "~/app/utils/shared-types";
+import {
+  type Guest,
+  type HouseholdSearch,
+  type StepFormProps,
+} from "~/app/utils/shared-types";
 
 export default function ConfirmNameForm({ goNext, goBack }: StepFormProps) {
   const { matchedHouseholds } = useRsvpForm();
@@ -15,10 +19,10 @@ export default function ConfirmNameForm({ goNext, goBack }: StepFormProps) {
 
   const onContinue = () => {
     const selectedHousehold = matchedHouseholds?.find(
-      (household) => household.id === selectedHouseholdId,
+      (household: HouseholdSearch[0]) => household.id === selectedHouseholdId,
     );
     const primaryContact = selectedHousehold?.guests.find(
-      (guest) => guest.isPrimaryContact,
+      (guest: Guest) => guest.isPrimaryContact,
     );
     updateRsvpForm({
       selectedHousehold: Object.assign({ primaryContact }, selectedHousehold),
@@ -32,7 +36,7 @@ export default function ConfirmNameForm({ goNext, goBack }: StepFormProps) {
         we&apos;ve found you in the guest list. please confirm your name below
         to continue with your rsvp
       </h2>
-      {matchedHouseholds?.map((household) => {
+      {matchedHouseholds?.map((household: HouseholdSearch[0]) => {
         return (
           <div key={household.id} className="flex gap-5">
             <input
@@ -43,7 +47,7 @@ export default function ConfirmNameForm({ goNext, goBack }: StepFormProps) {
             />
             <label htmlFor={household.id}>
               {household.guests
-                .map((guest) => `${guest.firstName} ${guest.lastName}`)
+                .map((guest: Guest) => `${guest.firstName} ${guest.lastName}`)
                 .join(", ")}
             </label>
           </div>

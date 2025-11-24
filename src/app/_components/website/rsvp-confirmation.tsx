@@ -42,7 +42,7 @@ export default function RsvpConfirmation({
         </button>
       </div>
       <ul>
-        {rsvpFormData.weddingData.events?.map((event) => {
+        {rsvpFormData.weddingData.events?.map((event: Event) => {
           const eventHasInvitedGuests = !!rsvpFormData.rsvpResponses.find(
             (response) => event.id === response.eventId,
           );

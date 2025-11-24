@@ -31,7 +31,7 @@ export const uploadRouter = createTRPCRouter({
       // const formData = await request.formData();
       // const files = formData.getAll("file") as File[];
       // const response = await Promise.all(
-      //   files.map(async (file) => {
+      //   files.map(async (file: any) => {
       //     const Body = (await file.arrayBuffer()) as Buffer;
       //     await s3.send(new PutObjectCommand({ Bucket, Key: file.name, Body }));
       //   }),

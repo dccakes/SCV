@@ -5,7 +5,7 @@ import WeddingPage from "./wedding-page";
 import WeddingPageMobile from "./wedding-page-mobile";
 
 export default async function WeddingWebsite() {
-  const headersList = headers();
+  const headersList = await headers();
   // headersList.forEach((k, h) => {
   //   console.log("headerz", `${h}: ${k}`);
   // });
