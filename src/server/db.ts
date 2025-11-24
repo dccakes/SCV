@@ -8,7 +8,8 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-const connectionString = `${env.DATABASE_URL}`;
+// Use DIRECT_URL for connection pooling if available, otherwise fall back to DATABASE_URL
+const connectionString = env.DIRECT_URL || env.DATABASE_URL;
 const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 
