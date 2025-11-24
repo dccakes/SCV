@@ -82,19 +82,19 @@ And... that's it! I know there's a lot more to what TheKnot offers than what was
 
 ### *With that said, here's a more exhaustive list of the technologies that were involved in making this happen:*
 
-- [Next.js](https://nextjs.org)
+- [Next.js](https://nextjs.org) v16
+- [React](https://react.dev/) v19
 - [TypeScript](https://www.typescriptlang.org/)
 - [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
-- [Clerk](https://clerk.com/)
+- [tRPC](https://trpc.io) v11
+- [Clerk](https://clerk.com/) v6
 - [shadcn/radix-ui](https://ui.shadcn.com/)
-- [Prisma ORM](https://prisma.io)
-- MySQL hosted on [PlanetScale](https://planetscale.com/)
-- PostgreSQL hosted on [Supabase](https://supabase.com/)
+- [Prisma ORM](https://prisma.io) v7
+- [PostgreSQL](https://www.postgresql.org/) hosted on [Supabase](https://supabase.com/)
 - [Zod](https://zod.dev/)
-- `@aws-sdk/client-s3`
-- `react-dropzone` & `react-cropper`
-- `react-chartjs-2`
+- [AWS S3](https://aws.amazon.com/s3/) via `@aws-sdk/client-s3`
+- `react-dropzone` & `react-cropper` for image handling
+- `react-chartjs-2` for analytics visualizations
 
 
 ### *License:*
