@@ -64,6 +64,8 @@ type Guest = {
   isPrimaryContact: boolean
   householdId: string
   userId: string
+  createdAt: Date
+  updatedAt: Date
 }
 
 type Household = {
@@ -83,6 +85,8 @@ type Household = {
     eventId: string
     description: string | null
     thankyou: boolean
+    createdAt: Date
+    updatedAt: Date
     event: { name: string }
   }>
 }
@@ -91,7 +95,7 @@ type Invitation = {
   guestId: number
   eventId: string
   rsvp: string | null
-  invitedAt: Date | null
+  invitedAt: Date
   updatedAt: Date
   userId: string
 }
