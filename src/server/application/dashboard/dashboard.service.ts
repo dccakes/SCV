@@ -90,7 +90,7 @@ type Household = {
 type Invitation = {
   guestId: number
   eventId: string
-  rsvp: string
+  rsvp: string | null
   invitedAt: Date | null
   updatedAt: Date
   userId: string
