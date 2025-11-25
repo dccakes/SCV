@@ -8,13 +8,12 @@
  * This is a cross-domain operation but is kept here for Phase 1.
  */
 
+import { type Guest as PrismaGuest,type PrismaClient } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
-import { type PrismaClient, type Guest as PrismaGuest } from '@prisma/client'
 
 import { RSVP_STATUS } from '~/lib/constants'
-
-import { type Event, type CreateEventInput, type UpdateEventInput } from './event.types'
-import { type EventRepository } from './event.repository'
+import { type EventRepository } from '~/server/domains/event/event.repository'
+import { type CreateEventInput, type Event, type UpdateEventInput } from '~/server/domains/event/event.types'
 
 export class EventService {
   constructor(

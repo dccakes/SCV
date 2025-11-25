@@ -5,27 +5,27 @@
  * Each domain contains its own types, validators, repository, service, and router.
  */
 
+// Event Domain
+export {
+  type CreateEventInput,
+  type Event,
+  eventRouter,
+  eventService,
+  type EventWithQuestions,
+  type EventWithStats,
+  type UpdateEventInput,
+} from '~/server/domains/event'
+
 // User Domain
-export { userRouter, userService, type User, type CreateUserInput, type UpdateUserInput } from './user'
+export { type CreateUserInput, type UpdateUserInput, type User, userRouter, userService } from '~/server/domains/user'
 
 // Website Domain
 export {
-  websiteRouter,
-  websiteService,
-  type Website,
-  type WebsiteWithQuestions,
   type CreateWebsiteInput,
   type UpdateWebsiteInput,
+  type Website,
+  websiteRouter,
+  websiteService,
+  type WebsiteWithQuestions,
   type WeddingPageData,
-} from './website'
-
-// Event Domain
-export {
-  eventRouter,
-  eventService,
-  type Event,
-  type EventWithQuestions,
-  type EventWithStats,
-  type CreateEventInput,
-  type UpdateEventInput,
-} from './event'
+} from '~/server/domains/website'

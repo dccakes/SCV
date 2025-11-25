@@ -1,8 +1,4 @@
 // Domain routers (Phase 1 - migrated to domain architecture)
-import { userRouter } from '~/server/domains/user'
-import { websiteRouter } from '~/server/domains/website'
-import { eventRouter } from '~/server/domains/event'
-
 // Legacy routers (to be migrated in future phases)
 import { dashboardRouter } from '~/server/api/routers/dashboard'
 import { giftRouter } from '~/server/api/routers/gift'
@@ -11,6 +7,9 @@ import { householdRouter } from '~/server/api/routers/household'
 import { invitationRouter } from '~/server/api/routers/invitation'
 import { questionRouter } from '~/server/api/routers/question'
 import { createTRPCRouter } from '~/server/api/trpc'
+import { eventRouter } from '~/server/domains/event'
+import { userRouter } from '~/server/domains/user'
+import { websiteRouter } from '~/server/domains/website'
 
 /**
  * This is the primary router for your server.

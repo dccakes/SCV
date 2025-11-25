@@ -5,7 +5,7 @@
  * Represents the public wedding website configuration.
  */
 
-import { type Question, type Option } from '~/app/utils/shared-types'
+import { type Question } from '~/app/utils/shared-types'
 
 /**
  * Core Website entity type
@@ -31,12 +31,7 @@ export type Website = {
  * Website with general questions included
  */
 export type WebsiteWithQuestions = Website & {
-  generalQuestions: Array<
-    Question & {
-      options?: Option[]
-      _count?: { answers: number }
-    }
-  >
+  generalQuestions: Question[]
 }
 
 /**
@@ -108,11 +103,6 @@ export type WeddingPageData = {
     description: string | null
     userId: string
     collectRsvp: boolean
-    questions: Array<
-      Question & {
-        options?: Option[]
-        _count?: { answers: number }
-      }
-    >
+    questions: Question[]
   }>
 }

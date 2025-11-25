@@ -1,12 +1,12 @@
 import '~/styles/globals.css'
 
+import { Inter } from "next/font/google";
 import { type Viewport } from 'next/types'
 
 import { EventFormProvider } from '~/app/_components/contexts/event-form-context'
 import { GuestFormProvider } from '~/app/_components/contexts/guest-form-context'
 import { Providers } from '~/app/providers'
 import { Toaster } from '~/components/ui/toaster'
-import { Inter } from "next/font/google";
 import { TRPCReactProvider } from '~/trpc/react'
 
 const inter = Inter({

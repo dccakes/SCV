@@ -7,7 +7,7 @@
 
 import { type PrismaClient } from '@prisma/client'
 
-import { type Website, type WebsiteWithQuestions } from './website.types'
+import { type Website, type WebsiteWithQuestions } from '~/server/domains/website/website.types'
 
 export class WebsiteRepository {
   constructor(private db: PrismaClient) {}

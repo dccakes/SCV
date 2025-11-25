@@ -6,9 +6,8 @@
  */
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
-
-import { updateUserSchema } from './user.validator'
-import { userService } from './index'
+import { userService } from '~/server/domains/user'
+import { updateUserSchema } from '~/server/domains/user/user.validator'
 
 export const userRouter = createTRPCRouter({
   /**

@@ -18,9 +18,7 @@ describe('createUserSchema', () => {
 
     const result = createUserSchema.safeParse(validInput)
     expect(result.success).toBe(true)
-    if (result.success) {
-      expect(result.data).toEqual(validInput)
-    }
+    expect(result.data).toEqual(validInput)
   })
 
   it('should require id field', () => {
@@ -63,9 +61,7 @@ describe('updateUserSchema', () => {
 
     const result = updateUserSchema.safeParse(validInput)
     expect(result.success).toBe(true)
-    if (result.success) {
-      expect(result.data).toEqual(validInput)
-    }
+    expect(result.data).toEqual(validInput)
   })
 
   it('should allow empty update', () => {
@@ -82,8 +78,6 @@ describe('updateUserSchema', () => {
 
     const result = updateUserSchema.safeParse(partialInput)
     expect(result.success).toBe(true)
-    if (result.success) {
-      expect(result.data.groomFirstName).toBe('Updated Name')
-    }
+    expect(result.data).toHaveProperty('groomFirstName', 'Updated Name')
   })
 })

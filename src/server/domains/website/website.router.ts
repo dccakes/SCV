@@ -6,17 +6,16 @@
  */
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
-
+import { websiteService } from '~/server/domains/website'
 import {
   createWebsiteSchema,
-  updateWebsiteSchema,
-  updateRsvpEnabledSchema,
-  updateCoverPhotoSchema,
-  getBySubUrlSchema,
   fetchWeddingDataSchema,
+  getBySubUrlSchema,
   submitRsvpSchema,
-} from './website.validator'
-import { websiteService } from './index'
+  updateCoverPhotoSchema,
+  updateRsvpEnabledSchema,
+  updateWebsiteSchema,
+} from '~/server/domains/website/website.validator'
 
 export const websiteRouter = createTRPCRouter({
   /**

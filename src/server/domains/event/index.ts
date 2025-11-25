@@ -4,10 +4,9 @@
  * Exports all event domain components for use throughout the application.
  */
 
+import { EventRepository } from '~/server/domains/event/event.repository'
+import { EventService } from '~/server/domains/event/event.service'
 import { db } from '~/server/infrastructure/database'
-
-import { EventRepository } from './event.repository'
-import { EventService } from './event.service'
 
 // Create singleton instances
 const eventRepository = new EventRepository(db)
@@ -15,31 +14,31 @@ export const eventService = new EventService(eventRepository, db)
 
 // Export types
 export type {
+  CreateEventInput,
+  DeleteEventInput,
   Event,
   EventWithQuestions,
   EventWithStats,
-  CreateEventInput,
-  UpdateEventInput,
   UpdateCollectRsvpInput,
-  DeleteEventInput,
-} from './event.types'
+  UpdateEventInput,
+} from '~/server/domains/event/event.types'
 
 // Export validators
 export {
   createEventSchema,
-  updateEventSchema,
-  updateCollectRsvpSchema,
-  deleteEventSchema,
-  eventIdSchema,
   type CreateEventSchemaInput,
-  type UpdateEventSchemaInput,
-  type UpdateCollectRsvpSchemaInput,
+  deleteEventSchema,
   type DeleteEventSchemaInput,
-} from './event.validator'
+  eventIdSchema,
+  updateCollectRsvpSchema,
+  type UpdateCollectRsvpSchemaInput,
+  updateEventSchema,
+  type UpdateEventSchemaInput,
+} from '~/server/domains/event/event.validator'
 
 // Export classes for testing/DI
-export { EventRepository } from './event.repository'
-export { EventService } from './event.service'
+export { EventRepository } from '~/server/domains/event/event.repository'
+export { EventService } from '~/server/domains/event/event.service'
 
 // Export router
-export { eventRouter } from './event.router'
+export { eventRouter } from '~/server/domains/event/event.router'

@@ -7,7 +7,7 @@
 
 import { type PrismaClient } from '@prisma/client'
 
-import { type Event, type EventWithQuestions } from './event.types'
+import { type Event, type EventWithQuestions } from '~/server/domains/event/event.types'
 
 export class EventRepository {
   constructor(private db: PrismaClient) {}

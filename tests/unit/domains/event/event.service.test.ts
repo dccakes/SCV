@@ -2,10 +2,11 @@
  * Tests for Event Domain Service
  */
 
+/* eslint-disable @typescript-eslint/unbound-method */
 import { TRPCError } from '@trpc/server'
 
-import { EventService } from '~/server/domains/event/event.service'
 import { type EventRepository } from '~/server/domains/event/event.repository'
+import { EventService } from '~/server/domains/event/event.service'
 import { type Event } from '~/server/domains/event/event.types'
 
 // Mock event data
@@ -151,26 +152,18 @@ describe('EventService', () => {
       mockRepository.findById.mockResolvedValue(null)
 
       await expect(eventService.getById('event-123', 'user-123')).rejects.toThrow(TRPCError)
-
-      try {
-        await eventService.getById('event-123', 'user-123')
-      } catch (error) {
-        expect(error).toBeInstanceOf(TRPCError)
-        expect((error as TRPCError).code).toBe('NOT_FOUND')
-      }
+      await expect(eventService.getById('event-123', 'user-123')).rejects.toMatchObject({
+        code: 'NOT_FOUND',
+      })
     })
 
     it('should throw FORBIDDEN when user does not own event', async () => {
       mockRepository.findById.mockResolvedValue(mockEvent)
 
       await expect(eventService.getById('event-123', 'other-user')).rejects.toThrow(TRPCError)
-
-      try {
-        await eventService.getById('event-123', 'other-user')
-      } catch (error) {
-        expect(error).toBeInstanceOf(TRPCError)
-        expect((error as TRPCError).code).toBe('FORBIDDEN')
-      }
+      await expect(eventService.getById('event-123', 'other-user')).rejects.toMatchObject({
+        code: 'FORBIDDEN',
+      })
     })
   })
 
@@ -197,16 +190,12 @@ describe('EventService', () => {
           eventName: 'Test',
         })
       ).rejects.toThrow(TRPCError)
-
-      try {
-        await eventService.updateEvent('user-123', {
+      await expect(
+        eventService.updateEvent('user-123', {
           eventId: 'event-123',
           eventName: 'Test',
         })
-      } catch (error) {
-        expect(error).toBeInstanceOf(TRPCError)
-        expect((error as TRPCError).code).toBe('FORBIDDEN')
-      }
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
     })
   })
 
@@ -237,13 +226,9 @@ describe('EventService', () => {
       mockRepository.belongsToUser.mockResolvedValue(false)
 
       await expect(eventService.deleteEvent('event-123', 'other-user')).rejects.toThrow(TRPCError)
-
-      try {
-        await eventService.deleteEvent('event-123', 'other-user')
-      } catch (error) {
-        expect(error).toBeInstanceOf(TRPCError)
-        expect((error as TRPCError).code).toBe('FORBIDDEN')
-      }
+      await expect(eventService.deleteEvent('event-123', 'other-user')).rejects.toMatchObject({
+        code: 'FORBIDDEN',
+      })
     })
   })
 })

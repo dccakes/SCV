@@ -9,20 +9,19 @@
  * be moved to an Application Service in the future.
  */
 
+import { type Prisma,type PrismaClient } from '@prisma/client'
 import { TRPCClientError } from '@trpc/client'
 import { TRPCError } from '@trpc/server'
-import { type PrismaClient, type Prisma } from '@prisma/client'
 
 import { calculateDaysRemaining, formatDateNumber } from '~/app/utils/helpers'
-
+import { type WebsiteRepository } from '~/server/domains/website/website.repository'
 import {
-  type Website,
   type CreateWebsiteInput,
   type UpdateWebsiteInput,
+  type Website,
   type WeddingPageData,
-} from './website.types'
-import { type WebsiteRepository } from './website.repository'
-import { type RsvpResponse, type AnswerToQuestion, type SubmitRsvpSchemaInput } from './website.validator'
+} from '~/server/domains/website/website.types'
+import { type AnswerToQuestion, type RsvpResponse, type SubmitRsvpSchemaInput } from '~/server/domains/website/website.validator'
 
 export class WebsiteService {
   constructor(

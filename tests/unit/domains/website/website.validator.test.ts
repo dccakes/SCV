@@ -4,12 +4,12 @@
 
 import {
   createWebsiteSchema,
-  updateWebsiteSchema,
-  updateRsvpEnabledSchema,
-  updateCoverPhotoSchema,
-  getBySubUrlSchema,
   fetchWeddingDataSchema,
+  getBySubUrlSchema,
   submitRsvpSchema,
+  updateCoverPhotoSchema,
+  updateRsvpEnabledSchema,
+  updateWebsiteSchema,
 } from '~/server/domains/website/website.validator'
 
 describe('createWebsiteSchema', () => {
@@ -25,9 +25,7 @@ describe('createWebsiteSchema', () => {
 
     const result = createWebsiteSchema.safeParse(validInput)
     expect(result.success).toBe(true)
-    if (result.success) {
-      expect(result.data).toEqual(validInput)
-    }
+    expect(result.data).toEqual(validInput)
   })
 
   it('should require all fields', () => {

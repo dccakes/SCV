@@ -7,7 +7,7 @@
 
 import { type PrismaClient } from '@prisma/client'
 
-import { type CreateUserInput, type UpdateUserInput, type User } from './user.types'
+import { type CreateUserInput, type UpdateUserInput, type User } from '~/server/domains/user/user.types'
 
 export class UserRepository {
   constructor(private db: PrismaClient) {}

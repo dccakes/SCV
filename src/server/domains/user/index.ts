@@ -4,30 +4,29 @@
  * Exports all user domain components for use throughout the application.
  */
 
+import { UserRepository } from '~/server/domains/user/user.repository'
+import { UserService } from '~/server/domains/user/user.service'
 import { db } from '~/server/infrastructure/database'
-
-import { UserRepository } from './user.repository'
-import { UserService } from './user.service'
 
 // Create singleton instances
 const userRepository = new UserRepository(db)
 export const userService = new UserService(userRepository)
 
 // Export types
-export type { User, CreateUserInput, UpdateUserInput, UserWithWebsite } from './user.types'
+export type { CreateUserInput, UpdateUserInput, User, UserWithWebsite } from '~/server/domains/user/user.types'
 
 // Export validators
 export {
   createUserSchema,
-  updateUserSchema,
-  userIdSchema,
   type CreateUserSchemaInput,
+  updateUserSchema,
   type UpdateUserSchemaInput,
-} from './user.validator'
+  userIdSchema,
+} from '~/server/domains/user/user.validator'
 
 // Export classes for testing/DI
-export { UserRepository } from './user.repository'
-export { UserService } from './user.service'
+export { UserRepository } from '~/server/domains/user/user.repository'
+export { UserService } from '~/server/domains/user/user.service'
 
 // Export router
-export { userRouter } from './user.router'
+export { userRouter } from '~/server/domains/user/user.router'

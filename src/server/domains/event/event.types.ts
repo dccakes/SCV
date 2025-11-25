@@ -5,7 +5,7 @@
  * Events represent wedding ceremonies, receptions, rehearsal dinners, etc.
  */
 
-import { type Question, type Option } from '~/app/utils/shared-types'
+import { type Question } from '~/app/utils/shared-types'
 
 /**
  * Core Event entity type
@@ -29,12 +29,7 @@ export type Event = {
  * Event with questions included
  */
 export type EventWithQuestions = Event & {
-  questions: Array<
-    Question & {
-      options?: Option[]
-      _count?: { answers: number }
-    }
-  >
+  questions: Question[]
 }
 
 /**

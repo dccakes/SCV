@@ -4,4 +4,4 @@
  * Technical concerns including database, storage, and email services.
  */
 
-export { db } from './database'
+export { db } from '~/server/infrastructure/database'

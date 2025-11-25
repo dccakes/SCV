@@ -5,10 +5,10 @@
  */
 
 export {
-  type PaginationParams,
-  type PaginatedResponse,
-  type ServiceResult,
   type BaseEntity,
+  type PaginatedResponse,
+  type PaginationParams,
+  type ServiceResult,
   type SortDirection,
   type SortParams,
-} from './shared'
+} from '~/lib/types/shared'

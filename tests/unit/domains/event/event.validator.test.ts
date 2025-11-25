@@ -4,9 +4,9 @@
 
 import {
   createEventSchema,
-  updateEventSchema,
-  updateCollectRsvpSchema,
   deleteEventSchema,
+  updateCollectRsvpSchema,
+  updateEventSchema,
 } from '~/server/domains/event/event.validator'
 
 describe('createEventSchema', () => {
@@ -23,9 +23,7 @@ describe('createEventSchema', () => {
 
     const result = createEventSchema.safeParse(validInput)
     expect(result.success).toBe(true)
-    if (result.success) {
-      expect(result.data).toEqual(validInput)
-    }
+    expect(result.data).toEqual(validInput)
   })
 
   it('should require eventName', () => {
@@ -82,9 +80,7 @@ describe('updateEventSchema', () => {
 
     const result = updateEventSchema.safeParse(validInput)
     expect(result.success).toBe(true)
-    if (result.success) {
-      expect(result.data).toEqual(validInput)
-    }
+    expect(result.data).toEqual(validInput)
   })
 
   it('should require eventId', () => {

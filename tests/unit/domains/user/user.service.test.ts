@@ -2,10 +2,11 @@
  * Tests for User Domain Service
  */
 
+/* eslint-disable @typescript-eslint/unbound-method */
 import { TRPCError } from '@trpc/server'
 
-import { UserService } from '~/server/domains/user/user.service'
 import { type UserRepository } from '~/server/domains/user/user.repository'
+import { UserService } from '~/server/domains/user/user.service'
 import { type User } from '~/server/domains/user/user.types'
 
 // Mock user data
@@ -78,26 +79,18 @@ describe('UserService', () => {
 
     it('should throw FORBIDDEN when user tries to access another user', async () => {
       await expect(userService.getById('user-123', 'other-user')).rejects.toThrow(TRPCError)
-
-      try {
-        await userService.getById('user-123', 'other-user')
-      } catch (error) {
-        expect(error).toBeInstanceOf(TRPCError)
-        expect((error as TRPCError).code).toBe('FORBIDDEN')
-      }
+      await expect(userService.getById('user-123', 'other-user')).rejects.toMatchObject({
+        code: 'FORBIDDEN',
+      })
     })
 
     it('should throw NOT_FOUND when user does not exist', async () => {
       mockRepository.findById.mockResolvedValue(null)
 
       await expect(userService.getById('user-123', 'user-123')).rejects.toThrow(TRPCError)
-
-      try {
-        await userService.getById('user-123', 'user-123')
-      } catch (error) {
-        expect(error).toBeInstanceOf(TRPCError)
-        expect((error as TRPCError).code).toBe('NOT_FOUND')
-      }
+      await expect(userService.getById('user-123', 'user-123')).rejects.toMatchObject({
+        code: 'NOT_FOUND',
+      })
     })
   })
 
@@ -119,13 +112,9 @@ describe('UserService', () => {
       await expect(
         userService.updateProfile('user-123', 'other-user', { name: 'Test' })
       ).rejects.toThrow(TRPCError)
-
-      try {
-        await userService.updateProfile('user-123', 'other-user', { name: 'Test' })
-      } catch (error) {
-        expect(error).toBeInstanceOf(TRPCError)
-        expect((error as TRPCError).code).toBe('FORBIDDEN')
-      }
+      await expect(
+        userService.updateProfile('user-123', 'other-user', { name: 'Test' })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
     })
 
     it('should throw NOT_FOUND when user does not exist', async () => {
@@ -134,13 +123,9 @@ describe('UserService', () => {
       await expect(
         userService.updateProfile('user-123', 'user-123', { name: 'Test' })
       ).rejects.toThrow(TRPCError)
-
-      try {
-        await userService.updateProfile('user-123', 'user-123', { name: 'Test' })
-      } catch (error) {
-        expect(error).toBeInstanceOf(TRPCError)
-        expect((error as TRPCError).code).toBe('NOT_FOUND')
-      }
+      await expect(
+        userService.updateProfile('user-123', 'user-123', { name: 'Test' })
+      ).rejects.toMatchObject({ code: 'NOT_FOUND' })
     })
   })
 

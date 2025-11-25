@@ -6,14 +6,13 @@
  */
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
-
+import { eventService } from '~/server/domains/event'
 import {
   createEventSchema,
-  updateEventSchema,
-  updateCollectRsvpSchema,
   deleteEventSchema,
-} from './event.validator'
-import { eventService } from './index'
+  updateCollectRsvpSchema,
+  updateEventSchema,
+} from '~/server/domains/event/event.validator'
 
 export const eventRouter = createTRPCRouter({
   /**
