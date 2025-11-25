@@ -49,9 +49,7 @@ describe('guestPartyInputSchema', () => {
 
     const result = guestPartyInputSchema.safeParse(invalidInput)
     expect(result.success).toBe(false)
-    if (!result.success) {
-      expect(result.error.issues[0]?.path).toContain('firstName')
-    }
+    expect(result.error?.issues[0]?.path).toContain('firstName')
   })
 
   it('should require non-empty lastName', () => {
@@ -63,9 +61,7 @@ describe('guestPartyInputSchema', () => {
 
     const result = guestPartyInputSchema.safeParse(invalidInput)
     expect(result.success).toBe(false)
-    if (!result.success) {
-      expect(result.error.issues[0]?.path).toContain('lastName')
-    }
+    expect(result.error?.issues[0]?.path).toContain('lastName')
   })
 
   it('should accept empty invites object', () => {
@@ -163,9 +159,7 @@ describe('createHouseholdWithGuestsSchema', () => {
 
     const result = createHouseholdWithGuestsSchema.safeParse(invalidInput)
     expect(result.success).toBe(false)
-    if (!result.success) {
-      expect(result.error.issues[0]?.message).toBe('At least one guest is required')
-    }
+    expect(result.error?.issues[0]?.message).toBe('At least one guest is required')
   })
 
   it('should allow optional address fields', () => {
@@ -325,9 +319,7 @@ describe('updateHouseholdWithGuestsSchema', () => {
 
     const result = updateHouseholdWithGuestsSchema.safeParse(invalidInput)
     expect(result.success).toBe(false)
-    if (!result.success) {
-      expect(result.error.issues[0]?.message).toBe('At least one guest is required')
-    }
+    expect(result.error?.issues[0]?.message).toBe('At least one guest is required')
   })
 })
 
