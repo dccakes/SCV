@@ -75,7 +75,7 @@ export class InvitationService {
     guestId: number,
     eventIds: string[],
     userId: string,
-    defaultRsvp: string = 'Not Invited'
+    defaultRsvp = 'Not Invited'
   ): Promise<{ count: number }> {
     return this.invitationRepository.createMany(
       eventIds.map((eventId) => ({
@@ -94,7 +94,7 @@ export class InvitationService {
     guests: Array<{ id: number }>,
     events: Array<{ id: string }>,
     userId: string,
-    defaultRsvp: string = 'Not Invited'
+    defaultRsvp = 'Not Invited'
   ): Promise<{ count: number }> {
     const invitations = guests.flatMap((guest) =>
       events.map((event) => ({
