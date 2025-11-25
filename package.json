@@ -14,7 +14,7 @@
     "dev:turbo": "NODE_OPTIONS='--trace-uncaught' next dev --turbopack",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test:unit": "",
+    "test:unit": "jest",
     "prettier": "prettier --check \"**/*.{js,jsx,ts,tsx}\"",
     "prettier:fix": "prettier --write \"**/*.{js,jsx,ts,tsx}\"",
     "postinstall": "prisma generate",
