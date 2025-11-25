@@ -2,67 +2,61 @@
  * Tests for Event Domain Service
  */
 
-/* eslint-disable @typescript-eslint/unbound-method */
 import { TRPCError } from '@trpc/server'
 
-import { type EventRepository } from '~/server/domains/event/event.repository'
+// Must mock before importing the service
+jest.mock('~/server/domains/event/event.repository')
+jest.mock('~/server/infrastructure/database/client')
+
+// @ts-expect-error - Importing mock functions from mocked module
+import {
+  EventRepository,
+  mockBelongsToUser,
+  mockCreate,
+  mockDelete,
+  mockEvent,
+  mockFindById,
+  mockFindByUserId,
+  mockGuests,
+  mockUpdate,
+  mockUpdateCollectRsvp,
+  resetMocks as resetEventMocks,
+} from '~/server/domains/event/event.repository'
 import { EventService } from '~/server/domains/event/event.service'
-import { type Event } from '~/server/domains/event/event.types'
+// @ts-expect-error - Importing mock functions from mocked module
+import {
+  db,
+  mockGuestFindMany,
+  mockInvitationCreate,
+  resetMocks as resetDbMocks,
+} from '~/server/infrastructure/database/client'
 
-// Mock event data
-const mockEvent: Event = {
-  id: 'event-123',
-  name: 'Wedding Day',
-  date: new Date('2024-06-15'),
-  startTime: '14:00',
-  endTime: '16:00',
-  venue: 'Beautiful Garden',
-  attire: 'Formal',
-  description: 'Our special day!',
-  userId: 'user-123',
-  collectRsvp: true,
-  createdAt: new Date('2024-01-01'),
-  updatedAt: new Date('2024-01-01'),
-}
-
-// Mock repository
-const createMockRepository = (): jest.Mocked<EventRepository> => ({
-  findById: jest.fn(),
-  findByIdWithQuestions: jest.fn(),
-  findByUserId: jest.fn(),
-  findByUserIdWithQuestions: jest.fn(),
-  create: jest.fn(),
-  update: jest.fn(),
-  updateCollectRsvp: jest.fn(),
-  delete: jest.fn(),
-  exists: jest.fn(),
-  belongsToUser: jest.fn(),
-})
-
-// Mock Prisma client
-const createMockDb = () => ({
-  guest: {
-    findMany: jest.fn().mockResolvedValue([]),
-  },
-  invitation: {
-    create: jest.fn(),
-  },
-})
+// Create typed aliases for mocked functions
+const mockCreateFn = mockCreate as jest.Mock
+const mockFindByIdFn = mockFindById as jest.Mock
+const mockFindByUserIdFn = mockFindByUserId as jest.Mock
+const mockUpdateFn = mockUpdate as jest.Mock
+const mockUpdateCollectRsvpFn = mockUpdateCollectRsvp as jest.Mock
+const mockDeleteFn = mockDelete as jest.Mock
+const mockBelongsToUserFn = mockBelongsToUser as jest.Mock
+const mockGuestFindManyFn = mockGuestFindMany as jest.Mock
+const mockInvitationCreateFn = mockInvitationCreate as jest.Mock
 
 describe('EventService', () => {
   let eventService: EventService
-  let mockRepository: jest.Mocked<EventRepository>
-  let mockDb: ReturnType<typeof createMockDb>
 
   beforeEach(() => {
-    mockRepository = createMockRepository()
-    mockDb = createMockDb()
-    eventService = new EventService(mockRepository, mockDb as any)
+    resetEventMocks()
+    resetDbMocks()
+    const mockRepository = new EventRepository({})
+    // Set default mock returns
+    mockGuestFindManyFn.mockResolvedValue([])
+    eventService = new EventService(mockRepository, db)
   })
 
   describe('createEvent', () => {
     it('should create an event successfully', async () => {
-      mockRepository.create.mockResolvedValue(mockEvent)
+      mockCreateFn.mockResolvedValue(mockEvent)
 
       const result = await eventService.createEvent('user-123', {
         eventName: 'Wedding Day',
@@ -75,7 +69,7 @@ describe('EventService', () => {
       })
 
       expect(result).toEqual(mockEvent)
-      expect(mockRepository.create).toHaveBeenCalledWith({
+      expect(mockCreateFn).toHaveBeenCalledWith({
         name: 'Wedding Day',
         userId: 'user-123',
         date: expect.any(Date),
@@ -88,27 +82,24 @@ describe('EventService', () => {
     })
 
     it('should create invitations for existing guests', async () => {
-      mockRepository.create.mockResolvedValue(mockEvent)
-      mockDb.guest.findMany.mockResolvedValue([
-        { id: 1, firstName: 'Guest', lastName: 'One', userId: 'user-123' },
-        { id: 2, firstName: 'Guest', lastName: 'Two', userId: 'user-123' },
-      ])
+      mockCreateFn.mockResolvedValue(mockEvent)
+      mockGuestFindManyFn.mockResolvedValue(mockGuests)
 
       await eventService.createEvent('user-123', {
         eventName: 'Wedding Day',
       })
 
-      expect(mockDb.invitation.create).toHaveBeenCalledTimes(2)
+      expect(mockInvitationCreateFn).toHaveBeenCalledTimes(2)
     })
 
     it('should handle event with only name', async () => {
-      mockRepository.create.mockResolvedValue({ ...mockEvent, date: null })
+      mockCreateFn.mockResolvedValue({ ...mockEvent, date: null })
 
       await eventService.createEvent('user-123', {
         eventName: 'Simple Event',
       })
 
-      expect(mockRepository.create).toHaveBeenCalledWith({
+      expect(mockCreateFn).toHaveBeenCalledWith({
         name: 'Simple Event',
         userId: 'user-123',
         date: undefined,
@@ -123,25 +114,25 @@ describe('EventService', () => {
 
   describe('getUserEvents', () => {
     it('should return events for valid userId', async () => {
-      mockRepository.findByUserId.mockResolvedValue([mockEvent])
+      mockFindByUserIdFn.mockResolvedValue([mockEvent])
 
       const result = await eventService.getUserEvents('user-123')
 
       expect(result).toEqual([mockEvent])
-      expect(mockRepository.findByUserId).toHaveBeenCalledWith('user-123')
+      expect(mockFindByUserIdFn).toHaveBeenCalledWith('user-123')
     })
 
     it('should return undefined when userId is null', async () => {
       const result = await eventService.getUserEvents(null)
 
       expect(result).toBeUndefined()
-      expect(mockRepository.findByUserId).not.toHaveBeenCalled()
+      expect(mockFindByUserIdFn).not.toHaveBeenCalled()
     })
   })
 
   describe('getById', () => {
     it('should return event when user owns it', async () => {
-      mockRepository.findById.mockResolvedValue(mockEvent)
+      mockFindByIdFn.mockResolvedValue(mockEvent)
 
       const result = await eventService.getById('event-123', 'user-123')
 
@@ -149,7 +140,7 @@ describe('EventService', () => {
     })
 
     it('should throw NOT_FOUND when event does not exist', async () => {
-      mockRepository.findById.mockResolvedValue(null)
+      mockFindByIdFn.mockResolvedValue(null)
 
       await expect(eventService.getById('event-123', 'user-123')).rejects.toThrow(TRPCError)
       await expect(eventService.getById('event-123', 'user-123')).rejects.toMatchObject({
@@ -158,7 +149,7 @@ describe('EventService', () => {
     })
 
     it('should throw FORBIDDEN when user does not own event', async () => {
-      mockRepository.findById.mockResolvedValue(mockEvent)
+      mockFindByIdFn.mockResolvedValue(mockEvent)
 
       await expect(eventService.getById('event-123', 'other-user')).rejects.toThrow(TRPCError)
       await expect(eventService.getById('event-123', 'other-user')).rejects.toMatchObject({
@@ -170,8 +161,8 @@ describe('EventService', () => {
   describe('updateEvent', () => {
     it('should update event when user owns it', async () => {
       const updatedEvent = { ...mockEvent, name: 'Updated Event' }
-      mockRepository.belongsToUser.mockResolvedValue(true)
-      mockRepository.update.mockResolvedValue(updatedEvent)
+      mockBelongsToUserFn.mockResolvedValue(true)
+      mockUpdateFn.mockResolvedValue(updatedEvent)
 
       const result = await eventService.updateEvent('user-123', {
         eventId: 'event-123',
@@ -182,7 +173,7 @@ describe('EventService', () => {
     })
 
     it('should throw FORBIDDEN when user does not own event', async () => {
-      mockRepository.belongsToUser.mockResolvedValue(false)
+      mockBelongsToUserFn.mockResolvedValue(false)
 
       await expect(
         eventService.updateEvent('user-123', {
@@ -202,28 +193,28 @@ describe('EventService', () => {
   describe('updateCollectRsvp', () => {
     it('should update collectRsvp status', async () => {
       const updatedEvent = { ...mockEvent, collectRsvp: false }
-      mockRepository.updateCollectRsvp.mockResolvedValue(updatedEvent)
+      mockUpdateCollectRsvpFn.mockResolvedValue(updatedEvent)
 
       const result = await eventService.updateCollectRsvp('event-123', false)
 
       expect(result.collectRsvp).toBe(false)
-      expect(mockRepository.updateCollectRsvp).toHaveBeenCalledWith('event-123', false)
+      expect(mockUpdateCollectRsvpFn).toHaveBeenCalledWith('event-123', false)
     })
   })
 
   describe('deleteEvent', () => {
     it('should delete event when user owns it', async () => {
-      mockRepository.belongsToUser.mockResolvedValue(true)
-      mockRepository.delete.mockResolvedValue(mockEvent)
+      mockBelongsToUserFn.mockResolvedValue(true)
+      mockDeleteFn.mockResolvedValue(mockEvent)
 
       const result = await eventService.deleteEvent('event-123', 'user-123')
 
       expect(result).toBe('event-123')
-      expect(mockRepository.delete).toHaveBeenCalledWith('event-123')
+      expect(mockDeleteFn).toHaveBeenCalledWith('event-123')
     })
 
     it('should throw FORBIDDEN when user does not own event', async () => {
-      mockRepository.belongsToUser.mockResolvedValue(false)
+      mockBelongsToUserFn.mockResolvedValue(false)
 
       await expect(eventService.deleteEvent('event-123', 'other-user')).rejects.toThrow(TRPCError)
       await expect(eventService.deleteEvent('event-123', 'other-user')).rejects.toMatchObject({

@@ -2,44 +2,26 @@
  * Tests for User Domain Service
  */
 
-/* eslint-disable @typescript-eslint/unbound-method */
 import { TRPCError } from '@trpc/server'
 
-import { type UserRepository } from '~/server/domains/user/user.repository'
+// Must mock before importing the service
+jest.mock('~/server/domains/user/user.repository')
+
+// @ts-expect-error - Importing mock functions from mocked module
+import { mockExists, mockFindById, mockUpdate, mockUser, resetMocks, UserRepository } from '~/server/domains/user/user.repository'
 import { UserService } from '~/server/domains/user/user.service'
-import { type User } from '~/server/domains/user/user.types'
 
-// Mock user data
-const mockUser: User = {
-  id: 'user-123',
-  name: 'John Doe',
-  email: 'john@example.com',
-  emailVerified: true,
-  image: null,
-  createdAt: new Date('2024-01-01'),
-  updatedAt: new Date('2024-01-01'),
-  websiteUrl: 'https://example.com/wedding',
-  groomFirstName: 'John',
-  groomLastName: 'Doe',
-  brideFirstName: 'Jane',
-  brideLastName: 'Doe',
-}
-
-// Mock repository
-const createMockRepository = (): jest.Mocked<UserRepository> => ({
-  findById: jest.fn(),
-  findByEmail: jest.fn(),
-  create: jest.fn(),
-  update: jest.fn(),
-  exists: jest.fn(),
-})
+// Create typed aliases for mocked functions
+const mockFindByIdFn = mockFindById as jest.Mock
+const mockExistsFn = mockExists as jest.Mock
+const mockUpdateFn = mockUpdate as jest.Mock
 
 describe('UserService', () => {
   let userService: UserService
-  let mockRepository: jest.Mocked<UserRepository>
 
   beforeEach(() => {
-    mockRepository = createMockRepository()
+    resetMocks()
+    const mockRepository = new UserRepository({})
     userService = new UserService(mockRepository)
   })
 
@@ -47,20 +29,20 @@ describe('UserService', () => {
     it('should return null when userId is null', async () => {
       const result = await userService.getCurrentUser(null)
       expect(result).toBeNull()
-      expect(mockRepository.findById).not.toHaveBeenCalled()
+      expect(mockFindByIdFn).not.toHaveBeenCalled()
     })
 
     it('should return user when userId is valid', async () => {
-      mockRepository.findById.mockResolvedValue(mockUser)
+      mockFindByIdFn.mockResolvedValue(mockUser)
 
       const result = await userService.getCurrentUser('user-123')
 
       expect(result).toEqual(mockUser)
-      expect(mockRepository.findById).toHaveBeenCalledWith('user-123')
+      expect(mockFindByIdFn).toHaveBeenCalledWith('user-123')
     })
 
     it('should return null when user not found', async () => {
-      mockRepository.findById.mockResolvedValue(null)
+      mockFindByIdFn.mockResolvedValue(null)
 
       const result = await userService.getCurrentUser('nonexistent')
 
@@ -70,7 +52,7 @@ describe('UserService', () => {
 
   describe('getById', () => {
     it('should return user when user accesses their own data', async () => {
-      mockRepository.findById.mockResolvedValue(mockUser)
+      mockFindByIdFn.mockResolvedValue(mockUser)
 
       const result = await userService.getById('user-123', 'user-123')
 
@@ -85,7 +67,7 @@ describe('UserService', () => {
     })
 
     it('should throw NOT_FOUND when user does not exist', async () => {
-      mockRepository.findById.mockResolvedValue(null)
+      mockFindByIdFn.mockResolvedValue(null)
 
       await expect(userService.getById('user-123', 'user-123')).rejects.toThrow(TRPCError)
       await expect(userService.getById('user-123', 'user-123')).rejects.toMatchObject({
@@ -97,15 +79,15 @@ describe('UserService', () => {
   describe('updateProfile', () => {
     it('should update user profile when user updates their own profile', async () => {
       const updatedUser = { ...mockUser, groomFirstName: 'Johnny' }
-      mockRepository.exists.mockResolvedValue(true)
-      mockRepository.update.mockResolvedValue(updatedUser)
+      mockExistsFn.mockResolvedValue(true)
+      mockUpdateFn.mockResolvedValue(updatedUser)
 
       const result = await userService.updateProfile('user-123', 'user-123', {
         groomFirstName: 'Johnny',
       })
 
       expect(result.groomFirstName).toBe('Johnny')
-      expect(mockRepository.update).toHaveBeenCalledWith('user-123', { groomFirstName: 'Johnny' })
+      expect(mockUpdateFn).toHaveBeenCalledWith('user-123', { groomFirstName: 'Johnny' })
     })
 
     it('should throw FORBIDDEN when user tries to update another user', async () => {
@@ -118,7 +100,7 @@ describe('UserService', () => {
     })
 
     it('should throw NOT_FOUND when user does not exist', async () => {
-      mockRepository.exists.mockResolvedValue(false)
+      mockExistsFn.mockResolvedValue(false)
 
       await expect(
         userService.updateProfile('user-123', 'user-123', { name: 'Test' })
@@ -131,7 +113,7 @@ describe('UserService', () => {
 
   describe('exists', () => {
     it('should return true when user exists', async () => {
-      mockRepository.exists.mockResolvedValue(true)
+      mockExistsFn.mockResolvedValue(true)
 
       const result = await userService.exists('user-123')
 
@@ -139,7 +121,7 @@ describe('UserService', () => {
     })
 
     it('should return false when user does not exist', async () => {
-      mockRepository.exists.mockResolvedValue(false)
+      mockExistsFn.mockResolvedValue(false)
 
       const result = await userService.exists('nonexistent')
 
