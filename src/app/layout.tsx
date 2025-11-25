@@ -1,6 +1,6 @@
 import '~/styles/globals.css'
 
-import { Inter } from "next/font/google";
+// import { Inter } from "next/font/google";
 import { type Viewport } from 'next/types'
 
 import { EventFormProvider } from '~/app/_components/contexts/event-form-context'
@@ -9,10 +9,10 @@ import { Providers } from '~/app/providers'
 import { Toaster } from '~/components/ui/toaster'
 import { TRPCReactProvider } from '~/trpc/react'
 
-const inter = Inter({
-   subsets: ["latin"],
-   variable: "--font-sans",
- });
+// const inter = Inter({
+//    subsets: ["latin"],
+//    variable: "--font-sans",
+//  });
 
 export const viewport: Viewport = {
   initialScale: 1,
