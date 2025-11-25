@@ -1,13 +1,14 @@
-import "chart.js/auto";
-import Link from "next/link";
-import { useCallback, useMemo } from "react";
-import { Doughnut } from "react-chartjs-2";
-import { MdPeopleOutline } from "react-icons/md";
-import { generateRandomColor } from "~/app/utils/helpers";
-import { sharedStyles } from "~/app/utils/shared-styles";
-import { IoMdDownload } from "react-icons/io";
+import 'chart.js/auto'
 
-import { type Question, type Event } from "../../../utils/shared-types";
+import Link from 'next/link'
+import { useCallback, useMemo } from 'react'
+import { Doughnut } from 'react-chartjs-2'
+import { IoMdDownload } from 'react-icons/io'
+import { MdPeopleOutline } from 'react-icons/md'
+
+import { generateRandomColor } from '~/app/utils/helpers'
+import { sharedStyles } from '~/app/utils/shared-styles'
+import { type Event, type Question } from '~/app/utils/shared-types'
 
 const chartOptions = {
   maintainAspectRatio: true,
@@ -18,46 +19,39 @@ const chartOptions = {
       display: false,
     },
   },
-};
+}
 
 type GuestResponses = {
-  attending: number;
-  declined: number;
-  invited: number;
-  notInvited: number;
-};
+  attending: number
+  declined: number
+  invited: number
+  notInvited: number
+}
 
 interface EventWithGuestResponses extends Event {
-  guestResponses: GuestResponses;
+  guestResponses: GuestResponses
 }
 
 type RsvpContentProps = {
-  events: EventWithGuestResponses[] | undefined | null;
-  totalGuests: number;
-  generalQuestions: Question[];
-};
+  events: EventWithGuestResponses[] | undefined | null
+  totalGuests: number
+  generalQuestions: Question[]
+}
 
-export default function RsvpContent({
-  events,
-  totalGuests,
-  generalQuestions,
-}: RsvpContentProps) {
+export default function RsvpContent({ events, totalGuests, generalQuestions }: RsvpContentProps) {
   return (
     <div className="border-t">
       {events?.map((event) => {
-        const numInvitedGuests = totalGuests - event.guestResponses.notInvited;
+        const numInvitedGuests = totalGuests - event.guestResponses.notInvited
         if (!event.collectRsvp)
           return (
-            <div
-              key={event.id}
-              className="flex items-center gap-4 border-b p-10"
-            >
+            <div key={event.id} className="flex items-center gap-4 border-b p-10">
               <h3 className="text-xl font-semibold">{event.name}</h3>
               <span className="bg-gray-200 px-2 py-1 text-xs font-bold text-gray-600">
                 Not Collecting RSVPs
               </span>
             </div>
-          );
+          )
         return (
           <div key={event.id} className="border-b px-10 pb-20 pt-10">
             <div className="flex items-center gap-3 pb-5">
@@ -68,14 +62,11 @@ export default function RsvpContent({
               </div>
             </div>
             <div className="grid grid-cols-2 gap-x-7 gap-y-20">
-              <AttendanceChart
-                event={event}
-                numInvitedGuests={numInvitedGuests}
-              />
+              <AttendanceChart event={event} numInvitedGuests={numInvitedGuests} />
               <QuestionCards questions={event.questions} />
             </div>
           </div>
-        );
+        )
       })}
       <div className="p-10">
         <h3 className="pb-6 text-2xl font-semibold">General Questions</h3>
@@ -88,18 +79,18 @@ export default function RsvpContent({
         <button type="button">Download All Responses</button>
       </div>
     </div>
-  );
+  )
 }
 
 type AttendanceChartProps = {
-  event: EventWithGuestResponses;
-  numInvitedGuests: number;
-};
+  event: EventWithGuestResponses
+  numInvitedGuests: number
+}
 
 const AttendanceChart = ({ event, numInvitedGuests }: AttendanceChartProps) => {
   const getChartData = (guestResponses: GuestResponses | null) => {
     return {
-      labels: ["Accepted", "Declined", "No Response"],
+      labels: ['Accepted', 'Declined', 'No Response'],
       datasets: [
         {
           data: [
@@ -107,16 +98,12 @@ const AttendanceChart = ({ event, numInvitedGuests }: AttendanceChartProps) => {
             guestResponses?.declined ?? 0,
             guestResponses?.invited ?? 0,
           ],
-          backgroundColor: [
-            "rgb(74, 222, 128)",
-            "rgb(248, 113, 113)",
-            "rgb(229, 231, 235)",
-          ],
+          backgroundColor: ['rgb(74, 222, 128)', 'rgb(248, 113, 113)', 'rgb(229, 231, 235)'],
           hoverOffset: 2,
         },
       ],
-    };
-  };
+    }
+  }
 
   return (
     <div>
@@ -124,10 +111,7 @@ const AttendanceChart = ({ event, numInvitedGuests }: AttendanceChartProps) => {
         <h5 className="pb-6 text-lg font-semibold">Will you be attending?</h5>
         <div className="flex items-center justify-between gap-7">
           <div className="relative h-full w-40">
-            <Doughnut
-              data={getChartData(event.guestResponses)}
-              options={chartOptions}
-            />
+            <Doughnut data={getChartData(event.guestResponses)} options={chartOptions} />
             <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col justify-center text-center font-bold leading-tight">
               <span className="text-3xl">
                 {event.guestResponses.attending + event.guestResponses.declined}
@@ -143,40 +127,31 @@ const AttendanceChart = ({ event, numInvitedGuests }: AttendanceChartProps) => {
                 <span className={`h-2 w-2 rounded-full bg-green-400`} />
                 Accepted
               </div>
-              <div className="font-medium">
-                {event.guestResponses.attending}
-              </div>
+              <div className="font-medium">{event.guestResponses.attending}</div>
             </div>
             <div className="flex items-center justify-between border-b">
               <div className="flex items-center gap-3 py-3">
                 <span className={`h-2 w-2 rounded-full bg-red-400`} />
                 Declined
               </div>
-              <span className="font-medium">
-                {event.guestResponses.declined}
-              </span>
+              <span className="font-medium">{event.guestResponses.declined}</span>
             </div>
             <div className="flex items-center justify-between border-b">
               <div className="flex items-center gap-3 py-3">
                 <span className={`h-2 w-2 rounded-full bg-gray-200`} />
                 No Response
               </div>
-              <span className="font-medium">
-                {event.guestResponses.invited}
-              </span>
+              <span className="font-medium">{event.guestResponses.invited}</span>
             </div>
           </div>
         </div>
       </div>
-      <Link
-        href={`/guest-list?event=${event.id}`}
-        className="cursor-pointer text-blue-600"
-      >
+      <Link href={`/guest-list?event=${event.id}`} className="cursor-pointer text-blue-600">
         Manage Guest List
       </Link>
     </div>
-  );
-};
+  )
+}
 
 const QuestionCards = ({ questions }: { questions: Question[] }) => {
   return (
@@ -184,7 +159,7 @@ const QuestionCards = ({ questions }: { questions: Question[] }) => {
       {questions?.map((question) => {
         return (
           <div key={question.id}>
-            {question.type === "Text" ? (
+            {question.type === 'Text' ? (
               <TextQuestionCard question={question} />
             ) : (
               <OptionQuestionCard question={question} />
@@ -193,19 +168,16 @@ const QuestionCards = ({ questions }: { questions: Question[] }) => {
               Download Responses
             </Link>
           </div>
-        );
+        )
       })}
     </>
-  );
-};
+  )
+}
 
 const TextQuestionCard = ({ question }: { question: Question }) => {
-  if (!question) return <div>Failed to fetch this question.</div>;
-  if (
-    question._count?.answers === undefined ||
-    question.recentAnswer === undefined
-  )
-    return <div>Failed to get responses for this question.</div>;
+  if (!question) return <div>Failed to fetch this question.</div>
+  if (question._count?.answers === undefined || question.recentAnswer === undefined)
+    return <div>Failed to get responses for this question.</div>
   return (
     <div className="mb-4 flex h-full min-h-60 flex-col rounded-md border p-5">
       <h5 className="text-lg font-semibold">{question.text}</h5>
@@ -220,11 +192,9 @@ const TextQuestionCard = ({ question }: { question: Question }) => {
           {question._count.answers > 0 ? (
             <div className="flex h-full flex-col justify-between">
               <span className="font-light">Most Recent</span>
-              <span className="font-bold">
-                &quot;{question.recentAnswer?.response}&quot;
-              </span>
+              <span className="font-bold">&quot;{question.recentAnswer?.response}&quot;</span>
               <span className="font-light">
-                -{" "}
+                -{' '}
                 {`${question.recentAnswer?.guestFirstName} ${question.recentAnswer?.guestLastName}`}
               </span>
             </div>
@@ -234,19 +204,18 @@ const TextQuestionCard = ({ question }: { question: Question }) => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
 const OptionQuestionCard = ({ question }: { question: Question }) => {
   const questionResponses = useMemo(
-    () =>
-      question.options?.reduce((acc, option) => acc + option.responseCount, 0),
-    [question.options],
-  );
+    () => question.options?.reduce((acc, option) => acc + option.responseCount, 0),
+    [question.options]
+  )
   const chartColors = useMemo(
     () => question.options?.map((_) => generateRandomColor()),
-    [question.options],
-  );
+    [question.options]
+  )
 
   const getChartData = useCallback(() => {
     return {
@@ -258,8 +227,8 @@ const OptionQuestionCard = ({ question }: { question: Question }) => {
           hoverOffset: 2,
         },
       ],
-    };
-  }, [question.options, chartColors]);
+    }
+  }, [question.options, chartColors])
 
   return (
     <div className="mb-4 h-full rounded-md border p-5">
@@ -275,27 +244,22 @@ const OptionQuestionCard = ({ question }: { question: Question }) => {
         <div className="flex w-48 flex-col pr-4">
           {question.options?.map((option, i) => {
             return (
-              <div
-                key={option.id}
-                className="flex items-center justify-between border-b"
-              >
+              <div key={option.id} className="flex items-center justify-between border-b">
                 <div className="flex items-center gap-3 py-3">
                   <span
                     className={`h-2 w-2 rounded-full`}
                     style={{ backgroundColor: chartColors?.[i] }}
                   />
-                  <span
-                    className={`max-w-[146px] ${sharedStyles.ellipsisOverflow}`}
-                  >
+                  <span className={`max-w-[146px] ${sharedStyles.ellipsisOverflow}`}>
                     {option.text}
                   </span>
                 </div>
                 <div className="font-medium">{option.responseCount}</div>
               </div>
-            );
+            )
           })}
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

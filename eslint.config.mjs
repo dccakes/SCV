@@ -137,7 +137,7 @@ export default [
           patterns: [
             {
               group: ['../*', './*'],
-              message: 'Relative imports are not allowed. Use absolute imports with "@/" prefix.',
+              message: 'Relative imports are not allowed. Use absolute imports with "~/" prefix.',
             },
           ],
         },

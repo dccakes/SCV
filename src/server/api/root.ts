@@ -1,13 +1,13 @@
-import { createTRPCRouter } from "~/server/api/trpc";
-import { websiteRouter } from "./routers/website";
-import { dashboardRouter } from "./routers/dashboard";
-import { guestRouter } from "./routers/guest";
-import { eventRouter } from "./routers/event";
-import { householdRouter } from "./routers/household";
-import { giftRouter } from "./routers/gift";
-import { userRouter } from "./routers/user";
-import { invitationRouter } from "./routers/invitation";
-import { questionRouter } from "./routers/question";
+import { dashboardRouter } from '~/server/api/routers/dashboard'
+import { eventRouter } from '~/server/api/routers/event'
+import { giftRouter } from '~/server/api/routers/gift'
+import { guestRouter } from '~/server/api/routers/guest'
+import { householdRouter } from '~/server/api/routers/household'
+import { invitationRouter } from '~/server/api/routers/invitation'
+import { questionRouter } from '~/server/api/routers/question'
+import { userRouter } from '~/server/api/routers/user'
+import { websiteRouter } from '~/server/api/routers/website'
+import { createTRPCRouter } from '~/server/api/trpc'
 
 /**
  * This is the primary router for your server.
@@ -24,7 +24,7 @@ export const appRouter = createTRPCRouter({
   household: householdRouter,
   gift: giftRouter,
   question: questionRouter,
-});
+})
 
 // export type definition of API
-export type AppRouter = typeof appRouter;
+export type AppRouter = typeof appRouter

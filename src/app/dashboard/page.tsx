@@ -1,14 +1,11 @@
-import { api } from "~/trpc/server";
-import { currentUser } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import { sharedStyles } from "../utils/shared-styles";
-import {
-  S3Client,
-  PutObjectCommand,
-  DeleteObjectCommand,
-} from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { headers } from 'next/headers'
+import { redirect } from 'next/navigation'
 
-import Dashboard from "../_components/dashboard";
+import Dashboard from '~/app/_components/dashboard'
+import { sharedStyles } from '~/app/utils/shared-styles'
+import { auth } from '~/lib/auth'
+import { api } from '~/trpc/server'
 
 // Check if S3 is configured
 const isS3Enabled = !!(
@@ -16,10 +13,10 @@ const isS3Enabled = !!(
   process.env.AWS_S3_REGION &&
   process.env.AWS_S3_ACCESS_KEY_ID &&
   process.env.AWS_S3_SECRET_ACCESS_KEY
-);
+)
 
-const Bucket = process.env.AWS_S3_BUCKET_NAME;
-const region = process.env.AWS_S3_REGION;
+const Bucket = process.env.AWS_S3_BUCKET_NAME
+const region = process.env.AWS_S3_REGION
 
 // Only initialize S3 client if configured
 const s3 = isS3Enabled
@@ -30,57 +27,55 @@ const s3 = isS3Enabled
         secretAccessKey: process.env.AWS_S3_SECRET_ACCESS_KEY!,
       },
     })
-  : null;
+  : null
 
 const uploadImage = async (formData: FormData): Promise<{ ok: boolean }> => {
-  "use server";
+  'use server'
 
   if (!isS3Enabled || !s3) {
-    console.log("S3 is not configured. Image upload disabled.");
-    return { ok: false };
+    return { ok: false }
   }
 
-  const files = formData.getAll("file") as File[];
-  const fileType = formData.get("type") as string;
+  const files = formData.getAll('file') as File[]
+  const fileType = formData.get('type') as string
 
   return Promise.all(
     files.map(async (file) => {
-      const arrayBuffer = await file.arrayBuffer();
-      const Body = Buffer.from(arrayBuffer);
+      const arrayBuffer = await file.arrayBuffer()
+      const Body = Buffer.from(arrayBuffer)
       await s3.send(
         new PutObjectCommand({
           Bucket,
           Key: file.name,
           Body,
           ContentType: fileType,
-          ContentEncoding: "base64",
-        }),
-      );
-    }),
+          ContentEncoding: 'base64',
+        })
+      )
+    })
   )
     .then(async (data) => {
-      console.log("File upload successful!", data);
-      const user = await currentUser();
-      const photoName = files[0]!.name;
-      const objectUrl = `https://${Bucket}.s3.${region}.amazonaws.com/${photoName}`;
+      const session = await auth.api.getSession({
+        headers: await headers(),
+      })
+      const photoName = files[0]!.name
+      const objectUrl = `https://${Bucket}.s3.${region}.amazonaws.com/${photoName}`
       await api.website.updateCoverPhoto.mutate({
-        userId: user?.id,
+        userId: session?.user?.id,
         coverPhotoUrl: objectUrl,
-      });
-      return { ok: true };
+      })
+      return { ok: true }
     })
-    .catch((err) => {
-      console.log("File upload failed. Error: ", err);
-      return { ok: false };
-    });
-};
+    .catch(() => {
+      return { ok: false }
+    })
+}
 
 const deleteImage = async (imageKey: string): Promise<{ ok: boolean }> => {
-  "use server";
+  'use server'
 
   if (!isS3Enabled || !s3) {
-    console.log("S3 is not configured. Image deletion disabled.");
-    return { ok: false };
+    return { ok: false }
   }
 
   return new Promise((resolve) => {
@@ -88,39 +83,38 @@ const deleteImage = async (imageKey: string): Promise<{ ok: boolean }> => {
       new DeleteObjectCommand({
         Bucket: Bucket,
         Key: imageKey,
-      }),
+      })
     )
       .then(async () => {
-        const user = await currentUser();
+        const session = await auth.api.getSession({
+          headers: await headers(),
+        })
         await api.website.updateCoverPhoto.mutate({
-          userId: user?.id,
+          userId: session?.user?.id,
           coverPhotoUrl: null,
-        });
-        resolve({ ok: true });
+        })
+        resolve({ ok: true })
       })
-      .catch((err) => {
-        console.log("File deletion failed. Error: ", err);
-        resolve({ ok: false });
-      });
-  });
-};
+      .catch(() => {
+        resolve({ ok: false })
+      })
+  })
+}
 
 export default async function DashboardPage() {
-  const dashboardData = await api.dashboard.getByUserId.query();
+  const dashboardData = await api.dashboard.getByUserId.query()
 
   if (dashboardData === null) {
-    redirect("/");
+    redirect('/')
   }
 
   return (
-    <main
-      className={`${sharedStyles.desktopPaddingSides} ${sharedStyles.minPageWidth}`}
-    >
+    <main className={`${sharedStyles.desktopPaddingSides} ${sharedStyles.minPageWidth}`}>
       <Dashboard
         dashboardData={dashboardData}
         uploadImage={uploadImage}
         deleteImage={deleteImage}
       />
     </main>
-  );
+  )
 }

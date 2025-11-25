@@ -1,30 +1,30 @@
-"use client";
+'use client'
 
-import { createContext, type ReactNode, useContext, useState } from "react";
+import { createContext, type ReactNode, useContext, useState } from 'react'
 
-const EventFormContext = createContext(false);
+const EventFormContext = createContext(false)
 const EventFormUpdateContext = createContext(() => {
-  return;
-});
+  return
+})
 
 interface EventFormProviderProps {
-  children?: ReactNode;
+  children?: ReactNode
 }
 
 export const useEventForm = () => {
-  return useContext(EventFormContext);
-};
+  return useContext(EventFormContext)
+}
 
 export const useToggleEventForm = () => {
-  return useContext(EventFormUpdateContext);
-};
+  return useContext(EventFormUpdateContext)
+}
 
 export const EventFormProvider = ({ children }: EventFormProviderProps) => {
-  const [isEventFormOpen, setIsEventFormOpen] = useState<boolean>(false);
+  const [isEventFormOpen, setIsEventFormOpen] = useState<boolean>(false)
 
   const toggleEventForm = () => {
-    setIsEventFormOpen((prevState) => !prevState);
-  };
+    setIsEventFormOpen((prevState) => !prevState)
+  }
 
   return (
     <EventFormContext.Provider value={isEventFormOpen}>
@@ -32,5 +32,5 @@ export const EventFormProvider = ({ children }: EventFormProviderProps) => {
         {children}
       </EventFormUpdateContext.Provider>
     </EventFormContext.Provider>
-  );
-};
+  )
+}

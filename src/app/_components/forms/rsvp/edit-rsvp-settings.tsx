@@ -1,54 +1,47 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { api } from "~/trpc/react";
-import { useRouter } from "next/navigation";
-import { sharedStyles } from "../../../utils/shared-styles";
-import { IoMdClose } from "react-icons/io";
-import { useToggleEditRsvpSettingsForm } from "../../contexts/edit-rsvp-settings-form-context";
-import { Switch } from "~/components/ui/switch";
-import SidePaneWrapper from "../wrapper";
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { IoMdClose } from 'react-icons/io'
 
-import { type Website } from "~/app/utils/shared-types";
+import { useToggleEditRsvpSettingsForm } from '~/app/_components/contexts/edit-rsvp-settings-form-context'
+import SidePaneWrapper from '~/app/_components/forms/wrapper'
+import { sharedStyles } from '~/app/utils/shared-styles'
+import { type Website } from '~/app/utils/shared-types'
+import { Switch } from '~/components/ui/switch'
+import { api } from '~/trpc/react'
 
 type EditRsvpSettingsFormProps = {
-  website: Website | undefined | null;
-};
+  website: Website | undefined | null
+}
 
-export default function EditRsvpSettingsForm({
-  website,
-}: EditRsvpSettingsFormProps) {
-  const router = useRouter();
-  const toggleEditRsvpSettingsForm = useToggleEditRsvpSettingsForm();
-  const [pageIsVisible, setPageIsVisible] = useState<boolean>(
-    !!website?.isRsvpEnabled,
-  );
-  const [rsvpAccess, setRsvpAccess] = useState<"Private" | "Public">("Private");
-  const [guestListIsVisible, setGuestListIsVisible] = useState<boolean>(false);
+export default function EditRsvpSettingsForm({ website }: EditRsvpSettingsFormProps) {
+  const router = useRouter()
+  const toggleEditRsvpSettingsForm = useToggleEditRsvpSettingsForm()
+  const [pageIsVisible, setPageIsVisible] = useState<boolean>(!!website?.isRsvpEnabled)
+  const [rsvpAccess, setRsvpAccess] = useState<'Private' | 'Public'>('Private')
+  const [guestListIsVisible, setGuestListIsVisible] = useState<boolean>(false)
 
   const updateIsRsvpEnabled = api.website.updateIsRsvpEnabled.useMutation({
     onSuccess: () => {
-      router.refresh();
-      toggleEditRsvpSettingsForm();
+      router.refresh()
+      toggleEditRsvpSettingsForm()
     },
     onError: (err) => {
-      if (err) window.alert(err);
-      else
-        window.alert(
-          "Failed to update RSVP Settings! Please refresh the page and try again.",
-        );
+      if (err) window.alert(err)
+      else window.alert('Failed to update RSVP Settings! Please refresh the page and try again.')
     },
-  });
+  })
 
   return (
     <SidePaneWrapper>
       <form
         onSubmit={(e) => {
-          e.preventDefault();
+          e.preventDefault()
           updateIsRsvpEnabled.mutate({
-            websiteId: website?.id ?? "",
+            websiteId: website?.id ?? '',
             isRsvpEnabled: pageIsVisible,
-          });
+          })
         }}
         className="pb-32"
       >
@@ -70,7 +63,7 @@ export default function EditRsvpSettingsForm({
                   checked={pageIsVisible}
                   onClick={() => setPageIsVisible((prev) => !prev)}
                 />
-                <span>{pageIsVisible ? "Visible" : "Hidden"}</span>
+                <span>{pageIsVisible ? 'Visible' : 'Hidden'}</span>
               </div>
             </div>
             <p>No one can RSVP from your Website until this page is visible</p>
@@ -85,8 +78,8 @@ export default function EditRsvpSettingsForm({
                   id="guest-list-only"
                   type="radio"
                   className="h-6 w-6"
-                  checked={rsvpAccess === "Private"}
-                  onClick={() => setRsvpAccess("Private")}
+                  checked={rsvpAccess === 'Private'}
+                  onClick={() => setRsvpAccess('Private')}
                 />
                 <label htmlFor="guest-list-only">
                   Guest List Only (recommended)
@@ -100,8 +93,8 @@ export default function EditRsvpSettingsForm({
                   id="public-rsvp"
                   type="radio"
                   className="h-6 w-6"
-                  checked={rsvpAccess === "Public"}
-                  onClick={() => setRsvpAccess("Public")}
+                  checked={rsvpAccess === 'Public'}
+                  onClick={() => setRsvpAccess('Public')}
                 />
                 <label htmlFor="public-rsvp">
                   Public RSVP (not recommended)
@@ -123,8 +116,7 @@ export default function EditRsvpSettingsForm({
               onChange={() => setGuestListIsVisible((prev) => !prev)}
             />
             <label htmlFor="guest-list-visibility">
-              Allow anybody who RSVPs &apos;Yes!&apos; to see who&apos;s
-              attending each event
+              Allow anybody who RSVPs &apos;Yes!&apos; to see who&apos;s attending each event
             </label>
           </div>
         </section>
@@ -137,7 +129,7 @@ export default function EditRsvpSettingsForm({
               disabled={updateIsRsvpEnabled.isPending}
               onClick={() => toggleEditRsvpSettingsForm()}
               className={`w-1/2 ${sharedStyles.secondaryButton({
-                py: "py-2",
+                py: 'py-2',
                 isLoading: updateIsRsvpEnabled.isPending,
               })}`}
             >
@@ -149,16 +141,16 @@ export default function EditRsvpSettingsForm({
               type="submit"
               disabled={updateIsRsvpEnabled.isPending}
               className={`w-1/2 ${sharedStyles.primaryButton({
-                px: "px-2",
-                py: "py-2",
+                px: 'px-2',
+                py: 'py-2',
                 isLoading: updateIsRsvpEnabled.isPending,
               })}`}
             >
-              {updateIsRsvpEnabled.isPending ? "Processing..." : "Save"}
+              {updateIsRsvpEnabled.isPending ? 'Processing...' : 'Save'}
             </button>
           </div>
         </div>
       </form>
     </SidePaneWrapper>
-  );
+  )
 }

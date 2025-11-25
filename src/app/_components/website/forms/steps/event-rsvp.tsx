@@ -1,25 +1,22 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { AiOutlineCalendar } from "react-icons/ai";
-import { IoIosCheckmarkCircleOutline } from "react-icons/io";
-import { formatDateStandard } from "~/app/utils/helpers";
-import {
-  useRsvpForm,
-  useUpdateRsvpForm,
-} from "~/app/_components/contexts/rsvp-form-context";
+import { useState } from 'react'
+import { type Dispatch, type SetStateAction } from 'react'
+import { AiOutlineCalendar } from 'react-icons/ai'
+import { IoIosCheckmarkCircleOutline } from 'react-icons/io'
 
-import { type Dispatch, type SetStateAction } from "react";
+import { useRsvpForm, useUpdateRsvpForm } from '~/app/_components/contexts/rsvp-form-context'
+import { formatDateStandard } from '~/app/utils/helpers'
 import {
-  type Guest,
   type Event,
-  type StepFormProps,
+  type Guest,
   type RsvpFormResponse,
-} from "~/app/utils/shared-types";
+  type StepFormProps,
+} from '~/app/utils/shared-types'
 
 interface EventRsvpFormProps extends StepFormProps {
-  event: Event;
-  invitedGuests: Guest[];
+  event: Event
+  invitedGuests: Guest[]
 }
 
 export default function EventRsvpForm({
@@ -28,9 +25,9 @@ export default function EventRsvpForm({
   event,
   invitedGuests,
 }: EventRsvpFormProps) {
-  const rsvpFormData = useRsvpForm();
-  const updateRsvpForm = useUpdateRsvpForm();
-  const [rsvpResponses, setRsvpResponses] = useState<RsvpFormResponse[]>([]);
+  const rsvpFormData = useRsvpForm()
+  const updateRsvpForm = useUpdateRsvpForm()
+  const [rsvpResponses, setRsvpResponses] = useState<RsvpFormResponse[]>([])
 
   return (
     <div className="flex flex-col gap-5">
@@ -60,18 +57,18 @@ export default function EventRsvpForm({
                 />
               </div>
             </li>
-          );
+          )
         })}
       </ul>
       <button
-        className={`mt-3 py-3 text-xl tracking-wide text-white ${rsvpResponses.length < invitedGuests.length ? "cursor-not-allowed bg-stone-400" : "bg-stone-700"}`}
+        className={`mt-3 py-3 text-xl tracking-wide text-white ${rsvpResponses.length < invitedGuests.length ? 'cursor-not-allowed bg-stone-400' : 'bg-stone-700'}`}
         disabled={rsvpResponses.length < invitedGuests.length}
         type="button"
         onClick={() => {
           updateRsvpForm({
             rsvpResponses: [...rsvpFormData.rsvpResponses, ...rsvpResponses],
-          });
-          goNext && goNext();
+          })
+          goNext?.()
         }}
       >
         CONTINUE
@@ -79,69 +76,51 @@ export default function EventRsvpForm({
       <button
         className={`mt-3 bg-gray-700 py-3 text-xl tracking-wide text-white`}
         type="submit"
-        onClick={() => goBack && goBack()}
+        onClick={() => goBack?.()}
       >
         BACK
       </button>
     </div>
-  );
+  )
 }
 
 type RsvpSelectionProps = {
-  eventId: string;
-  guestId: number;
-  setRsvpResponses: Dispatch<SetStateAction<RsvpFormResponse[]>>;
-  guestName: string;
-};
+  eventId: string
+  guestId: number
+  setRsvpResponses: Dispatch<SetStateAction<RsvpFormResponse[]>>
+  guestName: string
+}
 
-function RsvpSelection({
-  eventId,
-  guestId,
-  setRsvpResponses,
-  guestName,
-}: RsvpSelectionProps) {
-  const [rsvpSelection, setRsvpSelection] = useState<
-    "Attending" | "Declined"
-  >();
-  const handleOnSelect = (
-    rsvpSelection: "Attending" | "Declined",
-    currentGuestId: number,
-  ) => {
-    setRsvpSelection(rsvpSelection);
+function RsvpSelection({ eventId, guestId, setRsvpResponses, guestName }: RsvpSelectionProps) {
+  const [rsvpSelection, setRsvpSelection] = useState<'Attending' | 'Declined'>()
+  const handleOnSelect = (rsvpSelection: 'Attending' | 'Declined', currentGuestId: number) => {
+    setRsvpSelection(rsvpSelection)
     setRsvpResponses((prev) => {
-      const rsvpResponse = prev.find(
-        (response) => response.guestId === currentGuestId,
-      );
+      const rsvpResponse = prev.find((response) => response.guestId === currentGuestId)
       if (rsvpResponse === undefined) {
-        return [...prev, { eventId, guestId, rsvp: rsvpSelection, guestName }];
+        return [...prev, { eventId, guestId, rsvp: rsvpSelection, guestName }]
       }
       return prev.map((response) =>
-        response.guestId === currentGuestId
-          ? { ...response, rsvp: rsvpSelection }
-          : response,
-      );
-    });
-  };
+        response.guestId === currentGuestId ? { ...response, rsvp: rsvpSelection } : response
+      )
+    })
+  }
   return (
     <div className="flex gap-3">
       <div
-        className={`flex w-32 cursor-pointer items-center justify-center gap-1 border border-stone-400 py-2 ${rsvpSelection === "Attending" ? "bg-stone-700 text-white" : "text-stone-400"}`}
-        onClick={() => handleOnSelect("Attending", guestId)}
+        className={`flex w-32 cursor-pointer items-center justify-center gap-1 border border-stone-400 py-2 ${rsvpSelection === 'Attending' ? 'bg-stone-700 text-white' : 'text-stone-400'}`}
+        onClick={() => handleOnSelect('Attending', guestId)}
       >
-        {rsvpSelection === "Attending" && (
-          <IoIosCheckmarkCircleOutline size={20} />
-        )}
-        Accept{rsvpSelection === "Attending" && "ed"}
+        {rsvpSelection === 'Attending' && <IoIosCheckmarkCircleOutline size={20} />}
+        Accept{rsvpSelection === 'Attending' && 'ed'}
       </div>
       <div
-        className={`flex w-32 cursor-pointer items-center justify-center gap-1 border border-stone-400 py-2 ${rsvpSelection === "Declined" ? "bg-stone-700 text-white" : "text-stone-400"}`}
-        onClick={() => handleOnSelect("Declined", guestId)}
+        className={`flex w-32 cursor-pointer items-center justify-center gap-1 border border-stone-400 py-2 ${rsvpSelection === 'Declined' ? 'bg-stone-700 text-white' : 'text-stone-400'}`}
+        onClick={() => handleOnSelect('Declined', guestId)}
       >
-        {rsvpSelection === "Declined" && (
-          <IoIosCheckmarkCircleOutline size={20} />
-        )}
-        Decline{rsvpSelection === "Declined" && "d"}
+        {rsvpSelection === 'Declined' && <IoIosCheckmarkCircleOutline size={20} />}
+        Decline{rsvpSelection === 'Declined' && 'd'}
       </div>
     </div>
-  );
+  )
 }

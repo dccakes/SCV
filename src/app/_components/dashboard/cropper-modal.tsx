@@ -1,45 +1,26 @@
-import { type Dispatch, type SetStateAction, useRef, useState } from "react";
-import { sharedStyles } from "~/app/utils/shared-styles";
-import { useDisablePageScroll } from "../hooks";
-import { GrRotateRight } from "react-icons/gr";
-import { GrRotateLeft } from "react-icons/gr";
-import Cropper, { type ReactCropperElement } from "react-cropper";
-import { dataUrlToFile, debounce } from "~/app/utils/helpers";
-import "cropperjs/dist/cropper.css";
+import 'cropperjs/dist/cropper.css'
 
-import { type CoverPhoto } from "~/app/utils/shared-types";
-import { LoadingSpinner } from "../loaders";
+import { type Dispatch, type SetStateAction, useRef } from 'react'
+import Cropper, { type ReactCropperElement } from 'react-cropper'
+import { GrRotateRight } from 'react-icons/gr'
+import { GrRotateLeft } from 'react-icons/gr'
+
+import { useDisablePageScroll } from '~/app/_components/hooks'
+import { LoadingSpinner } from '~/app/_components/loaders'
+import { sharedStyles } from '~/app/utils/shared-styles'
+import { type CoverPhoto } from '~/app/utils/shared-types'
 
 export default function ImageCropperModal({
   coverPhoto,
   setCoverPhoto,
   isUploading,
 }: {
-  coverPhoto: CoverPhoto[];
-  setCoverPhoto: Dispatch<SetStateAction<CoverPhoto[]>>;
-  isUploading: boolean;
+  coverPhoto: CoverPhoto[]
+  setCoverPhoto: Dispatch<SetStateAction<CoverPhoto[]>>
+  isUploading: boolean
 }) {
-  useDisablePageScroll();
-  const cropperRef = useRef<ReactCropperElement>(null);
-  const [cropData, setCropData] = useState("#");
-  const getCropData = () => {
-    if (!!cropperRef.current) {
-      setCropData(cropperRef.current.cropper.getCroppedCanvas().toDataURL());
-    }
-  };
-  const onCrop = () => {
-    const cropper = cropperRef.current?.cropper;
-    // console.log(cropper?.getCroppedCanvas().toDataURL());
-    console.log(cropperRef?.current?.cropper);
-    if (!cropper) return;
-    // setCoverPhoto((prev) => {
-    //   const file = dataUrlToFile(
-    //     cropper.getCroppedCanvas()?.toDataURL() ?? "",
-    //     prev[0]!.name,
-    //   );
-    //   return [Object.assign(file, { preview: cropper.url ?? "" })];
-    // });
-  };
+  useDisablePageScroll()
+  const cropperRef = useRef<ReactCropperElement>(null)
 
   return (
     <div className="bg fixed left-0 top-0 z-50 flex h-screen w-screen items-center justify-center bg-transparent/[0.5]">
@@ -61,12 +42,11 @@ export default function ImageCropperModal({
         </div>
 
         <div className="my-5 flex h-[500px] w-full items-center bg-black">
-          {coverPhoto.map((photo) => (
+          {coverPhoto[0] && (
             <Cropper
-              key={photo.name}
-              src={photo.preview}
+              key={coverPhoto[0].name}
+              src={coverPhoto[0].preview}
               className="h-[400px] w-full"
-              crop={debounce(onCrop, 200)}
               ref={cropperRef}
               background={false}
               viewMode={1}
@@ -77,7 +57,7 @@ export default function ImageCropperModal({
               cropBoxResizable={false}
               dragMode="none"
             />
-          ))}
+          )}
         </div>
         {/* <img style={{ width: "100%" }} src={cropData} alt="cropped" /> */}
         <div className="flex justify-end gap-3">
@@ -85,7 +65,7 @@ export default function ImageCropperModal({
             type="button"
             disabled={isUploading}
             className={sharedStyles.secondaryButton({
-              py: "py-2",
+              py: 'py-2',
               isLoading: isUploading,
             })}
             onClick={() => setCoverPhoto([])}
@@ -95,7 +75,7 @@ export default function ImageCropperModal({
           <button
             type="submit"
             disabled={isUploading}
-            className={`${sharedStyles.primaryButton({ py: "py-2", isLoading: isUploading })} min-w-48 text-center`}
+            className={`${sharedStyles.primaryButton({ py: 'py-2', isLoading: isUploading })} min-w-48 text-center`}
             // TODO: cropped photo is uploading successfully to s3 but something gets corrupted along the way, so the objectURL fails to display the cropped image; hunch is something with how the dataUrlToFile function converts the croppedCanvas to a file
             // onClick={() => {
             //   getCropData();
@@ -109,14 +89,10 @@ export default function ImageCropperModal({
             //   ]);
             // }}
           >
-            {isUploading ? (
-              <LoadingSpinner size={24} useAccentColor={true} />
-            ) : (
-              "Crop Photo"
-            )}
+            {isUploading ? <LoadingSpinner size={24} useAccentColor={true} /> : 'Crop Photo'}
           </button>
         </div>
       </div>
     </div>
-  );
+  )
 }

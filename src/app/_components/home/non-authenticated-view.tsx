@@ -1,4 +1,4 @@
-import { SignInButton } from "@clerk/nextjs";
+import { SignInButton } from '~/app/_components/auth-buttons'
 
 export default function NonAuthenticatedView() {
   return (
@@ -7,5 +7,5 @@ export default function NonAuthenticatedView() {
         <SignInButton />
       </div>
     </div>
-  );
+  )
 }

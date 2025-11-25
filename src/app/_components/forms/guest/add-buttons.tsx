@@ -1,18 +1,15 @@
-import { sharedStyles } from "~/app/utils/shared-styles";
-import { useToggleGuestForm } from "../../contexts/guest-form-context";
+import { type Dispatch, type SetStateAction } from 'react'
 
-import { type Dispatch, type SetStateAction } from "react";
+import { useToggleGuestForm } from '~/app/_components/contexts/guest-form-context'
+import { sharedStyles } from '~/app/utils/shared-styles'
 
 type AddFormButtonsProps = {
-  isCreatingGuests: boolean;
-  setCloseForm: Dispatch<SetStateAction<boolean>>;
-};
+  isCreatingGuests: boolean
+  setCloseForm: Dispatch<SetStateAction<boolean>>
+}
 
-export default function AddFormButtons({
-  isCreatingGuests,
-  setCloseForm,
-}: AddFormButtonsProps) {
-  const toggleGuestForm = useToggleGuestForm();
+export default function AddFormButtons({ isCreatingGuests, setCloseForm }: AddFormButtonsProps) {
+  const toggleGuestForm = useToggleGuestForm()
   return (
     <div
       className={`fixed bottom-0 z-20 flex ${sharedStyles.sidebarFormWidth} flex-col gap-3 border-t bg-white px-3 py-5`}
@@ -25,11 +22,11 @@ export default function AddFormButtons({
           disabled={isCreatingGuests}
           onClick={() => setCloseForm(true)}
           className={`w-1/2 ${sharedStyles.secondaryButton({
-            py: "py-2",
+            py: 'py-2',
             isLoading: isCreatingGuests,
           })}`}
         >
-          {isCreatingGuests ? "Processing..." : "Save & Close"}
+          {isCreatingGuests ? 'Processing...' : 'Save & Close'}
         </button>
         <button
           id="save-household-another"
@@ -37,27 +34,23 @@ export default function AddFormButtons({
           name="add-button"
           disabled={isCreatingGuests}
           className={`w-1/2 ${sharedStyles.primaryButton({
-            px: "px-2",
-            py: "py-2",
+            px: 'px-2',
+            py: 'py-2',
             isLoading: isCreatingGuests,
           })}`}
           onClick={() => setCloseForm(false)}
         >
-          {isCreatingGuests ? "Processing..." : "Save & Add Another Guest"}
+          {isCreatingGuests ? 'Processing...' : 'Save & Add Another Guest'}
         </button>
       </div>
       <button
         onClick={() => toggleGuestForm()}
         className={`text-sm font-semibold ${
-          isCreatingGuests ? "cursor-not-allowed" : "hover:underline"
-        } ${
-          isCreatingGuests
-            ? "text-pink-200"
-            : `text-${sharedStyles.primaryColor}`
-        }`}
+          isCreatingGuests ? 'cursor-not-allowed' : 'hover:underline'
+        } ${isCreatingGuests ? 'text-pink-200' : `text-${sharedStyles.primaryColor}`}`}
       >
         Cancel
       </button>
     </div>
-  );
+  )
 }

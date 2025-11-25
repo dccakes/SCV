@@ -1,14 +1,12 @@
-import { sharedStyles } from "../../utils/shared-styles";
+import { type Dispatch, type SetStateAction } from 'react'
 
-import { type Dispatch, type SetStateAction } from "react";
+import { sharedStyles } from '~/app/utils/shared-styles'
 
 type SidebarPanelProps = {
-  setShowWebsiteSettings: Dispatch<SetStateAction<boolean>>;
-};
+  setShowWebsiteSettings: Dispatch<SetStateAction<boolean>>
+}
 
-export default function SidebarPanel({
-  setShowWebsiteSettings,
-}: SidebarPanelProps) {
+export default function SidebarPanel({ setShowWebsiteSettings }: SidebarPanelProps) {
   return (
     <section className="px-3">
       <div className="flex items-end justify-between border-b pb-8">
@@ -29,5 +27,5 @@ export default function SidebarPanel({
         </span>
       </div>
     </section>
-  );
+  )
 }

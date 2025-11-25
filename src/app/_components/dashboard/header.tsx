@@ -1,20 +1,20 @@
-import { sharedStyles } from "../../utils/shared-styles";
-import { FiEdit2 } from "react-icons/fi";
-import { FaRegCopy } from "react-icons/fa";
-import { useToast } from "~/components/ui/use-toast";
+import { type Dispatch, type SetStateAction } from 'react'
+import { FaRegCopy } from 'react-icons/fa'
+import { FiEdit2 } from 'react-icons/fi'
 
-import { type Dispatch, type SetStateAction } from "react";
+import { sharedStyles } from '~/app/utils/shared-styles'
+import { useToast } from '~/components/ui/use-toast'
 
 type DashboardHeaderProps = {
-  websiteUrl: string | undefined;
-  setShowWebsiteSettings: Dispatch<SetStateAction<boolean>>;
-};
+  websiteUrl: string | undefined
+  setShowWebsiteSettings: Dispatch<SetStateAction<boolean>>
+}
 
 export default function DashboardHeader({
   websiteUrl,
   setShowWebsiteSettings,
 }: DashboardHeaderProps) {
-  const { toast } = useToast();
+  const { toast } = useToast()
   return (
     <section className="py-10">
       <div className="flex items-center justify-between">
@@ -25,11 +25,11 @@ export default function DashboardHeader({
             <span
               className={`ml-5 cursor-pointer text-${sharedStyles.primaryColor} flex items-center gap-1`}
               onClick={async () => {
-                await navigator.clipboard.writeText(websiteUrl ?? "");
+                await navigator.clipboard.writeText(websiteUrl ?? '')
                 toast({
-                  description: "Website link copied!",
-                  variant: "success",
-                });
+                  description: 'Website link copied!',
+                  variant: 'success',
+                })
               }}
             >
               <FaRegCopy size={16} color={sharedStyles.primaryColorHex} />
@@ -45,14 +45,10 @@ export default function DashboardHeader({
           </div>
         </div>
         <div>
-          <button className={sharedStyles.secondaryButton()}>
-            Share your Website
-          </button>
-          <button className={`ml-5 ${sharedStyles.primaryButton()}`}>
-            Preview Site
-          </button>
+          <button className={sharedStyles.secondaryButton()}>Share your Website</button>
+          <button className={`ml-5 ${sharedStyles.primaryButton()}`}>Preview Site</button>
         </div>
       </div>
     </section>
-  );
+  )
 }

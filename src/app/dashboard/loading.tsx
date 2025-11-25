@@ -1,4 +1,4 @@
-import { sharedStyles } from "../utils/shared-styles";
+import { sharedStyles } from '~/app/utils/shared-styles'
 
 export default function DashboardSkeleton() {
   return (
@@ -29,9 +29,7 @@ export default function DashboardSkeleton() {
 
         {/* registry setup */}
         <section className="border-b py-10">
-          <div
-            className={`${sharedStyles.desktopPaddingSides} ${sharedStyles.minPageWidth} flex`}
-          >
+          <div className={`${sharedStyles.desktopPaddingSides} ${sharedStyles.minPageWidth} flex`}>
             <div className="flex h-32 w-32 items-center justify-center rounded bg-gray-300 dark:bg-gray-700">
               <svg
                 className="w-18 h-8 text-gray-200 dark:text-gray-600"
@@ -106,5 +104,5 @@ export default function DashboardSkeleton() {
         </section>
       </div>
     </div>
-  );
+  )
 }

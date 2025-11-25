@@ -1,19 +1,18 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { useRsvpForm } from "~/app/_components/contexts/rsvp-form-context";
+import { useState } from 'react'
 
-import { type StepFormProps } from "~/app/utils/shared-types";
+import { useRsvpForm } from '~/app/_components/contexts/rsvp-form-context'
+import { type StepFormProps } from '~/app/utils/shared-types'
 
 interface SendRsvpProps extends StepFormProps {
-  isFetching: boolean;
+  isFetching: boolean
 }
 
 export default function SendRsvp({ goBack, isFetching }: SendRsvpProps) {
-  const { weddingData, rsvpResponses } = useRsvpForm();
-  const [email, setEmail] = useState<string>("");
-  const [showSendEmailConfirmation, setShowSendEmailConfirmation] =
-    useState<boolean>(true);
+  const { weddingData } = useRsvpForm()
+  const [email, setEmail] = useState<string>('')
+  const [showSendEmailConfirmation, setShowSendEmailConfirmation] = useState<boolean>(true)
 
   return (
     <div className="flex flex-col gap-5">
@@ -23,13 +22,11 @@ export default function SendRsvp({ goBack, isFetching }: SendRsvpProps) {
           id="send-email-confirmation"
           type="checkbox"
           checked={showSendEmailConfirmation}
-          style={{ accentColor: "rgb(55 65 81)" }}
+          style={{ accentColor: 'rgb(55 65 81)' }}
           onChange={(e) => setShowSendEmailConfirmation(e.target.checked)}
           className="h-6 w-6"
         />
-        <label htmlFor="send-email-confirmation">
-          Send me an RSVP confirmation by email
-        </label>
+        <label htmlFor="send-email-confirmation">Send me an RSVP confirmation by email</label>
       </div>
       {showSendEmailConfirmation && (
         <input
@@ -42,7 +39,7 @@ export default function SendRsvp({ goBack, isFetching }: SendRsvpProps) {
       )}
       <button
         disabled={showSendEmailConfirmation && email.length === 0}
-        className={`mt-3 py-3 text-xl tracking-wide text-white ${(showSendEmailConfirmation && email.length === 0) || isFetching ? "cursor-not-allowed bg-stone-400" : "bg-stone-700"}`}
+        className={`mt-3 py-3 text-xl tracking-wide text-white ${(showSendEmailConfirmation && email.length === 0) || isFetching ? 'cursor-not-allowed bg-stone-400' : 'bg-stone-700'}`}
         type="submit"
       >
         SEND RSVP
@@ -50,11 +47,11 @@ export default function SendRsvp({ goBack, isFetching }: SendRsvpProps) {
       <button
         className={`mt-3 bg-gray-700 py-3 text-xl tracking-wide text-white`}
         type="button"
-        onClick={() => goBack && goBack()}
+        onClick={() => goBack?.()}
       >
         BACK
       </button>
       <p className="text-xs underline">View Our Privacy Policy</p>
     </div>
-  );
+  )
 }

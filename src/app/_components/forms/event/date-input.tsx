@@ -1,18 +1,9 @@
 type DateInputProps = {
-  eventDate: string | undefined;
-  handleOnChange: ({
-    field,
-    inputValue,
-  }: {
-    field: string;
-    inputValue: string;
-  }) => void;
-};
+  eventDate: string | undefined
+  handleOnChange: ({ field, inputValue }: { field: string; inputValue: string }) => void
+}
 
-export default function DateInput({
-  eventDate,
-  handleOnChange,
-}: DateInputProps) {
+export default function DateInput({ eventDate, handleOnChange }: DateInputProps) {
   return (
     <div className="relative">
       <input
@@ -21,9 +12,7 @@ export default function DateInput({
         required={(eventDate?.length ?? 0) > 0}
         placeholder="MM/DD/YYYY"
         value={eventDate}
-        onChange={(e) =>
-          handleOnChange({ field: "date", inputValue: e.target.value })
-        }
+        onChange={(e) => handleOnChange({ field: 'date', inputValue: e.target.value })}
         className="peer w-full rounded-lg border p-3 focus:border-pink-400 focus:outline-none focus:ring-0 dark:focus:border-pink-500"
       />
       <label
@@ -33,5 +22,5 @@ export default function DateInput({
         Date
       </label>
     </div>
-  );
+  )
 }

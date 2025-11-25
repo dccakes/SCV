@@ -1,5 +1,5 @@
-import { LoadingPage } from "../_components/loaders";
+import { LoadingPage } from '~/app/_components/loaders'
 
 export default function Loading() {
-  return <LoadingPage />;
+  return <LoadingPage />
 }

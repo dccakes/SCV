@@ -1,46 +1,42 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { api } from "~/trpc/react";
-import { sharedStyles } from "../../utils/shared-styles";
-import { IoMdClose } from "react-icons/io";
-import { BsTrash3 } from "react-icons/bs";
-import { LoadingSpinner } from "../loaders";
-import { Label } from "~/components/ui/label";
-import { Switch } from "~/components/ui/switch";
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { type Dispatch, type SetStateAction } from 'react'
+import { BsTrash3 } from 'react-icons/bs'
+import { IoMdClose } from 'react-icons/io'
 
-import SetPasswordView from "./website-settings/set-password";
-import EditUrlView from "./website-settings/edit-url";
-import SidePaneWrapper from "./wrapper";
-
-import { type Dispatch, type SetStateAction } from "react";
-import { type Website } from "../../utils/shared-types";
+import EditUrlView from '~/app/_components/forms/website-settings/edit-url'
+import SetPasswordView from '~/app/_components/forms/website-settings/set-password'
+import SidePaneWrapper from '~/app/_components/forms/wrapper'
+import { LoadingSpinner } from '~/app/_components/loaders'
+import { sharedStyles } from '~/app/utils/shared-styles'
+import { type Website } from '~/app/utils/shared-types'
+import { Label } from '~/components/ui/label'
+import { Switch } from '~/components/ui/switch'
+import { api } from '~/trpc/react'
 
 type DashboardSettingsFormProps = {
-  setShowWebsiteSettings: Dispatch<SetStateAction<boolean>>;
-  website: Website | null | undefined;
-};
+  setShowWebsiteSettings: Dispatch<SetStateAction<boolean>>
+  website: Website | null | undefined
+}
 
 export default function DashboardSettingsForm({
   setShowWebsiteSettings,
   website,
 }: DashboardSettingsFormProps) {
-  const [showPasswordView, setShowPasswordView] = useState<boolean>(false);
-  const [showEditUrlView, setShowEditUrlView] = useState<boolean>(false);
+  const [showPasswordView, setShowPasswordView] = useState<boolean>(false)
+  const [showEditUrlView, setShowEditUrlView] = useState<boolean>(false)
 
   return (
     <SidePaneWrapper>
       {showPasswordView ? (
         <SetPasswordView
           setShowPasswordView={setShowPasswordView}
-          password={website?.password ?? ""}
+          password={website?.password ?? ''}
         />
       ) : showEditUrlView ? (
-        <EditUrlView
-          setShowEditUrlView={setShowEditUrlView}
-          websiteUrl={website?.subUrl ?? ""}
-        />
+        <EditUrlView setShowEditUrlView={setShowEditUrlView} websiteUrl={website?.subUrl ?? ''} />
       ) : (
         <Main
           setShowWebsiteSettings={setShowWebsiteSettings}
@@ -50,15 +46,15 @@ export default function DashboardSettingsForm({
         />
       )}
     </SidePaneWrapper>
-  );
+  )
 }
 
 type MainProps = {
-  website: Website | null | undefined;
-  setShowWebsiteSettings: Dispatch<SetStateAction<boolean>>;
-  setShowPasswordView: Dispatch<SetStateAction<boolean>>;
-  setShowEditUrlView: Dispatch<SetStateAction<boolean>>;
-};
+  website: Website | null | undefined
+  setShowWebsiteSettings: Dispatch<SetStateAction<boolean>>
+  setShowPasswordView: Dispatch<SetStateAction<boolean>>
+  setShowEditUrlView: Dispatch<SetStateAction<boolean>>
+}
 
 const Main = ({
   website,
@@ -66,40 +62,36 @@ const Main = ({
   setShowPasswordView,
   setShowEditUrlView,
 }: MainProps) => {
-  const router = useRouter();
-  const [appearInSearchEngines, setAppearInSearchEngines] =
-    useState<boolean>(false);
+  const router = useRouter()
+  const [appearInSearchEngines, setAppearInSearchEngines] = useState<boolean>(false)
 
   const updateWebsite = api.website.update.useMutation({
     onSuccess: () => {
-      setShowPasswordView(false);
-      router.refresh();
+      setShowPasswordView(false)
+      router.refresh()
     },
     onError: (err) => {
-      if (err) window.alert(err);
-      else window.alert("Failed to update website! Please try again later.");
+      if (err) window.alert(err)
+      else window.alert('Failed to update website! Please try again later.')
     },
-  });
+  })
 
   const handleChange = (checked: boolean) => {
     if (!website?.isPasswordEnabled) {
-      setShowPasswordView(true);
+      setShowPasswordView(true)
     } else {
       updateWebsite.mutate({
         isPasswordEnabled: checked,
-        password: "",
-      });
+        password: '',
+      })
     }
-  };
+  }
 
   return (
     <>
       <div className="flex justify-between border-b px-8 py-5">
         <h1 className="text-2xl font-bold">Settings</h1>
-        <span
-          className="cursor-pointer"
-          onClick={() => setShowWebsiteSettings(false)}
-        >
+        <span className="cursor-pointer" onClick={() => setShowWebsiteSettings(false)}>
           <IoMdClose size={25} />
         </span>
       </div>
@@ -118,7 +110,7 @@ const Main = ({
         <p className="font-thin">
           {appearInSearchEngines
             ? "A link to your site doesn't currently show up in search engine results. This could keep some guests from finding your site."
-            : "A link to your site currently appears in search engines. This way guests can find your site without needing to memorize your URL."}
+            : 'A link to your site currently appears in search engines. This way guests can find your site without needing to memorize your URL.'}
         </p>
       </div>
       <div className="px-8 pb-5">
@@ -139,8 +131,8 @@ const Main = ({
         </div>
         <p className="font-thin">
           {website?.isPasswordEnabled
-            ? "Guests will be asked to enter a password before they may view your site."
-            : "Anyone with a link to your site may view it."}
+            ? 'Guests will be asked to enter a password before they may view your site.'
+            : 'Anyone with a link to your site may view it.'}
         </p>
         {website?.isPasswordEnabled && (
           <div className="pt-5">
@@ -172,11 +164,9 @@ const Main = ({
       <div className="flex items-center justify-center border-b border-t py-10">
         <div className="flex gap-2">
           <BsTrash3 size={25} />
-          <span className="text-lg underline">
-            Deactivate your Wedding Website
-          </span>
+          <span className="text-lg underline">Deactivate your Wedding Website</span>
         </div>
       </div>
     </>
-  );
-};
+  )
+}
