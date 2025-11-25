@@ -1,7 +1,10 @@
 // Domain routers (Phase 1-3 - migrated to domain architecture)
-// Legacy routers (to be migrated in Phase 4)
-import { dashboardRouter } from '~/server/api/routers/dashboard'
 import { createTRPCRouter } from '~/server/api/trpc'
+import {
+  dashboardRouter,
+  householdManagementRouter,
+  rsvpSubmissionRouter,
+} from '~/server/application'
 import { eventRouter } from '~/server/domains/event'
 import { giftRouter } from '~/server/domains/gift'
 import { guestRouter } from '~/server/domains/guest'
@@ -18,7 +21,7 @@ import { websiteRouter } from '~/server/domains/website'
  * - Phase 1 (Complete): user, website, event
  * - Phase 2 (Complete): gift, guest, invitation
  * - Phase 3 (Complete): question, household
- * - Phase 4 (Pending): Application Services (dashboard, rsvp-submission, household-management)
+ * - Phase 4 (Complete): Application Services (dashboard, rsvp-submission, household-management)
  */
 export const appRouter = createTRPCRouter({
   // Phase 1 domains (migrated)
@@ -35,8 +38,10 @@ export const appRouter = createTRPCRouter({
   question: questionRouter,
   household: householdRouter,
 
-  // Legacy routers (to be migrated in Phase 4)
+  // Phase 4 application services (migrated)
   dashboard: dashboardRouter,
+  householdManagement: householdManagementRouter,
+  rsvpSubmission: rsvpSubmissionRouter,
 })
 
 // export type definition of API
