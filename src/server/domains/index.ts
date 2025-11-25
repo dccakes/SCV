@@ -29,3 +29,61 @@ export {
   type WebsiteWithQuestions,
   type WeddingPageData,
 } from '~/server/domains/website'
+
+// Gift Domain
+export {
+  type CreateGiftInput,
+  type Gift,
+  giftRouter,
+  giftService,
+  type UpdateGiftInput,
+  type UpsertGiftInput,
+} from '~/server/domains/gift'
+
+// Guest Domain
+export {
+  type CreateGuestInput,
+  type Guest,
+  guestRouter,
+  guestService,
+  type GuestWithInvitations,
+  type UpdateGuestInput,
+} from '~/server/domains/guest'
+
+// Invitation Domain
+export {
+  type CreateInvitationInput,
+  type Invitation,
+  invitationRouter,
+  invitationService,
+  type RsvpStats,
+  type UpdateInvitationInput,
+} from '~/server/domains/invitation'
+
+// Question Domain
+export {
+  type Answer,
+  type DeleteQuestionInput,
+  type Option,
+  type OptionInput,
+  type OptionResponse,
+  type Question,
+  questionRouter,
+  questionService,
+  type QuestionWithOptions,
+  type UpsertQuestionInput,
+} from '~/server/domains/question'
+
+// Household Domain
+export {
+  type CreateHouseholdInput,
+  type DeleteHouseholdInput,
+  type Household,
+  householdRouter,
+  householdService,
+  type HouseholdSearchResult,
+  type HouseholdWithGuests,
+  type HouseholdWithGuestsAndGifts,
+  type SearchHouseholdInput,
+  type UpdateHouseholdInput,
+} from '~/server/domains/household'
