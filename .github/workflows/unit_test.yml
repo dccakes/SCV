@@ -30,6 +30,8 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      SKIP_ENV_VALIDATION: "1"
 
     steps:
       #----------------------------------------------
