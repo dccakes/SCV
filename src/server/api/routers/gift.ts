@@ -1,5 +1,6 @@
-import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { z } from 'zod'
+
+import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 
 export const giftRouter = createTRPCRouter({
   update: protectedProcedure
@@ -9,7 +10,7 @@ export const giftRouter = createTRPCRouter({
         eventId: z.string(),
         description: z.string().optional(),
         thankyou: z.boolean(),
-      }),
+      })
     )
     .mutation(({ input, ctx }) => {
       return ctx.db.gift.update({
@@ -23,6 +24,6 @@ export const giftRouter = createTRPCRouter({
           description: input.description,
           thankyou: input.thankyou,
         },
-      });
+      })
     }),
-});
+})

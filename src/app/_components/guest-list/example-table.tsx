@@ -1,6 +1,6 @@
-import { AiOutlineHome } from "react-icons/ai";
-import { CiMail } from "react-icons/ci";
-import { HiOutlinePhone } from "react-icons/hi2";
+import { AiOutlineHome } from 'react-icons/ai'
+import { CiMail } from 'react-icons/ci'
+import { HiOutlinePhone } from 'react-icons/hi2'
 
 export default function ExampleTable() {
   return (
@@ -12,12 +12,7 @@ export default function ExampleTable() {
         }}
       >
         <div>
-          <input
-            className="h-7 w-7"
-            type="checkbox"
-            id="check-all"
-            disabled={true}
-          ></input>
+          <input className="h-7 w-7" type="checkbox" id="check-all" disabled={true}></input>
         </div>
         <h5>Name</h5>
         <h5>Contact</h5>
@@ -49,11 +44,7 @@ export default function ExampleTable() {
             <CiMail size={23} />
           </div>
           <div>
-            <select
-              name="guestRSVP"
-              className="italic"
-              id={`guest-rsvp-example`}
-            >
+            <select name="guestRSVP" className="italic" id={`guest-rsvp-example`}>
               <option value="Not Invited">Not Invited</option>
               <option value="Invited">Invited</option>
               <option value="Attending">Attending</option>
@@ -73,5 +64,5 @@ export default function ExampleTable() {
         </div>
       </div>
     </div>
-  );
+  )
 }

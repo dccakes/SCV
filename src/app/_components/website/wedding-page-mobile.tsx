@@ -1,29 +1,24 @@
-import { sharedStyles } from "~/app/utils/shared-styles";
-import { formatDateStandard } from "~/app/utils/helpers";
-import Image from "next/image";
-import Link from "next/link";
-import Navbar from "./navbar";
+import Image from 'next/image'
+import Link from 'next/link'
 
-import { type WeddingPageData } from "~/app/utils/shared-types";
+import Navbar from '~/app/_components/website/navbar'
+import { formatDateStandard } from '~/app/utils/helpers'
+import { sharedStyles } from '~/app/utils/shared-styles'
+import { type WeddingPageData } from '~/app/utils/shared-types'
 
 type WeddingPageProps = {
-  weddingData: WeddingPageData;
-  path: string;
-};
+  weddingData: WeddingPageData
+  path: string
+}
 
-export default function WeddingPageMobile({
-  weddingData,
-  path,
-}: WeddingPageProps) {
+export default function WeddingPageMobile({ weddingData, path }: WeddingPageProps) {
   return (
     <main className='flex flex-col items-center justify-center gap-20 pb-24 text-center font-["Crimson_Text"] tracking-widest text-zinc-500'>
       <div className="text-center">
         <h1 className="my-5 text-6xl font-medium tracking-widest">
           {weddingData.groomFirstName} & {weddingData.brideFirstName}
         </h1>
-        <p className="text-lg">
-          {weddingData.date?.standardFormat ?? "Date To Be Announced"}
-        </p>
+        <p className="text-lg">{weddingData.date?.standardFormat ?? 'Date To Be Announced'}</p>
         {weddingData.daysRemaining > 0 && (
           <p className="text-lg">{weddingData.daysRemaining} Days To Go!</p>
         )}
@@ -51,13 +46,9 @@ export default function WeddingPageMobile({
       {weddingData.events.map((event) => {
         return (
           <div key={event.id} className="flex flex-col gap-2">
-            <h3 className="text-4xl tracking-widest">
-              {event.name.toLowerCase()}
-            </h3>
+            <h3 className="text-4xl tracking-widest">{event.name.toLowerCase()}</h3>
             {!!event.date && (
-              <span className="text-2xl font-thin">
-                {formatDateStandard(event.date)}
-              </span>
+              <span className="text-2xl font-thin">{formatDateStandard(event.date)}</span>
             )}
             {!!event.startTime && (
               <span className="text-2xl font-thin">
@@ -66,29 +57,29 @@ export default function WeddingPageMobile({
               </span>
             )}
           </div>
-        );
+        )
       })}
 
       <Navbar path={path} isRsvpEnabled={weddingData.website.isRsvpEnabled} />
 
       <div className="text-center">
         <h2 className="border-b border-black px-5 pb-6 text-6xl">
-          {weddingData.groomFirstName[0]} & {weddingData.brideFirstName[0]}
+          {weddingData.groomFirstName?.[0] ?? 'G'} & {weddingData.brideFirstName?.[0] ?? 'B'}
         </h2>
         <p className="mt-4 text-lg tracking-widest">
-          {weddingData.date.numberFormat?.toString() ?? "Date To Be Announced"}
+          {weddingData.date.numberFormat?.toString() ?? 'Date To Be Announced'}
         </p>
       </div>
 
       <div className="text-center">
         <p className="text-sm">Created by Kenford</p>
         <p className="text-sm">
-          Getting married?{" "}
+          Getting married?{' '}
           <span className="underline">
-            <Link href={"/"}>Create your wedding website for free</Link>
+            <Link href={'/'}>Create your wedding website for free</Link>
           </span>
         </p>
       </div>
     </main>
-  );
+  )
 }

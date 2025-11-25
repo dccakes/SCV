@@ -1,38 +1,35 @@
-import "~/styles/globals.css";
+import '~/styles/globals.css'
 
+import { type Viewport } from 'next/types'
+
+import { EventFormProvider } from '~/app/_components/contexts/event-form-context'
+import { GuestFormProvider } from '~/app/_components/contexts/guest-form-context'
+import { Providers } from '~/app/providers'
+import { Toaster } from '~/components/ui/toaster'
 import { Inter } from "next/font/google";
-
-import { TRPCReactProvider } from "~/trpc/react";
-import { ClerkProvider } from "@clerk/nextjs";
-import { EventFormProvider } from "./_components/contexts/event-form-context";
-import { GuestFormProvider } from "./_components/contexts/guest-form-context";
-import { Toaster } from "~/components/ui/toaster";
-import { type Viewport } from "next/types";
+import { TRPCReactProvider } from '~/trpc/react'
 
 const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
+   subsets: ["latin"],
+   variable: "--font-sans",
+ });
 
 export const viewport: Viewport = {
   initialScale: 1,
-  width: "device-width",
-};
+  width: 'device-width',
+}
 
 export const metadata = {
-  title: "Not The Knot",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
-};
+  title: 'OSWP - The Open Source Wedding Project',
+  description: 'A modern, open-source wedding planning and RSVP management system',
+  icons: [{ rel: 'icon', url: '/favicon.ico' }],
+}
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
-      <html lang="en">
-        <body className={`font-sans ${inter.variable}`}>
+    <html lang="en">
+      <body className="font-sans">
+        <Providers>
           <TRPCReactProvider>
             <EventFormProvider>
               <GuestFormProvider>
@@ -41,8 +38,8 @@ export default function RootLayout({
               </GuestFormProvider>
             </EventFormProvider>
           </TRPCReactProvider>
-        </body>
-      </html>
-    </ClerkProvider>
-  );
+        </Providers>
+      </body>
+    </html>
+  )
 }

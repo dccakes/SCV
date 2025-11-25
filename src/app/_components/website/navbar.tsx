@@ -1,62 +1,56 @@
-import Link from "next/link";
+import Link from 'next/link'
 
 const getNavLinks = (isRsvpEnabled: boolean) => {
   return [
     {
-      title: "Home",
-      subPath: "/",
+      title: 'Home',
+      subPath: '/',
       isVisible: true,
     },
     {
-      title: "Our Story",
-      subPath: "/our-story",
+      title: 'Our Story',
+      subPath: '/our-story',
       isVisible: true,
     },
     {
-      title: "Wedding Party",
-      subPath: "/wedding-party",
+      title: 'Wedding Party',
+      subPath: '/wedding-party',
       isVisible: true,
     },
     {
-      title: "Photos",
-      subPath: "/photos",
+      title: 'Photos',
+      subPath: '/photos',
       isVisible: true,
     },
     {
-      title: "Q + A",
-      subPath: "/q-a",
+      title: 'Q + A',
+      subPath: '/q-a',
       isVisible: true,
     },
     {
-      title: "Travel",
-      subPath: "/travel",
+      title: 'Travel',
+      subPath: '/travel',
       isVisible: true,
     },
     {
-      title: "Things to Do",
-      subPath: "/things-to-do",
+      title: 'Things to Do',
+      subPath: '/things-to-do',
       isVisible: true,
     },
     {
-      title: "Registry",
-      subPath: "/registry",
+      title: 'Registry',
+      subPath: '/registry',
       isVisible: true,
     },
     {
-      title: "RSVP",
-      subPath: "/rsvp",
+      title: 'RSVP',
+      subPath: '/rsvp',
       isVisible: isRsvpEnabled,
     },
-  ];
-};
+  ]
+}
 
-export default function Navbar({
-  path,
-  isRsvpEnabled,
-}: {
-  path: string;
-  isRsvpEnabled: boolean;
-}) {
+export default function Navbar({ path, isRsvpEnabled }: { path: string; isRsvpEnabled: boolean }) {
   return (
     <div className="mb-5 mt-10 w-full">
       <ul className="flex w-full justify-center">
@@ -70,10 +64,10 @@ export default function Navbar({
                   </Link>
                 </li>
               )
-            );
+            )
           })}
         </div>
       </ul>
     </div>
-  );
+  )
 }

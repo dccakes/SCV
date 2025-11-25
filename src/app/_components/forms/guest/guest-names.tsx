@@ -1,21 +1,17 @@
-import { sharedStyles } from "../../../utils/shared-styles";
-import { FiMinusCircle } from "react-icons/fi";
-import AnimatedInputLabel from "../animated-input-label";
+import { type Dispatch, type SetStateAction } from 'react'
+import { FiMinusCircle } from 'react-icons/fi'
 
-import { type Dispatch, type SetStateAction } from "react";
-import {
-  type GuestFormData,
-  type Event,
-  type HouseholdFormData,
-} from "../../../utils/shared-types";
+import AnimatedInputLabel from '~/app/_components/forms/animated-input-label'
+import { sharedStyles } from '~/app/utils/shared-styles'
+import { type Event, type GuestFormData, type HouseholdFormData } from '~/app/utils/shared-types'
 
 type GuestNameFormProps = {
-  events: Event[];
-  guestIndex: number;
-  guest: GuestFormData;
-  setHouseholdFormData: Dispatch<SetStateAction<HouseholdFormData>>;
-  setDeletedGuests: Dispatch<SetStateAction<number[]>>;
-};
+  events: Event[]
+  guestIndex: number
+  guest: GuestFormData
+  setHouseholdFormData: Dispatch<SetStateAction<HouseholdFormData>>
+  setDeletedGuests: Dispatch<SetStateAction<number[]>>
+}
 
 export const GuestNameForm = ({
   events,
@@ -25,17 +21,17 @@ export const GuestNameForm = ({
   setDeletedGuests,
 }: GuestNameFormProps) => {
   const handleRemoveGuest = () => {
-    setDeletedGuests((prev) => [...prev, guest.guestId ?? -1]); // for editMode, guestId will be defined - otherwise we're in add mode so dont need to delete from db
+    setDeletedGuests((prev) => [...prev, guest.guestId ?? -1]) // for editMode, guestId will be defined - otherwise we're in add mode so dont need to delete from db
     setHouseholdFormData((prev) => ({
       ...prev,
       guestParty: prev.guestParty.filter((guest, i) => i !== guestIndex),
-    }));
-  };
+    }))
+  }
 
   const handleSelectEvent = (
     e: React.ChangeEvent<HTMLInputElement>,
     event: Event,
-    index: number,
+    index: number
   ) => {
     setHouseholdFormData((prev) => {
       return {
@@ -46,33 +42,33 @@ export const GuestNameForm = ({
                 ...guest,
                 invites: {
                   ...guest.invites,
-                  [event.id]: e.target.checked ? "Invited" : "Not Invited",
+                  [event.id]: e.target.checked ? 'Invited' : 'Not Invited',
                 },
               }
-            : guest,
+            : guest
         ),
-      };
-    });
-  };
+      }
+    })
+  }
 
   const handleNameChange = ({
     field,
     inputValue,
     guestIndex,
   }: {
-    field: string;
-    inputValue: string;
-    guestIndex: number;
+    field: string
+    inputValue: string
+    guestIndex: number
   }) => {
     setHouseholdFormData((prev) => {
       return {
         ...prev,
         guestParty: prev.guestParty.map((guest, i) =>
-          i === guestIndex ? { ...guest, [field]: inputValue } : guest,
+          i === guestIndex ? { ...guest, [field]: inputValue } : guest
         ),
-      };
-    });
-  };
+      }
+    })
+  }
 
   return (
     <div>
@@ -122,8 +118,8 @@ export const GuestNameForm = ({
                       type="checkbox"
                       id={`guest${guestIndex}: ${event.id}`}
                       onChange={(e) => handleSelectEvent(e, event, guestIndex)}
-                      checked={["Invited", "Attending", "Declined"].includes(
-                        guest.invites[event.id] ?? "",
+                      checked={['Invited', 'Attending', 'Declined'].includes(
+                        guest.invites[event.id] ?? ''
                       )}
                     />
                   </div>
@@ -135,10 +131,10 @@ export const GuestNameForm = ({
                   </label>
                 </div>
               </div>
-            );
+            )
           })}
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

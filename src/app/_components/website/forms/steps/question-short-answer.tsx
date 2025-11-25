@@ -1,20 +1,13 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import {
-  useRsvpForm,
-  useUpdateRsvpForm,
-} from "~/app/_components/contexts/rsvp-form-context";
+import { useState } from 'react'
 
-import {
-  type Question,
-  type Guest,
-  type StepFormProps,
-} from "~/app/utils/shared-types";
+import { useRsvpForm, useUpdateRsvpForm } from '~/app/_components/contexts/rsvp-form-context'
+import { type Guest, type Question, type StepFormProps } from '~/app/utils/shared-types'
 
 interface QuestionShortAnswerProps extends StepFormProps {
-  guest?: Guest;
-  question: Question;
+  guest?: Guest
+  question: Question
 }
 
 export default function QuestionShortAnswer({
@@ -23,9 +16,9 @@ export default function QuestionShortAnswer({
   guest,
   question,
 }: QuestionShortAnswerProps) {
-  const rsvpFormData = useRsvpForm();
-  const updateRsvpForm = useUpdateRsvpForm();
-  const [answer, setAnswer] = useState("");
+  const rsvpFormData = useRsvpForm()
+  const updateRsvpForm = useUpdateRsvpForm()
+  const [answer, setAnswer] = useState('')
 
   return (
     <div className="flex flex-col gap-5">
@@ -41,28 +34,26 @@ export default function QuestionShortAnswer({
         className="h-40 border p-3"
       />
       <button
-        className={`mt-3 bg-stone-400 py-3 text-xl tracking-wide text-white ${answer.length === 0 ? "cursor-not-allowed bg-stone-400" : "bg-stone-700"}`}
+        className={`mt-3 bg-stone-400 py-3 text-xl tracking-wide text-white ${answer.length === 0 ? 'cursor-not-allowed bg-stone-400' : 'bg-stone-700'}`}
         type="button"
         onClick={() => {
           updateRsvpForm({
             answersToQuestions: [
               ...rsvpFormData.answersToQuestions,
               {
-                questionId: question.id ?? "-1",
-                questionType: "Text",
+                questionId: question.id ?? '-1',
+                questionType: 'Text',
                 response: answer,
                 guestId: guest?.id,
                 householdId: rsvpFormData.selectedHousehold?.id,
                 guestFirstName:
-                  guest?.firstName ??
-                  rsvpFormData.selectedHousehold?.primaryContact?.firstName,
+                  guest?.firstName ?? rsvpFormData.selectedHousehold?.primaryContact?.firstName,
                 guestLastName:
-                  guest?.lastName ??
-                  rsvpFormData.selectedHousehold?.primaryContact?.lastName,
+                  guest?.lastName ?? rsvpFormData.selectedHousehold?.primaryContact?.lastName,
               },
             ],
-          });
-          goNext && goNext();
+          })
+          goNext?.()
         }}
       >
         CONTINUE
@@ -71,7 +62,7 @@ export default function QuestionShortAnswer({
         <button
           className={`mt-3 bg-gray-700 py-3 text-xl tracking-wide text-white`}
           type="button"
-          onClick={() => goNext && goNext()}
+          onClick={() => goNext?.()}
         >
           SKIP
         </button>
@@ -79,10 +70,10 @@ export default function QuestionShortAnswer({
       <button
         className={`mt-3 bg-gray-700 py-3 text-xl tracking-wide text-white`}
         type="submit"
-        onClick={() => goBack && goBack()}
+        onClick={() => goBack?.()}
       >
         BACK
       </button>
     </div>
-  );
+  )
 }

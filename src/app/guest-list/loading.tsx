@@ -1,4 +1,4 @@
-import { sharedStyles } from "../utils/shared-styles";
+import { sharedStyles } from '~/app/utils/shared-styles'
 
 export default function GuestListSkeleton() {
   return (
@@ -45,8 +45,7 @@ export default function GuestListSkeleton() {
                 <div
                   className="sticky top-0 grid min-w-fit items-center gap-12 border-b bg-white px-8 py-6 italic text-gray-600"
                   style={{
-                    gridTemplateColumns:
-                      "40px 240px 100px 125px repeat(2, 175px) 175px",
+                    gridTemplateColumns: '40px 240px 100px 125px repeat(2, 175px) 175px',
                   }}
                 >
                   <div className="h-7 w-7 bg-gray-200 dark:bg-gray-700"></div>
@@ -82,7 +81,7 @@ export default function GuestListSkeleton() {
                       <div className="h-5 w-32 bg-gray-200 dark:bg-gray-700"></div>
                       <div className="h-5 w-24 bg-gray-200 dark:bg-gray-700"></div>
                     </div>
-                  );
+                  )
                 })}
               </div>
             </div>
@@ -90,5 +89,5 @@ export default function GuestListSkeleton() {
         </section>
       </div>
     </div>
-  );
+  )
 }

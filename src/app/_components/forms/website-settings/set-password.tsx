@@ -1,44 +1,38 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { api } from "~/trpc/react";
-import { useRouter } from "next/navigation";
-import { GoArrowLeft } from "react-icons/go";
-import { sharedStyles } from "../../../utils/shared-styles";
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { type Dispatch, type SetStateAction } from 'react'
+import { GoArrowLeft } from 'react-icons/go'
 
-import { type Dispatch, type SetStateAction } from "react";
+import { sharedStyles } from '~/app/utils/shared-styles'
+import { api } from '~/trpc/react'
 
 type SetPasswordViewProps = {
-  setShowPasswordView: Dispatch<SetStateAction<boolean>>;
-  password: string;
-};
+  setShowPasswordView: Dispatch<SetStateAction<boolean>>
+  password: string
+}
 
-export default function SetPasswordView({
-  setShowPasswordView,
-  password,
-}: SetPasswordViewProps) {
-  const [passwordInput, setPasswordInput] = useState(password ?? "");
-  const router = useRouter();
+export default function SetPasswordView({ setShowPasswordView, password }: SetPasswordViewProps) {
+  const [passwordInput, setPasswordInput] = useState(password ?? '')
+  const router = useRouter()
 
   const updateWebsite = api.website.update.useMutation({
     onSuccess: () => {
-      setShowPasswordView(false);
-      router.refresh();
+      setShowPasswordView(false)
+      router.refresh()
     },
     onError: (err) => {
-      if (err) window.alert(err);
-      else window.alert("Failed to update website! Please try again later.");
+      if (err) window.alert(err)
+      else window.alert('Failed to update website! Please try again later.')
     },
-  });
+  })
 
   return (
     <div>
       <div className="flex justify-between border-b p-5">
         <div className="flex gap-4">
-          <span
-            className="cursor-pointer"
-            onClick={() => setShowPasswordView(false)}
-          >
+          <span className="cursor-pointer" onClick={() => setShowPasswordView(false)}>
             <GoArrowLeft size={28} />
           </span>
           <span className="border-r"></span>
@@ -47,9 +41,8 @@ export default function SetPasswordView({
       </div>
       <div className="px-5 py-7">
         <p className="mb-5 font-thin tracking-tight">
-          Know who&apos;s in on your wedding plans by adding a password to your
-          site. Make sure it&apos;s easy for guests to remember (and for you to
-          share!).
+          Know who&apos;s in on your wedding plans by adding a password to your site. Make sure
+          it&apos;s easy for guests to remember (and for you to share!).
         </p>
         <input
           placeholder="Guest Password"
@@ -62,10 +55,10 @@ export default function SetPasswordView({
         className={`fixed bottom-0 flex flex-col gap-3 border-t px-8 py-5 ${sharedStyles.sidebarFormWidth}`}
       >
         <button
-          disabled={updateWebsite.isLoading}
+          disabled={updateWebsite.isPending}
           className={`w-[100%] ${sharedStyles.primaryButton({
-            py: "py-2",
-            isLoading: updateWebsite.isLoading,
+            py: 'py-2',
+            isLoading: updateWebsite.isPending,
           })}`}
           onClick={() =>
             updateWebsite.mutate({
@@ -74,9 +67,9 @@ export default function SetPasswordView({
             })
           }
         >
-          {updateWebsite.isLoading ? "Processing..." : "Save Changes"}
+          {updateWebsite.isPending ? 'Processing...' : 'Save Changes'}
         </button>
       </div>
     </div>
-  );
+  )
 }

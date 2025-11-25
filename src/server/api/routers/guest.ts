@@ -1,5 +1,6 @@
-import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { z } from 'zod'
+
+import { createTRPCRouter, publicProcedure } from '~/server/api/trpc'
 
 export const guestRouter = createTRPCRouter({
   // delete: publicProcedure
@@ -13,7 +14,7 @@ export const guestRouter = createTRPCRouter({
         where: {
           eventId: input.eventId,
         },
-      });
+      })
     }),
 
   getAllByHouseholdId: publicProcedure
@@ -26,19 +27,19 @@ export const guestRouter = createTRPCRouter({
         include: {
           guests: true,
         },
-      });
+      })
 
-      return householdGuests;
+      return householdGuests
     }),
 
   getAllByUserId: publicProcedure.query(async ({ ctx }) => {
-    if (!ctx.auth.userId) return;
+    if (!ctx.auth.userId) return
     const guestList = await ctx.db.guest.findMany({
       where: {
         userId: ctx.auth.userId,
       },
-    });
+    })
 
-    return guestList;
+    return guestList
   }),
-});
+})

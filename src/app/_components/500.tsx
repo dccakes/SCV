@@ -1,5 +1,5 @@
-import Footer from "./footer";
-import Navbar from "./navbar";
+import Footer from '~/app/_components/footer'
+import Navbar from '~/app/_components/navbar'
 
 export default function SomethingWentWrongPage() {
   return (
@@ -10,7 +10,7 @@ export default function SomethingWentWrongPage() {
           <h1 className="text-3xl">Something went wrong!</h1>
           <p>Sorry about that. Please refresh the page in a moment.</p>
           <p>
-            Need help?{" "}
+            Need help?{' '}
             <a href="#" className="underline">
               Search our Help Center or contact us.
             </a>
@@ -19,5 +19,5 @@ export default function SomethingWentWrongPage() {
       </div>
       <Footer />
     </>
-  );
+  )
 }

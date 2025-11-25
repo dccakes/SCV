@@ -1,38 +1,38 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import {
-  useRsvpForm,
-  useUpdateRsvpForm,
-} from "~/app/_components/contexts/rsvp-form-context";
+import { useState } from 'react'
 
-import { type StepFormProps } from "~/app/utils/shared-types";
+import { useRsvpForm, useUpdateRsvpForm } from '~/app/_components/contexts/rsvp-form-context'
+import { type HouseholdSearch, type StepFormProps } from '~/app/utils/shared-types'
+
+type HouseholdSearchItem = HouseholdSearch[number]
+type GuestWithInvitations = HouseholdSearchItem['guests'][number]
 
 export default function ConfirmNameForm({ goNext, goBack }: StepFormProps) {
-  const { matchedHouseholds } = useRsvpForm();
-  const updateRsvpForm = useUpdateRsvpForm();
-  const [selectedHouseholdId, setSelectedHouseholdId] = useState<string>();
+  const { matchedHouseholds } = useRsvpForm()
+  const updateRsvpForm = useUpdateRsvpForm()
+  const [selectedHouseholdId, setSelectedHouseholdId] = useState<string>()
 
   const onContinue = () => {
     const selectedHousehold = matchedHouseholds?.find(
-      (household) => household.id === selectedHouseholdId,
-    );
-    const primaryContact = selectedHousehold?.guests.find(
-      (guest) => guest.isPrimaryContact,
-    );
+      (household: HouseholdSearchItem) => household.id === selectedHouseholdId
+    )
+    const primaryContact = selectedHousehold?.guests?.find(
+      (guest: GuestWithInvitations) => guest.isPrimaryContact
+    )
     updateRsvpForm({
       selectedHousehold: Object.assign({ primaryContact }, selectedHousehold),
-    });
-    goNext && goNext();
-  };
+    })
+    goNext?.()
+  }
 
   return (
     <div className="flex flex-col gap-5">
       <h2 className="text-2xl tracking-widest">
-        we&apos;ve found you in the guest list. please confirm your name below
-        to continue with your rsvp
+        we&apos;ve found you in the guest list. please confirm your name below to continue with your
+        rsvp
       </h2>
-      {matchedHouseholds?.map((household) => {
+      {matchedHouseholds?.map((household: HouseholdSearchItem) => {
         return (
           <div key={household.id} className="flex gap-5">
             <input
@@ -43,15 +43,15 @@ export default function ConfirmNameForm({ goNext, goBack }: StepFormProps) {
             />
             <label htmlFor={household.id}>
               {household.guests
-                .map((guest) => `${guest.firstName} ${guest.lastName}`)
-                .join(", ")}
+                ?.map((guest: GuestWithInvitations) => `${guest.firstName} ${guest.lastName}`)
+                .join(', ')}
             </label>
           </div>
-        );
+        )
       })}
 
       <button
-        className={`mt-3 bg-stone-400 py-3 text-xl tracking-wide text-white ${selectedHouseholdId === undefined ? "cursor-not-allowed bg-stone-400" : "bg-stone-700"}`}
+        className={`mt-3 bg-stone-400 py-3 text-xl tracking-wide text-white ${selectedHouseholdId === undefined ? 'cursor-not-allowed bg-stone-400' : 'bg-stone-700'}`}
         type="button"
         disabled={selectedHouseholdId === undefined}
         onClick={onContinue}
@@ -61,10 +61,10 @@ export default function ConfirmNameForm({ goNext, goBack }: StepFormProps) {
       <button
         className={`mt-3 bg-gray-700 py-3 text-xl tracking-wide text-white`}
         type="button"
-        onClick={() => goBack && goBack()}
+        onClick={() => goBack?.()}
       >
         SEARCH AGAIN
       </button>
     </div>
-  );
+  )
 }

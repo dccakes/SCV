@@ -1,31 +1,35 @@
-"use client";
+'use client'
 
-import { createContext, useContext, useState } from "react";
-import { type ReactNode } from "react";
+import { createContext, useContext, useState } from 'react'
+import { type ReactNode } from 'react'
+
 import {
-  type RsvpPageData,
-  type HouseholdSearch,
-  type RsvpFormResponse,
   type Answer,
   type Guest,
-} from "~/app/utils/shared-types";
+  type HouseholdSearch,
+  type Invitation,
+  type RsvpFormResponse,
+  type RsvpPageData,
+} from '~/app/utils/shared-types'
 
 interface AnswerWithType extends Answer {
-  questionType: string;
+  questionType: string
 }
 
-type H = HouseholdSearch[0];
+type H = HouseholdSearch[0]
 interface SelectedHousehold extends H {
-  primaryContact: Guest | undefined;
+  id: string
+  primaryContact: Guest | undefined
+  guests: Array<Guest & { invitations: Invitation[] }>
 }
 
 type RsvpFormState = {
-  matchedHouseholds?: HouseholdSearch;
-  selectedHousehold?: SelectedHousehold;
-  rsvpResponses: RsvpFormResponse[];
-  answersToQuestions: AnswerWithType[];
-  weddingData: Partial<RsvpPageData>;
-};
+  matchedHouseholds?: HouseholdSearch
+  selectedHousehold?: SelectedHousehold
+  rsvpResponses: RsvpFormResponse[]
+  answersToQuestions: AnswerWithType[]
+  weddingData: Partial<RsvpPageData>
+}
 
 const INITIAL_STATE: RsvpFormState = {
   matchedHouseholds: [],
@@ -33,47 +37,44 @@ const INITIAL_STATE: RsvpFormState = {
   rsvpResponses: [],
   answersToQuestions: [],
   weddingData: {
-    groomFirstName: "",
-    groomLastName: "",
-    brideFirstName: "",
-    brideLastName: "",
+    groomFirstName: '',
+    groomLastName: '',
+    brideFirstName: '',
+    brideLastName: '',
     date: {
-      standardFormat: "",
-      numberFormat: "",
+      standardFormat: '',
+      numberFormat: '',
     },
     daysRemaining: 0,
     events: [],
   },
-};
+}
 
-const RsvpFormContext = createContext(INITIAL_STATE);
-const RsvpFormUpdateContext = createContext(
-  (fields: Partial<RsvpFormState>) => {
-    return;
-  },
-);
+const RsvpFormContext = createContext(INITIAL_STATE)
+const RsvpFormUpdateContext = createContext((_fields: Partial<RsvpFormState>) => {
+  return
+})
 
 interface RsvpFormProviderProps {
-  children?: ReactNode;
+  children?: ReactNode
 }
 
 export const useRsvpForm = () => {
-  return useContext(RsvpFormContext);
-};
+  return useContext(RsvpFormContext)
+}
 
 export const useUpdateRsvpForm = () => {
-  return useContext(RsvpFormUpdateContext);
-};
+  return useContext(RsvpFormUpdateContext)
+}
 
 export const RsvpFormProvider = ({ children }: RsvpFormProviderProps) => {
-  const [rsvpFormData, setRsvpFormData] =
-    useState<RsvpFormState>(INITIAL_STATE);
+  const [rsvpFormData, setRsvpFormData] = useState<RsvpFormState>(INITIAL_STATE)
 
   const updateFields = (fields: Partial<RsvpFormState>) => {
     setRsvpFormData((prev) => {
-      return { ...prev, ...fields };
-    });
-  };
+      return { ...prev, ...fields }
+    })
+  }
 
   return (
     <RsvpFormContext.Provider value={rsvpFormData}>
@@ -81,5 +82,5 @@ export const RsvpFormProvider = ({ children }: RsvpFormProviderProps) => {
         {children}
       </RsvpFormUpdateContext.Provider>
     </RsvpFormContext.Provider>
-  );
-};
+  )
+}

@@ -1,19 +1,22 @@
-import { api } from "~/trpc/server";
-import { redirect } from "next/navigation";
-import { sharedStyles } from "../utils/shared-styles";
+import { redirect } from 'next/navigation'
+import { Suspense } from 'react'
 
-import GuestList from "../_components/guest-list";
+import GuestList from '~/app/_components/guest-list'
+import { sharedStyles } from '~/app/utils/shared-styles'
+import { api } from '~/trpc/server'
 
 export default async function DashboardPage() {
-  const dashboardData = await api.dashboard.getByUserId.query();
+  const dashboardData = await api.dashboard.getByUserId.query()
 
   if (dashboardData === null) {
-    redirect("/");
+    redirect('/')
   }
 
   return (
     <main className={`${sharedStyles.desktopPaddingSidesGuestList}`}>
-      <GuestList dashboardData={dashboardData} />
+      <Suspense fallback={<div>Loading guest list...</div>}>
+        <GuestList dashboardData={dashboardData} />
+      </Suspense>
     </main>
-  );
+  )
 }

@@ -1,42 +1,41 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { useToggleEventForm } from "../contexts/event-form-context";
-import { sharedStyles } from "../../utils/shared-styles";
-import { IoMdClose } from "react-icons/io";
-import DeleteConfirmation from "./delete-confirmation";
-import DateInput from "./event/date-input";
-import TimeSelections from "./event/time-selections";
-import AnimatedInputLabel from "./animated-input-label";
+import { useState } from 'react'
+import { IoMdClose } from 'react-icons/io'
 
-import { type EventFormData } from "../../utils/shared-types";
-import { useEventFormActions } from "../hooks/forms/useEventFormActions";
-import SidePaneWrapper from "./wrapper";
+import { useToggleEventForm } from '~/app/_components/contexts/event-form-context'
+import AnimatedInputLabel from '~/app/_components/forms/animated-input-label'
+import DeleteConfirmation from '~/app/_components/forms/delete-confirmation'
+import DateInput from '~/app/_components/forms/event/date-input'
+import TimeSelections from '~/app/_components/forms/event/time-selections'
+import SidePaneWrapper from '~/app/_components/forms/wrapper'
+import { useEventFormActions } from '~/app/_components/hooks/forms/useEventFormActions'
+import { sharedStyles } from '~/app/utils/shared-styles'
+import { type EventFormData } from '~/app/utils/shared-types'
 
 type EventFormProps = {
-  prefillFormData: EventFormData | undefined;
-};
+  prefillFormData: EventFormData | undefined
+}
 
 const defaultFormData = {
-  eventName: "",
+  eventName: '',
   date: undefined,
   startTime: undefined,
   endTime: undefined,
   venue: undefined,
   attire: undefined,
   description: undefined,
-  eventId: "",
-};
+  eventId: '',
+}
 
 export default function EventForm({ prefillFormData }: EventFormProps) {
-  const isEditMode = !!prefillFormData;
-  const toggleEventForm = useToggleEventForm();
+  const isEditMode = !!prefillFormData
+  const toggleEventForm = useToggleEventForm()
 
-  const [showDeleteConfirmation, setShowDeleteConfirmation] =
-    useState<boolean>(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false)
   const [eventFormData, setEventFormData] = useState<EventFormData>(
-    prefillFormData ?? defaultFormData,
-  );
+    prefillFormData ?? defaultFormData
+  )
 
   const {
     createEvent,
@@ -45,63 +44,51 @@ export default function EventForm({ prefillFormData }: EventFormProps) {
     isUpdatingEvent,
     deleteEvent,
     isDeletingEvent,
-  } = useEventFormActions();
+  } = useEventFormActions()
 
-  const handleOnChange = ({
-    field,
-    inputValue,
-  }: {
-    field: string;
-    inputValue: string;
-  }) => {
+  const handleOnChange = ({ field, inputValue }: { field: string; inputValue: string }) => {
     setEventFormData((prev) => {
       return {
         ...prev,
         [field]: inputValue,
-      };
-    });
-  };
+      }
+    })
+  }
 
   const handleSaveEvent = () => {
     if (isEditMode) {
-      updateEvent(eventFormData);
+      updateEvent(eventFormData)
     } else {
-      createEvent(eventFormData);
+      createEvent(eventFormData)
     }
-  };
+  }
 
-  const isProcessing = isCreatingEvent || isUpdatingEvent || isDeletingEvent;
+  const isProcessing = isCreatingEvent || isUpdatingEvent || isDeletingEvent
 
   if (showDeleteConfirmation) {
     return (
       <DeleteConfirmation
         isProcessing={isProcessing}
         disclaimerText={
-          "Deleting this event will remove it from your website, and also erase any guest lists, RSVPs, and meals associated with it."
+          'Deleting this event will remove it from your website, and also erase any guest lists, RSVPs, and meals associated with it.'
         }
         noHandler={() => setShowDeleteConfirmation(false)}
         yesHandler={() => deleteEvent({ eventId: eventFormData.eventId })}
       />
-    );
+    )
   }
 
   return (
     <SidePaneWrapper>
       <form
         onSubmit={(e) => {
-          e.preventDefault();
-          handleSaveEvent();
+          e.preventDefault()
+          handleSaveEvent()
         }}
       >
         <div className="flex justify-between border-b p-5">
-          <h1 className="text-xl font-semibold">
-            {isEditMode ? "Edit Event" : "Add Event"}
-          </h1>
-          <IoMdClose
-            size={25}
-            className="cursor-pointer"
-            onClick={() => toggleEventForm()}
-          />
+          <h1 className="text-xl font-semibold">{isEditMode ? 'Edit Event' : 'Add Event'}</h1>
+          <IoMdClose size={25} className="cursor-pointer" onClick={() => toggleEventForm()} />
         </div>
         <div className="p-5">
           <h2 className="mb-3 text-xl font-semibold">Event Information</h2>
@@ -114,10 +101,7 @@ export default function EventForm({ prefillFormData }: EventFormProps) {
               required={true}
               handleOnChange={handleOnChange}
             />
-            <DateInput
-              eventDate={eventFormData.date}
-              handleOnChange={handleOnChange}
-            />
+            <DateInput eventDate={eventFormData.date} handleOnChange={handleOnChange} />
             <TimeSelections
               startTime={eventFormData.startTime}
               endTime={eventFormData.endTime}
@@ -125,21 +109,21 @@ export default function EventForm({ prefillFormData }: EventFormProps) {
             />
             <AnimatedInputLabel
               id="event-venue"
-              inputValue={eventFormData.venue ?? ""}
+              inputValue={eventFormData.venue ?? ''}
               fieldName="venue"
               labelText="Venue Name"
               handleOnChange={handleOnChange}
             />
             <AnimatedInputLabel
               id="event-attire"
-              inputValue={eventFormData.attire ?? ""}
+              inputValue={eventFormData.attire ?? ''}
               fieldName="attire"
               labelText="Attire"
               handleOnChange={handleOnChange}
             />
             <AnimatedInputLabel
               id="event-description"
-              inputValue={eventFormData.description ?? ""}
+              inputValue={eventFormData.description ?? ''}
               fieldName="description"
               labelText="Description"
               handleOnChange={handleOnChange}
@@ -154,13 +138,9 @@ export default function EventForm({ prefillFormData }: EventFormProps) {
               disabled={isProcessing}
               onClick={() => toggleEventForm()}
               className={`${sharedStyles.secondaryButton({
-                py: "py-2",
+                py: 'py-2',
                 isLoading: isProcessing,
-              })} w-1/2 ${
-                isProcessing
-                  ? "text-pink-200"
-                  : `text-${sharedStyles.primaryColor}`
-              }`}
+              })} w-1/2 ${isProcessing ? 'text-pink-200' : `text-${sharedStyles.primaryColor}`}`}
             >
               Cancel
             </button>
@@ -170,11 +150,11 @@ export default function EventForm({ prefillFormData }: EventFormProps) {
               name="save-event"
               disabled={isProcessing}
               className={`w-1/2 ${sharedStyles.primaryButton({
-                py: "py-2",
+                py: 'py-2',
                 isLoading: isProcessing,
               })}`}
             >
-              {isProcessing ? "Processing..." : "Save & Close"}
+              {isProcessing ? 'Processing...' : 'Save & Close'}
             </button>
           </div>
           {isEditMode && (
@@ -184,7 +164,7 @@ export default function EventForm({ prefillFormData }: EventFormProps) {
               onClick={() => setShowDeleteConfirmation(true)}
               className={`font-semibold ${
                 isProcessing
-                  ? "cursor-not-allowed text-pink-200"
+                  ? 'cursor-not-allowed text-pink-200'
                   : `text-${sharedStyles.primaryColor} hover:underline`
               }`}
             >
@@ -194,5 +174,5 @@ export default function EventForm({ prefillFormData }: EventFormProps) {
         </div>
       </form>
     </SidePaneWrapper>
-  );
+  )
 }

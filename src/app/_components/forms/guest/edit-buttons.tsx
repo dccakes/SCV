@@ -1,18 +1,18 @@
-import { sharedStyles } from "~/app/utils/shared-styles";
-import { useToggleGuestForm } from "../../contexts/guest-form-context";
+import { type Dispatch, type SetStateAction } from 'react'
 
-import { type Dispatch, type SetStateAction } from "react";
+import { useToggleGuestForm } from '~/app/_components/contexts/guest-form-context'
+import { sharedStyles } from '~/app/utils/shared-styles'
 
 type EditFormButtonsProps = {
-  isUpdatingHousehold: boolean;
-  setShowDeleteConfirmation: Dispatch<SetStateAction<boolean>>;
-};
+  isUpdatingHousehold: boolean
+  setShowDeleteConfirmation: Dispatch<SetStateAction<boolean>>
+}
 
 export default function EditFormButtons({
   isUpdatingHousehold,
   setShowDeleteConfirmation,
 }: EditFormButtonsProps) {
-  const toggleGuestForm = useToggleGuestForm();
+  const toggleGuestForm = useToggleGuestForm()
 
   return (
     <div
@@ -23,7 +23,7 @@ export default function EditFormButtons({
           disabled={isUpdatingHousehold}
           onClick={() => toggleGuestForm()}
           className={`w-1/2 ${sharedStyles.secondaryButton({
-            py: "py-2",
+            py: 'py-2',
             isLoading: isUpdatingHousehold,
           })}`}
         >
@@ -35,29 +35,25 @@ export default function EditFormButtons({
           type="submit"
           disabled={isUpdatingHousehold}
           className={`w-1/2 ${sharedStyles.primaryButton({
-            px: "px-2",
-            py: "py-2",
+            px: 'px-2',
+            py: 'py-2',
             isLoading: isUpdatingHousehold,
           })}`}
         >
-          {isUpdatingHousehold ? "Processing..." : "Save"}
+          {isUpdatingHousehold ? 'Processing...' : 'Save'}
         </button>
       </div>
       <button
         onClick={(e) => {
-          e.preventDefault();
-          setShowDeleteConfirmation(true);
+          e.preventDefault()
+          setShowDeleteConfirmation(true)
         }}
         className={`text-sm font-bold ${
-          isUpdatingHousehold ? "cursor-not-allowed" : "hover:underline"
-        } ${
-          isUpdatingHousehold
-            ? "text-pink-200"
-            : `text-${sharedStyles.primaryColor}`
-        }`}
+          isUpdatingHousehold ? 'cursor-not-allowed' : 'hover:underline'
+        } ${isUpdatingHousehold ? 'text-pink-200' : `text-${sharedStyles.primaryColor}`}`}
       >
-        {isUpdatingHousehold ? "Processing..." : "Delete Party"}
+        {isUpdatingHousehold ? 'Processing...' : 'Delete Party'}
       </button>
     </div>
-  );
+  )
 }

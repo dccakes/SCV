@@ -1,25 +1,25 @@
-import { sharedStyles } from "~/app/utils/shared-styles";
+import { sharedStyles } from '~/app/utils/shared-styles'
 
 type AnimatedInputLabelProps = {
-  id: string;
-  type?: string;
-  pattern?: string;
-  title?: string;
-  inputValue: string;
-  fieldName?: string;
-  labelText: string;
-  guestIndex?: number;
-  required?: boolean;
+  id: string
+  type?: string
+  pattern?: string
+  title?: string
+  inputValue: string
+  fieldName?: string
+  labelText: string
+  guestIndex?: number
+  required?: boolean
   handleOnChange: ({
     field,
     inputValue,
     guestIndex,
   }: {
-    field: string;
-    inputValue: string;
-    guestIndex: number;
-  }) => void;
-};
+    field: string
+    inputValue: string
+    guestIndex: number
+  }) => void
+}
 
 export default function AnimatedInputLabel({
   id,
@@ -36,16 +36,16 @@ export default function AnimatedInputLabel({
   return (
     <div className="relative">
       <input
-        type={type ?? "text"}
+        type={type ?? 'text'}
         pattern={pattern}
         title={title}
         id={id}
         placeholder=" "
-        value={inputValue ?? ""}
+        value={inputValue ?? ''}
         required={required ?? false}
         onChange={(e) =>
           handleOnChange({
-            field: fieldName ?? "",
+            field: fieldName ?? '',
             inputValue: e.target.value,
             guestIndex: guestIndex ?? 0,
           })
@@ -56,5 +56,5 @@ export default function AnimatedInputLabel({
         {labelText}
       </label>
     </div>
-  );
+  )
 }

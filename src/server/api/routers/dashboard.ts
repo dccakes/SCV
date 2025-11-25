@@ -1,11 +1,17 @@
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import { calculateDaysRemaining, formatDateNumber } from "~/app/utils/helpers";
-
-import { type Invitation, type User } from "~/app/utils/shared-types";
+import { calculateDaysRemaining, formatDateNumber } from '~/app/utils/helpers'
+import {
+  type Event,
+  type Guest,
+  type Household,
+  type Invitation,
+  type Question,
+  type User,
+} from '~/app/utils/shared-types'
+import { createTRPCRouter, publicProcedure } from '~/server/api/trpc'
 
 export const dashboardRouter = createTRPCRouter({
   getByUserId: publicProcedure.query(async ({ ctx }) => {
-    if (!ctx.auth.userId) return null;
+    if (!ctx.auth.userId) return null
 
     const households = await ctx.db.household.findMany({
       where: {
@@ -14,7 +20,7 @@ export const dashboardRouter = createTRPCRouter({
       select: {
         guests: {
           orderBy: {
-            firstName: "asc",
+            firstName: 'asc',
           },
         },
         id: true,
@@ -38,27 +44,27 @@ export const dashboardRouter = createTRPCRouter({
         },
       },
       orderBy: {
-        createdAt: "asc",
+        createdAt: 'asc',
       },
-    });
+    })
 
     const invitations = await ctx.db.invitation.findMany({
       where: {
         userId: ctx.auth.userId,
       },
-    });
+    })
 
     const events = await ctx.db.event.findMany({
       where: {
         userId: ctx.auth.userId,
       },
       orderBy: {
-        createdAt: "asc",
+        createdAt: 'asc',
       },
       include: {
         questions: {
           orderBy: {
-            createdAt: "asc",
+            createdAt: 'asc',
           },
           include: {
             options: true,
@@ -70,13 +76,13 @@ export const dashboardRouter = createTRPCRouter({
           },
         },
       },
-    });
+    })
 
     const currentUser: User | null = await ctx.db.user.findFirst({
       where: {
         id: ctx.auth.userId,
       },
-    });
+    })
 
     const website = await ctx.db.website.findFirst({
       where: {
@@ -85,7 +91,7 @@ export const dashboardRouter = createTRPCRouter({
       include: {
         generalQuestions: {
           orderBy: {
-            createdAt: "asc",
+            createdAt: 'asc',
           },
           include: {
             options: true,
@@ -97,19 +103,17 @@ export const dashboardRouter = createTRPCRouter({
           },
         },
       },
-    });
+    })
 
-    if (!currentUser || !website) return null;
+    if (!currentUser || !website) return null
 
-    const weddingDate = events.find(
-      (event) => event.name === "Wedding Day",
-    )?.date;
+    const weddingDate = events.find((event: Event) => event.name === 'Wedding Day')?.date
 
     const weddingData = {
       website: {
         ...website,
         generalQuestions: await Promise.all(
-          website.generalQuestions.map(async (question) => {
+          website.generalQuestions.map(async (question: Question) => {
             return {
               ...question,
               recentAnswer: await ctx.db.answer.findFirst({
@@ -117,7 +121,7 @@ export const dashboardRouter = createTRPCRouter({
                   questionId: question.id,
                 },
                 orderBy: {
-                  createdAt: "desc",
+                  createdAt: 'desc',
                 },
                 take: 1,
                 // select: {
@@ -129,8 +133,8 @@ export const dashboardRouter = createTRPCRouter({
                 //   }
                 // }
               }),
-            };
-          }),
+            }
+          })
         ),
       },
       groomFirstName: currentUser.groomFirstName,
@@ -138,16 +142,16 @@ export const dashboardRouter = createTRPCRouter({
       brideFirstName: currentUser.brideFirstName,
       brideLastName: currentUser.brideLastName,
       date: {
-        standardFormat: weddingDate?.toLocaleDateString("en-us", {
-          weekday: "long",
-          year: "numeric",
-          month: "short",
-          day: "numeric",
+        standardFormat: weddingDate?.toLocaleDateString('en-us', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
         }),
         numberFormat: formatDateNumber(weddingDate),
       },
       daysRemaining: calculateDaysRemaining(weddingDate) ?? -1,
-    };
+    }
 
     const dashboardData = {
       weddingData,
@@ -157,61 +161,62 @@ export const dashboardRouter = createTRPCRouter({
         },
       }),
       totalEvents: events.length,
-      households: households.map((household) => {
+      households: households.map((household: Household) => {
         return {
           ...household,
-          guests: household.guests.map((guest) => {
+          guests: household.guests.map((guest: Guest) => {
             return {
               ...guest,
-              invitations: invitations.reduce(
-                (acc: Invitation[], invitation) => {
-                  if (guest.id === invitation.guestId) {
-                    acc.push({
-                      eventId: invitation.eventId,
-                      rsvp: invitation.rsvp,
-                    });
-                  }
-                  return acc;
-                },
-                [],
-              ),
-            };
+              invitations: invitations.reduce((acc: Invitation[], invitation: Invitation) => {
+                if (guest.id === invitation.guestId) {
+                  acc.push({
+                    guestId: invitation.guestId,
+                    eventId: invitation.eventId,
+                    invitedAt: invitation.invitedAt,
+                    updatedAt: invitation.updatedAt,
+                    rsvp: invitation.rsvp,
+                    userId: invitation.userId,
+                  })
+                }
+                return acc
+              }, []),
+            }
           }),
-        };
+        }
       }),
 
       events: await Promise.all(
-        events.map(async (event) => {
+        events.map(async (event: Event) => {
           const guestResponses = {
             invited: 0,
             attending: 0,
             declined: 0,
             notInvited: 0,
-          };
+          }
 
-          invitations.forEach((rsvp) => {
+          invitations.forEach((rsvp: Invitation) => {
             if (event.id === rsvp.eventId) {
               switch (rsvp.rsvp) {
-                case "Invited":
-                  guestResponses.invited += 1;
-                  break;
-                case "Attending":
-                  guestResponses.attending += 1;
-                  break;
-                case "Declined":
-                  guestResponses.declined += 1;
-                  break;
+                case 'Invited':
+                  guestResponses.invited += 1
+                  break
+                case 'Attending':
+                  guestResponses.attending += 1
+                  break
+                case 'Declined':
+                  guestResponses.declined += 1
+                  break
                 default:
-                  guestResponses.notInvited += 1;
-                  break;
+                  guestResponses.notInvited += 1
+                  break
               }
             }
-          });
+          })
 
           return {
             ...event,
             questions: await Promise.all(
-              event.questions.map(async (question) => {
+              event.questions.map(async (question: Question) => {
                 return {
                   ...question,
                   recentAnswer: await ctx.db.answer.findFirst({
@@ -219,19 +224,19 @@ export const dashboardRouter = createTRPCRouter({
                       questionId: question.id,
                     },
                     orderBy: {
-                      createdAt: "desc",
+                      createdAt: 'desc',
                     },
                     take: 1,
                   }),
-                };
-              }),
+                }
+              })
             ),
             guestResponses,
-          };
-        }),
+          }
+        })
       ),
-    };
+    }
 
-    return dashboardData;
+    return dashboardData
   }),
-});
+})

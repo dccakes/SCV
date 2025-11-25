@@ -1,21 +1,14 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { IoIosCheckmarkCircleOutline } from "react-icons/io";
-import {
-  useRsvpForm,
-  useUpdateRsvpForm,
-} from "~/app/_components/contexts/rsvp-form-context";
+import { useState } from 'react'
+import { IoIosCheckmarkCircleOutline } from 'react-icons/io'
 
-import {
-  type Question,
-  type Guest,
-  type StepFormProps,
-} from "~/app/utils/shared-types";
+import { useRsvpForm, useUpdateRsvpForm } from '~/app/_components/contexts/rsvp-form-context'
+import { type Guest, type Question, type StepFormProps } from '~/app/utils/shared-types'
 
 interface QuestionMultipleChoiceProps extends StepFormProps {
-  guest?: Guest;
-  question: Question;
+  guest?: Guest
+  question: Question
 }
 
 export default function QuestionMultipleChoice({
@@ -24,11 +17,9 @@ export default function QuestionMultipleChoice({
   guest,
   question,
 }: QuestionMultipleChoiceProps) {
-  const rsvpFormData = useRsvpForm();
-  const updateRsvpForm = useUpdateRsvpForm();
-  const [selectedOptionId, setSelectedOptionId] = useState<
-    string | undefined
-  >();
+  const rsvpFormData = useRsvpForm()
+  const updateRsvpForm = useUpdateRsvpForm()
+  const [selectedOptionId, setSelectedOptionId] = useState<string | undefined>()
 
   return (
     <div className="flex flex-col gap-5">
@@ -44,7 +35,7 @@ export default function QuestionMultipleChoice({
             <li
               key={option.id}
               onClick={() => setSelectedOptionId(option.id)}
-              className={`relative mb-3 cursor-pointer rounded-lg border border-gray-700 p-5 hover:bg-gray-700 hover:text-white ${selectedOptionId === option.id && "bg-gray-700 text-white"}`}
+              className={`relative mb-3 cursor-pointer rounded-lg border border-gray-700 p-5 hover:bg-gray-700 hover:text-white ${selectedOptionId === option.id && 'bg-gray-700 text-white'}`}
             >
               <div className="flex flex-col gap-3">
                 <h3>{option.text}</h3>
@@ -56,11 +47,11 @@ export default function QuestionMultipleChoice({
                 </div>
               )}
             </li>
-          );
+          )
         })}
       </ul>
       <button
-        className={`mt-3 bg-stone-400 py-3 text-xl tracking-wide text-white ${selectedOptionId === undefined ? "cursor-not-allowed bg-stone-400" : "bg-stone-700"}`}
+        className={`mt-3 bg-stone-400 py-3 text-xl tracking-wide text-white ${selectedOptionId === undefined ? 'cursor-not-allowed bg-stone-400' : 'bg-stone-700'}`}
         type="button"
         disabled={selectedOptionId === undefined}
         onClick={() => {
@@ -68,21 +59,19 @@ export default function QuestionMultipleChoice({
             answersToQuestions: [
               ...rsvpFormData.answersToQuestions,
               {
-                questionId: question.id ?? "-1",
-                questionType: "Option",
+                questionId: question.id ?? '-1',
+                questionType: 'Option',
                 response: selectedOptionId!,
                 guestId: guest?.id,
                 householdId: rsvpFormData.selectedHousehold?.id,
                 guestFirstName:
-                  guest?.firstName ??
-                  rsvpFormData.selectedHousehold?.primaryContact?.firstName,
+                  guest?.firstName ?? rsvpFormData.selectedHousehold?.primaryContact?.firstName,
                 guestLastName:
-                  guest?.lastName ??
-                  rsvpFormData.selectedHousehold?.primaryContact?.lastName,
+                  guest?.lastName ?? rsvpFormData.selectedHousehold?.primaryContact?.lastName,
               },
             ],
-          });
-          goNext && goNext();
+          })
+          goNext?.()
         }}
       >
         CONTINUE
@@ -91,7 +80,7 @@ export default function QuestionMultipleChoice({
         <button
           className={`mt-3 bg-gray-700 py-3 text-xl tracking-wide text-white`}
           type="button"
-          onClick={() => goNext && goNext()}
+          onClick={() => goNext?.()}
         >
           SKIP
         </button>
@@ -99,10 +88,10 @@ export default function QuestionMultipleChoice({
       <button
         className={`mt-3 bg-gray-700 py-3 text-xl tracking-wide text-white`}
         type="submit"
-        onClick={() => goBack && goBack()}
+        onClick={() => goBack?.()}
       >
         BACK
       </button>
     </div>
-  );
+  )
 }

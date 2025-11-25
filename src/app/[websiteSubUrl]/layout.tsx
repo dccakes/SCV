@@ -1,11 +1,8 @@
-import Image from "next/image";
-import DefaultBanner from "../_components/images/default-banner.jpg";
+import Image from 'next/image'
 
-export default function WeddingWebsiteLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+import DefaultBanner from '~/app/_components/images/default-banner.jpg'
+
+export default function WeddingWebsiteLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <div className="relative h-48 w-full">
@@ -17,5 +14,5 @@ export default function WeddingWebsiteLayout({
       </div>
       {children}
     </>
-  );
+  )
 }

@@ -1,106 +1,99 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { api } from "~/trpc/react";
-import { useRouter } from "next/navigation";
-import { sharedStyles } from "../../utils/shared-styles";
-import { IoMdClose } from "react-icons/io";
-import SidePaneWrapper from "./wrapper";
-import AnimatedInputLabel from "./animated-input-label";
-import DeleteConfirmation from "./delete-confirmation";
-import QuestionOptionsForm from "./rsvp/question-option-form";
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { type Dispatch, type SetStateAction } from 'react'
+import { IoMdClose } from 'react-icons/io'
 
-import { type Dispatch, type SetStateAction } from "react";
-import { type TQuestionOption, type Question } from "~/app/utils/shared-types";
+import AnimatedInputLabel from '~/app/_components/forms/animated-input-label'
+import DeleteConfirmation from '~/app/_components/forms/delete-confirmation'
+import QuestionOptionsForm from '~/app/_components/forms/rsvp/question-option-form'
+import SidePaneWrapper from '~/app/_components/forms/wrapper'
+import { sharedStyles } from '~/app/utils/shared-styles'
+import { type Question, type TQuestionOption } from '~/app/utils/shared-types'
+import { api } from '~/trpc/react'
 
 const defaultQuestionOptions: TQuestionOption[] = [
   {
-    text: "",
-    description: "",
+    text: '',
+    description: '',
   },
   {
-    text: "",
-    description: "",
+    text: '',
+    description: '',
   },
-];
+]
 
 type QuestionFormProps = {
-  isEditMode: boolean;
-  question: Question;
-  setShowQuestionForm: Dispatch<SetStateAction<boolean>>;
-};
+  isEditMode: boolean
+  question: Question
+  setShowQuestionForm: Dispatch<SetStateAction<boolean>>
+}
 
 export default function QuestionForm({
   isEditMode,
   question,
   setShowQuestionForm,
 }: QuestionFormProps) {
-  const router = useRouter();
-  const [deletedOptions, setDeletedOptions] = useState<string[]>([]);
+  const router = useRouter()
+  const [deletedOptions, setDeletedOptions] = useState<string[]>([])
   const [questionOptions, setQuestionOptions] = useState<TQuestionOption[]>(
-    question.options && question.options.length > 1
-      ? question.options
-      : defaultQuestionOptions,
-  );
-  const [questionType, setQuestionType] = useState<string>(
-    question.type ?? "Text",
-  );
-  const [questionInput, setQuestionInput] = useState<string>(
-    question.text ?? "",
-  );
-  const [showDeleteConfirmation, setShowDeleteConfirmation] =
-    useState<boolean>(false);
+    question.options && question.options.length > 1 ? question.options : defaultQuestionOptions
+  )
+  const [questionType, setQuestionType] = useState<string>(question.type ?? 'Text')
+  const [questionInput, setQuestionInput] = useState<string>(question.text ?? '')
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false)
 
   const upsertQuestion = api.question.upsert.useMutation({
     onSuccess: () => {
-      setShowQuestionForm(false);
-      router.refresh();
+      setShowQuestionForm(false)
+      router.refresh()
     },
     onError: (err) => {
-      if (err) window.alert(err);
-      else window.alert("Failed to update question! Please try again later.");
+      if (err) window.alert(err)
+      else window.alert('Failed to update question! Please try again later.')
     },
-  });
+  })
 
   const deleteQuestion = api.question.delete.useMutation({
     onSuccess: () => {
-      setShowQuestionForm(false);
-      router.refresh();
+      setShowQuestionForm(false)
+      router.refresh()
     },
     onError: (err) => {
-      if (err) window.alert(err);
-      else window.alert("Failed to delete question! Please try again later.");
+      if (err) window.alert(err)
+      else window.alert('Failed to delete question! Please try again later.')
     },
-  });
+  })
 
   const handleOnChange = ({ inputValue }: { inputValue: string }) => {
-    setQuestionInput(inputValue);
-  };
+    setQuestionInput(inputValue)
+  }
 
   const handleOnSubmit = () => {
     // delete options in db when changing the question type to Option from Text
-    let deleteOptions = deletedOptions;
-    if (question.type === "Option" && questionType === "Text") {
-      deleteOptions = question.options?.map((option) => option.id) ?? [];
+    let deleteOptions = deletedOptions
+    if (question.type === 'Option' && questionType === 'Text') {
+      deleteOptions = question.options?.map((option) => option.id) ?? []
     }
     upsertQuestion.mutate({
       type: questionType,
       text: questionInput,
-      isRequired: questionType === "Option",
+      isRequired: questionType === 'Option',
       eventId: question.eventId,
       websiteId: question.websiteId,
       questionId: question.id,
-      options: questionType === "Option" ? questionOptions : undefined,
+      options: questionType === 'Option' ? questionOptions : undefined,
       deletedOptions: deleteOptions,
-    });
-  };
+    })
+  }
 
-  const isProcessing = upsertQuestion.isLoading || deleteQuestion.isLoading;
+  const isProcessing = upsertQuestion.isPending || deleteQuestion.isPending
 
   if (showDeleteConfirmation) {
     return (
       <DeleteConfirmation
-        isProcessing={deleteQuestion.isLoading}
+        isProcessing={deleteQuestion.isPending}
         disclaimerText={
           "This will permanently delete the question and any answers you've already received."
         }
@@ -111,15 +104,15 @@ export default function QuestionForm({
           })
         }
       />
-    );
+    )
   }
 
   return (
     <SidePaneWrapper>
       <form
         onSubmit={(e) => {
-          e.preventDefault();
-          handleOnSubmit();
+          e.preventDefault()
+          handleOnSubmit()
         }}
         className="pb-32"
       >
@@ -134,8 +127,7 @@ export default function QuestionForm({
         <div className="bg-pink-100 px-5 py-3">
           <b>FYI: </b>
           <span>
-            Guests can only skip short-answer questions. They must answer
-            multiple-choice questions.
+            Guests can only skip short-answer questions. They must answer multiple-choice questions.
           </span>
         </div>
         <div className="mt-7 px-5">
@@ -151,8 +143,8 @@ export default function QuestionForm({
               <input
                 type="radio"
                 id="short-answer"
-                checked={questionType === "Text"}
-                onChange={() => setQuestionType("Text")}
+                checked={questionType === 'Text'}
+                onChange={() => setQuestionType('Text')}
                 className="h-6 w-6"
               />
               <label htmlFor="short-answer">Short Answer</label>
@@ -161,15 +153,15 @@ export default function QuestionForm({
               <input
                 type="radio"
                 id="multiple-choice"
-                checked={questionType === "Option"}
-                onChange={() => setQuestionType("Option")}
+                checked={questionType === 'Option'}
+                onChange={() => setQuestionType('Option')}
                 className="h-6 w-6"
               />
               <label htmlFor="multiple-choice">Multiple Choice</label>
             </div>
           </div>
         </div>
-        {questionType === "Option" && (
+        {questionType === 'Option' && (
           <QuestionOptionsForm
             questionOptions={questionOptions}
             setQuestionOptions={setQuestionOptions}
@@ -184,7 +176,7 @@ export default function QuestionForm({
         />
       </form>
     </SidePaneWrapper>
-  );
+  )
 }
 
 const Buttons = ({
@@ -193,10 +185,10 @@ const Buttons = ({
   setShowQuestionForm,
   setShowDeleteConfirmation,
 }: {
-  isEditMode: boolean;
-  isProcessing: boolean;
-  setShowQuestionForm: Dispatch<SetStateAction<boolean>>;
-  setShowDeleteConfirmation: Dispatch<SetStateAction<boolean>>;
+  isEditMode: boolean
+  isProcessing: boolean
+  setShowQuestionForm: Dispatch<SetStateAction<boolean>>
+  setShowDeleteConfirmation: Dispatch<SetStateAction<boolean>>
 }) => {
   return (
     <div
@@ -208,7 +200,7 @@ const Buttons = ({
           disabled={isProcessing}
           onClick={() => setShowQuestionForm(false)}
           className={`w-1/2 ${sharedStyles.secondaryButton({
-            py: "py-2",
+            py: 'py-2',
             isLoading: isProcessing,
           })}`}
         >
@@ -218,30 +210,30 @@ const Buttons = ({
           type="submit"
           disabled={isProcessing}
           className={`w-1/2 ${sharedStyles.primaryButton({
-            px: "px-2",
-            py: "py-2",
+            px: 'px-2',
+            py: 'py-2',
             isLoading: isProcessing,
           })}`}
         >
-          {isProcessing ? "Processing..." : "Save"}
+          {isProcessing ? 'Processing...' : 'Save'}
         </button>
       </div>
       {isEditMode && (
         <button
           type="button"
           onClick={(e) => {
-            e.preventDefault();
-            setShowDeleteConfirmation(true);
+            e.preventDefault()
+            setShowDeleteConfirmation(true)
           }}
           className={`text-sm font-bold ${
             isProcessing
-              ? "cursor-not-allowed text-pink-200"
+              ? 'cursor-not-allowed text-pink-200'
               : `text-${sharedStyles.primaryColor} hover:underline`
           }`}
         >
-          {isProcessing ? "Processing..." : "Delete Question"}
+          {isProcessing ? 'Processing...' : 'Delete Question'}
         </button>
       )}
     </div>
-  );
-};
+  )
+}

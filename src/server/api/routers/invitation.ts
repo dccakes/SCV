@@ -1,9 +1,6 @@
-import { z } from "zod";
-import {
-  createTRPCRouter,
-  protectedProcedure,
-  publicProcedure,
-} from "~/server/api/trpc";
+import { z } from 'zod'
+
+import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
 
 export const invitationRouter = createTRPCRouter({
   create: protectedProcedure
@@ -12,11 +9,11 @@ export const invitationRouter = createTRPCRouter({
         guestId: z.number(),
         eventId: z.string(),
         rsvp: z.string(),
-      }),
+      })
     )
     .mutation(async ({ input, ctx }) => {
-      const userId = ctx.auth.userId;
-      const { guestId, eventId, rsvp } = input;
+      const userId = ctx.auth.userId
+      const { guestId, eventId, rsvp } = input
 
       return await ctx.db.invitation.create({
         data: {
@@ -25,7 +22,7 @@ export const invitationRouter = createTRPCRouter({
           rsvp,
           userId,
         },
-      });
+      })
     }),
 
   update: protectedProcedure
@@ -34,7 +31,7 @@ export const invitationRouter = createTRPCRouter({
         guestId: z.number(),
         eventId: z.string(),
         rsvp: z.string(),
-      }),
+      })
     )
     .mutation(async ({ input, ctx }) => {
       return await ctx.db.invitation.update({
@@ -47,15 +44,15 @@ export const invitationRouter = createTRPCRouter({
         data: {
           rsvp: input.rsvp,
         },
-      });
+      })
     }),
 
   getAllByUserId: publicProcedure.query(async ({ ctx }) => {
-    if (!ctx.auth.userId) return;
+    if (!ctx.auth.userId) return
     return await ctx.db.invitation.findMany({
       where: {
         userId: ctx.auth.userId,
       },
-    });
+    })
   }),
-});
+})

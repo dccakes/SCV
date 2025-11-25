@@ -1,0 +1,58 @@
+name: Release Please
+
+on:
+  workflow_dispatch: # Allow manual trigger
+  push:
+    branches:
+      - development
+      - main
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Run release-please
+        id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target-branch: ${{ github.ref_name }}
+          config-file: .release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      - name: Log release-please output
+        env:
+          PR_OUTPUT: ${{ steps.release.outputs.pr }}
+          RELEASE_CREATED: ${{ steps.release.outputs.release_created }}
+          TAG_NAME: ${{ steps.release.outputs.tag_name }}
+        run: |
+          echo "Release created: ${RELEASE_CREATED}"
+
+          # Parse PR JSON output if it exists
+          if [ -n "${PR_OUTPUT}" ] && [ "${PR_OUTPUT}" != "null" ]; then
+            PR_NUMBER=$(echo "${PR_OUTPUT}" | jq -r '.number // empty')
+            if [ -n "${PR_NUMBER}" ]; then
+              echo "✅ Release PR created/updated: https://github.com/${{ github.repository }}/pull/${PR_NUMBER}"
+            fi
+          fi
+
+          if [ "${RELEASE_CREATED}" == "true" ]; then
+            echo "🎉 Release ${TAG_NAME} created!"
+            echo "Tag: ${TAG_NAME}"
+            echo "Release URL: https://github.com/${{ github.repository }}/releases/tag/${TAG_NAME}"
+          fi
+
+      # Optional: Add deployment or other post-release steps here
+      - name: Checkout code (if release created)
+        if: steps.release.outputs.release_created
+        uses: actions/checkout@v4
+
+      # Example: You could trigger deployment, publish packages, etc.
+      # - name: Deploy to production
+      #   if: steps.release.outputs.release_created
+      #   run: |
+      #     echo "Deploying version ${{ steps.release.outputs.tag_name }}"

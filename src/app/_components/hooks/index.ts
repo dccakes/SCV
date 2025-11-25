@@ -1,52 +1,52 @@
-import { useEffect, useRef, useState } from "react";
-import { type ReactElement } from "react";
+import { useEffect, useRef, useState } from 'react'
+import { type ReactElement } from 'react'
 
 const useDisablePageScroll = () => {
   useEffect(() => {
-    document.body.classList.add("overflow-hidden");
-    return () => document.body.classList.remove("overflow-hidden");
-  }, []);
-};
+    document.body.classList.add('overflow-hidden')
+    return () => document.body.classList.remove('overflow-hidden')
+  }, [])
+}
 
 const useOuterClick = (callback: () => void) => {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (ref.current && !ref.current.contains(event.target as Node)) {
-        callback();
+        callback()
       }
-    };
+    }
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside)
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [callback]);
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [callback])
 
-  return ref;
-};
+  return ref
+}
 
 const useMultistepForm = (steps: ReactElement[]) => {
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0)
 
   function next() {
     setCurrentStepIndex((i) => {
-      if (i >= steps.length - 1) return i;
-      return i + 1;
-    });
+      if (i >= steps.length - 1) return i
+      return i + 1
+    })
   }
 
   function back() {
     setCurrentStepIndex((i) => {
-      if (i <= 0) return i;
-      return i - 1;
-    });
+      if (i <= 0) return i
+      return i - 1
+    })
   }
 
   function goTo(index: number) {
-    setCurrentStepIndex(index);
+    setCurrentStepIndex(index)
   }
 
   return {
@@ -58,25 +58,25 @@ const useMultistepForm = (steps: ReactElement[]) => {
     goTo,
     next,
     back,
-  };
-};
+  }
+}
 
 const useConfirmReloadPage = (shouldPreventUnload: boolean) => {
   useEffect(() => {
     const preventUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = "Changes you made may not be saved.";
-    };
+      e.preventDefault()
+      e.returnValue = 'Changes you made may not be saved.'
+    }
 
-    if (typeof window !== undefined && shouldPreventUnload) {
-      window.addEventListener("beforeunload", preventUnload);
+    if (typeof window !== 'undefined' && shouldPreventUnload) {
+      window.addEventListener('beforeunload', preventUnload)
     }
 
     return () => {
-      window.removeEventListener("beforeunload", preventUnload);
-    };
-  }, [shouldPreventUnload]);
-};
+      window.removeEventListener('beforeunload', preventUnload)
+    }
+  }, [shouldPreventUnload])
+}
 
 const useScrollToTop = () => {
   useEffect(() => {
@@ -84,19 +84,19 @@ const useScrollToTop = () => {
       window.scroll({
         top: 0,
         left: 0,
-        behavior: "smooth",
-      });
-    } catch (error) {
+        behavior: 'smooth',
+      })
+    } catch {
       // fallback for older browsers
-      window.scrollTo(0, 0);
+      window.scrollTo(0, 0)
     }
-  }, []);
-};
+  }, [])
+}
 
 export {
-  useDisablePageScroll,
-  useOuterClick,
-  useMultistepForm,
   useConfirmReloadPage,
+  useDisablePageScroll,
+  useMultistepForm,
+  useOuterClick,
   useScrollToTop,
-};
+}

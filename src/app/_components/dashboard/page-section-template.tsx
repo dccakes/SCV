@@ -1,24 +1,24 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useToggleEditRsvpSettingsForm } from "../contexts/edit-rsvp-settings-form-context";
-import { AiOutlineDown, AiOutlinePlusCircle } from "react-icons/ai";
-import { BsPencil, BsThreeDotsVertical } from "react-icons/bs";
-import { IoIosArrowForward } from "react-icons/io";
-import { sharedStyles } from "../../utils/shared-styles";
-import { useOuterClick } from "../hooks";
-import { LiaEyeSlash } from "react-icons/lia";
-import { FaCog } from "react-icons/fa";
+import Link from 'next/link'
+import { useState } from 'react'
+import { type Dispatch, type SetStateAction } from 'react'
+import { AiOutlineDown, AiOutlinePlusCircle } from 'react-icons/ai'
+import { BsPencil, BsThreeDotsVertical } from 'react-icons/bs'
+import { FaCog } from 'react-icons/fa'
+import { IoIosArrowForward } from 'react-icons/io'
+import { LiaEyeSlash } from 'react-icons/lia'
 
-import { type Dispatch, type SetStateAction } from "react";
+import { useToggleEditRsvpSettingsForm } from '~/app/_components/contexts/edit-rsvp-settings-form-context'
+import { useOuterClick } from '~/app/_components/hooks'
+import { sharedStyles } from '~/app/utils/shared-styles'
 
 type PageSectionsTemplateProps = {
-  title: string;
-  children?: React.ReactNode;
-  collapse: boolean;
-  setShowRsvpSettings?: Dispatch<SetStateAction<boolean>>;
-};
+  title: string
+  children?: React.ReactNode
+  collapse: boolean
+  setShowRsvpSettings?: Dispatch<SetStateAction<boolean>>
+}
 
 export default function PageSectionsTemplate({
   title,
@@ -26,12 +26,8 @@ export default function PageSectionsTemplate({
   collapse,
   setShowRsvpSettings,
 }: PageSectionsTemplateProps) {
-  const [showSection, setShowSection] = useState(true);
-  const [showMenu, setShowMenu] = useState(false);
-
-  useEffect(() => {
-    setShowSection(!collapse ?? true);
-  }, [collapse]);
+  const [showSection, setShowSection] = useState(!collapse)
+  const [showMenu, setShowMenu] = useState(false)
 
   return (
     <section className="mb-10">
@@ -47,7 +43,7 @@ export default function PageSectionsTemplate({
             <Link href="/dashboard/preview">
               <button className="text-pink-400">Preview</button>
             </Link>
-            {title !== "Home" && (
+            {title !== 'Home' && (
               <div className="relative flex">
                 <span className={`${sharedStyles.verticalDivider}`}>|</span>
                 <BsThreeDotsVertical
@@ -58,7 +54,7 @@ export default function PageSectionsTemplate({
                 {showMenu && (
                   <EditSectionMenu
                     setShowMenu={setShowMenu}
-                    isRsvpSection={title === "RSVP"}
+                    isRsvpSection={title === 'RSVP'}
                     setShowRsvpSettings={setShowRsvpSettings}
                   />
                 )}
@@ -69,16 +65,11 @@ export default function PageSectionsTemplate({
         {showSection && (
           <>
             {children}
-            {title !== "RSVP" && (
+            {title !== 'RSVP' && (
               <div className="border-t p-5">
                 <div className="flex cursor-pointer">
-                  <AiOutlinePlusCircle
-                    size={25}
-                    color={sharedStyles.primaryColorHex}
-                  />
-                  <p className={`pl-3 text-${sharedStyles.primaryColor}`}>
-                    Add More to {title}
-                  </p>
+                  <AiOutlinePlusCircle size={25} color={sharedStyles.primaryColorHex} />
+                  <p className={`pl-3 text-${sharedStyles.primaryColor}`}>Add More to {title}</p>
                 </div>
               </div>
             )}
@@ -86,22 +77,22 @@ export default function PageSectionsTemplate({
         )}
       </div>
     </section>
-  );
+  )
 }
 
 type EditSectionMenuProps = {
-  setShowMenu: Dispatch<SetStateAction<boolean>>;
-  isRsvpSection: boolean;
-  setShowRsvpSettings?: Dispatch<SetStateAction<boolean>>;
-};
+  setShowMenu: Dispatch<SetStateAction<boolean>>
+  isRsvpSection: boolean
+  setShowRsvpSettings?: Dispatch<SetStateAction<boolean>>
+}
 
 const EditSectionMenu = ({
   setShowMenu,
   isRsvpSection,
   setShowRsvpSettings,
 }: EditSectionMenuProps) => {
-  const editSectionMenuRef = useOuterClick(() => setShowMenu(false));
-  const toggleEditRsvpSettingsForm = useToggleEditRsvpSettingsForm();
+  const editSectionMenuRef = useOuterClick(() => setShowMenu(false))
+  const toggleEditRsvpSettingsForm = useToggleEditRsvpSettingsForm()
   return (
     <div
       ref={editSectionMenuRef}
@@ -111,7 +102,7 @@ const EditSectionMenu = ({
         <>
           <div
             className={`flex cursor-pointer items-center gap-3 border-b p-4 hover:underline text-${sharedStyles.primaryColor}`}
-            onClick={() => setShowRsvpSettings && setShowRsvpSettings(true)}
+            onClick={() => setShowRsvpSettings?.(true)}
           >
             <BsPencil size={20} color={sharedStyles.primaryColorHex} />
             <p className="text-lg">Edit Form</p>
@@ -147,5 +138,5 @@ const EditSectionMenu = ({
         </>
       )}
     </div>
-  );
-};
+  )
+}

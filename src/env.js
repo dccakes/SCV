@@ -11,12 +11,18 @@ export const env = createEnv({
       .string()
       .url()
       .refine(
-        (str) => !str.includes("YOUR_MYSQL_URL_HERE"),
+        (str) => !str.includes("YOUR_DATABASE_URL_HERE"),
         "You forgot to change the default URL"
       ),
+    DIRECT_URL: z.string().url().optional(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
+    // Optional: AWS S3 Storage (can be disabled for local dev)
+    AWS_S3_BUCKET_NAME: z.string().min(1).optional(),
+    AWS_S3_REGION: z.string().min(1).optional(),
+    AWS_S3_ACCESS_KEY_ID: z.string().min(1).optional(),
+    AWS_S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
   },
 
   /**
@@ -25,7 +31,8 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
-    // NEXT_PUBLIC_CLIENTVAR: z.string(),
+    // NEXT_PUBLIC_APP_URL for Better Auth
+    NEXT_PUBLIC_APP_URL: z.string().url().optional(),
   },
 
   /**
@@ -34,7 +41,13 @@ export const env = createEnv({
    */
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
+    DIRECT_URL: process.env.DIRECT_URL,
     NODE_ENV: process.env.NODE_ENV,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    AWS_S3_BUCKET_NAME: process.env.AWS_S3_BUCKET_NAME,
+    AWS_S3_REGION: process.env.AWS_S3_REGION,
+    AWS_S3_ACCESS_KEY_ID: process.env.AWS_S3_ACCESS_KEY_ID,
+    AWS_S3_SECRET_ACCESS_KEY: process.env.AWS_S3_SECRET_ACCESS_KEY,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

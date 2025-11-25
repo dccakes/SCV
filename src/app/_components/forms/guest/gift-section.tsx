@@ -1,22 +1,15 @@
-import { sharedStyles } from "~/app/utils/shared-styles";
+import { type Dispatch, type SetStateAction } from 'react'
 
-import { type Dispatch, type SetStateAction } from "react";
-import { type HouseholdFormData } from "~/app/utils/shared-types";
+import { sharedStyles } from '~/app/utils/shared-styles'
+import { type HouseholdFormData } from '~/app/utils/shared-types'
 
 type GiftSectionProps = {
-  setHouseholdFormData: Dispatch<SetStateAction<HouseholdFormData>>;
-  householdFormData: HouseholdFormData;
-};
+  setHouseholdFormData: Dispatch<SetStateAction<HouseholdFormData>>
+  householdFormData: HouseholdFormData
+}
 
-export default function GiftSection({
-  householdFormData,
-  setHouseholdFormData,
-}: GiftSectionProps) {
-  const handleOnChange = (
-    key: string,
-    value: boolean | string,
-    updatedEvent: string,
-  ) => {
+export default function GiftSection({ householdFormData, setHouseholdFormData }: GiftSectionProps) {
+  const handleOnChange = (key: string, value: boolean | string, updatedEvent: string) => {
     setHouseholdFormData((prev) => {
       return {
         ...prev,
@@ -25,13 +18,13 @@ export default function GiftSection({
             return {
               ...gift,
               [key]: value,
-            };
+            }
           }
-          return gift;
+          return gift
         }),
-      };
-    });
-  };
+      }
+    })
+  }
 
   return (
     <>
@@ -47,9 +40,7 @@ export default function GiftSection({
                   style={{ accentColor: sharedStyles.primaryColorHex }}
                   type="checkbox"
                   id={`thank-you-event: ${gift.eventId}`}
-                  onChange={(e) =>
-                    handleOnChange("thankyou", e.target.checked, gift.eventId)
-                  }
+                  onChange={(e) => handleOnChange('thankyou', e.target.checked, gift.eventId)}
                   checked={gift.thankyou}
                 />
                 <label
@@ -62,15 +53,13 @@ export default function GiftSection({
               <input
                 placeholder="Gift Received"
                 className="w-[100%] border p-3"
-                value={gift.description ?? ""}
-                onChange={(e) =>
-                  handleOnChange("description", e.target.value, gift.eventId)
-                }
+                value={gift.description ?? ''}
+                onChange={(e) => handleOnChange('description', e.target.value, gift.eventId)}
               />
             </div>
           </div>
-        );
+        )
       })}
     </>
-  );
+  )
 }
