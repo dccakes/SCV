@@ -337,122 +337,143 @@ server/domains/event/
 ├── event.repository.ts          ← Real implementation
 ├── event.service.ts              ← Real implementation
 └── __mocks__/
-    ├── event.repository.ts       ← Mock repository
-    └── event.service.ts          ← Mock service
+    └── event.repository.ts       ← Mock repository with exported mock functions
 ```
 
 **Creating Manual Mocks:**
 
+Export both individual mock functions AND the mocked class. This allows tests to:
+1. Configure mock return values per test
+2. Assert specific mock calls
+3. Reset mocks between tests
+
 ```typescript
 // server/domains/event/__mocks__/event.repository.ts
-export class EventRepository {
-  create = jest.fn()
-  findById = jest.fn()
-  findByUserId = jest.fn()
-  update = jest.fn()
-  delete = jest.fn()
+import { type Event } from '~/server/domains/event/event.types'
+
+// Export test fixtures for reuse
+export const mockEvent: Event = {
+  id: 'event-123',
+  name: 'Wedding Day',
+  date: new Date('2024-06-15'),
+  userId: 'user-123',
+  // ... other fields
+}
+
+// Export individual mock functions
+export const mockFindById = jest.fn()
+export const mockFindByUserId = jest.fn()
+export const mockCreate = jest.fn()
+export const mockUpdate = jest.fn()
+export const mockDelete = jest.fn()
+export const mockBelongsToUser = jest.fn()
+
+// Export mocked class that uses the mock functions
+export const EventRepository = jest.fn().mockImplementation(() => ({
+  findById: mockFindById,
+  findByUserId: mockFindByUserId,
+  create: mockCreate,
+  update: mockUpdate,
+  delete: mockDelete,
+  belongsToUser: mockBelongsToUser,
+}))
+
+// Export reset helper for use in beforeEach
+export const resetMocks = (): void => {
+  mockFindById.mockReset()
+  mockFindByUserId.mockReset()
+  mockCreate.mockReset()
+  mockUpdate.mockReset()
+  mockDelete.mockReset()
+  mockBelongsToUser.mockReset()
+  EventRepository.mockClear()
 }
 ```
 
-```typescript
-// server/domains/event/__mocks__/event.service.ts
-export class EventService {
-  createEvent = jest.fn()
-  getEvent = jest.fn()
-  getUserEvents = jest.fn()
-  updateEvent = jest.fn()
-  deleteEvent = jest.fn()
-}
-```
-
-**Why Manual Mocks:**
+**Why This Pattern:**
 1. **Co-location** - Mocks live next to code they mock
 2. **Auto-discovery** - Jest automatically finds `__mocks__` folders
-3. **Type-safe** - Mock structure matches real implementation
-4. **Reusable** - Same mock used across all tests
+3. **Reusable** - Same mock functions used across all tests
+4. **Configurable** - Each test can set up different return values
+5. **Resettable** - Clean slate between tests with `resetMocks()`
 
 ---
 
 ### Using Mocks in Tests
 
+**CRITICAL:** Import order matters! `jest.mock()` must come before importing from the mocked module.
+
 ```typescript
 // tests/unit/domains/event/event.service.test.ts
-import { EventService } from '~/server/domains/event/event.service'
-import { EventRepository } from '~/server/domains/event/event.repository'
+import { TRPCError } from '@trpc/server'
 
-// ✅ Mock the repository - Jest auto-loads from __mocks__
+// 1. FIRST: Declare the mock (hoisted by Jest)
 jest.mock('~/server/domains/event/event.repository')
+
+// 2. THEN: Import from the ORIGINAL path (Jest resolves to __mocks__)
+// @ts-expect-error - Importing mock functions from mocked module
+import {
+  EventRepository,
+  mockCreate,
+  mockEvent,
+  mockFindById,
+  resetMocks,
+} from '~/server/domains/event/event.repository'
+import { EventService } from '~/server/domains/event/event.service'
+
+// 3. Create typed aliases for mock functions
+const mockCreateFn = mockCreate as jest.Mock
+const mockFindByIdFn = mockFindById as jest.Mock
 
 describe('EventService', () => {
   let service: EventService
-  let mockRepository: jest.Mocked<EventRepository>
 
   beforeEach(() => {
-    // ✅ CRITICAL - Clear mocks between tests
-    jest.clearAllMocks()
-
-    mockRepository = new EventRepository() as jest.Mocked<EventRepository>
+    // 4. ALWAYS reset mocks between tests
+    resetMocks()
+    const mockRepository = new EventRepository({})
     service = new EventService(mockRepository)
   })
 
   describe('createEvent', () => {
     it('should create event with valid data', async () => {
-      // ✅ Setup mock return value
-      const mockEvent = {
-        id: 'evt_123',
-        name: 'Wedding',
-        date: new Date('2025-12-01')
-      }
-      mockRepository.create.mockResolvedValue(mockEvent)
+      // 5. Setup mock return value for this test
+      mockCreateFn.mockResolvedValue(mockEvent)
 
-      // ✅ Call service (which calls mocked repository)
-      const result = await service.createEvent('user_123', {
-        name: 'Wedding',
-        date: new Date('2025-12-01'),
+      const result = await service.createEvent('user-123', {
+        eventName: 'Wedding',
+        date: '2025-12-01',
       })
 
-      // ✅ Assert behavior
+      // 6. Assert behavior
       expect(result).toEqual(mockEvent)
-      expect(mockRepository.create).toHaveBeenCalledWith(
-        'user_123',
-        expect.any(Object)
+      expect(mockCreateFn).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'Wedding' })
       )
     })
 
     it('should reject past dates', async () => {
-      // ✅ Test business logic without hitting database
+      // Test business logic without hitting database
       await expect(
-        service.createEvent('user_123', {
-          name: 'Wedding',
-          date: new Date('2020-01-01'),
+        service.createEvent('user-123', {
+          eventName: 'Wedding',
+          date: '2020-01-01',
         })
-      ).rejects.toThrow('Event date cannot be in the past')
+      ).rejects.toThrow(TRPCError)
 
-      // ✅ Repository should not be called
-      expect(mockRepository.create).not.toHaveBeenCalled()
+      // Repository should NOT be called
+      expect(mockCreateFn).not.toHaveBeenCalled()
     })
   })
 })
 ```
 
-**Mock Setup Best Practices:**
-
-```typescript
-// ✅ GOOD - Clear mocks in beforeEach
-beforeEach(() => {
-  jest.clearAllMocks()
-  mockRepository.create.mockResolvedValue(mockEvent)
-})
-
-// ✅ GOOD - Override per test when needed
-it('should handle errors', async () => {
-  mockRepository.create.mockRejectedValue(new Error('Database error'))
-  // ... test error handling
-})
-
-// ❌ BAD - Forgetting to clear mocks
-// This causes test pollution between tests
-```
+**Key Points:**
+- ✅ `jest.mock('path')` BEFORE any imports from that path
+- ✅ Import from ORIGINAL path, NOT from `__mocks__` (avoids ESLint `jest/no-mocks-import` error)
+- ✅ Use `@ts-expect-error` for TypeScript (original module doesn't export mock functions)
+- ✅ Cast to `jest.Mock` for type safety on mock function calls
+- ✅ Call `resetMocks()` in `beforeEach` to prevent test pollution
 
 ---
 
@@ -462,46 +483,74 @@ For infrastructure like database or S3, create mocks in `__mocks__`:
 
 ```typescript
 // server/infrastructure/database/__mocks__/client.ts
+
+// Export individual mock functions for each model method
+export const mockUserFindUnique = jest.fn()
+export const mockUserCreate = jest.fn()
+export const mockEventFindMany = jest.fn()
+export const mockGuestFindMany = jest.fn()
+export const mockInvitationCreate = jest.fn()
+
+// Export the mock db object
 export const db = {
+  user: {
+    findUnique: mockUserFindUnique,
+    create: mockUserCreate,
+  },
   event: {
-    create: jest.fn(),
-    findMany: jest.fn(),
-    findUnique: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
+    findMany: mockEventFindMany,
   },
   guest: {
-    create: jest.fn(),
-    // ... other methods
+    findMany: mockGuestFindMany,
   },
-  // ... other models
+  invitation: {
+    create: mockInvitationCreate,
+  },
+}
+
+// Reset helper
+export const resetMocks = (): void => {
+  mockUserFindUnique.mockReset()
+  mockUserCreate.mockReset()
+  mockEventFindMany.mockReset()
+  mockGuestFindMany.mockReset()
+  mockInvitationCreate.mockReset()
 }
 ```
 
 Usage:
 ```typescript
 // tests/unit/domains/event/event.repository.test.ts
-import { db } from '~/server/infrastructure/database/client'
-
 jest.mock('~/server/infrastructure/database/client')
+
+// @ts-expect-error - Importing mock functions from mocked module
+import {
+  db,
+  mockEventFindMany,
+  resetMocks,
+} from '~/server/infrastructure/database/client'
+import { EventRepository } from '~/server/domains/event/event.repository'
+
+const mockEventFindManyFn = mockEventFindMany as jest.Mock
 
 describe('EventRepository', () => {
   let repository: EventRepository
 
   beforeEach(() => {
-    jest.clearAllMocks()
-    repository = new EventRepository()
+    resetMocks()
+    repository = new EventRepository(db as any)
   })
 
-  it('should create event in database', async () => {
-    const mockEvent = { id: 'evt_123', name: 'Wedding' }
-    ;(db.event.create as jest.Mock).mockResolvedValue(mockEvent)
+  it('should find events by user ID', async () => {
+    const events = [{ id: 'evt_123', name: 'Wedding' }]
+    mockEventFindManyFn.mockResolvedValue(events)
 
-    const result = await repository.create('user_123', { name: 'Wedding' })
+    const result = await repository.findByUserId('user_123')
 
-    expect(result).toEqual(mockEvent)
-    expect(db.event.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ name: 'Wedding' })
+    expect(result).toEqual(events)
+    expect(mockEventFindManyFn).toHaveBeenCalledWith({
+      where: { userId: 'user_123' },
+      orderBy: { createdAt: 'asc' },
     })
   })
 })
