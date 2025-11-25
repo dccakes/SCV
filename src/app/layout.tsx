@@ -6,14 +6,13 @@ import { EventFormProvider } from '~/app/_components/contexts/event-form-context
 import { GuestFormProvider } from '~/app/_components/contexts/guest-form-context'
 import { Providers } from '~/app/providers'
 import { Toaster } from '~/components/ui/toaster'
-// Temporarily disabled due to network restrictions in sandbox
-// import { Inter } from "next/font/google";
+import { Inter } from "next/font/google";
 import { TRPCReactProvider } from '~/trpc/react'
 
-// const inter = Inter({
-//   subsets: ["latin"],
-//   variable: "--font-sans",
-// });
+const inter = Inter({
+   subsets: ["latin"],
+   variable: "--font-sans",
+ });
 
 export const viewport: Viewport = {
   initialScale: 1,
@@ -21,7 +20,8 @@ export const viewport: Viewport = {
 }
 
 export const metadata = {
-  title: 'Not The Knot',
+  title: 'OSWP - The Open Source Wedding Project',
+  description: 'A modern, open-source wedding planning and RSVP management system',
   icons: [{ rel: 'icon', url: '/favicon.ico' }],
 }
 

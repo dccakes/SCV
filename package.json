@@ -1,5 +1,6 @@
 {
-  "name": "scv-app",
+  "name": "oswp",
+  "description": "The Open Source Wedding Project - A modern, open-source wedding planning and RSVP management system",
   "version": "0.1.0",
   "private": true,
   "type": "module",
