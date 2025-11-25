@@ -1,0 +1,102 @@
+# Docker Compose for SCV
+#
+# Usage:
+#   Development (PostgreSQL only, run app with npm run dev):
+#     docker compose up -d
+#
+#   Production (full stack):
+#     docker compose --profile prod up -d
+#
+#   With pgAdmin (database GUI):
+#     docker compose --profile admin up -d
+#
+#   Everything:
+#     docker compose --profile prod --profile admin up -d
+
+services:
+  # ==========================================
+  # PostgreSQL Database (always runs)
+  # ==========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: scv-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-scv}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-scv_password}
+      POSTGRES_DB: ${POSTGRES_DB:-scv_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-scv} -d ${POSTGRES_DB:-scv_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - scv-network
+
+  # ==========================================
+  # Application (production profile)
+  # ==========================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    container_name: scv-app
+    restart: unless-stopped
+    profiles:
+      - prod
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-scv}:${POSTGRES_PASSWORD:-scv_password}@postgres:5432/${POSTGRES_DB:-scv_db}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-change-me-in-production}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:3000}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - scv-network
+
+  # ==========================================
+  # Database Admin (pgAdmin)
+  # ==========================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: scv-pgadmin
+    restart: unless-stopped
+    profiles:
+      - admin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - scv-network
+
+networks:
+  scv-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
