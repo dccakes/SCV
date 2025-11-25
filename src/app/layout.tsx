@@ -4,6 +4,7 @@ import { type Viewport } from 'next/types'
 
 import { EventFormProvider } from '~/app/_components/contexts/event-form-context'
 import { GuestFormProvider } from '~/app/_components/contexts/guest-form-context'
+import { Providers } from '~/app/providers'
 import { Toaster } from '~/components/ui/toaster'
 // Temporarily disabled due to network restrictions in sandbox
 // import { Inter } from "next/font/google";
@@ -28,14 +29,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="font-sans">
-        <TRPCReactProvider>
-          <EventFormProvider>
-            <GuestFormProvider>
-              {children}
-              <Toaster />
-            </GuestFormProvider>
-          </EventFormProvider>
-        </TRPCReactProvider>
+        <Providers>
+          <TRPCReactProvider>
+            <EventFormProvider>
+              <GuestFormProvider>
+                {children}
+                <Toaster />
+              </GuestFormProvider>
+            </EventFormProvider>
+          </TRPCReactProvider>
+        </Providers>
       </body>
     </html>
   )

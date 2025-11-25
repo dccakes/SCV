@@ -9,6 +9,7 @@ const config = {
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
     './@/**/*.{ts,tsx}',
+    './node_modules/@daveyplate/better-auth-ui/dist/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   prefix: '',
   theme: {
