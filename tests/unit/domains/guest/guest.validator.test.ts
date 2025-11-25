@@ -63,10 +63,7 @@ describe('createGuestSchema', () => {
     }
 
     const result = createGuestSchema.safeParse(validInput)
-    expect(result.success).toBe(true)
-    if (result.success) {
-      expect(result.data.isPrimaryContact).toBe(false)
-    }
+    expect(result).toMatchObject({ success: true, data: { isPrimaryContact: false } })
   })
 })
 

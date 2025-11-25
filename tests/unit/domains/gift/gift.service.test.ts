@@ -8,7 +8,6 @@ jest.mock('~/server/domains/gift/gift.repository')
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   GiftRepository,
-  mockCreate,
   mockCreateMany,
   mockFindByEventId,
   mockFindByHouseholdId,

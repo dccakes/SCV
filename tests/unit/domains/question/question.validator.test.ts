@@ -104,10 +104,7 @@ describe('upsertQuestionSchema', () => {
     }
 
     const result = upsertQuestionSchema.safeParse(validInput)
-    expect(result.success).toBe(true)
-    if (result.success) {
-      expect(result.data.isRequired).toBe(false)
-    }
+    expect(result).toMatchObject({ success: true, data: { isRequired: false } })
   })
 
   it('should allow deletedOptions array', () => {

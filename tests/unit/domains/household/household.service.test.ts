@@ -21,7 +21,6 @@ import {
   mockHouseholdWithGuestsAndGifts,
   mockSearch,
   mockSearchResult,
-  mockUpdate,
   resetMocks,
 } from '~/server/domains/household/household.repository'
 import { HouseholdService } from '~/server/domains/household/household.service'
@@ -34,7 +33,6 @@ const mockSearchFn = mockSearch as jest.Mock
 const mockFindByIdFn = mockFindById as jest.Mock
 const mockFindByIdWithGuestsAndGiftsFn = mockFindByIdWithGuestsAndGifts as jest.Mock
 const mockFindByUserIdWithGuestsAndGiftsFn = mockFindByUserIdWithGuestsAndGifts as jest.Mock
-const mockUpdateFn = mockUpdate as jest.Mock
 
 describe('HouseholdService', () => {
   let householdService: HouseholdService
