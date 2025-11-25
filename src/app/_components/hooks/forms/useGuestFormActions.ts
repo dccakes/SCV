@@ -8,7 +8,7 @@ const useGuestFormActions = (closeForm: boolean, resetForm: () => void) => {
   const toggleGuestForm = useToggleGuestForm()
   const createGuests = api.household.create.useMutation({
     onSuccess: () => {
-      closeForm && toggleGuestForm()
+      if (closeForm) toggleGuestForm()
       router.refresh()
       resetForm()
     },

@@ -221,7 +221,9 @@ export const householdRouter = createTRPCRouter({
           })
         )
 
-        if (updatedInvitations.length !== Object.keys(guest.invites).length) return Promise.reject()
+        if (updatedInvitations.length !== Object.keys(guest.invites).length) {
+          return Promise.reject(new Error('Failed to update all invitations'))
+        }
 
         return {
           ...updatedGuest,

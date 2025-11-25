@@ -32,6 +32,7 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
   useConfirmReloadPage(currentStep > 1 && currentStep < numSteps.current)
   useEffect(() => {
     updateRsvpForm({ weddingData })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const submitRsvpForm = api.website.submitRsvpForm.useMutation({
@@ -61,9 +62,11 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
         acc.push(<EventRsvpForm event={event} invitedGuests={invitedGuests} />)
         for (const question of event.questions) {
           invitedGuests.forEach((guest) => {
-            question.type === 'Text'
-              ? acc.push(<QuestionShortAnswer question={question} guest={guest} />)
-              : acc.push(<QuestionMultipleChoice question={question} guest={guest} />)
+            if (question.type === 'Text') {
+              acc.push(<QuestionShortAnswer question={question} guest={guest} />)
+            } else {
+              acc.push(<QuestionMultipleChoice question={question} guest={guest} />)
+            }
           })
         }
       }
@@ -71,9 +74,11 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
     }, [])
 
     weddingData?.website.generalQuestions.forEach((question: Question) => {
-      question.type === 'Text'
-        ? newSteps?.push(<QuestionShortAnswer question={question} />)
-        : newSteps?.push(<QuestionMultipleChoice question={question} />)
+      if (question.type === 'Text') {
+        newSteps?.push(<QuestionShortAnswer question={question} />)
+      } else {
+        newSteps?.push(<QuestionMultipleChoice question={question} />)
+      }
     })
 
     const steps = newSteps ?? []

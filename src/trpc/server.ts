@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { createTRPCClient, httpBatchLink, loggerLink, TRPCClientError } from '@trpc/client'
+import { createTRPCClient, httpBatchLink, loggerLink } from '@trpc/client'
 import { headers } from 'next/headers'
 
 import { type AppRouter } from '~/server/api/root'

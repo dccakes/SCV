@@ -31,7 +31,11 @@ export default function GuestSearchFilter({
   const invitationFilterRef = useOuterClick(() => setShowInvitationDropdown(false))
 
   useEffect(() => {
+    // Reset filters when event changes - intentionally setting state in effect for state synchronization
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedRsvpFilter(null)
+
+    setSearchInput('')
   }, [selectedEventId])
 
   const eventsToMap =

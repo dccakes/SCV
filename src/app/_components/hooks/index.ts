@@ -86,7 +86,7 @@ const useScrollToTop = () => {
         left: 0,
         behavior: 'smooth',
       })
-    } catch (error) {
+    } catch {
       // fallback for older browsers
       window.scrollTo(0, 0)
     }

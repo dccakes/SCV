@@ -1,15 +1,13 @@
 import { z } from 'zod'
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
-
-const _s3Config = {
-  region: process.env.AWS_S3_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_S3_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_S3_SECRET_ACCESS_KEY!,
-  },
-}
-
+// const _s3Config = {
+//   region: process.env.AWS_S3_REGION,
+//   credentials: {
+//     accessKeyId: process.env.AWS_S3_ACCESS_KEY_ID!,
+//     secretAccessKey: process.env.AWS_S3_SECRET_ACCESS_KEY!,
+//   },
+// }
 export const uploadRouter = createTRPCRouter({
   getByUserId: publicProcedure.query(async ({ ctx }) => {
     if (!ctx.auth) return
@@ -19,7 +17,7 @@ export const uploadRouter = createTRPCRouter({
       },
     })
   }),
-  uploadFile: protectedProcedure.input(z.object({})).mutation(async ({ ctx }) => {
+  uploadFile: protectedProcedure.input(z.object({})).mutation(async () => {
     // const formData = await request.formData();
     // const files = formData.getAll("file") as File[];
     // const response = await Promise.all(

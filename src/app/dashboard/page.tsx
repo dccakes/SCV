@@ -54,7 +54,7 @@ const uploadImage = async (formData: FormData): Promise<{ ok: boolean }> => {
       )
     })
   )
-    .then(async (data) => {
+    .then(async () => {
       const session = await auth.api.getSession({
         headers: await headers(),
       })

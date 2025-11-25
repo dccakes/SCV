@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { type Dispatch, type SetStateAction } from 'react'
 import { AiOutlineDown, AiOutlinePlusCircle } from 'react-icons/ai'
 import { BsPencil, BsThreeDotsVertical } from 'react-icons/bs'
@@ -26,12 +26,8 @@ export default function PageSectionsTemplate({
   collapse,
   setShowRsvpSettings,
 }: PageSectionsTemplateProps) {
-  const [showSection, setShowSection] = useState(true)
+  const [showSection, setShowSection] = useState(!collapse)
   const [showMenu, setShowMenu] = useState(false)
-
-  useEffect(() => {
-    setShowSection(!collapse)
-  }, [collapse])
 
   return (
     <section className="mb-10">
