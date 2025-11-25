@@ -1,4 +1,4 @@
-# Docker Compose for SCV
+# Docker Compose for OSWP
 #
 # Usage:
 #   Development (PostgreSQL only, run app with npm run dev):
@@ -19,24 +19,24 @@ services:
   # ==========================================
   postgres:
     image: postgres:16-alpine
-    container_name: scv-postgres
+    container_name: oswp-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-scv}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-scv_password}
-      POSTGRES_DB: ${POSTGRES_DB:-scv_db}
+      POSTGRES_USER: ${POSTGRES_USER:-oswp_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-oswp_password}
+      POSTGRES_DB: ${POSTGRES_DB:-oswp_db}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-scv} -d ${POSTGRES_DB:-scv_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-oswp_user} -d ${POSTGRES_DB:-oswp_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
     networks:
-      - scv-network
+      - oswp-network
 
   # ==========================================
   # Application (production profile)
@@ -46,7 +46,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runner
-    container_name: scv-app
+    container_name: oswp-app
     restart: unless-stopped
     profiles:
       - prod
@@ -54,7 +54,7 @@ services:
       - "${APP_PORT:-3000}:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-scv}:${POSTGRES_PASSWORD:-scv_password}@postgres:5432/${POSTGRES_DB:-scv_db}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-oswp_user}:${POSTGRES_PASSWORD:-oswp_password}@postgres:5432/${POSTGRES_DB:-oswp_db}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-change-me-in-production}
       - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:3000}
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
@@ -67,14 +67,14 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - scv-network
+      - oswp-network
 
   # ==========================================
   # Database Admin (pgAdmin)
   # ==========================================
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: scv-pgadmin
+    container_name: oswp-pgadmin
     restart: unless-stopped
     profiles:
       - admin
@@ -89,10 +89,10 @@ services:
     depends_on:
       - postgres
     networks:
-      - scv-network
+      - oswp-network
 
 networks:
-  scv-network:
+  oswp-network:
     driver: bridge
 
 volumes:
