@@ -1,26 +1,36 @@
+// Domain routers (Phase 1 - migrated to domain architecture)
+import { userRouter } from '~/server/domains/user'
+import { websiteRouter } from '~/server/domains/website'
+import { eventRouter } from '~/server/domains/event'
+
+// Legacy routers (to be migrated in future phases)
 import { dashboardRouter } from '~/server/api/routers/dashboard'
-import { eventRouter } from '~/server/api/routers/event'
 import { giftRouter } from '~/server/api/routers/gift'
 import { guestRouter } from '~/server/api/routers/guest'
 import { householdRouter } from '~/server/api/routers/household'
 import { invitationRouter } from '~/server/api/routers/invitation'
 import { questionRouter } from '~/server/api/routers/question'
-import { userRouter } from '~/server/api/routers/user'
-import { websiteRouter } from '~/server/api/routers/website'
 import { createTRPCRouter } from '~/server/api/trpc'
 
 /**
  * This is the primary router for your server.
  *
- * All routers added in /api/routers should be manually added here.
+ * Domain Architecture Migration Status:
+ * - Phase 1 (Complete): user, website, event
+ * - Phase 2 (Pending): gift, guest, invitation
+ * - Phase 3 (Pending): question, household
+ * - Phase 4 (Pending): Application Services (dashboard, rsvp-submission, household-management)
  */
 export const appRouter = createTRPCRouter({
+  // Phase 1 domains (migrated)
+  user: userRouter,
   website: websiteRouter,
+  event: eventRouter,
+
+  // Legacy routers (to be migrated)
   dashboard: dashboardRouter,
   guest: guestRouter,
-  event: eventRouter,
   invitation: invitationRouter,
-  user: userRouter,
   household: householdRouter,
   gift: giftRouter,
   question: questionRouter,
