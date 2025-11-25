@@ -33,6 +33,8 @@ const mockWebsite = {
   password: null,
   coverPhotoUrl: null,
   isRsvpEnabled: true,
+  createdAt: new Date(),
+  updatedAt: new Date(),
   generalQuestions: [
     {
       id: 'question-gen-1',

@@ -45,6 +45,8 @@ export type WebsiteWithQuestions = {
   password: string | null
   coverPhotoUrl: string | null
   isRsvpEnabled: boolean
+  createdAt: Date
+  updatedAt: Date
   generalQuestions: QuestionWithRecentAnswer[]
 }
 
