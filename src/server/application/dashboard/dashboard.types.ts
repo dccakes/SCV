@@ -83,6 +83,8 @@ export type GuestWithInvitations = {
   isPrimaryContact: boolean
   householdId: string
   userId: string
+  createdAt: Date
+  updatedAt: Date
   invitations: Invitation[]
 }
 

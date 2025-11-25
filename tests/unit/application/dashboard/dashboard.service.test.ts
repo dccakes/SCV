@@ -105,8 +105,8 @@ const mockHouseholds = [
     email: 'smith@example.com',
     notes: null,
     guests: [
-      { id: 1, firstName: 'Bob', lastName: 'Smith', isPrimaryContact: true, householdId: 'household-1', userId: 'user-123' },
-      { id: 2, firstName: 'Alice', lastName: 'Smith', isPrimaryContact: false, householdId: 'household-1', userId: 'user-123' },
+      { id: 1, firstName: 'Bob', lastName: 'Smith', isPrimaryContact: true, householdId: 'household-1', userId: 'user-123', createdAt: new Date(), updatedAt: new Date() },
+      { id: 2, firstName: 'Alice', lastName: 'Smith', isPrimaryContact: false, householdId: 'household-1', userId: 'user-123', createdAt: new Date(), updatedAt: new Date() },
     ],
     gifts: [
       { householdId: 'household-1', eventId: 'event-wedding', description: 'Toaster', thankyou: true, event: { name: 'Wedding Day' } },
@@ -124,7 +124,7 @@ const mockHouseholds = [
     email: null,
     notes: 'Family friends',
     guests: [
-      { id: 3, firstName: 'Charlie', lastName: 'Brown', isPrimaryContact: true, householdId: 'household-2', userId: 'user-123' },
+      { id: 3, firstName: 'Charlie', lastName: 'Brown', isPrimaryContact: true, householdId: 'household-2', userId: 'user-123', createdAt: new Date(), updatedAt: new Date() },
     ],
     gifts: [],
   },
