@@ -1,22 +1,52 @@
 /**
- * Gift Domain - Repository Mock
+ * Gift Repository - Jest Manual Mock
  *
- * Jest mock for the GiftRepository class.
- * Used for unit testing the GiftService.
+ * This mock is automatically used when jest.mock('~/server/domains/gift/gift.repository') is called.
  */
 
 import { type Gift } from '~/server/domains/gift/gift.types'
 
-export const mockGiftRepository = {
-  findById: jest.fn<Promise<Gift | null>, [string, string]>(),
-  findByHouseholdId: jest.fn<Promise<Gift[]>, [string]>(),
-  findByEventId: jest.fn<Promise<Gift[]>, [string]>(),
-  create: jest.fn<Promise<Gift>, [{ householdId: string; eventId: string; description?: string; thankyou?: boolean }]>(),
-  createMany: jest.fn<Promise<{ count: number }>, [Array<{ householdId: string; eventId: string; description?: string; thankyou?: boolean }>]>(),
-  update: jest.fn<Promise<Gift>, [string, string, { description?: string; thankyou?: boolean }]>(),
-  upsert: jest.fn<Promise<Gift>, [{ householdId: string; eventId: string; description?: string | null; thankyou: boolean }]>(),
-  delete: jest.fn<Promise<Gift>, [string, string]>(),
-  exists: jest.fn<Promise<boolean>, [string, string]>(),
+export const mockGift: Gift = {
+  householdId: 'household-123',
+  eventId: 'event-123',
+  description: 'Beautiful vase',
+  thankyou: false,
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-01-01'),
 }
 
-export const GiftRepository = jest.fn().mockImplementation(() => mockGiftRepository)
+export const mockFindById = jest.fn()
+export const mockFindByHouseholdId = jest.fn()
+export const mockFindByEventId = jest.fn()
+export const mockCreate = jest.fn()
+export const mockCreateMany = jest.fn()
+export const mockUpdate = jest.fn()
+export const mockUpsert = jest.fn()
+export const mockDelete = jest.fn()
+export const mockExists = jest.fn()
+
+export const GiftRepository = jest.fn().mockImplementation(() => ({
+  findById: mockFindById,
+  findByHouseholdId: mockFindByHouseholdId,
+  findByEventId: mockFindByEventId,
+  create: mockCreate,
+  createMany: mockCreateMany,
+  update: mockUpdate,
+  upsert: mockUpsert,
+  delete: mockDelete,
+  exists: mockExists,
+}))
+
+// Helper to reset all mocks
+export const resetMocks = (): void => {
+  mockFindById.mockReset()
+  mockFindByHouseholdId.mockReset()
+  mockFindByEventId.mockReset()
+  mockCreate.mockReset()
+  mockCreateMany.mockReset()
+  mockUpdate.mockReset()
+  mockUpsert.mockReset()
+  mockDelete.mockReset()
+  mockExists.mockReset()
+  GiftRepository.mockClear()
+}

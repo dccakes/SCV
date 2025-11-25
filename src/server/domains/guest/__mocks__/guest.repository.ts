@@ -1,26 +1,80 @@
 /**
- * Guest Domain - Repository Mock
+ * Guest Repository - Jest Manual Mock
  *
- * Jest mock for the GuestRepository class.
- * Used for unit testing the GuestService.
+ * This mock is automatically used when jest.mock('~/server/domains/guest/guest.repository') is called.
  */
 
 import { type Guest, type GuestWithInvitations } from '~/server/domains/guest/guest.types'
 
-export const mockGuestRepository = {
-  findById: jest.fn<Promise<Guest | null>, [number]>(),
-  findByIdWithInvitations: jest.fn<Promise<GuestWithInvitations | null>, [number]>(),
-  findByUserId: jest.fn<Promise<Guest[]>, [string]>(),
-  findByHouseholdId: jest.fn<Promise<Guest[]>, [string]>(),
-  findByHouseholdIdWithInvitations: jest.fn<Promise<GuestWithInvitations[]>, [string]>(),
-  create: jest.fn<Promise<Guest>, [{ firstName: string; lastName: string; householdId: string; userId: string; isPrimaryContact?: boolean }]>(),
-  createWithInvitations: jest.fn<Promise<Guest>, [{ firstName: string; lastName: string; householdId: string; userId: string; isPrimaryContact?: boolean; invitations: Array<{ eventId: string; rsvp: string; userId: string }> }]>(),
-  update: jest.fn<Promise<Guest>, [number, { firstName?: string; lastName?: string }]>(),
-  upsert: jest.fn<Promise<Guest>, [number | undefined, { firstName: string; lastName: string; householdId: string; userId: string; isPrimaryContact?: boolean }, Array<{ eventId: string; rsvp: string; userId: string }> | undefined]>(),
-  delete: jest.fn<Promise<Guest>, [number]>(),
-  deleteMany: jest.fn<Promise<{ count: number }>, [number[]]>(),
-  exists: jest.fn<Promise<boolean>, [number]>(),
-  belongsToUser: jest.fn<Promise<boolean>, [number, string]>(),
+export const mockGuest: Guest = {
+  id: 1,
+  firstName: 'John',
+  lastName: 'Doe',
+  householdId: 'household-123',
+  userId: 'user-123',
+  isPrimaryContact: true,
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-01-01'),
 }
 
-export const GuestRepository = jest.fn().mockImplementation(() => mockGuestRepository)
+export const mockGuestWithInvitations: GuestWithInvitations = {
+  ...mockGuest,
+  invitations: [
+    {
+      guestId: 1,
+      eventId: 'event-123',
+      invitedAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-01'),
+      rsvp: 'Attending',
+      userId: 'user-123',
+    },
+  ],
+}
+
+export const mockFindById = jest.fn()
+export const mockFindByIdWithInvitations = jest.fn()
+export const mockFindByUserId = jest.fn()
+export const mockFindByHouseholdId = jest.fn()
+export const mockFindByHouseholdIdWithInvitations = jest.fn()
+export const mockCreate = jest.fn()
+export const mockCreateWithInvitations = jest.fn()
+export const mockUpdate = jest.fn()
+export const mockUpsert = jest.fn()
+export const mockDelete = jest.fn()
+export const mockDeleteMany = jest.fn()
+export const mockExists = jest.fn()
+export const mockBelongsToUser = jest.fn()
+
+export const GuestRepository = jest.fn().mockImplementation(() => ({
+  findById: mockFindById,
+  findByIdWithInvitations: mockFindByIdWithInvitations,
+  findByUserId: mockFindByUserId,
+  findByHouseholdId: mockFindByHouseholdId,
+  findByHouseholdIdWithInvitations: mockFindByHouseholdIdWithInvitations,
+  create: mockCreate,
+  createWithInvitations: mockCreateWithInvitations,
+  update: mockUpdate,
+  upsert: mockUpsert,
+  delete: mockDelete,
+  deleteMany: mockDeleteMany,
+  exists: mockExists,
+  belongsToUser: mockBelongsToUser,
+}))
+
+// Helper to reset all mocks
+export const resetMocks = (): void => {
+  mockFindById.mockReset()
+  mockFindByIdWithInvitations.mockReset()
+  mockFindByUserId.mockReset()
+  mockFindByHouseholdId.mockReset()
+  mockFindByHouseholdIdWithInvitations.mockReset()
+  mockCreate.mockReset()
+  mockCreateWithInvitations.mockReset()
+  mockUpdate.mockReset()
+  mockUpsert.mockReset()
+  mockDelete.mockReset()
+  mockDeleteMany.mockReset()
+  mockExists.mockReset()
+  mockBelongsToUser.mockReset()
+  GuestRepository.mockClear()
+}

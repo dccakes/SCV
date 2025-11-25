@@ -1,25 +1,87 @@
 /**
- * Question Domain - Repository Mock
+ * Question Repository - Jest Manual Mock
  *
- * Jest mock for the QuestionRepository class.
- * Used for unit testing the QuestionService.
+ * This mock is automatically used when jest.mock('~/server/domains/question/question.repository') is called.
  */
 
-import {
-  type OptionInput,
-  type Question,
-  type QuestionWithOptions,
-} from '~/server/domains/question/question.types'
+import { type Question, type QuestionWithOptions } from '~/server/domains/question/question.types'
 
-export const mockQuestionRepository = {
-  findById: jest.fn<Promise<Question | null>, [string]>(),
-  findByIdWithOptions: jest.fn<Promise<QuestionWithOptions | null>, [string]>(),
-  findByEventId: jest.fn<Promise<QuestionWithOptions[]>, [string]>(),
-  findByWebsiteId: jest.fn<Promise<QuestionWithOptions[]>, [string]>(),
-  deleteOptions: jest.fn<Promise<{ count: number }>, [string[]]>(),
-  upsert: jest.fn<Promise<Question>, [{ questionId?: string; eventId?: string | null; websiteId?: string | null; text: string; type: string; isRequired: boolean; options?: OptionInput[] }]>(),
-  delete: jest.fn<Promise<Question>, [string]>(),
-  exists: jest.fn<Promise<boolean>, [string]>(),
+export const mockQuestion: Question = {
+  id: 'question-123',
+  eventId: 'event-123',
+  websiteId: null,
+  text: 'What is your meal preference?',
+  type: 'Option',
+  isRequired: true,
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-01-01'),
 }
 
-export const QuestionRepository = jest.fn().mockImplementation(() => mockQuestionRepository)
+export const mockWebsiteQuestion: Question = {
+  id: 'question-456',
+  eventId: null,
+  websiteId: 'website-123',
+  text: 'Any dietary restrictions?',
+  type: 'Text',
+  isRequired: false,
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-01-01'),
+}
+
+export const mockQuestionWithOptions: QuestionWithOptions = {
+  ...mockQuestion,
+  options: [
+    {
+      id: 'option-1',
+      questionId: 'question-123',
+      text: 'Chicken',
+      description: 'Grilled chicken with vegetables',
+      responseCount: 5,
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-01'),
+    },
+    {
+      id: 'option-2',
+      questionId: 'question-123',
+      text: 'Fish',
+      description: 'Pan-seared salmon',
+      responseCount: 3,
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-01'),
+    },
+  ],
+  _count: { answers: 8 },
+}
+
+export const mockFindById = jest.fn()
+export const mockFindByIdWithOptions = jest.fn()
+export const mockFindByEventId = jest.fn()
+export const mockFindByWebsiteId = jest.fn()
+export const mockDeleteOptions = jest.fn()
+export const mockUpsert = jest.fn()
+export const mockDelete = jest.fn()
+export const mockExists = jest.fn()
+
+export const QuestionRepository = jest.fn().mockImplementation(() => ({
+  findById: mockFindById,
+  findByIdWithOptions: mockFindByIdWithOptions,
+  findByEventId: mockFindByEventId,
+  findByWebsiteId: mockFindByWebsiteId,
+  deleteOptions: mockDeleteOptions,
+  upsert: mockUpsert,
+  delete: mockDelete,
+  exists: mockExists,
+}))
+
+// Helper to reset all mocks
+export const resetMocks = (): void => {
+  mockFindById.mockReset()
+  mockFindByIdWithOptions.mockReset()
+  mockFindByEventId.mockReset()
+  mockFindByWebsiteId.mockReset()
+  mockDeleteOptions.mockReset()
+  mockUpsert.mockReset()
+  mockDelete.mockReset()
+  mockExists.mockReset()
+  QuestionRepository.mockClear()
+}
