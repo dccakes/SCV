@@ -2,6 +2,7 @@ import '~/styles/globals.css'
 
 // import { Inter } from "next/font/google";
 import { type Viewport } from 'next/types'
+import { Toaster as SonnerToaster } from 'sonner'
 
 import { EventFormProvider } from '~/app/_components/contexts/event-form-context'
 import { GuestFormProvider } from '~/app/_components/contexts/guest-form-context'
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <GuestFormProvider>
                 {children}
                 <Toaster />
+                <SonnerToaster richColors position="top-right" />
               </GuestFormProvider>
             </EventFormProvider>
           </TRPCReactProvider>

@@ -27,11 +27,11 @@ export class InvitationRepository {
   }
 
   /**
-   * Find all invitations for a user
+   * Find all invitations for a wedding
    */
-  async findByUserId(userId: string): Promise<Invitation[]> {
+  async findByWeddingId(weddingId: string): Promise<Invitation[]> {
     return this.db.invitation.findMany({
-      where: { userId },
+      where: { weddingId },
     })
   }
 
