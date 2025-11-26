@@ -10,8 +10,10 @@ export const mockGuest: Guest = {
   id: 1,
   firstName: 'John',
   lastName: 'Doe',
+  email: 'john@example.com',
+  phone: '+1234567890',
   householdId: 'household-123',
-  userId: 'user-123',
+  weddingId: 'wedding-123',
   isPrimaryContact: true,
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
@@ -21,19 +23,24 @@ export const mockGuestWithInvitations: GuestWithInvitations = {
   ...mockGuest,
   invitations: [
     {
+      id: 'inv-123',
       guestId: 1,
       eventId: 'event-123',
-      invitedAt: new Date('2024-01-01'),
-      updatedAt: new Date('2024-01-01'),
+      weddingId: 'wedding-123',
       rsvp: 'Attending',
-      userId: 'user-123',
+      dietaryRestrictions: null,
+      submittedBy: null,
+      submittedAt: null,
+      invitedAt: new Date('2024-01-01'),
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-01'),
     },
   ],
 }
 
 export const mockFindById = jest.fn()
 export const mockFindByIdWithInvitations = jest.fn()
-export const mockFindByUserId = jest.fn()
+export const mockFindByWeddingId = jest.fn()
 export const mockFindByHouseholdId = jest.fn()
 export const mockFindByHouseholdIdWithInvitations = jest.fn()
 export const mockCreate = jest.fn()
@@ -43,12 +50,12 @@ export const mockUpsert = jest.fn()
 export const mockDelete = jest.fn()
 export const mockDeleteMany = jest.fn()
 export const mockExists = jest.fn()
-export const mockBelongsToUser = jest.fn()
+export const mockBelongsToWedding = jest.fn()
 
 export const GuestRepository = jest.fn().mockImplementation(() => ({
   findById: mockFindById,
   findByIdWithInvitations: mockFindByIdWithInvitations,
-  findByUserId: mockFindByUserId,
+  findByWeddingId: mockFindByWeddingId,
   findByHouseholdId: mockFindByHouseholdId,
   findByHouseholdIdWithInvitations: mockFindByHouseholdIdWithInvitations,
   create: mockCreate,
@@ -58,14 +65,14 @@ export const GuestRepository = jest.fn().mockImplementation(() => ({
   delete: mockDelete,
   deleteMany: mockDeleteMany,
   exists: mockExists,
-  belongsToUser: mockBelongsToUser,
+  belongsToWedding: mockBelongsToWedding,
 }))
 
 // Helper to reset all mocks
 export const resetMocks = (): void => {
   mockFindById.mockReset()
   mockFindByIdWithInvitations.mockReset()
-  mockFindByUserId.mockReset()
+  mockFindByWeddingId.mockReset()
   mockFindByHouseholdId.mockReset()
   mockFindByHouseholdIdWithInvitations.mockReset()
   mockCreate.mockReset()
@@ -75,6 +82,6 @@ export const resetMocks = (): void => {
   mockDelete.mockReset()
   mockDeleteMany.mockReset()
   mockExists.mockReset()
-  mockBelongsToUser.mockReset()
+  mockBelongsToWedding.mockReset()
   GuestRepository.mockClear()
 }

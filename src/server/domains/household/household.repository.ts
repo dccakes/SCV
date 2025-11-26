@@ -43,20 +43,22 @@ export class HouseholdRepository {
   }
 
   /**
-   * Find all households for a user
+   * Find all households for a wedding
    */
-  async findByUserId(userId: string): Promise<Household[]> {
+  async findByWeddingId(weddingId: string): Promise<Household[]> {
     return this.db.household.findMany({
-      where: { userId },
+      where: { weddingId },
     })
   }
 
   /**
-   * Find all households for a user with guests and gifts
+   * Find all households for a wedding with guests and gifts
    */
-  async findByUserIdWithGuestsAndGifts(userId: string): Promise<HouseholdWithGuestsAndGifts[]> {
+  async findByWeddingIdWithGuestsAndGifts(
+    weddingId: string
+  ): Promise<HouseholdWithGuestsAndGifts[]> {
     return this.db.household.findMany({
-      where: { userId },
+      where: { weddingId },
       include: {
         guests: {
           include: {
@@ -72,28 +74,24 @@ export class HouseholdRepository {
    * Create a new household
    */
   async create(data: {
-    userId: string
+    weddingId: string
     address1?: string | null
     address2?: string | null
     city?: string | null
     state?: string | null
     country?: string | null
     zipCode?: string | null
-    phone?: string | null
-    email?: string | null
     notes?: string | null
   }): Promise<Household> {
     return this.db.household.create({
       data: {
-        userId: data.userId,
+        weddingId: data.weddingId,
         address1: data.address1,
         address2: data.address2,
         city: data.city,
         state: data.state,
         country: data.country,
         zipCode: data.zipCode,
-        phone: data.phone,
-        email: data.email,
         notes: data.notes,
       },
     })
@@ -104,30 +102,26 @@ export class HouseholdRepository {
    */
   async createWithGifts(
     data: {
-      userId: string
+      weddingId: string
       address1?: string | null
       address2?: string | null
       city?: string | null
       state?: string | null
       country?: string | null
       zipCode?: string | null
-      phone?: string | null
-      email?: string | null
       notes?: string | null
     },
     eventIds: string[]
   ): Promise<HouseholdWithGuestsAndGifts> {
     return this.db.household.create({
       data: {
-        userId: data.userId,
+        weddingId: data.weddingId,
         address1: data.address1,
         address2: data.address2,
         city: data.city,
         state: data.state,
         country: data.country,
         zipCode: data.zipCode,
-        phone: data.phone,
-        email: data.email,
         notes: data.notes,
         gifts: {
           createMany: {
@@ -161,8 +155,6 @@ export class HouseholdRepository {
       state?: string | null
       country?: string | null
       zipCode?: string | null
-      phone?: string | null
-      email?: string | null
       notes?: string | null
     }
   ): Promise<Household> {
@@ -175,8 +167,6 @@ export class HouseholdRepository {
         state: data.state ?? undefined,
         country: data.country ?? undefined,
         zipCode: data.zipCode ?? undefined,
-        phone: data.phone ?? undefined,
-        email: data.email ?? undefined,
         notes: data.notes ?? undefined,
       },
     })

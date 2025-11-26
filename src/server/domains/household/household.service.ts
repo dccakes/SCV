@@ -286,9 +286,9 @@ export class HouseholdService {
   }
 
   /**
-   * Get all households for a user
+   * Get all households for a wedding
    */
-  async getUserHouseholds(userId: string): Promise<HouseholdWithGuestsAndGifts[]> {
-    return this.householdRepository.findByUserIdWithGuestsAndGifts(userId)
+  async getWeddingHouseholds(weddingId: string): Promise<HouseholdWithGuestsAndGifts[]> {
+    return this.householdRepository.findByWeddingIdWithGuestsAndGifts(weddingId)
   }
 }

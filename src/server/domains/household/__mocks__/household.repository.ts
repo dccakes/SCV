@@ -12,7 +12,7 @@ import {
 
 export const mockHousehold: Household = {
   id: 'household-123',
-  userId: 'user-123',
+  weddingId: 'wedding-123',
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
   address1: '123 Main St',
@@ -21,8 +21,6 @@ export const mockHousehold: Household = {
   state: 'NY',
   zipCode: '10001',
   country: 'USA',
-  phone: '555-1234',
-  email: 'doe@example.com',
   notes: 'Family of the groom',
 }
 
@@ -33,19 +31,26 @@ export const mockHouseholdWithGuestsAndGifts: HouseholdWithGuestsAndGifts = {
       id: 1,
       firstName: 'John',
       lastName: 'Doe',
+      email: 'john@example.com',
+      phone: '+1234567890',
       householdId: 'household-123',
-      userId: 'user-123',
+      weddingId: 'wedding-123',
       isPrimaryContact: true,
       createdAt: new Date('2024-01-01'),
       updatedAt: new Date('2024-01-01'),
       invitations: [
         {
+          id: 'inv-123',
           guestId: 1,
           eventId: 'event-123',
-          invitedAt: new Date('2024-01-01'),
-          updatedAt: new Date('2024-01-01'),
+          weddingId: 'wedding-123',
           rsvp: 'Attending',
-          userId: 'user-123',
+          dietaryRestrictions: null,
+          submittedBy: null,
+          submittedAt: null,
+          invitedAt: new Date('2024-01-01'),
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date('2024-01-01'),
         },
       ],
     },
@@ -53,19 +58,26 @@ export const mockHouseholdWithGuestsAndGifts: HouseholdWithGuestsAndGifts = {
       id: 2,
       firstName: 'Jane',
       lastName: 'Doe',
+      email: 'jane@example.com',
+      phone: null,
       householdId: 'household-123',
-      userId: 'user-123',
+      weddingId: 'wedding-123',
       isPrimaryContact: false,
       createdAt: new Date('2024-01-01'),
       updatedAt: new Date('2024-01-01'),
       invitations: [
         {
+          id: 'inv-124',
           guestId: 2,
           eventId: 'event-123',
-          invitedAt: new Date('2024-01-01'),
-          updatedAt: new Date('2024-01-01'),
+          weddingId: 'wedding-123',
           rsvp: 'Attending',
-          userId: 'user-123',
+          dietaryRestrictions: null,
+          submittedBy: null,
+          submittedAt: null,
+          invitedAt: new Date('2024-01-01'),
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date('2024-01-01'),
         },
       ],
     },
@@ -89,8 +101,8 @@ export const mockSearchResult: HouseholdSearchResult = {
 
 export const mockFindById = jest.fn()
 export const mockFindByIdWithGuestsAndGifts = jest.fn()
-export const mockFindByUserId = jest.fn()
-export const mockFindByUserIdWithGuestsAndGifts = jest.fn()
+export const mockFindByWeddingId = jest.fn()
+export const mockFindByWeddingIdWithGuestsAndGifts = jest.fn()
 export const mockCreate = jest.fn()
 export const mockCreateWithGifts = jest.fn()
 export const mockUpdate = jest.fn()
@@ -102,8 +114,8 @@ export const mockBelongsToUser = jest.fn()
 export const HouseholdRepository = jest.fn().mockImplementation(() => ({
   findById: mockFindById,
   findByIdWithGuestsAndGifts: mockFindByIdWithGuestsAndGifts,
-  findByUserId: mockFindByUserId,
-  findByUserIdWithGuestsAndGifts: mockFindByUserIdWithGuestsAndGifts,
+  findByWeddingId: mockFindByWeddingId,
+  findByWeddingIdWithGuestsAndGifts: mockFindByWeddingIdWithGuestsAndGifts,
   create: mockCreate,
   createWithGifts: mockCreateWithGifts,
   update: mockUpdate,
@@ -117,8 +129,8 @@ export const HouseholdRepository = jest.fn().mockImplementation(() => ({
 export const resetMocks = (): void => {
   mockFindById.mockReset()
   mockFindByIdWithGuestsAndGifts.mockReset()
-  mockFindByUserId.mockReset()
-  mockFindByUserIdWithGuestsAndGifts.mockReset()
+  mockFindByWeddingId.mockReset()
+  mockFindByWeddingIdWithGuestsAndGifts.mockReset()
   mockCreate.mockReset()
   mockCreateWithGifts.mockReset()
   mockUpdate.mockReset()

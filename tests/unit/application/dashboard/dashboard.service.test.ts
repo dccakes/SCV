@@ -70,8 +70,20 @@ const mockEvents = [
         type: 'Option',
         isRequired: true,
         options: [
-          { id: 'opt-1', questionId: 'question-event-1', text: 'Chicken', description: null, responseCount: 10 },
-          { id: 'opt-2', questionId: 'question-event-1', text: 'Fish', description: null, responseCount: 5 },
+          {
+            id: 'opt-1',
+            questionId: 'question-event-1',
+            text: 'Chicken',
+            description: null,
+            responseCount: 10,
+          },
+          {
+            id: 'opt-2',
+            questionId: 'question-event-1',
+            text: 'Fish',
+            description: null,
+            responseCount: 5,
+          },
         ],
         _count: { answers: 15 },
       },
@@ -105,11 +117,35 @@ const mockHouseholds = [
     email: 'smith@example.com',
     notes: null,
     guests: [
-      { id: 1, firstName: 'Bob', lastName: 'Smith', isPrimaryContact: true, householdId: 'household-1', userId: 'user-123', createdAt: new Date(), updatedAt: new Date() },
-      { id: 2, firstName: 'Alice', lastName: 'Smith', isPrimaryContact: false, householdId: 'household-1', userId: 'user-123', createdAt: new Date(), updatedAt: new Date() },
+      {
+        id: 1,
+        firstName: 'Bob',
+        lastName: 'Smith',
+        isPrimaryContact: true,
+        householdId: 'household-1',
+        userId: 'user-123',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: 2,
+        firstName: 'Alice',
+        lastName: 'Smith',
+        isPrimaryContact: false,
+        householdId: 'household-1',
+        userId: 'user-123',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
     ],
     gifts: [
-      { householdId: 'household-1', eventId: 'event-wedding', description: 'Toaster', thankyou: true, event: { name: 'Wedding Day' } },
+      {
+        householdId: 'household-1',
+        eventId: 'event-wedding',
+        description: 'Toaster',
+        thankyou: true,
+        event: { name: 'Wedding Day' },
+      },
     ],
   },
   {
@@ -124,18 +160,62 @@ const mockHouseholds = [
     email: null,
     notes: 'Family friends',
     guests: [
-      { id: 3, firstName: 'Charlie', lastName: 'Brown', isPrimaryContact: true, householdId: 'household-2', userId: 'user-123', createdAt: new Date(), updatedAt: new Date() },
+      {
+        id: 3,
+        firstName: 'Charlie',
+        lastName: 'Brown',
+        isPrimaryContact: true,
+        householdId: 'household-2',
+        userId: 'user-123',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
     ],
     gifts: [],
   },
 ]
 
 const mockInvitations = [
-  { guestId: 1, eventId: 'event-wedding', rsvp: 'Attending', invitedAt: new Date(), updatedAt: new Date(), userId: 'user-123' },
-  { guestId: 2, eventId: 'event-wedding', rsvp: 'Attending', invitedAt: new Date(), updatedAt: new Date(), userId: 'user-123' },
-  { guestId: 3, eventId: 'event-wedding', rsvp: 'Declined', invitedAt: new Date(), updatedAt: new Date(), userId: 'user-123' },
-  { guestId: 1, eventId: 'event-rehearsal', rsvp: 'Invited', invitedAt: null, updatedAt: new Date(), userId: 'user-123' },
-  { guestId: 2, eventId: 'event-rehearsal', rsvp: 'Not Invited', invitedAt: null, updatedAt: new Date(), userId: 'user-123' },
+  {
+    guestId: 1,
+    eventId: 'event-wedding',
+    rsvp: 'Attending',
+    invitedAt: new Date(),
+    updatedAt: new Date(),
+    userId: 'user-123',
+  },
+  {
+    guestId: 2,
+    eventId: 'event-wedding',
+    rsvp: 'Attending',
+    invitedAt: new Date(),
+    updatedAt: new Date(),
+    userId: 'user-123',
+  },
+  {
+    guestId: 3,
+    eventId: 'event-wedding',
+    rsvp: 'Declined',
+    invitedAt: new Date(),
+    updatedAt: new Date(),
+    userId: 'user-123',
+  },
+  {
+    guestId: 1,
+    eventId: 'event-rehearsal',
+    rsvp: 'Invited',
+    invitedAt: null,
+    updatedAt: new Date(),
+    userId: 'user-123',
+  },
+  {
+    guestId: 2,
+    eventId: 'event-rehearsal',
+    rsvp: 'Not Invited',
+    invitedAt: null,
+    updatedAt: new Date(),
+    userId: 'user-123',
+  },
 ]
 
 const mockAnswer = {
@@ -147,6 +227,26 @@ const mockAnswer = {
   householdId: 'household-1',
   response: 'Vegetarian',
   createdAt: new Date(),
+}
+
+const mockWedding = {
+  id: 'wedding-123',
+  groomFirstName: 'John',
+  groomLastName: 'Smith',
+  brideFirstName: 'Jane',
+  brideLastName: 'Doe',
+  eventDate: new Date('2025-06-15'),
+  createdAt: new Date(),
+  updatedAt: new Date(),
+}
+
+const mockUserWedding = {
+  userId: 'user-123',
+  weddingId: 'wedding-123',
+  isPrimary: true,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  wedding: mockWedding,
 }
 
 // Create mock Prisma client
@@ -162,6 +262,9 @@ const createMockDb = () => ({
   },
   user: {
     findFirst: jest.fn().mockResolvedValue(mockUser),
+  },
+  userWedding: {
+    findFirst: jest.fn().mockResolvedValue(mockUserWedding),
   },
   website: {
     findFirst: jest.fn().mockResolvedValue(mockWebsite),
@@ -192,12 +295,15 @@ describe('DashboardService', () => {
       expect(result).toBeNull()
     })
 
-    it('should return null when website not found', async () => {
+    it('should return data even when website not found', async () => {
       mockDb.website.findFirst.mockResolvedValue(null)
 
       const result = await service.getOverview('user-123')
 
-      expect(result).toBeNull()
+      // Should not be null - website is optional
+      expect(result).not.toBeNull()
+      expect(result?.weddingData).toBeDefined()
+      expect(result?.weddingData.website).toBeUndefined()
     })
 
     it('should return complete dashboard data', async () => {
@@ -239,7 +345,9 @@ describe('DashboardService', () => {
 
       expect(result?.weddingData.website).toBeDefined()
       expect(result?.weddingData.website.generalQuestions).toHaveLength(1)
-      expect(result?.weddingData.website.generalQuestions[0]?.text).toBe('Any dietary restrictions?')
+      expect(result?.weddingData.website.generalQuestions[0]?.text).toBe(
+        'Any dietary restrictions?'
+      )
     })
 
     it('should include recent answers for questions', async () => {
@@ -253,7 +361,7 @@ describe('DashboardService', () => {
     it('should merge guest invitations into households', async () => {
       const result = await service.getOverview('user-123')
 
-      const household1 = result?.households.find(h => h.id === 'household-1')
+      const household1 = result?.households.find((h) => h.id === 'household-1')
       expect(household1?.guests[0]?.invitations).toBeDefined()
       expect(household1?.guests[0]?.invitations).toHaveLength(2) // 2 events
     })
@@ -261,7 +369,7 @@ describe('DashboardService', () => {
     it('should calculate RSVP statistics for each event', async () => {
       const result = await service.getOverview('user-123')
 
-      const weddingEvent = result?.events.find(e => e.id === 'event-wedding')
+      const weddingEvent = result?.events.find((e) => e.id === 'event-wedding')
       expect(weddingEvent?.guestResponses).toBeDefined()
       expect(weddingEvent?.guestResponses.attending).toBe(2)
       expect(weddingEvent?.guestResponses.declined).toBe(1)
@@ -270,7 +378,7 @@ describe('DashboardService', () => {
     it('should count invited guests correctly', async () => {
       const result = await service.getOverview('user-123')
 
-      const rehearsalEvent = result?.events.find(e => e.id === 'event-rehearsal')
+      const rehearsalEvent = result?.events.find((e) => e.id === 'event-rehearsal')
       expect(rehearsalEvent?.guestResponses.invited).toBe(1)
       expect(rehearsalEvent?.guestResponses.notInvited).toBe(1)
     })
@@ -278,7 +386,7 @@ describe('DashboardService', () => {
     it('should include event questions with recent answers', async () => {
       const result = await service.getOverview('user-123')
 
-      const weddingEvent = result?.events.find(e => e.id === 'event-wedding')
+      const weddingEvent = result?.events.find((e) => e.id === 'event-wedding')
       expect(weddingEvent?.questions).toHaveLength(1)
       expect(weddingEvent?.questions[0]?.text).toBe('Meal preference?')
     })
@@ -295,17 +403,17 @@ describe('DashboardService', () => {
       expect(mockDb.website.findFirst).toHaveBeenCalledTimes(1)
     })
 
-    it('should query with correct userId', async () => {
+    it('should query with correct weddingId', async () => {
       await service.getOverview('different-user-456')
 
       expect(mockDb.household.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { userId: 'different-user-456' } })
+        expect.objectContaining({ where: { weddingId: 'wedding-123' } })
       )
       expect(mockDb.invitation.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { userId: 'different-user-456' } })
+        expect.objectContaining({ where: { weddingId: 'wedding-123' } })
       )
       expect(mockDb.event.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { userId: 'different-user-456' } })
+        expect.objectContaining({ where: { weddingId: 'wedding-123' } })
       )
     })
 

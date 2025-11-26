@@ -16,7 +16,7 @@ import {
   mockDelete,
   mockFindById,
   mockFindByIdWithGuestsAndGifts,
-  mockFindByUserIdWithGuestsAndGifts,
+  mockFindByWeddingIdWithGuestsAndGifts,
   mockHousehold,
   mockHouseholdWithGuestsAndGifts,
   mockSearch,
@@ -32,7 +32,7 @@ const mockDeleteFn = mockDelete as jest.Mock
 const mockSearchFn = mockSearch as jest.Mock
 const mockFindByIdFn = mockFindById as jest.Mock
 const mockFindByIdWithGuestsAndGiftsFn = mockFindByIdWithGuestsAndGifts as jest.Mock
-const mockFindByUserIdWithGuestsAndGiftsFn = mockFindByUserIdWithGuestsAndGifts as jest.Mock
+const mockFindByWeddingIdWithGuestsAndGiftsFn = mockFindByWeddingIdWithGuestsAndGifts as jest.Mock
 
 describe('HouseholdService', () => {
   let householdService: HouseholdService
@@ -105,14 +105,14 @@ describe('HouseholdService', () => {
     })
   })
 
-  describe('getUserHouseholds', () => {
-    it('should return all households for a user with guests and gifts', async () => {
-      mockFindByUserIdWithGuestsAndGiftsFn.mockResolvedValue([mockHouseholdWithGuestsAndGifts])
+  describe('getWeddingHouseholds', () => {
+    it('should return all households for a wedding with guests and gifts', async () => {
+      mockFindByWeddingIdWithGuestsAndGiftsFn.mockResolvedValue([mockHouseholdWithGuestsAndGifts])
 
-      const result = await householdService.getUserHouseholds('user-123')
+      const result = await householdService.getWeddingHouseholds('wedding-123')
 
       expect(result).toEqual([mockHouseholdWithGuestsAndGifts])
-      expect(mockFindByUserIdWithGuestsAndGiftsFn).toHaveBeenCalledWith('user-123')
+      expect(mockFindByWeddingIdWithGuestsAndGiftsFn).toHaveBeenCalledWith('wedding-123')
     })
   })
 

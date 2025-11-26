@@ -37,7 +37,7 @@ export class RsvpSubmissionService {
         data.rsvpResponses.map(async (response: RsvpResponse) => {
           await prisma.invitation.update({
             where: {
-              invitationId: {
+              guestId_eventId: {
                 guestId: response.guestId,
                 eventId: response.eventId,
               },
@@ -82,10 +82,7 @@ export class RsvpSubmissionService {
         AND: [
           { questionId: answer.questionId ?? '-1' },
           {
-            OR: [
-              { guestId: answer.guestId ?? -1 },
-              { householdId: answer.householdId ?? '-1' },
-            ],
+            OR: [{ guestId: answer.guestId ?? -1 }, { householdId: answer.householdId ?? '-1' }],
           },
         ],
       },

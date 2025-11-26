@@ -8,12 +8,16 @@
  * This is a cross-domain operation but is kept here for Phase 1.
  */
 
-import { type Guest as PrismaGuest,type PrismaClient } from '@prisma/client'
+import { type Guest as PrismaGuest, type PrismaClient } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 
 import { RSVP_STATUS } from '~/lib/constants'
 import { type EventRepository } from '~/server/domains/event/event.repository'
-import { type CreateEventInput, type Event, type UpdateEventInput } from '~/server/domains/event/event.types'
+import {
+  type CreateEventInput,
+  type Event,
+  type UpdateEventInput,
+} from '~/server/domains/event/event.types'
 
 export class EventService {
   constructor(
@@ -28,13 +32,13 @@ export class EventService {
    * - Event date cannot be in the past (optional rule, currently not enforced)
    * - Auto-creates invitations for all existing guests with "Not Invited" status
    */
-  async createEvent(userId: string, data: CreateEventInput): Promise<Event> {
+  async createEvent(weddingId: string, data: CreateEventInput): Promise<Event> {
     const { eventName: name, date, startTime, endTime, venue, attire, description } = data
 
     // Create the event
     const newEvent = await this.eventRepository.create({
       name,
-      userId,
+      weddingId,
       date: date ? new Date(date) : undefined,
       startTime,
       endTime,
@@ -45,14 +49,14 @@ export class EventService {
 
     // Create invitations for all pre-existing guests
     const guests = await this.db.guest.findMany({
-      where: { userId },
+      where: { weddingId },
     })
 
     await Promise.all(
       guests.map(async (guest: PrismaGuest) => {
         await this.db.invitation.create({
           data: {
-            userId,
+            weddingId,
             guestId: guest.id,
             eventId: newEvent.id,
             rsvp: RSVP_STATUS.NOT_INVITED,
@@ -65,19 +69,19 @@ export class EventService {
   }
 
   /**
-   * Get all events for a user
+   * Get all events for a wedding
    */
-  async getUserEvents(userId: string | null): Promise<Event[] | undefined> {
-    if (!userId) {
+  async getWeddingEvents(weddingId: string | null): Promise<Event[] | undefined> {
+    if (!weddingId) {
       return undefined
     }
-    return this.eventRepository.findByUserId(userId)
+    return this.eventRepository.findByWeddingId(weddingId)
   }
 
   /**
    * Get an event by ID with authorization check
    */
-  async getById(eventId: string, userId: string): Promise<Event> {
+  async getById(eventId: string, weddingId: string): Promise<Event> {
     const event = await this.eventRepository.findById(eventId)
 
     if (!event) {
@@ -88,7 +92,7 @@ export class EventService {
     }
 
     // Check ownership
-    if (event.userId !== userId) {
+    if (event.weddingId !== weddingId) {
       throw new TRPCError({
         code: 'FORBIDDEN',
         message: 'You do not have permission to access this event',
@@ -101,10 +105,10 @@ export class EventService {
   /**
    * Update an existing event
    */
-  async updateEvent(userId: string, data: UpdateEventInput): Promise<Event> {
-    // Verify event belongs to user
-    const belongsToUser = await this.eventRepository.belongsToUser(data.eventId, userId)
-    if (!belongsToUser) {
+  async updateEvent(weddingId: string, data: UpdateEventInput): Promise<Event> {
+    // Verify event belongs to wedding
+    const belongsToWedding = await this.eventRepository.belongsToWedding(data.eventId, weddingId)
+    if (!belongsToWedding) {
       throw new TRPCError({
         code: 'FORBIDDEN',
         message: 'You do not have permission to update this event',
@@ -134,10 +138,10 @@ export class EventService {
    *
    * Note: Cascades to invitations, gifts, and questions via database relations
    */
-  async deleteEvent(eventId: string, userId: string): Promise<string> {
-    // Verify event belongs to user
-    const belongsToUser = await this.eventRepository.belongsToUser(eventId, userId)
-    if (!belongsToUser) {
+  async deleteEvent(eventId: string, weddingId: string): Promise<string> {
+    // Verify event belongs to wedding
+    const belongsToWedding = await this.eventRepository.belongsToWedding(eventId, weddingId)
+    if (!belongsToWedding) {
       throw new TRPCError({
         code: 'FORBIDDEN',
         message: 'You do not have permission to delete this event',

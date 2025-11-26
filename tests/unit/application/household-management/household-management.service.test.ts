@@ -283,7 +283,7 @@ describe('HouseholdManagementService', () => {
 
       expect(mockDb.guest.upsert).toHaveBeenCalledTimes(1)
       expect(mockDb.invitation.update).toHaveBeenCalledWith({
-        where: { invitationId: { eventId: 'event-123', guestId: 1 } },
+        where: { guestId_eventId: { eventId: 'event-123', guestId: 1 } },
         data: { rsvp: 'Attending' },
       })
     })
