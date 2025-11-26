@@ -31,11 +31,10 @@ export type WebsiteWithQuestions = Website & {
 }
 
 /**
- * Input for creating a new website (during initial setup)
- * NOTE: This type is DEPRECATED - Website creation now happens through Wedding domain
+ * Input for enabling website add-on
+ * Note: weddingId comes from authenticated user's wedding
  */
 export type CreateWebsiteInput = {
-  weddingId: string
   basePath: string
   email: string
 }

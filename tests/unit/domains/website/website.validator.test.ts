@@ -15,10 +15,6 @@ import {
 describe('createWebsiteSchema', () => {
   it('should validate a valid website creation input', () => {
     const validInput = {
-      firstName: 'John',
-      lastName: 'Doe',
-      partnerFirstName: 'Jane',
-      partnerLastName: 'Smith',
       basePath: 'https://example.com',
       email: 'john@example.com',
     }
@@ -28,78 +24,38 @@ describe('createWebsiteSchema', () => {
     expect(result.data).toEqual(validInput)
   })
 
-  it('should validate input with optional middle names', () => {
-    const validInput = {
-      firstName: 'John',
-      middleName: 'Michael',
-      lastName: 'Doe',
-      partnerFirstName: 'Jane',
-      partnerMiddleName: 'Elizabeth',
-      partnerLastName: 'Smith',
-      basePath: 'https://example.com',
-      email: 'john@example.com',
-    }
-
-    const result = createWebsiteSchema.safeParse(validInput)
-    expect(result.success).toBe(true)
-    expect(result.data).toEqual(validInput)
-  })
-
-  it('should validate input with wedding details', () => {
-    const validInput = {
-      firstName: 'John',
-      lastName: 'Doe',
-      partnerFirstName: 'Jane',
-      partnerLastName: 'Smith',
-      basePath: 'https://example.com',
-      email: 'john@example.com',
-      hasWeddingDetails: true,
-      weddingDate: '2025-06-15T00:00:00.000Z',
-      weddingLocation: 'Beach Resort, Hawaii',
-    }
-
-    const result = createWebsiteSchema.safeParse(validInput)
-    expect(result.success).toBe(true)
-    expect(result.data).toEqual(validInput)
-  })
-
-  it('should validate input with all optional fields', () => {
-    const validInput = {
-      firstName: 'John',
-      middleName: 'Michael',
-      lastName: 'Doe',
-      partnerFirstName: 'Jane',
-      partnerMiddleName: 'Elizabeth',
-      partnerLastName: 'Smith',
-      basePath: 'https://example.com',
-      email: 'john@example.com',
-      hasWeddingDetails: true,
-      weddingDate: '2025-06-15T00:00:00.000Z',
-      weddingLocation: 'Beach Resort, Hawaii',
-    }
-
-    const result = createWebsiteSchema.safeParse(validInput)
-    expect(result.success).toBe(true)
-    expect(result.data).toEqual(validInput)
-  })
-
-  it('should require all required fields', () => {
+  it('should require basePath', () => {
     const invalidInput = {
-      firstName: 'John',
+      email: 'john@example.com',
     }
 
     const result = createWebsiteSchema.safeParse(invalidInput)
     expect(result.success).toBe(false)
   })
 
-  it('should require valid email', () => {
+  it('should require email', () => {
     const invalidInput = {
-      firstName: 'John',
-      lastName: 'Doe',
-      partnerFirstName: 'Jane',
-      partnerLastName: 'Smith',
+      basePath: 'https://example.com',
+    }
+
+    const result = createWebsiteSchema.safeParse(invalidInput)
+    expect(result.success).toBe(false)
+  })
+
+  it('should require valid email format', () => {
+    const invalidInput = {
       basePath: 'https://example.com',
       email: 'invalid-email',
+    }
+
+    const result = createWebsiteSchema.safeParse(invalidInput)
+    expect(result.success).toBe(false)
+  })
+
+  it('should reject empty basePath', () => {
+    const invalidInput = {
+      basePath: '',
+      email: 'john@example.com',
     }
 
     const result = createWebsiteSchema.safeParse(invalidInput)
@@ -158,7 +114,6 @@ describe('updateRsvpEnabledSchema', () => {
 describe('updateCoverPhotoSchema', () => {
   it('should validate valid input with URL', () => {
     const validInput = {
-      userId: 'user-123',
       coverPhotoUrl: 'https://example.com/photo.jpg',
     }
 

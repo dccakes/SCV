@@ -5,6 +5,8 @@
  * This is a thin layer that handles input validation and delegates to the service.
  */
 
+import { TRPCError } from '@trpc/server'
+
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
 import { websiteService } from '~/server/domains/website'
 import {
@@ -16,24 +18,40 @@ import {
   updateRsvpEnabledSchema,
   updateWebsiteSchema,
 } from '~/server/domains/website/website.validator'
+import { weddingService } from '~/server/domains/wedding'
 
 export const websiteRouter = createTRPCRouter({
   /**
-   * Create a new website (initial setup)
-   * Creates website, user profile, and default event
+   * Enable website add-on for wedding
+   * Note: Wedding must already exist before enabling website add-on
    */
   create: protectedProcedure.input(createWebsiteSchema).mutation(async ({ ctx, input }) => {
-    return websiteService.createWebsite(ctx.auth.userId, {
-      userId: ctx.auth.userId,
-      ...input,
-    })
+    // Get the user's wedding
+    const wedding = await weddingService.getByUserId(ctx.auth.userId)
+    if (!wedding) {
+      throw new TRPCError({
+        code: 'PRECONDITION_FAILED',
+        message: 'Wedding must be created before enabling website add-on',
+      })
+    }
+
+    return websiteService.enableWebsite(wedding.id, input)
   }),
 
   /**
    * Update website settings
    */
   update: protectedProcedure.input(updateWebsiteSchema).mutation(async ({ ctx, input }) => {
-    return websiteService.updateWebsite(ctx.auth.userId, input)
+    // Get the user's wedding
+    const wedding = await weddingService.getByUserId(ctx.auth.userId)
+    if (!wedding) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Wedding not found',
+      })
+    }
+
+    return websiteService.updateWebsite(wedding.id, input)
   }),
 
   /**
@@ -48,15 +66,36 @@ export const websiteRouter = createTRPCRouter({
   /**
    * Update cover photo
    */
-  updateCoverPhoto: protectedProcedure.input(updateCoverPhotoSchema).mutation(async ({ input }) => {
-    return websiteService.updateCoverPhoto(input.userId ?? '', input.coverPhotoUrl)
-  }),
+  updateCoverPhoto: protectedProcedure
+    .input(updateCoverPhotoSchema)
+    .mutation(async ({ ctx, input }) => {
+      // Get the user's wedding
+      const wedding = await weddingService.getByUserId(ctx.auth.userId)
+      if (!wedding) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Wedding not found',
+        })
+      }
+
+      return websiteService.updateCoverPhoto(wedding.id, input.coverPhotoUrl)
+    }),
 
   /**
-   * Get website for current user
+   * Get website for current user's wedding
    */
   getByUserId: publicProcedure.query(async ({ ctx }) => {
-    return websiteService.getByUserId(ctx.auth?.userId ?? null)
+    if (!ctx.auth?.userId) {
+      return null
+    }
+
+    // Get the user's wedding first
+    const wedding = await weddingService.getByUserId(ctx.auth.userId)
+    if (!wedding) {
+      return null
+    }
+
+    return websiteService.getByWeddingId(wedding.id)
   }),
 
   /**

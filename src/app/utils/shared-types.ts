@@ -31,7 +31,7 @@ type Invitation = {
   guestId: number
   eventId: string
   weddingId: string
-  rsvp: string | null
+  rsvp: string
   dietaryRestrictions: string | null
   submittedBy: number | null
   submittedAt: Date | null

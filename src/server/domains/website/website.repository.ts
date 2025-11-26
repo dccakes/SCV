@@ -22,11 +22,11 @@ export class WebsiteRepository {
   }
 
   /**
-   * Find a website by user ID
+   * Find a website by wedding ID
    */
-  async findByUserId(userId: string): Promise<Website | null> {
+  async findByWeddingId(weddingId: string): Promise<Website | null> {
     return this.db.website.findFirst({
-      where: { userId },
+      where: { weddingId },
     })
   }
 
@@ -62,24 +62,12 @@ export class WebsiteRepository {
   /**
    * Create a new website with default general questions
    */
-  async create(data: {
-    userId: string
-    url: string
-    subUrl: string
-    groomFirstName: string
-    groomLastName: string
-    brideFirstName: string
-    brideLastName: string
-  }): Promise<Website> {
+  async create(data: { weddingId: string; url: string; subUrl: string }): Promise<Website> {
     return this.db.website.create({
       data: {
-        userId: data.userId,
+        weddingId: data.weddingId,
         url: data.url,
         subUrl: data.subUrl,
-        groomFirstName: data.groomFirstName,
-        groomLastName: data.groomLastName,
-        brideFirstName: data.brideFirstName,
-        brideLastName: data.brideLastName,
         generalQuestions: {
           create: [
             {
@@ -100,7 +88,7 @@ export class WebsiteRepository {
    * Update website settings
    */
   async update(
-    userId: string,
+    weddingId: string,
     data: {
       isPasswordEnabled?: boolean
       password?: string | null
@@ -109,7 +97,7 @@ export class WebsiteRepository {
     }
   ): Promise<Website> {
     return this.db.website.update({
-      where: { userId },
+      where: { weddingId },
       data: {
         isPasswordEnabled: data.isPasswordEnabled,
         password: data.password ?? undefined,
@@ -132,19 +120,19 @@ export class WebsiteRepository {
   /**
    * Update cover photo URL
    */
-  async updateCoverPhoto(userId: string, coverPhotoUrl: string | null): Promise<Website> {
+  async updateCoverPhoto(weddingId: string, coverPhotoUrl: string | null): Promise<Website> {
     return this.db.website.update({
-      where: { userId },
+      where: { weddingId },
       data: { coverPhotoUrl },
     })
   }
 
   /**
-   * Check if a website exists for a user
+   * Check if a website exists for a wedding
    */
-  async existsForUser(userId: string): Promise<boolean> {
+  async existsForWedding(weddingId: string): Promise<boolean> {
     const website = await this.db.website.findFirst({
-      where: { userId },
+      where: { weddingId },
       select: { id: true },
     })
     return website !== null

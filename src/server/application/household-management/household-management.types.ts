@@ -18,8 +18,6 @@ export type CreateHouseholdWithGuestsInput = {
   state?: string | null
   country?: string | null
   zipCode?: string | null
-  phone?: string | null
-  email?: string | null
   notes?: string | null
   guestParty: Array<{
     firstName: string
@@ -39,8 +37,6 @@ export type UpdateHouseholdWithGuestsInput = {
   state?: string | null
   country?: string | null
   zipCode?: string | null
-  phone?: string | null
-  email?: string | null
   notes?: string | null
   guestParty: Array<{
     guestId?: number
@@ -68,8 +64,6 @@ export type CreateHouseholdResult = {
     state: string | null
     country: string | null
     zipCode: string | null
-    phone: string | null
-    email: string | null
     notes: string | null
     gifts: Gift[]
   }
@@ -88,8 +82,6 @@ export type UpdateHouseholdResult = {
     state: string | null
     country: string | null
     zipCode: string | null
-    phone: string | null
-    email: string | null
     notes: string | null
   }
   guests: Array<{
@@ -98,7 +90,7 @@ export type UpdateHouseholdResult = {
     lastName: string
     isPrimaryContact: boolean
     householdId: string
-    userId: string
+    weddingId: string
     invitations: Invitation[]
   }>
   gifts: Gift[]

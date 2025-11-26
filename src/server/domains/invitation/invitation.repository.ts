@@ -18,7 +18,7 @@ export class InvitationRepository {
   async findById(guestId: number, eventId: string): Promise<Invitation | null> {
     return this.db.invitation.findUnique({
       where: {
-        invitationId: {
+        guestId_eventId: {
           guestId,
           eventId,
         },
@@ -60,14 +60,14 @@ export class InvitationRepository {
     guestId: number
     eventId: string
     rsvp: string
-    userId: string
+    weddingId: string
   }): Promise<Invitation> {
     return this.db.invitation.create({
       data: {
         guestId: data.guestId,
         eventId: data.eventId,
         rsvp: data.rsvp,
-        userId: data.userId,
+        weddingId: data.weddingId,
       },
     })
   }
@@ -80,7 +80,7 @@ export class InvitationRepository {
       guestId: number
       eventId: string
       rsvp: string
-      userId: string
+      weddingId: string
     }>
   ): Promise<{ count: number }> {
     return this.db.invitation.createMany({
@@ -88,7 +88,7 @@ export class InvitationRepository {
         guestId: inv.guestId,
         eventId: inv.eventId,
         rsvp: inv.rsvp,
-        userId: inv.userId,
+        weddingId: inv.weddingId,
       })),
     })
   }
@@ -105,7 +105,7 @@ export class InvitationRepository {
   ): Promise<Invitation> {
     return this.db.invitation.update({
       where: {
-        invitationId: {
+        guestId_eventId: {
           guestId,
           eventId,
         },
@@ -122,7 +122,7 @@ export class InvitationRepository {
   async delete(guestId: number, eventId: string): Promise<Invitation> {
     return this.db.invitation.delete({
       where: {
-        invitationId: {
+        guestId_eventId: {
           guestId,
           eventId,
         },
@@ -136,7 +136,7 @@ export class InvitationRepository {
   async exists(guestId: number, eventId: string): Promise<boolean> {
     const invitation = await this.db.invitation.findUnique({
       where: {
-        invitationId: {
+        guestId_eventId: {
           guestId,
           eventId,
         },

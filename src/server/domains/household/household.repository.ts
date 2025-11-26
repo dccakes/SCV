@@ -257,9 +257,9 @@ export class HouseholdRepository {
   /**
    * Check if a household belongs to a user
    */
-  async belongsToUser(id: string, userId: string): Promise<boolean> {
+  async belongsToUser(id: string, weddingId: string): Promise<boolean> {
     const household = await this.db.household.findFirst({
-      where: { id, userId },
+      where: { id, weddingId },
       select: { id: true },
     })
     return household !== null

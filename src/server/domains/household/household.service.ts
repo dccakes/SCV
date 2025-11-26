@@ -189,7 +189,7 @@ export class HouseholdService {
           Object.entries(guest.invites).map(async ([inviteEventId, inputRsvp]) => {
             return await this.db.invitation.update({
               where: {
-                invitationId: {
+                guestId_eventId: {
                   eventId: inviteEventId,
                   guestId: guest.guestId ?? updatedGuest.id,
                 },
