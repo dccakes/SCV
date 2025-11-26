@@ -67,7 +67,7 @@ describe('WebsiteService', () => {
         date: null,
         venue: null,
       })
-      mockUserCreateFn.mockResolvedValue({
+      mockUserUpdateFn.mockResolvedValue({
         id: 'user-123',
         email: 'john@example.com',
       })
@@ -93,9 +93,9 @@ describe('WebsiteService', () => {
           venue: null,
         },
       })
-      expect(mockUserCreateFn).toHaveBeenCalledWith({
+      expect(mockUserUpdateFn).toHaveBeenCalledWith({
+        where: { id: 'user-123' },
         data: {
-          id: 'user-123',
           websiteUrl: 'https://example.com/johndoeandjanesmith',
           email: 'john@example.com',
           groomFirstName: 'John',
@@ -120,7 +120,7 @@ describe('WebsiteService', () => {
         id: 'event-123',
         name: 'Wedding Day',
       })
-      mockUserCreateFn.mockResolvedValue({
+      mockUserUpdateFn.mockResolvedValue({
         id: 'user-123',
       })
       mockCreateFn.mockResolvedValue(mockWebsite)
@@ -157,7 +157,7 @@ describe('WebsiteService', () => {
         date: new Date(weddingDate),
         venue: 'Beach Resort, Hawaii',
       })
-      mockUserCreateFn.mockResolvedValue({
+      mockUserUpdateFn.mockResolvedValue({
         id: 'user-123',
       })
       mockCreateFn.mockResolvedValue(mockWebsite)
@@ -194,7 +194,7 @@ describe('WebsiteService', () => {
         date: new Date(weddingDate),
         venue: 'Beach Resort, Hawaii',
       })
-      mockUserCreateFn.mockResolvedValue({
+      mockUserUpdateFn.mockResolvedValue({
         id: 'user-123',
       })
       mockCreateFn.mockResolvedValue(mockWebsite)
@@ -231,7 +231,7 @@ describe('WebsiteService', () => {
         id: 'event-123',
         name: 'Wedding Day',
       })
-      mockUserCreateFn.mockResolvedValue({
+      mockUserUpdateFn.mockResolvedValue({
         id: 'user-123',
       })
       mockCreateFn.mockResolvedValue(mockWebsite)

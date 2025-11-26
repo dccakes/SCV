@@ -69,10 +69,10 @@ export class WebsiteService {
       },
     })
 
-    // Create user profile with wedding couple info
-    await this.db.user.create({
+    // Update user profile with wedding couple info
+    await this.db.user.update({
+      where: { id: userId },
       data: {
-        id: userId,
         websiteUrl: url,
         email,
         groomFirstName: firstName,

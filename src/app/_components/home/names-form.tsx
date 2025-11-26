@@ -2,12 +2,13 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarIcon } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import type { z } from 'zod'
 
 import { SignOutButton } from '~/app/_components/auth-buttons'
 import { LoadingSpinner } from '~/app/_components/loaders'
+import { ThemeToggle } from '~/app/_components/theme-toggle'
 import { Button } from '~/components/ui/button'
 import { Calendar } from '~/components/ui/calendar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
@@ -26,7 +27,12 @@ export default function NamesForm() {
   const { data: session, isPending: isLoading } = useSession()
 
   const createWebsite = api.website.create.useMutation({
-    onSuccess: () => (window.location.href = '/dashboard'),
+    onSuccess: () => {
+      window.location.href = '/dashboard'
+    },
+    onError: (error) => {
+      console.error('Error creating website:', error)
+    },
   })
 
   const form = useForm<NamesFormData>({
@@ -48,9 +54,19 @@ export default function NamesForm() {
   // Separate state for date picker (uses Date object, converted to string on submit)
   const [weddingDate, setWeddingDate] = useState<Date | undefined>(undefined)
 
-  const { register, handleSubmit, formState, control, watch } = form
+  const { register, handleSubmit, formState, control, watch, setValue } = form
   const { errors, isSubmitting } = formState
   const hasWeddingDetails = watch('hasWeddingDetails')
+
+  // Set basePath and email when component mounts
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setValue('basePath', window.location.origin)
+    }
+    if (session?.user?.email) {
+      setValue('email', session.user.email)
+    }
+  }, [session?.user?.email, setValue])
 
   if (isLoading) {
     return <LoadingSpinner />
@@ -62,11 +78,14 @@ export default function NamesForm() {
 
   return (
     <main>
-      <div className="flex justify-between bg-pink-300 p-4">
+      <div className="flex items-center justify-between bg-pink-300 p-4">
         <h1>{session.user?.name ?? session.user?.email}</h1>
-        <SignOutButton />
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <SignOutButton />
+        </div>
       </div>
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <Card className="w-full max-w-2xl">
           <CardHeader className="text-center">
             <CardTitle className="text-3xl">Welcome, Lovebirds! 💕</CardTitle>
@@ -80,29 +99,32 @@ export default function NamesForm() {
                 <LoadingSpinner />
               </div>
             )}
+            {createWebsite.isError && (
+              <div className="bg-destructive/10 mb-4 rounded-lg border border-destructive p-4 text-destructive">
+                <p className="font-semibold">Error creating website</p>
+                <p className="text-sm">{createWebsite.error?.message ?? 'Please try again'}</p>
+              </div>
+            )}
             <form
-              onSubmit={handleSubmit((data) => {
-                createWebsite.mutate({
-                  firstName: data.firstName,
-                  middleName: data.middleName,
-                  lastName: data.lastName,
-                  partnerFirstName: data.partnerFirstName,
-                  partnerMiddleName: data.partnerMiddleName,
-                  partnerLastName: data.partnerLastName,
-                  basePath: window.location.origin,
-                  email: session.user?.email ?? '',
-                  hasWeddingDetails: data.hasWeddingDetails,
-                  weddingDate: weddingDate?.toISOString(), // Convert Date to string
-                  weddingLocation: data.weddingLocation,
-                })
-              })}
+              onSubmit={handleSubmit(
+                (data) => {
+                  console.log('Form submitted with data:', data)
+                  createWebsite.mutate({
+                    ...data,
+                    weddingDate: weddingDate?.toISOString(), // Convert Date to string
+                  })
+                },
+                (errors) => {
+                  console.error('Form validation errors:', errors)
+                }
+              )}
               className="space-y-8"
             >
               {/* Groom and Bride Sections */}
               <div className="grid gap-6 md:grid-cols-2">
                 {/* Groom's Section */}
-                <div className="space-y-4 rounded-lg border bg-slate-50 p-6">
-                  <h3 className="text-lg font-semibold text-slate-900">Groom&apos;s Information</h3>
+                <div className="bg-muted/50 space-y-4 rounded-lg border p-6">
+                  <h3 className="text-lg font-semibold">Groom&apos;s Information</h3>
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="firstName">First Name</Label>
@@ -141,8 +163,8 @@ export default function NamesForm() {
                 </div>
 
                 {/* Bride's Section */}
-                <div className="space-y-4 rounded-lg border bg-slate-50 p-6">
-                  <h3 className="text-lg font-semibold text-slate-900">Bride&apos;s Information</h3>
+                <div className="bg-muted/50 space-y-4 rounded-lg border p-6">
+                  <h3 className="text-lg font-semibold">Bride&apos;s Information</h3>
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="partnerFirstName">First Name</Label>
@@ -184,7 +206,7 @@ export default function NamesForm() {
               </div>
 
               {/* Wedding Details Toggle */}
-              <div className="flex items-center justify-between rounded-lg border bg-slate-50 p-6">
+              <div className="bg-muted/50 flex items-center justify-between rounded-lg border p-6">
                 <div className="space-y-0.5">
                   <Label htmlFor="wedding-details-toggle" className="text-base">
                     Do you have a wedding date and location?
@@ -209,8 +231,8 @@ export default function NamesForm() {
 
               {/* Wedding Details Section (Conditional) */}
               {hasWeddingDetails && (
-                <div className="space-y-4 rounded-lg border bg-slate-50 p-6">
-                  <h3 className="text-lg font-semibold text-slate-900">Wedding Details</h3>
+                <div className="bg-muted/50 space-y-4 rounded-lg border p-6">
+                  <h3 className="text-lg font-semibold">Wedding Details</h3>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label>Wedding Date</Label>
