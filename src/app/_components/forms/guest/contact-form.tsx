@@ -64,32 +64,7 @@ export default function ContactForm({ householdFormData, handleOnChange }: Conta
         <option>Mexico</option>
         <option>Canada</option>
       </select>
-      <div className="flex gap-3">
-        <div className="w-1/2">
-          <AnimatedInputLabel
-            id="household-phone"
-            type="tel"
-            pattern="([+]\d{2})?\d{10}"
-            title="Please enter valid phone number"
-            inputValue={householdFormData.phone ?? ''}
-            fieldName="phone"
-            labelText="Phone"
-            required={(householdFormData?.phone?.length ?? 0) > 0}
-            handleOnChange={handleOnChange}
-          />
-        </div>
-        <div className="w-1/2">
-          <AnimatedInputLabel
-            id="household-email"
-            type="email"
-            inputValue={householdFormData.email ?? ''}
-            fieldName="email"
-            labelText="Email"
-            required={(householdFormData?.email?.length ?? 0) > 0}
-            handleOnChange={handleOnChange}
-          />
-        </div>
-      </div>
+      {/* Note: Phone and email are now on individual Guests, not Household */}
     </div>
   )
 }

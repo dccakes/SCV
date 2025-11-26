@@ -20,6 +20,8 @@ server/
 
 **Non-Negotiables:**
 
+YOU MUST FOLLOW A TDD APPROACH
+
 - ✅ **Test-first always** (Red-Green-Refactor)
 - ✅ **Business logic in Services**, NOT in tRPC routers
 - ✅ **Repositories for ALL database access** - no Prisma in services
@@ -46,6 +48,7 @@ npm run dev             # Development server
 npm run lint            # Check for errors
 npm run lint:fix        # Fix auto-fixable issues
 npm run build           # Production build
+npm run test:unit       # run unit tests
 ```
 
 ---
@@ -272,11 +275,44 @@ export class HouseholdManagementService {
 
 ## Test-Driven Development
 
+**CRITICAL RULE: ALWAYS WRITE TESTS FIRST. NO EXCEPTIONS.**
+
 ### The TDD Cycle
 
-1. **Red** → Write failing test
-2. **Green** → Minimal code to pass
+**MANDATORY PROCESS:**
+
+1. **Red** → Write failing test BEFORE any implementation
+2. **Green** → Write minimal code to pass the test
 3. **Refactor** → Improve only if it adds value
+
+**DO NOT:**
+- ❌ Write implementation code first, then tests
+- ❌ Test implementation details (method calls, internal state)
+- ❌ Write exhaustive edge case tests upfront
+
+**DO:**
+- ✅ Write tests for critical path behaviors first
+- ✅ Test what the code DOES, not how it does it
+- ✅ Add edge case tests as you discover them
+
+### What to Test
+
+**Priority 1: Critical Path (Happy Path)**
+- User can create a resource with valid data
+- User can retrieve their resources
+- User can update their resources
+
+**Priority 2: Common Error Cases**
+- User cannot create duplicate resources
+- User cannot use invalid data
+- User cannot access other users' resources
+
+**Priority 3: Edge Cases** (Add as discovered)
+- Null/undefined handling
+- Empty arrays
+- Boundary conditions
+
+### TDD Example: Simple Feature
 
 ```typescript
 // 1. RED - Write failing test
@@ -309,6 +345,157 @@ async createEvent(userId: string, data: CreateEventInput) {
   return this.repo.create(userId, data)
 }
 ```
+
+---
+
+### TDD in Practice: Real Example
+
+**Scenario:** Adding Wedding domain with UserWedding join table for multi-user support.
+
+**Step 1: Write behavior tests FIRST** (before any implementation)
+
+```typescript
+// tests/unit/domains/wedding/wedding.service.test.ts
+import { TRPCError } from '@trpc/server'
+
+jest.mock('~/server/domains/wedding/wedding.repository')
+jest.mock('~/server/infrastructure/database/client')
+
+// @ts-expect-error - Importing mock functions from mocked module
+import {
+  mockCreate,
+  mockExistsForUser,
+  mockFindByUserId,
+  mockWedding,
+  resetMocks as resetWeddingMocks,
+  WeddingRepository,
+} from '~/server/domains/wedding/wedding.repository'
+import { WeddingService } from '~/server/domains/wedding/wedding.service'
+// @ts-expect-error - Importing mock functions from mocked module
+import {
+  db,
+  mockEventCreate,
+  mockUserUpdate,
+  resetMocks as resetDbMocks,
+} from '~/server/infrastructure/database/client'
+
+const mockCreateFn = mockCreate as jest.Mock
+const mockExistsForUserFn = mockExistsForUser as jest.Mock
+const mockFindByUserIdFn = mockFindByUserId as jest.Mock
+const mockEventCreateFn = mockEventCreate as jest.Mock
+const mockUserUpdateFn = mockUserUpdate as jest.Mock
+
+describe('WeddingService', () => {
+  let weddingService: WeddingService
+
+  beforeEach(() => {
+    resetWeddingMocks()
+    resetDbMocks()
+    const mockRepository = new WeddingRepository({})
+    weddingService = new WeddingService(mockRepository, db)
+  })
+
+  describe('createWedding', () => {
+    // BEHAVIOR: User can create wedding with couple names
+    it('should create wedding with couple names', async () => {
+      mockExistsForUserFn.mockResolvedValue(false)
+      mockCreateFn.mockResolvedValue(mockWedding)
+      mockUserUpdateFn.mockResolvedValue({})
+
+      const result = await weddingService.createWedding('user-123', {
+        userId: 'user-123',
+        groomFirstName: 'John',
+        groomLastName: 'Doe',
+        brideFirstName: 'Jane',
+        brideLastName: 'Smith',
+      })
+
+      expect(result).toEqual(mockWedding)
+    })
+
+    // BEHAVIOR: User cannot create duplicate wedding
+    it('should prevent creating duplicate wedding for same user', async () => {
+      mockExistsForUserFn.mockResolvedValue(true)
+
+      await expect(
+        weddingService.createWedding('user-123', {
+          userId: 'user-123',
+          groomFirstName: 'John',
+          groomLastName: 'Doe',
+          brideFirstName: 'Jane',
+          brideLastName: 'Smith',
+        })
+      ).rejects.toThrow(TRPCError)
+
+      // Should NOT call repository when duplicate detected
+      expect(mockCreateFn).not.toHaveBeenCalled()
+    })
+
+    // BEHAVIOR: Creating wedding with date creates default event
+    it('should create default "Wedding Day" event when date provided', async () => {
+      const weddingDate = '2025-06-15T00:00:00.000Z'
+      mockExistsForUserFn.mockResolvedValue(false)
+      mockCreateFn.mockResolvedValue(mockWedding)
+      mockEventCreateFn.mockResolvedValue({ id: 'event-123', name: 'Wedding Day' })
+      mockUserUpdateFn.mockResolvedValue({})
+
+      await weddingService.createWedding('user-123', {
+        userId: 'user-123',
+        groomFirstName: 'John',
+        groomLastName: 'Doe',
+        brideFirstName: 'Jane',
+        brideLastName: 'Smith',
+        hasWeddingDetails: true,
+        weddingDate,
+        weddingLocation: 'Beach Resort',
+      })
+
+      // VERIFY BEHAVIOR: Event was created with correct data
+      expect(mockEventCreateFn).toHaveBeenCalledWith({
+        data: {
+          name: 'Wedding Day',
+          weddingId: 'wedding-123',
+          collectRsvp: true,
+          date: new Date(weddingDate),
+          venue: 'Beach Resort',
+        },
+      })
+    })
+  })
+
+  describe('getByUserId', () => {
+    // BEHAVIOR: User can retrieve their wedding
+    it('should return wedding for valid userId', async () => {
+      mockFindByUserIdFn.mockResolvedValue(mockWedding)
+
+      const result = await weddingService.getByUserId('user-123')
+
+      expect(result).toEqual(mockWedding)
+    })
+
+    // BEHAVIOR: Gracefully handles null userId
+    it('should return null when userId is null', async () => {
+      const result = await weddingService.getByUserId(null)
+
+      expect(result).toBeNull()
+      expect(mockFindByUserIdFn).not.toHaveBeenCalled()
+    })
+  })
+})
+```
+
+**Step 2: Implement to make tests pass**
+
+Now write `wedding.service.ts`, `wedding.repository.ts`, etc. to make the tests green.
+
+**Key Observations:**
+- ✅ Tests describe **what happens** (behavior), not **how it happens** (implementation)
+- ✅ Each test has a clear behavior being verified (User can X, User cannot Y)
+- ✅ Tests focus on critical paths first, edge cases later
+- ✅ Tests don't verify method calls unless they're external side effects (like Event creation)
+- ✅ Mock setup is in `beforeEach` - clean slate for each test
+
+---
 
 ### Testing with Jest
 
@@ -560,25 +747,56 @@ describe('EventRepository', () => {
 
 ### Test Principles
 
-- **Test behavior, not implementation**
-- **Mock at boundaries** (repositories, external APIs)
-- **Use factories for test data**
-- **Never redefine schemas in tests** - import real ones
-- **Always `jest.clearAllMocks()` in `beforeEach`**
+**GOLDEN RULES:**
+
+1. **Test BEHAVIOR, not implementation**
+   - ❌ Don't test: "method X was called"
+   - ✅ Do test: "user can do Y" or "user cannot do Z"
+
+2. **Write tests that describe USER OUTCOMES**
+   - Start test names with "should" + behavior
+   - Example: "should create wedding with couple names"
+   - Example: "should prevent creating duplicate wedding"
+
+3. **Mock at boundaries ONLY**
+   - Mock: Repositories, external APIs, database
+   - Don't mock: Services, domain logic, pure functions
+
+4. **Use real schemas** - Never redefine in tests
+   - Import actual Zod schemas from validators
+   - Import actual types from type files
+
+5. **Reset mocks between tests**
+   - Always call `resetMocks()` in `beforeEach`
+   - Ensures clean slate for each test
+
+**Examples:**
 
 ```typescript
-// ❌ BAD - Testing implementation
+// ❌ BAD - Testing implementation details
 it('should call validateDate method', () => {
   const spy = jest.spyOn(service, 'validateDate')
   service.createEvent(userId, data)
-  expect(spy).toHaveBeenCalled()
+  expect(spy).toHaveBeenCalled() // Who cares HOW it validates?
 })
 
 // ✅ GOOD - Testing behavior
 it('should reject event with past date', async () => {
   await expect(
     service.createEvent(userId, { date: pastDate })
-  ).rejects.toThrow('Event date cannot be in the past')
+  ).rejects.toThrow('Event date cannot be in the past') // This is what users experience
+})
+
+// ❌ BAD - Testing method calls unnecessarily
+it('should call repository.create', async () => {
+  await service.createEvent(userId, data)
+  expect(mockRepository.create).toHaveBeenCalled() // Implementation detail
+})
+
+// ✅ GOOD - Testing outcome
+it('should return created event', async () => {
+  const event = await service.createEvent(userId, data)
+  expect(event.name).toBe('Wedding Day') // User-facing result
 })
 
 // ❌ BAD - Redefining schemas in tests
@@ -586,7 +804,64 @@ const EventSchema = z.object({ id: z.string() })
 
 // ✅ GOOD - Import real schema
 import { EventSchema } from '~/server/domains/event/event.types'
+
+// ❌ BAD - Testing internal state
+it('should set isValid to true', () => {
+  service.validate(data)
+  expect(service.isValid).toBe(true) // Internal state
+})
+
+// ✅ GOOD - Testing observable behavior
+it('should accept valid data', () => {
+  expect(() => service.validate(data)).not.toThrow() // Observable outcome
+})
 ```
+
+**When to verify method calls:**
+
+Only verify external side effects (database writes, API calls, events):
+
+```typescript
+// ✅ GOOD - Verifying external side effect
+it('should create default event when date provided', async () => {
+  await service.createWedding(userId, { ...data, weddingDate: '2025-06-15' })
+
+  // This is a side effect users care about: event was created
+  expect(mockEventCreate).toHaveBeenCalledWith({
+    data: expect.objectContaining({ name: 'Wedding Day' })
+  })
+})
+```
+
+---
+
+### TDD Summary: The Mindset Shift
+
+**OLD WAY (Implementation Testing):**
+```typescript
+it('should call repository.create with correct params', () => {
+  service.createWedding(userId, data)
+  expect(mockCreate).toHaveBeenCalledWith(...)  // Testing HOW
+})
+```
+
+**NEW WAY (Behavior Testing):**
+```typescript
+it('should create wedding with couple names', async () => {
+  const wedding = await service.createWedding(userId, data)
+  expect(wedding.groomFirstName).toBe('John')  // Testing WHAT
+})
+```
+
+**Ask yourself:**
+- ❓ Does this test break if I refactor the implementation? → **Bad test**
+- ❓ Does this test break only when user-facing behavior changes? → **Good test**
+
+**Remember:**
+- 🎯 Tests are specifications of behavior, not implementation checklists
+- 🎯 If you refactor and tests fail (but behavior didn't change), tests are wrong
+- 🎯 Critical path first, edge cases later
+- 🎯 ALWAYS write tests BEFORE implementation
 
 ---
 

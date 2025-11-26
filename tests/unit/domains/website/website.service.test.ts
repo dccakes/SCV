@@ -29,7 +29,6 @@ import {
   db,
   mockEventCreate,
   mockEventFindMany,
-  mockUserCreate,
   mockUserFindFirst,
   mockUserUpdate,
   resetMocks as resetDbMocks,
@@ -44,7 +43,6 @@ const mockUpdateFn = mockUpdate as jest.Mock
 const mockUpdateRsvpEnabledFn = mockUpdateRsvpEnabled as jest.Mock
 const mockUpdateCoverPhotoFn = mockUpdateCoverPhoto as jest.Mock
 const mockEventCreateFn = mockEventCreate as jest.Mock
-const mockUserCreateFn = mockUserCreate as jest.Mock
 const mockUserUpdateFn = mockUserUpdate as jest.Mock
 const mockUserFindFirstFn = mockUserFindFirst as jest.Mock
 const mockEventFindManyFn = mockEventFindMany as jest.Mock

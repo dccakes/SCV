@@ -14,13 +14,9 @@ export type Website = {
   id: string
   createdAt: Date
   updatedAt: Date
-  userId: string
+  weddingId: string
   url: string
   subUrl: string
-  groomFirstName: string
-  groomLastName: string
-  brideFirstName: string
-  brideLastName: string
   isPasswordEnabled: boolean
   password: string | null
   isRsvpEnabled: boolean
@@ -36,20 +32,12 @@ export type WebsiteWithQuestions = Website & {
 
 /**
  * Input for creating a new website (during initial setup)
+ * NOTE: This type is DEPRECATED - Website creation now happens through Wedding domain
  */
 export type CreateWebsiteInput = {
-  userId: string
-  firstName: string
-  middleName?: string
-  lastName: string
-  partnerFirstName: string
-  partnerMiddleName?: string
-  partnerLastName: string
+  weddingId: string
   basePath: string
   email: string
-  hasWeddingDetails?: boolean
-  weddingDate?: string
-  weddingLocation?: string
 }
 
 /**
@@ -74,7 +62,7 @@ export type UpdateRsvpEnabledInput = {
  * Input for updating cover photo
  */
 export type UpdateCoverPhotoInput = {
-  userId: string
+  weddingId: string
   coverPhotoUrl: string | null
 }
 
@@ -106,7 +94,7 @@ export type WeddingPageData = {
     venue: string | null
     attire: string | null
     description: string | null
-    userId: string
+    weddingId: string
     collectRsvp: boolean
     questions: Question[]
   }>
