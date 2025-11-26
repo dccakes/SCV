@@ -42,21 +42,21 @@ export class EventRepository {
   }
 
   /**
-   * Find all events for a user
+   * Find all events for a wedding
    */
-  async findByUserId(userId: string): Promise<Event[]> {
+  async findByWeddingId(weddingId: string): Promise<Event[]> {
     return this.db.event.findMany({
-      where: { userId },
+      where: { weddingId },
       orderBy: { createdAt: 'asc' },
     })
   }
 
   /**
-   * Find all events for a user with questions included
+   * Find all events for a wedding with questions included
    */
-  async findByUserIdWithQuestions(userId: string): Promise<EventWithQuestions[]> {
+  async findByWeddingIdWithQuestions(weddingId: string): Promise<EventWithQuestions[]> {
     return this.db.event.findMany({
-      where: { userId },
+      where: { weddingId },
       orderBy: { createdAt: 'asc' },
       include: {
         questions: {
@@ -77,7 +77,7 @@ export class EventRepository {
    */
   async create(data: {
     name: string
-    userId: string
+    weddingId: string
     date?: Date
     startTime?: string
     endTime?: string
@@ -89,7 +89,7 @@ export class EventRepository {
     return this.db.event.create({
       data: {
         name: data.name,
-        userId: data.userId,
+        weddingId: data.weddingId,
         date: data.date,
         startTime: data.startTime,
         endTime: data.endTime,
@@ -161,11 +161,11 @@ export class EventRepository {
   }
 
   /**
-   * Check if an event belongs to a user
+   * Check if an event belongs to a wedding
    */
-  async belongsToUser(id: string, userId: string): Promise<boolean> {
+  async belongsToWedding(id: string, weddingId: string): Promise<boolean> {
     const event = await this.db.event.findFirst({
-      where: { id, userId },
+      where: { id, weddingId },
       select: { id: true },
     })
     return event !== null

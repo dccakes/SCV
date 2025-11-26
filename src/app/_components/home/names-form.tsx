@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarIcon } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import type { z } from 'zod'
 
@@ -18,34 +18,29 @@ import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover
 import { Switch } from '~/components/ui/switch'
 import { useSession } from '~/lib/auth-client'
 import { cn } from '~/lib/utils'
-import { createWebsiteSchema } from '~/server/domains/website/website.validator'
+import { createWeddingSchema } from '~/server/domains/wedding/wedding.validator'
 import { api } from '~/trpc/react'
 
-type NamesFormData = z.infer<typeof createWebsiteSchema>
+type NamesFormData = z.infer<typeof createWeddingSchema>
 
 export default function NamesForm() {
   const { data: session, isPending: isLoading } = useSession()
 
-  const createWebsite = api.website.create.useMutation({
+  const createWedding = api.wedding.create.useMutation({
     onSuccess: () => {
       window.location.href = '/dashboard'
-    },
-    onError: (error) => {
-      console.error('Error creating website:', error)
     },
   })
 
   const form = useForm<NamesFormData>({
-    resolver: zodResolver(createWebsiteSchema),
+    resolver: zodResolver(createWeddingSchema),
     defaultValues: {
-      firstName: '',
-      middleName: '',
-      lastName: '',
-      partnerFirstName: '',
-      partnerMiddleName: '',
-      partnerLastName: '',
-      basePath: '',
-      email: '',
+      groomFirstName: '',
+      groomMiddleName: '',
+      groomLastName: '',
+      brideFirstName: '',
+      brideMiddleName: '',
+      brideLastName: '',
       hasWeddingDetails: false,
       weddingLocation: '',
     },
@@ -54,19 +49,9 @@ export default function NamesForm() {
   // Separate state for date picker (uses Date object, converted to string on submit)
   const [weddingDate, setWeddingDate] = useState<Date | undefined>(undefined)
 
-  const { register, handleSubmit, formState, control, watch, setValue } = form
+  const { register, handleSubmit, formState, control, watch } = form
   const { errors, isSubmitting } = formState
   const hasWeddingDetails = watch('hasWeddingDetails')
-
-  // Set basePath and email when component mounts
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setValue('basePath', window.location.origin)
-    }
-    if (session?.user?.email) {
-      setValue('email', session.user.email)
-    }
-  }, [session?.user?.email, setValue])
 
   if (isLoading) {
     return <LoadingSpinner />
@@ -90,34 +75,28 @@ export default function NamesForm() {
           <CardHeader className="text-center">
             <CardTitle className="text-3xl">Welcome, Lovebirds! 💕</CardTitle>
             <CardDescription>
-              Let&apos;s get started by adding your names to create your wedding website
+              Let&apos;s get started by adding your names to create your wedding plan
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {createWebsite.isPending && (
+            {createWedding.isPending && (
               <div className="flex items-center justify-center py-4">
                 <LoadingSpinner />
               </div>
             )}
-            {createWebsite.isError && (
+            {createWedding.isError && (
               <div className="bg-destructive/10 mb-4 rounded-lg border border-destructive p-4 text-destructive">
-                <p className="font-semibold">Error creating website</p>
-                <p className="text-sm">{createWebsite.error?.message ?? 'Please try again'}</p>
+                <p className="font-semibold">Error creating wedding</p>
+                <p className="text-sm">{createWedding.error?.message ?? 'Please try again'}</p>
               </div>
             )}
             <form
-              onSubmit={handleSubmit(
-                (data) => {
-                  console.log('Form submitted with data:', data)
-                  createWebsite.mutate({
-                    ...data,
-                    weddingDate: weddingDate?.toISOString(), // Convert Date to string
-                  })
-                },
-                (errors) => {
-                  console.error('Form validation errors:', errors)
-                }
-              )}
+              onSubmit={handleSubmit((data) => {
+                createWedding.mutate({
+                  ...data,
+                  weddingDate: weddingDate?.toISOString(), // Convert Date to string
+                })
+              })}
               className="space-y-8"
             >
               {/* Groom and Bride Sections */}
@@ -127,36 +106,36 @@ export default function NamesForm() {
                   <h3 className="text-lg font-semibold">Groom&apos;s Information</h3>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name</Label>
+                      <Label htmlFor="groomFirstName">First Name</Label>
                       <Input
-                        id="firstName"
+                        id="groomFirstName"
                         placeholder="Enter first name"
-                        {...register('firstName')}
+                        {...register('groomFirstName')}
                         disabled={isSubmitting}
                       />
-                      {errors.firstName && (
-                        <p className="text-sm text-destructive">{errors.firstName.message}</p>
+                      {errors.groomFirstName && (
+                        <p className="text-sm text-destructive">{errors.groomFirstName.message}</p>
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="middleName">Middle Name (Optional)</Label>
+                      <Label htmlFor="groomMiddleName">Middle Name (Optional)</Label>
                       <Input
-                        id="middleName"
+                        id="groomMiddleName"
                         placeholder="Enter middle name"
-                        {...register('middleName')}
+                        {...register('groomMiddleName')}
                         disabled={isSubmitting}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name</Label>
+                      <Label htmlFor="groomLastName">Last Name</Label>
                       <Input
-                        id="lastName"
+                        id="groomLastName"
                         placeholder="Enter last name"
-                        {...register('lastName')}
+                        {...register('groomLastName')}
                         disabled={isSubmitting}
                       />
-                      {errors.lastName && (
-                        <p className="text-sm text-destructive">{errors.lastName.message}</p>
+                      {errors.groomLastName && (
+                        <p className="text-sm text-destructive">{errors.groomLastName.message}</p>
                       )}
                     </div>
                   </div>
@@ -167,38 +146,36 @@ export default function NamesForm() {
                   <h3 className="text-lg font-semibold">Bride&apos;s Information</h3>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="partnerFirstName">First Name</Label>
+                      <Label htmlFor="brideFirstName">First Name</Label>
                       <Input
-                        id="partnerFirstName"
+                        id="brideFirstName"
                         placeholder="Enter first name"
-                        {...register('partnerFirstName')}
+                        {...register('brideFirstName')}
                         disabled={isSubmitting}
                       />
-                      {errors.partnerFirstName && (
-                        <p className="text-sm text-destructive">
-                          {errors.partnerFirstName.message}
-                        </p>
+                      {errors.brideFirstName && (
+                        <p className="text-sm text-destructive">{errors.brideFirstName.message}</p>
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="partnerMiddleName">Middle Name (Optional)</Label>
+                      <Label htmlFor="brideMiddleName">Middle Name (Optional)</Label>
                       <Input
-                        id="partnerMiddleName"
+                        id="brideMiddleName"
                         placeholder="Enter middle name"
-                        {...register('partnerMiddleName')}
+                        {...register('brideMiddleName')}
                         disabled={isSubmitting}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="partnerLastName">Last Name</Label>
+                      <Label htmlFor="brideLastName">Last Name</Label>
                       <Input
-                        id="partnerLastName"
+                        id="brideLastName"
                         placeholder="Enter last name"
-                        {...register('partnerLastName')}
+                        {...register('brideLastName')}
                         disabled={isSubmitting}
                       />
-                      {errors.partnerLastName && (
-                        <p className="text-sm text-destructive">{errors.partnerLastName.message}</p>
+                      {errors.brideLastName && (
+                        <p className="text-sm text-destructive">{errors.brideLastName.message}</p>
                       )}
                     </div>
                   </div>

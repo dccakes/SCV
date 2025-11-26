@@ -13,7 +13,7 @@ import { type GuestWithInvitations } from '~/server/domains/guest/guest.types'
  */
 export type Household = {
   id: string
-  userId: string
+  weddingId: string
   createdAt: Date
   updatedAt: Date
   address1: string | null
@@ -22,8 +22,6 @@ export type Household = {
   state: string | null
   zipCode: string | null
   country: string | null
-  phone: string | null
-  email: string | null
   notes: string | null
 }
 
@@ -72,8 +70,6 @@ export type CreateHouseholdInput = {
   state?: string | null
   country?: string | null
   zipCode?: string | null
-  phone?: string | null
-  email?: string | null
   notes?: string | null
 }
 
@@ -89,8 +85,6 @@ export type UpdateHouseholdInput = {
   state?: string | null
   country?: string | null
   zipCode?: string | null
-  phone?: string | null
-  email?: string | null
   notes?: string | null
   deletedGuests?: number[]
   gifts: GiftInput[]

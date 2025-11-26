@@ -34,11 +34,11 @@ export class GuestRepository {
   }
 
   /**
-   * Find all guests for a user
+   * Find all guests for a wedding
    */
-  async findByUserId(userId: string): Promise<Guest[]> {
+  async findByWeddingId(weddingId: string): Promise<Guest[]> {
     return this.db.guest.findMany({
-      where: { userId },
+      where: { weddingId },
     })
   }
 
@@ -69,16 +69,20 @@ export class GuestRepository {
   async create(data: {
     firstName: string
     lastName: string
+    email?: string | null
+    phone?: string | null
     householdId: string
-    userId: string
+    weddingId: string
     isPrimaryContact?: boolean
   }): Promise<Guest> {
     return this.db.guest.create({
       data: {
         firstName: data.firstName,
         lastName: data.lastName,
+        email: data.email ?? null,
+        phone: data.phone ?? null,
         householdId: data.householdId,
-        userId: data.userId,
+        weddingId: data.weddingId,
         isPrimaryContact: data.isPrimaryContact ?? false,
       },
     })
@@ -90,21 +94,25 @@ export class GuestRepository {
   async createWithInvitations(data: {
     firstName: string
     lastName: string
+    email?: string | null
+    phone?: string | null
     householdId: string
-    userId: string
+    weddingId: string
     isPrimaryContact?: boolean
     invitations: Array<{
       eventId: string
       rsvp: string
-      userId: string
+      weddingId: string
     }>
   }): Promise<Guest> {
     return this.db.guest.create({
       data: {
         firstName: data.firstName,
         lastName: data.lastName,
+        email: data.email ?? null,
+        phone: data.phone ?? null,
         householdId: data.householdId,
-        userId: data.userId,
+        weddingId: data.weddingId,
         isPrimaryContact: data.isPrimaryContact ?? false,
         invitations: {
           createMany: {
@@ -142,14 +150,16 @@ export class GuestRepository {
     data: {
       firstName: string
       lastName: string
+      email?: string | null
+      phone?: string | null
       householdId: string
-      userId: string
+      weddingId: string
       isPrimaryContact?: boolean
     },
     invitations?: Array<{
       eventId: string
       rsvp: string
-      userId: string
+      weddingId: string
     }>
   ): Promise<Guest> {
     return this.db.guest.upsert({
@@ -157,12 +167,16 @@ export class GuestRepository {
       update: {
         firstName: data.firstName,
         lastName: data.lastName,
+        email: data.email ?? null,
+        phone: data.phone ?? null,
       },
       create: {
         firstName: data.firstName,
         lastName: data.lastName,
+        email: data.email ?? null,
+        phone: data.phone ?? null,
         householdId: data.householdId,
-        userId: data.userId,
+        weddingId: data.weddingId,
         isPrimaryContact: data.isPrimaryContact ?? false,
         invitations: invitations
           ? {
@@ -209,11 +223,11 @@ export class GuestRepository {
   }
 
   /**
-   * Check if a guest belongs to a user
+   * Check if a guest belongs to a wedding
    */
-  async belongsToUser(id: number, userId: string): Promise<boolean> {
+  async belongsToWedding(id: number, weddingId: string): Promise<boolean> {
     const guest = await this.db.guest.findFirst({
-      where: { id, userId },
+      where: { id, weddingId },
       select: { id: true },
     })
     return guest !== null

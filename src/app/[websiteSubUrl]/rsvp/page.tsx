@@ -10,13 +10,13 @@ export async function generateMetadata(): Promise<Metadata> {
   const headersList = await headers()
   const path = headersList.get('x-url')
   const websiteSubUrl = path?.replace('/', '').replace('/rsvp', '') ?? ''
-  const website = await api.website.getBySubUrl.query({
-    subUrl: websiteSubUrl,
-  })
+  const weddingData = await api.website.fetchWeddingData
+    .query({ subUrl: websiteSubUrl })
+    .catch(() => undefined)
 
   return {
-    title: website
-      ? `${website?.groomFirstName} ${website?.groomLastName} and ${website?.brideFirstName} ${website?.brideLastName}'s Wedding Website`
+    title: weddingData
+      ? `${weddingData.groomFirstName} ${weddingData.groomLastName} and ${weddingData.brideFirstName} ${weddingData.brideLastName}'s Wedding Website`
       : 'Wedding Website',
   }
 }

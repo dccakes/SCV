@@ -7,12 +7,17 @@
 import { type Invitation } from '~/server/domains/invitation/invitation.types'
 
 export const mockInvitation: Invitation = {
+  id: 'inv-123',
   guestId: 1,
   eventId: 'event-123',
-  invitedAt: new Date('2024-01-01'),
-  updatedAt: new Date('2024-01-01'),
+  weddingId: 'wedding-123',
   rsvp: 'Invited',
-  userId: 'user-123',
+  dietaryRestrictions: null,
+  submittedBy: null,
+  submittedAt: null,
+  invitedAt: new Date('2024-01-01'),
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-01-01'),
 }
 
 export const mockRsvpStats = {
@@ -23,7 +28,7 @@ export const mockRsvpStats = {
 }
 
 export const mockFindById = jest.fn()
-export const mockFindByUserId = jest.fn()
+export const mockFindByWeddingId = jest.fn()
 export const mockFindByEventId = jest.fn()
 export const mockFindByGuestId = jest.fn()
 export const mockCreate = jest.fn()
@@ -35,7 +40,7 @@ export const mockGetRsvpCountsByEventId = jest.fn()
 
 export const InvitationRepository = jest.fn().mockImplementation(() => ({
   findById: mockFindById,
-  findByUserId: mockFindByUserId,
+  findByWeddingId: mockFindByWeddingId,
   findByEventId: mockFindByEventId,
   findByGuestId: mockFindByGuestId,
   create: mockCreate,
@@ -49,7 +54,7 @@ export const InvitationRepository = jest.fn().mockImplementation(() => ({
 // Helper to reset all mocks
 export const resetMocks = (): void => {
   mockFindById.mockReset()
-  mockFindByUserId.mockReset()
+  mockFindByWeddingId.mockReset()
   mockFindByEventId.mockReset()
   mockFindByGuestId.mockReset()
   mockCreate.mockReset()

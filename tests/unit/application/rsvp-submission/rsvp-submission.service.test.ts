@@ -100,11 +100,11 @@ describe('RsvpSubmissionService', () => {
       const txClient = mockDb._mockTransactionClient
       expect(txClient.invitation.update).toHaveBeenCalledTimes(2)
       expect(txClient.invitation.update).toHaveBeenCalledWith({
-        where: { invitationId: { guestId: 1, eventId: 'event-123' } },
+        where: { guestId_eventId: { guestId: 1, eventId: 'event-123' } },
         data: { rsvp: 'Attending' },
       })
       expect(txClient.invitation.update).toHaveBeenCalledWith({
-        where: { invitationId: { guestId: 1, eventId: 'event-456' } },
+        where: { guestId_eventId: { guestId: 1, eventId: 'event-456' } },
         data: { rsvp: 'Declined' },
       })
     })
@@ -284,9 +284,7 @@ describe('RsvpSubmissionService', () => {
       txClient.optionResponse.findFirst.mockResolvedValue(null)
 
       const result = await service.submitRsvp({
-        rsvpResponses: [
-          { eventId: 'event-123', guestId: 1, rsvp: 'Attending' },
-        ],
+        rsvpResponses: [{ eventId: 'event-123', guestId: 1, rsvp: 'Attending' }],
         answersToQuestions: [
           {
             questionId: 'question-text',

@@ -14,7 +14,7 @@
  * separate application-level orchestration from domain logic.
  */
 
-import { type PrismaClient } from '@prisma/client'
+import { type Prisma, type PrismaClient } from '@prisma/client'
 
 import { calculateDaysRemaining, formatDateNumber } from '~/app/utils/helpers'
 import {
@@ -27,96 +27,6 @@ import {
   type WeddingData,
 } from '~/server/application/dashboard/dashboard.types'
 
-// Import Prisma types for type annotations
-type Event = {
-  id: string
-  name: string
-  date: Date | null
-  startTime: string | null
-  endTime: string | null
-  venue: string | null
-  attire: string | null
-  description: string | null
-  userId: string
-  collectRsvp: boolean
-  questions: Array<{
-    id: string
-    eventId: string | null
-    websiteId: string | null
-    text: string
-    type: string
-    isRequired: boolean
-    options: Array<{
-      id: string
-      questionId: string
-      text: string
-      description: string | null
-      responseCount: number
-    }>
-    _count: { answers: number }
-  }>
-}
-
-type Guest = {
-  id: number
-  firstName: string
-  lastName: string
-  isPrimaryContact: boolean
-  householdId: string
-  userId: string
-  createdAt: Date
-  updatedAt: Date
-}
-
-type Household = {
-  id: string
-  address1: string | null
-  address2: string | null
-  city: string | null
-  state: string | null
-  zipCode: string | null
-  country: string | null
-  phone: string | null
-  email: string | null
-  notes: string | null
-  guests: Guest[]
-  gifts: Array<{
-    householdId: string
-    eventId: string
-    description: string | null
-    thankyou: boolean
-    createdAt: Date
-    updatedAt: Date
-    event: { name: string }
-  }>
-}
-
-type Invitation = {
-  guestId: number
-  eventId: string
-  rsvp: string | null
-  invitedAt: Date
-  updatedAt: Date
-  userId: string
-}
-
-type Question = {
-  id: string
-  eventId: string | null
-  websiteId: string | null
-  text: string
-  type: string
-  isRequired: boolean
-  options: Array<{
-    id: string
-    questionId: string
-    text: string
-    description: string | null
-    responseCount: number
-  }>
-  _count: { answers: number }
-}
-
 export class DashboardService {
   constructor(private db: PrismaClient) {}
 
@@ -127,21 +37,41 @@ export class DashboardService {
    * to optimize performance.
    */
   async getOverview(userId: string): Promise<DashboardData | null> {
-    // Fetch all data in parallel
-    const [households, invitations, events, currentUser, website] = await Promise.all([
-      this.fetchHouseholds(userId),
-      this.fetchInvitations(userId),
-      this.fetchEvents(userId),
-      this.fetchUser(userId),
-      this.fetchWebsite(userId),
-    ])
+    // First, get the user's wedding
+    const userWedding = await this.db.userWedding.findFirst({
+      where: { userId },
+      include: { wedding: true },
+      orderBy: { isPrimary: 'desc' }, // Prioritize primary wedding
+    })
 
-    if (!currentUser || !website) {
+    if (!userWedding) {
       return null
     }
 
+    const weddingId = userWedding.weddingId
+
+    // Fetch all data in parallel
+    const [households, invitations, events, currentUser, website] = await Promise.all([
+      this.fetchHouseholds(weddingId),
+      this.fetchInvitations(weddingId),
+      this.fetchEvents(weddingId),
+      this.fetchUser(userId),
+      this.fetchWebsite(weddingId),
+    ])
+
+    if (!currentUser) {
+      return null
+    }
+
+    // Website is optional (it's an add-on, not Core)
+    // Create default website data if it doesn't exist yet
+    if (!website) {
+      // TODO: Auto-create website when user accesses dashboard for first time
+      // For now, return minimal wedding data without website
+    }
+
     // Get wedding date from "Wedding Day" event
-    const weddingDate = events.find((event: Event) => event.name === 'Wedding Day')?.date
+    const weddingDate = events.find((event) => event.name === 'Wedding Day')?.date
 
     // Build wedding data
     const weddingData = await this.buildWeddingData(
@@ -161,7 +91,7 @@ export class DashboardService {
 
     // Get total guest count
     const totalGuests = await this.db.guest.count({
-      where: { userId },
+      where: { weddingId },
     })
 
     return {
@@ -174,11 +104,11 @@ export class DashboardService {
   }
 
   /**
-   * Fetch all households for a user with guests and gifts
+   * Fetch all households for a wedding with guests and gifts
    */
-  private async fetchHouseholds(userId: string): Promise<Household[]> {
+  private async fetchHouseholds(weddingId: string) {
     return this.db.household.findMany({
-      where: { userId },
+      where: { weddingId },
       select: {
         id: true,
         address1: true,
@@ -187,12 +117,8 @@ export class DashboardService {
         state: true,
         zipCode: true,
         country: true,
-        phone: true,
-        email: true,
         notes: true,
-        guests: {
-          orderBy: { firstName: 'asc' },
-        },
+        guests: true,
         gifts: {
           include: {
             event: {
@@ -206,24 +132,22 @@ export class DashboardService {
   }
 
   /**
-   * Fetch all invitations for a user
+   * Fetch all invitations for a wedding
    */
-  private async fetchInvitations(userId: string): Promise<Invitation[]> {
+  private async fetchInvitations(weddingId: string) {
     return this.db.invitation.findMany({
-      where: { userId },
+      where: { weddingId },
     })
   }
 
   /**
-   * Fetch all events for a user with questions
+   * Fetch all events for a wedding with questions
    */
-  private async fetchEvents(userId: string): Promise<Event[]> {
+  private async fetchEvents(weddingId: string) {
     return this.db.event.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'asc' },
+      where: { weddingId },
       include: {
         questions: {
-          orderBy: { createdAt: 'asc' },
           include: {
             options: true,
             _count: {
@@ -232,6 +156,7 @@ export class DashboardService {
           },
         },
       },
+      orderBy: { createdAt: 'asc' },
     })
   }
 
@@ -245,14 +170,13 @@ export class DashboardService {
   }
 
   /**
-   * Fetch website for a user with general questions
+   * Fetch website for a wedding with general questions
    */
-  private async fetchWebsite(userId: string) {
+  private async fetchWebsite(weddingId: string) {
     return this.db.website.findFirst({
-      where: { userId },
+      where: { weddingId },
       include: {
         generalQuestions: {
-          orderBy: { createdAt: 'asc' },
           include: {
             options: true,
             _count: {
@@ -268,28 +192,32 @@ export class DashboardService {
    * Build wedding data with recent answers for questions
    */
   private async buildWeddingData(
-    website: NonNullable<Awaited<ReturnType<typeof this.fetchWebsite>>>,
+    website: Awaited<ReturnType<typeof this.fetchWebsite>>,
     currentUser: NonNullable<Awaited<ReturnType<typeof this.fetchUser>>>,
     weddingDate: Date | null | undefined
   ): Promise<WeddingData> {
-    // Add recent answers to general questions
-    const questionsWithRecentAnswers: QuestionWithRecentAnswer[] = await Promise.all(
-      website.generalQuestions.map(async (question: Question) => {
-        const recentAnswer = await this.db.answer.findFirst({
-          where: { questionId: question.id },
-          orderBy: { createdAt: 'desc' },
-          take: 1,
-        })
-        return {
-          ...question,
-          recentAnswer,
-        } as QuestionWithRecentAnswer
-      })
-    )
+    let websiteWithQuestions: WebsiteWithQuestions | undefined
 
-    const websiteWithQuestions: WebsiteWithQuestions = {
-      ...website,
-      generalQuestions: questionsWithRecentAnswers,
+    if (website) {
+      // Add recent answers to general questions
+      const questionsWithRecentAnswers: QuestionWithRecentAnswer[] = await Promise.all(
+        website.generalQuestions.map(async (question) => {
+          const recentAnswer = await this.db.answer.findFirst({
+            where: { questionId: question.id },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+          })
+          return {
+            ...question,
+            recentAnswer,
+          } as QuestionWithRecentAnswer
+        })
+      )
+
+      websiteWithQuestions = {
+        ...website,
+        generalQuestions: questionsWithRecentAnswers,
+      }
     }
 
     return {
@@ -315,16 +243,14 @@ export class DashboardService {
    * Build households with guest invitations merged in
    */
   private buildHouseholdsWithInvitations(
-    households: Household[],
-    invitations: Invitation[]
+    households: Awaited<ReturnType<typeof this.fetchHouseholds>>,
+    invitations: Awaited<ReturnType<typeof this.fetchInvitations>>
   ): HouseholdWithGuests[] {
-    return households.map((household: Household) => ({
+    return households.map((household) => ({
       ...household,
-      guests: household.guests.map((guest: Guest) => ({
+      guests: household.guests.map((guest) => ({
         ...guest,
-        invitations: invitations.filter(
-          (invitation: Invitation) => guest.id === invitation.guestId
-        ),
+        invitations: invitations.filter((invitation) => guest.id === invitation.guestId),
       })),
     }))
   }
@@ -333,17 +259,17 @@ export class DashboardService {
    * Build events with RSVP statistics and recent answers
    */
   private async buildEventsWithStats(
-    events: Event[],
-    invitations: Invitation[]
+    events: Awaited<ReturnType<typeof this.fetchEvents>>,
+    invitations: Awaited<ReturnType<typeof this.fetchInvitations>>
   ): Promise<EventWithStats[]> {
     return Promise.all(
-      events.map(async (event: Event) => {
+      events.map(async (event) => {
         // Calculate RSVP statistics
         const guestResponses = this.calculateGuestResponses(event.id, invitations)
 
         // Add recent answers to questions
         const questionsWithRecentAnswers: QuestionWithRecentAnswer[] = await Promise.all(
-          event.questions.map(async (question: Question) => {
+          event.questions.map(async (question) => {
             const recentAnswer = await this.db.answer.findFirst({
               where: { questionId: question.id },
               orderBy: { createdAt: 'desc' },
@@ -368,7 +294,10 @@ export class DashboardService {
   /**
    * Calculate RSVP response statistics for an event
    */
-  private calculateGuestResponses(eventId: string, invitations: Invitation[]): GuestResponses {
+  private calculateGuestResponses(
+    eventId: string,
+    invitations: Awaited<ReturnType<typeof this.fetchInvitations>>
+  ): GuestResponses {
     const responses: GuestResponses = {
       invited: 0,
       attending: 0,
@@ -376,7 +305,7 @@ export class DashboardService {
       notInvited: 0,
     }
 
-    invitations.forEach((invitation: Invitation) => {
+    invitations.forEach((invitation) => {
       if (invitation.eventId === eventId) {
         switch (invitation.rsvp) {
           case 'Invited':

@@ -12,7 +12,7 @@ type Event = {
   venue: string | null
   attire: string | null
   description: string | null
-  userId: string
+  weddingId: string
   questions: Question[]
   collectRsvp?: boolean
 }
@@ -27,12 +27,17 @@ interface EventWithResponses extends Event {
 }
 
 type Invitation = {
+  id: string
   guestId: number
   eventId: string
+  weddingId: string
+  rsvp: string
+  dietaryRestrictions: string | null
+  submittedBy: number | null
+  submittedAt: Date | null
   invitedAt: Date
+  createdAt: Date
   updatedAt: Date
-  rsvp: string | null
-  userId: string
 }
 
 type Household = {
@@ -43,8 +48,6 @@ type Household = {
   state: string | null
   zipCode: string | null
   country: string | null
-  phone: string | null
-  email: string | null
   notes: string | null
   gifts: Gift[]
   guests: Guest[]
@@ -64,8 +67,10 @@ type Guest = {
   id: number
   firstName: string
   lastName: string
+  email: string | null
+  phone: string | null
   isPrimaryContact: boolean
-  userId: string
+  weddingId: string
   householdId: string
   createdAt: Date
   updatedAt: Date
@@ -132,8 +137,6 @@ type HouseholdFormData = {
   state?: string
   country?: string
   zipCode?: string
-  phone?: string
-  email?: string
   notes?: string
   gifts: Gift[]
   guestParty: GuestFormData[]
@@ -143,7 +146,7 @@ type Website = {
   id: string
   createdAt: Date
   updatedAt: Date
-  userId: string
+  weddingId: string
   url: string
   subUrl: string
   isPasswordEnabled: boolean

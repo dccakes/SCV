@@ -47,7 +47,7 @@ export default function HomeContent({
   return (
     <>
       <div className="px-10">
-        {dashboardData?.weddingData.website.coverPhotoUrl ? (
+        {dashboardData?.weddingData?.website?.coverPhotoUrl ? (
           <CoverPhotoImage
             coverPhotoUrl={dashboardData.weddingData.website.coverPhotoUrl}
             deleteImage={deleteImage}

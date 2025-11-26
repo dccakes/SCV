@@ -178,8 +178,6 @@ const DefaultTableRow = ({ household, events, setPrefillHousehold }: DefaultTabl
       state: household.state ?? undefined,
       country: household.country ?? undefined,
       zipCode: household.zipCode ?? undefined,
-      phone: household.phone ?? undefined,
-      email: household.email ?? undefined,
       notes: household.notes ?? undefined,
       gifts: household.gifts,
       guestParty: household.guests.map((guest) => {
@@ -299,8 +297,6 @@ const SingleEventTableRow = ({
       state: household.state ?? undefined,
       country: household.country ?? undefined,
       zipCode: household.zipCode ?? undefined,
-      phone: household.phone ?? undefined,
-      email: household.email ?? undefined,
       notes: household.notes ?? undefined,
       gifts: household.gifts.filter((gift) => gift.eventId === selectedEvent.id),
       guestParty: household.guests.map((guest) => {

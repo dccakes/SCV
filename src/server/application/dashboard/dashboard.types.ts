@@ -20,7 +20,7 @@ export type WeddingDate = {
  * Wedding data for dashboard header
  */
 export type WeddingData = {
-  website: WebsiteWithQuestions
+  website?: WebsiteWithQuestions
   groomFirstName: string | null
   groomLastName: string | null
   brideFirstName: string | null
@@ -34,13 +34,9 @@ export type WeddingData = {
  */
 export type WebsiteWithQuestions = {
   id: string
-  userId: string
+  weddingId: string
   url: string
   subUrl: string
-  groomFirstName: string | null
-  groomLastName: string | null
-  brideFirstName: string | null
-  brideLastName: string | null
   isPasswordEnabled: boolean
   password: string | null
   coverPhotoUrl: string | null
@@ -80,9 +76,11 @@ export type GuestWithInvitations = {
   id: number
   firstName: string
   lastName: string
+  email: string | null
+  phone: string | null
   isPrimaryContact: boolean
   householdId: string
-  userId: string
+  weddingId: string
   createdAt: Date
   updatedAt: Date
   invitations: Invitation[]
@@ -99,8 +97,6 @@ export type HouseholdWithGuests = {
   state: string | null
   zipCode: string | null
   country: string | null
-  phone: string | null
-  email: string | null
   notes: string | null
   guests: GuestWithInvitations[]
   gifts: Array<Gift & { event: { name: string } }>
@@ -128,8 +124,10 @@ export type EventWithStats = {
   venue: string | null
   attire: string | null
   description: string | null
-  userId: string
+  weddingId: string
   collectRsvp: boolean
+  createdAt: Date
+  updatedAt: Date
   questions: QuestionWithRecentAnswer[]
   guestResponses: GuestResponses
 }

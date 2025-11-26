@@ -12,7 +12,7 @@ import {
   mockCreateMany,
   mockFindByEventId,
   mockFindByGuestId,
-  mockFindByUserId,
+  mockFindByWeddingId,
   mockGetRsvpCountsByEventId,
   mockInvitation,
   mockRsvpStats,
@@ -25,7 +25,7 @@ import { InvitationService } from '~/server/domains/invitation/invitation.servic
 const mockCreateFn = mockCreate as jest.Mock
 const mockCreateManyFn = mockCreateMany as jest.Mock
 const mockUpdateFn = mockUpdate as jest.Mock
-const mockFindByUserIdFn = mockFindByUserId as jest.Mock
+const mockFindByWeddingIdFn = mockFindByWeddingId as jest.Mock
 const mockFindByEventIdFn = mockFindByEventId as jest.Mock
 const mockFindByGuestIdFn = mockFindByGuestId as jest.Mock
 const mockGetRsvpCountsByEventIdFn = mockGetRsvpCountsByEventId as jest.Mock
@@ -43,7 +43,7 @@ describe('InvitationService', () => {
     it('should create an invitation successfully', async () => {
       mockCreateFn.mockResolvedValue(mockInvitation)
 
-      const result = await invitationService.createInvitation('user-123', {
+      const result = await invitationService.createInvitation('wedding-123', {
         guestId: 1,
         eventId: 'event-123',
         rsvp: 'Invited',
@@ -54,7 +54,7 @@ describe('InvitationService', () => {
         guestId: 1,
         eventId: 'event-123',
         rsvp: 'Invited',
-        userId: 'user-123',
+        weddingId: 'wedding-123',
       })
     })
   })
@@ -75,21 +75,21 @@ describe('InvitationService', () => {
     })
   })
 
-  describe('getAllByUserId', () => {
-    it('should return invitations for valid userId', async () => {
-      mockFindByUserIdFn.mockResolvedValue([mockInvitation])
+  describe('getAllByWeddingId', () => {
+    it('should return invitations for valid weddingId', async () => {
+      mockFindByWeddingIdFn.mockResolvedValue([mockInvitation])
 
-      const result = await invitationService.getAllByUserId('user-123')
+      const result = await invitationService.getAllByWeddingId('wedding-123')
 
       expect(result).toEqual([mockInvitation])
-      expect(mockFindByUserIdFn).toHaveBeenCalledWith('user-123')
+      expect(mockFindByWeddingIdFn).toHaveBeenCalledWith('wedding-123')
     })
 
-    it('should return undefined when userId is null', async () => {
-      const result = await invitationService.getAllByUserId(null)
+    it('should return undefined when weddingId is null', async () => {
+      const result = await invitationService.getAllByWeddingId(null)
 
       expect(result).toBeUndefined()
-      expect(mockFindByUserIdFn).not.toHaveBeenCalled()
+      expect(mockFindByWeddingIdFn).not.toHaveBeenCalled()
     })
   })
 
@@ -132,24 +132,33 @@ describe('InvitationService', () => {
     it('should create invitations for a guest across multiple events', async () => {
       mockCreateManyFn.mockResolvedValue({ count: 3 })
 
-      const result = await invitationService.createForGuestAndEvents(1, ['event-1', 'event-2', 'event-3'], 'user-123')
+      const result = await invitationService.createForGuestAndEvents(
+        1,
+        ['event-1', 'event-2', 'event-3'],
+        'wedding-123'
+      )
 
       expect(result).toEqual({ count: 3 })
       expect(mockCreateManyFn).toHaveBeenCalledWith([
-        { guestId: 1, eventId: 'event-1', rsvp: 'Not Invited', userId: 'user-123' },
-        { guestId: 1, eventId: 'event-2', rsvp: 'Not Invited', userId: 'user-123' },
-        { guestId: 1, eventId: 'event-3', rsvp: 'Not Invited', userId: 'user-123' },
+        { guestId: 1, eventId: 'event-1', rsvp: 'Not Invited', weddingId: 'wedding-123' },
+        { guestId: 1, eventId: 'event-2', rsvp: 'Not Invited', weddingId: 'wedding-123' },
+        { guestId: 1, eventId: 'event-3', rsvp: 'Not Invited', weddingId: 'wedding-123' },
       ])
     })
 
     it('should use custom default RSVP status', async () => {
       mockCreateManyFn.mockResolvedValue({ count: 2 })
 
-      await invitationService.createForGuestAndEvents(1, ['event-1', 'event-2'], 'user-123', 'Invited')
+      await invitationService.createForGuestAndEvents(
+        1,
+        ['event-1', 'event-2'],
+        'wedding-123',
+        'Invited'
+      )
 
       expect(mockCreateManyFn).toHaveBeenCalledWith([
-        { guestId: 1, eventId: 'event-1', rsvp: 'Invited', userId: 'user-123' },
-        { guestId: 1, eventId: 'event-2', rsvp: 'Invited', userId: 'user-123' },
+        { guestId: 1, eventId: 'event-1', rsvp: 'Invited', weddingId: 'wedding-123' },
+        { guestId: 1, eventId: 'event-2', rsvp: 'Invited', weddingId: 'wedding-123' },
       ])
     })
   })
@@ -161,17 +170,17 @@ describe('InvitationService', () => {
       const result = await invitationService.createForGuestsAndEvents(
         [{ id: 1 }, { id: 2 }],
         [{ id: 'event-1' }, { id: 'event-2' }, { id: 'event-3' }],
-        'user-123'
+        'wedding-123'
       )
 
       expect(result).toEqual({ count: 6 })
       expect(mockCreateManyFn).toHaveBeenCalledWith([
-        { guestId: 1, eventId: 'event-1', rsvp: 'Not Invited', userId: 'user-123' },
-        { guestId: 1, eventId: 'event-2', rsvp: 'Not Invited', userId: 'user-123' },
-        { guestId: 1, eventId: 'event-3', rsvp: 'Not Invited', userId: 'user-123' },
-        { guestId: 2, eventId: 'event-1', rsvp: 'Not Invited', userId: 'user-123' },
-        { guestId: 2, eventId: 'event-2', rsvp: 'Not Invited', userId: 'user-123' },
-        { guestId: 2, eventId: 'event-3', rsvp: 'Not Invited', userId: 'user-123' },
+        { guestId: 1, eventId: 'event-1', rsvp: 'Not Invited', weddingId: 'wedding-123' },
+        { guestId: 1, eventId: 'event-2', rsvp: 'Not Invited', weddingId: 'wedding-123' },
+        { guestId: 1, eventId: 'event-3', rsvp: 'Not Invited', weddingId: 'wedding-123' },
+        { guestId: 2, eventId: 'event-1', rsvp: 'Not Invited', weddingId: 'wedding-123' },
+        { guestId: 2, eventId: 'event-2', rsvp: 'Not Invited', weddingId: 'wedding-123' },
+        { guestId: 2, eventId: 'event-3', rsvp: 'Not Invited', weddingId: 'wedding-123' },
       ])
     })
   })

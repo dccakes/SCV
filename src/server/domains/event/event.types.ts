@@ -19,7 +19,7 @@ export type Event = {
   venue: string | null
   attire: string | null
   description: string | null
-  userId: string
+  weddingId: string
   collectRsvp: boolean
   createdAt: Date
   updatedAt: Date

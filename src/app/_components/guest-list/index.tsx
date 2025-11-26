@@ -30,7 +30,7 @@ export default function GuestList({ dashboardData }: { dashboardData: DashboardD
     () =>
       selectedEventId === 'all'
         ? (dashboardData?.households ?? [])
-        : (dashboardData?.households?.map((household: Household) => {
+        : (dashboardData?.households?.map((household) => {
             return {
               ...household,
               guests: household.guests.filter((guest) => {
@@ -49,7 +49,7 @@ export default function GuestList({ dashboardData }: { dashboardData: DashboardD
   // Calculate total guests - simplified to avoid React Compiler memoization issues
   const totalGuests =
     filteredHouseholdsByEvent?.reduce(
-      (acc: number, household: Household) => acc + household.guests.length,
+      (acc: number, household) => acc + household.guests.length,
       0
     ) ?? 0
 

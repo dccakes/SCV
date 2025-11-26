@@ -15,7 +15,7 @@ import {
   mockFindByHouseholdIdWithInvitations,
   mockFindById,
   mockFindByIdWithInvitations,
-  mockFindByUserId,
+  mockFindByWeddingId,
   mockGuest,
   mockGuestWithInvitations,
   mockUpdate,
@@ -25,7 +25,7 @@ import {
 import { GuestService } from '~/server/domains/guest/guest.service'
 
 // Create typed aliases for mocked functions
-const mockFindByUserIdFn = mockFindByUserId as jest.Mock
+const mockFindByWeddingIdFn = mockFindByWeddingId as jest.Mock
 const mockFindByHouseholdIdWithInvitationsFn = mockFindByHouseholdIdWithInvitations as jest.Mock
 const mockFindByIdFn = mockFindById as jest.Mock
 const mockFindByIdWithInvitationsFn = mockFindByIdWithInvitations as jest.Mock
@@ -45,21 +45,21 @@ describe('GuestService', () => {
     guestService = new GuestService(mockRepository)
   })
 
-  describe('getAllByUserId', () => {
-    it('should return guests for valid userId', async () => {
-      mockFindByUserIdFn.mockResolvedValue([mockGuest])
+  describe('getAllByWeddingId', () => {
+    it('should return guests for valid weddingId', async () => {
+      mockFindByWeddingIdFn.mockResolvedValue([mockGuest])
 
-      const result = await guestService.getAllByUserId('user-123')
+      const result = await guestService.getAllByWeddingId('wedding-123')
 
       expect(result).toEqual([mockGuest])
-      expect(mockFindByUserIdFn).toHaveBeenCalledWith('user-123')
+      expect(mockFindByWeddingIdFn).toHaveBeenCalledWith('wedding-123')
     })
 
-    it('should return undefined when userId is null', async () => {
-      const result = await guestService.getAllByUserId(null)
+    it('should return undefined when weddingId is null', async () => {
+      const result = await guestService.getAllByWeddingId(null)
 
       expect(result).toBeUndefined()
-      expect(mockFindByUserIdFn).not.toHaveBeenCalled()
+      expect(mockFindByWeddingIdFn).not.toHaveBeenCalled()
     })
   })
 
@@ -108,9 +108,11 @@ describe('GuestService', () => {
     it('should create a guest successfully', async () => {
       mockCreateFn.mockResolvedValue(mockGuest)
 
-      const result = await guestService.createGuest('user-123', {
+      const result = await guestService.createGuest('wedding-123', {
         firstName: 'John',
         lastName: 'Doe',
+        email: 'john@example.com',
+        phone: '+1234567890',
         householdId: 'household-123',
         isPrimaryContact: true,
       })
@@ -119,8 +121,10 @@ describe('GuestService', () => {
       expect(mockCreateFn).toHaveBeenCalledWith({
         firstName: 'John',
         lastName: 'Doe',
+        email: 'john@example.com',
+        phone: '+1234567890',
         householdId: 'household-123',
-        userId: 'user-123',
+        weddingId: 'wedding-123',
         isPrimaryContact: true,
       })
     })
@@ -130,9 +134,11 @@ describe('GuestService', () => {
     it('should create a guest with invitations', async () => {
       mockCreateWithInvitationsFn.mockResolvedValue(mockGuest)
 
-      const result = await guestService.createGuestWithInvitations('user-123', {
+      const result = await guestService.createGuestWithInvitations('wedding-123', {
         firstName: 'John',
         lastName: 'Doe',
+        email: 'john@example.com',
+        phone: '+1234567890',
         householdId: 'household-123',
         isPrimaryContact: true,
         invitations: [
@@ -145,12 +151,14 @@ describe('GuestService', () => {
       expect(mockCreateWithInvitationsFn).toHaveBeenCalledWith({
         firstName: 'John',
         lastName: 'Doe',
+        email: 'john@example.com',
+        phone: '+1234567890',
         householdId: 'household-123',
-        userId: 'user-123',
+        weddingId: 'wedding-123',
         isPrimaryContact: true,
         invitations: [
-          { eventId: 'event-123', rsvp: 'Attending', userId: 'user-123' },
-          { eventId: 'event-456', rsvp: 'Invited', userId: 'user-123' },
+          { eventId: 'event-123', rsvp: 'Attending', weddingId: 'wedding-123' },
+          { eventId: 'event-456', rsvp: 'Invited', weddingId: 'wedding-123' },
         ],
       })
     })
@@ -160,7 +168,7 @@ describe('GuestService', () => {
     it('should upsert an existing guest', async () => {
       mockUpsertFn.mockResolvedValue(mockGuest)
 
-      const result = await guestService.upsertGuest('user-123', {
+      const result = await guestService.upsertGuest('wedding-123', {
         guestId: 1,
         firstName: 'John',
         lastName: 'Doe',
@@ -173,7 +181,7 @@ describe('GuestService', () => {
     it('should create a new guest when guestId is undefined', async () => {
       mockUpsertFn.mockResolvedValue(mockGuest)
 
-      await guestService.upsertGuest('user-123', {
+      await guestService.upsertGuest('wedding-123', {
         firstName: 'New',
         lastName: 'Guest',
         householdId: 'household-123',

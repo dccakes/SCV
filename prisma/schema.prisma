@@ -9,22 +9,68 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Core: Wedding is the root entity
+model Wedding {
+  id             String          @id @default(uuid())
+  groomFirstName String
+  groomLastName  String
+  brideFirstName String
+  brideLastName  String
+  enabledAddOns  String[]        @default([]) // e.g., ["website", "tasks", "gifts"]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  // User relationships (many-to-many through UserWedding)
+  userWeddings   UserWedding[]
+
+  // Core relationships
+  events         Event[]
+  guests         Guest[]
+  households     Household[]
+  invitations    Invitation[]
+
+  // Add-on relationships
+  website        Website?
+}
+
+// Join table: Allows multiple users per wedding (co-management)
+model UserWedding {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weddingId  String
+  wedding    Wedding  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
+  // Role for future access control (e.g., "owner", "editor", "viewer")
+  role       String   @default("owner")
+
+  // Indicates if this is the primary/creator user
+  isPrimary  Boolean  @default(false)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, weddingId])
+  @@index([userId])
+  @@index([weddingId])
+}
+
+// Add-on: Website (guest-facing wedding website)
 model Website {
   id                String     @id @default(uuid())
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
-  userId            String     @unique
+  weddingId         String     @unique
+  wedding           Wedding    @relation(fields: [weddingId], references: [id], onDelete: Cascade)
   url               String     @unique
   subUrl            String     @unique
-  groomFirstName    String
-  groomLastName     String
-  brideFirstName    String
-  brideLastName     String
   isPasswordEnabled Boolean    @default(false)
   password          String?
   isRsvpEnabled     Boolean    @default(true)
   coverPhotoUrl     String?
   generalQuestions  Question[] @relation(name: "Website_Questions")
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  @@index([weddingId])
 }
 
 // model StoryItem {
@@ -57,16 +103,17 @@ model User {
   image          String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
-  
+
   // Custom fields for your app
   websiteUrl     String?   @db.VarChar(255)
   groomFirstName String?
   groomLastName  String?
   brideFirstName String?
   brideLastName  String?
-  
+
   sessions       Session[]
   accounts       Account[]
+  userWeddings   UserWedding[]
 }
 
 model Session {
@@ -114,25 +161,36 @@ model Verification {
   @@unique([identifier, value])
 }
 
+// Core: Household groups guests together (families, couples, singles)
 model Household {
   id             String           @id @default(uuid())
-  userId         String
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  weddingId      String
+  wedding        Wedding          @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
+  // Mailing address for physical invitations
   address1       String?
   address2       String?
   city           String?
   state          String?
   zipCode        String?
   country        String?
-  phone          String?
-  email          String?
+
+  // General notes about the household
   notes          String?
-  gifts          Gift[]           @relation(name: "Household_Gifts")
+
+  // Relations
   guests         Guest[]          @relation(name: "Household_Guests")
+  gifts          Gift[]           @relation(name: "Household_Gifts")
   answers        Answer[]         @relation(name: "Household_Answers")
   optionReponses OptionResponse[] @relation(name: "Household_OptionResponses")
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([weddingId])
 }
+
+// NOTE: Contact info (email, phone) lives on Guest, not Household
 
 model Gift {
   householdId String
@@ -149,28 +207,45 @@ model Gift {
   @@index([eventId])
 }
 
+// Core: Individual guests (always belong to a household)
 model Guest {
   id               Int              @id @default(autoincrement())
+  weddingId        String
+  wedding          Wedding          @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
   firstName        String
   lastName         String
+  email            String?          // Individual contact for notifications
+  phone            String?          // Individual contact for WhatsApp/SMS
+
+  // Every guest belongs to a household (required)
   householdId      String
-  userId           String
-  isPrimaryContact Boolean
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
   household        Household        @relation(name: "Household_Guests", fields: [householdId], references: [id], onDelete: Cascade)
+
+  // Primary contact for the household (who manages RSVPs)
+  isPrimaryContact Boolean          @default(false)
+
+  // Relations
   invitations      Invitation[]     @relation(name: "Guest_Invitations")
   optionResponses  OptionResponse[] @relation(name: "Guest_OptionResponses")
   answers          Answer[]         @relation(name: "Guest_Answers")
 
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([weddingId])
   @@index([householdId])
-  // not supoprted in postgres - TODO: ensure rsvp search functionality is unaffected
+  // not supported in postgres - TODO: ensure rsvp search functionality is unaffected
   // @@fulltext([firstName])
   // @@fulltext([lastName])
 }
 
+// Core: Wedding events (ceremony, reception, etc.)
 model Event {
   id          String       @id @default(uuid())
+  weddingId   String
+  wedding     Wedding      @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
   name        String
   date        DateTime?    @db.Date
   startTime   String?
@@ -178,13 +253,17 @@ model Event {
   venue       String?
   attire      String?
   description String?
-  userId      String
   collectRsvp Boolean      @default(false)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+
+  // Relations
   invitations Invitation[] @relation(name: "Event_Invitations")
   gifts       Gift[]       @relation(name: "Event_Gifts")
   questions   Question[]   @relation(name: "Event_Questions")
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([weddingId])
   // subEvents   SubEvent[]   @relation(name: "Event_SubEvent")
 }
 
@@ -277,17 +356,32 @@ model Answer {
   @@index([questionId])
 }
 
+// Core: Invitations are per-guest, per-event (not per household)
 model Invitation {
-  guest     Guest    @relation(name: "Guest_Invitations", fields: [guestId], references: [id], onDelete: Cascade)
-  guestId   Int
-  event     Event    @relation(name: "Event_Invitations", fields: [eventId], references: [id], onDelete: Cascade)
-  eventId   String
-  invitedAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  rsvp      String?  @default("Not Invited") // ['Invited', 'Attending', 'Declined']
-  userId    String
+  id                  String    @id @default(uuid())
+  weddingId           String
+  wedding             Wedding   @relation(fields: [weddingId], references: [id], onDelete: Cascade)
 
-  @@id(name: "invitationId", [guestId, eventId])
+  guestId             Int
+  guest               Guest     @relation(name: "Guest_Invitations", fields: [guestId], references: [id], onDelete: Cascade)
+
+  eventId             String
+  event               Event     @relation(name: "Event_Invitations", fields: [eventId], references: [id], onDelete: Cascade)
+
+  // RSVP data
+  rsvp                String    @default("Invited") // 'Invited', 'Attending', 'Declined', 'Not Invited'
+  dietaryRestrictions String?   // Per-guest dietary needs
+
+  // Tracking
+  submittedBy         Int?      // Which guest actually submitted (usually primary contact)
+  submittedAt         DateTime?
+  invitedAt           DateTime  @default(now())
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@unique([guestId, eventId])
+  @@index([weddingId])
   @@index([guestId])
   @@index([eventId])
 }

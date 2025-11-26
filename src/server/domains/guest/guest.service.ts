@@ -12,13 +12,13 @@ export class GuestService {
   constructor(private guestRepository: GuestRepository) {}
 
   /**
-   * Get all guests by user ID
+   * Get all guests by wedding ID
    */
-  async getAllByUserId(userId: string | null): Promise<Guest[] | undefined> {
-    if (!userId) {
+  async getAllByWeddingId(weddingId: string | null): Promise<Guest[] | undefined> {
+    if (!weddingId) {
       return undefined
     }
-    return this.guestRepository.findByUserId(userId)
+    return this.guestRepository.findByWeddingId(weddingId)
   }
 
   /**
@@ -46,10 +46,12 @@ export class GuestService {
    * Create a new guest
    */
   async createGuest(
-    userId: string,
+    weddingId: string,
     data: {
       firstName: string
       lastName: string
+      email?: string | null
+      phone?: string | null
       householdId: string
       isPrimaryContact?: boolean
     }
@@ -57,8 +59,10 @@ export class GuestService {
     return this.guestRepository.create({
       firstName: data.firstName,
       lastName: data.lastName,
+      email: data.email,
+      phone: data.phone,
       householdId: data.householdId,
-      userId,
+      weddingId,
       isPrimaryContact: data.isPrimaryContact,
     })
   }
@@ -67,10 +71,12 @@ export class GuestService {
    * Create a guest with invitations
    */
   async createGuestWithInvitations(
-    userId: string,
+    weddingId: string,
     data: {
       firstName: string
       lastName: string
+      email?: string | null
+      phone?: string | null
       householdId: string
       isPrimaryContact?: boolean
       invitations: Array<{
@@ -82,12 +88,14 @@ export class GuestService {
     return this.guestRepository.createWithInvitations({
       firstName: data.firstName,
       lastName: data.lastName,
+      email: data.email,
+      phone: data.phone,
       householdId: data.householdId,
-      userId,
+      weddingId,
       isPrimaryContact: data.isPrimaryContact,
       invitations: data.invitations.map((inv) => ({
         ...inv,
-        userId,
+        weddingId,
       })),
     })
   }
@@ -96,11 +104,13 @@ export class GuestService {
    * Upsert a guest
    */
   async upsertGuest(
-    userId: string,
+    weddingId: string,
     data: {
       guestId?: number
       firstName: string
       lastName: string
+      email?: string | null
+      phone?: string | null
       householdId: string
       isPrimaryContact?: boolean
     },
@@ -114,13 +124,15 @@ export class GuestService {
       {
         firstName: data.firstName,
         lastName: data.lastName,
+        email: data.email,
+        phone: data.phone,
         householdId: data.householdId,
-        userId,
+        weddingId,
         isPrimaryContact: data.isPrimaryContact,
       },
       invitations?.map((inv) => ({
         ...inv,
-        userId,
+        weddingId,
       }))
     )
   }

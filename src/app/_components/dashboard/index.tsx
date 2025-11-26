@@ -57,7 +57,7 @@ export default function Dashboard({
         />
       )}
       {showEditRsvpSettings && (
-        <EditRsvpSettingsForm website={dashboardData?.weddingData.website} />
+        <EditRsvpSettingsForm website={dashboardData?.weddingData?.website} />
       )}
       <DashboardHeader
         websiteUrl={dashboardData?.weddingData?.website?.url}

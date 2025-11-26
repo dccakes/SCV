@@ -14,8 +14,10 @@ export type Guest = {
   id: number
   firstName: string
   lastName: string
+  email: string | null
+  phone: string | null
   householdId: string
-  userId: string
+  weddingId: string
   isPrimaryContact: boolean
   createdAt: Date
   updatedAt: Date

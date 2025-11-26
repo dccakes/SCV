@@ -13,6 +13,7 @@ import { invitationRouter } from '~/server/domains/invitation'
 import { questionRouter } from '~/server/domains/question'
 import { userRouter } from '~/server/domains/user'
 import { websiteRouter } from '~/server/domains/website'
+import { weddingRouter } from '~/server/domains/wedding'
 
 /**
  * This is the primary router for your server.
@@ -24,6 +25,9 @@ import { websiteRouter } from '~/server/domains/website'
  * - Phase 4 (Complete): Application Services (dashboard, rsvp-submission, household-management)
  */
 export const appRouter = createTRPCRouter({
+  // Core domain (new architecture)
+  wedding: weddingRouter,
+
   // Phase 1 domains (migrated)
   user: userRouter,
   website: websiteRouter,

@@ -47,43 +47,43 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
   const progress = (currentStep / numSteps.current) * 100
 
   const generateDynamicStepForms = useCallback((): ReactNode[] => {
-    const newSteps = weddingData?.events?.reduce((acc: ReactNode[], event: Event) => {
-      if (!event.collectRsvp) return acc
-      // TODO: invitedGuests need to be filtered based on rsvp selection - shouldnt show question step forms for those who declined rsvp
-      const invitedGuests = rsvpFormData.selectedHousehold?.guests.filter((guest) =>
-        guest.invitations.some(
-          (invite) =>
-            invite.eventId === event.id &&
-            ['Invited', 'Attending', 'Declined'].includes(invite.rsvp ?? '')
+    const newSteps: ReactNode[] =
+      weddingData?.events?.reduce((acc: ReactNode[], event: Event) => {
+        if (!event.collectRsvp) return acc
+        // TODO: invitedGuests need to be filtered based on rsvp selection - shouldnt show question step forms for those who declined rsvp
+        const invitedGuests = rsvpFormData.selectedHousehold?.guests.filter((guest) =>
+          guest.invitations.some(
+            (invite) =>
+              invite.eventId === event.id &&
+              ['Invited', 'Attending', 'Declined'].includes(invite.rsvp ?? '')
+          )
         )
-      )
 
-      if (invitedGuests !== undefined && invitedGuests.length > 0) {
-        acc.push(<EventRsvpForm event={event} invitedGuests={invitedGuests} />)
-        for (const question of event.questions) {
-          invitedGuests.forEach((guest) => {
-            if (question.type === 'Text') {
-              acc.push(<QuestionShortAnswer question={question} guest={guest} />)
-            } else {
-              acc.push(<QuestionMultipleChoice question={question} guest={guest} />)
-            }
-          })
+        if (invitedGuests !== undefined && invitedGuests.length > 0) {
+          acc.push(<EventRsvpForm event={event} invitedGuests={invitedGuests} />)
+          for (const question of event.questions) {
+            invitedGuests.forEach((guest) => {
+              if (question.type === 'Text') {
+                acc.push(<QuestionShortAnswer question={question} guest={guest} />)
+              } else {
+                acc.push(<QuestionMultipleChoice question={question} guest={guest} />)
+              }
+            })
+          }
         }
-      }
-      return acc
-    }, [])
+        return acc
+      }, []) ?? []
 
-    weddingData?.website.generalQuestions.forEach((question: Question) => {
+    weddingData?.website?.generalQuestions?.forEach((question: Question) => {
       if (question.type === 'Text') {
-        newSteps?.push(<QuestionShortAnswer question={question} />)
+        newSteps.push(<QuestionShortAnswer question={question} />)
       } else {
-        newSteps?.push(<QuestionMultipleChoice question={question} />)
+        newSteps.push(<QuestionMultipleChoice question={question} />)
       }
     })
 
-    const steps = newSteps ?? []
-    numSteps.current = steps.length + NUM_STATIC_STEPS
-    return steps
+    numSteps.current = newSteps.length + NUM_STATIC_STEPS
+    return newSteps
   }, [weddingData, rsvpFormData.selectedHousehold])
 
   return (

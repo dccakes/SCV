@@ -47,7 +47,7 @@ export class HouseholdManagementService {
    * 4. Return complete household data
    */
   async createHouseholdWithGuests(
-    userId: string,
+    weddingId: string,
     data: CreateHouseholdWithGuestsInput
   ): Promise<CreateHouseholdResult> {
     // Extract event IDs from the first guest's invites
@@ -56,15 +56,13 @@ export class HouseholdManagementService {
     // 1. Create household with gifts for each event
     const household = await this.db.household.create({
       data: {
-        userId,
+        weddingId,
         address1: data.address1,
         address2: data.address2,
         city: data.city,
         state: data.state,
         country: data.country,
         zipCode: data.zipCode,
-        phone: data.phone,
-        email: data.email,
         notes: data.notes,
         gifts: {
           createMany: {
@@ -94,7 +92,7 @@ export class HouseholdManagementService {
           data: {
             firstName: guest.firstName,
             lastName: guest.lastName,
-            userId,
+            weddingId,
             householdId: household.id,
             isPrimaryContact: index === 0,
             invitations: {
@@ -102,7 +100,7 @@ export class HouseholdManagementService {
                 data: Object.entries(guest.invites).map(([eventId, rsvp]) => ({
                   eventId,
                   rsvp,
-                  userId,
+                  weddingId,
                 })),
               },
             },
@@ -140,7 +138,7 @@ export class HouseholdManagementService {
    * 5. Upsert gifts
    */
   async updateHouseholdWithGuests(
-    userId: string,
+    weddingId: string,
     data: UpdateHouseholdWithGuestsInput
   ): Promise<UpdateHouseholdResult> {
     // 1. Update household details
@@ -153,8 +151,6 @@ export class HouseholdManagementService {
         state: data.state,
         country: data.country,
         zipCode: data.zipCode,
-        phone: data.phone,
-        email: data.email,
         notes: data.notes,
       },
     })
@@ -182,7 +178,7 @@ export class HouseholdManagementService {
           create: {
             firstName: guest.firstName,
             lastName: guest.lastName,
-            userId,
+            weddingId,
             householdId: data.householdId,
             isPrimaryContact: false,
             invitations: {
@@ -190,7 +186,7 @@ export class HouseholdManagementService {
                 data: Object.entries(guest.invites).map(([eventId, rsvp]) => ({
                   eventId,
                   rsvp,
-                  userId,
+                  weddingId,
                 })),
               },
             },
@@ -202,7 +198,7 @@ export class HouseholdManagementService {
           Object.entries(guest.invites).map(async ([inviteEventId, inputRsvp]) => {
             return await this.db.invitation.update({
               where: {
-                invitationId: {
+                guestId_eventId: {
                   eventId: inviteEventId,
                   guestId: guest.guestId ?? updatedGuest.id,
                 },

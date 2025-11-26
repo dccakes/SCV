@@ -19,12 +19,12 @@ export class InvitationService {
   /**
    * Create a new invitation
    */
-  async createInvitation(userId: string, data: CreateInvitationInput): Promise<Invitation> {
+  async createInvitation(weddingId: string, data: CreateInvitationInput): Promise<Invitation> {
     return this.invitationRepository.create({
       guestId: data.guestId,
       eventId: data.eventId,
       rsvp: data.rsvp,
-      userId,
+      weddingId,
     })
   }
 
@@ -38,13 +38,13 @@ export class InvitationService {
   }
 
   /**
-   * Get all invitations for a user
+   * Get all invitations for a wedding
    */
-  async getAllByUserId(userId: string | null): Promise<Invitation[] | undefined> {
-    if (!userId) {
+  async getAllByWeddingId(weddingId: string | null): Promise<Invitation[] | undefined> {
+    if (!weddingId) {
       return undefined
     }
-    return this.invitationRepository.findByUserId(userId)
+    return this.invitationRepository.findByWeddingId(weddingId)
   }
 
   /**
@@ -74,7 +74,7 @@ export class InvitationService {
   async createForGuestAndEvents(
     guestId: number,
     eventIds: string[],
-    userId: string,
+    weddingId: string,
     defaultRsvp = 'Not Invited'
   ): Promise<{ count: number }> {
     return this.invitationRepository.createMany(
@@ -82,7 +82,7 @@ export class InvitationService {
         guestId,
         eventId,
         rsvp: defaultRsvp,
-        userId,
+        weddingId,
       }))
     )
   }
@@ -93,7 +93,7 @@ export class InvitationService {
   async createForGuestsAndEvents(
     guests: Array<{ id: number }>,
     events: Array<{ id: string }>,
-    userId: string,
+    weddingId: string,
     defaultRsvp = 'Not Invited'
   ): Promise<{ count: number }> {
     const invitations = guests.flatMap((guest) =>
@@ -101,7 +101,7 @@ export class InvitationService {
         guestId: guest.id,
         eventId: event.id,
         rsvp: defaultRsvp,
-        userId,
+        weddingId,
       }))
     )
     return this.invitationRepository.createMany(invitations)

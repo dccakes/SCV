@@ -34,79 +34,55 @@ export class WebsiteService {
   ) {}
 
   /**
-   * Create a new website and associated user/event
+   * Enable website add-on for a wedding
    *
-   * This is a cross-domain operation that creates:
-   * 1. A default "Wedding Day" event
-   * 2. The user profile with wedding couple info
-   * 3. The website with default questions
+   * Creates the website configuration and generates URL from wedding details.
+   * Note: Wedding must already exist. This is called when user enables the website add-on.
    */
-  async createWebsite(userId: string, data: CreateWebsiteInput): Promise<Website> {
-    const {
-      firstName,
-      lastName,
-      partnerFirstName,
-      partnerLastName,
-      basePath,
-      email,
-      weddingDate,
-      weddingLocation,
-    } = data
+  async enableWebsite(weddingId: string, data: CreateWebsiteInput): Promise<Website> {
+    const { basePath } = data
 
-    const subUrl = `${firstName}${lastName}and${partnerFirstName}${partnerLastName}`.toLowerCase()
+    // Get wedding to generate URL
+    const wedding = await this.db.wedding.findUnique({
+      where: { id: weddingId },
+    })
+
+    if (!wedding) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Wedding not found',
+      })
+    }
+
+    // Generate URL from wedding couple names
+    const subUrl =
+      `${wedding.groomFirstName}${wedding.groomLastName}and${wedding.brideFirstName}${wedding.brideLastName}`.toLowerCase()
     const url = `${basePath}/${subUrl}`
 
-    // TODO: Check for duplicate URLs
-
-    // Create default Wedding Day event with optional date and venue
-    await this.db.event.create({
-      data: {
-        name: 'Wedding Day',
-        userId,
-        collectRsvp: true,
-        date: weddingDate ? new Date(weddingDate) : null,
-        venue: weddingLocation ?? null,
-      },
-    })
-
-    // Update user profile with wedding couple info
-    await this.db.user.update({
-      where: { id: userId },
-      data: {
-        websiteUrl: url,
-        email,
-        groomFirstName: firstName,
-        groomLastName: lastName,
-        brideFirstName: partnerFirstName,
-        brideLastName: partnerLastName,
-      },
-    })
+    // Check for duplicate URLs
+    const existingWebsite = await this.websiteRepository.findBySubUrl(subUrl)
+    if (existingWebsite) {
+      throw new TRPCError({
+        code: 'CONFLICT',
+        message: 'This URL is already taken',
+      })
+    }
 
     // Create website with default questions
     return this.websiteRepository.create({
-      userId,
+      weddingId,
       url,
       subUrl,
-      groomFirstName: firstName,
-      groomLastName: lastName,
-      brideFirstName: partnerFirstName,
-      brideLastName: partnerLastName,
     })
   }
 
   /**
    * Update website settings
    */
-  async updateWebsite(userId: string, data: UpdateWebsiteInput): Promise<Website> {
+  async updateWebsite(weddingId: string, data: UpdateWebsiteInput): Promise<Website> {
     const url = data.subUrl !== undefined ? `${data.basePath}/${data.subUrl}` : undefined
 
-    // Also update the user's website URL
-    await this.db.user.update({
-      where: { id: userId },
-      data: { websiteUrl: url },
-    })
-
-    return this.websiteRepository.update(userId, {
+    return this.websiteRepository.update(weddingId, {
       isPasswordEnabled: data.isPasswordEnabled,
       password: data.password,
       subUrl: data.subUrl,
@@ -124,18 +100,18 @@ export class WebsiteService {
   /**
    * Update cover photo
    */
-  async updateCoverPhoto(userId: string, coverPhotoUrl: string | null): Promise<Website> {
-    return this.websiteRepository.updateCoverPhoto(userId, coverPhotoUrl)
+  async updateCoverPhoto(weddingId: string, coverPhotoUrl: string | null): Promise<Website> {
+    return this.websiteRepository.updateCoverPhoto(weddingId, coverPhotoUrl)
   }
 
   /**
-   * Get website by user ID
+   * Get website by wedding ID
    */
-  async getByUserId(userId: string | null): Promise<Website | null> {
-    if (!userId) {
+  async getByWeddingId(weddingId: string | null): Promise<Website | null> {
+    if (!weddingId) {
       return null
     }
-    return this.websiteRepository.findByUserId(userId)
+    return this.websiteRepository.findByWeddingId(weddingId)
   }
 
   /**
@@ -159,21 +135,21 @@ export class WebsiteService {
       throw new TRPCClientError('This website does not exist.')
     }
 
-    // Get the wedding user
-    const weddingUser = await this.db.user.findFirst({
-      where: { id: website.userId },
+    // Get the wedding entity (couple names live here now)
+    const wedding = await this.db.wedding.findUnique({
+      where: { id: website.weddingId },
     })
 
-    if (!weddingUser) {
+    if (!wedding) {
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to fetch wedding website data.',
+        message: 'Failed to fetch wedding data.',
       })
     }
 
-    // Get all events for this user with their questions
+    // Get all events for this wedding with their questions
     const events = await this.db.event.findMany({
-      where: { userId: website.userId },
+      where: { weddingId: website.weddingId },
       orderBy: { createdAt: 'asc' },
       include: {
         questions: {
@@ -188,15 +164,15 @@ export class WebsiteService {
       },
     })
 
-    // Find the wedding date from the Wedding Day event
-    const weddingDateEvent = events.find((event) => event.name === 'Wedding Day')
-    const weddingDate = weddingDateEvent?.date
+    // Get wedding date from Wedding Day event
+    // TODO: Once weddingDate field is added to Wedding model, use: wedding.weddingDate ?? events.find(...)?.date
+    const weddingDate = events.find((event) => event.name === 'Wedding Day')?.date
 
     return {
-      groomFirstName: weddingUser.groomFirstName,
-      groomLastName: weddingUser.groomLastName,
-      brideFirstName: weddingUser.brideFirstName,
-      brideLastName: weddingUser.brideLastName,
+      groomFirstName: wedding.groomFirstName,
+      groomLastName: wedding.groomLastName,
+      brideFirstName: wedding.brideFirstName,
+      brideLastName: wedding.brideLastName,
       date: {
         standardFormat: weddingDate?.toLocaleDateString('en-us', {
           weekday: 'long',
@@ -217,7 +193,7 @@ export class WebsiteService {
         venue: event.venue,
         attire: event.attire,
         description: event.description,
-        userId: event.userId,
+        weddingId: event.weddingId,
         collectRsvp: event.collectRsvp,
         questions: event.questions,
       })),
@@ -240,7 +216,7 @@ export class WebsiteService {
         data.rsvpResponses.map(async (response: RsvpResponse) => {
           await prisma.invitation.update({
             where: {
-              invitationId: {
+              guestId_eventId: {
                 guestId: response.guestId,
                 eventId: response.eventId,
               },

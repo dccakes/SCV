@@ -9,12 +9,17 @@
  * Core Invitation entity type
  */
 export type Invitation = {
+  id: string
+  weddingId: string
   guestId: number
   eventId: string
+  rsvp: string
+  dietaryRestrictions: string | null
+  submittedBy: number | null
+  submittedAt: Date | null
   invitedAt: Date
+  createdAt: Date
   updatedAt: Date
-  rsvp: string | null
-  userId: string
 }
 
 /**

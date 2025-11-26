@@ -7,20 +7,12 @@
 import { z } from 'zod'
 
 /**
- * Schema for creating a new website (initial setup)
+ * Schema for enabling website add-on
+ * Note: Wedding must already exist. Couple names come from Wedding entity.
  */
 export const createWebsiteSchema = z.object({
-  firstName: z.string().min(1, 'First name is required'),
-  middleName: z.string().optional(),
-  lastName: z.string().min(1, 'Last name is required'),
-  partnerFirstName: z.string().min(1, 'Partner first name is required'),
-  partnerMiddleName: z.string().optional(),
-  partnerLastName: z.string().min(1, 'Partner last name is required'),
   basePath: z.string().min(1, 'Base path is required'),
   email: z.string().email('Valid email is required'),
-  hasWeddingDetails: z.boolean().optional(),
-  weddingDate: z.string().optional(),
-  weddingLocation: z.string().optional(),
 })
 
 /**
@@ -72,7 +64,6 @@ export const updateRsvpEnabledSchema = z.object({
  * Schema for updating cover photo
  */
 export const updateCoverPhotoSchema = z.object({
-  userId: z.string().optional(),
   coverPhotoUrl: z.string().nullable(),
 })
 
