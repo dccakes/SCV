@@ -17,7 +17,13 @@ export {
 } from '~/server/domains/event'
 
 // User Domain
-export { type CreateUserInput, type UpdateUserInput, type User, userRouter, userService } from '~/server/domains/user'
+export {
+  type CreateUserInput,
+  type UpdateUserInput,
+  type User,
+  userRouter,
+  userService,
+} from '~/server/domains/user'
 
 // Website Domain
 export {
@@ -80,8 +86,8 @@ export {
   type DeleteHouseholdInput,
   type Household,
   householdRouter,
-  householdService,
   type HouseholdSearchResult,
+  householdService,
   type HouseholdWithGuests,
   type HouseholdWithGuestsAndGifts,
   type SearchHouseholdInput,

@@ -1,0 +1,23 @@
+echo "🔍 Running ESLint & Prettier..."
+# Add nvm paths to ensure npx is available
+export PATH="$HOME/.nvm/versions/node/v22.19.0/bin:$PATH"
+npx lint-staged 
+
+# --- Skip tests ONLY if $SKIP_TESTS is set ---
+if [ -n "$SKIP_TESTS" ]; then
+  echo "⏭️ Skipping unit tests (SKIP_TESTS detected)"
+  exit 0
+fi
+
+# To skip unit tests on the commit, run the commit like:
+# SKIP_TESTS=1 git commit -m "msg"
+## or, you can create an alias in your shell config:
+## git config --global alias.cit '!SKIP_TESTS=1 git commit'
+## then you can run:
+## git cit -m "msg" to skip tests
+
+## the alias ("cit") can be anything you want, just make sure to use the same name in the alias and in the script
+
+# --- Otherwise, run tests ---
+echo "🧪 Running unit tests..."
+npm run test:unit

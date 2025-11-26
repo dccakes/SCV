@@ -9,7 +9,7 @@
  * be moved to an Application Service in the future.
  */
 
-import { type Prisma,type PrismaClient } from '@prisma/client'
+import { type Prisma, type PrismaClient } from '@prisma/client'
 import { TRPCClientError } from '@trpc/client'
 import { TRPCError } from '@trpc/server'
 
@@ -21,7 +21,11 @@ import {
   type Website,
   type WeddingPageData,
 } from '~/server/domains/website/website.types'
-import { type AnswerToQuestion, type RsvpResponse, type SubmitRsvpSchemaInput } from '~/server/domains/website/website.validator'
+import {
+  type AnswerToQuestion,
+  type RsvpResponse,
+  type SubmitRsvpSchemaInput,
+} from '~/server/domains/website/website.validator'
 
 export class WebsiteService {
   constructor(
@@ -38,26 +42,37 @@ export class WebsiteService {
    * 3. The website with default questions
    */
   async createWebsite(userId: string, data: CreateWebsiteInput): Promise<Website> {
-    const { firstName, lastName, partnerFirstName, partnerLastName, basePath, email } = data
+    const {
+      firstName,
+      lastName,
+      partnerFirstName,
+      partnerLastName,
+      basePath,
+      email,
+      weddingDate,
+      weddingLocation,
+    } = data
 
     const subUrl = `${firstName}${lastName}and${partnerFirstName}${partnerLastName}`.toLowerCase()
     const url = `${basePath}/${subUrl}`
 
     // TODO: Check for duplicate URLs
 
-    // Create default Wedding Day event
+    // Create default Wedding Day event with optional date and venue
     await this.db.event.create({
       data: {
         name: 'Wedding Day',
         userId,
         collectRsvp: true,
+        date: weddingDate ? new Date(weddingDate) : null,
+        venue: weddingLocation ?? null,
       },
     })
 
-    // Create user profile with wedding couple info
-    await this.db.user.create({
+    // Update user profile with wedding couple info
+    await this.db.user.update({
+      where: { id: userId },
       data: {
-        id: userId,
         websiteUrl: url,
         email,
         groomFirstName: firstName,

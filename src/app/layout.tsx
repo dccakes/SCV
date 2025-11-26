@@ -27,8 +27,8 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="font-sans">
+    <html lang="en" suppressHydrationWarning>
+      <body className="bg-background font-sans text-foreground antialiased">
         <Providers>
           <TRPCReactProvider>
             <EventFormProvider>

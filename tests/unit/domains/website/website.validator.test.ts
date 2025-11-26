@@ -28,7 +28,62 @@ describe('createWebsiteSchema', () => {
     expect(result.data).toEqual(validInput)
   })
 
-  it('should require all fields', () => {
+  it('should validate input with optional middle names', () => {
+    const validInput = {
+      firstName: 'John',
+      middleName: 'Michael',
+      lastName: 'Doe',
+      partnerFirstName: 'Jane',
+      partnerMiddleName: 'Elizabeth',
+      partnerLastName: 'Smith',
+      basePath: 'https://example.com',
+      email: 'john@example.com',
+    }
+
+    const result = createWebsiteSchema.safeParse(validInput)
+    expect(result.success).toBe(true)
+    expect(result.data).toEqual(validInput)
+  })
+
+  it('should validate input with wedding details', () => {
+    const validInput = {
+      firstName: 'John',
+      lastName: 'Doe',
+      partnerFirstName: 'Jane',
+      partnerLastName: 'Smith',
+      basePath: 'https://example.com',
+      email: 'john@example.com',
+      hasWeddingDetails: true,
+      weddingDate: '2025-06-15T00:00:00.000Z',
+      weddingLocation: 'Beach Resort, Hawaii',
+    }
+
+    const result = createWebsiteSchema.safeParse(validInput)
+    expect(result.success).toBe(true)
+    expect(result.data).toEqual(validInput)
+  })
+
+  it('should validate input with all optional fields', () => {
+    const validInput = {
+      firstName: 'John',
+      middleName: 'Michael',
+      lastName: 'Doe',
+      partnerFirstName: 'Jane',
+      partnerMiddleName: 'Elizabeth',
+      partnerLastName: 'Smith',
+      basePath: 'https://example.com',
+      email: 'john@example.com',
+      hasWeddingDetails: true,
+      weddingDate: '2025-06-15T00:00:00.000Z',
+      weddingLocation: 'Beach Resort, Hawaii',
+    }
+
+    const result = createWebsiteSchema.safeParse(validInput)
+    expect(result.success).toBe(true)
+    expect(result.data).toEqual(validInput)
+  })
+
+  it('should require all required fields', () => {
     const invalidInput = {
       firstName: 'John',
     }
