@@ -40,11 +40,16 @@ export type WebsiteWithQuestions = Website & {
 export type CreateWebsiteInput = {
   userId: string
   firstName: string
+  middleName?: string
   lastName: string
   partnerFirstName: string
+  partnerMiddleName?: string
   partnerLastName: string
   basePath: string
   email: string
+  hasWeddingDetails?: boolean
+  weddingDate?: string
+  weddingLocation?: string
 }
 
 /**

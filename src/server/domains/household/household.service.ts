@@ -12,7 +12,6 @@ import { type Guest as PrismaGuest } from '@prisma/client'
 import { type PrismaClient } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 
-import { type Invitation } from '~/server/domains/invitation/invitation.types'
 import { type HouseholdRepository } from '~/server/domains/household/household.repository'
 import {
   type CreateHouseholdInput,
@@ -25,6 +24,7 @@ import {
   type SearchHouseholdInput,
   type UpdateHouseholdInput,
 } from '~/server/domains/household/household.types'
+import { type Invitation } from '~/server/domains/invitation/invitation.types'
 
 export class HouseholdService {
   constructor(
@@ -279,7 +279,9 @@ export class HouseholdService {
   /**
    * Get a household by ID with guests and gifts
    */
-  async getByIdWithGuestsAndGifts(householdId: string): Promise<HouseholdWithGuestsAndGifts | null> {
+  async getByIdWithGuestsAndGifts(
+    householdId: string
+  ): Promise<HouseholdWithGuestsAndGifts | null> {
     return this.householdRepository.findByIdWithGuestsAndGifts(householdId)
   }
 
