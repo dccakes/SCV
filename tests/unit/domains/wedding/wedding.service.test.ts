@@ -13,8 +13,14 @@ import { TRPCError } from '@trpc/server'
 // Must mock before importing the service
 jest.mock('~/server/domains/wedding/wedding.repository')
 jest.mock('~/server/infrastructure/database/client')
+jest.mock('~/server/domains/guest-tag/guest-tag.service')
 
 // @ts-expect-error - Importing mock functions from mocked module
+import {
+  GuestTagService,
+  mockSeedInitialTags,
+  resetMocks as resetTagMocks,
+} from '~/server/domains/guest-tag/guest-tag.service'
 import {
   mockCreate,
   mockExistsForUser,
@@ -38,6 +44,7 @@ const mockExistsForUserFn = mockExistsForUser as jest.Mock
 const mockFindByUserIdFn = mockFindByUserId as jest.Mock
 const mockEventCreateFn = mockEventCreate as jest.Mock
 const mockUserUpdateFn = mockUserUpdate as jest.Mock
+const mockSeedInitialTagsFn = mockSeedInitialTags as jest.Mock
 
 describe('WeddingService', () => {
   let weddingService: WeddingService
@@ -45,14 +52,17 @@ describe('WeddingService', () => {
   beforeEach(() => {
     resetWeddingMocks()
     resetDbMocks()
+    resetTagMocks()
     const mockRepository = new WeddingRepository({})
-    weddingService = new WeddingService(mockRepository, db)
+    const mockGuestTagService = new GuestTagService({})
+    weddingService = new WeddingService(mockRepository, db, mockGuestTagService)
   })
 
   describe('createWedding', () => {
     it('should create wedding with couple names', async () => {
       mockExistsForUserFn.mockResolvedValue(false)
       mockCreateFn.mockResolvedValue(mockWedding)
+      mockSeedInitialTagsFn.mockResolvedValue(undefined)
       mockUserUpdateFn.mockResolvedValue({})
 
       const result = await weddingService.createWedding('user-123', {
@@ -72,6 +82,28 @@ describe('WeddingService', () => {
         brideLastName: 'Smith',
         enabledAddOns: [],
       })
+    })
+
+    it('should seed default tags when creating wedding', async () => {
+      mockExistsForUserFn.mockResolvedValue(false)
+      mockCreateFn.mockResolvedValue(mockWedding)
+      mockSeedInitialTagsFn.mockResolvedValue(undefined)
+      mockUserUpdateFn.mockResolvedValue({})
+
+      await weddingService.createWedding('user-123', {
+        userId: 'user-123',
+        groomFirstName: 'John',
+        groomLastName: 'Doe',
+        brideFirstName: 'Jane',
+        brideLastName: 'Smith',
+      })
+
+      expect(mockSeedInitialTagsFn).toHaveBeenCalledWith('wedding-123', [
+        { name: 'Family', color: '#3b82f6' },
+        { name: 'MutualFriends', color: '#10b981' },
+        { name: 'Coworkers', color: '#8b5cf6' },
+        { name: 'Plus One', color: '#f59e0b' },
+      ])
     })
 
     it('should prevent creating duplicate wedding for same user', async () => {
@@ -94,6 +126,7 @@ describe('WeddingService', () => {
       const weddingDate = '2025-06-15T00:00:00.000Z'
       mockExistsForUserFn.mockResolvedValue(false)
       mockCreateFn.mockResolvedValue(mockWedding)
+      mockSeedInitialTagsFn.mockResolvedValue(undefined)
       mockEventCreateFn.mockResolvedValue({
         id: 'event-123',
         name: 'Wedding Day',
@@ -127,6 +160,7 @@ describe('WeddingService', () => {
     it('should update user profile with couple names', async () => {
       mockExistsForUserFn.mockResolvedValue(false)
       mockCreateFn.mockResolvedValue(mockWedding)
+      mockSeedInitialTagsFn.mockResolvedValue(undefined)
       mockUserUpdateFn.mockResolvedValue({})
 
       await weddingService.createWedding('user-123', {
@@ -151,6 +185,7 @@ describe('WeddingService', () => {
     it('should not create event when wedding details not provided', async () => {
       mockExistsForUserFn.mockResolvedValue(false)
       mockCreateFn.mockResolvedValue(mockWedding)
+      mockSeedInitialTagsFn.mockResolvedValue(undefined)
       mockUserUpdateFn.mockResolvedValue({})
 
       await weddingService.createWedding('user-123', {

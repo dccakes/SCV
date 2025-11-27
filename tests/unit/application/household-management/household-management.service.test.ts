@@ -159,7 +159,23 @@ describe('HouseholdManagementService', () => {
       expect(mockDb.guest.create).toHaveBeenCalledTimes(2)
     })
 
-    it('should set first guest as primary contact', async () => {
+    it('should use isPrimaryContact from form when provided', async () => {
+      mockDb.household.create.mockResolvedValue(mockHousehold)
+      mockDb.guest.create.mockResolvedValue(mockGuest)
+
+      await service.createHouseholdWithGuests('user-123', {
+        guestParty: [
+          { firstName: 'John', lastName: 'Doe', isPrimaryContact: false, invites: {} },
+          { firstName: 'Jane', lastName: 'Doe', isPrimaryContact: true, invites: {} },
+        ],
+      })
+
+      // Should use value from form, not default to first guest
+      expect(mockDb.guest.create.mock.calls[0][0].data.isPrimaryContact).toBe(false)
+      expect(mockDb.guest.create.mock.calls[1][0].data.isPrimaryContact).toBe(true)
+    })
+
+    it('should default first guest as primary contact when not provided', async () => {
       mockDb.household.create.mockResolvedValue(mockHousehold)
       mockDb.guest.create.mockResolvedValue(mockGuest)
 
@@ -170,9 +186,8 @@ describe('HouseholdManagementService', () => {
         ],
       })
 
-      // First call should have isPrimaryContact: true
+      // Fallback: First guest should be primary when not specified
       expect(mockDb.guest.create.mock.calls[0][0].data.isPrimaryContact).toBe(true)
-      // Second call should have isPrimaryContact: false
       expect(mockDb.guest.create.mock.calls[1][0].data.isPrimaryContact).toBe(false)
     })
 
@@ -317,6 +332,92 @@ describe('HouseholdManagementService', () => {
           description: 'Kitchen set',
           thankyou: true,
         },
+      })
+    })
+
+    it('should update isPrimaryContact when provided', async () => {
+      mockDb.household.update.mockResolvedValue(mockHousehold)
+      mockDb.guest.updateMany.mockResolvedValue({ count: 1 })
+      mockDb.guest.upsert.mockResolvedValue(mockGuest)
+      mockDb.invitation.update.mockResolvedValue(mockInvitation)
+      mockDb.gift.upsert.mockResolvedValue(mockGift)
+
+      await service.updateHouseholdWithGuests('user-123', {
+        householdId: 'household-123',
+        guestParty: [
+          {
+            guestId: 1,
+            firstName: 'John',
+            lastName: 'Doe',
+            isPrimaryContact: true,
+            invites: { 'event-123': 'Attending' },
+          },
+        ],
+        gifts: [],
+      })
+
+      // Should update isPrimaryContact field
+      expect(mockDb.guest.upsert.mock.calls[0][0].update).toEqual(
+        expect.objectContaining({
+          isPrimaryContact: true,
+        })
+      )
+    })
+
+    it('should create new guest with isPrimaryContact during update', async () => {
+      mockDb.household.update.mockResolvedValue(mockHousehold)
+      mockDb.guest.updateMany.mockResolvedValue({ count: 1 })
+      mockDb.guest.upsert.mockResolvedValue(mockGuest)
+      mockDb.invitation.update.mockResolvedValue(mockInvitation)
+      mockDb.gift.upsert.mockResolvedValue(mockGift)
+
+      await service.updateHouseholdWithGuests('user-123', {
+        householdId: 'household-123',
+        guestParty: [
+          {
+            // New guest (no guestId)
+            firstName: 'Jane',
+            lastName: 'Doe',
+            isPrimaryContact: false,
+            invites: { 'event-123': 'Invited' },
+          },
+        ],
+        gifts: [],
+      })
+
+      // New guest should use form value for isPrimaryContact
+      expect(mockDb.guest.upsert.mock.calls[0][0].create).toEqual(
+        expect.objectContaining({
+          isPrimaryContact: false,
+        })
+      )
+    })
+
+    it('should clear all primary contacts before upserting', async () => {
+      mockDb.household.update.mockResolvedValue(mockHousehold)
+      mockDb.guest.updateMany.mockResolvedValue({ count: 2 })
+      mockDb.guest.upsert.mockResolvedValue(mockGuest)
+      mockDb.invitation.update.mockResolvedValue(mockInvitation)
+      mockDb.gift.upsert.mockResolvedValue(mockGift)
+
+      await service.updateHouseholdWithGuests('user-123', {
+        householdId: 'household-123',
+        guestParty: [
+          {
+            guestId: 1,
+            firstName: 'John',
+            lastName: 'Doe',
+            isPrimaryContact: true,
+            invites: { 'event-123': 'Attending' },
+          },
+        ],
+        gifts: [],
+      })
+
+      // Should clear all primary contacts in household first
+      expect(mockDb.guest.updateMany).toHaveBeenCalledWith({
+        where: { householdId: 'household-123' },
+        data: { isPrimaryContact: false },
       })
     })
   })

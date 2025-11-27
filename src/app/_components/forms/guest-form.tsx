@@ -1,13 +1,14 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { type SubmitHandler, useFieldArray, useForm } from 'react-hook-form'
 import { IoMdClose } from 'react-icons/io'
+import { toast } from 'sonner'
 
 import { useToggleGuestForm } from '~/app/_components/contexts/guest-form-context'
-import DeleteConfirmation from '~/app/_components/forms/delete-confirmation'
 import AddFormButtons from '~/app/_components/forms/guest/add-buttons'
 import ContactForm from '~/app/_components/forms/guest/contact-form'
 import EditFormButtons from '~/app/_components/forms/guest/edit-buttons'
@@ -20,8 +21,24 @@ import {
 } from '~/app/_components/forms/guest-form.schema'
 import SidePaneWrapper from '~/app/_components/forms/wrapper'
 import { getDirtyValues } from '~/app/utils/form-helpers'
-import { sharedStyles } from '~/app/utils/shared-styles'
 import { type Event, type FormInvites } from '~/app/utils/shared-types'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '~/components/ui/accordion'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '~/components/ui/alert-dialog'
+import { Label } from '~/components/ui/label'
 import { api } from '~/trpc/react'
 
 type GuestFormProps = {
@@ -60,9 +77,13 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
     name: 'guestParty',
   })
 
+  // Fetch tags for the current wedding
+  const { data: tags = [] } = api.guestTag.getAll.useQuery()
+
   // Mutations directly in component
   const createMutation = api.household.create.useMutation({
     onSuccess: () => {
+      toast.success('Party created successfully!')
       reset(getDefaultHouseholdFormData(events))
       if (shouldCloseAfterSave) {
         toggleGuestForm()
@@ -81,14 +102,16 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
             })
           }
         })
+        toast.error('Please fix the form errors')
       } else {
-        window.alert('Failed to create guests! Please try again later.')
+        toast.error('Failed to create party. Please try again.')
       }
     },
   })
 
   const updateMutation = api.household.update.useMutation({
     onSuccess: (data) => {
+      toast.success('Party updated successfully!')
       // Reset form with updated data to clear dirty state
       if (data) {
         reset(data as unknown as HouseholdFormData)
@@ -107,19 +130,21 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
             })
           }
         })
+        toast.error('Please fix the form errors')
       } else {
-        window.alert('Failed to update party! Please try again later.')
+        toast.error('Failed to update party. Please try again.')
       }
     },
   })
 
   const deleteMutation = api.household.delete.useMutation({
     onSuccess: () => {
+      toast.success('Party deleted successfully!')
       toggleGuestForm()
       router.refresh()
     },
     onError: () => {
-      window.alert('Failed to delete party! Please try again later.')
+      toast.error('Failed to delete party. Please try again.')
     },
   })
 
@@ -142,6 +167,8 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
       email: null,
       phone: null,
       isPrimaryContact: false,
+      ageGroup: 'ADULT' as const,
+      tagIds: [],
       invites,
     })
   }
@@ -190,75 +217,109 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
   // Combined loading state from mutations
   const isLoading = isSubmitting || createMutation.isPending || updateMutation.isPending
 
-  if (showDeleteConfirmation) {
-    return (
-      <DeleteConfirmation
-        isProcessing={deleteMutation.isPending}
-        disclaimerText={
-          'Please confirm whether you would like to delete this party along with all its guests.'
-        }
-        noHandler={() => setShowDeleteConfirmation(false)}
-        yesHandler={() =>
-          deleteMutation.mutate({
-            householdId,
-          })
-        }
-      />
-    )
-  }
-
   return (
     <SidePaneWrapper>
-      <form className={`pb-28 ${sharedStyles.sidebarFormWidth}`} onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex justify-between border-b p-5">
-          <h1 className="text-2xl font-bold">{getTitle()}</h1>
-          <IoMdClose size={25} className="cursor-pointer" onClick={() => toggleGuestForm()} />
+      <form className="flex h-full flex-col" onSubmit={handleSubmit(onSubmit)}>
+        {/* Header */}
+        <div className="flex items-center justify-between border-b bg-background p-6">
+          <h1 className="mr-4 truncate text-2xl font-bold">{getTitle()}</h1>
+          <button
+            type="button"
+            onClick={() => toggleGuestForm()}
+            className="text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <IoMdClose size={24} />
+          </button>
         </div>
 
-        {/* Display validation error for guestParty array */}
-        {errors.guestParty && typeof errors.guestParty.message === 'string' && (
-          <div className="mx-5 mt-3 rounded-md bg-red-50 p-3 text-sm text-red-600">
-            {errors.guestParty.message}
-          </div>
-        )}
-
-        {fields.map((field, index) => (
-          <GuestNameForm
-            key={field.id}
-            events={events}
-            guestIndex={index}
-            control={control}
-            register={register}
-            errors={errors}
-            handleRemoveGuest={handleRemoveGuest}
-            setValue={setValue}
-          />
-        ))}
-
-        <button
-          type="button"
-          onClick={handleAddGuestToParty}
-          className={`m-auto w-full py-2 text-${sharedStyles.primaryColor}`}
-        >
-          + Add A Guest To This Party
-        </button>
-
-        <div className="p-5">
-          <h2 className="mb-3 text-2xl font-bold">Contact Information</h2>
-          <ContactForm register={register} errors={errors} />
-
-          <h2 className="my-4 text-2xl font-bold">My Notes</h2>
-          <textarea
-            {...register('notes')}
-            placeholder="Enter notes about your guests, like food allergies"
-            className="h-32 w-full rounded-lg border p-3"
-            style={{ resize: 'none' }}
-          />
-          {errors.notes && <p className="mt-1 text-sm text-red-600">{errors.notes.message}</p>}
-
-          {isEditMode && (
-            <GiftSection control={control} register={register} errors={errors} events={events} />
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto pb-32">
+          {/* Display validation error for guestParty array */}
+          {errors.guestParty && typeof errors.guestParty.message === 'string' && (
+            <div className="bg-destructive/10 mx-6 mt-4 rounded-lg border border-destructive p-4">
+              <p className="text-sm font-medium text-destructive">{errors.guestParty.message}</p>
+            </div>
           )}
+
+          <Accordion
+            type="multiple"
+            defaultValue={['guests', 'contact', 'notes']}
+            className="w-full"
+          >
+            <AccordionItem value="guests" className="border-b-0">
+              <AccordionTrigger className="px-6 py-4 text-lg font-semibold hover:no-underline">
+                Guest Party ({fields.length})
+              </AccordionTrigger>
+              <AccordionContent className="pb-0">
+                {fields.map((field, index) => (
+                  <GuestNameForm
+                    key={field.id}
+                    events={events}
+                    tags={tags}
+                    guestIndex={index}
+                    control={control}
+                    register={register}
+                    errors={errors}
+                    handleRemoveGuest={handleRemoveGuest}
+                    setValue={setValue}
+                  />
+                ))}
+
+                <button
+                  type="button"
+                  onClick={handleAddGuestToParty}
+                  className="hover:bg-muted/50 w-full border-t py-4 text-sm font-medium text-primary transition-colors"
+                >
+                  + Add A Guest To This Party
+                </button>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="contact" className="border-b-0">
+              <AccordionTrigger className="px-6 py-4 text-lg font-semibold hover:no-underline">
+                Contact Information
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-6">
+                <ContactForm register={register} errors={errors} />
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="notes" className="border-b-0">
+              <AccordionTrigger className="px-6 py-4 text-lg font-semibold hover:no-underline">
+                Notes
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-6">
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Additional Information</Label>
+                  <textarea
+                    id="notes"
+                    {...register('notes')}
+                    placeholder="Enter notes about your guests, like food allergies or special requests"
+                    className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  />
+                  {errors.notes && (
+                    <p className="text-sm text-destructive">{errors.notes.message}</p>
+                  )}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {isEditMode && (
+              <AccordionItem value="gifts" className="border-b-0">
+                <AccordionTrigger className="px-6 py-4 text-lg font-semibold hover:no-underline">
+                  Gifts
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-6">
+                  <GiftSection
+                    control={control}
+                    register={register}
+                    errors={errors}
+                    events={events}
+                  />
+                </AccordionContent>
+              </AccordionItem>
+            )}
+          </Accordion>
         </div>
 
         {isEditMode ? (
@@ -274,6 +335,32 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
           />
         )}
       </form>
+
+      <AlertDialog open={showDeleteConfirmation} onOpenChange={setShowDeleteConfirmation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Party?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this party and all associated guests. This action cannot
+              be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                deleteMutation.mutate({ householdId })
+              }}
+              disabled={deleteMutation.isPending}
+              className="flex items-center gap-2 bg-red-600 hover:bg-red-700"
+            >
+              {deleteMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete Party'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SidePaneWrapper>
   )
 }

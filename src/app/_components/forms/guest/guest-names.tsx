@@ -1,3 +1,5 @@
+import { GuestAgeGroup } from '@prisma/client'
+import { useState } from 'react'
 import {
   type Control,
   Controller,
@@ -6,14 +8,33 @@ import {
   type UseFormSetValue,
   useWatch,
 } from 'react-hook-form'
-import { FiMinusCircle } from 'react-icons/fi'
+import { FiMinusCircle, FiTag } from 'react-icons/fi'
 
+import { TagsModal } from '~/app/_components/forms/guest/tags-modal'
 import { type HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
-import { sharedStyles } from '~/app/utils/shared-styles'
 import { type Event } from '~/app/utils/shared-types'
+import { Badge } from '~/components/ui/badge'
+import { Button } from '~/components/ui/button'
+import { Input } from '~/components/ui/input'
+import { Label } from '~/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/ui/select'
+import { Switch } from '~/components/ui/switch'
+
+type Tag = {
+  id: string
+  name: string
+  color: string | null
+}
 
 type GuestNameFormProps = {
   events: Event[]
+  tags: Tag[]
   guestIndex: number
   control: Control<HouseholdFormData>
   register: UseFormRegister<HouseholdFormData>
@@ -24,6 +45,7 @@ type GuestNameFormProps = {
 
 export const GuestNameForm = ({
   events,
+  tags,
   guestIndex,
   control,
   register,
@@ -31,6 +53,8 @@ export const GuestNameForm = ({
   handleRemoveGuest,
   setValue,
 }: GuestNameFormProps) => {
+  const [isTagsModalOpen, setIsTagsModalOpen] = useState(false)
+
   // Get field-level errors for this guest
   const guestErrors = errors.guestParty?.[guestIndex]
 
@@ -39,6 +63,28 @@ export const GuestNameForm = ({
     control,
     name: 'guestParty',
   })
+
+  // Watch the current guest's tagIds and name
+  const selectedTagIds =
+    useWatch({
+      control,
+      name: `guestParty.${guestIndex}.tagIds`,
+    }) ?? []
+
+  const firstName =
+    useWatch({
+      control,
+      name: `guestParty.${guestIndex}.firstName`,
+    }) ?? ''
+
+  const lastName =
+    useWatch({
+      control,
+      name: `guestParty.${guestIndex}.lastName`,
+    }) ?? ''
+
+  const guestName =
+    firstName || lastName ? `${firstName} ${lastName}`.trim() : `Guest ${guestIndex + 1}`
 
   const handlePrimaryContactChange = (checked: boolean) => {
     if (checked && guestParty) {
@@ -51,173 +97,216 @@ export const GuestNameForm = ({
     }
   }
 
+  const handleTagsChange = (tagIds: string[]) => {
+    setValue(`guestParty.${guestIndex}.tagIds`, tagIds, {
+      shouldDirty: true,
+    })
+  }
+
   return (
-    <div>
-      <div className="p-5">
-        <h2 className="mb-3 text-2xl font-bold">Guest Name</h2>
-        <div className="flex items-center justify-between gap-3">
-          <div className="w-1/2">
-            <div className="relative">
-              <input
-                id={`guest${guestIndex}-firstName`}
-                {...register(`guestParty.${guestIndex}.firstName`)}
-                className={`peer w-full rounded-lg border p-3 ${
-                  guestErrors?.firstName ? 'border-red-500' : 'border-gray-300'
-                } focus:border-blue-500 focus:outline-none`}
-                placeholder=" "
-              />
-              <label
-                htmlFor={`guest${guestIndex}-firstName`}
-                className="absolute left-3 top-3 -translate-y-6 transform bg-white px-1 text-sm text-gray-600 transition-all peer-placeholder-shown:translate-y-0 peer-placeholder-shown:text-base peer-focus:-translate-y-6 peer-focus:text-sm peer-focus:text-blue-500"
-              >
-                First Name*
-              </label>
-            </div>
-            {guestErrors?.firstName && (
-              <p className="mt-1 text-sm text-red-600">{guestErrors.firstName.message}</p>
-            )}
+    <div className="border-b last:border-b-0">
+      <div className="space-y-6 p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h3 className="text-lg font-semibold">Guest {guestIndex + 1}</h3>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsTagsModalOpen(true)}
+              className="h-7 gap-1.5 px-2 text-xs"
+            >
+              <FiTag className="h-3 w-3" />
+              Tags
+              {selectedTagIds.length > 0 && (
+                <Badge variant="secondary" className="ml-0.5 h-4 px-1 text-[10px]">
+                  {selectedTagIds.length}
+                </Badge>
+              )}
+            </Button>
           </div>
-
-          <div className="w-1/2">
-            <div className="relative">
-              <input
-                id={`guest${guestIndex}-lastName`}
-                {...register(`guestParty.${guestIndex}.lastName`)}
-                className={`peer w-full rounded-lg border p-3 ${
-                  guestErrors?.lastName ? 'border-red-500' : 'border-gray-300'
-                } focus:border-blue-500 focus:outline-none`}
-                placeholder=" "
-              />
-              <label
-                htmlFor={`guest${guestIndex}-lastName`}
-                className="absolute left-3 top-3 -translate-y-6 transform bg-white px-1 text-sm text-gray-600 transition-all peer-placeholder-shown:translate-y-0 peer-placeholder-shown:text-base peer-focus:-translate-y-6 peer-focus:text-sm peer-focus:text-blue-500"
-              >
-                Last Name*
-              </label>
-            </div>
-            {guestErrors?.lastName && (
-              <p className="mt-1 text-sm text-red-600">{guestErrors.lastName.message}</p>
-            )}
-          </div>
-
           {guestIndex > 0 && (
-            <div className="cursor-pointer" onClick={() => handleRemoveGuest(guestIndex)}>
-              <FiMinusCircle size={28} color="gray" />
-            </div>
+            <button
+              type="button"
+              onClick={() => handleRemoveGuest(guestIndex)}
+              className="text-muted-foreground transition-colors hover:text-destructive"
+            >
+              <FiMinusCircle size={24} />
+            </button>
           )}
         </div>
 
-        <div className="mt-4 flex gap-3">
-          <div className="w-1/2">
-            <div className="relative">
-              <input
-                id={`guest${guestIndex}-email`}
-                {...register(`guestParty.${guestIndex}.email`)}
-                type="email"
-                className={`peer w-full rounded-lg border p-3 ${
-                  guestErrors?.email ? 'border-red-500' : 'border-gray-300'
-                } focus:border-blue-500 focus:outline-none`}
-                placeholder=" "
-              />
-              <label
-                htmlFor={`guest${guestIndex}-email`}
-                className="absolute left-3 top-3 -translate-y-6 transform bg-white px-1 text-sm text-gray-600 transition-all peer-placeholder-shown:translate-y-0 peer-placeholder-shown:text-base peer-focus:-translate-y-6 peer-focus:text-sm peer-focus:text-blue-500"
-              >
-                Email
-              </label>
-            </div>
-            {guestErrors?.email && (
-              <p className="mt-1 text-sm text-red-600">{guestErrors.email.message}</p>
+        {/* Tags Modal */}
+        <TagsModal
+          open={isTagsModalOpen}
+          onOpenChange={setIsTagsModalOpen}
+          selectedTagIds={selectedTagIds}
+          onTagsChange={handleTagsChange}
+          guestName={guestName}
+        />
+
+        {/* Display selected tags */}
+        {selectedTagIds.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {selectedTagIds.map((tagId) => {
+              const tag = tags.find((t) => t.id === tagId)
+              if (!tag) return null
+              return (
+                <Badge key={tag.id} variant="secondary" className="flex items-center gap-1.5">
+                  {tag.color && (
+                    <span
+                      className="h-2.5 w-2.5 rounded-full"
+                      style={{ backgroundColor: tag.color }}
+                    />
+                  )}
+                  {tag.name}
+                </Badge>
+              )
+            })}
+          </div>
+        )}
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor={`guest${guestIndex}-firstName`}>
+              First Name <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id={`guest${guestIndex}-firstName`}
+              {...register(`guestParty.${guestIndex}.firstName`)}
+              className={guestErrors?.firstName ? 'border-destructive' : ''}
+            />
+            {guestErrors?.firstName && (
+              <p className="text-sm text-destructive">{guestErrors.firstName.message}</p>
             )}
           </div>
 
-          <div className="w-1/2">
-            <div className="relative">
-              <input
-                id={`guest${guestIndex}-phone`}
-                {...register(`guestParty.${guestIndex}.phone`)}
-                className={`peer w-full rounded-lg border p-3 ${
-                  guestErrors?.phone ? 'border-red-500' : 'border-gray-300'
-                } focus:border-blue-500 focus:outline-none`}
-                placeholder=" "
-              />
-              <label
-                htmlFor={`guest${guestIndex}-phone`}
-                className="absolute left-3 top-3 -translate-y-6 transform bg-white px-1 text-sm text-gray-600 transition-all peer-placeholder-shown:translate-y-0 peer-placeholder-shown:text-base peer-focus:-translate-y-6 peer-focus:text-sm peer-focus:text-blue-500"
-              >
-                Phone
-              </label>
-            </div>
-            {guestErrors?.phone && (
-              <p className="mt-1 text-sm text-red-600">{guestErrors.phone.message}</p>
+          <div className="space-y-2">
+            <Label htmlFor={`guest${guestIndex}-lastName`}>
+              Last Name <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id={`guest${guestIndex}-lastName`}
+              {...register(`guestParty.${guestIndex}.lastName`)}
+              className={guestErrors?.lastName ? 'border-destructive' : ''}
+            />
+            {guestErrors?.lastName && (
+              <p className="text-sm text-destructive">{guestErrors.lastName.message}</p>
             )}
           </div>
         </div>
 
-        <div className="mt-4 flex items-center gap-2">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor={`guest${guestIndex}-email`}>Email</Label>
+            <Input
+              id={`guest${guestIndex}-email`}
+              {...register(`guestParty.${guestIndex}.email`)}
+              type="email"
+              className={guestErrors?.email ? 'border-destructive' : ''}
+            />
+            {guestErrors?.email && (
+              <p className="text-sm text-destructive">{guestErrors.email.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor={`guest${guestIndex}-phone`}>Phone</Label>
+            <Input
+              id={`guest${guestIndex}-phone`}
+              {...register(`guestParty.${guestIndex}.phone`)}
+              className={guestErrors?.phone ? 'border-destructive' : ''}
+            />
+            {guestErrors?.phone && (
+              <p className="text-sm text-destructive">{guestErrors.phone.message}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor={`guest${guestIndex}-ageGroup`}>
+            Age Group <span className="text-destructive">*</span>
+          </Label>
+          <Controller
+            name={`guestParty.${guestIndex}.ageGroup`}
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value ?? 'ADULT'} onValueChange={field.onChange}>
+                <SelectTrigger id={`guest${guestIndex}-ageGroup`}>
+                  <SelectValue placeholder="Select age group" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={GuestAgeGroup.INFANT}>Infant (0-2 years)</SelectItem>
+                  <SelectItem value={GuestAgeGroup.CHILD}>Child (3-12 years)</SelectItem>
+                  <SelectItem value={GuestAgeGroup.TEEN}>Teen (13-17 years)</SelectItem>
+                  <SelectItem value={GuestAgeGroup.ADULT}>Adult (18+ years)</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {guestErrors?.ageGroup && (
+            <p className="text-sm text-destructive">{guestErrors.ageGroup.message}</p>
+          )}
+        </div>
+
+        <div className="bg-muted/50 flex items-center justify-between rounded-lg border p-4">
+          <div className="space-y-0.5">
+            <Label htmlFor={`guest${guestIndex}-isPrimaryContact`} className="text-base">
+              Primary Contact
+            </Label>
+            <p className="text-sm text-muted-foreground">This guest will receive correspondence</p>
+          </div>
           <Controller
             name={`guestParty.${guestIndex}.isPrimaryContact`}
             control={control}
             render={({ field }) => (
-              <>
-                <input
-                  type="checkbox"
-                  id={`guest${guestIndex}-isPrimaryContact`}
-                  checked={field.value ?? false}
-                  onChange={(e) => {
-                    const checked = e.target.checked
-                    field.onChange(checked)
-                    // When checking this guest as primary, uncheck all others
-                    handlePrimaryContactChange(checked)
-                  }}
-                  className="h-5 w-5 cursor-pointer"
-                  style={{ accentColor: sharedStyles.primaryColorHex }}
-                />
-                <label
-                  htmlFor={`guest${guestIndex}-isPrimaryContact`}
-                  className="cursor-pointer text-sm"
-                >
-                  Primary Contact
-                </label>
-              </>
+              <Switch
+                id={`guest${guestIndex}-isPrimaryContact`}
+                checked={field.value ?? false}
+                onCheckedChange={(checked) => {
+                  field.onChange(checked)
+                  handlePrimaryContactChange(checked)
+                }}
+              />
             )}
           />
         </div>
-      </div>
 
-      <div className="p-5">
-        <h3 className="mb-3 text-gray-400">Invite to the following events:</h3>
-        <div className="grid grid-cols-2 gap-3">
-          {events?.map((event: Event) => (
-            <div key={event.id}>
-              <div className="flex items-center gap-3 pr-2">
-                <Controller
-                  name={`guestParty.${guestIndex}.invites.${event.id}`}
-                  control={control}
-                  render={({ field }) => (
-                    <>
-                      <input
-                        className="h-6 w-6 cursor-pointer border p-3"
-                        style={{ accentColor: sharedStyles.primaryColorHex }}
-                        type="checkbox"
-                        id={`guest${guestIndex}: ${event.id}`}
-                        checked={['Invited', 'Attending', 'Declined'].includes(field.value ?? '')}
-                        onChange={(e) => {
-                          field.onChange(e.target.checked ? 'Invited' : 'Not Invited')
-                        }}
-                      />
-                      <label
-                        className={`cursor-pointer ${sharedStyles.ellipsisOverflow}`}
-                        htmlFor={`guest${guestIndex}: ${event.id}`}
+        <div className="space-y-4">
+          <h4 className="text-sm font-medium text-muted-foreground">Event Invitations</h4>
+          <div className="space-y-2">
+            {events?.map((event: Event) => (
+              <Controller
+                key={event.id}
+                name={`guestParty.${guestIndex}.invites.${event.id}`}
+                control={control}
+                render={({ field }) => (
+                  <div className="hover:bg-muted/50 flex items-center justify-between rounded-lg border bg-card p-3 transition-colors">
+                    <div className="mr-3 min-w-0 flex-1">
+                      <Label
+                        htmlFor={`guest${guestIndex}-event-${event.id}`}
+                        className="cursor-pointer font-medium"
                       >
                         {event.name}
-                      </label>
-                    </>
-                  )}
-                />
-              </div>
-            </div>
-          ))}
+                      </Label>
+                      {event.date && (
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {new Date(event.date).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                    <Switch
+                      id={`guest${guestIndex}-event-${event.id}`}
+                      checked={['Invited', 'Attending', 'Declined'].includes(field.value ?? '')}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked ? 'Invited' : 'Not Invited')
+                      }}
+                    />
+                  </div>
+                )}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>

@@ -21,7 +21,11 @@ describe('createGuestSchema', () => {
 
     const result = createGuestSchema.safeParse(validInput)
     expect(result.success).toBe(true)
-    expect(result.data).toEqual(validInput)
+    expect(result.data).toEqual({
+      ...validInput,
+      ageGroup: 'ADULT',
+      tagIds: [],
+    })
   })
 
   it('should validate guest with email and phone', () => {
@@ -36,7 +40,11 @@ describe('createGuestSchema', () => {
 
     const result = createGuestSchema.safeParse(validInput)
     expect(result.success).toBe(true)
-    expect(result.data).toEqual(validInput)
+    expect(result.data).toEqual({
+      ...validInput,
+      ageGroup: 'ADULT',
+      tagIds: [],
+    })
   })
 
   it('should reject invalid email format', () => {

@@ -1,5 +1,7 @@
 import '~/styles/globals.css'
 
+import { Toaster } from 'sonner'
+
 import Footer from '~/app/_components/footer'
 import GuestHeader from '~/app/_components/guest-list/header'
 import Navbar from '~/app/_components/navbar'
@@ -18,6 +20,7 @@ export default function GuestListLayout({ children }: { children: React.ReactNod
       <GuestHeader />
       {children}
       <Footer />
+      <Toaster position="top-right" richColors />
     </TRPCReactProvider>
   )
 }

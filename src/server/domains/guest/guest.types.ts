@@ -5,6 +5,8 @@
  * Guests are individual wedding invitees belonging to a household.
  */
 
+import { type GuestAgeGroup } from '@prisma/client'
+
 import { type Invitation } from '~/server/domains/invitation/invitation.types'
 
 /**
@@ -19,6 +21,7 @@ export type Guest = {
   householdId: string
   weddingId: string
   isPrimaryContact: boolean
+  ageGroup: GuestAgeGroup | null
   createdAt: Date
   updatedAt: Date
 }
@@ -40,6 +43,8 @@ export type CreateGuestInput = {
   phone?: string | null
   householdId: string
   isPrimaryContact?: boolean
+  ageGroup?: GuestAgeGroup | null
+  tagIds?: string[]
 }
 
 /**
@@ -51,6 +56,8 @@ export type UpdateGuestInput = {
   lastName?: string
   email?: string | null
   phone?: string | null
+  ageGroup?: GuestAgeGroup | null
+  tagIds?: string[]
 }
 
 /**
@@ -62,5 +69,7 @@ export type GuestPartyInput = {
   lastName: string
   email?: string | null
   phone?: string | null
+  ageGroup?: GuestAgeGroup | null
+  tagIds?: string[]
   invites: Record<string, string> // eventId -> rsvp status
 }

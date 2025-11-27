@@ -55,13 +55,9 @@ const uploadImage = async (formData: FormData): Promise<{ ok: boolean }> => {
     })
   )
     .then(async () => {
-      const session = await auth.api.getSession({
-        headers: await headers(),
-      })
       const photoName = files[0]!.name
       const objectUrl = `https://${Bucket}.s3.${region}.amazonaws.com/${photoName}`
       await api.website.updateCoverPhoto.mutate({
-        userId: session?.user?.id,
         coverPhotoUrl: objectUrl,
       })
       return { ok: true }
@@ -86,11 +82,7 @@ const deleteImage = async (imageKey: string): Promise<{ ok: boolean }> => {
       })
     )
       .then(async () => {
-        const session = await auth.api.getSession({
-          headers: await headers(),
-        })
         await api.website.updateCoverPhoto.mutate({
-          userId: session?.user?.id,
           coverPhotoUrl: null,
         })
         resolve({ ok: true })

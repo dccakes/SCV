@@ -8,6 +8,7 @@ import {
 import { eventRouter } from '~/server/domains/event'
 import { giftRouter } from '~/server/domains/gift'
 import { guestRouter } from '~/server/domains/guest'
+import { guestTagRouter } from '~/server/domains/guest-tag'
 import { householdRouter } from '~/server/domains/household'
 import { invitationRouter } from '~/server/domains/invitation'
 import { questionRouter } from '~/server/domains/question'
@@ -36,6 +37,7 @@ export const appRouter = createTRPCRouter({
   // Phase 2 domains (migrated)
   gift: giftRouter,
   guest: guestRouter,
+  guestTag: guestTagRouter,
   invitation: invitationRouter,
 
   // Phase 3 domains (migrated)

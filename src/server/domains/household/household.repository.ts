@@ -35,6 +35,11 @@ export class HouseholdRepository {
         guests: {
           include: {
             invitations: true,
+            guestTagAssignments: {
+              select: {
+                guestTagId: true,
+              },
+            },
           },
         },
         gifts: true,
@@ -63,6 +68,11 @@ export class HouseholdRepository {
         guests: {
           include: {
             invitations: true,
+            guestTagAssignments: {
+              select: {
+                guestTagId: true,
+              },
+            },
           },
         },
         gifts: true,

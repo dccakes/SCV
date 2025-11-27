@@ -84,6 +84,8 @@ export const getDefaultHouseholdFormData = (events: Array<{ id: string }>): Hous
         email: null,
         phone: null,
         isPrimaryContact: true,
+        ageGroup: 'ADULT' as const,
+        tagIds: [],
         invites,
       },
     ],
