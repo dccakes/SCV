@@ -75,6 +75,8 @@ export class HouseholdService {
           data: {
             firstName: guest.firstName,
             lastName: guest.lastName,
+            email: guest.email ?? null,
+            phone: guest.phone ?? null,
             weddingId,
             householdId: household.id,
             isPrimaryContact: i === 0,
@@ -165,10 +167,14 @@ export class HouseholdService {
           update: {
             firstName: guest.firstName ?? undefined,
             lastName: guest.lastName ?? undefined,
+            email: guest.email ?? undefined,
+            phone: guest.phone ?? undefined,
           },
           create: {
             firstName: guest.firstName,
             lastName: guest.lastName,
+            email: guest.email ?? null,
+            phone: guest.phone ?? null,
             weddingId,
             householdId: data.householdId,
             isPrimaryContact: false,

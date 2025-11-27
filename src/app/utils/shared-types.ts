@@ -125,6 +125,8 @@ type GuestFormData = {
   guestId?: number
   firstName: string
   lastName: string
+  email?: string | null
+  phone?: string | null
   isPrimaryContact?: boolean
   invites: FormInvites
 }

@@ -12,6 +12,8 @@ import { z } from 'zod'
 export const createGuestSchema = z.object({
   firstName: z.string().nonempty({ message: 'First name required' }),
   lastName: z.string().nonempty({ message: 'Last name required' }),
+  email: z.string().email('Valid email required').optional().nullable(),
+  phone: z.string().optional().nullable(),
   householdId: z.string().min(1, 'Household ID is required'),
   isPrimaryContact: z.boolean().optional().default(false),
 })
@@ -23,6 +25,8 @@ export const updateGuestSchema = z.object({
   guestId: z.number(),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
+  email: z.string().email('Valid email required').optional().nullable(),
+  phone: z.string().optional().nullable(),
 })
 
 /**
@@ -48,11 +52,15 @@ export const getByEventSchema = z.object({
 
 /**
  * Schema for guest party input (used in household operations)
+ * This is the canonical schema for guest data in multi-guest contexts
  */
 export const guestPartySchema = z.object({
   guestId: z.number().optional(),
   firstName: z.string().nonempty({ message: 'First name required' }),
   lastName: z.string().nonempty({ message: 'Last name required' }),
+  email: z.string().email('Valid email required').optional().nullable(),
+  phone: z.string().optional().nullable(),
+  isPrimaryContact: z.boolean().default(false),
   invites: z.record(z.string(), z.string()),
 })
 

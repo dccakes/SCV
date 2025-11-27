@@ -36,6 +36,8 @@ export type GuestWithInvitations = Guest & {
 export type CreateGuestInput = {
   firstName: string
   lastName: string
+  email?: string | null
+  phone?: string | null
   householdId: string
   isPrimaryContact?: boolean
 }
@@ -47,6 +49,8 @@ export type UpdateGuestInput = {
   guestId: number
   firstName?: string
   lastName?: string
+  email?: string | null
+  phone?: string | null
 }
 
 /**
@@ -56,5 +60,7 @@ export type GuestPartyInput = {
   guestId?: number
   firstName: string
   lastName: string
+  email?: string | null
+  phone?: string | null
   invites: Record<string, string> // eventId -> rsvp status
 }

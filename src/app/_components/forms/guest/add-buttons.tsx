@@ -1,14 +1,17 @@
-import { type Dispatch, type SetStateAction } from 'react'
-
 import { useToggleGuestForm } from '~/app/_components/contexts/guest-form-context'
 import { sharedStyles } from '~/app/utils/shared-styles'
 
 type AddFormButtonsProps = {
   isCreatingGuests: boolean
-  setCloseForm: Dispatch<SetStateAction<boolean>>
+  shouldCloseAfterSave?: boolean
+  onSaveIntentChange?: (shouldClose: boolean) => void
 }
 
-export default function AddFormButtons({ isCreatingGuests, setCloseForm }: AddFormButtonsProps) {
+export default function AddFormButtons({
+  isCreatingGuests,
+  shouldCloseAfterSave,
+  onSaveIntentChange,
+}: AddFormButtonsProps) {
   const toggleGuestForm = useToggleGuestForm()
   return (
     <div
@@ -20,7 +23,7 @@ export default function AddFormButtons({ isCreatingGuests, setCloseForm }: AddFo
           type="submit"
           name="add-button"
           disabled={isCreatingGuests}
-          onClick={() => setCloseForm(true)}
+          onClick={() => onSaveIntentChange?.(true)}
           className={`w-1/2 ${sharedStyles.secondaryButton({
             py: 'py-2',
             isLoading: isCreatingGuests,
@@ -38,13 +41,15 @@ export default function AddFormButtons({ isCreatingGuests, setCloseForm }: AddFo
             py: 'py-2',
             isLoading: isCreatingGuests,
           })}`}
-          onClick={() => setCloseForm(false)}
+          onClick={() => onSaveIntentChange?.(false)}
         >
           {isCreatingGuests ? 'Processing...' : 'Save & Add Another Guest'}
         </button>
       </div>
       <button
+        type="button"
         onClick={() => toggleGuestForm()}
+        disabled={isCreatingGuests}
         className={`text-sm font-semibold ${
           isCreatingGuests ? 'cursor-not-allowed' : 'hover:underline'
         } ${isCreatingGuests ? 'text-pink-200' : `text-${sharedStyles.primaryColor}`}`}

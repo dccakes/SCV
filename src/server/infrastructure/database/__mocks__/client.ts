@@ -19,6 +19,7 @@ export const mockEventUpdate = jest.fn()
 export const mockEventDelete = jest.fn()
 
 export const mockGuestFindMany = jest.fn()
+export const mockGuestUpdateMany = jest.fn()
 export const mockInvitationCreate = jest.fn()
 
 export const mockWeddingFindUnique = jest.fn()
@@ -45,6 +46,7 @@ export const db = {
   },
   guest: {
     findMany: mockGuestFindMany,
+    updateMany: mockGuestUpdateMany,
   },
   invitation: {
     create: mockInvitationCreate,
@@ -72,6 +74,7 @@ export const resetMocks = (): void => {
   mockEventUpdate.mockReset()
   mockEventDelete.mockReset()
   mockGuestFindMany.mockReset()
+  mockGuestUpdateMany.mockReset()
   mockInvitationCreate.mockReset()
   mockWeddingFindUnique.mockReset()
   mockWeddingFindFirst.mockReset()

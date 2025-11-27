@@ -131,6 +131,8 @@ export class GuestRepository {
     data: {
       firstName?: string
       lastName?: string
+      email?: string | null
+      phone?: string | null
     }
   ): Promise<Guest> {
     return this.db.guest.update({
@@ -138,6 +140,8 @@ export class GuestRepository {
       data: {
         firstName: data.firstName,
         lastName: data.lastName,
+        email: data.email,
+        phone: data.phone,
       },
     })
   }

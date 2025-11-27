@@ -47,6 +47,8 @@ export type GuestPartyInput = {
   guestId?: number
   firstName: string
   lastName: string
+  email?: string | null
+  phone?: string | null
   invites: Record<string, string> // eventId -> rsvp status
 }
 

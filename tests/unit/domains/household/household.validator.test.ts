@@ -27,6 +27,51 @@ describe('guestPartyInputSchema', () => {
     expect(result.success).toBe(true)
   })
 
+  it('should validate guest party with email and phone', () => {
+    const validInput = {
+      guestId: 1,
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john@example.com',
+      phone: '+1234567890',
+      invites: {
+        'event-123': 'Attending',
+      },
+    }
+
+    const result = guestPartyInputSchema.safeParse(validInput)
+    expect(result.success).toBe(true)
+  })
+
+  it('should reject invalid email format in guest party', () => {
+    const invalidInput = {
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'not-valid-email',
+      invites: {
+        'event-123': 'Invited',
+      },
+    }
+
+    const result = guestPartyInputSchema.safeParse(invalidInput)
+    expect(result.success).toBe(false)
+  })
+
+  it('should allow null email and phone', () => {
+    const validInput = {
+      firstName: 'John',
+      lastName: 'Doe',
+      email: null,
+      phone: null,
+      invites: {
+        'event-123': 'Invited',
+      },
+    }
+
+    const result = guestPartyInputSchema.safeParse(validInput)
+    expect(result.success).toBe(true)
+  })
+
   it('should allow guestId to be optional (for new guests)', () => {
     const validInput = {
       firstName: 'New',
@@ -70,6 +115,7 @@ describe('createHouseholdSchema', () => {
         {
           firstName: 'John',
           lastName: 'Doe',
+          isPrimaryContact: true,
           invites: { 'event-123': 'Invited' },
         },
       ],
@@ -91,8 +137,8 @@ describe('createHouseholdSchema', () => {
     }
 
     const result = createHouseholdSchema.safeParse(validInput)
-    // Empty array is technically valid by schema, but business logic would handle
-    expect(result.success).toBe(true)
+    // Empty array should fail - need at least one guest with primary contact
+    expect(result.success).toBe(false)
   })
 
   it('should allow optional address fields', () => {
@@ -101,6 +147,7 @@ describe('createHouseholdSchema', () => {
         {
           firstName: 'John',
           lastName: 'Doe',
+          isPrimaryContact: true,
           invites: { 'event-123': 'Invited' },
         },
       ],
@@ -116,6 +163,7 @@ describe('createHouseholdSchema', () => {
         {
           firstName: 'John',
           lastName: 'Doe',
+          isPrimaryContact: true,
           invites: {},
         },
       ],
@@ -132,6 +180,7 @@ describe('createHouseholdSchema', () => {
         {
           firstName: 'John',
           lastName: 'Doe',
+          isPrimaryContact: true,
           invites: {},
         },
       ],
@@ -154,6 +203,7 @@ describe('updateHouseholdSchema', () => {
           guestId: 1,
           firstName: 'John',
           lastName: 'Doe',
+          isPrimaryContact: true,
           invites: { 'event-123': 'Attending' },
         },
       ],
@@ -173,7 +223,14 @@ describe('updateHouseholdSchema', () => {
 
   it('should require householdId', () => {
     const invalidInput = {
-      guestParty: [],
+      guestParty: [
+        {
+          firstName: 'John',
+          lastName: 'Doe',
+          isPrimaryContact: true,
+          invites: {},
+        },
+      ],
       gifts: [],
     }
 
@@ -184,7 +241,14 @@ describe('updateHouseholdSchema', () => {
   it('should require gifts array', () => {
     const invalidInput = {
       householdId: 'household-123',
-      guestParty: [],
+      guestParty: [
+        {
+          firstName: 'John',
+          lastName: 'Doe',
+          isPrimaryContact: true,
+          invites: {},
+        },
+      ],
     }
 
     const result = updateHouseholdSchema.safeParse(invalidInput)
@@ -194,7 +258,14 @@ describe('updateHouseholdSchema', () => {
   it('should allow deletedGuests array', () => {
     const validInput = {
       householdId: 'household-123',
-      guestParty: [],
+      guestParty: [
+        {
+          firstName: 'John',
+          lastName: 'Doe',
+          isPrimaryContact: true,
+          invites: {},
+        },
+      ],
       deletedGuests: [1, 2, 3],
       gifts: [],
     }

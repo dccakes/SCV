@@ -72,6 +72,7 @@ const createMockDb = () => ({
   guest: {
     create: jest.fn(),
     upsert: jest.fn(),
+    updateMany: jest.fn(),
     deleteMany: jest.fn(),
   },
   invitation: {
@@ -209,6 +210,7 @@ describe('HouseholdManagementService', () => {
     it('should update household details', async () => {
       const updatedHousehold = { ...mockHousehold, address1: '456 New St' }
       mockDb.household.update.mockResolvedValue(updatedHousehold)
+      mockDb.guest.updateMany.mockResolvedValue({ count: 1 })
       mockDb.guest.upsert.mockResolvedValue(mockGuest)
       mockDb.invitation.update.mockResolvedValue(mockInvitation)
       mockDb.gift.upsert.mockResolvedValue(mockGift)
@@ -231,6 +233,7 @@ describe('HouseholdManagementService', () => {
 
     it('should delete removed guests', async () => {
       mockDb.household.update.mockResolvedValue(mockHousehold)
+      mockDb.guest.updateMany.mockResolvedValue({ count: 1 })
       mockDb.guest.deleteMany.mockResolvedValue({ count: 2 })
       mockDb.guest.upsert.mockResolvedValue(mockGuest)
       mockDb.invitation.update.mockResolvedValue(mockInvitation)
@@ -252,6 +255,7 @@ describe('HouseholdManagementService', () => {
 
     it('should not call deleteMany when no guests to delete', async () => {
       mockDb.household.update.mockResolvedValue(mockHousehold)
+      mockDb.guest.updateMany.mockResolvedValue({ count: 1 })
       mockDb.guest.upsert.mockResolvedValue(mockGuest)
       mockDb.invitation.update.mockResolvedValue(mockInvitation)
       mockDb.gift.upsert.mockResolvedValue(mockGift)
@@ -269,6 +273,7 @@ describe('HouseholdManagementService', () => {
 
     it('should upsert guests and update invitations', async () => {
       mockDb.household.update.mockResolvedValue(mockHousehold)
+      mockDb.guest.updateMany.mockResolvedValue({ count: 1 })
       mockDb.guest.upsert.mockResolvedValue(mockGuest)
       mockDb.invitation.update.mockResolvedValue(mockInvitation)
       mockDb.gift.upsert.mockResolvedValue(mockGift)
@@ -290,6 +295,7 @@ describe('HouseholdManagementService', () => {
 
     it('should upsert gifts', async () => {
       mockDb.household.update.mockResolvedValue(mockHousehold)
+      mockDb.guest.updateMany.mockResolvedValue({ count: 1 })
       mockDb.guest.upsert.mockResolvedValue(mockGuest)
       mockDb.invitation.update.mockResolvedValue(mockInvitation)
       mockDb.gift.upsert.mockResolvedValue(mockGift)

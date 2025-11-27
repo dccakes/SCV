@@ -92,9 +92,11 @@ export class HouseholdManagementService {
           data: {
             firstName: guest.firstName,
             lastName: guest.lastName,
+            email: guest.email,
+            phone: guest.phone,
             weddingId,
             householdId: household.id,
-            isPrimaryContact: index === 0,
+            isPrimaryContact: guest.isPrimaryContact ?? index === 0,
             invitations: {
               createMany: {
                 data: Object.entries(guest.invites).map(([eventId, rsvp]) => ({
@@ -133,9 +135,10 @@ export class HouseholdManagementService {
    * Orchestration flow:
    * 1. Update household details
    * 2. Delete removed guests
-   * 3. Upsert guests (creates new, updates existing)
-   * 4. Update invitations
-   * 5. Upsert gifts
+   * 3. Clear all primary contact flags in household
+   * 4. Upsert guests (creates new, updates existing)
+   * 5. Update invitations
+   * 6. Upsert gifts
    */
   async updateHouseholdWithGuests(
     weddingId: string,
@@ -164,7 +167,17 @@ export class HouseholdManagementService {
       })
     }
 
-    // 3. Upsert guests and their invitations
+    // 3. First, clear all primary contact flags in this household
+    await this.db.guest.updateMany({
+      where: {
+        householdId: data.householdId,
+      },
+      data: {
+        isPrimaryContact: false,
+      },
+    })
+
+    // 4. Upsert guests and their invitations
     const updatedGuests = await Promise.all(
       data.guestParty.map(async (guest) => {
         const updatedGuest = await this.db.guest.upsert({
@@ -174,13 +187,18 @@ export class HouseholdManagementService {
           update: {
             firstName: guest.firstName,
             lastName: guest.lastName,
+            email: guest.email,
+            phone: guest.phone,
+            isPrimaryContact: guest.isPrimaryContact ?? false,
           },
           create: {
             firstName: guest.firstName,
             lastName: guest.lastName,
+            email: guest.email,
+            phone: guest.phone,
             weddingId,
             householdId: data.householdId,
-            isPrimaryContact: false,
+            isPrimaryContact: guest.isPrimaryContact ?? false,
             invitations: {
               createMany: {
                 data: Object.entries(guest.invites).map(([eventId, rsvp]) => ({
@@ -193,7 +211,7 @@ export class HouseholdManagementService {
           },
         })
 
-        // 4. Update invitations for existing guests
+        // 5. Update invitations for existing guests
         const updatedInvitations: Invitation[] = await Promise.all(
           Object.entries(guest.invites).map(async ([inviteEventId, inputRsvp]) => {
             return await this.db.invitation.update({
@@ -231,7 +249,7 @@ export class HouseholdManagementService {
       })
     }
 
-    // 5. Upsert gifts
+    // 6. Upsert gifts
     const updatedGifts = await Promise.all(
       data.gifts.map(async (gift) => {
         return await this.db.gift.upsert({

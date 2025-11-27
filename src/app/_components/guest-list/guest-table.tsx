@@ -18,6 +18,8 @@ import {
   type Household,
   type HouseholdFormData,
 } from '~/app/utils/shared-types'
+import { Button } from '~/components/ui/button'
+import { Card, CardContent, CardHeader } from '~/components/ui/card'
 import { api } from '~/trpc/react'
 
 type GuestTableProps = {
@@ -82,90 +84,47 @@ export default function GuestTable({
 
   return (
     <>
-      <div className="max-h-[75vh] overflow-auto">
-        <table>
-          <thead>
-            <tr
-              className="sticky top-0 grid min-w-fit items-center gap-12 border-b bg-white px-8 py-6 italic text-gray-600"
-              style={{
-                gridTemplateColumns: gridColumns,
-              }}
-            >
-              <th>
-                <input
-                  style={{ accentColor: sharedStyles.primaryColorHex }}
-                  type="checkbox"
-                  id="check-all"
-                  className="h-6 w-6 cursor-pointer"
-                />
-              </th>
-              <th
-                className="flex cursor-pointer items-center gap-2 font-light"
-                onClick={() => sortByName()}
-              >
-                Name
-                <FaSort size={14} />
-              </th>
-              <th
-                className="flex cursor-pointer items-center gap-2 font-light"
-                onClick={() => sortByParty()}
-              >
-                Party Of
-                <FaSort size={14} />
-              </th>
-              <th className="font-light">Contact</th>
-              {selectedEventId === 'all' ? (
-                events?.map((event) => {
-                  return (
-                    <th key={event.id} className="font-light">
-                      {event.name} RSVP
-                    </th>
-                  )
-                })
-              ) : (
-                <th className="font-light">{selectedEvent?.name} RSVP</th>
-              )}
+      <div className="mb-4 flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={() => sortByName()}>
+          <FaSort className="mr-2 h-3 w-3" />
+          Sort by Name
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => sortByParty()}>
+          <FaSort className="mr-2 h-3 w-3" />
+          Sort by Party Size
+        </Button>
+      </div>
 
-              <th className="font-light">My Notes</th>
-
-              {selectedEventId !== 'all' && <th className="font-light">Gift</th>}
-
-              {selectedEventId !== 'all' && <th className="font-light">Thank You</th>}
-            </tr>
-          </thead>
-
-          <tbody>
-            {sortedHouseholds?.map((household) =>
-              selectedEventId === 'all' ? (
-                <DefaultTableRow
-                  key={household.id}
-                  household={household}
-                  events={events}
-                  setPrefillHousehold={setPrefillHousehold}
-                />
-              ) : (
-                <SingleEventTableRow
-                  key={household.id}
-                  household={household}
-                  selectedEvent={selectedEvent}
-                  setPrefillHousehold={setPrefillHousehold}
-                />
-              )
-            )}
-          </tbody>
-        </table>
+      <div className="max-h-[75vh] space-y-3 overflow-auto pr-2">
+        {sortedHouseholds?.map((household) =>
+          selectedEventId === 'all' ? (
+            <DefaultCard
+              key={household.id}
+              household={household}
+              events={events}
+              setPrefillHousehold={setPrefillHousehold}
+            />
+          ) : (
+            <SingleEventCard
+              key={household.id}
+              household={household}
+              selectedEvent={selectedEvent}
+              setPrefillHousehold={setPrefillHousehold}
+            />
+          )
+        )}
       </div>
     </>
   )
 }
 
-type DefaultTableRowProps = {
+type DefaultCardProps = {
   household: Household
   events: Event[]
   setPrefillHousehold: Dispatch<SetStateAction<HouseholdFormData | undefined>>
 }
 
-const DefaultTableRow = ({ household, events, setPrefillHousehold }: DefaultTableRowProps) => {
+const DefaultCard = ({ household, events, setPrefillHousehold }: DefaultCardProps) => {
   const toggleGuestForm = useToggleGuestForm()
   if (household.guests.length < 1) return null
 
@@ -189,6 +148,8 @@ const DefaultTableRow = ({ household, events, setPrefillHousehold }: DefaultTabl
           guestId: guest.id,
           firstName: guest.firstName,
           lastName: guest.lastName,
+          email: guest.email,
+          phone: guest.phone,
           isPrimaryContact: guest.isPrimaryContact,
           invites: invitations,
         }
@@ -198,84 +159,105 @@ const DefaultTableRow = ({ household, events, setPrefillHousehold }: DefaultTabl
   }
 
   return (
-    <tr
-      key={household.id}
-      className="box-border grid min-w-fit cursor-pointer items-center gap-12 border-b border-l border-r px-8 py-5"
-      style={{
-        gridTemplateColumns: `40px 240px 100px 125px repeat(${events.length}, 175px) 175px`,
-      }}
+    <Card
+      className="cursor-pointer transition-all hover:shadow-lg"
       onClick={() => handleEditHousehold()}
     >
-      <td className="flex flex-col gap-1">
-        {household.guests.map((guest) => {
-          return (
-            <div key={guest.id}>
-              <input
-                className="h-6 w-6 cursor-pointer"
-                style={{
-                  accentColor: sharedStyles.primaryColorHex,
-                }}
-                type="checkbox"
-                id={`check-guest-${guest.id}`}
-                onClick={(e) => e.stopPropagation()}
-              />
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="mb-2 flex items-center gap-2">
+              <h3 className="text-lg font-semibold">
+                {household.guests[0]?.firstName} {household.guests[0]?.lastName}
+                {household.guests.length > 1 && ` +${household.guests.length - 1}`}
+              </h3>
+              <span className="inline-flex items-center rounded-full bg-secondary px-2 py-1 text-xs font-medium">
+                Party of {household.guests.length}
+              </span>
             </div>
-          )
-        })}
-      </td>
 
-      <td className="flex flex-col gap-2">
-        {household.guests.map((guest) => {
-          return (
-            <span
-              className={sharedStyles.ellipsisOverflow}
-              key={guest.id}
-            >{`${guest.firstName} ${guest.lastName}`}</span>
-          )
-        })}
-      </td>
+            <div className="mb-3 space-y-1 text-sm text-muted-foreground">
+              {household.guests.map((guest) => (
+                <div key={guest.id} className="flex items-center gap-2">
+                  <span>
+                    {guest.firstName} {guest.lastName}
+                  </span>
+                  {guest.isPrimaryContact && (
+                    <span className="inline-flex items-center rounded-md bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                      Primary
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
 
-      <td>{household.guests.length}</td>
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <AiOutlineHome className="h-4 w-4" />
+                <span className="text-xs">{household.address1 ? 'Address' : 'No address'}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <HiOutlinePhone className="h-4 w-4" />
+                <span className="text-xs">
+                  {household.guests.some((g) => g.phone) ? 'Phone' : 'No phone'}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <CiMail className="h-4 w-4" />
+                <span className="text-xs">
+                  {household.guests.some((g) => g.email) ? 'Email' : 'No email'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardHeader>
 
-      <td className="flex gap-2">
-        <AiOutlineHome size={22} />
-        <HiOutlinePhone size={22} />
-        <CiMail size={23} />
-      </td>
+      <CardContent className="space-y-2">
+        {/* RSVP Status for all events */}
+        {events.map((event) => (
+          <div
+            key={event.id}
+            className="bg-muted/50 flex items-center justify-between rounded-md p-2"
+          >
+            <span className="text-sm font-medium">{event.name}</span>
+            <div className="flex flex-wrap gap-2">
+              {household.guests.map((guest) => {
+                const rsvp = guest.invitations?.find((inv) => inv.eventId === event.id)?.rsvp
+                return (
+                  <InvitationDropdown
+                    key={guest.id}
+                    guest={guest}
+                    event={event}
+                    rsvp={rsvp ?? 'Not Invited'}
+                  />
+                )
+              })}
+            </div>
+          </div>
+        ))}
 
-      {events?.map((event) => {
-        return (
-          <td key={event.id} className="flex flex-col gap-3">
-            {household.guests.map((guest) => {
-              const rsvp = guest.invitations?.find((inv) => inv.eventId === event.id)?.rsvp
-              return (
-                <InvitationDropdown
-                  key={guest.id}
-                  guest={guest}
-                  event={event}
-                  rsvp={rsvp ?? 'Not Invited'}
-                />
-              )
-            })}
-          </td>
-        )
-      })}
-      <td className={sharedStyles.ellipsisOverflow}>{household.notes ?? '-'}</td>
-    </tr>
+        {household.notes && (
+          <div className="mt-2 rounded-md border border-yellow-200 bg-yellow-50 p-2 text-sm dark:border-yellow-900 dark:bg-yellow-950">
+            <span className="font-medium">Notes:</span> {household.notes}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }
 
-type SingleEventTableRowProps = {
+type SingleEventCardProps = {
   household: Household
   selectedEvent: Event | undefined
   setPrefillHousehold: Dispatch<SetStateAction<HouseholdFormData | undefined>>
 }
 
-const SingleEventTableRow = ({
+const SingleEventCard = ({
   household,
   selectedEvent,
   setPrefillHousehold,
-}: SingleEventTableRowProps) => {
+}: SingleEventCardProps) => {
   const router = useRouter()
   const toggleGuestForm = useToggleGuestForm()
   const updateGift = api.gift.update.useMutation({
@@ -308,6 +290,8 @@ const SingleEventTableRow = ({
           guestId: guest.id,
           firstName: guest.firstName,
           lastName: guest.lastName,
+          email: guest.email,
+          phone: guest.phone,
           isPrimaryContact: guest.isPrimaryContact,
           invites: invitations,
         }
@@ -317,93 +301,130 @@ const SingleEventTableRow = ({
   }
 
   return (
-    <tr
-      key={household.id}
-      className="box-border grid min-w-fit cursor-pointer items-center gap-12 border-b border-l border-r px-8 py-5"
-      style={{
-        gridTemplateColumns: '40px 240px 100px 125px 175px 175px 150px 100px',
-      }}
+    <Card
+      className="cursor-pointer transition-all hover:shadow-lg"
       onClick={() => handleEditHousehold()}
     >
-      <td className="flex flex-col gap-1">
-        {household.guests.map((guest) => {
-          return (
-            <div key={guest.id}>
-              <input
-                className="h-6 w-6 cursor-pointer"
-                style={{
-                  accentColor: sharedStyles.primaryColorHex,
-                }}
-                type="checkbox"
-                id={`check-guest-${guest.id}`}
-                onClick={(e) => e.stopPropagation()}
-              />
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="mb-2 flex items-center gap-2">
+              <h3 className="text-lg font-semibold">
+                {household.guests[0]?.firstName} {household.guests[0]?.lastName}
+                {household.guests.length > 1 && ` +${household.guests.length - 1}`}
+              </h3>
+              <span className="inline-flex items-center rounded-full bg-secondary px-2 py-1 text-xs font-medium">
+                Party of {household.guests.length}
+              </span>
             </div>
-          )
-        })}
-      </td>
 
-      <td className="flex flex-col gap-2">
-        {household.guests.map((guest) => {
-          return (
-            <span
-              className={sharedStyles.ellipsisOverflow}
-              key={guest.id}
-            >{`${guest.firstName} ${guest.lastName}`}</span>
-          )
-        })}
-      </td>
+            <div className="mb-3 space-y-1 text-sm text-muted-foreground">
+              {household.guests.map((guest) => (
+                <div key={guest.id} className="flex items-center gap-2">
+                  <span>
+                    {guest.firstName} {guest.lastName}
+                  </span>
+                  {guest.isPrimaryContact && (
+                    <span className="inline-flex items-center rounded-md bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                      Primary
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
 
-      <td>{household.guests.length}</td>
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <AiOutlineHome className="h-4 w-4" />
+                <span className="text-xs">{household.address1 ? 'Address' : 'No address'}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <HiOutlinePhone className="h-4 w-4" />
+                <span className="text-xs">
+                  {household.guests.some((g) => g.phone) ? 'Phone' : 'No phone'}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <CiMail className="h-4 w-4" />
+                <span className="text-xs">
+                  {household.guests.some((g) => g.email) ? 'Email' : 'No email'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardHeader>
 
-      <td className="flex gap-2">
-        <AiOutlineHome size={22} />
-        <HiOutlinePhone size={22} />
-        <CiMail size={23} />
-      </td>
+      <CardContent className="space-y-3">
+        {/* RSVP Status for selected event */}
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-sm font-medium">{selectedEvent.name} RSVPs</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {household.guests.map((guest) => {
+              const rsvp = guest.invitations?.find((inv) => inv.eventId === selectedEvent.id)?.rsvp
+              return (
+                <div
+                  key={guest.id}
+                  className="bg-muted/50 flex items-center gap-2 rounded-md p-1.5"
+                >
+                  <span className="text-xs text-muted-foreground">
+                    {guest.firstName.charAt(0)}.{guest.lastName.charAt(0)}:
+                  </span>
+                  <InvitationDropdown
+                    guest={guest}
+                    event={selectedEvent}
+                    rsvp={rsvp ?? 'Not Invited'}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        </div>
 
-      <td key={selectedEvent.id} className="flex flex-col gap-3">
-        {household.guests.map((guest) => {
-          const rsvp = guest.invitations?.find((inv) => inv.eventId === selectedEvent.id)?.rsvp
-          return (
-            <InvitationDropdown
-              key={guest.id}
-              guest={guest}
-              event={selectedEvent}
-              rsvp={rsvp ?? 'Not Invited'}
-            />
-          )
-        })}
-      </td>
+        {/* Gift section */}
+        {selectedEventGift && (
+          <div className="rounded-md border border-purple-200 bg-purple-50 p-3 dark:border-purple-900 dark:bg-purple-950">
+            <div className="flex items-center justify-between">
+              <div className="text-sm">
+                <span className="font-medium">Gift:</span>{' '}
+                <span className="text-muted-foreground">
+                  {selectedEventGift.description || 'Not specified'}
+                </span>
+              </div>
+              {updateGift.isPending ? (
+                <LoadingSpinner />
+              ) : (
+                <label className="flex cursor-pointer items-center gap-2 text-sm">
+                  <input
+                    className="h-4 w-4 cursor-pointer"
+                    style={{ accentColor: sharedStyles.primaryColorHex }}
+                    type="checkbox"
+                    onClick={(e) => e.stopPropagation()}
+                    checked={selectedEventGift.thankyou}
+                    onChange={(e) =>
+                      updateGift.mutate({
+                        householdId: household.id,
+                        eventId: selectedEvent.id,
+                        thankyou: e.target.checked,
+                      })
+                    }
+                  />
+                  <span>Thank you sent</span>
+                </label>
+              )}
+            </div>
+          </div>
+        )}
 
-      <td className={sharedStyles.ellipsisOverflow}>{household.notes ?? '-'}</td>
-
-      <td>{selectedEventGift?.description ?? '-'}</td>
-
-      {updateGift.isPending ? (
-        <LoadingSpinner />
-      ) : (
-        <td>
-          <input
-            className="h-6 w-6 cursor-pointer"
-            style={{
-              accentColor: sharedStyles.primaryColorHex,
-            }}
-            type="checkbox"
-            id={`thank-you-${selectedEvent.id}`}
-            onClick={(e) => e.stopPropagation()}
-            checked={selectedEventGift?.thankyou}
-            onChange={(e) =>
-              updateGift.mutate({
-                householdId: household.id,
-                eventId: selectedEvent.id,
-                thankyou: e.target.checked,
-              })
-            }
-          />
-        </td>
-      )}
-    </tr>
+        {household.notes && (
+          <div className="rounded-md border border-yellow-200 bg-yellow-50 p-2 text-sm dark:border-yellow-900 dark:bg-yellow-950">
+            <span className="font-medium">Notes:</span> {household.notes}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }
 
