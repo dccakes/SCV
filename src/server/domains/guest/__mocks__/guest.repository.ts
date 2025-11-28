@@ -15,6 +15,7 @@ export const mockGuest: Guest = {
   householdId: 'household-123',
   weddingId: 'wedding-123',
   isPrimaryContact: true,
+  ageGroup: 'ADULT',
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
 }

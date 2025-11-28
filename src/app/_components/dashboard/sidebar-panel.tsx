@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { type Dispatch, type SetStateAction } from 'react'
 
 import { sharedStyles } from '~/app/utils/shared-styles'
@@ -16,6 +17,15 @@ export default function SidebarPanel({ setShowWebsiteSettings }: SidebarPanelPro
         >
           Browse Themes
         </span>
+      </div>
+      <div className="flex items-end justify-between border-b py-8">
+        <h2 className="text-xl font-semibold">Guest List</h2>
+        <Link
+          href="/guest-list"
+          className={`text-${sharedStyles.primaryColor} cursor-pointer text-lg hover:underline`}
+        >
+          Manage
+        </Link>
       </div>
       <div className="flex items-end justify-between border-b py-8">
         <h2 className="text-xl font-semibold">Privacy Settings</h2>

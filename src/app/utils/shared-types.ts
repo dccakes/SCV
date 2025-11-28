@@ -72,9 +72,11 @@ type Guest = {
   isPrimaryContact: boolean
   weddingId: string
   householdId: string
+  ageGroup: 'INFANT' | 'CHILD' | 'TEEN' | 'ADULT' | null
   createdAt: Date
   updatedAt: Date
   invitations?: Invitation[]
+  guestTags?: Array<{ tagId: string }>
 }
 
 type User = {
@@ -125,7 +127,11 @@ type GuestFormData = {
   guestId?: number
   firstName: string
   lastName: string
+  email?: string | null
+  phone?: string | null
   isPrimaryContact?: boolean
+  ageGroup?: 'INFANT' | 'CHILD' | 'TEEN' | 'ADULT' | null
+  tagIds?: string[]
   invites: FormInvites
 }
 

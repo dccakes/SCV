@@ -24,7 +24,11 @@ describe('guestPartyInputSchema', () => {
 
     const result = guestPartyInputSchema.safeParse(validInput)
     expect(result.success).toBe(true)
-    expect(result.data).toEqual(validInput)
+    expect(result.data).toEqual({
+      ...validInput,
+      ageGroup: 'ADULT',
+      tagIds: [],
+    })
   })
 
   it('should validate a new guest without guestId', () => {
@@ -38,6 +42,11 @@ describe('guestPartyInputSchema', () => {
 
     const result = guestPartyInputSchema.safeParse(validInput)
     expect(result.success).toBe(true)
+    expect(result.data).toEqual({
+      ...validInput,
+      ageGroup: 'ADULT',
+      tagIds: [],
+    })
   })
 
   it('should require non-empty firstName', () => {
@@ -148,7 +157,14 @@ describe('createHouseholdWithGuestsSchema', () => {
 
     const result = createHouseholdWithGuestsSchema.safeParse(validInput)
     expect(result.success).toBe(true)
-    expect(result.data).toEqual(validInput)
+    expect(result.data).toEqual({
+      ...validInput,
+      guestParty: validInput.guestParty.map((guest) => ({
+        ...guest,
+        ageGroup: 'ADULT',
+        tagIds: [],
+      })),
+    })
   })
 
   it('should require at least one guest in guestParty', () => {

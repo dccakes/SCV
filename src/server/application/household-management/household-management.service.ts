@@ -92,9 +92,12 @@ export class HouseholdManagementService {
           data: {
             firstName: guest.firstName,
             lastName: guest.lastName,
+            email: guest.email,
+            phone: guest.phone,
             weddingId,
             householdId: household.id,
-            isPrimaryContact: index === 0,
+            isPrimaryContact: guest.isPrimaryContact ?? index === 0,
+            ageGroup: guest.ageGroup,
             invitations: {
               createMany: {
                 data: Object.entries(guest.invites).map(([eventId, rsvp]) => ({
@@ -109,6 +112,16 @@ export class HouseholdManagementService {
             invitations: true,
           },
         })
+
+        // Create GuestTagAssignment entries if tagIds provided
+        if (guest.tagIds && guest.tagIds.length > 0) {
+          await this.db.guestTagAssignment.createMany({
+            data: guest.tagIds.map((tagId) => ({
+              guestId: newGuest.id,
+              guestTagId: tagId,
+            })),
+          })
+        }
 
         return newGuest
       })
@@ -133,9 +146,10 @@ export class HouseholdManagementService {
    * Orchestration flow:
    * 1. Update household details
    * 2. Delete removed guests
-   * 3. Upsert guests (creates new, updates existing)
-   * 4. Update invitations
-   * 5. Upsert gifts
+   * 3. Clear all primary contact flags in household
+   * 4. Upsert guests (creates new, updates existing)
+   * 5. Update invitations
+   * 6. Upsert gifts
    */
   async updateHouseholdWithGuests(
     weddingId: string,
@@ -164,7 +178,17 @@ export class HouseholdManagementService {
       })
     }
 
-    // 3. Upsert guests and their invitations
+    // 3. First, clear all primary contact flags in this household
+    await this.db.guest.updateMany({
+      where: {
+        householdId: data.householdId,
+      },
+      data: {
+        isPrimaryContact: false,
+      },
+    })
+
+    // 4. Upsert guests and their invitations
     const updatedGuests = await Promise.all(
       data.guestParty.map(async (guest) => {
         const updatedGuest = await this.db.guest.upsert({
@@ -174,13 +198,20 @@ export class HouseholdManagementService {
           update: {
             firstName: guest.firstName,
             lastName: guest.lastName,
+            email: guest.email,
+            phone: guest.phone,
+            isPrimaryContact: guest.isPrimaryContact ?? false,
+            ageGroup: guest.ageGroup,
           },
           create: {
             firstName: guest.firstName,
             lastName: guest.lastName,
+            email: guest.email,
+            phone: guest.phone,
             weddingId,
             householdId: data.householdId,
-            isPrimaryContact: false,
+            isPrimaryContact: guest.isPrimaryContact ?? false,
+            ageGroup: guest.ageGroup,
             invitations: {
               createMany: {
                 data: Object.entries(guest.invites).map(([eventId, rsvp]) => ({
@@ -193,7 +224,25 @@ export class HouseholdManagementService {
           },
         })
 
-        // 4. Update invitations for existing guests
+        // Update GuestTagAssignment entries: delete existing and create new ones
+        if (guest.tagIds !== undefined) {
+          // Delete existing tag assignments
+          await this.db.guestTagAssignment.deleteMany({
+            where: { guestId: updatedGuest.id },
+          })
+
+          // Create new tag assignments if provided
+          if (guest.tagIds.length > 0) {
+            await this.db.guestTagAssignment.createMany({
+              data: guest.tagIds.map((tagId) => ({
+                guestId: updatedGuest.id,
+                guestTagId: tagId,
+              })),
+            })
+          }
+        }
+
+        // 5. Update invitations for existing guests
         const updatedInvitations: Invitation[] = await Promise.all(
           Object.entries(guest.invites).map(async ([inviteEventId, inputRsvp]) => {
             return await this.db.invitation.update({
@@ -231,7 +280,7 @@ export class HouseholdManagementService {
       })
     }
 
-    // 5. Upsert gifts
+    // 6. Upsert gifts
     const updatedGifts = await Promise.all(
       data.gifts.map(async (gift) => {
         return await this.db.gift.upsert({

@@ -1,7 +1,8 @@
+import { Loader2 } from 'lucide-react'
 import { type Dispatch, type SetStateAction } from 'react'
 
 import { useToggleGuestForm } from '~/app/_components/contexts/guest-form-context'
-import { sharedStyles } from '~/app/utils/shared-styles'
+import { Button } from '~/components/ui/button'
 
 type EditFormButtonsProps = {
   isUpdatingHousehold: boolean
@@ -15,45 +16,39 @@ export default function EditFormButtons({
   const toggleGuestForm = useToggleGuestForm()
 
   return (
-    <div
-      className={`fixed bottom-0 z-20 flex ${sharedStyles.sidebarFormWidth} flex-col gap-3 border-t bg-white px-3 py-5`}
-    >
-      <div className="flex gap-3 text-sm">
-        <button
+    <div className="fixed bottom-0 left-0 right-0 z-20 space-y-3 border-t bg-background p-6 sm:left-auto sm:right-0 sm:w-[525px]">
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <Button
+          type="button"
+          variant="outline"
           disabled={isUpdatingHousehold}
           onClick={() => toggleGuestForm()}
-          className={`w-1/2 ${sharedStyles.secondaryButton({
-            py: 'py-2',
-            isLoading: isUpdatingHousehold,
-          })}`}
+          className="w-full sm:flex-1"
         >
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
           id="edit-save"
-          name="edit-button"
           type="submit"
           disabled={isUpdatingHousehold}
-          className={`w-1/2 ${sharedStyles.primaryButton({
-            px: 'px-2',
-            py: 'py-2',
-            isLoading: isUpdatingHousehold,
-          })}`}
+          className="w-full sm:flex-1"
         >
-          {isUpdatingHousehold ? 'Processing...' : 'Save'}
-        </button>
+          {isUpdatingHousehold && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isUpdatingHousehold ? 'Saving...' : 'Save Changes'}
+        </Button>
       </div>
-      <button
+      <Button
+        type="button"
+        variant="ghost"
+        disabled={isUpdatingHousehold}
         onClick={(e) => {
           e.preventDefault()
           setShowDeleteConfirmation(true)
         }}
-        className={`text-sm font-bold ${
-          isUpdatingHousehold ? 'cursor-not-allowed' : 'hover:underline'
-        } ${isUpdatingHousehold ? 'text-pink-200' : `text-${sharedStyles.primaryColor}`}`}
+        className="hover:bg-destructive/10 w-full text-destructive hover:text-destructive"
       >
-        {isUpdatingHousehold ? 'Processing...' : 'Delete Party'}
-      </button>
+        Delete Party
+      </Button>
     </div>
   )
 }

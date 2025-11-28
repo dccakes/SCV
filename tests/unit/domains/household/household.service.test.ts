@@ -116,7 +116,7 @@ describe('HouseholdService', () => {
     })
   })
 
-  // Note: createHousehold and updateHousehold have complex orchestration
-  // that requires database mocking for guest, invitation, and gift operations.
-  // These would be better tested with integration tests or by mocking the db object more completely.
+  // TODO: Add integration tests for createHousehold and updateHousehold
+  // These methods have complex cross-domain orchestration that requires
+  // full database mocking (household, guest, invitation, gift operations)
 })

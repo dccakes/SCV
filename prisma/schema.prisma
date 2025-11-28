@@ -28,6 +28,7 @@ model Wedding {
   guests         Guest[]
   households     Household[]
   invitations    Invitation[]
+  guestTags      GuestTag[]
 
   // Add-on relationships
   website        Website?
@@ -225,6 +226,10 @@ model Guest {
   // Primary contact for the household (who manages RSVPs)
   isPrimaryContact Boolean          @default(false)
 
+  // Guest classification
+  ageGroup              GuestAgeGroup?          @default(ADULT)
+  guestTagAssignments   GuestTagAssignment[]    @relation(name: "Guest_GuestTagAssignments")
+
   // Relations
   invitations      Invitation[]     @relation(name: "Guest_Invitations")
   optionResponses  OptionResponse[] @relation(name: "Guest_OptionResponses")
@@ -384,4 +389,41 @@ model Invitation {
   @@index([weddingId])
   @@index([guestId])
   @@index([eventId])
+}
+
+// Enum: Guest age groups for planning purposes (meals, activities, etc.)
+enum GuestAgeGroup {
+  INFANT  // 0-2 years
+  CHILD   // 3-12 years
+  TEEN    // 13-17 years
+  ADULT   // 18+ years
+}
+
+// User-defined tags for organizing and filtering guests
+model GuestTag {
+  id                  String                @id @default(uuid())
+  weddingId           String
+  wedding             Wedding               @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  name                String
+  color               String?               // Hex color for UI badge display
+  guestTagAssignments GuestTagAssignment[]  @relation(name: "GuestTag_GuestTagAssignments")
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  @@unique([weddingId, name]) // Prevent duplicate tag names per wedding
+  @@index([weddingId])
+}
+
+// Join table: Many-to-many relationship between Guests and GuestTags
+model GuestTagAssignment {
+  id          String    @id @default(uuid())
+  guestId     Int
+  guest       Guest     @relation(name: "Guest_GuestTagAssignments", fields: [guestId], references: [id], onDelete: Cascade)
+  guestTagId  String
+  guestTag    GuestTag  @relation(name: "GuestTag_GuestTagAssignments", fields: [guestTagId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([guestId, guestTagId]) // Prevent duplicate tag assignments
+  @@index([guestId])
+  @@index([guestTagId])
 }

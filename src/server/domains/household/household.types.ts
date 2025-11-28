@@ -47,6 +47,11 @@ export type GuestPartyInput = {
   guestId?: number
   firstName: string
   lastName: string
+  email?: string | null
+  phone?: string | null
+  isPrimaryContact: boolean
+  ageGroup: 'INFANT' | 'CHILD' | 'TEEN' | 'ADULT'
+  tagIds: string[]
   invites: Record<string, string> // eventId -> rsvp status
 }
 

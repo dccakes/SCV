@@ -1,56 +1,54 @@
-import { type Dispatch, type SetStateAction } from 'react'
+import { Loader2 } from 'lucide-react'
 
 import { useToggleGuestForm } from '~/app/_components/contexts/guest-form-context'
-import { sharedStyles } from '~/app/utils/shared-styles'
+import { Button } from '~/components/ui/button'
 
 type AddFormButtonsProps = {
   isCreatingGuests: boolean
-  setCloseForm: Dispatch<SetStateAction<boolean>>
+  shouldCloseAfterSave?: boolean
+  onSaveIntentChange?: (shouldClose: boolean) => void
 }
 
-export default function AddFormButtons({ isCreatingGuests, setCloseForm }: AddFormButtonsProps) {
+export default function AddFormButtons({
+  isCreatingGuests,
+  shouldCloseAfterSave: _shouldCloseAfterSave,
+  onSaveIntentChange,
+}: AddFormButtonsProps) {
   const toggleGuestForm = useToggleGuestForm()
   return (
-    <div
-      className={`fixed bottom-0 z-20 flex ${sharedStyles.sidebarFormWidth} flex-col gap-3 border-t bg-white px-3 py-5`}
-    >
-      <div className="flex gap-3 text-sm">
-        <button
+    <div className="fixed bottom-0 left-0 right-0 z-20 space-y-3 border-t bg-background p-6 sm:left-auto sm:right-0 sm:w-[525px]">
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <Button
           id="save-household-close"
           type="submit"
-          name="add-button"
+          variant="outline"
           disabled={isCreatingGuests}
-          onClick={() => setCloseForm(true)}
-          className={`w-1/2 ${sharedStyles.secondaryButton({
-            py: 'py-2',
-            isLoading: isCreatingGuests,
-          })}`}
+          onClick={() => onSaveIntentChange?.(true)}
+          className="w-full sm:flex-1"
         >
-          {isCreatingGuests ? 'Processing...' : 'Save & Close'}
-        </button>
-        <button
+          {isCreatingGuests && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isCreatingGuests ? 'Saving...' : 'Save & Close'}
+        </Button>
+        <Button
           id="save-household-another"
           type="submit"
-          name="add-button"
           disabled={isCreatingGuests}
-          className={`w-1/2 ${sharedStyles.primaryButton({
-            px: 'px-2',
-            py: 'py-2',
-            isLoading: isCreatingGuests,
-          })}`}
-          onClick={() => setCloseForm(false)}
+          onClick={() => onSaveIntentChange?.(false)}
+          className="w-full sm:flex-1"
         >
-          {isCreatingGuests ? 'Processing...' : 'Save & Add Another Guest'}
-        </button>
+          {isCreatingGuests && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isCreatingGuests ? 'Saving...' : 'Save & Add Another Party'}
+        </Button>
       </div>
-      <button
+      <Button
+        type="button"
+        variant="ghost"
         onClick={() => toggleGuestForm()}
-        className={`text-sm font-semibold ${
-          isCreatingGuests ? 'cursor-not-allowed' : 'hover:underline'
-        } ${isCreatingGuests ? 'text-pink-200' : `text-${sharedStyles.primaryColor}`}`}
+        disabled={isCreatingGuests}
+        className="w-full"
       >
         Cancel
-      </button>
+      </Button>
     </div>
   )
 }

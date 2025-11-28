@@ -1,8 +1,8 @@
 import Link from 'next/link'
 
 import { useToggleEventForm } from '~/app/_components/contexts/event-form-context'
-import { sharedStyles } from '~/app/utils/shared-styles'
 import { type Event } from '~/app/utils/shared-types'
+import { Button } from '~/components/ui/button'
 
 type EventsTabsProps = {
   events: Event[]
@@ -14,10 +14,12 @@ export default function EventsTabs({ events, selectedEventId }: EventsTabsProps)
 
   return (
     <>
-      <ul className="flex gap-5">
+      <ul className="flex items-center gap-5">
         <li
-          className={`cursor-pointer border-b-4 py-3 text-sm hover:border-gray-600 ${
-            selectedEventId === 'all' ? 'border-gray-600' : 'border-transparent'
+          className={`cursor-pointer border-b-2 py-3 text-sm transition-colors hover:border-foreground ${
+            selectedEventId === 'all'
+              ? 'border-foreground font-medium'
+              : 'border-transparent text-muted-foreground'
           }`}
         >
           <Link href="?event=all" scroll={false}>
@@ -27,8 +29,10 @@ export default function EventsTabs({ events, selectedEventId }: EventsTabsProps)
         {events?.map((event) => {
           return (
             <li
-              className={`cursor-pointer border-b-4 py-3 text-sm hover:border-gray-600 ${
-                selectedEventId === event.id ? 'border-gray-600' : 'border-transparent'
+              className={`cursor-pointer border-b-2 py-3 text-sm transition-colors hover:border-foreground ${
+                selectedEventId === event.id
+                  ? 'border-foreground font-medium'
+                  : 'border-transparent text-muted-foreground'
               }`}
               key={event.id}
             >
@@ -38,14 +42,16 @@ export default function EventsTabs({ events, selectedEventId }: EventsTabsProps)
             </li>
           )
         })}
-        <button
-          className={`pb-1 text-sm font-semibold text-${sharedStyles.primaryColor}`}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-primary"
           onClick={() => toggleEventForm()}
         >
           + New Event
-        </button>
+        </Button>
       </ul>
-      <hr className="relative -left-20 bottom-0 w-screen border-gray-300" />
+      <hr className="relative -left-20 bottom-0 w-screen border" />
     </>
   )
 }

@@ -70,14 +70,17 @@ export class HouseholdService {
 
     // Create guests with invitations
     const newGuests = await Promise.all(
-      data.guestParty.map(async (guest: GuestPartyInput, i: number) => {
-        return await this.db.guest.create({
+      data.guestParty.map(async (guest: GuestPartyInput) => {
+        const createdGuest = await this.db.guest.create({
           data: {
             firstName: guest.firstName,
             lastName: guest.lastName,
+            email: guest.email ?? null,
+            phone: guest.phone ?? null,
             weddingId,
             householdId: household.id,
-            isPrimaryContact: i === 0,
+            isPrimaryContact: guest.isPrimaryContact,
+            ageGroup: guest.ageGroup,
             invitations: {
               createMany: {
                 data: Object.entries(guest.invites).map(([eventId, rsvp]) => ({
@@ -89,6 +92,18 @@ export class HouseholdService {
             },
           },
         })
+
+        // Create GuestTagAssignment entries if tagIds provided
+        if (guest.tagIds && guest.tagIds.length > 0) {
+          await this.db.guestTagAssignment.createMany({
+            data: guest.tagIds.map((tagId) => ({
+              guestId: createdGuest.id,
+              guestTagId: tagId,
+            })),
+          })
+        }
+
+        return createdGuest
       })
     )
 
@@ -133,16 +148,20 @@ export class HouseholdService {
     weddingId: string,
     data: UpdateHouseholdInput
   ): Promise<HouseholdWithGuestsAndGifts> {
-    // Update household details
-    const updatedHousehold = await this.householdRepository.update(data.householdId, {
-      address1: data.address1,
-      address2: data.address2,
-      city: data.city,
-      state: data.state,
-      country: data.country,
-      zipCode: data.zipCode,
-      notes: data.notes,
-    })
+    // Update household details - only update fields that are present
+    const householdUpdate: Record<string, unknown> = {}
+    if (data.address1 !== undefined) householdUpdate.address1 = data.address1
+    if (data.address2 !== undefined) householdUpdate.address2 = data.address2
+    if (data.city !== undefined) householdUpdate.city = data.city
+    if (data.state !== undefined) householdUpdate.state = data.state
+    if (data.country !== undefined) householdUpdate.country = data.country
+    if (data.zipCode !== undefined) householdUpdate.zipCode = data.zipCode
+    if (data.notes !== undefined) householdUpdate.notes = data.notes
+
+    const updatedHousehold = await this.householdRepository.update(
+      data.householdId,
+      householdUpdate
+    )
 
     // Delete removed guests
     if (data.deletedGuests && data.deletedGuests.length > 0) {
@@ -163,15 +182,22 @@ export class HouseholdService {
             id: guest.guestId ?? -1,
           },
           update: {
-            firstName: guest.firstName ?? undefined,
-            lastName: guest.lastName ?? undefined,
+            firstName: guest.firstName,
+            lastName: guest.lastName,
+            email: guest.email,
+            phone: guest.phone,
+            isPrimaryContact: guest.isPrimaryContact,
+            ageGroup: guest.ageGroup,
           },
           create: {
             firstName: guest.firstName,
             lastName: guest.lastName,
+            email: guest.email ?? null,
+            phone: guest.phone ?? null,
             weddingId,
             householdId: data.householdId,
-            isPrimaryContact: false,
+            isPrimaryContact: guest.isPrimaryContact,
+            ageGroup: guest.ageGroup,
             invitations: {
               createMany: {
                 data: Object.entries(guest.invites).map(([eventId, rsvp]) => ({
@@ -183,6 +209,24 @@ export class HouseholdService {
             },
           },
         })
+
+        // Update GuestTagAssignment entries: delete existing and create new ones
+        if (guest.tagIds !== undefined) {
+          // Delete existing tag assignments
+          await this.db.guestTagAssignment.deleteMany({
+            where: { guestId: updatedGuest.id },
+          })
+
+          // Create new tag assignments if provided
+          if (guest.tagIds.length > 0) {
+            await this.db.guestTagAssignment.createMany({
+              data: guest.tagIds.map((tagId) => ({
+                guestId: updatedGuest.id,
+                guestTagId: tagId,
+              })),
+            })
+          }
+        }
 
         // Update invitations for existing guests
         const updatedInvitations: Invitation[] = await Promise.all(

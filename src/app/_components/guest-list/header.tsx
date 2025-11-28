@@ -1,4 +1,5 @@
 import { sharedStyles } from '~/app/utils/shared-styles'
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 
 export default function GuestHeader() {
   return (
@@ -7,20 +8,36 @@ export default function GuestHeader() {
         <div className="flex justify-between">
           <h1 className="text-3xl font-bold">Your Guest List</h1>
           <div>
-            <h3 className="pb-3 text-sm">SIMPLIFY GUEST COMMUNICATION</h3>
+            <h3 className="mb-4 text-sm uppercase tracking-wide text-muted-foreground">
+              Simplify Guest Communication
+            </h3>
             <div className="flex gap-5">
-              <div className="w-72 cursor-pointer rounded-md p-5 shadow-[0_3px_10px_rgb(0,0,0,0.2)]">
-                <h4 className="pb-3 font-bold">
-                  See invitations & paper <span className="pl-2">--{'>'}</span>
-                </h4>
-                <p>Share the most important details with designs that feel like you.</p>
-              </div>
-              <div className="w-72 cursor-pointer rounded-md p-5 shadow-[0_3px_10px_rgb(0,0,0,0.2)]">
-                <h4 className="pb-3 font-bold">
-                  Message guests <span className="pl-2">--{'>'}</span>
-                </h4>
-                <p>Share your website, remind guests to RSVP and more.</p>
-              </div>
+              <Card className="w-72 cursor-pointer transition-all hover:shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between text-base">
+                    See invitations & paper
+                    <span className="text-primary">→</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Share the most important details with designs that feel like you.
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="w-72 cursor-pointer transition-all hover:shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between text-base">
+                    Message guests
+                    <span className="text-primary">→</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Share your website, remind guests to RSVP and more.
+                  </p>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>

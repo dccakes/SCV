@@ -22,6 +22,9 @@ export type CreateHouseholdWithGuestsInput = {
   guestParty: Array<{
     firstName: string
     lastName: string
+    email?: string | null
+    phone?: string | null
+    isPrimaryContact?: boolean
     invites: Record<string, string> // eventId -> rsvp status
   }>
 }
@@ -42,6 +45,9 @@ export type UpdateHouseholdWithGuestsInput = {
     guestId?: number
     firstName: string
     lastName: string
+    email?: string | null
+    phone?: string | null
+    isPrimaryContact?: boolean
     invites: Record<string, string> // eventId -> rsvp status
   }>
   deletedGuests?: number[]

@@ -6,15 +6,13 @@
 
 import { z } from 'zod'
 
+import { guestPartySchema } from '~/server/domains/guest/guest.validator'
+
 /**
- * Schema for guest party input
+ * Re-export guest party schema for convenience
+ * (Canonical definition is in guest.validator.ts)
  */
-export const guestPartyInputSchema = z.object({
-  guestId: z.number().optional(),
-  firstName: z.string().nonempty({ message: 'First name required' }),
-  lastName: z.string().nonempty({ message: 'Last name required' }),
-  invites: z.record(z.string(), z.string()),
-})
+export const guestPartyInputSchema = guestPartySchema
 
 /**
  * Schema for gift input
@@ -26,10 +24,10 @@ export const giftInputSchema = z.object({
 })
 
 /**
- * Schema for creating a household
+ * Base household fields (address, contact info, notes)
+ * Shared across create, update, and form schemas
  */
-export const createHouseholdSchema = z.object({
-  guestParty: z.array(guestPartyInputSchema),
+export const baseHouseholdFields = z.object({
   address1: z.string().nullish().optional(),
   address2: z.string().nullish().optional(),
   city: z.string().nullish().optional(),
@@ -42,23 +40,45 @@ export const createHouseholdSchema = z.object({
 })
 
 /**
+ * Schema for creating a household
+ */
+export const createHouseholdSchema = baseHouseholdFields
+  .extend({
+    guestParty: z.array(guestPartyInputSchema).min(1, 'At least one guest is required'),
+  })
+  .refine(
+    (data) => {
+      // Ensure exactly one guest is marked as primary contact
+      const primaryContacts = data.guestParty.filter((guest) => guest.isPrimaryContact)
+      return primaryContacts.length === 1
+    },
+    {
+      message: 'Exactly one guest must be marked as primary contact',
+      path: ['guestParty'],
+    }
+  )
+
+/**
  * Schema for updating a household
  */
-export const updateHouseholdSchema = z.object({
-  householdId: z.string().min(1, 'Household ID is required'),
-  guestParty: z.array(guestPartyInputSchema),
-  address1: z.string().nullish().optional(),
-  address2: z.string().nullish().optional(),
-  city: z.string().nullish().optional(),
-  state: z.string().nullish().optional(),
-  country: z.string().nullish().optional(),
-  zipCode: z.string().nullish().optional(),
-  phone: z.string().nullish().optional(),
-  email: z.string().email({ message: 'Not a valid email' }).nullish().optional(),
-  notes: z.string().nullish().optional(),
-  deletedGuests: z.array(z.number()).optional(),
-  gifts: z.array(giftInputSchema),
-})
+export const updateHouseholdSchema = baseHouseholdFields
+  .extend({
+    householdId: z.string().min(1, 'Household ID is required'),
+    guestParty: z.array(guestPartyInputSchema).min(1, 'At least one guest is required'),
+    deletedGuests: z.array(z.number()).optional(),
+    gifts: z.array(giftInputSchema),
+  })
+  .refine(
+    (data) => {
+      // Ensure exactly one guest is marked as primary contact
+      const primaryContacts = data.guestParty.filter((guest) => guest.isPrimaryContact)
+      return primaryContacts.length === 1
+    },
+    {
+      message: 'Exactly one guest must be marked as primary contact',
+      path: ['guestParty'],
+    }
+  )
 
 /**
  * Schema for deleting a household
