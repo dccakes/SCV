@@ -97,6 +97,7 @@ export class HouseholdManagementService {
             weddingId,
             householdId: household.id,
             isPrimaryContact: guest.isPrimaryContact ?? index === 0,
+            ageGroup: guest.ageGroup,
             invitations: {
               createMany: {
                 data: Object.entries(guest.invites).map(([eventId, rsvp]) => ({
@@ -111,6 +112,16 @@ export class HouseholdManagementService {
             invitations: true,
           },
         })
+
+        // Create GuestTagAssignment entries if tagIds provided
+        if (guest.tagIds && guest.tagIds.length > 0) {
+          await this.db.guestTagAssignment.createMany({
+            data: guest.tagIds.map((tagId) => ({
+              guestId: newGuest.id,
+              guestTagId: tagId,
+            })),
+          })
+        }
 
         return newGuest
       })
@@ -190,6 +201,7 @@ export class HouseholdManagementService {
             email: guest.email,
             phone: guest.phone,
             isPrimaryContact: guest.isPrimaryContact ?? false,
+            ageGroup: guest.ageGroup,
           },
           create: {
             firstName: guest.firstName,
@@ -199,6 +211,7 @@ export class HouseholdManagementService {
             weddingId,
             householdId: data.householdId,
             isPrimaryContact: guest.isPrimaryContact ?? false,
+            ageGroup: guest.ageGroup,
             invitations: {
               createMany: {
                 data: Object.entries(guest.invites).map(([eventId, rsvp]) => ({
@@ -210,6 +223,24 @@ export class HouseholdManagementService {
             },
           },
         })
+
+        // Update GuestTagAssignment entries: delete existing and create new ones
+        if (guest.tagIds !== undefined) {
+          // Delete existing tag assignments
+          await this.db.guestTagAssignment.deleteMany({
+            where: { guestId: updatedGuest.id },
+          })
+
+          // Create new tag assignments if provided
+          if (guest.tagIds.length > 0) {
+            await this.db.guestTagAssignment.createMany({
+              data: guest.tagIds.map((tagId) => ({
+                guestId: updatedGuest.id,
+                guestTagId: tagId,
+              })),
+            })
+          }
+        }
 
         // 5. Update invitations for existing guests
         const updatedInvitations: Invitation[] = await Promise.all(
