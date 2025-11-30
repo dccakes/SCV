@@ -13,27 +13,23 @@ const eventRepository = new EventRepository(db)
 export const eventService = new EventService(eventRepository, db)
 
 // Export types
+export type { Event, EventWithQuestions, EventWithStats } from '~/server/domains/event/event.types'
+
+// Export input types from validator (schema-first pattern)
 export type {
   CreateEventInput,
   DeleteEventInput,
-  Event,
-  EventWithQuestions,
-  EventWithStats,
   UpdateCollectRsvpInput,
   UpdateEventInput,
-} from '~/server/domains/event/event.types'
+} from '~/server/domains/event/event.validator'
 
-// Export validators
+// Export validators (schemas only, types already exported above)
 export {
   createEventSchema,
-  type CreateEventSchemaInput,
   deleteEventSchema,
-  type DeleteEventSchemaInput,
   eventIdSchema,
   updateCollectRsvpSchema,
-  type UpdateCollectRsvpSchemaInput,
   updateEventSchema,
-  type UpdateEventSchemaInput,
 } from '~/server/domains/event/event.validator'
 
 // Export classes for testing/DI

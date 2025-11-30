@@ -19,11 +19,11 @@ import { TRPCError } from '@trpc/server'
 
 import { RSVP_STATUS } from '~/lib/constants'
 import { type EventRepository } from '~/server/domains/event/event.repository'
+import { type Event } from '~/server/domains/event/event.types'
 import {
   type CreateEventInput,
-  type Event,
   type UpdateEventInput,
-} from '~/server/domains/event/event.types'
+} from '~/server/domains/event/event.validator'
 
 export class EventService {
   constructor(
