@@ -2,10 +2,81 @@
  * Tests for Dashboard Application Service
  *
  * This service aggregates data from multiple domains for the dashboard overview.
- * Tests verify correct data aggregation and transformation.
+ * Tests verify correct data aggregation and transformation using mocked repositories.
  */
 
 import { DashboardService } from '~/server/application/dashboard/dashboard.service'
+
+// Mock all repositories
+jest.mock('~/server/domains/household/household.repository')
+jest.mock('~/server/domains/invitation/invitation.repository')
+jest.mock('~/server/domains/event/event.repository')
+jest.mock('~/server/domains/user/user.repository')
+jest.mock('~/server/domains/website/website.repository')
+jest.mock('~/server/domains/guest/guest.repository')
+jest.mock('~/server/domains/question/question.repository')
+jest.mock('~/server/domains/wedding/wedding.repository')
+
+// @ts-expect-error - Importing mock functions from mocked module
+// @ts-expect-error - Importing mock functions from mocked module
+import {
+  EventRepository,
+  mockFindByWeddingIdWithQuestions,
+  resetMocks as resetEventMocks,
+} from '~/server/domains/event/event.repository'
+// @ts-expect-error - Importing mock functions from mocked module
+import {
+  GuestRepository,
+  mockCountByWeddingId,
+  resetMocks as resetGuestMocks,
+} from '~/server/domains/guest/guest.repository'
+import {
+  HouseholdRepository,
+  mockFindByWeddingIdWithGuestsAndGifts,
+  resetMocks as resetHouseholdMocks,
+} from '~/server/domains/household/household.repository'
+// @ts-expect-error - Importing mock functions from mocked module
+import {
+  InvitationRepository,
+  mockFindByWeddingId as mockInvitationFindByWeddingId,
+  resetMocks as resetInvitationMocks,
+} from '~/server/domains/invitation/invitation.repository'
+// @ts-expect-error - Importing mock functions from mocked module
+import {
+  mockFindMostRecentAnswerByQuestionId,
+  QuestionRepository,
+  resetMocks as resetQuestionMocks,
+} from '~/server/domains/question/question.repository'
+// @ts-expect-error - Importing mock functions from mocked module
+import {
+  mockFindById as mockUserFindById,
+  resetMocks as resetUserMocks,
+  UserRepository,
+} from '~/server/domains/user/user.repository'
+// @ts-expect-error - Importing mock functions from mocked module
+import {
+  mockFindByWeddingIdWithQuestions as mockWebsiteFindByWeddingIdWithQuestions,
+  resetMocks as resetWebsiteMocks,
+  WebsiteRepository,
+} from '~/server/domains/website/website.repository'
+// @ts-expect-error - Importing mock functions from mocked module
+import {
+  mockFindByUserId,
+  resetMocks as resetWeddingMocks,
+  WeddingRepository,
+} from '~/server/domains/wedding/wedding.repository'
+
+// Cast to jest.Mock for type safety
+const mockHouseholdFindByWeddingIdWithGuestsAndGifts =
+  mockFindByWeddingIdWithGuestsAndGifts as jest.Mock
+const mockInvitationFindByWeddingIdFn = mockInvitationFindByWeddingId as jest.Mock
+const mockEventFindByWeddingIdWithQuestionsFn = mockFindByWeddingIdWithQuestions as jest.Mock
+const mockUserFindByIdFn = mockUserFindById as jest.Mock
+const mockWebsiteFindByWeddingIdWithQuestionsFn =
+  mockWebsiteFindByWeddingIdWithQuestions as jest.Mock
+const mockGuestCountByWeddingIdFn = mockCountByWeddingId as jest.Mock
+const mockQuestionFindMostRecentAnswerFn = mockFindMostRecentAnswerByQuestionId as jest.Mock
+const mockWeddingFindByUserIdFn = mockFindByUserId as jest.Mock
 
 // Mock data
 const mockUser = {
@@ -15,20 +86,19 @@ const mockUser = {
   groomLastName: 'Smith',
   brideFirstName: 'Jane',
   brideLastName: 'Doe',
-  clerkId: 'clerk-123',
+  name: 'John Smith',
+  emailVerified: true,
+  image: null,
+  websiteUrl: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 }
 
 const mockWebsite = {
   id: 'website-123',
-  userId: 'user-123',
+  weddingId: 'wedding-123',
   url: 'https://example.com',
   subUrl: 'john-jane',
-  groomFirstName: 'John',
-  groomLastName: 'Smith',
-  brideFirstName: 'Jane',
-  brideLastName: 'Doe',
   isPasswordEnabled: false,
   password: null,
   coverPhotoUrl: null,
@@ -43,6 +113,8 @@ const mockWebsite = {
       text: 'Any dietary restrictions?',
       type: 'Text',
       isRequired: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
       options: [],
       _count: { answers: 3 },
     },
@@ -59,8 +131,10 @@ const mockEvents = [
     venue: 'The Grand Ballroom',
     attire: 'Black Tie',
     description: 'Main wedding ceremony and reception',
-    userId: 'user-123',
+    weddingId: 'wedding-123',
     collectRsvp: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
     questions: [
       {
         id: 'question-event-1',
@@ -69,6 +143,8 @@ const mockEvents = [
         text: 'Meal preference?',
         type: 'Option',
         isRequired: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
         options: [
           {
             id: 'opt-1',
@@ -76,6 +152,8 @@ const mockEvents = [
             text: 'Chicken',
             description: null,
             responseCount: 10,
+            createdAt: new Date(),
+            updatedAt: new Date(),
           },
           {
             id: 'opt-2',
@@ -83,6 +161,8 @@ const mockEvents = [
             text: 'Fish',
             description: null,
             responseCount: 5,
+            createdAt: new Date(),
+            updatedAt: new Date(),
           },
         ],
         _count: { answers: 15 },
@@ -98,8 +178,10 @@ const mockEvents = [
     venue: 'Italian Restaurant',
     attire: 'Cocktail',
     description: null,
-    userId: 'user-123',
+    weddingId: 'wedding-123',
     collectRsvp: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
     questions: [],
   },
 ]
@@ -107,35 +189,46 @@ const mockEvents = [
 const mockHouseholds = [
   {
     id: 'household-1',
+    weddingId: 'wedding-123',
     address1: '123 Main St',
     address2: null,
     city: 'New York',
     state: 'NY',
     zipCode: '10001',
     country: 'USA',
-    phone: '555-1234',
-    email: 'smith@example.com',
     notes: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
     guests: [
       {
         id: 1,
         firstName: 'Bob',
         lastName: 'Smith',
+        email: 'bob@example.com',
+        phone: null,
         isPrimaryContact: true,
         householdId: 'household-1',
-        userId: 'user-123',
+        weddingId: 'wedding-123',
+        ageGroup: 'ADULT',
         createdAt: new Date(),
         updatedAt: new Date(),
+        guestTagAssignments: [],
+        invitations: [],
       },
       {
         id: 2,
         firstName: 'Alice',
         lastName: 'Smith',
+        email: null,
+        phone: null,
         isPrimaryContact: false,
         householdId: 'household-1',
-        userId: 'user-123',
+        weddingId: 'wedding-123',
+        ageGroup: 'ADULT',
         createdAt: new Date(),
         updatedAt: new Date(),
+        guestTagAssignments: [],
+        invitations: [],
       },
     ],
     gifts: [
@@ -144,31 +237,39 @@ const mockHouseholds = [
         eventId: 'event-wedding',
         description: 'Toaster',
         thankyou: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
         event: { name: 'Wedding Day' },
       },
     ],
   },
   {
     id: 'household-2',
+    weddingId: 'wedding-123',
     address1: '456 Oak Ave',
     address2: 'Suite 100',
     city: 'Los Angeles',
     state: 'CA',
     zipCode: '90001',
     country: 'USA',
-    phone: null,
-    email: null,
     notes: 'Family friends',
+    createdAt: new Date(),
+    updatedAt: new Date(),
     guests: [
       {
         id: 3,
         firstName: 'Charlie',
         lastName: 'Brown',
+        email: 'charlie@example.com',
+        phone: null,
         isPrimaryContact: true,
         householdId: 'household-2',
-        userId: 'user-123',
+        weddingId: 'wedding-123',
+        ageGroup: 'ADULT',
         createdAt: new Date(),
         updatedAt: new Date(),
+        guestTagAssignments: [],
+        invitations: [],
       },
     ],
     gifts: [],
@@ -177,49 +278,73 @@ const mockHouseholds = [
 
 const mockInvitations = [
   {
+    id: 'inv-1',
     guestId: 1,
     eventId: 'event-wedding',
+    weddingId: 'wedding-123',
     rsvp: 'Attending',
+    dietaryRestrictions: null,
+    submittedBy: null,
+    submittedAt: null,
     invitedAt: new Date(),
+    createdAt: new Date(),
     updatedAt: new Date(),
-    userId: 'user-123',
   },
   {
+    id: 'inv-2',
     guestId: 2,
     eventId: 'event-wedding',
+    weddingId: 'wedding-123',
     rsvp: 'Attending',
+    dietaryRestrictions: null,
+    submittedBy: null,
+    submittedAt: null,
     invitedAt: new Date(),
+    createdAt: new Date(),
     updatedAt: new Date(),
-    userId: 'user-123',
   },
   {
+    id: 'inv-3',
     guestId: 3,
     eventId: 'event-wedding',
+    weddingId: 'wedding-123',
     rsvp: 'Declined',
+    dietaryRestrictions: null,
+    submittedBy: null,
+    submittedAt: null,
     invitedAt: new Date(),
+    createdAt: new Date(),
     updatedAt: new Date(),
-    userId: 'user-123',
   },
   {
+    id: 'inv-4',
     guestId: 1,
     eventId: 'event-rehearsal',
+    weddingId: 'wedding-123',
     rsvp: 'Invited',
+    dietaryRestrictions: null,
+    submittedBy: null,
+    submittedAt: null,
     invitedAt: null,
+    createdAt: new Date(),
     updatedAt: new Date(),
-    userId: 'user-123',
   },
   {
+    id: 'inv-5',
     guestId: 2,
     eventId: 'event-rehearsal',
+    weddingId: 'wedding-123',
     rsvp: 'Not Invited',
+    dietaryRestrictions: null,
+    submittedBy: null,
+    submittedAt: null,
     invitedAt: null,
+    createdAt: new Date(),
     updatedAt: new Date(),
-    userId: 'user-123',
   },
 ]
 
 const mockAnswer = {
-  id: 'answer-1',
   questionId: 'question-gen-1',
   guestId: 1,
   guestFirstName: 'Bob',
@@ -227,6 +352,7 @@ const mockAnswer = {
   householdId: 'household-1',
   response: 'Vegetarian',
   createdAt: new Date(),
+  updatedAt: new Date(),
 }
 
 const mockWedding = {
@@ -240,55 +366,64 @@ const mockWedding = {
   updatedAt: new Date(),
 }
 
-const mockUserWedding = {
-  userId: 'user-123',
-  weddingId: 'wedding-123',
-  isPrimary: true,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  wedding: mockWedding,
-}
-
-// Create mock Prisma client
-const createMockDb = () => ({
-  household: {
-    findMany: jest.fn().mockResolvedValue(mockHouseholds),
-  },
-  invitation: {
-    findMany: jest.fn().mockResolvedValue(mockInvitations),
-  },
-  event: {
-    findMany: jest.fn().mockResolvedValue(mockEvents),
-  },
-  user: {
-    findFirst: jest.fn().mockResolvedValue(mockUser),
-  },
-  userWedding: {
-    findFirst: jest.fn().mockResolvedValue(mockUserWedding),
-  },
-  website: {
-    findFirst: jest.fn().mockResolvedValue(mockWebsite),
-  },
-  guest: {
-    count: jest.fn().mockResolvedValue(3),
-  },
-  answer: {
-    findFirst: jest.fn().mockResolvedValue(mockAnswer),
-  },
-})
-
 describe('DashboardService', () => {
   let service: DashboardService
-  let mockDb: ReturnType<typeof createMockDb>
 
   beforeEach(() => {
-    mockDb = createMockDb()
-    service = new DashboardService(mockDb as never)
+    // Reset all mocks
+    resetHouseholdMocks()
+    resetInvitationMocks()
+    resetEventMocks()
+    resetUserMocks()
+    resetWebsiteMocks()
+    resetGuestMocks()
+    resetQuestionMocks()
+    resetWeddingMocks()
+
+    // Create repository instances
+    const householdRepo = new HouseholdRepository({} as never)
+    const invitationRepo = new InvitationRepository({} as never)
+    const eventRepo = new EventRepository({} as never)
+    const userRepo = new UserRepository({} as never)
+    const websiteRepo = new WebsiteRepository({} as never)
+    const guestRepo = new GuestRepository({} as never)
+    const questionRepo = new QuestionRepository({} as never)
+    const weddingRepo = new WeddingRepository({} as never)
+
+    // Setup default mock return values
+    mockWeddingFindByUserIdFn.mockResolvedValue(mockWedding)
+    mockHouseholdFindByWeddingIdWithGuestsAndGifts.mockResolvedValue(mockHouseholds)
+    mockInvitationFindByWeddingIdFn.mockResolvedValue(mockInvitations)
+    mockEventFindByWeddingIdWithQuestionsFn.mockResolvedValue(mockEvents)
+    mockUserFindByIdFn.mockResolvedValue(mockUser)
+    mockWebsiteFindByWeddingIdWithQuestionsFn.mockResolvedValue(mockWebsite)
+    mockGuestCountByWeddingIdFn.mockResolvedValue(3)
+    mockQuestionFindMostRecentAnswerFn.mockResolvedValue(mockAnswer)
+
+    // Create service with injected repositories
+    service = new DashboardService(
+      householdRepo,
+      invitationRepo,
+      eventRepo,
+      userRepo,
+      websiteRepo,
+      guestRepo,
+      questionRepo,
+      weddingRepo
+    )
   })
 
   describe('getOverview', () => {
+    it('should return null when wedding not found', async () => {
+      mockWeddingFindByUserIdFn.mockResolvedValue(null)
+
+      const result = await service.getOverview('user-123')
+
+      expect(result).toBeNull()
+    })
+
     it('should return null when user not found', async () => {
-      mockDb.user.findFirst.mockResolvedValue(null)
+      mockUserFindByIdFn.mockResolvedValue(null)
 
       const result = await service.getOverview('user-123')
 
@@ -296,7 +431,7 @@ describe('DashboardService', () => {
     })
 
     it('should return data even when website not found', async () => {
-      mockDb.website.findFirst.mockResolvedValue(null)
+      mockWebsiteFindByWeddingIdWithQuestionsFn.mockResolvedValue(null)
 
       const result = await service.getOverview('user-123')
 
@@ -391,36 +526,19 @@ describe('DashboardService', () => {
       expect(weddingEvent?.questions[0]?.text).toBe('Meal preference?')
     })
 
-    it('should fetch data in parallel for performance', async () => {
+    it('should call repositories with correct weddingId', async () => {
       await service.getOverview('user-123')
 
-      // All data fetching should happen (we can't directly verify parallelism,
-      // but we can verify all queries are made)
-      expect(mockDb.household.findMany).toHaveBeenCalledTimes(1)
-      expect(mockDb.invitation.findMany).toHaveBeenCalledTimes(1)
-      expect(mockDb.event.findMany).toHaveBeenCalledTimes(1)
-      expect(mockDb.user.findFirst).toHaveBeenCalledTimes(1)
-      expect(mockDb.website.findFirst).toHaveBeenCalledTimes(1)
-    })
-
-    it('should query with correct weddingId', async () => {
-      await service.getOverview('different-user-456')
-
-      expect(mockDb.household.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { weddingId: 'wedding-123' } })
-      )
-      expect(mockDb.invitation.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { weddingId: 'wedding-123' } })
-      )
-      expect(mockDb.event.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { weddingId: 'wedding-123' } })
-      )
+      expect(mockHouseholdFindByWeddingIdWithGuestsAndGifts).toHaveBeenCalledWith('wedding-123')
+      expect(mockInvitationFindByWeddingIdFn).toHaveBeenCalledWith('wedding-123')
+      expect(mockEventFindByWeddingIdWithQuestionsFn).toHaveBeenCalledWith('wedding-123')
+      expect(mockGuestCountByWeddingIdFn).toHaveBeenCalledWith('wedding-123')
+      expect(mockWebsiteFindByWeddingIdWithQuestionsFn).toHaveBeenCalledWith('wedding-123')
     })
 
     it('should handle missing wedding date gracefully', async () => {
-      mockDb.event.findMany.mockResolvedValue([
-        { ...mockEvents[1], name: 'Rehearsal Dinner' }, // No Wedding Day event
-      ])
+      const eventsWithoutWeddingDay = [mockEvents[1]] // Only rehearsal dinner
+      mockEventFindByWeddingIdWithQuestionsFn.mockResolvedValue(eventsWithoutWeddingDay)
 
       const result = await service.getOverview('user-123')
 
@@ -429,8 +547,8 @@ describe('DashboardService', () => {
     })
 
     it('should handle empty households', async () => {
-      mockDb.household.findMany.mockResolvedValue([])
-      mockDb.guest.count.mockResolvedValue(0)
+      mockHouseholdFindByWeddingIdWithGuestsAndGifts.mockResolvedValue([])
+      mockGuestCountByWeddingIdFn.mockResolvedValue(0)
 
       const result = await service.getOverview('user-123')
 
@@ -439,7 +557,7 @@ describe('DashboardService', () => {
     })
 
     it('should handle empty events', async () => {
-      mockDb.event.findMany.mockResolvedValue([])
+      mockEventFindByWeddingIdWithQuestionsFn.mockResolvedValue([])
 
       const result = await service.getOverview('user-123')
 

@@ -60,6 +60,26 @@ export class WebsiteRepository {
   }
 
   /**
+   * Find a website by wedding ID with general questions included
+   */
+  async findByWeddingIdWithQuestions(weddingId: string): Promise<WebsiteWithQuestions | null> {
+    return this.db.website.findFirst({
+      where: { weddingId },
+      include: {
+        generalQuestions: {
+          orderBy: { createdAt: 'asc' },
+          include: {
+            options: true,
+            _count: {
+              select: { answers: true },
+            },
+          },
+        },
+      },
+    })
+  }
+
+  /**
    * Create a new website with default general questions
    */
   async create(data: { weddingId: string; url: string; subUrl: string }): Promise<Website> {

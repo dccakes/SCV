@@ -8,6 +8,11 @@
  *
  * This service was extracted from the Website domain service to properly
  * separate cross-domain orchestration concerns.
+ *
+ * TODO: ARCHITECTURAL VIOLATION - This service directly accesses PrismaClient
+ * instead of using repositories/services. It should inject InvitationService
+ * and QuestionService and use their methods instead of direct DB access.
+ * See ARCHITECTURAL_VIOLATIONS.md for details.
  */
 
 import { type Prisma, type PrismaClient } from '@prisma/client'

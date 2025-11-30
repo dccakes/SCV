@@ -7,6 +7,11 @@
  * Note: The website creation process involves cross-domain operations
  * (creating User and Event). This is kept here for Phase 1, but could
  * be moved to an Application Service in the future.
+ *
+ * TODO: ARCHITECTURAL VIOLATION - This service directly accesses PrismaClient
+ * for cross-domain queries (wedding data, complex includes). It should inject
+ * WeddingRepository and create repository methods for complex queries like
+ * getPublicPageBySubUrl(). See ARCHITECTURAL_VIOLATIONS.md for details.
  */
 
 import { type Prisma, type PrismaClient } from '@prisma/client'

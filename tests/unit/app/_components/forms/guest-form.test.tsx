@@ -4,14 +4,17 @@
  * Tests critical form behaviors that are NOT covered by backend tests:
  * 1. Deleted guests tracking - prevents data loss during updates
  * 2. Dirty field submission - optimizes API calls by only sending changed data
+ * 3. Common use cases - one guest, two guests, tags, contact info
  */
 
+import { zodResolver } from '@hookform/resolvers/zod'
 import { act, renderHook } from '@testing-library/react'
 import { useFieldArray, useForm } from 'react-hook-form'
 
 import {
   getDefaultHouseholdFormData,
   type HouseholdFormData,
+  HouseholdFormSchema,
 } from '~/app/_components/forms/guest-form.schema'
 import { getDirtyValues } from '~/app/utils/form-helpers'
 
@@ -406,6 +409,410 @@ describe('GuestForm - Dirty Field Submission', () => {
       //   gifts: [...],
       //   deletedGuests: [2]  // Jane to be deleted
       // }
+    })
+  })
+})
+
+describe('GuestForm - Common Use Cases', () => {
+  describe('one guest household', () => {
+    it('should validate and accept form with one guest', async () => {
+      const { result } = renderHook(() =>
+        useForm<HouseholdFormData>({
+          resolver: zodResolver(HouseholdFormSchema),
+          defaultValues: getDefaultHouseholdFormData(mockEvents),
+        })
+      )
+
+      // Fill in one guest
+      act(() => {
+        result.current.setValue('guestParty.0.firstName', 'John')
+        result.current.setValue('guestParty.0.lastName', 'Doe')
+        result.current.setValue('guestParty.0.isPrimaryContact', true)
+      })
+
+      // Trigger validation
+      const isValid = await act(async () => {
+        return await result.current.trigger()
+      })
+
+      expect(isValid).toBe(true)
+      expect(result.current.formState.errors).toEqual({})
+
+      const data = result.current.getValues()
+      expect(data.guestParty).toHaveLength(1)
+      expect(data.guestParty[0]?.firstName).toBe('John')
+      expect(data.guestParty[0]?.lastName).toBe('Doe')
+      expect(data.guestParty[0]?.isPrimaryContact).toBe(true)
+    })
+
+    it('should require at least one guest', async () => {
+      const { result } = renderHook(() => {
+        const form = useForm<HouseholdFormData>({
+          resolver: zodResolver(HouseholdFormSchema),
+          defaultValues: {
+            ...getDefaultHouseholdFormData(mockEvents),
+            guestParty: [], // Empty guest array
+          },
+        })
+        // Access formState to subscribe to errors
+        void form.formState.errors
+        return form
+      })
+
+      const isValid = await act(async () => {
+        return await result.current.trigger()
+      })
+
+      expect(isValid).toBe(false)
+      // Array min validation creates error at the array field level
+      expect(result.current.formState.errors).toHaveProperty('guestParty')
+    })
+  })
+
+  describe('two guests household', () => {
+    it('should validate and accept form with two guests', async () => {
+      const { result } = renderHook(() => {
+        const form = useForm<HouseholdFormData>({
+          resolver: zodResolver(HouseholdFormSchema),
+          defaultValues: getDefaultHouseholdFormData(mockEvents),
+        })
+
+        const { append } = useFieldArray({
+          control: form.control,
+          name: 'guestParty',
+        })
+
+        return { form, append }
+      })
+
+      // Fill in first guest
+      act(() => {
+        result.current.form.setValue('guestParty.0.firstName', 'John')
+        result.current.form.setValue('guestParty.0.lastName', 'Doe')
+        result.current.form.setValue('guestParty.0.isPrimaryContact', true)
+      })
+
+      // Add second guest
+      act(() => {
+        result.current.append({
+          firstName: 'Jane',
+          lastName: 'Doe',
+          isPrimaryContact: false,
+          email: null,
+          phone: null,
+          ageGroup: 'ADULT',
+          tagIds: [],
+          invites: {
+            'event-1': 'Invited',
+            'event-2': 'Invited',
+          },
+        })
+      })
+
+      // Trigger validation
+      const isValid = await act(async () => {
+        return await result.current.form.trigger()
+      })
+
+      expect(isValid).toBe(true)
+      expect(result.current.form.formState.errors).toEqual({})
+
+      const data = result.current.form.getValues()
+      expect(data.guestParty).toHaveLength(2)
+      expect(data.guestParty[0]?.firstName).toBe('John')
+      expect(data.guestParty[1]?.firstName).toBe('Jane')
+      expect(data.guestParty[0]?.isPrimaryContact).toBe(true)
+      expect(data.guestParty[1]?.isPrimaryContact).toBe(false)
+    })
+
+    it('should enforce exactly one primary contact with two guests', async () => {
+      const { result } = renderHook(() => {
+        const form = useForm<HouseholdFormData>({
+          resolver: zodResolver(HouseholdFormSchema),
+          defaultValues: getDefaultHouseholdFormData(mockEvents),
+        })
+
+        // Access formState to subscribe to errors
+        void form.formState.errors
+
+        const { append } = useFieldArray({
+          control: form.control,
+          name: 'guestParty',
+        })
+
+        return { form, append }
+      })
+
+      // Fill in first guest
+      act(() => {
+        result.current.form.setValue('guestParty.0.firstName', 'John')
+        result.current.form.setValue('guestParty.0.lastName', 'Doe')
+        result.current.form.setValue('guestParty.0.isPrimaryContact', false) // NOT primary
+      })
+
+      // Add second guest (also not primary)
+      act(() => {
+        result.current.append({
+          firstName: 'Jane',
+          lastName: 'Doe',
+          isPrimaryContact: false, // NOT primary
+          email: null,
+          phone: null,
+          ageGroup: 'ADULT',
+          tagIds: [],
+          invites: {
+            'event-1': 'Invited',
+            'event-2': 'Invited',
+          },
+        })
+      })
+
+      // Trigger validation
+      const isValid = await act(async () => {
+        return await result.current.form.trigger()
+      })
+
+      expect(isValid).toBe(false)
+      // Schema refine() validation creates error on the field
+      expect(result.current.form.formState.errors).toHaveProperty('guestParty')
+    })
+  })
+
+  describe('guest with tags', () => {
+    it('should accept guest with tags', async () => {
+      const { result } = renderHook(() =>
+        useForm<HouseholdFormData>({
+          resolver: zodResolver(HouseholdFormSchema),
+          defaultValues: getDefaultHouseholdFormData(mockEvents),
+        })
+      )
+
+      // Valid UUIDs for tags
+      const validTagIds = [
+        '123e4567-e89b-12d3-a456-426614174000',
+        '123e4567-e89b-12d3-a456-426614174001',
+        '123e4567-e89b-12d3-a456-426614174002',
+      ]
+
+      // Fill in guest with tags
+      act(() => {
+        result.current.setValue('guestParty.0.firstName', 'John')
+        result.current.setValue('guestParty.0.lastName', 'Doe')
+        result.current.setValue('guestParty.0.isPrimaryContact', true)
+        result.current.setValue('guestParty.0.tagIds', validTagIds)
+      })
+
+      // Trigger validation
+      const isValid = await act(async () => {
+        return await result.current.trigger()
+      })
+
+      expect(isValid).toBe(true)
+      expect(result.current.formState.errors).toEqual({})
+
+      const data = result.current.getValues()
+      expect(data.guestParty[0]?.tagIds).toEqual(validTagIds)
+      expect(data.guestParty[0]?.tagIds).toHaveLength(3)
+    })
+
+    it('should accept guest with empty tags array', async () => {
+      const { result } = renderHook(() =>
+        useForm<HouseholdFormData>({
+          resolver: zodResolver(HouseholdFormSchema),
+          defaultValues: getDefaultHouseholdFormData(mockEvents),
+        })
+      )
+
+      // Fill in guest without tags
+      act(() => {
+        result.current.setValue('guestParty.0.firstName', 'John')
+        result.current.setValue('guestParty.0.lastName', 'Doe')
+        result.current.setValue('guestParty.0.isPrimaryContact', true)
+        result.current.setValue('guestParty.0.tagIds', [])
+      })
+
+      // Trigger validation
+      const isValid = await act(async () => {
+        return await result.current.trigger()
+      })
+
+      expect(isValid).toBe(true)
+      expect(result.current.formState.errors).toEqual({})
+
+      const data = result.current.getValues()
+      expect(data.guestParty[0]?.tagIds).toEqual([])
+    })
+  })
+
+  describe('two guests with contact information', () => {
+    it('should accept two guests both with email and phone', async () => {
+      const { result } = renderHook(() => {
+        const form = useForm<HouseholdFormData>({
+          resolver: zodResolver(HouseholdFormSchema),
+          defaultValues: getDefaultHouseholdFormData(mockEvents),
+        })
+
+        const { append } = useFieldArray({
+          control: form.control,
+          name: 'guestParty',
+        })
+
+        return { form, append }
+      })
+
+      // Fill in first guest with contact info
+      act(() => {
+        result.current.form.setValue('guestParty.0.firstName', 'John')
+        result.current.form.setValue('guestParty.0.lastName', 'Doe')
+        result.current.form.setValue('guestParty.0.email', 'john@example.com')
+        result.current.form.setValue('guestParty.0.phone', '+1234567890')
+        result.current.form.setValue('guestParty.0.isPrimaryContact', true)
+      })
+
+      // Add second guest with contact info
+      act(() => {
+        result.current.append({
+          firstName: 'Jane',
+          lastName: 'Doe',
+          email: 'jane@example.com',
+          phone: '+0987654321',
+          isPrimaryContact: false,
+          ageGroup: 'ADULT',
+          tagIds: [],
+          invites: {
+            'event-1': 'Invited',
+            'event-2': 'Invited',
+          },
+        })
+      })
+
+      // Trigger validation
+      const isValid = await act(async () => {
+        return await result.current.form.trigger()
+      })
+
+      expect(isValid).toBe(true)
+      expect(result.current.form.formState.errors).toEqual({})
+
+      const data = result.current.form.getValues()
+      expect(data.guestParty).toHaveLength(2)
+
+      // Verify first guest contact info
+      expect(data.guestParty[0]?.email).toBe('john@example.com')
+      expect(data.guestParty[0]?.phone).toBe('+1234567890')
+
+      // Verify second guest contact info
+      expect(data.guestParty[1]?.email).toBe('jane@example.com')
+      expect(data.guestParty[1]?.phone).toBe('+0987654321')
+    })
+
+    it('should validate email format for both guests', async () => {
+      const { result } = renderHook(() => {
+        const form = useForm<HouseholdFormData>({
+          resolver: zodResolver(HouseholdFormSchema),
+          defaultValues: getDefaultHouseholdFormData(mockEvents),
+        })
+
+        // Access formState to subscribe to errors
+        void form.formState.errors
+
+        const { append } = useFieldArray({
+          control: form.control,
+          name: 'guestParty',
+        })
+
+        return { form, append }
+      })
+
+      // Fill in first guest with INVALID email
+      act(() => {
+        result.current.form.setValue('guestParty.0.firstName', 'John')
+        result.current.form.setValue('guestParty.0.lastName', 'Doe')
+        result.current.form.setValue('guestParty.0.email', 'invalid-email')
+        result.current.form.setValue('guestParty.0.isPrimaryContact', true)
+      })
+
+      // Add second guest with valid email
+      act(() => {
+        result.current.append({
+          firstName: 'Jane',
+          lastName: 'Doe',
+          email: 'jane@example.com',
+          phone: null,
+          isPrimaryContact: false,
+          ageGroup: 'ADULT',
+          tagIds: [],
+          invites: {
+            'event-1': 'Invited',
+            'event-2': 'Invited',
+          },
+        })
+      })
+
+      // Trigger validation
+      const isValid = await act(async () => {
+        return await result.current.form.trigger()
+      })
+
+      expect(isValid).toBe(false)
+      // Email validation should fail
+      expect(result.current.form.formState.errors).toHaveProperty('guestParty')
+    })
+
+    it('should allow null/empty contact information', async () => {
+      const { result } = renderHook(() => {
+        const form = useForm<HouseholdFormData>({
+          resolver: zodResolver(HouseholdFormSchema),
+          defaultValues: getDefaultHouseholdFormData(mockEvents),
+        })
+
+        const { append } = useFieldArray({
+          control: form.control,
+          name: 'guestParty',
+        })
+
+        return { form, append }
+      })
+
+      // Fill in first guest WITHOUT contact info
+      act(() => {
+        result.current.form.setValue('guestParty.0.firstName', 'John')
+        result.current.form.setValue('guestParty.0.lastName', 'Doe')
+        result.current.form.setValue('guestParty.0.email', null)
+        result.current.form.setValue('guestParty.0.phone', null)
+        result.current.form.setValue('guestParty.0.isPrimaryContact', true)
+      })
+
+      // Add second guest without contact info
+      act(() => {
+        result.current.append({
+          firstName: 'Jane',
+          lastName: 'Doe',
+          email: null,
+          phone: null,
+          isPrimaryContact: false,
+          ageGroup: 'ADULT',
+          tagIds: [],
+          invites: {
+            'event-1': 'Invited',
+            'event-2': 'Invited',
+          },
+        })
+      })
+
+      // Trigger validation
+      const isValid = await act(async () => {
+        return await result.current.form.trigger()
+      })
+
+      expect(isValid).toBe(true)
+      expect(result.current.form.formState.errors).toEqual({})
+
+      const data = result.current.form.getValues()
+      expect(data.guestParty[0]?.email).toBeNull()
+      expect(data.guestParty[0]?.phone).toBeNull()
+      expect(data.guestParty[1]?.email).toBeNull()
+      expect(data.guestParty[1]?.phone).toBeNull()
     })
   })
 })

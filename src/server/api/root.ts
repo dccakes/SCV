@@ -1,10 +1,6 @@
 // Domain routers (Phase 1-3 - migrated to domain architecture)
 import { createTRPCRouter } from '~/server/api/trpc'
-import {
-  dashboardRouter,
-  householdManagementRouter,
-  rsvpSubmissionRouter,
-} from '~/server/application'
+import { dashboardRouter, rsvpSubmissionRouter } from '~/server/application'
 import { eventRouter } from '~/server/domains/event'
 import { giftRouter } from '~/server/domains/gift'
 import { guestRouter } from '~/server/domains/guest'
@@ -46,7 +42,6 @@ export const appRouter = createTRPCRouter({
 
   // Phase 4 application services (migrated)
   dashboard: dashboardRouter,
-  householdManagement: householdManagementRouter,
   rsvpSubmission: rsvpSubmissionRouter,
 })
 

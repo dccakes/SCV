@@ -45,10 +45,11 @@ export type HouseholdWithGuests = Household & {
 
 /**
  * Household with guests and gifts included
+ * Gifts include the event name
  */
 export type HouseholdWithGuestsAndGifts = Household & {
   guests: GuestWithInvitations[]
-  gifts: Gift[]
+  gifts: Array<Gift & { event: { name: string } }>
 }
 
 /**

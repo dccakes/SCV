@@ -7,9 +7,37 @@
 
 import { createTRPCRouter, publicProcedure } from '~/server/api/trpc'
 import { DashboardService } from '~/server/application/dashboard/dashboard.service'
+import { EventRepository } from '~/server/domains/event/event.repository'
+import { GuestRepository } from '~/server/domains/guest/guest.repository'
+import { HouseholdRepository } from '~/server/domains/household/household.repository'
+import { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
+import { QuestionRepository } from '~/server/domains/question/question.repository'
+import { UserRepository } from '~/server/domains/user/user.repository'
+import { WebsiteRepository } from '~/server/domains/website/website.repository'
+import { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
 import { db } from '~/server/infrastructure/database'
 
-const dashboardService = new DashboardService(db)
+// Initialize repositories
+const householdRepo = new HouseholdRepository(db)
+const invitationRepo = new InvitationRepository(db)
+const eventRepo = new EventRepository(db)
+const userRepo = new UserRepository(db)
+const websiteRepo = new WebsiteRepository(db)
+const guestRepo = new GuestRepository(db)
+const questionRepo = new QuestionRepository(db)
+const weddingRepo = new WeddingRepository(db)
+
+// Initialize service with all repositories
+const dashboardService = new DashboardService(
+  householdRepo,
+  invitationRepo,
+  eventRepo,
+  userRepo,
+  websiteRepo,
+  guestRepo,
+  questionRepo,
+  weddingRepo
+)
 
 export const dashboardRouter = createTRPCRouter({
   /**

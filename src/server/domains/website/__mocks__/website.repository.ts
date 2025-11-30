@@ -49,6 +49,7 @@ export const mockFindById = jest.fn()
 export const mockFindByWeddingId = jest.fn()
 export const mockFindBySubUrl = jest.fn()
 export const mockFindBySubUrlWithQuestions = jest.fn()
+export const mockFindByWeddingIdWithQuestions = jest.fn()
 export const mockCreate = jest.fn()
 export const mockUpdate = jest.fn()
 export const mockUpdateRsvpEnabled = jest.fn()
@@ -61,6 +62,7 @@ export const WebsiteRepository = jest.fn().mockImplementation(() => ({
   findByWeddingId: mockFindByWeddingId,
   findBySubUrl: mockFindBySubUrl,
   findBySubUrlWithQuestions: mockFindBySubUrlWithQuestions,
+  findByWeddingIdWithQuestions: mockFindByWeddingIdWithQuestions,
   create: mockCreate,
   update: mockUpdate,
   updateRsvpEnabled: mockUpdateRsvpEnabled,
@@ -75,6 +77,7 @@ export const resetMocks = (): void => {
   mockFindByWeddingId.mockReset()
   mockFindBySubUrl.mockReset()
   mockFindBySubUrlWithQuestions.mockReset()
+  mockFindByWeddingIdWithQuestions.mockReset()
   mockCreate.mockReset()
   mockUpdate.mockReset()
   mockUpdateRsvpEnabled.mockReset()

@@ -8,6 +8,7 @@
 import { type PrismaClient } from '@prisma/client'
 
 import {
+  type Answer,
   type OptionInput,
   type Question,
   type QuestionWithOptions,
@@ -168,5 +169,15 @@ export class QuestionRepository {
       select: { id: true },
     })
     return question !== null
+  }
+
+  /**
+   * Find the most recent answer for a question
+   */
+  async findMostRecentAnswerByQuestionId(questionId: string): Promise<Answer | null> {
+    return this.db.answer.findFirst({
+      where: { questionId },
+      orderBy: { createdAt: 'desc' },
+    })
   }
 }
