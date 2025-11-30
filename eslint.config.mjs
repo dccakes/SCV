@@ -180,4 +180,31 @@ export default [
       ...playwright.configs.recommended.rules,
     },
   },
+
+  // Architectural rule: Services must not import PrismaClient directly
+  {
+    files: [
+      'src/server/domains/**/*.service.ts',
+      'src/server/application/**/*.service.ts',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@prisma/client'],
+              message:
+                'Services must not import PrismaClient directly. Use repositories instead.',
+            },
+            {
+              group: ['~/server/infrastructure/database'],
+              message:
+                'Services must not import database client directly. Use repositories instead.',
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]

@@ -9,7 +9,6 @@ jest.mock('~/server/domains/guest/guest.repository')
 import {
   GuestRepository,
   mockCreate,
-  mockCreateWithInvitations,
   mockDelete,
   mockDeleteMany,
   mockFindByHouseholdIdWithInvitations,
@@ -30,7 +29,6 @@ const mockFindByHouseholdIdWithInvitationsFn = mockFindByHouseholdIdWithInvitati
 const mockFindByIdFn = mockFindById as jest.Mock
 const mockFindByIdWithInvitationsFn = mockFindByIdWithInvitations as jest.Mock
 const mockCreateFn = mockCreate as jest.Mock
-const mockCreateWithInvitationsFn = mockCreateWithInvitations as jest.Mock
 const mockUpsertFn = mockUpsert as jest.Mock
 const mockUpdateFn = mockUpdate as jest.Mock
 const mockDeleteFn = mockDelete as jest.Mock
@@ -132,7 +130,7 @@ describe('GuestService', () => {
 
   describe('createGuestWithInvitations', () => {
     it('should create a guest with invitations', async () => {
-      mockCreateWithInvitationsFn.mockResolvedValue(mockGuest)
+      mockCreateFn.mockResolvedValue(mockGuest)
 
       const result = await guestService.createGuestWithInvitations('wedding-123', {
         firstName: 'John',
@@ -148,7 +146,7 @@ describe('GuestService', () => {
       })
 
       expect(result).toEqual(mockGuest)
-      expect(mockCreateWithInvitationsFn).toHaveBeenCalledWith({
+      expect(mockCreateFn).toHaveBeenCalledWith({
         firstName: 'John',
         lastName: 'Doe',
         email: 'john@example.com',

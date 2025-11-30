@@ -3,10 +3,21 @@
  *
  * Type definitions for the Household domain entity.
  * Households represent guest groups/families sharing an address.
+ *
+ * Note: Input types are derived from Zod schemas (single source of truth).
+ * Only entity types representing database models are manually defined.
  */
 
 import { type Gift } from '~/server/domains/gift/gift.types'
 import { type GuestWithInvitations } from '~/server/domains/guest/guest.types'
+import {
+  type CreateHouseholdSchemaInput,
+  type DeleteHouseholdSchemaInput,
+  type GiftInputSchemaInput,
+  type GuestPartyInputSchemaInput,
+  type SearchHouseholdSchemaInput,
+  type UpdateHouseholdSchemaInput,
+} from '~/server/domains/household/household.validator'
 
 /**
  * Core Household entity type
@@ -34,75 +45,23 @@ export type HouseholdWithGuests = Household & {
 
 /**
  * Household with guests and gifts included
+ * Gifts include the event name
  */
 export type HouseholdWithGuestsAndGifts = Household & {
   guests: GuestWithInvitations[]
-  gifts: Gift[]
+  gifts: Array<Gift & { event: { name: string } }>
 }
 
 /**
- * Guest party input for household creation/update
+ * Input types derived from Zod schemas (single source of truth)
+ * These re-exports provide cleaner names and centralize type definitions
  */
-export type GuestPartyInput = {
-  guestId?: number
-  firstName: string
-  lastName: string
-  invites: Record<string, string> // eventId -> rsvp status
-}
-
-/**
- * Gift input for household update
- */
-export type GiftInput = {
-  eventId: string
-  thankyou: boolean
-  description?: string | null
-}
-
-/**
- * Input for creating a household with guests
- */
-export type CreateHouseholdInput = {
-  guestParty: GuestPartyInput[]
-  address1?: string | null
-  address2?: string | null
-  city?: string | null
-  state?: string | null
-  country?: string | null
-  zipCode?: string | null
-  notes?: string | null
-}
-
-/**
- * Input for updating a household with guests
- */
-export type UpdateHouseholdInput = {
-  householdId: string
-  guestParty: GuestPartyInput[]
-  address1?: string | null
-  address2?: string | null
-  city?: string | null
-  state?: string | null
-  country?: string | null
-  zipCode?: string | null
-  notes?: string | null
-  deletedGuests?: number[]
-  gifts: GiftInput[]
-}
-
-/**
- * Input for deleting a household
- */
-export type DeleteHouseholdInput = {
-  householdId: string
-}
-
-/**
- * Input for searching households
- */
-export type SearchHouseholdInput = {
-  searchText: string
-}
+export type GuestPartyInput = GuestPartyInputSchemaInput
+export type GiftInput = GiftInputSchemaInput
+export type CreateHouseholdInput = CreateHouseholdSchemaInput
+export type UpdateHouseholdInput = UpdateHouseholdSchemaInput
+export type DeleteHouseholdInput = DeleteHouseholdSchemaInput
+export type SearchHouseholdInput = SearchHouseholdSchemaInput
 
 /**
  * Search result type

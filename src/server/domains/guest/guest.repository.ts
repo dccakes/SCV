@@ -5,7 +5,7 @@
  * This layer handles all direct database access for guests.
  */
 
-import { type PrismaClient } from '@prisma/client'
+import { type GuestAgeGroup, type PrismaClient } from '@prisma/client'
 
 import { type Guest, type GuestWithInvitations } from '~/server/domains/guest/guest.types'
 
@@ -29,6 +29,11 @@ export class GuestRepository {
       where: { id },
       include: {
         invitations: true,
+        guestTagAssignments: {
+          select: {
+            guestTagId: true,
+          },
+        },
       },
     })
   }
@@ -64,7 +69,7 @@ export class GuestRepository {
   }
 
   /**
-   * Create a new guest
+   * Create a new guest with optional invitations and tags
    */
   async create(data: {
     firstName: string
@@ -74,36 +79,13 @@ export class GuestRepository {
     householdId: string
     weddingId: string
     isPrimaryContact?: boolean
-  }): Promise<Guest> {
-    return this.db.guest.create({
-      data: {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email ?? null,
-        phone: data.phone ?? null,
-        householdId: data.householdId,
-        weddingId: data.weddingId,
-        isPrimaryContact: data.isPrimaryContact ?? false,
-      },
-    })
-  }
-
-  /**
-   * Create a guest with invitations
-   */
-  async createWithInvitations(data: {
-    firstName: string
-    lastName: string
-    email?: string | null
-    phone?: string | null
-    householdId: string
-    weddingId: string
-    isPrimaryContact?: boolean
-    invitations: Array<{
+    ageGroup?: GuestAgeGroup | null
+    invitations?: Array<{
       eventId: string
       rsvp: string
       weddingId: string
     }>
+    tagIds?: string[]
   }): Promise<Guest> {
     return this.db.guest.create({
       data: {
@@ -114,11 +96,21 @@ export class GuestRepository {
         householdId: data.householdId,
         weddingId: data.weddingId,
         isPrimaryContact: data.isPrimaryContact ?? false,
-        invitations: {
-          createMany: {
-            data: data.invitations,
-          },
-        },
+        ageGroup: data.ageGroup ?? null,
+        invitations: data.invitations
+          ? {
+              createMany: {
+                data: data.invitations,
+              },
+            }
+          : undefined,
+        guestTagAssignments: data.tagIds
+          ? {
+              createMany: {
+                data: data.tagIds.map((tagId) => ({ guestTagId: tagId })),
+              },
+            }
+          : undefined,
       },
     })
   }
@@ -131,6 +123,10 @@ export class GuestRepository {
     data: {
       firstName?: string
       lastName?: string
+      email?: string | null
+      phone?: string | null
+      ageGroup?: GuestAgeGroup | null
+      isPrimaryContact?: boolean
     }
   ): Promise<Guest> {
     return this.db.guest.update({
@@ -138,12 +134,17 @@ export class GuestRepository {
       data: {
         firstName: data.firstName,
         lastName: data.lastName,
+        email: data.email,
+        phone: data.phone,
+        ageGroup: data.ageGroup,
+        isPrimaryContact: data.isPrimaryContact,
       },
     })
   }
 
   /**
-   * Upsert a guest
+   * Upsert a guest with optional invitations and tags
+   * Note: Tags are only created in the CREATE branch. For updates, use updateTags() separately.
    */
   async upsert(
     id: number | undefined,
@@ -155,12 +156,14 @@ export class GuestRepository {
       householdId: string
       weddingId: string
       isPrimaryContact?: boolean
+      ageGroup?: GuestAgeGroup | null
     },
     invitations?: Array<{
       eventId: string
       rsvp: string
       weddingId: string
-    }>
+    }>,
+    tagIds?: string[]
   ): Promise<Guest> {
     return this.db.guest.upsert({
       where: { id: id ?? -1 },
@@ -169,6 +172,8 @@ export class GuestRepository {
         lastName: data.lastName,
         email: data.email ?? null,
         phone: data.phone ?? null,
+        isPrimaryContact: data.isPrimaryContact,
+        ageGroup: data.ageGroup,
       },
       create: {
         firstName: data.firstName,
@@ -178,6 +183,7 @@ export class GuestRepository {
         householdId: data.householdId,
         weddingId: data.weddingId,
         isPrimaryContact: data.isPrimaryContact ?? false,
+        ageGroup: data.ageGroup ?? null,
         invitations: invitations
           ? {
               createMany: {
@@ -185,8 +191,36 @@ export class GuestRepository {
               },
             }
           : undefined,
+        guestTagAssignments: tagIds
+          ? {
+              createMany: {
+                data: tagIds.map((tagId) => ({ guestTagId: tagId })),
+              },
+            }
+          : undefined,
       },
     })
+  }
+
+  /**
+   * Update guest tags
+   * Replaces all existing tags with the provided list
+   */
+  async updateTags(guestId: number, tagIds: string[]): Promise<void> {
+    // Delete existing tag assignments
+    await this.db.guestTagAssignment.deleteMany({
+      where: { guestId },
+    })
+
+    // Create new tag assignments if provided
+    if (tagIds.length > 0) {
+      await this.db.guestTagAssignment.createMany({
+        data: tagIds.map((tagId) => ({
+          guestId,
+          guestTagId: tagId,
+        })),
+      })
+    }
   }
 
   /**
@@ -231,5 +265,14 @@ export class GuestRepository {
       select: { id: true },
     })
     return guest !== null
+  }
+
+  /**
+   * Count guests by wedding ID
+   */
+  async countByWeddingId(weddingId: string): Promise<number> {
+    return this.db.guest.count({
+      where: { weddingId },
+    })
   }
 }

@@ -4,20 +4,17 @@ import { BiPencil } from 'react-icons/bi'
 
 import { useToggleEventForm } from '~/app/_components/contexts/event-form-context'
 import { useToggleGuestForm } from '~/app/_components/contexts/guest-form-context'
+import { type HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
 import GuestSearchFilter from '~/app/_components/guest-list/guest-search-filter'
 import GuestTable from '~/app/_components/guest-list/guest-table'
 import { formatDateStandard } from '~/app/utils/helpers'
-import { sharedStyles } from '~/app/utils/shared-styles'
-import {
-  type Event,
-  type EventFormData,
-  type Household,
-  type HouseholdFormData,
-} from '~/app/utils/shared-types'
+import { type Event, type EventFormData } from '~/app/utils/shared-types'
+import { Button } from '~/components/ui/button'
+import { type HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 
 type GuestsViewProps = {
   events: Event[]
-  households: Household[]
+  households: HouseholdWithGuests[]
   selectedEventId: string
   setPrefillHousehold: Dispatch<SetStateAction<HouseholdFormData | undefined>>
   setPrefillEvent: Dispatch<SetStateAction<EventFormData | undefined>>
@@ -66,17 +63,16 @@ export default function GuestsView({
           events={events}
           selectedEventId={selectedEventId}
         />
-        <div>
-          <button className={sharedStyles.secondaryButton()}>Download List</button>
-          <button
-            className={`ml-5 ${sharedStyles.primaryButton()}`}
+        <div className="flex gap-3">
+          <Button variant="outline">Download List</Button>
+          <Button
             onClick={() => {
               setPrefillHousehold(undefined)
               toggleGuestForm()
             }}
           >
             Add Guest
-          </button>
+          </Button>
         </div>
       </div>
       <GuestTable
@@ -90,26 +86,29 @@ export default function GuestsView({
 }
 
 type DefaultTableHeaderProps = {
-  households: Household[]
+  households: HouseholdWithGuests[]
   numEvents: number
   totalGuests: number
 }
 
 const DefaultTableHeader = ({ households, numEvents, totalGuests }: DefaultTableHeaderProps) => {
   return (
-    <div>
-      <div className="py-8">
-        <span className="text-sm">
-          TOTAL HOUSEHOLDS: <span className="font-bold">{households.length}</span>
-        </span>
-        <span className={sharedStyles.verticalDivider}>|</span>
-        <span className="text-sm">
-          TOTAL GUESTS: <span className="font-bold">{totalGuests}</span>
-        </span>
-        <span className={sharedStyles.verticalDivider}>|</span>
-        <span className="text-sm">
-          TOTAL EVENTS: <span className="font-bold">{numEvents}</span>
-        </span>
+    <div className="py-8">
+      <div className="flex items-center gap-6 text-sm text-muted-foreground">
+        <div>
+          <span className="uppercase">Total Households: </span>
+          <span className="font-bold text-foreground">{households.length}</span>
+        </div>
+        <div className="h-4 w-px bg-border" />
+        <div>
+          <span className="uppercase">Total Guests: </span>
+          <span className="font-bold text-foreground">{totalGuests}</span>
+        </div>
+        <div className="h-4 w-px bg-border" />
+        <div>
+          <span className="uppercase">Total Events: </span>
+          <span className="font-bold text-foreground">{numEvents}</span>
+        </div>
       </div>
     </div>
   )
@@ -117,7 +116,7 @@ const DefaultTableHeader = ({ households, numEvents, totalGuests }: DefaultTable
 
 type SelectedEventTableHeaderProps = {
   totalGuests: number
-  households: Household[]
+  households: HouseholdWithGuests[]
   selectedEvent: Event | undefined
   setPrefillEvent: Dispatch<SetStateAction<EventFormData | undefined>>
 }
@@ -180,30 +179,30 @@ const SelectedEventTableHeader = ({
 
   return (
     <div className="py-8">
-      <div className="mb-3 flex items-center gap-2">
+      <div className="mb-4 flex items-center gap-2">
         <h2 className="text-xl font-bold">{selectedEvent.name}</h2>
         <BiPencil
           size={22}
-          color={sharedStyles.primaryColorHex}
-          className="cursor-pointer"
+          className="hover:text-primary/80 cursor-pointer text-primary transition-colors"
           onClick={() => handleEditEvent(selectedEvent)}
         />
       </div>
-      <div className="flex gap-4">
-        <span className="text-md font-semibold">{totalGuests} Guests Invited:</span>
-        <div className="text-md flex items-center gap-1.5">
-          <span className={`h-1.5 w-1.5 rounded-full bg-green-400`} />
-          <div className="font-medium">{guestResponses.attending}</div>
-          Attending
+      <div className="flex items-center gap-6 text-sm">
+        <span className="font-semibold text-foreground">{totalGuests} Guests Invited:</span>
+        <div className="flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-green-500 dark:bg-green-400" />
+          <span className="font-medium">{guestResponses.attending}</span>
+          <span className="text-muted-foreground">Attending</span>
         </div>
-        <div className="text-md flex items-center gap-1.5">
-          <span className={`h-1.5 w-1.5 rounded-full bg-red-400`} />
+        <div className="flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-red-500 dark:bg-red-400" />
           <span className="font-medium">{guestResponses.declined}</span>
-          Declined
+          <span className="text-muted-foreground">Declined</span>
         </div>
-        <div className="text-md flex items-center gap-1.5">
-          <span className={`h-1.5 w-1.5 rounded-full bg-gray-200`} />
-          <span className="">{guestResponses.noResponse}</span>No Response
+        <div className="flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
+          <span className="font-medium">{guestResponses.noResponse}</span>
+          <span className="text-muted-foreground">No Response</span>
         </div>
       </div>
     </div>

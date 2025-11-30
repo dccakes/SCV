@@ -5,11 +5,11 @@
  * - Household domain (core household data)
  * - Guest domain (guest creation/updates)
  * - Invitation domain (invitation creation/updates)
- * - Event domain (get events for auto-invitation)
  * - Gift domain (gift tracking)
+ * - Guest tags (tag assignments)
  *
- * This service handles the cross-domain coordination that was previously
- * embedded in the Household domain service.
+ * This service handles cross-domain coordination using repositories directly
+ * for efficient orchestration and transactional control.
  */
 
 import { type PrismaClient } from '@prisma/client'
@@ -21,20 +21,20 @@ import {
   type UpdateHouseholdResult,
   type UpdateHouseholdWithGuestsInput,
 } from '~/server/application/household-management/household-management.types'
-import { type EventService } from '~/server/domains/event'
-import { type GiftService } from '~/server/domains/gift'
-import { type GuestService } from '~/server/domains/guest'
-import { type HouseholdService } from '~/server/domains/household'
-import { type Invitation, type InvitationService } from '~/server/domains/invitation'
+import { type GiftRepository } from '~/server/domains/gift/gift.repository'
+import { type GuestRepository } from '~/server/domains/guest/guest.repository'
+import { type HouseholdRepository } from '~/server/domains/household/household.repository'
+import { type HouseholdSearchResult } from '~/server/domains/household/household.types'
+import { type InvitationRepository } from '~/server/domains/invitation/invitation.repository'
+import { type Invitation } from '~/server/domains/invitation/invitation.types'
 
 export class HouseholdManagementService {
   constructor(
-    private householdService: HouseholdService,
-    private guestService: GuestService,
-    private invitationService: InvitationService,
-    private eventService: EventService,
-    private giftService: GiftService,
-    private db: PrismaClient
+    private householdRepo: HouseholdRepository,
+    private guestRepo: GuestRepository,
+    private invitationRepo: InvitationRepository,
+    private giftRepo: GiftRepository,
+    private db: PrismaClient // For guestTagAssignment operations until we create a repository
   ) {}
 
   /**
@@ -44,7 +44,8 @@ export class HouseholdManagementService {
    * 1. Extract event IDs from guest invitations
    * 2. Create household with gifts for each event
    * 3. Create guests with their invitations
-   * 4. Return complete household data
+   * 4. Create guest tag assignments
+   * 5. Return complete household data
    */
   async createHouseholdWithGuests(
     weddingId: string,
@@ -54,8 +55,8 @@ export class HouseholdManagementService {
     const eventIds = Object.keys(data.guestParty[0]?.invites ?? {})
 
     // 1. Create household with gifts for each event
-    const household = await this.db.household.create({
-      data: {
+    const household = await this.householdRepo.createWithGifts(
+      {
         weddingId,
         address1: data.address1,
         address2: data.address2,
@@ -64,19 +65,9 @@ export class HouseholdManagementService {
         country: data.country,
         zipCode: data.zipCode,
         notes: data.notes,
-        gifts: {
-          createMany: {
-            data: eventIds.map((eventId) => ({
-              eventId,
-              thankyou: false,
-            })),
-          },
-        },
       },
-      include: {
-        gifts: true,
-      },
-    })
+      eventIds
+    )
 
     if (!household) {
       throw new TRPCError({
@@ -85,32 +76,30 @@ export class HouseholdManagementService {
       })
     }
 
-    // 2. Create guests with their invitations
+    // 2. Create guests with their invitations and tags
     const guests = await Promise.all(
       data.guestParty.map(async (guest, index) => {
-        const newGuest = await this.db.guest.create({
-          data: {
-            firstName: guest.firstName,
-            lastName: guest.lastName,
+        const newGuest = await this.guestRepo.create({
+          firstName: guest.firstName,
+          lastName: guest.lastName,
+          email: guest.email,
+          phone: guest.phone,
+          weddingId,
+          householdId: household.id,
+          isPrimaryContact: guest.isPrimaryContact ?? index === 0,
+          ageGroup: guest.ageGroup,
+          invitations: Object.entries(guest.invites).map(([eventId, rsvp]) => ({
+            eventId,
+            rsvp,
             weddingId,
-            householdId: household.id,
-            isPrimaryContact: index === 0,
-            invitations: {
-              createMany: {
-                data: Object.entries(guest.invites).map(([eventId, rsvp]) => ({
-                  eventId,
-                  rsvp,
-                  weddingId,
-                })),
-              },
-            },
-          },
-          include: {
-            invitations: true,
-          },
+          })),
+          tagIds: guest.tagIds,
         })
 
-        return newGuest
+        // Refetch guest with tag assignments to include in response
+        const guestWithTags = await this.guestRepo.findByIdWithInvitations(newGuest.id)
+
+        return guestWithTags!
       })
     )
 
@@ -133,79 +122,76 @@ export class HouseholdManagementService {
    * Orchestration flow:
    * 1. Update household details
    * 2. Delete removed guests
-   * 3. Upsert guests (creates new, updates existing)
-   * 4. Update invitations
-   * 5. Upsert gifts
+   * 3. Clear all primary contact flags in household
+   * 4. Upsert guests (creates new, updates existing)
+   * 5. Update invitations
+   * 6. Update guest tag assignments
+   * 7. Upsert gifts
    */
   async updateHouseholdWithGuests(
     weddingId: string,
     data: UpdateHouseholdWithGuestsInput
   ): Promise<UpdateHouseholdResult> {
     // 1. Update household details
-    const updatedHousehold = await this.db.household.update({
-      where: { id: data.householdId },
-      data: {
-        address1: data.address1,
-        address2: data.address2,
-        city: data.city,
-        state: data.state,
-        country: data.country,
-        zipCode: data.zipCode,
-        notes: data.notes,
-      },
+    const updatedHousehold = await this.householdRepo.update(data.householdId, {
+      address1: data.address1,
+      address2: data.address2,
+      city: data.city,
+      state: data.state,
+      country: data.country,
+      zipCode: data.zipCode,
+      notes: data.notes,
     })
 
     // 2. Delete removed guests
     if (data.deletedGuests && data.deletedGuests.length > 0) {
-      await this.db.guest.deleteMany({
-        where: {
-          id: { in: data.deletedGuests },
-        },
-      })
+      await this.guestRepo.deleteMany(data.deletedGuests)
     }
 
-    // 3. Upsert guests and their invitations
+    // 3. First, clear all primary contact flags in this household
+    await this.db.guest.updateMany({
+      where: {
+        householdId: data.householdId,
+      },
+      data: {
+        isPrimaryContact: false,
+      },
+    })
+
+    // 4. Upsert guests and their invitations
     const updatedGuests = await Promise.all(
       data.guestParty.map(async (guest) => {
-        const updatedGuest = await this.db.guest.upsert({
-          where: {
-            id: guest.guestId ?? -1,
-          },
-          update: {
+        const updatedGuest = await this.guestRepo.upsert(
+          guest.guestId,
+          {
             firstName: guest.firstName,
             lastName: guest.lastName,
-          },
-          create: {
-            firstName: guest.firstName,
-            lastName: guest.lastName,
-            weddingId,
+            email: guest.email,
+            phone: guest.phone,
             householdId: data.householdId,
-            isPrimaryContact: false,
-            invitations: {
-              createMany: {
-                data: Object.entries(guest.invites).map(([eventId, rsvp]) => ({
-                  eventId,
-                  rsvp,
-                  weddingId,
-                })),
-              },
-            },
+            weddingId,
+            isPrimaryContact: guest.isPrimaryContact ?? false,
+            ageGroup: guest.ageGroup,
           },
-        })
+          Object.entries(guest.invites).map(([eventId, rsvp]) => ({
+            eventId,
+            rsvp,
+            weddingId,
+          }))
+        )
 
-        // 4. Update invitations for existing guests
+        // Update guest tag assignments
+        if (guest.tagIds !== undefined) {
+          await this.guestRepo.updateTags(updatedGuest.id, guest.tagIds)
+        }
+
+        // 5. Update invitations for existing guests
         const updatedInvitations: Invitation[] = await Promise.all(
           Object.entries(guest.invites).map(async ([inviteEventId, inputRsvp]) => {
-            return await this.db.invitation.update({
-              where: {
-                guestId_eventId: {
-                  eventId: inviteEventId,
-                  guestId: guest.guestId ?? updatedGuest.id,
-                },
-              },
-              data: {
-                rsvp: inputRsvp,
-              },
+            return await this.invitationRepo.update({
+              guestId: guest.guestId ?? updatedGuest.id,
+              eventId: inviteEventId,
+              rsvp: inputRsvp,
             })
           })
         )
@@ -217,10 +203,10 @@ export class HouseholdManagementService {
           })
         }
 
-        return {
-          ...updatedGuest,
-          invitations: updatedInvitations,
-        }
+        // Refetch guest with tag assignments to include in response
+        const guestWithTags = await this.guestRepo.findByIdWithInvitations(updatedGuest.id)
+
+        return guestWithTags!
       })
     )
 
@@ -231,26 +217,14 @@ export class HouseholdManagementService {
       })
     }
 
-    // 5. Upsert gifts
+    // 6. Upsert gifts
     const updatedGifts = await Promise.all(
       data.gifts.map(async (gift) => {
-        return await this.db.gift.upsert({
-          where: {
-            GiftId: {
-              eventId: gift.eventId,
-              householdId: data.householdId,
-            },
-          },
-          update: {
-            description: gift.description,
-            thankyou: gift.thankyou,
-          },
-          create: {
-            householdId: data.householdId,
-            eventId: gift.eventId,
-            description: gift.description,
-            thankyou: gift.thankyou,
-          },
+        return await this.giftRepo.upsert({
+          householdId: data.householdId,
+          eventId: gift.eventId,
+          description: gift.description,
+          thankyou: gift.thankyou,
         })
       })
     )
@@ -268,9 +242,14 @@ export class HouseholdManagementService {
    * Note: Cascading deletes are handled by database relations
    */
   async deleteHousehold(householdId: string): Promise<string> {
-    const deletedHousehold = await this.db.household.delete({
-      where: { id: householdId },
-    })
+    const deletedHousehold = await this.householdRepo.delete(householdId)
     return deletedHousehold.id
+  }
+
+  /**
+   * Search households by guest name
+   */
+  async searchHouseholds(searchText: string): Promise<HouseholdSearchResult[]> {
+    return this.householdRepo.search(searchText)
   }
 }

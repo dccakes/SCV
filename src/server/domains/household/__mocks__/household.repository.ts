@@ -36,6 +36,7 @@ export const mockHouseholdWithGuestsAndGifts: HouseholdWithGuestsAndGifts = {
       householdId: 'household-123',
       weddingId: 'wedding-123',
       isPrimaryContact: true,
+      ageGroup: 'ADULT',
       createdAt: new Date('2024-01-01'),
       updatedAt: new Date('2024-01-01'),
       invitations: [
@@ -63,6 +64,7 @@ export const mockHouseholdWithGuestsAndGifts: HouseholdWithGuestsAndGifts = {
       householdId: 'household-123',
       weddingId: 'wedding-123',
       isPrimaryContact: false,
+      ageGroup: 'ADULT',
       createdAt: new Date('2024-01-01'),
       updatedAt: new Date('2024-01-01'),
       invitations: [
@@ -90,6 +92,7 @@ export const mockHouseholdWithGuestsAndGifts: HouseholdWithGuestsAndGifts = {
       thankyou: false,
       createdAt: new Date('2024-01-01'),
       updatedAt: new Date('2024-01-01'),
+      event: { name: 'Wedding Day' },
     },
   ],
 }

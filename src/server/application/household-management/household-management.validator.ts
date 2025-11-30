@@ -13,6 +13,11 @@ export const guestPartyInputSchema = z.object({
   guestId: z.number().optional(),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
+  email: z.string().email().nullish().or(z.literal('')),
+  phone: z.string().nullish(),
+  isPrimaryContact: z.boolean().optional(),
+  ageGroup: z.enum(['INFANT', 'CHILD', 'TEEN', 'ADULT']).default('ADULT'),
+  tagIds: z.array(z.string().uuid()).max(10, 'Maximum 10 tags allowed').default([]),
   invites: z.record(z.string()), // eventId -> rsvp status
 })
 

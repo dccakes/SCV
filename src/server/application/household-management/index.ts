@@ -5,20 +5,24 @@
  */
 
 import { HouseholdManagementService } from '~/server/application/household-management/household-management.service'
-import { eventService } from '~/server/domains/event'
-import { giftService } from '~/server/domains/gift'
-import { guestService } from '~/server/domains/guest'
-import { householdService } from '~/server/domains/household'
-import { invitationService } from '~/server/domains/invitation'
+import { GiftRepository } from '~/server/domains/gift/gift.repository'
+import { GuestRepository } from '~/server/domains/guest/guest.repository'
+import { HouseholdRepository } from '~/server/domains/household/household.repository'
+import { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
 import { db } from '~/server/infrastructure/database'
 
-// Create singleton instance with injected domain services
+// Create repository instances
+const householdRepo = new HouseholdRepository(db)
+const guestRepo = new GuestRepository(db)
+const invitationRepo = new InvitationRepository(db)
+const giftRepo = new GiftRepository(db)
+
+// Create singleton instance with injected repositories
 export const householdManagementService = new HouseholdManagementService(
-  householdService,
-  guestService,
-  invitationService,
-  eventService,
-  giftService,
+  householdRepo,
+  guestRepo,
+  invitationRepo,
+  giftRepo,
   db
 )
 
@@ -46,6 +50,3 @@ export {
 
 // Export classes for testing/DI
 export { HouseholdManagementService } from '~/server/application/household-management/household-management.service'
-
-// Export router
-export { householdManagementRouter } from '~/server/application/household-management/household-management.router'

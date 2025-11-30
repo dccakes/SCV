@@ -4,6 +4,7 @@
  * Zod schemas for validating guest-related inputs.
  */
 
+import { GuestAgeGroup } from '@prisma/client'
 import { z } from 'zod'
 
 /**
@@ -12,8 +13,12 @@ import { z } from 'zod'
 export const createGuestSchema = z.object({
   firstName: z.string().nonempty({ message: 'First name required' }),
   lastName: z.string().nonempty({ message: 'Last name required' }),
+  email: z.string().email('Valid email required').optional().nullable(),
+  phone: z.string().optional().nullable(),
   householdId: z.string().min(1, 'Household ID is required'),
   isPrimaryContact: z.boolean().optional().default(false),
+  ageGroup: z.nativeEnum(GuestAgeGroup).default(GuestAgeGroup.ADULT),
+  tagIds: z.array(z.string().uuid()).max(10, 'Maximum 10 tags allowed').optional().default([]),
 })
 
 /**
@@ -23,6 +28,10 @@ export const updateGuestSchema = z.object({
   guestId: z.number(),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
+  email: z.string().email('Valid email required').optional().nullable(),
+  phone: z.string().optional().nullable(),
+  ageGroup: z.nativeEnum(GuestAgeGroup).optional(),
+  tagIds: z.array(z.string().uuid()).max(10, 'Maximum 10 tags allowed').optional(),
 })
 
 /**
@@ -48,11 +57,17 @@ export const getByEventSchema = z.object({
 
 /**
  * Schema for guest party input (used in household operations)
+ * This is the canonical schema for guest data in multi-guest contexts
  */
 export const guestPartySchema = z.object({
   guestId: z.number().optional(),
   firstName: z.string().nonempty({ message: 'First name required' }),
   lastName: z.string().nonempty({ message: 'Last name required' }),
+  email: z.string().email('Valid email required').optional().nullable(),
+  phone: z.string().optional().nullable(),
+  isPrimaryContact: z.boolean().default(false),
+  ageGroup: z.nativeEnum(GuestAgeGroup).default(GuestAgeGroup.ADULT),
+  tagIds: z.array(z.string().uuid()).max(10, 'Maximum 10 tags allowed').default([]),
   invites: z.record(z.string(), z.string()),
 })
 

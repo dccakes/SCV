@@ -15,6 +15,7 @@ export const mockGuest: Guest = {
   householdId: 'household-123',
   weddingId: 'wedding-123',
   isPrimaryContact: true,
+  ageGroup: 'ADULT',
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
 }
@@ -44,13 +45,14 @@ export const mockFindByWeddingId = jest.fn()
 export const mockFindByHouseholdId = jest.fn()
 export const mockFindByHouseholdIdWithInvitations = jest.fn()
 export const mockCreate = jest.fn()
-export const mockCreateWithInvitations = jest.fn()
 export const mockUpdate = jest.fn()
+export const mockUpdateTags = jest.fn()
 export const mockUpsert = jest.fn()
 export const mockDelete = jest.fn()
 export const mockDeleteMany = jest.fn()
 export const mockExists = jest.fn()
 export const mockBelongsToWedding = jest.fn()
+export const mockCountByWeddingId = jest.fn()
 
 export const GuestRepository = jest.fn().mockImplementation(() => ({
   findById: mockFindById,
@@ -59,13 +61,14 @@ export const GuestRepository = jest.fn().mockImplementation(() => ({
   findByHouseholdId: mockFindByHouseholdId,
   findByHouseholdIdWithInvitations: mockFindByHouseholdIdWithInvitations,
   create: mockCreate,
-  createWithInvitations: mockCreateWithInvitations,
   update: mockUpdate,
+  updateTags: mockUpdateTags,
   upsert: mockUpsert,
   delete: mockDelete,
   deleteMany: mockDeleteMany,
   exists: mockExists,
   belongsToWedding: mockBelongsToWedding,
+  countByWeddingId: mockCountByWeddingId,
 }))
 
 // Helper to reset all mocks
@@ -76,12 +79,13 @@ export const resetMocks = (): void => {
   mockFindByHouseholdId.mockReset()
   mockFindByHouseholdIdWithInvitations.mockReset()
   mockCreate.mockReset()
-  mockCreateWithInvitations.mockReset()
   mockUpdate.mockReset()
+  mockUpdateTags.mockReset()
   mockUpsert.mockReset()
   mockDelete.mockReset()
   mockDeleteMany.mockReset()
   mockExists.mockReset()
   mockBelongsToWedding.mockReset()
+  mockCountByWeddingId.mockReset()
   GuestRepository.mockClear()
 }

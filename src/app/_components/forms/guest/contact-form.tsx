@@ -1,70 +1,94 @@
-import AnimatedInputLabel from '~/app/_components/forms/animated-input-label'
-import { type HouseholdFormData } from '~/app/utils/shared-types'
+import { type FieldErrors, type UseFormRegister } from 'react-hook-form'
+
+import { type HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
+import { Input } from '~/components/ui/input'
+import { Label } from '~/components/ui/label'
 
 type ContactFormProps = {
-  householdFormData: HouseholdFormData
-  handleOnChange: ({ field, inputValue }: { field: string; inputValue: string }) => void
+  register: UseFormRegister<HouseholdFormData>
+  errors: FieldErrors<HouseholdFormData>
 }
 
-export default function ContactForm({ householdFormData, handleOnChange }: ContactFormProps) {
+export default function ContactForm({ register, errors }: ContactFormProps) {
   return (
-    <div className="grid grid-cols-1 grid-rows-[repeat(5,50px)] gap-3">
-      <AnimatedInputLabel
-        id="household-address1"
-        inputValue={householdFormData.address1 ?? ''}
-        fieldName="address1"
-        labelText="Street Address"
-        handleOnChange={handleOnChange}
-      />
-      <AnimatedInputLabel
-        id="household-address2"
-        inputValue={householdFormData.address2 ?? ''}
-        fieldName="address2"
-        labelText="Apt/Suite/Other"
-        handleOnChange={handleOnChange}
-      />
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="household-address1">Street Address</Label>
+        <Input
+          id="household-address1"
+          {...register('address1')}
+          placeholder="123 Main St"
+          className={errors.address1 ? 'border-destructive' : ''}
+        />
+        {errors.address1 && <p className="text-sm text-destructive">{errors.address1.message}</p>}
+      </div>
 
-      <div className="flex gap-3">
-        <div className="w-1/2">
-          <AnimatedInputLabel
+      <div className="space-y-2">
+        <Label htmlFor="household-address2">Apt/Suite/Other</Label>
+        <Input
+          id="household-address2"
+          {...register('address2')}
+          placeholder="Apt 4B"
+          className={errors.address2 ? 'border-destructive' : ''}
+        />
+        {errors.address2 && <p className="text-sm text-destructive">{errors.address2.message}</p>}
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="household-city">City</Label>
+          <Input
             id="household-city"
-            inputValue={householdFormData.city ?? ''}
-            fieldName="city"
-            labelText="City"
-            handleOnChange={handleOnChange}
+            {...register('city')}
+            placeholder="San Francisco"
+            className={errors.city ? 'border-destructive' : ''}
           />
+          {errors.city && <p className="text-sm text-destructive">{errors.city.message}</p>}
         </div>
-        <select
-          value={householdFormData.state}
-          onChange={(e) => handleOnChange({ field: 'state', inputValue: e.target.value })}
-          className="w-1/4 rounded-lg border p-3"
-        >
-          <option defaultValue="State">State</option>
-          <option>AL</option>
-          <option>AR</option>
-          <option>WY</option>
-        </select>
-        <div className="w-1/4">
-          <AnimatedInputLabel
-            id="household-zipCode"
-            inputValue={householdFormData.zipCode ?? ''}
-            fieldName="zipCode"
-            labelText="Zip Code"
-            handleOnChange={handleOnChange}
-          />
+
+        <div className="space-y-2">
+          <Label htmlFor="household-state">State</Label>
+          <select
+            id="household-state"
+            {...register('state')}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <option value="">Select</option>
+            <option>AL</option>
+            <option>AR</option>
+            <option>WY</option>
+          </select>
+          {errors.state && <p className="text-sm text-destructive">{errors.state.message}</p>}
         </div>
       </div>
-      <select
-        className="w-100 rounded-lg border p-3"
-        value={householdFormData.country}
-        onChange={(e) => handleOnChange({ field: 'country', inputValue: e.target.value })}
-      >
-        <option defaultValue="State">Country</option>
-        <option>Murca</option>
-        <option>Mexico</option>
-        <option>Canada</option>
-      </select>
-      {/* Note: Phone and email are now on individual Guests, not Household */}
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="household-zipCode">Zip Code</Label>
+          <Input
+            id="household-zipCode"
+            {...register('zipCode')}
+            placeholder="94102"
+            className={errors.zipCode ? 'border-destructive' : ''}
+          />
+          {errors.zipCode && <p className="text-sm text-destructive">{errors.zipCode.message}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="household-country">Country</Label>
+          <select
+            id="household-country"
+            {...register('country')}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <option value="">Select</option>
+            <option>United States</option>
+            <option>Mexico</option>
+            <option>Canada</option>
+          </select>
+          {errors.country && <p className="text-sm text-destructive">{errors.country.message}</p>}
+        </div>
+      </div>
     </div>
   )
 }

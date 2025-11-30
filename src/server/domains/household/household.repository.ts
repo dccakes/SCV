@@ -35,9 +35,20 @@ export class HouseholdRepository {
         guests: {
           include: {
             invitations: true,
+            guestTagAssignments: {
+              select: {
+                guestTagId: true,
+              },
+            },
           },
         },
-        gifts: true,
+        gifts: {
+          include: {
+            event: {
+              select: { name: true },
+            },
+          },
+        },
       },
     })
   }
@@ -63,10 +74,22 @@ export class HouseholdRepository {
         guests: {
           include: {
             invitations: true,
+            guestTagAssignments: {
+              select: {
+                guestTagId: true,
+              },
+            },
           },
         },
-        gifts: true,
+        gifts: {
+          include: {
+            event: {
+              select: { name: true },
+            },
+          },
+        },
       },
+      orderBy: { createdAt: 'asc' },
     })
   }
 
@@ -136,9 +159,20 @@ export class HouseholdRepository {
         guests: {
           include: {
             invitations: true,
+            guestTagAssignments: {
+              select: {
+                guestTagId: true,
+              },
+            },
           },
         },
-        gifts: true,
+        gifts: {
+          include: {
+            event: {
+              select: { name: true },
+            },
+          },
+        },
       },
     })
   }
@@ -237,6 +271,11 @@ export class HouseholdRepository {
         guests: {
           include: {
             invitations: true,
+            guestTagAssignments: {
+              select: {
+                guestTagId: true,
+              },
+            },
           },
         },
       },

@@ -6,6 +6,12 @@
  *
  * Note: Event creation auto-creates invitations for existing guests.
  * This is a cross-domain operation but is kept here for Phase 1.
+ *
+ * TODO: ARCHITECTURAL VIOLATION - This service directly accesses PrismaClient
+ * for cross-domain operations (fetching guests, creating invitations). The
+ * invitation creation logic should be moved to an Application Service that
+ * orchestrates EventService and InvitationService. See ARCHITECTURAL_VIOLATIONS.md
+ * for details.
  */
 
 import { type Guest as PrismaGuest, type PrismaClient } from '@prisma/client'

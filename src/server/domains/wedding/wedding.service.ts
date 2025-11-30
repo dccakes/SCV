@@ -5,9 +5,11 @@
  * Handles wedding creation, updates, and retrieval.
  */
 
-import { type PrismaClient } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 
+import { type EventService } from '~/server/domains/event/event.service'
+import { type GuestTagService } from '~/server/domains/guest-tag/guest-tag.service'
+import { type UserService } from '~/server/domains/user/user.service'
 import { type WeddingRepository } from '~/server/domains/wedding/wedding.repository'
 import {
   type CreateWeddingInput,
@@ -15,10 +17,22 @@ import {
   type Wedding,
 } from '~/server/domains/wedding/wedding.types'
 
+/**
+ * Default tags created for new weddings
+ */
+const DEFAULT_TAGS = [
+  { name: 'Family', color: '#3b82f6' }, // blue
+  { name: 'MutualFriends', color: '#10b981' }, // green
+  { name: 'Coworkers', color: '#8b5cf6' }, // purple
+  { name: 'Plus One', color: '#f59e0b' }, // amber
+]
+
 export class WeddingService {
   constructor(
     private weddingRepository: WeddingRepository,
-    private db: PrismaClient
+    private eventService: EventService,
+    private userService: UserService,
+    private guestTagService: GuestTagService
   ) {}
 
   /**
@@ -31,7 +45,7 @@ export class WeddingService {
    * 4. Updates the user's profile with couple info
    */
   async createWedding(userId: string, data: CreateWeddingInput): Promise<Wedding> {
-    // Check if user already has a wedding
+    // Check if user already has a wedding (currently allow only one wedding per user)
     const existingWedding = await this.weddingRepository.existsForUser(userId)
     if (existingWedding) {
       throw new TRPCError({
@@ -59,28 +73,25 @@ export class WeddingService {
       enabledAddOns: [], // Core features only on creation
     })
 
+    // Seed default tags for the wedding
+    await this.guestTagService.seedInitialTags(wedding.id, DEFAULT_TAGS)
+
     // Create default "Wedding Day" event if date/location provided
     if (data.hasWeddingDetails && (weddingDate || weddingLocation)) {
-      await this.db.event.create({
-        data: {
-          name: 'Wedding Day',
-          weddingId: wedding.id,
-          collectRsvp: true,
-          date: weddingDate ? new Date(weddingDate) : null,
-          venue: weddingLocation ?? null,
-        },
+      await this.eventService.createEvent(wedding.id, {
+        name: 'Ceremony',
+        collectRsvp: true,
+        date: weddingDate ?? undefined,
+        venue: weddingLocation ?? undefined,
       })
     }
 
     // Update user profile with couple info (for backward compatibility)
-    await this.db.user.update({
-      where: { id: userId },
-      data: {
-        groomFirstName,
-        groomLastName,
-        brideFirstName,
-        brideLastName,
-      },
+    await this.userService.updateProfile(userId, {
+      groomFirstName,
+      groomLastName,
+      brideFirstName,
+      brideLastName,
     })
 
     return wedding

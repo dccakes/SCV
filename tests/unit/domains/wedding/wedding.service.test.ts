@@ -12,9 +12,28 @@ import { TRPCError } from '@trpc/server'
 
 // Must mock before importing the service
 jest.mock('~/server/domains/wedding/wedding.repository')
-jest.mock('~/server/infrastructure/database/client')
+jest.mock('~/server/domains/event/event.service')
+jest.mock('~/server/domains/user/user.service')
+jest.mock('~/server/domains/guest-tag/guest-tag.service')
 
 // @ts-expect-error - Importing mock functions from mocked module
+import {
+  EventService,
+  mockCreateEvent,
+  resetMocks as resetEventMocks,
+} from '~/server/domains/event/event.service'
+// @ts-expect-error - Importing mock functions from mocked module
+import {
+  GuestTagService,
+  mockSeedInitialTags,
+  resetMocks as resetTagMocks,
+} from '~/server/domains/guest-tag/guest-tag.service'
+// @ts-expect-error - Importing mock functions from mocked module
+import {
+  mockUpdateProfile,
+  resetMocks as resetUserMocks,
+  UserService,
+} from '~/server/domains/user/user.service'
 import {
   mockCreate,
   mockExistsForUser,
@@ -24,36 +43,41 @@ import {
   WeddingRepository,
 } from '~/server/domains/wedding/wedding.repository'
 import { WeddingService } from '~/server/domains/wedding/wedding.service'
-// @ts-expect-error - Importing mock functions from mocked module
-import {
-  db,
-  mockEventCreate,
-  mockUserUpdate,
-  resetMocks as resetDbMocks,
-} from '~/server/infrastructure/database/client'
 
 // Create typed aliases for mock functions
 const mockCreateFn = mockCreate as jest.Mock
 const mockExistsForUserFn = mockExistsForUser as jest.Mock
 const mockFindByUserIdFn = mockFindByUserId as jest.Mock
-const mockEventCreateFn = mockEventCreate as jest.Mock
-const mockUserUpdateFn = mockUserUpdate as jest.Mock
+const mockCreateEventFn = mockCreateEvent as jest.Mock
+const mockUpdateProfileFn = mockUpdateProfile as jest.Mock
+const mockSeedInitialTagsFn = mockSeedInitialTags as jest.Mock
 
 describe('WeddingService', () => {
   let weddingService: WeddingService
 
   beforeEach(() => {
     resetWeddingMocks()
-    resetDbMocks()
+    resetEventMocks()
+    resetUserMocks()
+    resetTagMocks()
     const mockRepository = new WeddingRepository({})
-    weddingService = new WeddingService(mockRepository, db)
+    const mockEventSvc = new EventService({})
+    const mockUserSvc = new UserService({})
+    const mockGuestTagService = new GuestTagService({})
+    weddingService = new WeddingService(
+      mockRepository,
+      mockEventSvc,
+      mockUserSvc,
+      mockGuestTagService
+    )
   })
 
   describe('createWedding', () => {
     it('should create wedding with couple names', async () => {
       mockExistsForUserFn.mockResolvedValue(false)
       mockCreateFn.mockResolvedValue(mockWedding)
-      mockUserUpdateFn.mockResolvedValue({})
+      mockSeedInitialTagsFn.mockResolvedValue(undefined)
+      mockUpdateProfileFn.mockResolvedValue({})
 
       const result = await weddingService.createWedding('user-123', {
         userId: 'user-123',
@@ -72,6 +96,28 @@ describe('WeddingService', () => {
         brideLastName: 'Smith',
         enabledAddOns: [],
       })
+    })
+
+    it('should seed default tags when creating wedding', async () => {
+      mockExistsForUserFn.mockResolvedValue(false)
+      mockCreateFn.mockResolvedValue(mockWedding)
+      mockSeedInitialTagsFn.mockResolvedValue(undefined)
+      mockUpdateProfileFn.mockResolvedValue({})
+
+      await weddingService.createWedding('user-123', {
+        userId: 'user-123',
+        groomFirstName: 'John',
+        groomLastName: 'Doe',
+        brideFirstName: 'Jane',
+        brideLastName: 'Smith',
+      })
+
+      expect(mockSeedInitialTagsFn).toHaveBeenCalledWith('wedding-123', [
+        { name: 'Family', color: '#3b82f6' },
+        { name: 'MutualFriends', color: '#10b981' },
+        { name: 'Coworkers', color: '#8b5cf6' },
+        { name: 'Plus One', color: '#f59e0b' },
+      ])
     })
 
     it('should prevent creating duplicate wedding for same user', async () => {
@@ -94,13 +140,14 @@ describe('WeddingService', () => {
       const weddingDate = '2025-06-15T00:00:00.000Z'
       mockExistsForUserFn.mockResolvedValue(false)
       mockCreateFn.mockResolvedValue(mockWedding)
-      mockEventCreateFn.mockResolvedValue({
+      mockSeedInitialTagsFn.mockResolvedValue(undefined)
+      mockCreateEventFn.mockResolvedValue({
         id: 'event-123',
-        name: 'Wedding Day',
+        name: 'Ceremony',
         date: new Date(weddingDate),
         venue: 'Beach Resort',
       })
-      mockUserUpdateFn.mockResolvedValue({})
+      mockUpdateProfileFn.mockResolvedValue({})
 
       await weddingService.createWedding('user-123', {
         userId: 'user-123',
@@ -113,21 +160,19 @@ describe('WeddingService', () => {
         weddingLocation: 'Beach Resort',
       })
 
-      expect(mockEventCreateFn).toHaveBeenCalledWith({
-        data: {
-          name: 'Wedding Day',
-          weddingId: 'wedding-123',
-          collectRsvp: true,
-          date: new Date(weddingDate),
-          venue: 'Beach Resort',
-        },
+      expect(mockCreateEventFn).toHaveBeenCalledWith('wedding-123', {
+        name: 'Ceremony',
+        collectRsvp: true,
+        date: weddingDate,
+        venue: 'Beach Resort',
       })
     })
 
     it('should update user profile with couple names', async () => {
       mockExistsForUserFn.mockResolvedValue(false)
       mockCreateFn.mockResolvedValue(mockWedding)
-      mockUserUpdateFn.mockResolvedValue({})
+      mockSeedInitialTagsFn.mockResolvedValue(undefined)
+      mockUpdateProfileFn.mockResolvedValue({})
 
       await weddingService.createWedding('user-123', {
         userId: 'user-123',
@@ -137,21 +182,19 @@ describe('WeddingService', () => {
         brideLastName: 'Smith',
       })
 
-      expect(mockUserUpdateFn).toHaveBeenCalledWith({
-        where: { id: 'user-123' },
-        data: {
-          groomFirstName: 'John',
-          groomLastName: 'Doe',
-          brideFirstName: 'Jane',
-          brideLastName: 'Smith',
-        },
+      expect(mockUpdateProfileFn).toHaveBeenCalledWith('user-123', {
+        groomFirstName: 'John',
+        groomLastName: 'Doe',
+        brideFirstName: 'Jane',
+        brideLastName: 'Smith',
       })
     })
 
     it('should not create event when wedding details not provided', async () => {
       mockExistsForUserFn.mockResolvedValue(false)
       mockCreateFn.mockResolvedValue(mockWedding)
-      mockUserUpdateFn.mockResolvedValue({})
+      mockSeedInitialTagsFn.mockResolvedValue(undefined)
+      mockUpdateProfileFn.mockResolvedValue({})
 
       await weddingService.createWedding('user-123', {
         userId: 'user-123',
@@ -162,7 +205,7 @@ describe('WeddingService', () => {
         hasWeddingDetails: false,
       })
 
-      expect(mockEventCreateFn).not.toHaveBeenCalled()
+      expect(mockCreateEventFn).not.toHaveBeenCalled()
     })
   })
 

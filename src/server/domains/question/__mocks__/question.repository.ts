@@ -4,7 +4,11 @@
  * This mock is automatically used when jest.mock('~/server/domains/question/question.repository') is called.
  */
 
-import { type Question, type QuestionWithOptions } from '~/server/domains/question/question.types'
+import {
+  type Answer,
+  type Question,
+  type QuestionWithOptions,
+} from '~/server/domains/question/question.types'
 
 export const mockQuestion: Question = {
   id: 'question-123',
@@ -53,6 +57,17 @@ export const mockQuestionWithOptions: QuestionWithOptions = {
   _count: { answers: 8 },
 }
 
+export const mockAnswer: Answer = {
+  questionId: 'question-123',
+  guestId: 1,
+  householdId: 'household-123',
+  response: 'We will bring 2 children',
+  guestFirstName: 'John',
+  guestLastName: 'Doe',
+  createdAt: new Date('2024-01-02'),
+  updatedAt: new Date('2024-01-02'),
+}
+
 export const mockFindById = jest.fn()
 export const mockFindByIdWithOptions = jest.fn()
 export const mockFindByEventId = jest.fn()
@@ -61,6 +76,7 @@ export const mockDeleteOptions = jest.fn()
 export const mockUpsert = jest.fn()
 export const mockDelete = jest.fn()
 export const mockExists = jest.fn()
+export const mockFindMostRecentAnswerByQuestionId = jest.fn()
 
 export const QuestionRepository = jest.fn().mockImplementation(() => ({
   findById: mockFindById,
@@ -71,6 +87,7 @@ export const QuestionRepository = jest.fn().mockImplementation(() => ({
   upsert: mockUpsert,
   delete: mockDelete,
   exists: mockExists,
+  findMostRecentAnswerByQuestionId: mockFindMostRecentAnswerByQuestionId,
 }))
 
 // Helper to reset all mocks
@@ -83,5 +100,6 @@ export const resetMocks = (): void => {
   mockUpsert.mockReset()
   mockDelete.mockReset()
   mockExists.mockReset()
+  mockFindMostRecentAnswerByQuestionId.mockReset()
   QuestionRepository.mockClear()
 }
