@@ -85,7 +85,7 @@ export class GuestService {
       }>
     }
   ): Promise<Guest> {
-    return this.guestRepository.createWithInvitations({
+    return this.guestRepository.create({
       firstName: data.firstName,
       lastName: data.lastName,
       email: data.email,

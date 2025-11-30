@@ -36,7 +36,7 @@ export type Guest = {
 }
 
 /**
- * Guest with invitations included
+ * Guest with invitations included (requires events related to invitations)
  */
 export type GuestWithInvitations = Guest & {
   invitations: Invitation[]
