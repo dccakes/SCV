@@ -62,14 +62,8 @@ describe('WeddingService', () => {
     resetTagMocks()
     const mockRepository = new WeddingRepository({})
     const mockEventSvc = new EventService({})
-    const mockUserSvc = new UserService({})
     const mockGuestTagService = new GuestTagService({})
-    weddingService = new WeddingService(
-      mockRepository,
-      mockEventSvc,
-      mockUserSvc,
-      mockGuestTagService
-    )
+    weddingService = new WeddingService(mockRepository, mockEventSvc, mockGuestTagService)
   })
 
   describe('createWedding', () => {
@@ -164,28 +158,6 @@ describe('WeddingService', () => {
         eventName: 'Ceremony',
         date: weddingDate,
         venue: 'Beach Resort',
-      })
-    })
-
-    it('should update user profile with couple names', async () => {
-      mockExistsForUserFn.mockResolvedValue(false)
-      mockCreateFn.mockResolvedValue(mockWedding)
-      mockSeedInitialTagsFn.mockResolvedValue(undefined)
-      mockUpdateProfileFn.mockResolvedValue({})
-
-      await weddingService.createWedding('user-123', {
-        userId: 'user-123',
-        groomFirstName: 'John',
-        groomLastName: 'Doe',
-        brideFirstName: 'Jane',
-        brideLastName: 'Smith',
-      })
-
-      expect(mockUpdateProfileFn).toHaveBeenCalledWith('user-123', 'user-123', {
-        groomFirstName: 'John',
-        groomLastName: 'Doe',
-        brideFirstName: 'Jane',
-        brideLastName: 'Smith',
       })
     })
 

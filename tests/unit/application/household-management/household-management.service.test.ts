@@ -124,7 +124,12 @@ describe('HouseholdManagementService', () => {
     })
 
     it('should create multiple guests for a household', async () => {
-      const mockGuest2 = { ...mockGuestWithInvitations, id: 2, firstName: 'Jane', isPrimaryContact: false }
+      const mockGuest2 = {
+        ...mockGuestWithInvitations,
+        id: 2,
+        firstName: 'Jane',
+        isPrimaryContact: false,
+      }
       mockCreateWithGiftsFn.mockResolvedValue(mockHousehold)
       mockCreateFn
         .mockResolvedValueOnce({ ...mockGuestWithInvitations, isPrimaryContact: true })
@@ -230,7 +235,10 @@ describe('HouseholdManagementService', () => {
       })
 
       expect(result.household.address1).toBe('456 New St')
-      expect(mockUpdateFn).toHaveBeenCalledWith('household-123', expect.objectContaining({ address1: '456 New St' }))
+      expect(mockUpdateFn).toHaveBeenCalledWith(
+        'household-123',
+        expect.objectContaining({ address1: '456 New St' })
+      )
     })
 
     it('should delete removed guests', async () => {
@@ -290,9 +298,7 @@ describe('HouseholdManagementService', () => {
       })
 
       expect(mockGuestUpsertFn).toHaveBeenCalledTimes(1)
-      expect(mockInvitationUpdateFn).toHaveBeenCalledWith({
-        guestId: 1,
-        eventId: 'event-123',
+      expect(mockInvitationUpdateFn).toHaveBeenCalledWith(1, 'event-123', {
         rsvp: 'Attending',
       })
     })

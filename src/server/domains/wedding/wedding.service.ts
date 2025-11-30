@@ -9,7 +9,6 @@ import { TRPCError } from '@trpc/server'
 
 import { type EventService } from '~/server/domains/event/event.service'
 import { type GuestTagService } from '~/server/domains/guest-tag/guest-tag.service'
-import { type UserService } from '~/server/domains/user/user.service'
 import { type WeddingRepository } from '~/server/domains/wedding/wedding.repository'
 import {
   type CreateWeddingInput,
@@ -31,7 +30,6 @@ export class WeddingService {
   constructor(
     private weddingRepository: WeddingRepository,
     private eventService: EventService,
-    private userService: UserService,
     private guestTagService: GuestTagService
   ) {}
 
@@ -84,14 +82,6 @@ export class WeddingService {
         venue: weddingLocation ?? undefined,
       })
     }
-
-    // Update user profile with couple info (for backward compatibility)
-    await this.userService.updateProfile(userId, {
-      groomFirstName,
-      groomLastName,
-      brideFirstName,
-      brideLastName,
-    })
 
     return wedding
   }
