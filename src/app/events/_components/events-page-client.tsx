@@ -4,54 +4,158 @@
  * Events Page Client Component
  *
  * Displays list of events for the wedding.
- * Client component to enable interactivity (future: create/edit/delete).
+ * Client component to enable interactivity (create/edit/delete).
  */
 
 import { format } from 'date-fns'
-import { Calendar, MapPin } from 'lucide-react'
+import { Calendar, MapPin, Plus } from 'lucide-react'
+import { useState } from 'react'
+import { toast } from 'sonner'
 
+import {
+  type EventFormData,
+  transformToServerInput,
+} from '~/app/_components/forms/event/event-form.schema'
+import { ModernEventForm } from '~/app/_components/forms/event/modern-event-form'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 import { type Event } from '~/server/domains/event/event.types'
+import { api } from '~/trpc/react'
 
-type EventsPageClientProps = Readonly<{
-  events: Event[]
-}>
+export function EventsPageClient() {
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [editingEvent, setEditingEvent] = useState<Event | undefined>(undefined)
+  const utils = api.useUtils()
 
-export function EventsPageClient({ events }: EventsPageClientProps) {
+  // Fetch events on client side so invalidation triggers refetch
+  const { data: events = [], isLoading } = api.event.getAllByUserId.useQuery()
+
+  const createEvent = api.event.create.useMutation({
+    onSuccess: async () => {
+      // Wait for data to refetch before closing dialog
+      await utils.event.getAllByUserId.invalidate()
+      toast.success('Event created', {
+        description: 'Your event has been created successfully.',
+      })
+      setIsCreateDialogOpen(false)
+    },
+    onError: (error) => {
+      toast.error('Error creating event', {
+        description: error.message,
+      })
+    },
+  })
+
+  const updateEvent = api.event.update.useMutation({
+    onSuccess: async () => {
+      // Wait for data to refetch before closing dialog
+      await utils.event.getAllByUserId.invalidate()
+      toast.success('Event updated', {
+        description: 'Your event has been updated successfully.',
+      })
+      setEditingEvent(undefined)
+    },
+    onError: (error) => {
+      toast.error('Error updating event', {
+        description: error.message,
+      })
+    },
+  })
+
+  const handleCreateEvent = async (data: EventFormData) => {
+    await createEvent.mutateAsync(transformToServerInput(data))
+  }
+
+  const handleUpdateEvent = async (data: EventFormData) => {
+    if (!editingEvent) return
+    await updateEvent.mutateAsync({
+      eventId: editingEvent.id,
+      ...transformToServerInput(data),
+    })
+  }
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-sm text-muted-foreground">Loading events...</p>
+      </div>
+    )
+  }
+
   if (events.length === 0) {
     return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-8 text-center md:py-12">
-          <div className="mb-4 rounded-full bg-muted p-4 md:p-6">
-            <Calendar className="h-10 w-10 text-muted-foreground md:h-12 md:w-12" />
-          </div>
-          <h2 className="mb-2 text-xl font-semibold md:text-2xl">No events yet</h2>
-          <p className="mb-6 max-w-md px-4 text-sm text-muted-foreground md:text-base">
-            Get started by creating your first wedding event. You can add ceremonies, receptions,
-            rehearsal dinners, and more.
-          </p>
-          <Button>Create Event</Button>
-        </CardContent>
-      </Card>
+      <>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-8 text-center md:py-12">
+            <div className="mb-4 rounded-full bg-muted p-4 md:p-6">
+              <Calendar className="h-10 w-10 text-muted-foreground md:h-12 md:w-12" />
+            </div>
+            <h2 className="mb-2 text-xl font-semibold md:text-2xl">No events yet</h2>
+            <p className="mb-6 max-w-md px-4 text-sm text-muted-foreground md:text-base">
+              Get started by creating your first wedding event. You can add ceremonies, receptions,
+              rehearsal dinners, and more.
+            </p>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Event
+            </Button>
+          </CardContent>
+        </Card>
+
+        <ModernEventForm
+          open={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
+          onSubmit={handleCreateEvent}
+          isSubmitting={createEvent.isPending}
+        />
+      </>
     )
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
-      {events.map((event) => (
-        <EventCard key={event.id} event={event} />
-      ))}
-    </div>
+    <>
+      <div className="mb-4 flex items-center justify-between md:mb-6">
+        <p className="text-sm text-muted-foreground">
+          {events.length} {events.length === 1 ? 'event' : 'events'}
+        </p>
+        <Button onClick={() => setIsCreateDialogOpen(true)} size="sm">
+          <Plus className="mr-2 h-4 w-4" />
+          Create Event
+        </Button>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+        {events.map((event) => (
+          <EventCard key={event.id} event={event} onEdit={() => setEditingEvent(event)} />
+        ))}
+      </div>
+
+      <ModernEventForm
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        onSubmit={handleCreateEvent}
+        isSubmitting={createEvent.isPending}
+      />
+
+      <ModernEventForm
+        open={!!editingEvent}
+        onOpenChange={(open) => !open && setEditingEvent(undefined)}
+        onSubmit={handleUpdateEvent}
+        event={editingEvent}
+        isSubmitting={updateEvent.isPending}
+      />
+    </>
   )
 }
 
 type EventCardProps = Readonly<{
   event: Event
+  onEdit: () => void
 }>
 
-function EventCard({ event }: EventCardProps) {
+function EventCard({ event, onEdit }: EventCardProps) {
   return (
     <Card className="transition-shadow hover:shadow-md">
       <CardHeader className="pb-3">
@@ -97,7 +201,7 @@ function EventCard({ event }: EventCardProps) {
             <Button variant="outline" size="sm" className="flex-1 text-xs md:text-sm">
               View Details
             </Button>
-            <Button variant="ghost" size="sm" className="text-xs md:text-sm">
+            <Button variant="ghost" size="sm" className="text-xs md:text-sm" onClick={onEdit}>
               Edit
             </Button>
           </div>

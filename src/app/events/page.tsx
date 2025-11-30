@@ -18,9 +18,6 @@ export default async function EventsPage() {
     redirect('/')
   }
 
-  // Fetch all events for the wedding
-  const events = await api.event.getAllByUserId.query()
-
   return (
     <div className="container mx-auto px-4 py-6 md:py-8">
       <div className="mb-6 md:mb-8">
@@ -30,7 +27,7 @@ export default async function EventsPage() {
         </p>
       </div>
 
-      <EventsPageClient events={events ?? []} />
+      <EventsPageClient />
     </div>
   )
 }
