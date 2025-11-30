@@ -1,3 +1,4 @@
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 
@@ -6,6 +7,8 @@ import { sharedStyles } from '~/app/utils/shared-styles'
 import { api } from '~/trpc/server'
 
 export default async function DashboardPage() {
+  headers() // Make this page dynamic (requires authentication)
+
   const dashboardData = await api.dashboard.getByUserId.query()
 
   if (dashboardData === null) {

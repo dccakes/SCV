@@ -5,12 +5,15 @@
  * Events are ordered by creation date (oldest first).
  */
 
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 
 import { EventsPageClient } from '~/app/events/_components/events-page-client'
 import { api } from '~/trpc/server'
 
 export default async function EventsPage() {
+  headers() // Make this page dynamic (requires authentication)
+
   // Fetch wedding to ensure user has completed onboarding
   const wedding = await api.wedding.getByUserId.query()
 
