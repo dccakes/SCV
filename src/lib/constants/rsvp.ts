@@ -5,6 +5,7 @@
  */
 
 export const RSVP_STATUS = {
+  PENDING: 'Pending',
   NOT_INVITED: 'Not Invited',
   INVITED: 'Invited',
   ATTENDING: 'Attending',

@@ -20,21 +20,21 @@ import { ModernEventForm } from '~/app/_components/forms/event/modern-event-form
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
-import { type Event } from '~/server/domains/event/event.types'
+import { type EventWithStats } from '~/server/domains/event/event.types'
 import { api } from '~/trpc/react'
 
 export function EventsPageClient() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [editingEvent, setEditingEvent] = useState<Event | undefined>(undefined)
+  const [editingEvent, setEditingEvent] = useState<EventWithStats | undefined>(undefined)
   const utils = api.useUtils()
 
-  // Fetch events on client side so invalidation triggers refetch
-  const { data: events = [], isLoading } = api.event.getAllByUserId.useQuery()
+  // Fetch events with RSVP statistics
+  const { data: events = [], isLoading } = api.event.getAllByUserIdWithStats.useQuery()
 
   const createEvent = api.event.create.useMutation({
     onSuccess: async () => {
       // Wait for data to refetch before closing dialog
-      await utils.event.getAllByUserId.invalidate()
+      await utils.event.getAllByUserIdWithStats.invalidate()
       toast.success('Event created', {
         description: 'Your event has been created successfully.',
       })
@@ -50,7 +50,7 @@ export function EventsPageClient() {
   const updateEvent = api.event.update.useMutation({
     onSuccess: async () => {
       // Wait for data to refetch before closing dialog
-      await utils.event.getAllByUserId.invalidate()
+      await utils.event.getAllByUserIdWithStats.invalidate()
       toast.success('Event updated', {
         description: 'Your event has been updated successfully.',
       })
@@ -151,11 +151,15 @@ export function EventsPageClient() {
 }
 
 type EventCardProps = Readonly<{
-  event: Event
+  event: EventWithStats
   onEdit: () => void
 }>
 
 function EventCard({ event, onEdit }: EventCardProps) {
+  const { guestResponses } = event
+  const totalGuests = guestResponses.attending + guestResponses.invited + guestResponses.declined + guestResponses.notInvited
+  const totalInvited = guestResponses.attending + guestResponses.invited + guestResponses.declined
+
   return (
     <Card className="transition-shadow hover:shadow-md">
       <CardHeader className="pb-3">
@@ -195,6 +199,31 @@ function EventCard({ event, onEdit }: EventCardProps) {
             <p className="line-clamp-2 text-xs text-muted-foreground md:text-sm">
               {event.description}
             </p>
+          )}
+
+          {event.collectRsvp && totalGuests > 0 && (
+            <div className="rounded-md border bg-muted/50 p-2">
+              <div className="text-xs font-medium text-muted-foreground">
+                RSVP Status {totalInvited > 0 && `(${totalInvited} invited)`}
+              </div>
+              <div className="mt-1.5 flex gap-3 text-xs">
+                <div className="flex items-center gap-1">
+                  <div className="h-2 w-2 rounded-full bg-green-500" />
+                  <span className="font-medium">{guestResponses.attending}</span>
+                  <span className="text-muted-foreground">Attending</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                  <span className="font-medium">{guestResponses.invited}</span>
+                  <span className="text-muted-foreground">Pending</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="h-2 w-2 rounded-full bg-red-500" />
+                  <span className="font-medium">{guestResponses.declined}</span>
+                  <span className="text-muted-foreground">Declined</span>
+                </div>
+              </div>
+            </div>
           )}
 
           <div className="flex gap-2 pt-2">

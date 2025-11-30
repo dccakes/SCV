@@ -4,7 +4,7 @@
  * This mock is automatically used when jest.mock('~/server/domains/event/event.repository') is called.
  */
 
-import { type Event } from '~/server/domains/event/event.types'
+import { type Event, type EventWithStats } from '~/server/domains/event/event.types'
 
 export const mockEvent: Event = {
   id: 'event-123',
@@ -21,6 +21,16 @@ export const mockEvent: Event = {
   updatedAt: new Date('2024-01-01'),
 }
 
+export const mockEventWithStats: EventWithStats = {
+  ...mockEvent,
+  guestResponses: {
+    attending: 5,
+    invited: 8,
+    declined: 2,
+    notInvited: 3,
+  },
+}
+
 export const mockGuests = [
   { id: 1, firstName: 'Guest', lastName: 'One', weddingId: 'wedding-123' },
   { id: 2, firstName: 'Guest', lastName: 'Two', weddingId: 'wedding-123' },
@@ -30,6 +40,7 @@ export const mockFindById = jest.fn()
 export const mockFindByIdWithQuestions = jest.fn()
 export const mockFindByWeddingId = jest.fn()
 export const mockFindByWeddingIdWithQuestions = jest.fn()
+export const mockFindByWeddingIdWithStats = jest.fn()
 export const mockCreate = jest.fn()
 export const mockUpdate = jest.fn()
 export const mockUpdateCollectRsvp = jest.fn()
@@ -42,6 +53,7 @@ export const EventRepository = jest.fn().mockImplementation(() => ({
   findByIdWithQuestions: mockFindByIdWithQuestions,
   findByWeddingId: mockFindByWeddingId,
   findByWeddingIdWithQuestions: mockFindByWeddingIdWithQuestions,
+  findByWeddingIdWithStats: mockFindByWeddingIdWithStats,
   create: mockCreate,
   update: mockUpdate,
   updateCollectRsvp: mockUpdateCollectRsvp,
@@ -56,6 +68,7 @@ export const resetMocks = (): void => {
   mockFindByIdWithQuestions.mockReset()
   mockFindByWeddingId.mockReset()
   mockFindByWeddingIdWithQuestions.mockReset()
+  mockFindByWeddingIdWithStats.mockReset()
   mockCreate.mockReset()
   mockUpdate.mockReset()
   mockUpdateCollectRsvp.mockReset()

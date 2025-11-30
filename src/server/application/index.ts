@@ -34,7 +34,6 @@ export {
   type GiftInputSchemaInput,
   guestPartyInputSchema,
   type GuestPartyInputSchemaInput,
-  householdManagementRouter,
   HouseholdManagementService,
   householdManagementService,
   type UpdateHouseholdResult,

@@ -38,7 +38,7 @@ export const getEventFormDefaults = (): Partial<EventFormData> => {
  */
 export const transformToServerInput = (data: EventFormData): z.infer<typeof createEventSchema> => {
   // Using || instead of ?? intentionally to convert empty strings to undefined
-  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+   
   return {
     eventName: data.eventName,
     date: data.date || undefined,

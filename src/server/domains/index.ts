@@ -87,7 +87,6 @@ export {
   type Household,
   householdRouter,
   type HouseholdSearchResult,
-  householdService,
   type HouseholdWithGuests,
   type HouseholdWithGuestsAndGifts,
   type SearchHouseholdInput,

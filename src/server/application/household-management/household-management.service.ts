@@ -188,11 +188,11 @@ export class HouseholdManagementService {
         // 5. Update invitations for existing guests
         const updatedInvitations: Invitation[] = await Promise.all(
           Object.entries(guest.invites).map(async ([inviteEventId, inputRsvp]) => {
-            return await this.invitationRepo.update({
-              guestId: guest.guestId ?? updatedGuest.id,
-              eventId: inviteEventId,
-              rsvp: inputRsvp,
-            })
+            return await this.invitationRepo.update(
+              guest.guestId ?? updatedGuest.id,
+              inviteEventId,
+              { rsvp: inputRsvp }
+            )
           })
         )
 
@@ -224,7 +224,7 @@ export class HouseholdManagementService {
           householdId: data.householdId,
           eventId: gift.eventId,
           description: gift.description,
-          thankyou: gift.thankyou,
+          thankyou: gift.thankyou ?? false,
         })
       })
     )

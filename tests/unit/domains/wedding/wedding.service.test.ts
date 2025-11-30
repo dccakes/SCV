@@ -161,8 +161,7 @@ describe('WeddingService', () => {
       })
 
       expect(mockCreateEventFn).toHaveBeenCalledWith('wedding-123', {
-        name: 'Ceremony',
-        collectRsvp: true,
+        eventName: 'Ceremony',
         date: weddingDate,
         venue: 'Beach Resort',
       })
@@ -182,7 +181,7 @@ describe('WeddingService', () => {
         brideLastName: 'Smith',
       })
 
-      expect(mockUpdateProfileFn).toHaveBeenCalledWith('user-123', {
+      expect(mockUpdateProfileFn).toHaveBeenCalledWith('user-123', 'user-123', {
         groomFirstName: 'John',
         groomLastName: 'Doe',
         brideFirstName: 'Jane',

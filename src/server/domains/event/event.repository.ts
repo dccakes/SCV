@@ -7,7 +7,8 @@
 
 import { type PrismaClient } from '@prisma/client'
 
-import { type Event, type EventWithQuestions } from '~/server/domains/event/event.types'
+import { RSVP_STATUS } from '~/lib/constants'
+import { type Event, type EventWithQuestions, type EventWithStats } from '~/server/domains/event/event.types'
 
 export class EventRepository {
   constructor(private db: PrismaClient) {}
@@ -69,6 +70,40 @@ export class EventRepository {
           },
         },
       },
+    })
+  }
+
+  /**
+   * Find all events for a wedding with RSVP statistics
+   */
+  async findByWeddingIdWithStats(weddingId: string): Promise<EventWithStats[]> {
+    const events = await this.db.event.findMany({
+      where: { weddingId },
+      orderBy: { createdAt: 'asc' },
+      include: {
+        invitations: {
+          select: {
+            rsvp: true,
+          },
+        },
+      },
+    })
+
+    return events.map((event) => {
+      const { invitations, ...eventData } = event
+
+      // Count invitations by RSVP status
+      const guestResponses = {
+        attending: invitations.filter((inv) => inv.rsvp === RSVP_STATUS.ATTENDING).length,
+        invited: invitations.filter((inv) => inv.rsvp === RSVP_STATUS.INVITED).length,
+        declined: invitations.filter((inv) => inv.rsvp === RSVP_STATUS.DECLINED).length,
+        notInvited: invitations.filter((inv) => inv.rsvp === RSVP_STATUS.NOT_INVITED).length,
+      }
+
+      return {
+        ...eventData,
+        guestResponses,
+      }
     })
   }
 

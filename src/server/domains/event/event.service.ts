@@ -19,7 +19,7 @@ import { TRPCError } from '@trpc/server'
 
 import { RSVP_STATUS } from '~/lib/constants'
 import { type EventRepository } from '~/server/domains/event/event.repository'
-import { type Event } from '~/server/domains/event/event.types'
+import { type Event, type EventWithStats } from '~/server/domains/event/event.types'
 import {
   type CreateEventInput,
   type UpdateEventInput,
@@ -82,6 +82,16 @@ export class EventService {
       return undefined
     }
     return this.eventRepository.findByWeddingId(weddingId)
+  }
+
+  /**
+   * Get all events for a wedding with RSVP statistics
+   */
+  async getWeddingEventsWithStats(weddingId: string | null): Promise<EventWithStats[] | undefined> {
+    if (!weddingId) {
+      return undefined
+    }
+    return this.eventRepository.findByWeddingIdWithStats(weddingId)
   }
 
   /**
