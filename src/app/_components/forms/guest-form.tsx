@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { type SubmitHandler, useFieldArray, useForm } from 'react-hook-form'
+import { type Resolver, type SubmitHandler, useFieldArray, useForm } from 'react-hook-form'
 import { IoMdClose } from 'react-icons/io'
 import { toast } from 'sonner'
 
@@ -54,9 +54,10 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
   const [shouldCloseAfterSave, setShouldCloseAfterSave] = useState<boolean>(true)
 
   // Initialize react-hook-form
-  // Use zodResolver with proper type parameters for schemas with .default()
+  // Use zodResolver with explicit Resolver type for schemas with .refine()
+  // This ensures type compatibility between input and output types
   const form = useForm<HouseholdFormData>({
-    resolver: zodResolver(HouseholdFormSchema) as any,
+    resolver: zodResolver(HouseholdFormSchema) as Resolver<HouseholdFormData>,
     defaultValues: prefillFormData ?? getDefaultHouseholdFormData(events),
     mode: 'onChange', // Real-time validation for better UX
   })
@@ -68,6 +69,7 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
     formState: { errors, isSubmitting, isDirty, dirtyFields },
     reset,
     watch,
+    getValues,
     setValue,
     setError,
   } = form
@@ -198,12 +200,16 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
       const changedData = getDirtyValues(dirtyFields, data)
       const deletedGuests = data.deletedGuests ?? []
 
+      // Remove array fields from changedData to avoid conflict with full arrays
+      delete changedData.guestParty
+      delete changedData.gifts
+
       // Server expects these fields for update
       updateMutation.mutate({
         householdId: data.householdId, // Required
-        guestParty: data.guestParty, // Required
-        gifts: data.gifts, // Required
-        ...changedData, // Add any other changed fields
+        guestParty: data.guestParty, // Always send full array
+        gifts: data.gifts, // Always send full array
+        ...changedData, // Add any other changed fields (address, notes, etc.)
         deletedGuests: deletedGuests.length > 0 ? deletedGuests : undefined,
       } as Parameters<typeof updateMutation.mutate>[0])
     } else {
@@ -227,9 +233,10 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
           <button
             type="button"
             onClick={() => toggleGuestForm()}
+            aria-label="Close guest form"
             className="text-muted-foreground transition-colors hover:text-foreground"
           >
-            <IoMdClose size={24} />
+            <IoMdClose size={24} aria-hidden="true" />
           </button>
         </div>
 
@@ -263,6 +270,7 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
                     errors={errors}
                     handleRemoveGuest={handleRemoveGuest}
                     setValue={setValue}
+                    getValues={getValues}
                   />
                 ))}
 

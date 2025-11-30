@@ -4,6 +4,7 @@ import {
   type Control,
   Controller,
   type FieldErrors,
+  type UseFormGetValues,
   type UseFormRegister,
   type UseFormSetValue,
   useWatch,
@@ -41,6 +42,7 @@ type GuestNameFormProps = {
   errors: FieldErrors<HouseholdFormData>
   handleRemoveGuest: (index: number) => void
   setValue: UseFormSetValue<HouseholdFormData>
+  getValues: UseFormGetValues<HouseholdFormData>
 }
 
 export const GuestNameForm = ({
@@ -52,49 +54,42 @@ export const GuestNameForm = ({
   errors,
   handleRemoveGuest,
   setValue,
+  getValues,
 }: GuestNameFormProps) => {
   const [isTagsModalOpen, setIsTagsModalOpen] = useState(false)
+  const [modalGuestName, setModalGuestName] = useState('')
 
   // Get field-level errors for this guest
   const guestErrors = errors.guestParty?.[guestIndex]
 
-  // Watch the guest party array to know how many guests exist
-  const guestParty = useWatch({
-    control,
-    name: 'guestParty',
-  })
-
-  // Watch the current guest's tagIds and name
+  // Watch only the current guest's tagIds (needed for rendering)
   const selectedTagIds =
     useWatch({
       control,
       name: `guestParty.${guestIndex}.tagIds`,
     }) ?? []
 
-  const firstName =
-    useWatch({
-      control,
-      name: `guestParty.${guestIndex}.firstName`,
-    }) ?? ''
-
-  const lastName =
-    useWatch({
-      control,
-      name: `guestParty.${guestIndex}.lastName`,
-    }) ?? ''
-
-  const guestName =
-    firstName || lastName ? `${firstName} ${lastName}`.trim() : `Guest ${guestIndex + 1}`
-
   const handlePrimaryContactChange = (checked: boolean) => {
-    if (checked && guestParty) {
+    if (checked) {
+      // Read guest party synchronously without subscription
+      const guestParty = getValues('guestParty')
       // Uncheck all other guests
-      guestParty.forEach((_, index) => {
+      guestParty?.forEach((_, index) => {
         if (index !== guestIndex) {
           setValue(`guestParty.${index}.isPrimaryContact`, false)
         }
       })
     }
+  }
+
+  const handleOpenTagsModal = () => {
+    // Compute guest name only when modal opens (no subscription needed)
+    const firstName = getValues(`guestParty.${guestIndex}.firstName`) ?? ''
+    const lastName = getValues(`guestParty.${guestIndex}.lastName`) ?? ''
+    setModalGuestName(
+      firstName || lastName ? `${firstName} ${lastName}`.trim() : `Guest ${guestIndex + 1}`
+    )
+    setIsTagsModalOpen(true)
   }
 
   const handleTagsChange = (tagIds: string[]) => {
@@ -113,7 +108,7 @@ export const GuestNameForm = ({
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => setIsTagsModalOpen(true)}
+              onClick={handleOpenTagsModal}
               className="h-7 gap-1.5 px-2 text-xs"
             >
               <FiTag className="h-3 w-3" />
@@ -129,9 +124,10 @@ export const GuestNameForm = ({
             <button
               type="button"
               onClick={() => handleRemoveGuest(guestIndex)}
+              aria-label={`Remove Guest ${guestIndex + 1}`}
               className="text-muted-foreground transition-colors hover:text-destructive"
             >
-              <FiMinusCircle size={24} />
+              <FiMinusCircle size={24} aria-hidden="true" />
             </button>
           )}
         </div>
@@ -142,7 +138,7 @@ export const GuestNameForm = ({
           onOpenChange={setIsTagsModalOpen}
           selectedTagIds={selectedTagIds}
           onTagsChange={handleTagsChange}
-          guestName={guestName}
+          guestName={modalGuestName}
         />
 
         {/* Display selected tags */}

@@ -51,7 +51,7 @@ export type GiftFormData = z.infer<typeof giftInputSchema>
 
 /**
  * Helper to get default form values for creating a new household
- * Uses schema.parse({}) to extract defaults from the schema (single source of truth)
+ * Constructs default form data without validation (validation happens on submit)
  */
 export const getDefaultHouseholdFormData = (events: Array<{ id: string }>): HouseholdFormData => {
   const invites: Record<string, string> = {}
@@ -66,19 +66,20 @@ export const getDefaultHouseholdFormData = (events: Array<{ id: string }>): Hous
     })
   })
 
-  // Parse empty object to get all schema defaults, then merge with event-specific data
-  const schemaDefaults = HouseholdFormSchema.parse({
-    guestParty: [
-      {
-        firstName: '',
-        lastName: '',
-        invites,
-      },
-    ],
-  })
-
+  // Construct default form data directly
+  // Validation will occur on form submission via zodResolver
   return {
-    ...schemaDefaults,
+    householdId: '',
+    address1: null,
+    address2: null,
+    city: null,
+    state: null,
+    country: null,
+    zipCode: null,
+    phone: null,
+    email: null,
+    notes: null,
+    deletedGuests: [],
     gifts,
     guestParty: [
       {
