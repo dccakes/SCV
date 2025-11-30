@@ -4,20 +4,17 @@ import { BiPencil } from 'react-icons/bi'
 
 import { useToggleEventForm } from '~/app/_components/contexts/event-form-context'
 import { useToggleGuestForm } from '~/app/_components/contexts/guest-form-context'
+import { type HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
 import GuestSearchFilter from '~/app/_components/guest-list/guest-search-filter'
 import GuestTable from '~/app/_components/guest-list/guest-table'
 import { formatDateStandard } from '~/app/utils/helpers'
-import {
-  type Event,
-  type EventFormData,
-  type Household,
-  type HouseholdFormData,
-} from '~/app/utils/shared-types'
+import { type Event, type EventFormData } from '~/app/utils/shared-types'
 import { Button } from '~/components/ui/button'
+import { type HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 
 type GuestsViewProps = {
   events: Event[]
-  households: Household[]
+  households: HouseholdWithGuests[]
   selectedEventId: string
   setPrefillHousehold: Dispatch<SetStateAction<HouseholdFormData | undefined>>
   setPrefillEvent: Dispatch<SetStateAction<EventFormData | undefined>>
@@ -89,7 +86,7 @@ export default function GuestsView({
 }
 
 type DefaultTableHeaderProps = {
-  households: Household[]
+  households: HouseholdWithGuests[]
   numEvents: number
   totalGuests: number
 }
@@ -119,7 +116,7 @@ const DefaultTableHeader = ({ households, numEvents, totalGuests }: DefaultTable
 
 type SelectedEventTableHeaderProps = {
   totalGuests: number
-  households: Household[]
+  households: HouseholdWithGuests[]
   selectedEvent: Event | undefined
   setPrefillEvent: Dispatch<SetStateAction<EventFormData | undefined>>
 }

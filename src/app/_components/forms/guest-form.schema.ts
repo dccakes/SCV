@@ -43,13 +43,15 @@ export const HouseholdFormSchema = baseHouseholdFormSchema.refine(
   }
 )
 
-// Export types - use refined schema for type inference
-export type HouseholdFormData = z.infer<typeof HouseholdFormSchema>
+// Export types - use output type for react-hook-form (after defaults applied)
+// zodResolver handles the input type internally, form values use output type
+export type HouseholdFormData = z.output<typeof HouseholdFormSchema>
 export type GuestFormData = z.infer<typeof guestPartyInputSchema>
 export type GiftFormData = z.infer<typeof giftInputSchema>
 
 /**
  * Helper to get default form values for creating a new household
+ * Uses schema.parse({}) to extract defaults from the schema (single source of truth)
  */
 export const getDefaultHouseholdFormData = (events: Array<{ id: string }>): HouseholdFormData => {
   const invites: Record<string, string> = {}
@@ -64,19 +66,20 @@ export const getDefaultHouseholdFormData = (events: Array<{ id: string }>): Hous
     })
   })
 
+  // Parse empty object to get all schema defaults, then merge with event-specific data
+  const schemaDefaults = HouseholdFormSchema.parse({
+    guestParty: [
+      {
+        firstName: '',
+        lastName: '',
+        invites,
+      },
+    ],
+  })
+
   return {
-    householdId: '',
-    address1: null,
-    address2: null,
-    city: null,
-    state: null,
-    country: null,
-    zipCode: null,
-    phone: null,
-    email: null,
-    notes: null,
+    ...schemaDefaults,
     gifts,
-    deletedGuests: [],
     guestParty: [
       {
         firstName: '',

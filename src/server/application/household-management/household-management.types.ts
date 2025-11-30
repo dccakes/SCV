@@ -6,7 +6,21 @@
 
 import { type Gift } from '~/server/domains/gift'
 import { type GuestWithInvitations } from '~/server/domains/guest'
+import { type GuestPartyInput as DomainGuestPartyInput } from '~/server/domains/household'
 import { type Invitation } from '~/server/domains/invitation'
+
+/**
+ * Guest party input with optional fields for creation
+ * Based on domain GuestPartyInput but with optional isPrimaryContact for flexibility
+ */
+export type GuestPartyInput = Omit<
+  DomainGuestPartyInput,
+  'isPrimaryContact' | 'ageGroup' | 'tagIds'
+> & {
+  isPrimaryContact?: boolean
+  ageGroup?: 'INFANT' | 'CHILD' | 'TEEN' | 'ADULT'
+  tagIds?: string[]
+}
 
 /**
  * Input for creating a household with guests
@@ -19,14 +33,7 @@ export type CreateHouseholdWithGuestsInput = {
   country?: string | null
   zipCode?: string | null
   notes?: string | null
-  guestParty: Array<{
-    firstName: string
-    lastName: string
-    email?: string | null
-    phone?: string | null
-    isPrimaryContact?: boolean
-    invites: Record<string, string> // eventId -> rsvp status
-  }>
+  guestParty: GuestPartyInput[]
 }
 
 /**
@@ -41,15 +48,7 @@ export type UpdateHouseholdWithGuestsInput = {
   country?: string | null
   zipCode?: string | null
   notes?: string | null
-  guestParty: Array<{
-    guestId?: number
-    firstName: string
-    lastName: string
-    email?: string | null
-    phone?: string | null
-    isPrimaryContact?: boolean
-    invites: Record<string, string> // eventId -> rsvp status
-  }>
+  guestParty: GuestPartyInput[]
   deletedGuests?: number[]
   gifts: Array<{
     eventId: string

@@ -74,17 +74,10 @@ export class DashboardService {
     const weddingDate = events.find((event) => event.name === 'Wedding Day')?.date
 
     // Build wedding data
-    const weddingData = await this.buildWeddingData(
-      website,
-      currentUser,
-      weddingDate
-    )
+    const weddingData = await this.buildWeddingData(website, currentUser, weddingDate)
 
     // Build households with guest invitations
-    const householdsWithInvitations = this.buildHouseholdsWithInvitations(
-      households,
-      invitations
-    )
+    const householdsWithInvitations = this.buildHouseholdsWithInvitations(households, invitations)
 
     // Build events with RSVP statistics
     const eventsWithStats = await this.buildEventsWithStats(events, invitations)
@@ -111,6 +104,9 @@ export class DashboardService {
       where: { weddingId },
       select: {
         id: true,
+        weddingId: true,
+        createdAt: true,
+        updatedAt: true,
         address1: true,
         address2: true,
         city: true,

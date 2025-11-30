@@ -16,13 +16,15 @@ export type {
   DashboardData,
   EventWithStats,
   GuestResponses,
-  GuestWithInvitations,
   HouseholdWithGuests,
   QuestionWithRecentAnswer,
   WebsiteWithQuestions,
   WeddingData,
   WeddingDate,
 } from '~/server/application/dashboard/dashboard.types'
+
+// Re-export domain types for convenience
+export type { GuestWithInvitations } from '~/server/domains/guest'
 
 // Export classes for testing/DI
 export { DashboardService } from '~/server/application/dashboard/dashboard.service'

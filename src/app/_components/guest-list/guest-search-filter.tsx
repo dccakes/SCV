@@ -5,9 +5,10 @@ import { IoIosArrowDown, IoMdCheckmark } from 'react-icons/io'
 
 import { useOuterClick } from '~/app/_components/hooks'
 import { sharedStyles } from '~/app/utils/shared-styles'
-import { type Event, type Household } from '~/app/utils/shared-types'
+import { type Event } from '~/app/utils/shared-types'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
+import { type HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 
 type TSelectedRsvpFilter = {
   eventId: string
@@ -15,8 +16,8 @@ type TSelectedRsvpFilter = {
 }
 
 type GuestSearchFilterProps = {
-  households: Household[]
-  setFilteredHouseholds: Dispatch<SetStateAction<Household[]>>
+  households: HouseholdWithGuests[]
+  setFilteredHouseholds: Dispatch<SetStateAction<HouseholdWithGuests[]>>
   events: Event[]
   selectedEventId: string
 }

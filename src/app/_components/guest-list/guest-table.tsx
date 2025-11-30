@@ -9,22 +9,18 @@ import { FaSort } from 'react-icons/fa'
 import { HiOutlinePhone } from 'react-icons/hi2'
 
 import { useToggleGuestForm } from '~/app/_components/contexts/guest-form-context'
+import { type HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
 import { LoadingSpinner } from '~/app/_components/loaders'
 import { sharedStyles } from '~/app/utils/shared-styles'
-import {
-  type Event,
-  type FormInvites,
-  type Guest,
-  type Household,
-  type HouseholdFormData,
-} from '~/app/utils/shared-types'
+import { type Event, type FormInvites, type Guest } from '~/app/utils/shared-types'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader } from '~/components/ui/card'
+import { type HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 import { api } from '~/trpc/react'
 
 type GuestTableProps = {
   events: Event[]
-  households: Household[]
+  households: HouseholdWithGuests[]
   selectedEventId: string
   setPrefillHousehold: Dispatch<SetStateAction<HouseholdFormData | undefined>>
 }
@@ -119,7 +115,7 @@ export default function GuestTable({
 }
 
 type DefaultCardProps = {
-  household: Household
+  household: HouseholdWithGuests
   events: Event[]
   setPrefillHousehold: Dispatch<SetStateAction<HouseholdFormData | undefined>>
 }
@@ -139,6 +135,7 @@ const DefaultCard = ({ household, events, setPrefillHousehold }: DefaultCardProp
       zipCode: household.zipCode ?? undefined,
       notes: household.notes ?? undefined,
       gifts: household.gifts,
+      deletedGuests: [],
       guestParty: household.guests.map((guest) => {
         const invitations: FormInvites = {}
         guest?.invitations?.forEach((inv) => {
@@ -250,7 +247,7 @@ const DefaultCard = ({ household, events, setPrefillHousehold }: DefaultCardProp
 }
 
 type SingleEventCardProps = {
-  household: Household
+  household: HouseholdWithGuests
   selectedEvent: Event | undefined
   setPrefillHousehold: Dispatch<SetStateAction<HouseholdFormData | undefined>>
 }
@@ -283,6 +280,7 @@ const SingleEventCard = ({
       zipCode: household.zipCode ?? undefined,
       notes: household.notes ?? undefined,
       gifts: household.gifts.filter((gift) => gift.eventId === selectedEvent.id),
+      deletedGuests: [],
       guestParty: household.guests.map((guest) => {
         const invitations: FormInvites = {}
         guest?.invitations?.forEach((inv) => {

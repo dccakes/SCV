@@ -7,15 +7,11 @@ import { useEventForm } from '~/app/_components/contexts/event-form-context'
 import { useGuestForm } from '~/app/_components/contexts/guest-form-context'
 import EventForm from '~/app/_components/forms/event-form'
 import GuestForm from '~/app/_components/forms/guest-form'
+import { type HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
 import EventsTabs from '~/app/_components/guest-list/event-tabs'
 import GuestsView from '~/app/_components/guest-list/guests-view'
 import NoGuestsView from '~/app/_components/guest-list/no-guests-view'
-import {
-  type DashboardData,
-  type EventFormData,
-  type Household,
-  type HouseholdFormData,
-} from '~/app/utils/shared-types'
+import { type DashboardData, type EventFormData } from '~/app/utils/shared-types'
 
 export default function GuestList({ dashboardData }: { dashboardData: DashboardData }) {
   const isEventFormOpen = useEventForm()

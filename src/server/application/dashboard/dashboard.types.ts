@@ -5,7 +5,8 @@
  */
 
 import { type Gift } from '~/server/domains/gift'
-import { type Invitation } from '~/server/domains/invitation'
+import { type GuestWithInvitations } from '~/server/domains/guest'
+import { type Household } from '~/server/domains/household'
 import { type Option, type Question } from '~/server/domains/question'
 
 /**
@@ -70,34 +71,10 @@ export type Answer = {
 }
 
 /**
- * Guest with invitations for dashboard
+ * Household with guests and gifts for dashboard
+ * Extends the domain Household type with populated guests and gifts including event names
  */
-export type GuestWithInvitations = {
-  id: number
-  firstName: string
-  lastName: string
-  email: string | null
-  phone: string | null
-  isPrimaryContact: boolean
-  householdId: string
-  weddingId: string
-  createdAt: Date
-  updatedAt: Date
-  invitations: Invitation[]
-}
-
-/**
- * Household with guests for dashboard
- */
-export type HouseholdWithGuests = {
-  id: string
-  address1: string | null
-  address2: string | null
-  city: string | null
-  state: string | null
-  zipCode: string | null
-  country: string | null
-  notes: string | null
+export type HouseholdWithGuests = Household & {
   guests: GuestWithInvitations[]
   gifts: Array<Gift & { event: { name: string } }>
 }

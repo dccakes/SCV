@@ -54,8 +54,9 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
   const [shouldCloseAfterSave, setShouldCloseAfterSave] = useState<boolean>(true)
 
   // Initialize react-hook-form
+  // Use zodResolver with proper type parameters for schemas with .default()
   const form = useForm<HouseholdFormData>({
-    resolver: zodResolver(HouseholdFormSchema),
+    resolver: zodResolver(HouseholdFormSchema) as any,
     defaultValues: prefillFormData ?? getDefaultHouseholdFormData(events),
     mode: 'onChange', // Real-time validation for better UX
   })

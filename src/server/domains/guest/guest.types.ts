@@ -22,6 +22,7 @@ export type Guest = {
   weddingId: string
   isPrimaryContact: boolean
   ageGroup: GuestAgeGroup | null
+  guestTags?: Array<{ tagId: string }>
   createdAt: Date
   updatedAt: Date
 }
