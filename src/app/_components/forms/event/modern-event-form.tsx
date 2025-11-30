@@ -78,9 +78,10 @@ export function ModernEventForm({
     // This ensures data is refetched before dialog closes
   }
 
-  // Reset form when dialog closes or event changes
+  // Reset form when dialog opens or event changes
   useEffect(() => {
-    if (!open) {
+    if (open) {
+      // When dialog opens, reset to event data or defaults
       form.reset(
         event
           ? {
