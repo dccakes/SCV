@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/dccakes/SCV/compare/oswp-v0.2.0...oswp-v0.3.0) (2025-11-30)
+
+
+### Features
+
+* **db:** inroduce wedding domain ([#11](https://github.com/dccakes/SCV/issues/11)) ([e19507c](https://github.com/dccakes/SCV/commit/e19507cfa81ebc23240d8111bd6175535b3ce842))
+* **docs:** implement phase 5 - cleanup old routers and create comprehensive documentation ([#8](https://github.com/dccakes/SCV/issues/8)) ([28d512e](https://github.com/dccakes/SCV/commit/28d512ef38af49ef705710b4e5b47908a6915fc1))
+* **guests:** update add guest form ([#12](https://github.com/dccakes/SCV/issues/12)) ([ab6b51a](https://github.com/dccakes/SCV/commit/ab6b51a56a363e09b159c1b359961f8a0bd28375))
+* **migrate:** implement phase 4 of domain integration plan ([#6](https://github.com/dccakes/SCV/issues/6)) ([cccf98b](https://github.com/dccakes/SCV/commit/cccf98b96ab9ca7d272de5b4ca4356ff9f07df26))
+* **setup:** update prisma runs ([#7](https://github.com/dccakes/SCV/issues/7)) ([f7b16e7](https://github.com/dccakes/SCV/commit/f7b16e772575943b88ae6f01090c0f2f97de4d68))
+* **ui:** add shadcn components ([#9](https://github.com/dccakes/SCV/issues/9)) ([495a2f5](https://github.com/dccakes/SCV/commit/495a2f58f5a52d24f145f049303bf4f7f16fc164))
+
 ## [0.2.0](https://github.com/dccakes/SCV/compare/oswp-v0.1.0...oswp-v0.2.0) (2025-11-25)
 
 
