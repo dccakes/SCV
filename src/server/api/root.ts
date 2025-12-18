@@ -8,6 +8,7 @@ import { guestTagRouter } from '~/server/domains/guest-tag'
 import { householdRouter } from '~/server/domains/household'
 import { invitationRouter } from '~/server/domains/invitation'
 import { questionRouter } from '~/server/domains/question'
+import { selfFillRouter } from '~/server/domains/self-fill'
 import { userRouter } from '~/server/domains/user'
 import { websiteRouter } from '~/server/domains/website'
 import { weddingRouter } from '~/server/domains/wedding'
@@ -39,6 +40,9 @@ export const appRouter = createTRPCRouter({
   // Phase 3 domains (migrated)
   question: questionRouter,
   household: householdRouter,
+
+  // Self-fill guest registration
+  selfFill: selfFillRouter,
 
   // Phase 4 application services (migrated)
   dashboard: dashboardRouter,

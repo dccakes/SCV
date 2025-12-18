@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { type Dispatch, type SetStateAction } from 'react'
 
+import SelfFillLinkManager from '~/app/_components/dashboard/self-fill-link-manager'
 import { sharedStyles } from '~/app/utils/shared-styles'
 
 type SidebarPanelProps = {
@@ -27,6 +28,7 @@ export default function SidebarPanel({ setShowWebsiteSettings }: SidebarPanelPro
           Manage
         </Link>
       </div>
+      <SelfFillLinkManager />
       <div className="flex items-end justify-between border-b py-8">
         <h2 className="text-xl font-semibold">Privacy Settings</h2>
         <span
