@@ -6,19 +6,13 @@
 
 import { eventService } from '~/server/domains/event'
 import { guestTagService } from '~/server/domains/guest-tag'
-import { userService } from '~/server/domains/user'
 import { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
 import { WeddingService } from '~/server/domains/wedding/wedding.service'
 import { db } from '~/server/infrastructure/database'
 
 // Create singleton instances
 const weddingRepository = new WeddingRepository(db)
-export const weddingService = new WeddingService(
-  weddingRepository,
-  eventService,
-  userService,
-  guestTagService
-)
+export const weddingService = new WeddingService(weddingRepository, eventService, guestTagService)
 
 // Export types
 export type {

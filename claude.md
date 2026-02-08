@@ -41,6 +41,13 @@ YOU MUST FOLLOW A TDD APPROACH
 | **Service** | Business logic, validation | Repository | Router, Other Services (use Application layer) |
 | **Repository** | Database queries | Prisma | Service, Router |
 
+**Responsive Design:**
+
+- ✅ **Mobile-first** - Base styles for mobile, use `md:` and `lg:` for larger screens
+- ✅ **Standard breakpoints** - Mobile (< 768px), Tablet (`md:` ≥ 768px), Desktop (`lg:` ≥ 1024px)
+- ✅ **Consistent spacing** - Mobile: `gap-4 py-6 px-4`, Desktop: `gap-6 py-8`
+- ✅ **Typography scale** - Mobile: `text-sm/text-xl`, Desktop: `md:text-base/md:text-3xl`
+
 **Common Commands:**
 
 ```bash
@@ -1055,6 +1062,135 @@ const createInvitation = (options: CreateInvitationOptions) => {
 
 ---
 
+## Responsive Design Standards
+
+### Tailwind Breakpoints
+
+Use Tailwind's standard breakpoints consistently across the application:
+
+| Breakpoint | Min Width | Target Devices | Columns | Spacing |
+|------------|-----------|----------------|---------|---------|
+| **Mobile** | < 768px | Phones | 1 column | Compact (gap-4, py-6, px-4) |
+| **Tablet** | ≥ 768px (`md:`) | Tablets, small laptops | 2 columns | Medium (gap-6, py-8) |
+| **Desktop** | ≥ 1024px (`lg:`) | Desktops, large screens | 3+ columns | Full (gap-6, py-8) |
+
+### Mobile-First Approach
+
+Always design mobile-first, then add larger breakpoints:
+
+```tsx
+// ✅ GOOD - Mobile-first
+<div className="px-4 py-6 md:py-8">
+  <h1 className="text-2xl md:text-3xl">Title</h1>
+  <p className="text-sm md:text-base">Description</p>
+</div>
+
+// ❌ BAD - Desktop-first (requires overrides)
+<div className="px-8 py-8 sm:px-4 sm:py-6">
+  <h1 className="text-3xl sm:text-2xl">Title</h1>
+</div>
+```
+
+### Standard Responsive Patterns
+
+**Grid Layouts:**
+```tsx
+// 1 column mobile → 2 tablet → 3 desktop
+<div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
+
+// 1 column mobile → 2 desktop
+<div className="grid gap-4 md:gap-6 md:grid-cols-2">
+```
+
+**Typography:**
+```tsx
+// Headings
+<h1 className="text-2xl md:text-3xl lg:text-4xl">
+<h2 className="text-xl md:text-2xl lg:text-3xl">
+<h3 className="text-lg md:text-xl">
+
+// Body text
+<p className="text-sm md:text-base">
+<span className="text-xs md:text-sm">
+```
+
+**Spacing:**
+```tsx
+// Container padding
+<div className="px-4 py-6 md:px-6 md:py-8 lg:px-8">
+
+// Section margins
+<div className="mb-6 md:mb-8 lg:mb-10">
+
+// Grid/flex gaps
+<div className="gap-4 md:gap-6">
+```
+
+**Cards and Components:**
+```tsx
+// Card padding
+<Card>
+  <CardHeader className="pb-3 md:pb-4">
+  <CardContent className="pt-0">
+</Card>
+
+// Button text
+<Button className="text-xs md:text-sm">
+
+// Icon sizes
+<Icon className="h-4 w-4 md:h-5 md:w-5" />
+```
+
+### Layout Utilities
+
+**Prevent content overflow:**
+```tsx
+// Text truncation
+<div className="flex-1 min-w-0">
+  <h3 className="truncate">{longTitle}</h3>
+</div>
+
+// Prevent icon squishing
+<Icon className="shrink-0" />
+
+// Line clamping
+<p className="line-clamp-2 md:line-clamp-3">
+```
+
+**Responsive visibility:**
+```tsx
+// Hide on mobile
+<div className="hidden md:block">
+
+// Show only on mobile
+<div className="block md:hidden">
+```
+
+### Anti-Patterns
+
+```tsx
+// ❌ BAD - Hardcoded pixel values
+<div style={{ width: '320px' }}>
+
+// ❌ BAD - Inconsistent breakpoint usage
+<div className="sm:grid-cols-2 xl:grid-cols-3">  // Skips md and lg
+
+// ❌ BAD - Too many breakpoint variations
+<div className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl">
+
+// ✅ GOOD - Consistent, progressive enhancement
+<div className="text-sm md:text-base">
+```
+
+### Accessibility Considerations
+
+- ✅ Minimum touch target: 44x44px on mobile
+- ✅ Readable text: minimum `text-sm` (14px) on mobile
+- ✅ Sufficient spacing: minimum `gap-4` between interactive elements
+- ✅ Test on real devices, not just browser DevTools
+
+---
+
 ## Common Patterns
 
 ### Result Types
@@ -1194,6 +1330,7 @@ After tests pass, ask:
 - Database query? → Repository
 - Multiple domains? → Application Service
 - User input? → react-hook-form + Zod
+- Responsive layout? → Mobile-first with `md:` and `lg:` breakpoints
 
 ---
 

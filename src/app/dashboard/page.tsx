@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation'
 
 import Dashboard from '~/app/_components/dashboard'
 import { sharedStyles } from '~/app/utils/shared-styles'
-import { auth } from '~/lib/auth'
 import { api } from '~/trpc/server'
 
 // Check if S3 is configured
@@ -94,6 +93,8 @@ const deleteImage = async (imageKey: string): Promise<{ ok: boolean }> => {
 }
 
 export default async function DashboardPage() {
+  headers() // Make this page dynamic (requires authentication)
+
   const dashboardData = await api.dashboard.getByUserId.query()
 
   if (dashboardData === null) {

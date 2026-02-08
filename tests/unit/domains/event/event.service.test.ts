@@ -15,8 +15,10 @@ import {
   mockCreate,
   mockDelete,
   mockEvent,
+  mockEventWithStats,
   mockFindById,
   mockFindByWeddingId,
+  mockFindByWeddingIdWithStats,
   mockGuests,
   mockUpdate,
   mockUpdateCollectRsvp,
@@ -35,6 +37,7 @@ import {
 const mockCreateFn = mockCreate as jest.Mock
 const mockFindByIdFn = mockFindById as jest.Mock
 const mockFindByWeddingIdFn = mockFindByWeddingId as jest.Mock
+const mockFindByWeddingIdWithStatsFn = mockFindByWeddingIdWithStats as jest.Mock
 const mockUpdateFn = mockUpdate as jest.Mock
 const mockUpdateCollectRsvpFn = mockUpdateCollectRsvp as jest.Mock
 const mockDeleteFn = mockDelete as jest.Mock
@@ -127,6 +130,62 @@ describe('EventService', () => {
 
       expect(result).toBeUndefined()
       expect(mockFindByWeddingIdFn).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('getWeddingEventsWithStats', () => {
+    it('should return events with RSVP statistics for valid weddingId', async () => {
+      mockFindByWeddingIdWithStatsFn.mockResolvedValue([mockEventWithStats])
+
+      const result = await eventService.getWeddingEventsWithStats('wedding-123')
+
+      expect(result).toEqual([mockEventWithStats])
+      expect(mockFindByWeddingIdWithStatsFn).toHaveBeenCalledWith('wedding-123')
+    })
+
+    it('should return events with correct RSVP counts', async () => {
+      mockFindByWeddingIdWithStatsFn.mockResolvedValue([mockEventWithStats])
+
+      const result = await eventService.getWeddingEventsWithStats('wedding-123')
+
+      expect(result).toHaveLength(1)
+      expect(result?.[0]?.guestResponses).toEqual({
+        attending: 5,
+        invited: 8,
+        declined: 2,
+        notInvited: 3,
+      })
+    })
+
+    it('should return undefined when weddingId is null', async () => {
+      const result = await eventService.getWeddingEventsWithStats(null)
+
+      expect(result).toBeUndefined()
+      expect(mockFindByWeddingIdWithStatsFn).not.toHaveBeenCalled()
+    })
+
+    it('should handle multiple events with different RSVP statistics', async () => {
+      const multipleEventsWithStats = [
+        mockEventWithStats,
+        {
+          ...mockEvent,
+          id: 'event-456',
+          name: 'Reception',
+          guestResponses: {
+            attending: 10,
+            invited: 5,
+            declined: 1,
+            notInvited: 0,
+          },
+        },
+      ]
+      mockFindByWeddingIdWithStatsFn.mockResolvedValue(multipleEventsWithStats)
+
+      const result = await eventService.getWeddingEventsWithStats('wedding-123')
+
+      expect(result).toHaveLength(2)
+      expect(result?.[0]?.guestResponses.attending).toBe(5)
+      expect(result?.[1]?.guestResponses.attending).toBe(10)
     })
   })
 

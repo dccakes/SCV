@@ -28,7 +28,6 @@ export default function DashboardHeader({
                 await navigator.clipboard.writeText(websiteUrl ?? '')
                 toast({
                   description: 'Website link copied!',
-                  variant: 'success',
                 })
               }}
             >

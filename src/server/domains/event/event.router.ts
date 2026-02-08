@@ -57,6 +57,15 @@ export const eventRouter = createTRPCRouter({
   }),
 
   /**
+   * Get all events for the current user's wedding with RSVP statistics
+   */
+  getAllByUserIdWithStats: publicProcedure.query(async ({ ctx }) => {
+    if (!ctx.auth.userId) return undefined
+    const weddingId = await getUserWeddingId(ctx.auth.userId)
+    return eventService.getWeddingEventsWithStats(weddingId)
+  }),
+
+  /**
    * Update an existing event
    */
   update: protectedProcedure.input(updateEventSchema).mutation(async ({ ctx, input }) => {

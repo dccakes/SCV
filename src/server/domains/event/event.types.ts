@@ -45,43 +45,6 @@ export type EventWithStats = Event & {
 }
 
 /**
- * Input for creating a new event
+ * Input types are now derived from Zod schemas in event.validator.ts
+ * Import them from there to maintain schema-first development pattern
  */
-export type CreateEventInput = {
-  eventName: string
-  date?: string
-  startTime?: string
-  endTime?: string
-  venue?: string
-  attire?: string
-  description?: string
-}
-
-/**
- * Input for updating an existing event
- */
-export type UpdateEventInput = {
-  eventId: string
-  eventName: string
-  date?: string
-  startTime?: string
-  endTime?: string
-  venue?: string
-  attire?: string
-  description?: string
-}
-
-/**
- * Input for updating collect RSVP status
- */
-export type UpdateCollectRsvpInput = {
-  eventId: string
-  collectRsvp: boolean
-}
-
-/**
- * Input for deleting an event
- */
-export type DeleteEventInput = {
-  eventId: string
-}
