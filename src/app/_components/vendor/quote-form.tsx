@@ -93,7 +93,7 @@ export function QuoteForm({ vendorId, onSuccess, onCancel }: QuoteFormProps) {
         <Button type="button" variant="outline" size="sm" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit" size="sm" disabled={addQuote.isPending} className="bg-pink-400 hover:bg-pink-500">
+        <Button type="submit" size="sm" disabled={addQuote.isPending} className="bg-primary hover:bg-primary/90 text-primary-foreground">
           {addQuote.isPending ? 'Saving…' : 'Add Quote'}
         </Button>
       </div>

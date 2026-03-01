@@ -30,26 +30,35 @@ export default function PageSectionsTemplate({
   const [showMenu, setShowMenu] = useState(false)
 
   return (
-    <section className="mb-10">
-      <div className="w-full border">
-        <div className="flex justify-between px-5 py-7">
-          <div className="flex">
-            <button onClick={() => setShowSection((prev) => !prev)}>
-              {showSection ? <IoIosArrowForward /> : <AiOutlineDown />}
+    <section className="mb-6">
+      <div className="w-full rounded-lg border bg-card shadow-sm">
+        <div className="flex justify-between px-5 py-5">
+          <div className="flex items-center">
+            <button
+              className="text-muted-foreground transition-colors hover:text-foreground"
+              onClick={() => setShowSection((prev) => !prev)}
+            >
+              {showSection ? (
+                <AiOutlineDown className="h-4 w-4" />
+              ) : (
+                <IoIosArrowForward className="h-4 w-4" />
+              )}
             </button>
-            <h2 className="ml-3 text-xl font-semibold">{title}</h2>
+            <h2 className="ml-3 font-serif text-lg font-semibold">{title}</h2>
           </div>
-          <div className="flex">
+          <div className="flex items-center">
             <Link href="/dashboard/preview">
-              <button className="text-pink-400">Preview</button>
+              <button className="text-sm text-primary transition-colors hover:text-primary/80">
+                Preview
+              </button>
             </Link>
             {title !== 'Home' && (
               <div className="relative flex">
                 <span className={`${sharedStyles.verticalDivider}`}>|</span>
                 <BsThreeDotsVertical
-                  size={24}
+                  size={20}
                   onClick={() => setShowMenu(true)}
-                  className="cursor-pointer"
+                  className="cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
                 />
                 {showMenu && (
                   <EditSectionMenu
@@ -67,9 +76,9 @@ export default function PageSectionsTemplate({
             {children}
             {title !== 'RSVP' && (
               <div className="border-t p-5">
-                <div className="flex cursor-pointer">
-                  <AiOutlinePlusCircle size={25} color={sharedStyles.primaryColorHex} />
-                  <p className={`pl-3 text-${sharedStyles.primaryColor}`}>Add More to {title}</p>
+                <div className="flex cursor-pointer items-center">
+                  <AiOutlinePlusCircle size={20} className="text-primary" />
+                  <p className="pl-2 text-sm text-primary">Add More to {title}</p>
                 </div>
               </div>
             )}
@@ -96,44 +105,38 @@ const EditSectionMenu = ({
   return (
     <div
       ref={editSectionMenuRef}
-      className="absolute -left-32 top-9 z-20 flex w-48 flex-col bg-white shadow-[1px_2px_14px_1px_rgba(30,30,30,0.22)]"
+      className="absolute -left-32 top-9 z-20 flex w-48 flex-col rounded-md border bg-popover shadow-md"
     >
       {isRsvpSection ? (
         <>
           <div
-            className={`flex cursor-pointer items-center gap-3 border-b p-4 hover:underline text-${sharedStyles.primaryColor}`}
+            className="flex cursor-pointer items-center gap-3 border-b p-4 text-foreground transition-colors hover:bg-muted/50"
             onClick={() => setShowRsvpSettings?.(true)}
           >
-            <BsPencil size={20} color={sharedStyles.primaryColorHex} />
-            <p className="text-lg">Edit Form</p>
+            <BsPencil size={16} className="text-primary" />
+            <p className="text-sm">Edit Form</p>
+          </div>
+          <div className="flex cursor-pointer items-center gap-3 border-b p-4 text-foreground transition-colors hover:bg-muted/50">
+            <LiaEyeSlash size={16} className="text-primary" />
+            <p className="text-sm">Hide Page</p>
           </div>
           <div
-            className={`flex cursor-pointer items-center gap-3 border-b p-4 hover:underline text-${sharedStyles.primaryColor}`}
-          >
-            <LiaEyeSlash size={20} color={sharedStyles.primaryColorHex} />
-            <p className="text-lg">Hide Page</p>
-          </div>
-          <div
-            className={`flex cursor-pointer items-center gap-3 p-4 hover:underline text-${sharedStyles.primaryColor}`}
+            className="flex cursor-pointer items-center gap-3 p-4 text-foreground transition-colors hover:bg-muted/50"
             onClick={toggleEditRsvpSettingsForm}
           >
-            <FaCog size={20} color={sharedStyles.primaryColorHex} />
-            <p className="text-lg">RSVP Settings</p>
+            <FaCog size={16} className="text-primary" />
+            <p className="text-sm">RSVP Settings</p>
           </div>
         </>
       ) : (
         <>
-          <div
-            className={`flex cursor-pointer items-center gap-3 border-b p-4 hover:underline text-${sharedStyles.primaryColor}`}
-          >
-            <LiaEyeSlash size={20} color={sharedStyles.primaryColorHex} />
-            <p className="text-lg">Hide Page</p>
+          <div className="flex cursor-pointer items-center gap-3 border-b p-4 text-foreground transition-colors hover:bg-muted/50">
+            <LiaEyeSlash size={16} className="text-primary" />
+            <p className="text-sm">Hide Page</p>
           </div>
-          <div
-            className={`flex cursor-pointer items-center gap-3 p-4 hover:underline text-${sharedStyles.primaryColor}`}
-          >
-            <BsPencil size={20} color={sharedStyles.primaryColorHex} />
-            <p className="text-lg">Rename Page</p>
+          <div className="flex cursor-pointer items-center gap-3 p-4 text-foreground transition-colors hover:bg-muted/50">
+            <BsPencil size={16} className="text-primary" />
+            <p className="text-sm">Rename Page</p>
           </div>
         </>
       )}

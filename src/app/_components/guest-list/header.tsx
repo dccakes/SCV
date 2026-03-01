@@ -6,7 +6,7 @@ export default function GuestHeader() {
     <section>
       <div className={`pb-5 pt-10 ${sharedStyles.desktopPaddingSidesGuestList}`}>
         <div className="flex justify-between">
-          <h1 className="text-3xl font-bold">Your Guest List</h1>
+          <h1 className="font-serif text-3xl font-bold">Your Guest List</h1>
           <div>
             <h3 className="mb-4 text-sm uppercase tracking-wide text-muted-foreground">
               Simplify Guest Communication

@@ -43,7 +43,7 @@ export function VendorCard({ vendor, latestQuotePrice, onViewDetails, onDeleted 
     <div className="flex items-center justify-between rounded-lg border bg-white px-4 py-3 shadow-sm">
       <div className="flex flex-col gap-1">
         <button
-          className="text-left text-sm font-semibold text-gray-800 hover:text-pink-500"
+          className="text-left text-sm font-semibold text-foreground hover:text-primary"
           onClick={() => onViewDetails(vendor.id)}
         >
           {vendor.name}

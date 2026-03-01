@@ -41,7 +41,7 @@ export function VendorCategorySection({
         <Button
           size="sm"
           variant="outline"
-          className="h-7 border-pink-300 text-xs text-pink-500 hover:bg-pink-50"
+          className="h-7 border-primary/30 text-xs text-primary hover:bg-primary/10"
           onClick={() => setShowAddForm(true)}
         >
           + Add Vendor

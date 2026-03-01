@@ -218,7 +218,7 @@ export function VendorForm({ defaultCategory, vendor, onSuccess, onCancel }: Ven
         <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isPending} className="bg-pink-400 hover:bg-pink-500">
+        <Button type="submit" disabled={isPending} className="bg-primary hover:bg-primary/90 text-primary-foreground">
           {isPending ? 'Saving…' : isEditing ? 'Save Changes' : 'Add Vendor'}
         </Button>
       </div>

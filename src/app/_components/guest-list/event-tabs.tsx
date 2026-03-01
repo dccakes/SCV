@@ -51,7 +51,7 @@ export default function EventsTabs({ events, selectedEventId }: EventsTabsProps)
           + New Event
         </Button>
       </ul>
-      <hr className="relative -left-20 bottom-0 w-screen border" />
+      <div className="border-t border-border" />
     </>
   )
 }

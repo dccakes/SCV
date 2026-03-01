@@ -12,10 +12,10 @@ type RegistrySetupProps = {
 
 export default function RegistrySetup({ setShowRegistrySetup }: RegistrySetupProps) {
   return (
-    <section className="py-10">
-      <div className="flex">
+    <section className="my-6 rounded-xl border bg-muted/30 px-6 py-8">
+      <div className="flex items-start gap-6">
         <Image alt="registry gifts" src={PresentsImage} width="130" height="130" priority={true} />
-        <div className="ml-10 flex flex-col">
+        <div className="flex flex-col">
           <h2 className="text-2xl font-semibold">Let&apos;s set up your registry</h2>
           <p className="my-5">
             Share your wish list with guests by linking an existing registry or starting a new one.

@@ -96,7 +96,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                     href={vendorData.website}
                     target="_blank"
                     rel="noreferrer"
-                    className="truncate text-pink-500 hover:underline"
+                    className="truncate text-primary hover:underline"
                   >
                     {vendorData.website}
                   </a>
@@ -128,7 +128,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                       <span className="text-gray-500">Email</span>
                       <a
                         href={`mailto:${vendorData.contactEmail}`}
-                        className="text-pink-500 hover:underline"
+                        className="text-primary hover:underline"
                       >
                         {vendorData.contactEmail}
                       </a>
