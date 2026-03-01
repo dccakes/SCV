@@ -8,7 +8,7 @@
  */
 
 import { format } from 'date-fns'
-import { Calendar, MapPin, Plus } from 'lucide-react'
+import { Calendar, Loader2, MapPin, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -17,6 +17,16 @@ import {
   transformToServerInput,
 } from '~/app/_components/forms/event/event-form.schema'
 import { ModernEventForm } from '~/app/_components/forms/event/modern-event-form'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '~/components/ui/alert-dialog'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
@@ -26,6 +36,7 @@ import { api } from '~/trpc/react'
 export function EventsPageClient() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState<EventWithStats | undefined>(undefined)
+  const [deletingEvent, setDeletingEvent] = useState<EventWithStats | undefined>(undefined)
   const utils = api.useUtils()
 
   // Fetch events with RSVP statistics
@@ -58,6 +69,21 @@ export function EventsPageClient() {
     },
     onError: (error) => {
       toast.error('Error updating event', {
+        description: error.message,
+      })
+    },
+  })
+
+  const deleteEvent = api.event.delete.useMutation({
+    onSuccess: async () => {
+      await utils.event.getAllByUserIdWithStats.invalidate()
+      toast.success('Event deleted', {
+        description: 'Your event has been deleted successfully.',
+      })
+      setDeletingEvent(undefined)
+    },
+    onError: (error) => {
+      toast.error('Error deleting event', {
         description: error.message,
       })
     },
@@ -128,7 +154,12 @@ export function EventsPageClient() {
 
       <div className="grid gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
         {events.map((event) => (
-          <EventCard key={event.id} event={event} onEdit={() => setEditingEvent(event)} />
+          <EventCard
+            key={event.id}
+            event={event}
+            onEdit={() => setEditingEvent(event)}
+            onDelete={() => setDeletingEvent(event)}
+          />
         ))}
       </div>
 
@@ -146,6 +177,33 @@ export function EventsPageClient() {
         event={editingEvent}
         isSubmitting={updateEvent.isPending}
       />
+
+      <AlertDialog open={!!deletingEvent} onOpenChange={(open) => !open && setDeletingEvent(undefined)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Event?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete &quot;{deletingEvent?.name}&quot; and all associated invitations, questions, and responses. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteEvent.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                if (deletingEvent) {
+                  deleteEvent.mutate({ eventId: deletingEvent.id })
+                }
+              }}
+              disabled={deleteEvent.isPending}
+              className="flex items-center gap-2 bg-red-600 hover:bg-red-700"
+            >
+              {deleteEvent.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              {deleteEvent.isPending ? 'Deleting...' : 'Delete Event'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
@@ -153,9 +211,10 @@ export function EventsPageClient() {
 type EventCardProps = Readonly<{
   event: EventWithStats
   onEdit: () => void
+  onDelete: () => void
 }>
 
-function EventCard({ event, onEdit }: EventCardProps) {
+function EventCard({ event, onEdit, onDelete }: EventCardProps) {
   const { guestResponses } = event
   const totalGuests = guestResponses.attending + guestResponses.invited + guestResponses.declined + guestResponses.notInvited
   const totalInvited = guestResponses.attending + guestResponses.invited + guestResponses.declined
@@ -232,6 +291,14 @@ function EventCard({ event, onEdit }: EventCardProps) {
             </Button>
             <Button variant="ghost" size="sm" className="text-xs md:text-sm" onClick={onEdit}>
               Edit
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-red-600 hover:text-red-700 md:text-sm"
+              onClick={onDelete}
+            >
+              Delete
             </Button>
           </div>
         </div>
