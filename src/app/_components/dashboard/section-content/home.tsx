@@ -4,6 +4,7 @@ import { BsPencil } from 'react-icons/bs'
 import { CiLocationOn } from 'react-icons/ci'
 import { TfiNewWindow } from 'react-icons/tfi'
 
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { useToggleEventForm } from '~/app/_components/contexts/event-form-context'
 import CoverPhotoImage from '~/app/_components/dashboard/cover-photo-image'
 import CoverPhotoUploader from '~/app/_components/dashboard/cover-photo-uploader'
@@ -58,11 +59,11 @@ export default function HomeContent({
       </div>
       <div className="border-b py-5">
         <div className="px-10">
-          <h2 className="my-3 text-xl font-semibold">
+          <h2 className="my-3 font-serif text-xl font-semibold">
             {dashboardData?.weddingData?.groomFirstName} &{' '}
             {dashboardData?.weddingData?.brideFirstName}
           </h2>
-          <div className="flex gap-1 text-neutral-500">
+          <div className="flex gap-1 text-muted-foreground">
             <AiOutlineCalendar size={20} />
             {dashboardData?.weddingData?.date?.standardFormat ? (
               <span>{dashboardData?.weddingData?.date?.standardFormat}</span>
@@ -79,7 +80,7 @@ export default function HomeContent({
           <div className="mt-1 flex gap-1">
             <CiLocationOn size={20} />
             <span
-              className={`cursor-pointer text-${sharedStyles.primaryColor}`}
+              className="cursor-pointer text-primary"
               onClick={toggleEventForm}
             >
               Add your wedding location
@@ -92,11 +93,12 @@ export default function HomeContent({
         <div className="grid auto-rows-[minmax(min-content,150px)] grid-cols-3 gap-5">
           {events?.map((event) => {
             return (
-              <div key={event.id} className="relative border p-6">
-                <button className="absolute right-5 top-5" onClick={() => handleEditEvent(event)}>
-                  <BsPencil size={20} color={sharedStyles.primaryColorHex} />
+              <Card key={event.id} className="relative transition-shadow hover:shadow-md">
+                <button className="absolute right-4 top-4 text-muted-foreground hover:text-primary transition-colors" onClick={() => handleEditEvent(event)}>
+                  <BsPencil size={16} className="text-primary" />
                 </button>
-                <h3 className="mb-4 pr-5 text-lg font-semibold">{event.name}</h3>
+                <CardHeader className="pb-2"><CardTitle className="font-serif text-base pr-6">{event.name}</CardTitle></CardHeader>
+                <CardContent className="space-y-2">
                 <div className="flex flex-col gap-3 text-sm font-light">
                   <div className="flex items-center gap-2 text-xs">
                     <AiOutlineCalendar size={20} />
@@ -136,7 +138,8 @@ export default function HomeContent({
                     )}
                   </div>
                 </div>
-              </div>
+                </CardContent>
+              </Card>
             )
           })}
           <div
@@ -144,11 +147,11 @@ export default function HomeContent({
               setPrefillEvent(undefined)
               toggleEventForm()
             }}
-            className="flex cursor-pointer items-center justify-center border transition-colors duration-300 ease-in-out hover:bg-gray-100"
+            className="flex min-h-[150px] cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-border transition-colors hover:border-primary hover:bg-primary/5"
           >
             <div className="flex">
-              <AiOutlinePlusCircle size={25} color={sharedStyles.primaryColorHex} />
-              <span className={`pl-2 text-${sharedStyles.primaryColor}`}>Add Event</span>
+              <AiOutlinePlusCircle size={22} className="text-primary" />
+              <span className="pl-2 text-sm text-primary">Add Event</span>
             </div>
           </div>
         </div>

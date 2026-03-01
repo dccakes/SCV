@@ -3,7 +3,7 @@ export const LoadingSpinner = (props: { size?: number; useAccentColor?: boolean 
     <div role="status" className="flex justify-center">
       <svg
         aria-hidden="true"
-        className={`animate-spin ${props.useAccentColor ? 'fill-pink-200 text-slate-400' : 'fill-slate-300 text-pink-400'} dark:text-slate-600`}
+        className={`animate-spin ${props.useAccentColor ? 'fill-accent/30 text-muted-foreground' : 'fill-muted text-primary'} dark:text-slate-600`}
         viewBox="0 0 100 101"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
