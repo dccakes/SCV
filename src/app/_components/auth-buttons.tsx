@@ -3,25 +3,20 @@
 import Link from 'next/link'
 
 import { signOut } from '~/lib/auth-client'
+import { Button } from '~/components/ui/button'
 
 export function SignInButton() {
   return (
-    <Link
-      href="/auth/signin"
-      className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-    >
-      Sign In
-    </Link>
+    <Button asChild size="sm">
+      <Link href="/auth/signin">Sign In</Link>
+    </Button>
   )
 }
 
 export function SignOutButton() {
   return (
-    <button
-      onClick={() => signOut()}
-      className="rounded-md bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
-    >
+    <Button variant="outline" size="sm" onClick={() => signOut()}>
       Sign Out
-    </button>
+    </Button>
   )
 }

@@ -5,8 +5,9 @@ import { useEffect, useState } from 'react'
 import { type Dispatch, type SetStateAction } from 'react'
 import { AiOutlineHome } from 'react-icons/ai'
 import { CiMail } from 'react-icons/ci'
-import { FaSort } from 'react-icons/fa'
+import { ArrowUpDown } from 'lucide-react'
 import { HiOutlinePhone } from 'react-icons/hi2'
+import { toast } from 'sonner'
 
 import { useToggleGuestForm } from '~/app/_components/contexts/guest-form-context'
 import { type HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
@@ -15,6 +16,7 @@ import { sharedStyles } from '~/app/utils/shared-styles'
 import { type Event, type FormInvites, type Guest } from '~/app/utils/shared-types'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader } from '~/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import { type HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 import { api } from '~/trpc/react'
 
@@ -82,11 +84,11 @@ export default function GuestTable({
     <>
       <div className="mb-4 flex items-center gap-2">
         <Button variant="outline" size="sm" onClick={() => sortByName()}>
-          <FaSort className="mr-2 h-3 w-3" />
+          <ArrowUpDown className="mr-2 h-3 w-3" />
           Sort by Name
         </Button>
         <Button variant="outline" size="sm" onClick={() => sortByParty()}>
-          <FaSort className="mr-2 h-3 w-3" />
+          <ArrowUpDown className="mr-2 h-3 w-3" />
           Sort by Party Size
         </Button>
       </div>
@@ -182,7 +184,7 @@ const DefaultCard = ({ household, events, setPrefillHousehold }: DefaultCardProp
                     {guest.firstName} {guest.lastName}
                   </span>
                   {guest.isPrimaryContact && (
-                    <span className="inline-flex items-center rounded-md bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                    <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
                       Primary
                     </span>
                   )}
@@ -237,7 +239,7 @@ const DefaultCard = ({ household, events, setPrefillHousehold }: DefaultCardProp
         ))}
 
         {household.notes && (
-          <div className="mt-2 rounded-md border border-yellow-200 bg-yellow-50 p-2 text-sm dark:border-yellow-900 dark:bg-yellow-950">
+          <div className="mt-2 rounded-md border border-border bg-muted/40 p-2 text-sm">
             <span className="font-medium">Notes:</span> {household.notes}
           </div>
         )}
@@ -262,7 +264,7 @@ const SingleEventCard = ({
   const updateGift = api.gift.update.useMutation({
     onSuccess: () => router.refresh(),
     onError: () => {
-      window.alert('Failed to update gift! Please try again later.')
+      toast.error('Failed to update gift. Please try again.')
     },
   })
 
@@ -327,7 +329,7 @@ const SingleEventCard = ({
                     {guest.firstName} {guest.lastName}
                   </span>
                   {guest.isPrimaryContact && (
-                    <span className="inline-flex items-center rounded-md bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                    <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
                       Primary
                     </span>
                   )}
@@ -387,7 +389,7 @@ const SingleEventCard = ({
 
         {/* Gift section */}
         {selectedEventGift && (
-          <div className="rounded-md border border-purple-200 bg-purple-50 p-3 dark:border-purple-900 dark:bg-purple-950">
+          <div className="rounded-md border border-border bg-accent/10 p-3">
             <div className="flex items-center justify-between">
               <div className="text-sm">
                 <span className="font-medium">Gift:</span>{' '}
@@ -421,7 +423,7 @@ const SingleEventCard = ({
         )}
 
         {household.notes && (
-          <div className="rounded-md border border-yellow-200 bg-yellow-50 p-2 text-sm dark:border-yellow-900 dark:bg-yellow-950">
+          <div className="rounded-md border border-border bg-muted/40 p-2 text-sm">
             <span className="font-medium">Notes:</span> {household.notes}
           </div>
         )}
@@ -442,7 +444,7 @@ const InvitationDropdown = ({ guest, event, rsvp }: InvitationDropdownProps) => 
   const updateInvitation = api.invitation.update.useMutation({
     onSuccess: () => router.refresh(),
     onError: () => {
-      window.alert('Failed to update invitation! Please try again later.')
+      toast.error('Failed to update invitation. Please try again.')
     },
   })
 
@@ -456,25 +458,29 @@ const InvitationDropdown = ({ guest, event, rsvp }: InvitationDropdownProps) => 
           <LoadingSpinner />
         </div>
       ) : (
-        <select
-          name="guestRSVP"
+        <Select
           value={rsvp}
-          id={`guest-rsvp-${guest.id}-${event.id}`}
-          className="pr-3 font-light tracking-tight"
-          onClick={(e) => e.stopPropagation()}
-          onChange={(e) => {
+          onValueChange={(value) => {
             updateInvitation.mutate({
               guestId: guest.id,
               eventId: event.id,
-              rsvp: e.target.value,
+              rsvp: value,
             })
           }}
         >
-          <option value="Not Invited">Not Invited</option>
-          <option value="Invited">Invited</option>
-          <option value="Attending">Attending</option>
-          <option value="Declined">Declined</option>
-        </select>
+          <SelectTrigger
+            className="h-7 w-36 text-xs"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent onClick={(e) => e.stopPropagation()}>
+            <SelectItem value="Not Invited">Not Invited</SelectItem>
+            <SelectItem value="Invited">Invited</SelectItem>
+            <SelectItem value="Attending">Attending</SelectItem>
+            <SelectItem value="Declined">Declined</SelectItem>
+          </SelectContent>
+        </Select>
       )}
     </div>
   )

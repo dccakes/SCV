@@ -47,7 +47,7 @@ export default function RsvpContent({ events, totalGuests, generalQuestions }: R
           return (
             <div key={event.id} className="flex items-center gap-4 border-b p-10">
               <h3 className="text-xl font-semibold">{event.name}</h3>
-              <span className="bg-gray-200 px-2 py-1 text-xs font-bold text-gray-600">
+              <span className="rounded-full bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
                 Not Collecting RSVPs
               </span>
             </div>
@@ -74,9 +74,9 @@ export default function RsvpContent({ events, totalGuests, generalQuestions }: R
           <QuestionCards questions={generalQuestions} />
         </div>
       </div>
-      <div className="mt-16 flex cursor-pointer items-center gap-2 border-t px-10 py-6 text-blue-600">
+      <div className="mt-16 flex items-center gap-2 border-t px-10 py-6">
         <IoMdDownload size={20} />
-        <button type="button">Download All Responses</button>
+        <button type="button" className="text-sm text-primary hover:underline">Download All Responses</button>
       </div>
     </div>
   )
@@ -146,7 +146,7 @@ const AttendanceChart = ({ event, numInvitedGuests }: AttendanceChartProps) => {
           </div>
         </div>
       </div>
-      <Link href={`/guest-list?event=${event.id}`} className="cursor-pointer text-blue-600">
+      <Link href={`/guest-list?event=${event.id}`} className="text-sm text-primary hover:underline">
         Manage Guest List
       </Link>
     </div>
@@ -164,7 +164,7 @@ const QuestionCards = ({ questions }: { questions: Question[] }) => {
             ) : (
               <OptionQuestionCard question={question} />
             )}
-            <Link href="/" className="cursor-pointer text-blue-600">
+            <Link href="/" className="text-sm text-primary hover:underline">
               Download Responses
             </Link>
           </div>
