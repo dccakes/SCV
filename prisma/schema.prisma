@@ -475,6 +475,7 @@ model Vendor {
 
   @@index([weddingId])
   @@index([weddingId, category])
+  @@index([weddingId, category, createdAt])
 }
 
 // Quotes submitted by a vendor for a wedding
@@ -483,7 +484,7 @@ model VendorQuote {
   vendorId  String
   vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
-  price     Decimal
+  price     Decimal  @db.Decimal(10, 2)
   quoteDate DateTime @db.Date
   notes     String?
 

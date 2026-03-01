@@ -30,7 +30,10 @@ export function QuoteForm({ vendorId, onSuccess, onCancel }: QuoteFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!price || !quoteDate) return
+    if (!price || !quoteDate) {
+      toast.error('Price and date are required')
+      return
+    }
     addQuote.mutate({
       vendorId,
       price: parseFloat(price),

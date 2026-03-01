@@ -7,7 +7,7 @@ import { VendorCard } from '~/app/_components/vendor/vendor-card'
 import { VendorForm } from '~/app/_components/vendor/vendor-form'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
-import { type Vendor } from '~/server/domains/vendor/vendor.types'
+import { type VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
 
 const CATEGORY_LABELS: Record<VendorCategory, string> = {
   VENUE: 'Venue',
@@ -21,7 +21,7 @@ const CATEGORY_LABELS: Record<VendorCategory, string> = {
 
 type VendorCategorySectionProps = {
   category: VendorCategory
-  vendors: Vendor[]
+  vendors: VendorWithQuotes[]
   onViewDetails: (vendorId: string) => void
   onRefresh: () => void
 }
@@ -57,7 +57,7 @@ export function VendorCategorySection({
           <VendorCard
             key={vendor.id}
             vendor={vendor}
-            latestQuotePrice={null}
+            latestQuotePrice={vendor.quotes[0]?.price ?? null}
             onViewDetails={onViewDetails}
             onDeleted={onRefresh}
           />

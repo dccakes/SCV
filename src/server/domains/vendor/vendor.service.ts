@@ -23,8 +23,15 @@ export class VendorService {
   /**
    * Get all vendors for a wedding, optionally filtered by category
    */
-  async getVendors(weddingId: string, category?: VendorCategory): Promise<Vendor[]> {
+  async getVendors(weddingId: string, category?: VendorCategory): Promise<VendorWithQuotes[]> {
     return this.vendorRepository.findAllByWeddingId(weddingId, category)
+  }
+
+  /**
+   * Get all vendors for a user's wedding in a single query (no separate weddingId lookup)
+   */
+  async getVendorsByUserId(userId: string, category?: VendorCategory): Promise<VendorWithQuotes[]> {
+    return this.vendorRepository.findAllByUserId(userId, category)
   }
 
   /**

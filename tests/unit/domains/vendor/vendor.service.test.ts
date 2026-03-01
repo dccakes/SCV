@@ -16,6 +16,7 @@ import {
   mockDelete,
   mockDeleteQuote,
   mockFindAllByWeddingId,
+  mockFindAllByUserId,
   mockFindByIdWithQuotes,
   mockQuoteBelongsToVendor,
   mockUpdate,
@@ -29,6 +30,7 @@ import {
 import { VendorService } from '~/server/domains/vendor/vendor.service'
 
 const mockFindAllByWeddingIdFn = mockFindAllByWeddingId as jest.Mock
+const mockFindAllByUserIdFn = mockFindAllByUserId as jest.Mock
 const mockFindByIdWithQuotesFn = mockFindByIdWithQuotes as jest.Mock
 const mockCreateFn = mockCreate as jest.Mock
 const mockUpdateFn = mockUpdate as jest.Mock
@@ -53,20 +55,57 @@ describe('VendorService', () => {
 
   describe('getVendors', () => {
     it('should return all vendors for a wedding', async () => {
-      mockFindAllByWeddingIdFn.mockResolvedValue([mockVendor])
+      mockFindAllByWeddingIdFn.mockResolvedValue([mockVendorWithQuotes])
 
       const result = await vendorService.getVendors('wedding-123')
 
-      expect(result).toEqual([mockVendor])
+      expect(result).toEqual([mockVendorWithQuotes])
       expect(mockFindAllByWeddingIdFn).toHaveBeenCalledWith('wedding-123', undefined)
     })
 
     it('should filter by category when provided', async () => {
-      mockFindAllByWeddingIdFn.mockResolvedValue([mockVendor])
+      mockFindAllByWeddingIdFn.mockResolvedValue([mockVendorWithQuotes])
 
       await vendorService.getVendors('wedding-123', VendorCategory.PHOTOGRAPHER)
 
       expect(mockFindAllByWeddingIdFn).toHaveBeenCalledWith('wedding-123', VendorCategory.PHOTOGRAPHER)
+    })
+
+    it('should return empty array when no vendors exist', async () => {
+      mockFindAllByWeddingIdFn.mockResolvedValue([])
+
+      const result = await vendorService.getVendors('wedding-123')
+
+      expect(result).toEqual([])
+    })
+  })
+
+  // ─── getVendorsByUserId ────────────────────────────────────────────────────
+
+  describe('getVendorsByUserId', () => {
+    it('should return vendors via userId JOIN without separate weddingId lookup', async () => {
+      mockFindAllByUserIdFn.mockResolvedValue([mockVendorWithQuotes])
+
+      const result = await vendorService.getVendorsByUserId('user-123')
+
+      expect(result).toEqual([mockVendorWithQuotes])
+      expect(mockFindAllByUserIdFn).toHaveBeenCalledWith('user-123', undefined)
+    })
+
+    it('should pass category filter through', async () => {
+      mockFindAllByUserIdFn.mockResolvedValue([mockVendorWithQuotes])
+
+      await vendorService.getVendorsByUserId('user-123', VendorCategory.VENUE)
+
+      expect(mockFindAllByUserIdFn).toHaveBeenCalledWith('user-123', VendorCategory.VENUE)
+    })
+
+    it('should return empty array when user has no vendors', async () => {
+      mockFindAllByUserIdFn.mockResolvedValue([])
+
+      const result = await vendorService.getVendorsByUserId('user-123')
+
+      expect(result).toEqual([])
     })
   })
 
@@ -294,6 +333,42 @@ describe('VendorService', () => {
       await expect(
         vendorService.deleteQuote('quote-123', 'vendor-123', 'wedding-123')
       ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+  })
+
+  // ─── DB error propagation ──────────────────────────────────────────────────
+
+  describe('DB error propagation', () => {
+    it('deleteVendor should propagate repository errors', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockDeleteFn.mockRejectedValue(new Error('DB connection error'))
+
+      await expect(vendorService.deleteVendor('vendor-123', 'wedding-123')).rejects.toThrow(
+        'DB connection error'
+      )
+    })
+
+    it('addQuote should propagate repository errors', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockCreateQuoteFn.mockRejectedValue(new Error('DB constraint violation'))
+
+      await expect(
+        vendorService.addQuote('vendor-123', 'wedding-123', {
+          vendorId: 'vendor-123',
+          price: 500,
+          quoteDate: '2026-03-01',
+        })
+      ).rejects.toThrow('DB constraint violation')
+    })
+
+    it('deleteQuote should propagate repository errors', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockQuoteBelongsToVendorFn.mockResolvedValue(true)
+      mockDeleteQuoteFn.mockRejectedValue(new Error('Record not found'))
+
+      await expect(
+        vendorService.deleteQuote('quote-123', 'vendor-123', 'wedding-123')
+      ).rejects.toThrow('Record not found')
     })
   })
 })

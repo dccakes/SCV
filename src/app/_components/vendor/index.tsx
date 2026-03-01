@@ -5,7 +5,7 @@ import { useState } from 'react'
 
 import { VendorCategorySection } from '~/app/_components/vendor/vendor-category-section'
 import { VendorDetailPanel } from '~/app/_components/vendor/vendor-detail-panel'
-import { type Vendor, type VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
+import { type VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
 
 const CATEGORY_ORDER: VendorCategory[] = [
@@ -19,7 +19,7 @@ const CATEGORY_ORDER: VendorCategory[] = [
 ]
 
 type VendorListProps = {
-  initialVendors: Vendor[]
+  initialVendors: VendorWithQuotes[]
 }
 
 export default function VendorList({ initialVendors }: VendorListProps) {
@@ -48,7 +48,7 @@ export default function VendorList({ initialVendors }: VendorListProps) {
     setDetailVendor(null)
   }
 
-  const vendorsByCategory = (category: VendorCategory): Vendor[] =>
+  const vendorsByCategory = (category: VendorCategory): VendorWithQuotes[] =>
     (vendors ?? []).filter((v) => v.category === category)
 
   return (

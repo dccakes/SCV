@@ -5,7 +5,6 @@
  */
 
 import { VendorCategory, VendorStatus } from '@prisma/client'
-import { Prisma } from '@prisma/client'
 
 import { type Vendor, type VendorQuote, type VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
 
@@ -28,7 +27,7 @@ export const mockVendor: Vendor = {
 export const mockQuote: VendorQuote = {
   id: 'quote-123',
   vendorId: 'vendor-123',
-  price: new Prisma.Decimal(2500.00),
+  price: 2500,
   quoteDate: new Date('2026-02-01'),
   notes: 'Full day coverage',
   createdAt: new Date('2026-01-15'),
@@ -41,6 +40,7 @@ export const mockVendorWithQuotes: VendorWithQuotes = {
 }
 
 export const mockFindAllByWeddingId = jest.fn()
+export const mockFindAllByUserId = jest.fn()
 export const mockFindByIdWithQuotes = jest.fn()
 export const mockCreate = jest.fn()
 export const mockUpdate = jest.fn()
@@ -54,6 +54,7 @@ export const mockQuoteBelongsToVendor = jest.fn()
 
 export const VendorRepository = jest.fn().mockImplementation(() => ({
   findAllByWeddingId: mockFindAllByWeddingId,
+  findAllByUserId: mockFindAllByUserId,
   findByIdWithQuotes: mockFindByIdWithQuotes,
   create: mockCreate,
   update: mockUpdate,
@@ -68,6 +69,7 @@ export const VendorRepository = jest.fn().mockImplementation(() => ({
 
 export const resetMocks = (): void => {
   mockFindAllByWeddingId.mockReset()
+  mockFindAllByUserId.mockReset()
   mockFindByIdWithQuotes.mockReset()
   mockCreate.mockReset()
   mockUpdate.mockReset()

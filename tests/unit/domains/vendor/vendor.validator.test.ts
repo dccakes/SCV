@@ -100,6 +100,42 @@ describe('createVendorSchema', () => {
       expect(result.success).toBe(true)
     }
   })
+
+  it('should reject location longer than 200 characters', () => {
+    const result = createVendorSchema.safeParse({
+      category: 'VENUE',
+      name: 'Test',
+      location: 'A'.repeat(201),
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('should reject instagram longer than 100 characters', () => {
+    const result = createVendorSchema.safeParse({
+      category: 'VENUE',
+      name: 'Test',
+      instagram: '@' + 'a'.repeat(100),
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('should reject contactName longer than 100 characters', () => {
+    const result = createVendorSchema.safeParse({
+      category: 'VENUE',
+      name: 'Test',
+      contactName: 'A'.repeat(101),
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('should reject contactPhone longer than 30 characters', () => {
+    const result = createVendorSchema.safeParse({
+      category: 'VENUE',
+      name: 'Test',
+      contactPhone: '1'.repeat(31),
+    })
+    expect(result.success).toBe(false)
+  })
 })
 
 describe('updateVendorSchema', () => {
@@ -212,6 +248,42 @@ describe('createQuoteSchema', () => {
 
   it('should require quoteDate', () => {
     const result = createQuoteSchema.safeParse({ vendorId: 'vendor-123', price: 500 })
+    expect(result.success).toBe(false)
+  })
+
+  it('should reject quoteDate not in YYYY-MM-DD format', () => {
+    const invalid = ['03/01/2026', '2026/03/01', '01-03-2026', 'March 1 2026', '2026-3-1']
+    for (const date of invalid) {
+      const result = createQuoteSchema.safeParse({ vendorId: 'vendor-123', price: 500, quoteDate: date })
+      expect(result.success).toBe(false)
+    }
+  })
+
+  it('should accept quoteDate in YYYY-MM-DD format', () => {
+    const result = createQuoteSchema.safeParse({
+      vendorId: 'vendor-123',
+      price: 500,
+      quoteDate: '2026-03-01',
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('should reject price above $10,000,000', () => {
+    const result = createQuoteSchema.safeParse({
+      vendorId: 'vendor-123',
+      price: 10_000_001,
+      quoteDate: '2026-03-01',
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('should reject notes longer than 5000 characters', () => {
+    const result = createQuoteSchema.safeParse({
+      vendorId: 'vendor-123',
+      price: 500,
+      quoteDate: '2026-03-01',
+      notes: 'A'.repeat(5001),
+    })
     expect(result.success).toBe(false)
   })
 })
