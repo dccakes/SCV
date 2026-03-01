@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { headers } from 'next/headers'
 
 import { SignOutButton } from '~/app/_components/auth-buttons'
@@ -20,7 +21,7 @@ export default async function Navbar() {
     >
       <div className={`flex h-14 items-center justify-between ${sharedStyles.desktopPaddingSides}`}>
         <div className="flex items-center gap-8">
-          <span className="font-serif text-lg font-semibold tracking-wide text-primary">OSWP</span>
+          <Link href="/" className="font-serif text-lg font-semibold tracking-wide text-primary">OSWP</Link>
           <NavLinks />
         </div>
         <div className="flex items-center gap-2">
