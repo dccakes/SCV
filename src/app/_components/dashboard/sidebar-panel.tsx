@@ -28,6 +28,15 @@ export default function SidebarPanel({ setShowWebsiteSettings }: SidebarPanelPro
         </Link>
       </div>
       <div className="flex items-end justify-between border-b py-8">
+        <h2 className="text-xl font-semibold">Vendors</h2>
+        <Link
+          href="/vendors"
+          className={`text-${sharedStyles.primaryColor} cursor-pointer text-lg hover:underline`}
+        >
+          Manage
+        </Link>
+      </div>
+      <div className="flex items-end justify-between border-b py-8">
         <h2 className="text-xl font-semibold">Privacy Settings</h2>
         <span
           className={`text-${sharedStyles.primaryColor} cursor-pointer text-lg hover:underline`}

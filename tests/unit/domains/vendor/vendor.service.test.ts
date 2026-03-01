@@ -1,0 +1,299 @@
+/**
+ * Tests for Vendor Domain Service
+ */
+
+import { TRPCError } from '@trpc/server'
+import { VendorCategory, VendorStatus } from '@prisma/client'
+
+jest.mock('~/server/domains/vendor/vendor.repository')
+
+// @ts-expect-error - Importing mock functions from mocked module
+import {
+  VendorRepository,
+  mockBelongsToWedding,
+  mockCreate,
+  mockCreateQuote,
+  mockDelete,
+  mockDeleteQuote,
+  mockFindAllByWeddingId,
+  mockFindByIdWithQuotes,
+  mockQuoteBelongsToVendor,
+  mockUpdate,
+  mockUpdateQuote,
+  mockUpdateStatus,
+  mockVendor,
+  mockVendorWithQuotes,
+  mockQuote,
+  resetMocks,
+} from '~/server/domains/vendor/vendor.repository'
+import { VendorService } from '~/server/domains/vendor/vendor.service'
+
+const mockFindAllByWeddingIdFn = mockFindAllByWeddingId as jest.Mock
+const mockFindByIdWithQuotesFn = mockFindByIdWithQuotes as jest.Mock
+const mockCreateFn = mockCreate as jest.Mock
+const mockUpdateFn = mockUpdate as jest.Mock
+const mockUpdateStatusFn = mockUpdateStatus as jest.Mock
+const mockDeleteFn = mockDelete as jest.Mock
+const mockBelongsToWeddingFn = mockBelongsToWedding as jest.Mock
+const mockCreateQuoteFn = mockCreateQuote as jest.Mock
+const mockUpdateQuoteFn = mockUpdateQuote as jest.Mock
+const mockDeleteQuoteFn = mockDeleteQuote as jest.Mock
+const mockQuoteBelongsToVendorFn = mockQuoteBelongsToVendor as jest.Mock
+
+describe('VendorService', () => {
+  let vendorService: VendorService
+
+  beforeEach(() => {
+    resetMocks()
+    const mockRepository = new VendorRepository({})
+    vendorService = new VendorService(mockRepository)
+  })
+
+  // ─── getVendors ────────────────────────────────────────────────────────────
+
+  describe('getVendors', () => {
+    it('should return all vendors for a wedding', async () => {
+      mockFindAllByWeddingIdFn.mockResolvedValue([mockVendor])
+
+      const result = await vendorService.getVendors('wedding-123')
+
+      expect(result).toEqual([mockVendor])
+      expect(mockFindAllByWeddingIdFn).toHaveBeenCalledWith('wedding-123', undefined)
+    })
+
+    it('should filter by category when provided', async () => {
+      mockFindAllByWeddingIdFn.mockResolvedValue([mockVendor])
+
+      await vendorService.getVendors('wedding-123', VendorCategory.PHOTOGRAPHER)
+
+      expect(mockFindAllByWeddingIdFn).toHaveBeenCalledWith('wedding-123', VendorCategory.PHOTOGRAPHER)
+    })
+  })
+
+  // ─── getVendorWithQuotes ───────────────────────────────────────────────────
+
+  describe('getVendorWithQuotes', () => {
+    it('should return vendor with quotes when it belongs to the wedding', async () => {
+      mockFindByIdWithQuotesFn.mockResolvedValue(mockVendorWithQuotes)
+
+      const result = await vendorService.getVendorWithQuotes('vendor-123', 'wedding-123')
+
+      expect(result).toEqual(mockVendorWithQuotes)
+    })
+
+    it('should throw NOT_FOUND when vendor does not exist', async () => {
+      mockFindByIdWithQuotesFn.mockResolvedValue(null)
+
+      await expect(vendorService.getVendorWithQuotes('vendor-123', 'wedding-123')).rejects.toThrow(
+        TRPCError
+      )
+      await expect(
+        vendorService.getVendorWithQuotes('vendor-123', 'wedding-123')
+      ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+    })
+
+    it('should throw FORBIDDEN when vendor belongs to a different wedding', async () => {
+      mockFindByIdWithQuotesFn.mockResolvedValue(mockVendorWithQuotes)
+
+      await expect(
+        vendorService.getVendorWithQuotes('vendor-123', 'other-wedding')
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+  })
+
+  // ─── createVendor ──────────────────────────────────────────────────────────
+
+  describe('createVendor', () => {
+    it('should create a vendor successfully', async () => {
+      mockCreateFn.mockResolvedValue(mockVendor)
+
+      const result = await vendorService.createVendor('wedding-123', {
+        category: VendorCategory.PHOTOGRAPHER,
+        name: 'Alice Photos',
+      })
+
+      expect(result).toEqual(mockVendor)
+      expect(mockCreateFn).toHaveBeenCalledWith(
+        expect.objectContaining({ weddingId: 'wedding-123', name: 'Alice Photos' })
+      )
+    })
+  })
+
+  // ─── updateVendor ──────────────────────────────────────────────────────────
+
+  describe('updateVendor', () => {
+    it('should update vendor when it belongs to the wedding', async () => {
+      const updated = { ...mockVendor, name: 'Bob Photos' }
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockUpdateFn.mockResolvedValue(updated)
+
+      const result = await vendorService.updateVendor('vendor-123', 'wedding-123', {
+        vendorId: 'vendor-123',
+        name: 'Bob Photos',
+      })
+
+      expect(result.name).toBe('Bob Photos')
+    })
+
+    it('should throw FORBIDDEN when vendor does not belong to the wedding', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(false)
+
+      await expect(
+        vendorService.updateVendor('vendor-123', 'other-wedding', {
+          vendorId: 'vendor-123',
+          name: 'Test',
+        })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+  })
+
+  // ─── updateStatus ──────────────────────────────────────────────────────────
+
+  describe('updateStatus', () => {
+    it('should update vendor status when it belongs to the wedding', async () => {
+      const updated = { ...mockVendor, status: VendorStatus.SELECTED }
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockUpdateStatusFn.mockResolvedValue(updated)
+
+      const result = await vendorService.updateStatus('vendor-123', 'wedding-123', VendorStatus.SELECTED)
+
+      expect(result.status).toBe(VendorStatus.SELECTED)
+    })
+
+    it('should throw FORBIDDEN when vendor does not belong to the wedding', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(false)
+
+      await expect(
+        vendorService.updateStatus('vendor-123', 'other-wedding', VendorStatus.SELECTED)
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+  })
+
+  // ─── deleteVendor ──────────────────────────────────────────────────────────
+
+  describe('deleteVendor', () => {
+    it('should delete vendor when it belongs to the wedding', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockDeleteFn.mockResolvedValue(mockVendor)
+
+      const result = await vendorService.deleteVendor('vendor-123', 'wedding-123')
+
+      expect(result).toBe('vendor-123')
+      expect(mockDeleteFn).toHaveBeenCalledWith('vendor-123')
+    })
+
+    it('should throw FORBIDDEN when vendor does not belong to the wedding', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(false)
+
+      await expect(vendorService.deleteVendor('vendor-123', 'other-wedding')).rejects.toMatchObject({
+        code: 'FORBIDDEN',
+      })
+    })
+  })
+
+  // ─── addQuote ──────────────────────────────────────────────────────────────
+
+  describe('addQuote', () => {
+    it('should add quote when vendor belongs to the wedding', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockCreateQuoteFn.mockResolvedValue(mockQuote)
+
+      const result = await vendorService.addQuote('vendor-123', 'wedding-123', {
+        vendorId: 'vendor-123',
+        price: 2500,
+        quoteDate: '2026-02-01',
+        notes: 'Full day coverage',
+      })
+
+      expect(result).toEqual(mockQuote)
+      expect(mockCreateQuoteFn).toHaveBeenCalledWith(
+        expect.objectContaining({ vendorId: 'vendor-123' })
+      )
+    })
+
+    it('should throw FORBIDDEN when vendor does not belong to the wedding', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(false)
+
+      await expect(
+        vendorService.addQuote('vendor-123', 'other-wedding', {
+          vendorId: 'vendor-123',
+          price: 500,
+          quoteDate: '2026-03-01',
+        })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+  })
+
+  // ─── updateQuote ───────────────────────────────────────────────────────────
+
+  describe('updateQuote', () => {
+    it('should update quote when quote belongs to vendor and vendor belongs to wedding', async () => {
+      const updated = { ...mockQuote, notes: 'Updated notes' }
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockQuoteBelongsToVendorFn.mockResolvedValue(true)
+      mockUpdateQuoteFn.mockResolvedValue(updated)
+
+      const result = await vendorService.updateQuote('quote-123', 'vendor-123', 'wedding-123', {
+        quoteId: 'quote-123',
+        vendorId: 'vendor-123',
+        notes: 'Updated notes',
+      })
+
+      expect(result.notes).toBe('Updated notes')
+    })
+
+    it('should throw FORBIDDEN when vendor does not belong to wedding', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(false)
+
+      await expect(
+        vendorService.updateQuote('quote-123', 'vendor-123', 'other-wedding', {
+          quoteId: 'quote-123',
+          vendorId: 'vendor-123',
+        })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+
+    it('should throw FORBIDDEN when quote does not belong to vendor', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockQuoteBelongsToVendorFn.mockResolvedValue(false)
+
+      await expect(
+        vendorService.updateQuote('quote-123', 'vendor-123', 'wedding-123', {
+          quoteId: 'quote-123',
+          vendorId: 'vendor-123',
+        })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+  })
+
+  // ─── deleteQuote ───────────────────────────────────────────────────────────
+
+  describe('deleteQuote', () => {
+    it('should delete quote when authorized', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockQuoteBelongsToVendorFn.mockResolvedValue(true)
+      mockDeleteQuoteFn.mockResolvedValue(mockQuote)
+
+      const result = await vendorService.deleteQuote('quote-123', 'vendor-123', 'wedding-123')
+
+      expect(result).toBe('quote-123')
+    })
+
+    it('should throw FORBIDDEN when vendor does not belong to wedding', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(false)
+
+      await expect(
+        vendorService.deleteQuote('quote-123', 'vendor-123', 'other-wedding')
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+
+    it('should throw FORBIDDEN when quote does not belong to vendor', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockQuoteBelongsToVendorFn.mockResolvedValue(false)
+
+      await expect(
+        vendorService.deleteQuote('quote-123', 'vendor-123', 'wedding-123')
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+  })
+})

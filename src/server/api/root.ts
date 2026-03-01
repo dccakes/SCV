@@ -10,6 +10,7 @@ import { invitationRouter } from '~/server/domains/invitation'
 import { questionRouter } from '~/server/domains/question'
 import { userRouter } from '~/server/domains/user'
 import { websiteRouter } from '~/server/domains/website'
+import { vendorRouter } from '~/server/domains/vendor'
 import { weddingRouter } from '~/server/domains/wedding'
 
 /**
@@ -43,6 +44,9 @@ export const appRouter = createTRPCRouter({
   // Phase 4 application services (migrated)
   dashboard: dashboardRouter,
   rsvpSubmission: rsvpSubmissionRouter,
+
+  // Phase 5 add-on domains
+  vendor: vendorRouter,
 })
 
 // export type definition of API
