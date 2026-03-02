@@ -3,15 +3,15 @@
   "files": {
     "includes": [
       "**",
-      "!node_modules/**",
-      "!.next/**",
-      "!dist/**",
-      "!build/**",
-      "!coverage/**",
-      "!tests/resources/**",
+      "!node_modules",
+      "!.next",
+      "!dist",
+      "!build",
+      "!coverage",
+      "!tests/resources",
       "!next-env.d.ts",
       "!src/types.gen.ts",
-      "!src/lib/pickle-iq-sdk/**"
+      "!src/lib/pickle-iq-sdk"
     ]
   },
   "formatter": {
@@ -75,12 +75,25 @@
       }
     }
   },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
   "overrides": [
     {
-      "includes": [
-        "src/server/domains/**/*.service.ts",
-        "src/server/application/**/*.service.ts"
-      ],
+      "includes": ["src/styles/globals.css"],
+      "css": {
+        "linter": {
+          "enabled": false
+        },
+        "formatter": {
+          "enabled": false
+        }
+      }
+    },
+    {
+      "includes": ["src/server/domains/**/*.service.ts", "src/server/application/**/*.service.ts"],
       "linter": {
         "rules": {
           "style": {

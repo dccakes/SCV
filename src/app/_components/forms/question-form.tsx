@@ -1,8 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { type Dispatch, type SetStateAction } from 'react'
+import { type Dispatch, type SetStateAction, useState } from 'react'
 import { IoMdClose } from 'react-icons/io'
 
 import AnimatedInputLabel from '~/app/_components/forms/animated-input-label'
@@ -10,7 +9,7 @@ import DeleteConfirmation from '~/app/_components/forms/delete-confirmation'
 import QuestionOptionsForm from '~/app/_components/forms/rsvp/question-option-form'
 import SidePaneWrapper from '~/app/_components/forms/wrapper'
 import { sharedStyles } from '~/app/utils/shared-styles'
-import { type Question, type TQuestionOption } from '~/app/utils/shared-types'
+import type { Question, TQuestionOption } from '~/app/utils/shared-types'
 import { api } from '~/trpc/react'
 
 const defaultQuestionOptions: TQuestionOption[] = [
@@ -100,7 +99,7 @@ export default function QuestionForm({
         noHandler={() => setShowDeleteConfirmation(false)}
         yesHandler={() =>
           deleteQuestion.mutate({
-            questionId: question.id!,
+            questionId: question.id ?? '',
           })
         }
       />
@@ -114,50 +113,50 @@ export default function QuestionForm({
           e.preventDefault()
           handleOnSubmit()
         }}
-        className="pb-32"
+        className='pb-32'
       >
-        <div className="flex justify-between border-b p-5">
-          <h1 className="text-xl font-semibold">Add Question</h1>
+        <div className='flex justify-between border-b p-5'>
+          <h1 className='font-semibold text-xl'>Add Question</h1>
           <IoMdClose
             size={25}
-            className="cursor-pointer"
+            className='cursor-pointer'
             onClick={() => setShowQuestionForm(false)}
           />
         </div>
-        <div className="bg-pink-100 px-5 py-3">
+        <div className='bg-pink-100 px-5 py-3'>
           <b>FYI: </b>
           <span>
             Guests can only skip short-answer questions. They must answer multiple-choice questions.
           </span>
         </div>
-        <div className="mt-7 px-5">
+        <div className='mt-7 px-5'>
           <AnimatedInputLabel
-            id="question-input"
+            id='question-input'
             inputValue={questionInput}
-            labelText="Question Prompt*"
+            labelText='Question Prompt*'
             required={true}
             handleOnChange={handleOnChange}
           />
-          <div className="flex gap-5 py-5">
-            <div className="flex items-center gap-2">
+          <div className='flex gap-5 py-5'>
+            <div className='flex items-center gap-2'>
               <input
-                type="radio"
-                id="short-answer"
+                type='radio'
+                id='short-answer'
                 checked={questionType === 'Text'}
                 onChange={() => setQuestionType('Text')}
-                className="h-6 w-6"
+                className='h-6 w-6'
               />
-              <label htmlFor="short-answer">Short Answer</label>
+              <label htmlFor='short-answer'>Short Answer</label>
             </div>
-            <div className="flex items-center gap-2">
+            <div className='flex items-center gap-2'>
               <input
-                type="radio"
-                id="multiple-choice"
+                type='radio'
+                id='multiple-choice'
                 checked={questionType === 'Option'}
                 onChange={() => setQuestionType('Option')}
-                className="h-6 w-6"
+                className='h-6 w-6'
               />
-              <label htmlFor="multiple-choice">Multiple Choice</label>
+              <label htmlFor='multiple-choice'>Multiple Choice</label>
             </div>
           </div>
         </div>
@@ -194,9 +193,9 @@ const Buttons = ({
     <div
       className={`fixed bottom-0 z-20 flex ${sharedStyles.sidebarFormWidth} flex-col gap-3 border-t bg-white px-3 py-5`}
     >
-      <div className="flex gap-3 text-sm">
+      <div className='flex gap-3 text-sm'>
         <button
-          type="button"
+          type='button'
           disabled={isProcessing}
           onClick={() => setShowQuestionForm(false)}
           className={`w-1/2 ${sharedStyles.secondaryButton({
@@ -207,7 +206,7 @@ const Buttons = ({
           Cancel
         </button>
         <button
-          type="submit"
+          type='submit'
           disabled={isProcessing}
           className={`w-1/2 ${sharedStyles.primaryButton({
             px: 'px-2',
@@ -220,12 +219,12 @@ const Buttons = ({
       </div>
       {isEditMode && (
         <button
-          type="button"
+          type='button'
           onClick={(e) => {
             e.preventDefault()
             setShowDeleteConfirmation(true)
           }}
-          className={`text-sm font-bold ${
+          className={`font-bold text-sm ${
             isProcessing
               ? 'cursor-not-allowed text-pink-200'
               : `text-${sharedStyles.primaryColor} hover:underline`

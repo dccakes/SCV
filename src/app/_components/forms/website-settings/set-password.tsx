@@ -1,8 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { type Dispatch, type SetStateAction } from 'react'
+import { type Dispatch, type SetStateAction, useState } from 'react'
 import { GoArrowLeft } from 'react-icons/go'
 
 import { sharedStyles } from '~/app/utils/shared-styles'
@@ -30,23 +29,27 @@ export default function SetPasswordView({ setShowPasswordView, password }: SetPa
 
   return (
     <div>
-      <div className="flex justify-between border-b p-5">
-        <div className="flex gap-4">
-          <span className="cursor-pointer" onClick={() => setShowPasswordView(false)}>
+      <div className='flex justify-between border-b p-5'>
+        <div className='flex gap-4'>
+          <button
+            type='button'
+            className='cursor-pointer'
+            onClick={() => setShowPasswordView(false)}
+          >
             <GoArrowLeft size={28} />
-          </span>
-          <span className="border-r"></span>
-          <h1 className="text-2xl font-bold">Set a Password</h1>
+          </button>
+          <span className='border-r'></span>
+          <h1 className='font-bold text-2xl'>Set a Password</h1>
         </div>
       </div>
-      <div className="px-5 py-7">
-        <p className="mb-5 font-thin tracking-tight">
+      <div className='px-5 py-7'>
+        <p className='mb-5 font-thin tracking-tight'>
           Know who&apos;s in on your wedding plans by adding a password to your site. Make sure
           it&apos;s easy for guests to remember (and for you to share!).
         </p>
         <input
-          placeholder="Guest Password"
-          className="w-[100%] border p-3"
+          placeholder='Guest Password'
+          className='w-[100%] border p-3'
           value={passwordInput}
           onChange={(e) => setPasswordInput(e.target.value)}
         />
@@ -55,6 +58,7 @@ export default function SetPasswordView({ setShowPasswordView, password }: SetPa
         className={`fixed bottom-0 flex flex-col gap-3 border-t px-8 py-5 ${sharedStyles.sidebarFormWidth}`}
       >
         <button
+          type='button'
           disabled={updateWebsite.isPending}
           className={`w-[100%] ${sharedStyles.primaryButton({
             py: 'py-2',

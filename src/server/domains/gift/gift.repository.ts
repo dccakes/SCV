@@ -5,9 +5,9 @@
  * This layer handles all direct database access for gifts.
  */
 
-import { type PrismaClient } from '@prisma/client'
+import type { PrismaClient } from '@prisma/client'
 
-import { type Gift } from '~/server/domains/gift/gift.types'
+import type { Gift } from '~/server/domains/gift/gift.types'
 
 export class GiftRepository {
   constructor(private db: PrismaClient) {}

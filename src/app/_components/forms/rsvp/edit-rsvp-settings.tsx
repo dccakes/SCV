@@ -7,7 +7,7 @@ import { IoMdClose } from 'react-icons/io'
 import { useToggleEditRsvpSettingsForm } from '~/app/_components/contexts/edit-rsvp-settings-form-context'
 import SidePaneWrapper from '~/app/_components/forms/wrapper'
 import { sharedStyles } from '~/app/utils/shared-styles'
-import { type Website } from '~/app/utils/shared-types'
+import type { Website } from '~/app/utils/shared-types'
 import { Switch } from '~/components/ui/switch'
 import { api } from '~/trpc/react'
 
@@ -43,23 +43,23 @@ export default function EditRsvpSettingsForm({ website }: EditRsvpSettingsFormPr
             isRsvpEnabled: pageIsVisible,
           })
         }}
-        className="pb-32"
+        className='pb-32'
       >
-        <header className="flex justify-between border-b p-5">
-          <h1 className="text-xl font-semibold">RSVP Settings</h1>
+        <header className='flex justify-between border-b p-5'>
+          <h1 className='font-semibold text-xl'>RSVP Settings</h1>
           <IoMdClose
             size={25}
-            className="cursor-pointer"
+            className='cursor-pointer'
             onClick={() => toggleEditRsvpSettingsForm()}
           />
         </header>
-        <section className="border-b px-5 py-8">
+        <section className='border-b px-5 py-8'>
           <div>
-            <div className="mb-2 flex justify-between">
-              <h2 className="text-xl font-semibold">Page Visibility</h2>
-              <div className="flex items-center gap-3">
+            <div className='mb-2 flex justify-between'>
+              <h2 className='font-semibold text-xl'>Page Visibility</h2>
+              <div className='flex items-center gap-3'>
                 <Switch
-                  id="rsvp-page-visibility-toggle"
+                  id='rsvp-page-visibility-toggle'
                   checked={pageIsVisible}
                   onClick={() => setPageIsVisible((prev) => !prev)}
                 />
@@ -69,34 +69,34 @@ export default function EditRsvpSettingsForm({ website }: EditRsvpSettingsFormPr
             <p>No one can RSVP from your Website until this page is visible</p>
           </div>
         </section>
-        <section className="border-b px-5 py-8">
-          <h2 className="mb-3 text-xl font-semibold">Access</h2>
-          <ul className="flex flex-col gap-3">
+        <section className='border-b px-5 py-8'>
+          <h2 className='mb-3 font-semibold text-xl'>Access</h2>
+          <ul className='flex flex-col gap-3'>
             <li>
-              <div className="flex gap-2">
+              <div className='flex gap-2'>
                 <input
-                  id="guest-list-only"
-                  type="radio"
-                  className="h-6 w-6"
+                  id='guest-list-only'
+                  type='radio'
+                  className='h-6 w-6'
                   checked={rsvpAccess === 'Private'}
                   onClick={() => setRsvpAccess('Private')}
                 />
-                <label htmlFor="guest-list-only">
+                <label htmlFor='guest-list-only'>
                   Guest List Only (recommended)
                   <p>Only guests on your Guest List can RSVP.</p>
                 </label>
               </div>
             </li>
             <li>
-              <div className="flex gap-2">
+              <div className='flex gap-2'>
                 <input
-                  id="public-rsvp"
-                  type="radio"
-                  className="h-6 w-6"
+                  id='public-rsvp'
+                  type='radio'
+                  className='h-6 w-6'
                   checked={rsvpAccess === 'Public'}
                   onClick={() => setRsvpAccess('Public')}
                 />
-                <label htmlFor="public-rsvp">
+                <label htmlFor='public-rsvp'>
                   Public RSVP (not recommended)
                   <p>Anyone with the link to your Wedding Website can RSVP.</p>
                 </label>
@@ -105,17 +105,17 @@ export default function EditRsvpSettingsForm({ website }: EditRsvpSettingsFormPr
           </ul>
         </section>
 
-        <section className="px-5 py-8">
-          <h2 className="mb-3 text-xl font-semibold">Guest List Visibility</h2>
-          <div className="flex gap-2">
+        <section className='px-5 py-8'>
+          <h2 className='mb-3 font-semibold text-xl'>Guest List Visibility</h2>
+          <div className='flex gap-2'>
             <input
-              id="guest-list-visibility"
-              type="checkbox"
-              className="h-7 w-7 accent-pink-400"
+              id='guest-list-visibility'
+              type='checkbox'
+              className='h-7 w-7 accent-pink-400'
               checked={guestListIsVisible}
               onChange={() => setGuestListIsVisible((prev) => !prev)}
             />
-            <label htmlFor="guest-list-visibility">
+            <label htmlFor='guest-list-visibility'>
               Allow anybody who RSVPs &apos;Yes!&apos; to see who&apos;s attending each event
             </label>
           </div>
@@ -124,8 +124,9 @@ export default function EditRsvpSettingsForm({ website }: EditRsvpSettingsFormPr
         <div
           className={`fixed bottom-0 z-20 flex ${sharedStyles.sidebarFormWidth} flex-col gap-3 border-t bg-white px-3 py-5`}
         >
-          <div className="flex gap-3 text-sm">
+          <div className='flex gap-3 text-sm'>
             <button
+              type='button'
               disabled={updateIsRsvpEnabled.isPending}
               onClick={() => toggleEditRsvpSettingsForm()}
               className={`w-1/2 ${sharedStyles.secondaryButton({
@@ -136,9 +137,9 @@ export default function EditRsvpSettingsForm({ website }: EditRsvpSettingsFormPr
               Cancel
             </button>
             <button
-              id="edit-save"
-              name="edit-button"
-              type="submit"
+              id='edit-save'
+              name='edit-button'
+              type='submit'
               disabled={updateIsRsvpEnabled.isPending}
               className={`w-1/2 ${sharedStyles.primaryButton({
                 px: 'px-2',

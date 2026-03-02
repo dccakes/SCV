@@ -8,15 +8,15 @@
  * Only entity types representing database models are manually defined.
  */
 
-import { type Gift } from '~/server/domains/gift/gift.types'
-import { type GuestWithInvitations } from '~/server/domains/guest/guest.types'
-import {
-  type CreateHouseholdSchemaInput,
-  type DeleteHouseholdSchemaInput,
-  type GiftInputSchemaInput,
-  type GuestPartyInputSchemaInput,
-  type SearchHouseholdSchemaInput,
-  type UpdateHouseholdSchemaInput,
+import type { Gift } from '~/server/domains/gift/gift.types'
+import type { GuestWithInvitations } from '~/server/domains/guest/guest.types'
+import type {
+  CreateHouseholdSchemaInput,
+  DeleteHouseholdSchemaInput,
+  GiftInputSchemaInput,
+  GuestPartyInputSchemaInput,
+  SearchHouseholdSchemaInput,
+  UpdateHouseholdSchemaInput,
 } from '~/server/domains/household/household.validator'
 
 /**

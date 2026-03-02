@@ -4,7 +4,7 @@
  * This mock is automatically used when jest.mock('~/server/domains/guest/guest.repository') is called.
  */
 
-import { type Guest, type GuestWithInvitations } from '~/server/domains/guest/guest.types'
+import type { Guest, GuestWithInvitations } from '~/server/domains/guest/guest.types'
 
 export const mockGuest: Guest = {
   id: 1,

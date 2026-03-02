@@ -4,7 +4,7 @@
  * This mock is automatically used when jest.mock('~/server/domains/website/website.repository') is called.
  */
 
-import { type Website, type WebsiteWithQuestions } from '~/server/domains/website/website.types'
+import type { Website, WebsiteWithQuestions } from '~/server/domains/website/website.types'
 
 export const mockWebsite: Website = {
   id: 'website-123',

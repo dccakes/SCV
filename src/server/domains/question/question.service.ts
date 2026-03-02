@@ -10,12 +10,12 @@
 
 import { TRPCError } from '@trpc/server'
 
-import { type QuestionRepository } from '~/server/domains/question/question.repository'
-import {
-  type DeleteQuestionInput,
-  type Question,
-  type QuestionWithOptions,
-  type UpsertQuestionInput,
+import type { QuestionRepository } from '~/server/domains/question/question.repository'
+import type {
+  DeleteQuestionInput,
+  Question,
+  QuestionWithOptions,
+  UpsertQuestionInput,
 } from '~/server/domains/question/question.types'
 
 export class QuestionService {

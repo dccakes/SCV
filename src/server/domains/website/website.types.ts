@@ -5,7 +5,7 @@
  * Represents the public wedding website configuration.
  */
 
-import { type Question } from '~/app/utils/shared-types'
+import type { Question } from '~/app/utils/shared-types'
 
 /**
  * Core Website entity type

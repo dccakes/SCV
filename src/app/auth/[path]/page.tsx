@@ -4,7 +4,7 @@ export default async function AuthPage({ params }: { params: Promise<{ path: str
   const { path } = await params
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50">
+    <main className='flex min-h-screen items-center justify-center bg-gray-50'>
       <AuthView path={path} />
     </main>
   )

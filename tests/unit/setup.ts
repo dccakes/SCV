@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom'
 
-import { TextDecoder, TextEncoder } from 'util'
+import { TextDecoder, TextEncoder } from 'node:util'
 
 // Polyfill for Prisma client in Jest
 global.TextEncoder = TextEncoder

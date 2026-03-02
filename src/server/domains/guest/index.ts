@@ -12,6 +12,11 @@ import { db } from '~/server/infrastructure/database'
 const guestRepository = new GuestRepository(db)
 export const guestService = new GuestService(guestRepository)
 
+// Export classes for testing/DI
+export { GuestRepository } from '~/server/domains/guest/guest.repository'
+// Export router
+export { guestRouter } from '~/server/domains/guest/guest.router'
+export { GuestService } from '~/server/domains/guest/guest.service'
 // Export types
 export type {
   CreateGuestInput,
@@ -20,26 +25,18 @@ export type {
   GuestWithInvitations,
   UpdateGuestInput,
 } from '~/server/domains/guest/guest.types'
-
 // Export validators
 export {
-  createGuestSchema,
   type CreateGuestSchemaInput,
-  getByEventSchema,
+  createGuestSchema,
   type GetByEventSchemaInput,
-  getByHouseholdSchema,
   type GetByHouseholdSchemaInput,
-  guestIdSchema,
   type GuestIdSchemaInput,
-  guestPartySchema,
   type GuestPartySchemaInput,
-  updateGuestSchema,
+  getByEventSchema,
+  getByHouseholdSchema,
+  guestIdSchema,
+  guestPartySchema,
   type UpdateGuestSchemaInput,
+  updateGuestSchema,
 } from '~/server/domains/guest/guest.validator'
-
-// Export classes for testing/DI
-export { GuestRepository } from '~/server/domains/guest/guest.repository'
-export { GuestService } from '~/server/domains/guest/guest.service'
-
-// Export router
-export { guestRouter } from '~/server/domains/guest/guest.router'

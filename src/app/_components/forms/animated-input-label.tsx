@@ -34,13 +34,13 @@ export default function AnimatedInputLabel({
   handleOnChange,
 }: AnimatedInputLabelProps) {
   return (
-    <div className="relative">
+    <div className='relative'>
       <input
         type={type ?? 'text'}
         pattern={pattern}
         title={title}
         id={id}
-        placeholder=" "
+        placeholder=' '
         value={inputValue ?? ''}
         required={required ?? false}
         onChange={(e) =>

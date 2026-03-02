@@ -1,8 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { type Dispatch, type SetStateAction } from 'react'
+import { type Dispatch, type SetStateAction, useState } from 'react'
 import { BsTrash3 } from 'react-icons/bs'
 import { IoMdClose } from 'react-icons/io'
 
@@ -11,7 +10,7 @@ import SetPasswordView from '~/app/_components/forms/website-settings/set-passwo
 import SidePaneWrapper from '~/app/_components/forms/wrapper'
 import { LoadingSpinner } from '~/app/_components/loaders'
 import { sharedStyles } from '~/app/utils/shared-styles'
-import { type Website } from '~/app/utils/shared-types'
+import type { Website } from '~/app/utils/shared-types'
 import { Label } from '~/components/ui/label'
 import { Switch } from '~/components/ui/switch'
 import { api } from '~/trpc/react'
@@ -89,70 +88,76 @@ const Main = ({
 
   return (
     <>
-      <div className="flex justify-between border-b px-8 py-5">
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <span className="cursor-pointer" onClick={() => setShowWebsiteSettings(false)}>
+      <div className='flex justify-between border-b px-8 py-5'>
+        <h1 className='font-bold text-2xl'>Settings</h1>
+        <button
+          type='button'
+          className='cursor-pointer'
+          onClick={() => setShowWebsiteSettings(false)}
+        >
           <IoMdClose size={25} />
-        </span>
+        </button>
       </div>
-      <div className="px-8 pb-5">
-        <h2 className="my-4 text-2xl font-bold">Visibility</h2>
-        <div className="flex items-center justify-between pb-3">
-          <Label htmlFor="search-engine-toggle" className="text-md">
+      <div className='px-8 pb-5'>
+        <h2 className='my-4 font-bold text-2xl'>Visibility</h2>
+        <div className='flex items-center justify-between pb-3'>
+          <Label htmlFor='search-engine-toggle' className='text-md'>
             Appear in Search Engines
           </Label>
           <Switch
-            id="search-engine-toggle"
+            id='search-engine-toggle'
             checked={appearInSearchEngines}
             onClick={() => setAppearInSearchEngines((prev) => !prev)}
           />
         </div>
-        <p className="font-thin">
+        <p className='font-thin'>
           {appearInSearchEngines
             ? "A link to your site doesn't currently show up in search engine results. This could keep some guests from finding your site."
             : 'A link to your site currently appears in search engines. This way guests can find your site without needing to memorize your URL.'}
         </p>
       </div>
-      <div className="px-8 pb-5">
-        <h2 className="my-4 text-2xl font-bold">Privacy</h2>
-        <div className="flex items-center justify-between pb-3">
-          <Label htmlFor="password-toggle" className="text-md">
+      <div className='px-8 pb-5'>
+        <h2 className='my-4 font-bold text-2xl'>Privacy</h2>
+        <div className='flex items-center justify-between pb-3'>
+          <Label htmlFor='password-toggle' className='text-md'>
             Require a Password
           </Label>
           {updateWebsite.isPending ? (
             <LoadingSpinner size={20} />
           ) : (
             <Switch
-              id="password-toggle"
+              id='password-toggle'
               checked={website?.isPasswordEnabled}
               onClick={() => handleChange(!website?.isPasswordEnabled)}
             />
           )}
         </div>
-        <p className="font-thin">
+        <p className='font-thin'>
           {website?.isPasswordEnabled
             ? 'Guests will be asked to enter a password before they may view your site.'
             : 'Anyone with a link to your site may view it.'}
         </p>
         {website?.isPasswordEnabled && (
-          <div className="pt-5">
-            <div className="flex justify-between pb-2">
+          <div className='pt-5'>
+            <div className='flex justify-between pb-2'>
               <span>Guest Password</span>
               <button
+                type='button'
                 className={`text-${sharedStyles.primaryColor}`}
                 onClick={() => setShowPasswordView(true)}
               >
                 Edit Password
               </button>
             </div>
-            <span className="font-thin">{website?.password}</span>
+            <span className='font-thin'>{website?.password}</span>
           </div>
         )}
       </div>
-      <div className="px-8 pb-5">
-        <div className="flex justify-between">
-          <h2 className="my-4 text-2xl font-bold">Your URL</h2>
+      <div className='px-8 pb-5'>
+        <div className='flex justify-between'>
+          <h2 className='my-4 font-bold text-2xl'>Your URL</h2>
           <button
+            type='button'
             className={`text-${sharedStyles.primaryColor}`}
             onClick={() => setShowEditUrlView(true)}
           >
@@ -161,10 +166,10 @@ const Main = ({
         </div>
         <span>{website?.url}</span>
       </div>
-      <div className="flex items-center justify-center border-b border-t py-10">
-        <div className="flex gap-2">
+      <div className='flex items-center justify-center border-t border-b py-10'>
+        <div className='flex gap-2'>
           <BsTrash3 size={25} />
-          <span className="text-lg underline">Deactivate your Wedding Website</span>
+          <span className='text-lg underline'>Deactivate your Wedding Website</span>
         </div>
       </div>
     </>

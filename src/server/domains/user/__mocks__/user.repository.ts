@@ -4,7 +4,7 @@
  * This mock is automatically used when jest.mock('~/server/domains/user/user.repository') is called.
  */
 
-import { type User } from '~/server/domains/user/user.types'
+import type { User } from '~/server/domains/user/user.types'
 
 export const mockUser: User = {
   id: 'user-123',

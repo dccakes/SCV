@@ -13,14 +13,14 @@ export default function NavLinks() {
   const pathname = usePathname()
 
   return (
-    <ul className="flex items-center gap-6">
+    <ul className='flex items-center gap-6'>
       {NAV_LINKS.map((link) => {
         const isActive = pathname.startsWith(link.href)
         return (
           <li key={link.href}>
             <Link
               href={link.href}
-              className={`border-b-2 pb-0.5 text-sm font-medium transition-colors ${
+              className={`border-b-2 pb-0.5 font-medium text-sm transition-colors ${
                 isActive
                   ? 'border-primary text-foreground'
                   : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'

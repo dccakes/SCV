@@ -2,12 +2,13 @@
  * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially useful
  * for Docker builds.
  */
-await import("./src/env.js");
+// biome-ignore lint/style/noRestrictedImports: Next.js config requires relative import
+await import('./src/env.js')
 
 /** @type {import("next").NextConfig} */
 const config = {
   // Enable standalone output for Docker deployments
-  output: "standalone",
+  output: 'standalone',
   eslint: {
     // Temporarily ignore ESLint during builds due to v9 config format issue
     ignoreDuringBuilds: true,
@@ -19,8 +20,8 @@ const config = {
   images: {
     remotePatterns: [
       {
-        protocol: "https",
-        hostname: "**",
+        protocol: 'https',
+        hostname: '**',
       },
     ],
   },
@@ -28,8 +29,8 @@ const config = {
     // Resolve app URL: explicit env var → Vercel system var → localhost fallback
     NEXT_PUBLIC_APP_URL:
       process.env.NEXT_PUBLIC_APP_URL ??
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"),
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'),
   },
-};
+}
 
-export default config;
+export default config

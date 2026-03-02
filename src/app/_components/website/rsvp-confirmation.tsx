@@ -1,12 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { type Dispatch, type SetStateAction } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
 import { FaCircleCheck } from 'react-icons/fa6'
 import { RxCrossCircled } from 'react-icons/rx'
 
 import { useRsvpForm } from '~/app/_components/contexts/rsvp-form-context'
-import { type Event, type RsvpFormResponse } from '~/app/utils/shared-types'
+import type { Event, RsvpFormResponse } from '~/app/utils/shared-types'
 
 type RsvpConfirmationProps = {
   basePath: string
@@ -16,20 +16,20 @@ type RsvpConfirmationProps = {
 export default function RsvpConfirmation({ basePath, setCurrentStep }: RsvpConfirmationProps) {
   const rsvpFormData = useRsvpForm()
   return (
-    <div className="flex flex-col pb-8 pt-5">
-      <h2 className="text-2xl tracking-widest">
+    <div className='flex flex-col pt-5 pb-8'>
+      <h2 className='text-2xl tracking-widest'>
         all set! here&apos;s what we sent {rsvpFormData.weddingData.groomFirstName} &{' '}
         {rsvpFormData.weddingData.brideFirstName}
       </h2>
       <Link
-        className={`my-5 bg-gray-700 py-3 text-center text-xl tracking-wide text-white`}
+        className={`my-5 bg-gray-700 py-3 text-center text-white text-xl tracking-wide`}
         href={basePath}
       >
         BACK TO HOMEPAGE
       </Link>
-      <div className="flex justify-between border-b-2 py-4">
-        <h2 className="text-xl">Your RSVP Response</h2>
-        <button type="button" className="border-b-2 py-1" onClick={() => setCurrentStep(3)}>
+      <div className='flex justify-between border-b-2 py-4'>
+        <h2 className='text-xl'>Your RSVP Response</h2>
+        <button type='button' className='border-b-2 py-1' onClick={() => setCurrentStep(3)}>
           Update Response
         </button>
       </div>
@@ -60,17 +60,17 @@ const ConfirmationListItem = ({
   rsvpResponses: RsvpFormResponse[]
 }) => {
   return (
-    <li className="flex flex-col gap-3 border-b-2 py-6">
-      <div className="flex items-start justify-between">
-        <h3 className="text-lg font-bold">{event.name}</h3>
-        <button type="button" className="border-b-2 py-1">
+    <li className='flex flex-col gap-3 border-b-2 py-6'>
+      <div className='flex items-start justify-between'>
+        <h3 className='font-bold text-lg'>{event.name}</h3>
+        <button type='button' className='border-b-2 py-1'>
           + Add to Calendar
         </button>
       </div>
       {rsvpResponses.map((response) => {
         if (response.eventId === event.id) {
           return (
-            <div key={`${event.id}_${response.guestId}`} className="flex items-center gap-3">
+            <div key={`${event.id}_${response.guestId}`} className='flex items-center gap-3'>
               {response.rsvp === 'Attending' ? (
                 <FaCircleCheck size={22} />
               ) : (
@@ -80,6 +80,7 @@ const ConfirmationListItem = ({
             </div>
           )
         }
+        return null
       })}
     </li>
   )
