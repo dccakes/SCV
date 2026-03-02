@@ -2,9 +2,11 @@ import { betterAuth } from 'better-auth'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { nextCookies } from 'better-auth/next-js'
 
+import { env } from '~/env'
 import { db } from '~/server/db'
 
 export const auth = betterAuth({
+  secret: env.BETTER_AUTH_SECRET,
   database: prismaAdapter(db, {
     provider: 'postgresql',
   }),
@@ -14,12 +16,12 @@ export const auth = betterAuth({
   socialProviders: {
     // Add social providers as needed
     // github: {
-    //   clientId: process.env.GITHUB_CLIENT_ID || "",
-    //   clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
+    //   clientId: env.GITHUB_CLIENT_ID ?? "",
+    //   clientSecret: env.GITHUB_CLIENT_SECRET ?? "",
     // },
     // google: {
-    //   clientId: process.env.GOOGLE_CLIENT_ID || "",
-    //   clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    //   clientId: env.GOOGLE_CLIENT_ID ?? "",
+    //   clientSecret: env.GOOGLE_CLIENT_SECRET ?? "",
     // },
   },
   experimental: {
