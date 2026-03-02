@@ -12,11 +12,13 @@
     "db:studio": "prisma studio",
     "dev": "next dev",
     "dev:turbo": "NODE_OPTIONS='--trace-uncaught' next dev --turbopack",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format .",
+    "format:fix": "biome format --write .",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
     "test:unit": "SKIP_ENV_VALIDATION=true jest",
-    "prettier": "prettier --check \"**/*.{js,jsx,ts,tsx}\"",
-    "prettier:fix": "prettier --write \"**/*.{js,jsx,ts,tsx}\"",
     "postinstall": "prisma generate",
     "start": "next start",
     "prepare": "husky || true"
@@ -72,45 +74,30 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.4",
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
-    "@eslint/compat": "^1.4.0",
-    "@eslint/js": "^9.37.0",
     "@tailwindcss/typography": "^0.5.16",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.1.0",
-    "@types/eslint": "^9.6.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.10.1",
     "@types/pg": "^8.15.6",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.46.1",
-    "@typescript-eslint/parser": "^8.46.1",
     "autoprefixer": "^10.4.20",
-    "eslint": "^9.37.0",
-    "eslint-config-next": "^15.5.5",
-    "eslint-plugin-jest": "^29.0.1",
-    "eslint-plugin-jsx-a11y": "^6.10.2",
-    "eslint-plugin-playwright": "^2.2.2",
-    "eslint-plugin-react": "^7.37.5",
-    "eslint-plugin-react-hooks": "^7.0.0",
-    "eslint-plugin-simple-import-sort": "^12.1.1",
     "husky": "^9.1.7",
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.0.5",
     "postcss": "^8.5.6",
-    "prettier": "^3.6.2",
-    "prettier-plugin-tailwindcss": "^0.6.14",
     "prisma": "^7.0.1",
     "tailwindcss": "^3.4.17",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2"
   },
   "lint-staged": {
-    "**/*.{ts,tsx}": [
-      "npx eslint --fix",
-      "npx prettier --write"
+    "**/*.{js,jsx,ts,tsx,json}": [
+      "biome check --write --no-errors-on-unmatched"
     ]
   },
   "ct3aMetadata": {
