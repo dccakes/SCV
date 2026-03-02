@@ -39,6 +39,3 @@ export {
 // Export classes for testing/DI
 export { QuestionRepository } from '~/server/domains/question/question.repository'
 export { QuestionService } from '~/server/domains/question/question.service'
-
-// Export router
-export { questionRouter } from '~/server/domains/question/question.router'

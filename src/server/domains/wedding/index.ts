@@ -34,6 +34,3 @@ export {
 // Export classes for testing/DI
 export { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
 export { WeddingService } from '~/server/domains/wedding/wedding.service'
-
-// Export router
-export { weddingRouter } from '~/server/domains/wedding/wedding.router'

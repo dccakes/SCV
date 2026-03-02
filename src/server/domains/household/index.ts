@@ -41,6 +41,3 @@ export {
 
 // Export classes for testing/DI
 export { HouseholdRepository } from '~/server/domains/household/household.repository'
-
-// Export router
-export { householdRouter } from '~/server/domains/household/household.router'

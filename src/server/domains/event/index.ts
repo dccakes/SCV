@@ -35,6 +35,3 @@ export {
 // Export classes for testing/DI
 export { EventRepository } from '~/server/domains/event/event.repository'
 export { EventService } from '~/server/domains/event/event.service'
-
-// Export router
-export { eventRouter } from '~/server/domains/event/event.router'

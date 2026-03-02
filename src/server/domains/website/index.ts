@@ -45,6 +45,3 @@ export {
 // Export classes for testing/DI
 export { WebsiteRepository } from '~/server/domains/website/website.repository'
 export { WebsiteService } from '~/server/domains/website/website.service'
-
-// Export router
-export { websiteRouter } from '~/server/domains/website/website.router'

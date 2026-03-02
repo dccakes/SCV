@@ -35,6 +35,3 @@ export {
 // Export classes for testing/DI
 export { GiftRepository } from '~/server/domains/gift/gift.repository'
 export { GiftService } from '~/server/domains/gift/gift.service'
-
-// Export router
-export { giftRouter } from '~/server/domains/gift/gift.router'

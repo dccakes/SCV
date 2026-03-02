@@ -45,6 +45,3 @@ export {
 // Export classes for testing/DI
 export { VendorRepository } from '~/server/domains/vendor/vendor.repository'
 export { VendorService } from '~/server/domains/vendor/vendor.service'
-
-// Export router
-export { vendorRouter } from '~/server/domains/vendor/vendor.router'

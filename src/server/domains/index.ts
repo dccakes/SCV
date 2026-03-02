@@ -9,7 +9,6 @@
 export {
   type CreateEventInput,
   type Event,
-  eventRouter,
   eventService,
   type EventWithQuestions,
   type EventWithStats,
@@ -21,7 +20,6 @@ export {
   type CreateUserInput,
   type UpdateUserInput,
   type User,
-  userRouter,
   userService,
 } from '~/server/domains/user'
 
@@ -30,7 +28,6 @@ export {
   type CreateWebsiteInput,
   type UpdateWebsiteInput,
   type Website,
-  websiteRouter,
   websiteService,
   type WebsiteWithQuestions,
   type WeddingPageData,
@@ -40,7 +37,6 @@ export {
 export {
   type CreateGiftInput,
   type Gift,
-  giftRouter,
   giftService,
   type UpdateGiftInput,
   type UpsertGiftInput,
@@ -50,7 +46,6 @@ export {
 export {
   type CreateGuestInput,
   type Guest,
-  guestRouter,
   guestService,
   type GuestWithInvitations,
   type UpdateGuestInput,
@@ -60,7 +55,6 @@ export {
 export {
   type CreateInvitationInput,
   type Invitation,
-  invitationRouter,
   invitationService,
   type RsvpStats,
   type UpdateInvitationInput,
@@ -74,7 +68,6 @@ export {
   type OptionInput,
   type OptionResponse,
   type Question,
-  questionRouter,
   questionService,
   type QuestionWithOptions,
   type UpsertQuestionInput,
@@ -85,7 +78,6 @@ export {
   type CreateHouseholdInput,
   type DeleteHouseholdInput,
   type Household,
-  householdRouter,
   type HouseholdSearchResult,
   type HouseholdWithGuests,
   type HouseholdWithGuestsAndGifts,

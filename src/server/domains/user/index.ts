@@ -27,6 +27,3 @@ export {
 // Export classes for testing/DI
 export { UserRepository } from '~/server/domains/user/user.repository'
 export { UserService } from '~/server/domains/user/user.service'
-
-// Export router
-export { userRouter } from '~/server/domains/user/user.router'

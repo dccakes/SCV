@@ -40,6 +40,3 @@ export {
 // Export classes for testing/DI
 export { GuestRepository } from '~/server/domains/guest/guest.repository'
 export { GuestService } from '~/server/domains/guest/guest.service'
-
-// Export router
-export { guestRouter } from '~/server/domains/guest/guest.router'

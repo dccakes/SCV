@@ -33,6 +33,3 @@ export {
 // Export classes for testing/DI
 export { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
 export { InvitationService } from '~/server/domains/invitation/invitation.service'
-
-// Export router
-export { invitationRouter } from '~/server/domains/invitation/invitation.router'

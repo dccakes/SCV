@@ -9,7 +9,6 @@
 export {
   type Answer,
   type DashboardData,
-  dashboardRouter,
   DashboardService,
   dashboardService,
   type EventWithStats,
@@ -52,7 +51,6 @@ export {
   type RsvpResponseSchemaInput,
   type RsvpSubmissionInput,
   type RsvpSubmissionResult,
-  rsvpSubmissionRouter,
   RsvpSubmissionService,
   rsvpSubmissionService,
   submitRsvpSchema,

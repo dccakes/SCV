@@ -45,6 +45,3 @@ export type { GuestWithInvitations } from '~/server/domains/guest'
 
 // Export classes for testing/DI
 export { DashboardService } from '~/server/application/dashboard/dashboard.service'
-
-// Export router
-export { dashboardRouter } from '~/server/application/dashboard/dashboard.router'

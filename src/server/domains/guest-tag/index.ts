@@ -30,6 +30,3 @@ export {
 // Export classes for testing/DI
 export { GuestTagRepository } from '~/server/domains/guest-tag/guest-tag.repository'
 export { GuestTagService } from '~/server/domains/guest-tag/guest-tag.service'
-
-// Export router
-export { guestTagRouter } from '~/server/domains/guest-tag/guest-tag.router'

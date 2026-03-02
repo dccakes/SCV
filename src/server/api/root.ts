@@ -1,17 +1,20 @@
 // Domain routers (Phase 1-3 - migrated to domain architecture)
+// NOTE: routers are imported directly from their router files (not domain barrels)
+// to avoid circular module dependencies that cause TDZ errors in the compiled bundle.
 import { createTRPCRouter } from '~/server/api/trpc'
-import { dashboardRouter, rsvpSubmissionRouter } from '~/server/application'
-import { eventRouter } from '~/server/domains/event'
-import { giftRouter } from '~/server/domains/gift'
-import { guestRouter } from '~/server/domains/guest'
-import { guestTagRouter } from '~/server/domains/guest-tag'
-import { householdRouter } from '~/server/domains/household'
-import { invitationRouter } from '~/server/domains/invitation'
-import { questionRouter } from '~/server/domains/question'
-import { userRouter } from '~/server/domains/user'
-import { websiteRouter } from '~/server/domains/website'
-import { vendorRouter } from '~/server/domains/vendor'
-import { weddingRouter } from '~/server/domains/wedding'
+import { dashboardRouter } from '~/server/application/dashboard/dashboard.router'
+import { rsvpSubmissionRouter } from '~/server/application/rsvp-submission/rsvp-submission.router'
+import { eventRouter } from '~/server/domains/event/event.router'
+import { giftRouter } from '~/server/domains/gift/gift.router'
+import { guestRouter } from '~/server/domains/guest/guest.router'
+import { guestTagRouter } from '~/server/domains/guest-tag/guest-tag.router'
+import { householdRouter } from '~/server/domains/household/household.router'
+import { invitationRouter } from '~/server/domains/invitation/invitation.router'
+import { questionRouter } from '~/server/domains/question/question.router'
+import { userRouter } from '~/server/domains/user/user.router'
+import { websiteRouter } from '~/server/domains/website/website.router'
+import { vendorRouter } from '~/server/domains/vendor/vendor.router'
+import { weddingRouter } from '~/server/domains/wedding/wedding.router'
 
 /**
  * This is the primary router for your server.

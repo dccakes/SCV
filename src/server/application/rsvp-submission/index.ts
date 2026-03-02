@@ -30,6 +30,3 @@ export {
 
 // Export classes for testing/DI
 export { RsvpSubmissionService } from '~/server/application/rsvp-submission/rsvp-submission.service'
-
-// Export router
-export { rsvpSubmissionRouter } from '~/server/application/rsvp-submission/rsvp-submission.router'
