@@ -7,8 +7,8 @@ const useDisablePageScroll = () => {
   }, [])
 }
 
-const useOuterClick = (callback: () => void) => {
-  const ref = useRef<HTMLDivElement>(null)
+const useOuterClick = <T extends HTMLElement = HTMLDivElement>(callback: () => void) => {
+  const ref = useRef<T>(null)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

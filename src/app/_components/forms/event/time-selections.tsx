@@ -19,8 +19,8 @@ export default function TimeSelections({
 }: TimeSelectionsProps) {
   const [showStartTimes, setShowStartTimes] = useState<boolean>(false)
   const [showEndTimes, setShowEndTimes] = useState<boolean>(false)
-  const startTimeRef = useOuterClick(() => setShowStartTimes(false))
-  const endTimeRef = useOuterClick(() => setShowEndTimes(false))
+  const startTimeRef = useOuterClick<HTMLButtonElement>(() => setShowStartTimes(false))
+  const endTimeRef = useOuterClick<HTMLButtonElement>(() => setShowEndTimes(false))
 
   return (
     <div className='flex gap-3'>

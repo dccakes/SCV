@@ -56,12 +56,12 @@ export default function GuestTable({
       if (nameSort === 'none') {
         setNameSort('ascending')
         return [...households].sort((a, b) =>
-          a.guests[0]?.firstName.localeCompare(b.guests[0]?.firstName)
+          (a.guests[0]?.firstName ?? '').localeCompare(b.guests[0]?.firstName ?? '')
         )
       } else if (nameSort === 'ascending') {
         setNameSort('descending')
         return [...households].sort((a, b) =>
-          b.guests[0]?.firstName.localeCompare(a.guests[0]?.firstName)
+          (b.guests[0]?.firstName ?? '').localeCompare(a.guests[0]?.firstName ?? '')
         )
       } else {
         setNameSort('none')
