@@ -14,22 +14,23 @@
  * getPublicPageBySubUrl(). See ARCHITECTURAL_VIOLATIONS.md for details.
  */
 
-import { type Prisma, type PrismaClient } from '@prisma/client'
+// biome-ignore lint/style/noRestrictedImports: architectural violation, tracked in ARCHITECTURAL_VIOLATIONS.md
+import type { Prisma, PrismaClient } from '@prisma/client'
 import { TRPCClientError } from '@trpc/client'
 import { TRPCError } from '@trpc/server'
 
 import { calculateDaysRemaining, formatDateNumber } from '~/app/utils/helpers'
-import { type WebsiteRepository } from '~/server/domains/website/website.repository'
-import {
-  type CreateWebsiteInput,
-  type UpdateWebsiteInput,
-  type Website,
-  type WeddingPageData,
+import type { WebsiteRepository } from '~/server/domains/website/website.repository'
+import type {
+  CreateWebsiteInput,
+  UpdateWebsiteInput,
+  Website,
+  WeddingPageData,
 } from '~/server/domains/website/website.types'
-import {
-  type AnswerToQuestion,
-  type RsvpResponse,
-  type SubmitRsvpSchemaInput,
+import type {
+  AnswerToQuestion,
+  RsvpResponse,
+  SubmitRsvpSchemaInput,
 } from '~/server/domains/website/website.validator'
 
 export class WebsiteService {

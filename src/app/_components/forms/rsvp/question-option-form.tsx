@@ -1,9 +1,9 @@
-import { type Dispatch, type SetStateAction } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
 import { AiOutlinePlusCircle } from 'react-icons/ai'
 
 import QuestionOption from '~/app/_components/forms/rsvp/question-option'
 import { sharedStyles } from '~/app/utils/shared-styles'
-import { type TQuestionOption } from '~/app/utils/shared-types'
+import type { TQuestionOption } from '~/app/utils/shared-types'
 
 type QuestionOptionsFormProps = {
   questionOptions: TQuestionOption[]
@@ -17,11 +17,13 @@ export default function QuestionOptionsForm({
   setDeletedOptions,
 }: QuestionOptionsFormProps) {
   return (
-    <div className="px-5">
+    <div className='px-5'>
       {questionOptions.map((option, i) => {
         return (
           <QuestionOption
-            key={i}
+            key={
+              'id' in option && option.id ? option.id : `${option.text}-${option.description}-${i}`
+            }
             option={option}
             setQuestionOptions={setQuestionOptions}
             optionIndex={i}
@@ -29,8 +31,9 @@ export default function QuestionOptionsForm({
           />
         )
       })}
-      <div
-        className="flex cursor-pointer gap-2"
+      <button
+        type='button'
+        className='flex cursor-pointer gap-2'
         onClick={() =>
           setQuestionOptions((prev) => [
             ...prev,
@@ -43,7 +46,7 @@ export default function QuestionOptionsForm({
       >
         <AiOutlinePlusCircle size={25} color={sharedStyles.primaryColorHex} />
         <span className={`text-${sharedStyles.primaryColor}`}>Add Another Option</span>
-      </div>
+      </button>
     </div>
   )
 }

@@ -12,17 +12,18 @@ type RegistrySetupProps = {
 
 export default function RegistrySetup({ setShowRegistrySetup }: RegistrySetupProps) {
   return (
-    <section className="py-10">
-      <div className="flex">
-        <Image alt="registry gifts" src={PresentsImage} width="130" height="130" priority={true} />
-        <div className="ml-10 flex flex-col">
-          <h2 className="text-2xl font-semibold">Let&apos;s set up your registry</h2>
-          <p className="my-5">
+    <section className='my-6 rounded-xl border bg-muted/30 px-6 py-8'>
+      <div className='flex items-start gap-6'>
+        <Image alt='registry gifts' src={PresentsImage} width='130' height='130' priority={true} />
+        <div className='flex flex-col'>
+          <h2 className='font-semibold text-2xl'>Let&apos;s set up your registry</h2>
+          <p className='my-5'>
             Share your wish list with guests by linking an existing registry or starting a new one.
           </p>
           <div>
-            <Link href="/registry">
+            <Link href='/registry'>
               <button
+                type='button'
                 className={`${sharedStyles.secondaryButton({
                   px: 'px-7',
                   py: 'py-1',
@@ -32,7 +33,8 @@ export default function RegistrySetup({ setShowRegistrySetup }: RegistrySetupPro
               </button>
             </Link>
             <button
-              className="ml-5 underline hover:no-underline"
+              type='button'
+              className='ml-5 underline hover:no-underline'
               onClick={() => {
                 localStorage.setItem('registrySectionStatus', 'hidden')
                 setShowRegistrySetup(false)

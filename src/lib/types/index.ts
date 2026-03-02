@@ -4,11 +4,11 @@
  * Cross-domain types used throughout the application.
  */
 
-export {
-  type BaseEntity,
-  type PaginatedResponse,
-  type PaginationParams,
-  type ServiceResult,
-  type SortDirection,
-  type SortParams,
+export type {
+  BaseEntity,
+  PaginatedResponse,
+  PaginationParams,
+  ServiceResult,
+  SortDirection,
+  SortParams,
 } from '~/lib/types/shared'

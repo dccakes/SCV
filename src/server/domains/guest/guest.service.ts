@@ -5,8 +5,8 @@
  * Handles guest creation, updates, and retrieval.
  */
 
-import { type GuestRepository } from '~/server/domains/guest/guest.repository'
-import { type Guest, type GuestWithInvitations } from '~/server/domains/guest/guest.types'
+import type { GuestRepository } from '~/server/domains/guest/guest.repository'
+import type { Guest, GuestWithInvitations } from '~/server/domains/guest/guest.types'
 
 export class GuestService {
   constructor(private guestRepository: GuestRepository) {}

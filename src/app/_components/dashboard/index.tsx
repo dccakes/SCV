@@ -15,7 +15,7 @@ import DashboardSettingsForm from '~/app/_components/forms/dashboard-settings-fo
 import EventForm from '~/app/_components/forms/event-form'
 import EditRsvpSettingsForm from '~/app/_components/forms/rsvp/edit-rsvp-settings'
 import RsvpFormSettings from '~/app/_components/forms/rsvp-form-settings'
-import { type DashboardData, type EventFormData } from '~/app/utils/shared-types'
+import type { DashboardData, EventFormData } from '~/app/utils/shared-types'
 
 export default function Dashboard({
   dashboardData,
@@ -63,45 +63,43 @@ export default function Dashboard({
         websiteUrl={dashboardData?.weddingData?.website?.url}
         setShowWebsiteSettings={setShowWebsiteSettings}
       />
-      <hr className="relative -left-48 bottom-0 w-screen border-gray-300" />
+      <div className='border-border border-t' />
       {showRegistrySetup && <RegistrySetup setShowRegistrySetup={setShowRegistrySetup} />}
-      <hr className="relative -left-48 bottom-0 w-screen border-gray-300" />
-      <div className="mt-14 grid grid-cols-[3fr_275px] gap-7">
-        <div>
-          <div className="flex justify-between pb-8">
-            <h2 className="text-xl font-semibold">Pages</h2>
-            <DashboardControls
-              collapseSections={collapseSections}
-              setCollapseSections={setCollapseSections}
-            />
-          </div>
-          <PageSectionsTemplate title={'Home'} collapse={collapseSections}>
-            <HomeContent
-              dashboardData={dashboardData}
-              events={events}
-              setPrefillEvent={setPrefillEvent}
-              uploadImage={uploadImage}
-              deleteImage={deleteImage}
-            />
-          </PageSectionsTemplate>
-          <PageSectionsTemplate title={'Our Story'} collapse={collapseSections} />
-          <PageSectionsTemplate title={'Wedding Party'} collapse={collapseSections} />
-          <PageSectionsTemplate title={'Photos'} collapse={collapseSections} />
-          <PageSectionsTemplate title={'Q + A'} collapse={collapseSections} />
-          <PageSectionsTemplate title={'Travel'} collapse={collapseSections} />
-          <PageSectionsTemplate title={'Things to Do'} collapse={collapseSections} />
-          <PageSectionsTemplate
-            title={'RSVP'}
-            collapse={collapseSections}
-            setShowRsvpSettings={setShowRsvpSettings}
-          >
-            <RsvpContent
-              events={dashboardData?.events}
-              totalGuests={dashboardData?.totalGuests ?? 0}
-              generalQuestions={dashboardData?.weddingData.website?.generalQuestions ?? []}
-            />
-          </PageSectionsTemplate>
+      <div className='border-border border-t' />
+      <div className='mt-10'>
+        <div className='mb-6 flex justify-between'>
+          <h2 className='font-semibold font-serif text-xl'>Pages</h2>
+          <DashboardControls
+            collapseSections={collapseSections}
+            setCollapseSections={setCollapseSections}
+          />
         </div>
+        <PageSectionsTemplate title={'Home'} collapse={collapseSections}>
+          <HomeContent
+            dashboardData={dashboardData}
+            events={events}
+            setPrefillEvent={setPrefillEvent}
+            uploadImage={uploadImage}
+            deleteImage={deleteImage}
+          />
+        </PageSectionsTemplate>
+        <PageSectionsTemplate title={'Our Story'} collapse={collapseSections} />
+        <PageSectionsTemplate title={'Wedding Party'} collapse={collapseSections} />
+        <PageSectionsTemplate title={'Photos'} collapse={collapseSections} />
+        <PageSectionsTemplate title={'Q + A'} collapse={collapseSections} />
+        <PageSectionsTemplate title={'Travel'} collapse={collapseSections} />
+        <PageSectionsTemplate title={'Things to Do'} collapse={collapseSections} />
+        <PageSectionsTemplate
+          title={'RSVP'}
+          collapse={collapseSections}
+          setShowRsvpSettings={setShowRsvpSettings}
+        >
+          <RsvpContent
+            events={dashboardData?.events}
+            totalGuests={dashboardData?.totalGuests ?? 0}
+            generalQuestions={dashboardData?.weddingData.website?.generalQuestions ?? []}
+          />
+        </PageSectionsTemplate>
         <SidebarPanel setShowWebsiteSettings={setShowWebsiteSettings} />
       </div>
     </>

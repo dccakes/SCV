@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
-import { type ReactElement } from 'react'
+import { type ReactElement, useEffect, useRef, useState } from 'react'
 
 const useDisablePageScroll = () => {
   useEffect(() => {
@@ -8,8 +7,8 @@ const useDisablePageScroll = () => {
   }, [])
 }
 
-const useOuterClick = (callback: () => void) => {
-  const ref = useRef<HTMLDivElement>(null)
+const useOuterClick = <T extends HTMLElement = HTMLDivElement>(callback: () => void) => {
+  const ref = useRef<T>(null)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

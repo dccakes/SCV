@@ -4,10 +4,10 @@
  * Types for complex household management operations that span multiple domains.
  */
 
-import { type Gift } from '~/server/domains/gift'
-import { type GuestWithInvitations } from '~/server/domains/guest'
-import { type GuestPartyInput as DomainGuestPartyInput } from '~/server/domains/household'
-import { type Invitation } from '~/server/domains/invitation'
+import type { Gift } from '~/server/domains/gift'
+import type { GuestWithInvitations } from '~/server/domains/guest'
+import type { GuestPartyInput as DomainGuestPartyInput } from '~/server/domains/household'
+import type { Invitation } from '~/server/domains/invitation'
 
 /**
  * Guest party input with optional fields for creation

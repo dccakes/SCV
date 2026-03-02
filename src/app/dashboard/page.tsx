@@ -1,29 +1,29 @@
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-
 import Dashboard from '~/app/_components/dashboard'
 import { sharedStyles } from '~/app/utils/shared-styles'
+import { env } from '~/env'
 import { api } from '~/trpc/server'
 
 // Check if S3 is configured
 const isS3Enabled = !!(
-  process.env.AWS_S3_BUCKET_NAME &&
-  process.env.AWS_S3_REGION &&
-  process.env.AWS_S3_ACCESS_KEY_ID &&
-  process.env.AWS_S3_SECRET_ACCESS_KEY
+  env.AWS_S3_BUCKET_NAME &&
+  env.AWS_S3_REGION &&
+  env.AWS_S3_ACCESS_KEY_ID &&
+  env.AWS_S3_SECRET_ACCESS_KEY
 )
 
-const Bucket = process.env.AWS_S3_BUCKET_NAME
-const region = process.env.AWS_S3_REGION
+const Bucket = env.AWS_S3_BUCKET_NAME
+const region = env.AWS_S3_REGION
 
 // Only initialize S3 client if configured
 const s3 = isS3Enabled
   ? new S3Client({
       region,
       credentials: {
-        accessKeyId: process.env.AWS_S3_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_S3_SECRET_ACCESS_KEY!,
+        accessKeyId: env.AWS_S3_ACCESS_KEY_ID ?? '',
+        secretAccessKey: env.AWS_S3_SECRET_ACCESS_KEY ?? '',
       },
     })
   : null
@@ -54,7 +54,7 @@ const uploadImage = async (formData: FormData): Promise<{ ok: boolean }> => {
     })
   )
     .then(async () => {
-      const photoName = files[0]!.name
+      const photoName = files[0]?.name
       const objectUrl = `https://${Bucket}.s3.${region}.amazonaws.com/${photoName}`
       await api.website.updateCoverPhoto.mutate({
         coverPhotoUrl: objectUrl,

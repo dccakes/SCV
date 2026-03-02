@@ -7,8 +7,8 @@
 
 import { TRPCError } from '@trpc/server'
 
-import { type UserRepository } from '~/server/domains/user/user.repository'
-import { type UpdateUserInput, type User } from '~/server/domains/user/user.types'
+import type { UserRepository } from '~/server/domains/user/user.repository'
+import type { UpdateUserInput, User } from '~/server/domains/user/user.types'
 
 export class UserService {
   constructor(private userRepository: UserRepository) {}

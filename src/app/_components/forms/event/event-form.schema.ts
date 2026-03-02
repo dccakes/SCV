@@ -5,7 +5,7 @@
  * Based on server createEventSchema - validation rules match server.
  */
 
-import { type z } from 'zod'
+import type { z } from 'zod'
 
 import { createEventSchema } from '~/server/domains/event/event.validator'
 
@@ -38,7 +38,7 @@ export const getEventFormDefaults = (): Partial<EventFormData> => {
  */
 export const transformToServerInput = (data: EventFormData): z.infer<typeof createEventSchema> => {
   // Using || instead of ?? intentionally to convert empty strings to undefined
-   
+
   return {
     eventName: data.eventName,
     date: data.date || undefined,

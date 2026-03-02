@@ -12,6 +12,11 @@ import { db } from '~/server/infrastructure/database'
 const invitationRepository = new InvitationRepository(db)
 export const invitationService = new InvitationService(invitationRepository)
 
+// Export classes for testing/DI
+export { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
+// Export router
+export { invitationRouter } from '~/server/domains/invitation/invitation.router'
+export { InvitationService } from '~/server/domains/invitation/invitation.service'
 // Export types
 export type {
   CreateInvitationInput,
@@ -19,20 +24,12 @@ export type {
   RsvpStats,
   UpdateInvitationInput,
 } from '~/server/domains/invitation/invitation.types'
-
 // Export validators
 export {
-  createInvitationSchema,
   type CreateInvitationSchemaInput,
-  invitationIdSchema,
+  createInvitationSchema,
   type InvitationIdSchemaInput,
-  updateInvitationSchema,
+  invitationIdSchema,
   type UpdateInvitationSchemaInput,
+  updateInvitationSchema,
 } from '~/server/domains/invitation/invitation.validator'
-
-// Export classes for testing/DI
-export { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
-export { InvitationService } from '~/server/domains/invitation/invitation.service'
-
-// Export router
-export { invitationRouter } from '~/server/domains/invitation/invitation.router'

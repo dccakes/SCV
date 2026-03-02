@@ -130,10 +130,7 @@ describe('QuestionService', () => {
         text: 'Updated question',
         type: 'Option',
         isRequired: true,
-        options: [
-          { text: 'New Option A' },
-          { text: 'New Option B' },
-        ],
+        options: [{ text: 'New Option A' }, { text: 'New Option B' }],
         deletedOptions: ['option-1', 'option-2'],
       })
 
@@ -196,7 +193,11 @@ describe('QuestionService', () => {
 
   describe('getByWebsiteId', () => {
     it('should return all questions for a website', async () => {
-      const websiteQuestionWithOptions = { ...mockWebsiteQuestion, options: [], _count: { answers: 0 } }
+      const websiteQuestionWithOptions = {
+        ...mockWebsiteQuestion,
+        options: [],
+        _count: { answers: 0 },
+      }
       mockFindByWebsiteIdFn.mockResolvedValue([websiteQuestionWithOptions])
 
       const result = await questionService.getByWebsiteId('website-123')

@@ -1,16 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
-import { type Dispatch, type SetStateAction } from 'react'
+import { type Dispatch, type SetStateAction, useEffect, useMemo, useState } from 'react'
 import { BiPencil } from 'react-icons/bi'
 
 import { useToggleEventForm } from '~/app/_components/contexts/event-form-context'
 import { useToggleGuestForm } from '~/app/_components/contexts/guest-form-context'
-import { type HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
+import type { HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
 import GuestSearchFilter from '~/app/_components/guest-list/guest-search-filter'
 import GuestTable from '~/app/_components/guest-list/guest-table'
 import { formatDateStandard } from '~/app/utils/helpers'
-import { type Event, type EventFormData } from '~/app/utils/shared-types'
+import type { Event, EventFormData } from '~/app/utils/shared-types'
 import { Button } from '~/components/ui/button'
-import { type HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
+import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 
 type GuestsViewProps = {
   events: Event[]
@@ -56,15 +55,15 @@ export default function GuestsView({
           setPrefillEvent={setPrefillEvent}
         />
       )}
-      <div className="mb-8 flex justify-between">
+      <div className='mb-8 flex justify-between'>
         <GuestSearchFilter
           setFilteredHouseholds={setFilteredHouseholds}
           households={households}
           events={events}
           selectedEventId={selectedEventId}
         />
-        <div className="flex gap-3">
-          <Button variant="outline">Download List</Button>
+        <div className='flex gap-3'>
+          <Button variant='outline'>Download List</Button>
           <Button
             onClick={() => {
               setPrefillHousehold(undefined)
@@ -93,21 +92,21 @@ type DefaultTableHeaderProps = {
 
 const DefaultTableHeader = ({ households, numEvents, totalGuests }: DefaultTableHeaderProps) => {
   return (
-    <div className="py-8">
-      <div className="flex items-center gap-6 text-sm text-muted-foreground">
+    <div className='py-8'>
+      <div className='flex items-center gap-6 text-muted-foreground text-sm'>
         <div>
-          <span className="uppercase">Total Households: </span>
-          <span className="font-bold text-foreground">{households.length}</span>
+          <span className='uppercase'>Total Households: </span>
+          <span className='font-bold text-foreground'>{households.length}</span>
         </div>
-        <div className="h-4 w-px bg-border" />
+        <div className='h-4 w-px bg-border' />
         <div>
-          <span className="uppercase">Total Guests: </span>
-          <span className="font-bold text-foreground">{totalGuests}</span>
+          <span className='uppercase'>Total Guests: </span>
+          <span className='font-bold text-foreground'>{totalGuests}</span>
         </div>
-        <div className="h-4 w-px bg-border" />
+        <div className='h-4 w-px bg-border' />
         <div>
-          <span className="uppercase">Total Events: </span>
-          <span className="font-bold text-foreground">{numEvents}</span>
+          <span className='uppercase'>Total Events: </span>
+          <span className='font-bold text-foreground'>{numEvents}</span>
         </div>
       </div>
     </div>
@@ -178,31 +177,31 @@ const SelectedEventTableHeader = ({
   }
 
   return (
-    <div className="py-8">
-      <div className="mb-4 flex items-center gap-2">
-        <h2 className="text-xl font-bold">{selectedEvent.name}</h2>
+    <div className='py-8'>
+      <div className='mb-4 flex items-center gap-2'>
+        <h2 className='font-bold text-xl'>{selectedEvent.name}</h2>
         <BiPencil
           size={22}
-          className="hover:text-primary/80 cursor-pointer text-primary transition-colors"
+          className='cursor-pointer text-primary transition-colors hover:text-primary/80'
           onClick={() => handleEditEvent(selectedEvent)}
         />
       </div>
-      <div className="flex items-center gap-6 text-sm">
-        <span className="font-semibold text-foreground">{totalGuests} Guests Invited:</span>
-        <div className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-green-500 dark:bg-green-400" />
-          <span className="font-medium">{guestResponses.attending}</span>
-          <span className="text-muted-foreground">Attending</span>
+      <div className='flex items-center gap-6 text-sm'>
+        <span className='font-semibold text-foreground'>{totalGuests} Guests Invited:</span>
+        <div className='flex items-center gap-1.5'>
+          <span className='h-1.5 w-1.5 rounded-full bg-green-500 dark:bg-green-400' />
+          <span className='font-medium'>{guestResponses.attending}</span>
+          <span className='text-muted-foreground'>Attending</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-red-500 dark:bg-red-400" />
-          <span className="font-medium">{guestResponses.declined}</span>
-          <span className="text-muted-foreground">Declined</span>
+        <div className='flex items-center gap-1.5'>
+          <span className='h-1.5 w-1.5 rounded-full bg-red-500 dark:bg-red-400' />
+          <span className='font-medium'>{guestResponses.declined}</span>
+          <span className='text-muted-foreground'>Declined</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
-          <span className="font-medium">{guestResponses.noResponse}</span>
-          <span className="text-muted-foreground">No Response</span>
+        <div className='flex items-center gap-1.5'>
+          <span className='h-1.5 w-1.5 rounded-full bg-muted-foreground' />
+          <span className='font-medium'>{guestResponses.noResponse}</span>
+          <span className='text-muted-foreground'>No Response</span>
         </div>
       </div>
     </div>

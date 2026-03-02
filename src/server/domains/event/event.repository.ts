@@ -5,10 +5,10 @@
  * This layer handles all direct database access for events.
  */
 
-import { type PrismaClient } from '@prisma/client'
+import type { PrismaClient } from '@prisma/client'
 
 import { RSVP_STATUS } from '~/lib/constants'
-import { type Event, type EventWithQuestions, type EventWithStats } from '~/server/domains/event/event.types'
+import type { Event, EventWithQuestions, EventWithStats } from '~/server/domains/event/event.types'
 
 export class EventRepository {
   constructor(private db: PrismaClient) {}

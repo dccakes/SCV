@@ -1,0 +1,120 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.4/schema.json",
+  "files": {
+    "includes": [
+      "**",
+      "!node_modules",
+      "!.next",
+      "!dist",
+      "!build",
+      "!coverage",
+      "!tests/resources",
+      "!next-env.d.ts",
+      "!src/types.gen.ts",
+      "!src/lib/pickle-iq-sdk"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "lineWidth": 100,
+    "indentStyle": "space",
+    "indentWidth": 2
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "jsxQuoteStyle": "single",
+      "trailingCommas": "es5",
+      "semicolons": "asNeeded"
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "correctness": {
+        "noUnusedVariables": "warn",
+        "noUnusedImports": "warn",
+        "noUnusedFunctionParameters": "warn"
+      },
+      "style": {
+        "useImportType": "warn",
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "patterns": [
+              {
+                "group": ["../**", "./**"],
+                "message": "Relative imports are not allowed. Use absolute imports with '~/' prefix."
+              }
+            ]
+          }
+        }
+      },
+      "suspicious": {
+        "noConsole": "warn",
+        "noExplicitAny": "warn",
+        "noUnusedExpressions": "warn"
+      },
+      "nursery": {
+        "useSortedClasses": {
+          "level": "warn",
+          "options": {
+            "attributes": ["className", "class"],
+            "functions": ["cn", "clsx", "cva", "tv"]
+          }
+        }
+      }
+    }
+  },
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["src/styles/globals.css"],
+      "css": {
+        "linter": {
+          "enabled": false
+        },
+        "formatter": {
+          "enabled": false
+        }
+      }
+    },
+    {
+      "includes": ["src/server/domains/**/*.service.ts", "src/server/application/**/*.service.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@prisma/client": "Services must not import PrismaClient directly. Use repositories instead.",
+                  "~/server/infrastructure/database": "Services must not import database client directly. Use repositories instead."
+                },
+                "patterns": [
+                  {
+                    "group": ["../**", "./**"],
+                    "message": "Relative imports are not allowed. Use absolute imports with '~/' prefix."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

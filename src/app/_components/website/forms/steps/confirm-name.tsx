@@ -3,7 +3,7 @@
 import { useState } from 'react'
 
 import { useRsvpForm, useUpdateRsvpForm } from '~/app/_components/contexts/rsvp-form-context'
-import { type HouseholdSearch, type StepFormProps } from '~/app/utils/shared-types'
+import type { HouseholdSearch, StepFormProps } from '~/app/utils/shared-types'
 
 type HouseholdSearchItem = HouseholdSearch[number]
 type GuestWithInvitations = HouseholdSearchItem['guests'][number]
@@ -27,16 +27,16 @@ export default function ConfirmNameForm({ goNext, goBack }: StepFormProps) {
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      <h2 className="text-2xl tracking-widest">
+    <div className='flex flex-col gap-5'>
+      <h2 className='text-2xl tracking-widest'>
         we&apos;ve found you in the guest list. please confirm your name below to continue with your
         rsvp
       </h2>
       {matchedHouseholds?.map((household: HouseholdSearchItem) => {
         return (
-          <div key={household.id} className="flex gap-5">
+          <div key={household.id} className='flex gap-5'>
             <input
-              type="radio"
+              type='radio'
               id={household.id}
               checked={selectedHouseholdId === household.id}
               onChange={() => setSelectedHouseholdId(household.id)}
@@ -51,16 +51,16 @@ export default function ConfirmNameForm({ goNext, goBack }: StepFormProps) {
       })}
 
       <button
-        className={`mt-3 bg-stone-400 py-3 text-xl tracking-wide text-white ${selectedHouseholdId === undefined ? 'cursor-not-allowed bg-stone-400' : 'bg-stone-700'}`}
-        type="button"
+        className={`mt-3 bg-stone-400 py-3 text-white text-xl tracking-wide ${selectedHouseholdId === undefined ? 'cursor-not-allowed bg-stone-400' : 'bg-stone-700'}`}
+        type='button'
         disabled={selectedHouseholdId === undefined}
         onClick={onContinue}
       >
         CONTINUE
       </button>
       <button
-        className={`mt-3 bg-gray-700 py-3 text-xl tracking-wide text-white`}
-        type="button"
+        className={`mt-3 bg-gray-700 py-3 text-white text-xl tracking-wide`}
+        type='button'
         onClick={() => goBack?.()}
       >
         SEARCH AGAIN

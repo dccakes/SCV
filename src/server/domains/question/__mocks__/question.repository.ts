@@ -4,10 +4,10 @@
  * This mock is automatically used when jest.mock('~/server/domains/question/question.repository') is called.
  */
 
-import {
-  type Answer,
-  type Question,
-  type QuestionWithOptions,
+import type {
+  Answer,
+  Question,
+  QuestionWithOptions,
 } from '~/server/domains/question/question.types'
 
 export const mockQuestion: Question = {

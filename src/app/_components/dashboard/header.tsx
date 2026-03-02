@@ -1,8 +1,8 @@
-import { type Dispatch, type SetStateAction } from 'react'
-import { FaRegCopy } from 'react-icons/fa'
-import { FiEdit2 } from 'react-icons/fi'
+import { Copy, ExternalLink, Pencil } from 'lucide-react'
+import Link from 'next/link'
+import type { Dispatch, SetStateAction } from 'react'
 
-import { sharedStyles } from '~/app/utils/shared-styles'
+import { Button } from '~/components/ui/button'
 import { useToast } from '~/components/ui/use-toast'
 
 type DashboardHeaderProps = {
@@ -16,36 +16,51 @@ export default function DashboardHeader({
 }: DashboardHeaderProps) {
   const { toast } = useToast()
   return (
-    <section className="py-10">
-      <div className="flex items-center justify-between">
-        <div className="">
-          <h1 className="text-3xl font-bold">Your Website</h1>
-          <div className="mt-2 flex">
-            <p>{websiteUrl}</p>
-            <span
-              className={`ml-5 cursor-pointer text-${sharedStyles.primaryColor} flex items-center gap-1`}
-              onClick={async () => {
-                await navigator.clipboard.writeText(websiteUrl ?? '')
-                toast({
-                  description: 'Website link copied!',
-                })
-              }}
-            >
-              <FaRegCopy size={16} color={sharedStyles.primaryColorHex} />
-              Copy
-            </span>
-            <span
-              className={`ml-5 cursor-pointer text-${sharedStyles.primaryColor} flex items-center gap-1`}
-              onClick={() => setShowWebsiteSettings(true)}
-            >
-              <FiEdit2 size={16} color={sharedStyles.primaryColorHex} />
-              Edit
-            </span>
+    <section className='py-8'>
+      <div className='flex items-center justify-between'>
+        <div className='flex-1'>
+          <h1 className='font-semibold font-serif text-2xl tracking-tight'>Your Website</h1>
+          <div className='mt-3 flex items-center gap-2'>
+            <div className='flex items-center gap-2 rounded-md bg-muted px-3 py-1.5'>
+              <span className='font-mono text-muted-foreground text-sm'>
+                {websiteUrl ?? 'Set your website URL'}
+              </span>
+              <Button
+                variant='ghost'
+                size='icon'
+                className='h-6 w-6 text-muted-foreground hover:text-primary'
+                onClick={async () => {
+                  await navigator.clipboard.writeText(websiteUrl ?? '')
+                  toast({ description: 'Website link copied!' })
+                }}
+              >
+                <Copy className='h-3.5 w-3.5' />
+              </Button>
+              <Button
+                variant='ghost'
+                size='icon'
+                className='h-6 w-6 text-muted-foreground hover:text-primary'
+                onClick={() => setShowWebsiteSettings(true)}
+              >
+                <Pencil className='h-3.5 w-3.5' />
+              </Button>
+            </div>
           </div>
         </div>
-        <div>
-          <button className={sharedStyles.secondaryButton()}>Share your Website</button>
-          <button className={`ml-5 ${sharedStyles.primaryButton()}`}>Preview Site</button>
+        <div className='flex items-center gap-3'>
+          <Button variant='outline' size='sm'>
+            Share your Website
+          </Button>
+          <Button size='sm' asChild>
+            <Link
+              href={websiteUrl ? `/${websiteUrl}` : '#'}
+              target='_blank'
+              className='flex items-center gap-1.5'
+            >
+              Preview Site
+              <ExternalLink className='h-3.5 w-3.5' />
+            </Link>
+          </Button>
         </div>
       </div>
     </section>

@@ -101,10 +101,10 @@ export function TagsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className='sm:max-w-[500px]'>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FiTag className="h-5 w-5" />
+          <DialogTitle className='flex items-center gap-2'>
+            <FiTag className='h-5 w-5' />
             Tags for {guestName}
           </DialogTitle>
           <DialogDescription>
@@ -112,36 +112,36 @@ export function TagsModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className='space-y-4'>
           {/* Selected Tags Display */}
           {localSelectedIds.length > 0 && (
-            <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">
+            <div className='space-y-2'>
+              <Label className='text-muted-foreground text-xs'>
                 Selected ({localSelectedIds.length}/10)
               </Label>
-              <div className="flex flex-wrap gap-2">
+              <div className='flex flex-wrap gap-2'>
                 {localSelectedIds.map((tagId) => {
                   const tag = tags.find((t) => t.id === tagId)
                   if (!tag) return null
                   return (
                     <Badge
                       key={tag.id}
-                      variant="secondary"
-                      className="flex items-center gap-1.5 px-2.5 py-1"
+                      variant='secondary'
+                      className='flex items-center gap-1.5 px-2.5 py-1'
                     >
                       {tag.color && (
                         <span
-                          className="h-2.5 w-2.5 rounded-full"
+                          className='h-2.5 w-2.5 rounded-full'
                           style={{ backgroundColor: tag.color }}
                         />
                       )}
                       {tag.name}
                       <button
-                        type="button"
+                        type='button'
                         onClick={() => handleToggleTag(tag.id)}
-                        className="ml-1 hover:text-destructive"
+                        className='ml-1 hover:text-destructive'
                       >
-                        <FiX className="h-3 w-3" />
+                        <FiX className='h-3 w-3' />
                       </button>
                     </Badge>
                   )
@@ -151,20 +151,20 @@ export function TagsModal({
           )}
 
           {/* Available Tags */}
-          <div className="space-y-2">
+          <div className='space-y-2'>
             <Label>Available Tags</Label>
-            <div className="max-h-[200px] overflow-y-auto rounded-lg border bg-card p-3">
+            <div className='max-h-[200px] overflow-y-auto rounded-lg border bg-card p-3'>
               {tags.length === 0 ? (
-                <p className="py-4 text-center text-sm text-muted-foreground">
+                <p className='py-4 text-center text-muted-foreground text-sm'>
                   No tags yet. Create your first tag below!
                 </p>
               ) : (
-                <div className="space-y-2">
+                <div className='space-y-2'>
                   {tags.map((tag) => {
                     const isChecked = localSelectedIds.includes(tag.id)
                     const isMaxReached = localSelectedIds.length >= 10 && !isChecked
                     return (
-                      <div key={tag.id} className="flex items-center space-x-2">
+                      <div key={tag.id} className='flex items-center space-x-2'>
                         <Checkbox
                           id={`tag-${tag.id}`}
                           checked={isChecked}
@@ -173,11 +173,11 @@ export function TagsModal({
                         />
                         <label
                           htmlFor={`tag-${tag.id}`}
-                          className="flex cursor-pointer items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          className='flex cursor-pointer items-center gap-2 font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
                         >
                           {tag.color && (
                             <span
-                              className="h-3 w-3 rounded-full"
+                              className='h-3 w-3 rounded-full'
                               style={{ backgroundColor: tag.color }}
                             />
                           )}
@@ -194,38 +194,38 @@ export function TagsModal({
           {/* Create New Tag */}
           {!isCreating ? (
             <Button
-              type="button"
-              variant="outline"
-              size="sm"
+              type='button'
+              variant='outline'
+              size='sm'
               onClick={() => setIsCreating(true)}
-              className="w-full"
+              className='w-full'
             >
-              <FiPlus className="mr-2 h-4 w-4" />
+              <FiPlus className='mr-2 h-4 w-4' />
               Create New Tag
             </Button>
           ) : (
             <form
               onSubmit={handleSubmit(handleCreateTag)}
-              className="bg-muted/50 space-y-3 rounded-lg border p-4"
+              className='space-y-3 rounded-lg border bg-muted/50 p-4'
             >
-              <div className="space-y-2">
-                <Label htmlFor="tag-name">Tag Name</Label>
+              <div className='space-y-2'>
+                <Label htmlFor='tag-name'>Tag Name</Label>
                 <Input
-                  id="tag-name"
+                  id='tag-name'
                   {...register('name')}
-                  placeholder="e.g., VIP, Family, Friends"
+                  placeholder='e.g., VIP, Family, Friends'
                   autoFocus
                 />
-                {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+                {errors.name && <p className='text-destructive text-sm'>{errors.name.message}</p>}
               </div>
 
-              <div className="space-y-2">
+              <div className='space-y-2'>
                 <Label>Color</Label>
-                <div className="flex gap-2">
+                <div className='flex gap-2'>
                   {DEFAULT_COLORS.map((color) => (
                     <button
                       key={color}
-                      type="button"
+                      type='button'
                       onClick={() => setValue('color', color)}
                       className={`h-8 w-8 rounded-full border-2 transition-transform ${
                         selectedColor === color
@@ -239,19 +239,19 @@ export function TagsModal({
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <div className='flex gap-2'>
                 <Button
-                  type="submit"
-                  size="sm"
+                  type='submit'
+                  size='sm'
                   disabled={isSubmitting || createTagMutation.isPending}
-                  className="flex-1"
+                  className='flex-1'
                 >
                   {isSubmitting || createTagMutation.isPending ? 'Creating...' : 'Create Tag'}
                 </Button>
                 <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
+                  type='button'
+                  variant='outline'
+                  size='sm'
                   onClick={() => {
                     setIsCreating(false)
                     reset()
@@ -265,7 +265,7 @@ export function TagsModal({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant='outline' onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={handleSave}>Save Tags</Button>

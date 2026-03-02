@@ -12,21 +12,22 @@
  * for efficient orchestration and transactional control.
  */
 
-import { type PrismaClient } from '@prisma/client'
+// biome-ignore lint/style/noRestrictedImports: architectural violation, tracked in ARCHITECTURAL_VIOLATIONS.md
+import type { PrismaClient } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 
-import {
-  type CreateHouseholdResult,
-  type CreateHouseholdWithGuestsInput,
-  type UpdateHouseholdResult,
-  type UpdateHouseholdWithGuestsInput,
+import type {
+  CreateHouseholdResult,
+  CreateHouseholdWithGuestsInput,
+  UpdateHouseholdResult,
+  UpdateHouseholdWithGuestsInput,
 } from '~/server/application/household-management/household-management.types'
-import { type GiftRepository } from '~/server/domains/gift/gift.repository'
-import { type GuestRepository } from '~/server/domains/guest/guest.repository'
-import { type HouseholdRepository } from '~/server/domains/household/household.repository'
-import { type HouseholdSearchResult } from '~/server/domains/household/household.types'
-import { type InvitationRepository } from '~/server/domains/invitation/invitation.repository'
-import { type Invitation } from '~/server/domains/invitation/invitation.types'
+import type { GiftRepository } from '~/server/domains/gift/gift.repository'
+import type { GuestRepository } from '~/server/domains/guest/guest.repository'
+import type { HouseholdRepository } from '~/server/domains/household/household.repository'
+import type { HouseholdSearchResult } from '~/server/domains/household/household.types'
+import type { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
+import type { Invitation } from '~/server/domains/invitation/invitation.types'
 
 export class HouseholdManagementService {
   constructor(
@@ -99,7 +100,14 @@ export class HouseholdManagementService {
         // Refetch guest with tag assignments to include in response
         const guestWithTags = await this.guestRepo.findByIdWithInvitations(newGuest.id)
 
-        return guestWithTags!
+        if (!guestWithTags) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to refetch guest after creation',
+          })
+        }
+
+        return guestWithTags
       })
     )
 
@@ -206,7 +214,14 @@ export class HouseholdManagementService {
         // Refetch guest with tag assignments to include in response
         const guestWithTags = await this.guestRepo.findByIdWithInvitations(updatedGuest.id)
 
-        return guestWithTags!
+        if (!guestWithTags) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to refetch guest after update',
+          })
+        }
+
+        return guestWithTags
       })
     )
 

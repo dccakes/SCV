@@ -1,9 +1,7 @@
-import { type Dispatch, type SetStateAction } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
 import { BiCollapseVertical } from 'react-icons/bi'
 import { HiOutlineArrowsUpDown } from 'react-icons/hi2'
 import { RiExpandUpDownLine } from 'react-icons/ri'
-
-import { sharedStyles } from '~/app/utils/shared-styles'
 
 type DashboardControlsProps = {
   collapseSections: boolean
@@ -15,24 +13,28 @@ export default function DashboardControls({
   setCollapseSections,
 }: DashboardControlsProps) {
   return (
-    <div className="flex items-center">
-      <div className="flex cursor-pointer">
-        <HiOutlineArrowsUpDown size={21} color={sharedStyles.primaryColorHex} />
-        <button className={`text-${sharedStyles.primaryColor} mx-2`}>Reorder</button>
+    <div className='flex items-center gap-4'>
+      <div className='flex cursor-pointer items-center gap-1 text-primary text-sm transition-colors hover:text-primary/80'>
+        <HiOutlineArrowsUpDown size={16} className='text-primary' />
+        <button type='button'>Reorder</button>
       </div>
-      <div className="flex cursor-pointer" onClick={() => setCollapseSections((prev) => !prev)}>
+      <button
+        type='button'
+        className='flex cursor-pointer items-center gap-1 text-primary text-sm transition-colors hover:text-primary/80'
+        onClick={() => setCollapseSections((prev) => !prev)}
+      >
         {collapseSections ? (
           <>
-            <RiExpandUpDownLine size={21} color={sharedStyles.primaryColorHex} />
-            <button className={`text-${sharedStyles.primaryColor}`}>Expand All</button>
+            <RiExpandUpDownLine size={16} className='text-primary' />
+            <span>Expand All</span>
           </>
         ) : (
           <>
-            <BiCollapseVertical size={21} color={sharedStyles.primaryColorHex} />
-            <button className={`text-${sharedStyles.primaryColor}`}>Collapse All</button>
+            <BiCollapseVertical size={16} className='text-primary' />
+            <span>Collapse All</span>
           </>
         )}
-      </div>
+      </button>
     </div>
   )
 }

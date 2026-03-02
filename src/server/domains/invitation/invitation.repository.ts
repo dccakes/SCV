@@ -5,9 +5,9 @@
  * This layer handles all direct database access for invitations.
  */
 
-import { type PrismaClient } from '@prisma/client'
+import type { PrismaClient } from '@prisma/client'
 
-import { type Invitation } from '~/server/domains/invitation/invitation.types'
+import type { Invitation } from '~/server/domains/invitation/invitation.types'
 
 export class InvitationRepository {
   constructor(private db: PrismaClient) {}

@@ -3,14 +3,15 @@ import 'server-only'
 import { createTRPCClient, httpBatchLink, loggerLink } from '@trpc/client'
 import { headers } from 'next/headers'
 
-import { type AppRouter } from '~/server/api/root'
+import { env } from '~/env'
+import type { AppRouter } from '~/server/api/root'
 import { getUrl, transformer } from '~/trpc/shared'
 
 export const api = createTRPCClient<AppRouter>({
   links: [
     loggerLink({
       enabled: (opts) =>
-        process.env.NODE_ENV === 'development' ||
+        env.NODE_ENV === 'development' ||
         (opts.direction === 'down' && opts.result instanceof Error),
     }),
     httpBatchLink({

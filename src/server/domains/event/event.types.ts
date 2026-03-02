@@ -5,7 +5,7 @@
  * Events represent wedding ceremonies, receptions, rehearsal dinners, etc.
  */
 
-import { type Question } from '~/app/utils/shared-types'
+import type { Question } from '~/app/utils/shared-types'
 
 /**
  * Core Event entity type

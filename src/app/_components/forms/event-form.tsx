@@ -11,7 +11,7 @@ import TimeSelections from '~/app/_components/forms/event/time-selections'
 import SidePaneWrapper from '~/app/_components/forms/wrapper'
 import { useEventFormActions } from '~/app/_components/hooks/forms/useEventFormActions'
 import { sharedStyles } from '~/app/utils/shared-styles'
-import { type EventFormData } from '~/app/utils/shared-types'
+import type { EventFormData } from '~/app/utils/shared-types'
 
 type EventFormProps = {
   prefillFormData: EventFormData | undefined
@@ -86,18 +86,18 @@ export default function EventForm({ prefillFormData }: EventFormProps) {
           handleSaveEvent()
         }}
       >
-        <div className="flex justify-between border-b p-5">
-          <h1 className="text-xl font-semibold">{isEditMode ? 'Edit Event' : 'Add Event'}</h1>
-          <IoMdClose size={25} className="cursor-pointer" onClick={() => toggleEventForm()} />
+        <div className='flex justify-between border-b p-5'>
+          <h1 className='font-semibold text-xl'>{isEditMode ? 'Edit Event' : 'Add Event'}</h1>
+          <IoMdClose size={25} className='cursor-pointer' onClick={() => toggleEventForm()} />
         </div>
-        <div className="p-5">
-          <h2 className="mb-3 text-xl font-semibold">Event Information</h2>
-          <div className="grid grid-cols-1 grid-rows-[repeat(6,50px)] gap-5">
+        <div className='p-5'>
+          <h2 className='mb-3 font-semibold text-xl'>Event Information</h2>
+          <div className='grid grid-cols-1 grid-rows-[repeat(6,50px)] gap-5'>
             <AnimatedInputLabel
-              id="event-name"
+              id='event-name'
               inputValue={eventFormData.eventName}
-              fieldName="eventName"
-              labelText="Event Name*"
+              fieldName='eventName'
+              labelText='Event Name*'
               required={true}
               handleOnChange={handleOnChange}
             />
@@ -108,24 +108,24 @@ export default function EventForm({ prefillFormData }: EventFormProps) {
               handleOnChange={handleOnChange}
             />
             <AnimatedInputLabel
-              id="event-venue"
+              id='event-venue'
               inputValue={eventFormData.venue ?? ''}
-              fieldName="venue"
-              labelText="Venue Name"
+              fieldName='venue'
+              labelText='Venue Name'
               handleOnChange={handleOnChange}
             />
             <AnimatedInputLabel
-              id="event-attire"
+              id='event-attire'
               inputValue={eventFormData.attire ?? ''}
-              fieldName="attire"
-              labelText="Attire"
+              fieldName='attire'
+              labelText='Attire'
               handleOnChange={handleOnChange}
             />
             <AnimatedInputLabel
-              id="event-description"
+              id='event-description'
               inputValue={eventFormData.description ?? ''}
-              fieldName="description"
-              labelText="Description"
+              fieldName='description'
+              labelText='Description'
               handleOnChange={handleOnChange}
             />
           </div>
@@ -133,8 +133,9 @@ export default function EventForm({ prefillFormData }: EventFormProps) {
         <div
           className={`fixed bottom-0 flex ${sharedStyles.sidebarFormWidth} flex-col gap-3 border-t px-8 py-5`}
         >
-          <div className="flex gap-5">
+          <div className='flex gap-5'>
             <button
+              type='button'
               disabled={isProcessing}
               onClick={() => toggleEventForm()}
               className={`${sharedStyles.secondaryButton({
@@ -145,9 +146,9 @@ export default function EventForm({ prefillFormData }: EventFormProps) {
               Cancel
             </button>
             <button
-              id="save-event"
-              type="submit"
-              name="save-event"
+              id='save-event'
+              type='submit'
+              name='save-event'
               disabled={isProcessing}
               className={`w-1/2 ${sharedStyles.primaryButton({
                 py: 'py-2',
@@ -159,7 +160,7 @@ export default function EventForm({ prefillFormData }: EventFormProps) {
           </div>
           {isEditMode && (
             <button
-              type="button"
+              type='button'
               disabled={isProcessing}
               onClick={() => setShowDeleteConfirmation(true)}
               className={`font-semibold ${

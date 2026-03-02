@@ -9,33 +9,12 @@
 export {
   type CreateEventInput,
   type Event,
-  eventRouter,
-  eventService,
   type EventWithQuestions,
   type EventWithStats,
+  eventRouter,
+  eventService,
   type UpdateEventInput,
 } from '~/server/domains/event'
-
-// User Domain
-export {
-  type CreateUserInput,
-  type UpdateUserInput,
-  type User,
-  userRouter,
-  userService,
-} from '~/server/domains/user'
-
-// Website Domain
-export {
-  type CreateWebsiteInput,
-  type UpdateWebsiteInput,
-  type Website,
-  websiteRouter,
-  websiteService,
-  type WebsiteWithQuestions,
-  type WeddingPageData,
-} from '~/server/domains/website'
-
 // Gift Domain
 export {
   type CreateGiftInput,
@@ -45,17 +24,27 @@ export {
   type UpdateGiftInput,
   type UpsertGiftInput,
 } from '~/server/domains/gift'
-
 // Guest Domain
 export {
   type CreateGuestInput,
   type Guest,
+  type GuestWithInvitations,
   guestRouter,
   guestService,
-  type GuestWithInvitations,
   type UpdateGuestInput,
 } from '~/server/domains/guest'
-
+// Household Domain
+export {
+  type CreateHouseholdInput,
+  type DeleteHouseholdInput,
+  type Household,
+  type HouseholdSearchResult,
+  type HouseholdWithGuests,
+  type HouseholdWithGuestsAndGifts,
+  householdRouter,
+  type SearchHouseholdInput,
+  type UpdateHouseholdInput,
+} from '~/server/domains/household'
 // Invitation Domain
 export {
   type CreateInvitationInput,
@@ -65,7 +54,6 @@ export {
   type RsvpStats,
   type UpdateInvitationInput,
 } from '~/server/domains/invitation'
-
 // Question Domain
 export {
   type Answer,
@@ -74,21 +62,26 @@ export {
   type OptionInput,
   type OptionResponse,
   type Question,
+  type QuestionWithOptions,
   questionRouter,
   questionService,
-  type QuestionWithOptions,
   type UpsertQuestionInput,
 } from '~/server/domains/question'
-
-// Household Domain
+// User Domain
 export {
-  type CreateHouseholdInput,
-  type DeleteHouseholdInput,
-  type Household,
-  householdRouter,
-  type HouseholdSearchResult,
-  type HouseholdWithGuests,
-  type HouseholdWithGuestsAndGifts,
-  type SearchHouseholdInput,
-  type UpdateHouseholdInput,
-} from '~/server/domains/household'
+  type CreateUserInput,
+  type UpdateUserInput,
+  type User,
+  userRouter,
+  userService,
+} from '~/server/domains/user'
+// Website Domain
+export {
+  type CreateWebsiteInput,
+  type UpdateWebsiteInput,
+  type Website,
+  type WebsiteWithQuestions,
+  type WeddingPageData,
+  websiteRouter,
+  websiteService,
+} from '~/server/domains/website'

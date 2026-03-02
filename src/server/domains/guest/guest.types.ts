@@ -8,14 +8,14 @@
  * Only entity types representing database models are manually defined.
  */
 
-import { type GuestAgeGroup } from '@prisma/client'
+import type { GuestAgeGroup } from '@prisma/client'
 
-import {
-  type CreateGuestSchemaInput,
-  type GuestPartySchemaInput,
-  type UpdateGuestSchemaInput,
+import type {
+  CreateGuestSchemaInput,
+  GuestPartySchemaInput,
+  UpdateGuestSchemaInput,
 } from '~/server/domains/guest/guest.validator'
-import { type Invitation } from '~/server/domains/invitation/invitation.types'
+import type { Invitation } from '~/server/domains/invitation/invitation.types'
 
 /**
  * Core Guest entity type

@@ -9,7 +9,7 @@
 import { act, renderHook } from '@testing-library/react'
 import { useForm } from 'react-hook-form'
 
-import { type HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
+import type { HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
 
 describe('GuestNameForm - Primary Contact Toggle', () => {
   describe('handlePrimaryContactChange behavior', () => {

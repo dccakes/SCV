@@ -5,9 +5,9 @@
  * This layer handles all direct database access for weddings.
  */
 
-import { type PrismaClient } from '@prisma/client'
+import type { PrismaClient } from '@prisma/client'
 
-import { type Wedding } from '~/server/domains/wedding/wedding.types'
+import type { Wedding } from '~/server/domains/wedding/wedding.types'
 
 export class WeddingRepository {
   constructor(private db: PrismaClient) {}
