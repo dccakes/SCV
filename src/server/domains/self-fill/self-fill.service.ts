@@ -5,17 +5,16 @@
  * Handles token generation, validation, and guest self-registration.
  */
 
-import { randomBytes } from 'crypto'
-
+import { randomBytes } from 'node:crypto'
 import { TRPCError } from '@trpc/server'
 
-import { type GuestRepository } from '~/server/domains/guest/guest.repository'
-import { type HouseholdRepository } from '~/server/domains/household/household.repository'
-import { type SelfFillRepository } from '~/server/domains/self-fill/self-fill.repository'
-import {
-  type SelfFillGuestInput,
-  type SelfFillRegistrationResult,
-  type SelfFillWeddingData,
+import type { GuestRepository } from '~/server/domains/guest/guest.repository'
+import type { HouseholdRepository } from '~/server/domains/household/household.repository'
+import type { SelfFillRepository } from '~/server/domains/self-fill/self-fill.repository'
+import type {
+  SelfFillGuestInput,
+  SelfFillRegistrationResult,
+  SelfFillWeddingData,
 } from '~/server/domains/self-fill/self-fill.types'
 
 export class SelfFillService {

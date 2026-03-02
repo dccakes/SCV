@@ -66,18 +66,18 @@ export default function SelfFillPage() {
 
   if (isLoadingWedding) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-rose-50 to-white">
-        <Loader2 className="h-8 w-8 animate-spin text-rose-500" />
+      <div className='flex min-h-screen items-center justify-center bg-gradient-to-b from-rose-50 to-white'>
+        <Loader2 className='h-8 w-8 animate-spin text-rose-500' />
       </div>
     )
   }
 
   if (!wedding) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-rose-50 to-white p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl text-rose-700">Link Not Found</CardTitle>
+      <div className='flex min-h-screen items-center justify-center bg-gradient-to-b from-rose-50 to-white p-4'>
+        <Card className='w-full max-w-md'>
+          <CardHeader className='text-center'>
+            <CardTitle className='text-2xl text-rose-700'>Link Not Found</CardTitle>
             <CardDescription>
               This registration link is invalid or has expired. Please contact the couple for a new
               link.
@@ -90,16 +90,16 @@ export default function SelfFillPage() {
 
   if (isSubmitted) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-rose-50 to-white p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-              <CheckCircle2 className="h-10 w-10 text-green-600" />
+      <div className='flex min-h-screen items-center justify-center bg-gradient-to-b from-rose-50 to-white p-4'>
+        <Card className='w-full max-w-md'>
+          <CardHeader className='text-center'>
+            <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100'>
+              <CheckCircle2 className='h-10 w-10 text-green-600' />
             </div>
-            <CardTitle className="text-2xl text-green-700">You&apos;re on the list!</CardTitle>
-            <CardDescription className="text-base">{successMessage}</CardDescription>
+            <CardTitle className='text-2xl text-green-700'>You&apos;re on the list!</CardTitle>
+            <CardDescription className='text-base'>{successMessage}</CardDescription>
           </CardHeader>
-          <CardContent className="text-center text-sm text-muted-foreground">
+          <CardContent className='text-center text-muted-foreground text-sm'>
             <p>
               {wedding.groomFirstName} & {wedding.brideFirstName} will be in touch with more
               details.
@@ -111,10 +111,10 @@ export default function SelfFillPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-rose-50 to-white p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl text-rose-700">
+    <div className='flex min-h-screen items-center justify-center bg-gradient-to-b from-rose-50 to-white p-4'>
+      <Card className='w-full max-w-md'>
+        <CardHeader className='text-center'>
+          <CardTitle className='text-2xl text-rose-700'>
             {wedding.groomFirstName} & {wedding.brideFirstName}&apos;s Wedding
           </CardTitle>
           <CardDescription>
@@ -122,72 +122,72 @@ export default function SelfFillPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name *</Label>
+          <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='firstName'>First Name *</Label>
                 <Input
-                  id="firstName"
-                  placeholder="John"
+                  id='firstName'
+                  placeholder='John'
                   {...register('firstName')}
                   className={errors.firstName ? 'border-red-500' : ''}
                 />
                 {errors.firstName && (
-                  <p className="text-sm text-red-500">{errors.firstName.message}</p>
+                  <p className='text-red-500 text-sm'>{errors.firstName.message}</p>
                 )}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name *</Label>
+              <div className='space-y-2'>
+                <Label htmlFor='lastName'>Last Name *</Label>
                 <Input
-                  id="lastName"
-                  placeholder="Doe"
+                  id='lastName'
+                  placeholder='Doe'
                   {...register('lastName')}
                   className={errors.lastName ? 'border-red-500' : ''}
                 />
                 {errors.lastName && (
-                  <p className="text-sm text-red-500">{errors.lastName.message}</p>
+                  <p className='text-red-500 text-sm'>{errors.lastName.message}</p>
                 )}
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email (optional)</Label>
+            <div className='space-y-2'>
+              <Label htmlFor='email'>Email (optional)</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="john@example.com"
+                id='email'
+                type='email'
+                placeholder='john@example.com'
                 {...register('email')}
                 className={errors.email ? 'border-red-500' : ''}
               />
-              {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
+              {errors.email && <p className='text-red-500 text-sm'>{errors.email.message}</p>}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone (optional)</Label>
+            <div className='space-y-2'>
+              <Label htmlFor='phone'>Phone (optional)</Label>
               <Input
-                id="phone"
-                type="tel"
-                placeholder="+1 234 567 8900"
+                id='phone'
+                type='tel'
+                placeholder='+1 234 567 8900'
                 {...register('phone')}
                 className={errors.phone ? 'border-red-500' : ''}
               />
-              {errors.phone && <p className="text-sm text-red-500">{errors.phone.message}</p>}
+              {errors.phone && <p className='text-red-500 text-sm'>{errors.phone.message}</p>}
             </div>
 
             {registerMutation.error && (
-              <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+              <div className='rounded-md bg-red-50 p-3 text-red-700 text-sm'>
                 {registerMutation.error.message}
               </div>
             )}
 
             <Button
-              type="submit"
-              className="w-full bg-rose-600 hover:bg-rose-700"
+              type='submit'
+              className='w-full bg-rose-600 hover:bg-rose-700'
               disabled={isSubmitting || registerMutation.isPending}
             >
               {isSubmitting || registerMutation.isPending ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
                   Adding...
                 </>
               ) : (

@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
-import { sharedStyles } from '~/app/utils/shared-styles'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -65,70 +64,70 @@ export default function SelfFillLinkManager() {
 
   if (isLoading) {
     return (
-      <div className="border-b py-8">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Self-Fill Link</h2>
-          <Loader2 className="h-4 w-4 animate-spin" />
-        </div>
+      <div className='flex items-center justify-between'>
+        <h2 className='font-semibold text-xl'>Self-Fill Link</h2>
+        <Loader2 className='h-4 w-4 animate-spin' />
       </div>
     )
   }
 
   return (
     <>
-      <div className="border-b py-8">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Self-Fill Link</h2>
+      <div>
+        <div className='mb-3 flex items-center justify-between'>
+          <h2 className='font-semibold text-xl'>Self-Fill Link</h2>
           {tokenData?.token ? (
-            <span
-              className={`text-${sharedStyles.primaryColor} cursor-pointer text-lg hover:underline`}
+            <button
+              type='button'
+              className='cursor-pointer text-lg text-primary hover:underline'
               onClick={() => setShowRevokeDialog(true)}
             >
               Disable
-            </span>
+            </button>
           ) : (
-            <span
-              className={`text-${sharedStyles.primaryColor} cursor-pointer text-lg hover:underline`}
+            <button
+              type='button'
+              className='cursor-pointer text-lg text-primary hover:underline'
               onClick={() => generateMutation.mutate({})}
             >
               {generateMutation.isPending ? 'Generating...' : 'Generate'}
-            </span>
+            </button>
           )}
         </div>
 
-        <p className="mb-3 text-sm text-muted-foreground">
+        <p className='mb-3 text-muted-foreground text-sm'>
           {tokenData?.token
             ? 'Share this link with guests so they can add themselves to your guest list.'
             : 'Generate a link that guests can use to add themselves to your guest list.'}
         </p>
 
         {tokenData?.token && (
-          <div className="flex gap-2">
+          <div className='flex gap-2'>
             <Button
-              variant="outline"
-              size="sm"
-              className="flex-1"
+              variant='outline'
+              size='sm'
+              className='flex-1'
               onClick={handleCopy}
               disabled={copied}
             >
               {copied ? (
                 <>
-                  <Check className="mr-2 h-4 w-4" />
+                  <Check className='mr-2 h-4 w-4' />
                   Copied!
                 </>
               ) : (
                 <>
-                  <Copy className="mr-2 h-4 w-4" />
+                  <Copy className='mr-2 h-4 w-4' />
                   Copy Link
                 </>
               )}
             </Button>
             <Button
-              variant="outline"
-              size="sm"
+              variant='outline'
+              size='sm'
               onClick={() => window.open(getSelfFillUrl(), '_blank')}
             >
-              <Link2 className="h-4 w-4" />
+              <Link2 className='h-4 w-4' />
             </Button>
           </div>
         )}
@@ -151,10 +150,10 @@ export default function SelfFillLinkManager() {
                 revokeMutation.mutate({})
               }}
               disabled={revokeMutation.isPending}
-              className="flex items-center gap-2 bg-red-600 hover:bg-red-700"
+              className='flex items-center gap-2 bg-red-600 hover:bg-red-700'
             >
-              {revokeMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-              <Trash2 className="h-4 w-4" />
+              {revokeMutation.isPending && <Loader2 className='h-4 w-4 animate-spin' />}
+              <Trash2 className='h-4 w-4' />
               Disable Link
             </AlertDialogAction>
           </AlertDialogFooter>

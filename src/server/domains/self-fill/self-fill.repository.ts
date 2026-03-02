@@ -5,9 +5,9 @@
  * Handles wedding lookup by token and token management.
  */
 
-import { type PrismaClient } from '@prisma/client'
+import type { PrismaClient } from '@prisma/client'
 
-import { type SelfFillWeddingData } from '~/server/domains/self-fill/self-fill.types'
+import type { SelfFillWeddingData } from '~/server/domains/self-fill/self-fill.types'
 
 export class SelfFillRepository {
   constructor(private db: PrismaClient) {}

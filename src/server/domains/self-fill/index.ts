@@ -21,6 +21,11 @@ export const selfFillService = new SelfFillService(
   guestRepository
 )
 
+// Export classes for testing/DI
+export { SelfFillRepository } from '~/server/domains/self-fill/self-fill.repository'
+// Export router
+export { selfFillRouter } from '~/server/domains/self-fill/self-fill.router'
+export { SelfFillService } from '~/server/domains/self-fill/self-fill.service'
 // Export types
 export type {
   SelfFillEvent,
@@ -28,22 +33,14 @@ export type {
   SelfFillRegistrationResult,
   SelfFillWeddingData,
 } from '~/server/domains/self-fill/self-fill.types'
-
 // Export validators
 export {
-  generateTokenSchema,
   type GenerateTokenSchemaInput,
-  getByTokenSchema,
   type GetByTokenSchemaInput,
-  revokeTokenSchema,
+  generateTokenSchema,
+  getByTokenSchema,
   type RevokeTokenSchemaInput,
-  selfFillGuestSchema,
+  revokeTokenSchema,
   type SelfFillGuestSchemaInput,
+  selfFillGuestSchema,
 } from '~/server/domains/self-fill/self-fill.validator'
-
-// Export classes for testing/DI
-export { SelfFillRepository } from '~/server/domains/self-fill/self-fill.repository'
-export { SelfFillService } from '~/server/domains/self-fill/self-fill.service'
-
-// Export router
-export { selfFillRouter } from '~/server/domains/self-fill/self-fill.router'

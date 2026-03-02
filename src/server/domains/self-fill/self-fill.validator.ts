@@ -22,11 +22,7 @@ export const selfFillGuestSchema = z.object({
   token: z.string().min(1, 'Token is required'),
   firstName: z.string().min(1, 'First name is required').max(100),
   lastName: z.string().min(1, 'Last name is required').max(100),
-  email: z
-    .string()
-    .email('Please enter a valid email address')
-    .nullish()
-    .or(z.literal('')),
+  email: z.string().email('Please enter a valid email address').nullish().or(z.literal('')),
   phone: z.string().max(20).nullish(),
 })
 
