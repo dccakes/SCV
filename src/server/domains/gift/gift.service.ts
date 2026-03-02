@@ -5,8 +5,8 @@
  * Handles gift tracking, updates, and thank you status.
  */
 
-import { type GiftRepository } from '~/server/domains/gift/gift.repository'
-import { type Gift, type UpdateGiftInput, type UpsertGiftInput } from '~/server/domains/gift/gift.types'
+import type { GiftRepository } from '~/server/domains/gift/gift.repository'
+import type { Gift, UpdateGiftInput, UpsertGiftInput } from '~/server/domains/gift/gift.types'
 
 export class GiftService {
   constructor(private giftRepository: GiftRepository) {}

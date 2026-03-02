@@ -17,25 +17,25 @@
  */
 
 import { calculateDaysRemaining, formatDateNumber } from '~/app/utils/helpers'
-import {
-  type DashboardData,
-  type EventWithStats,
-  type GuestResponses,
-  type HouseholdWithGuests,
-  type QuestionWithRecentAnswer,
-  type WebsiteWithQuestions,
-  type WeddingData,
+import type {
+  DashboardData,
+  EventWithStats,
+  GuestResponses,
+  HouseholdWithGuests,
+  QuestionWithRecentAnswer,
+  WebsiteWithQuestions,
+  WeddingData,
 } from '~/server/application/dashboard/dashboard.types'
-import { type EventRepository } from '~/server/domains/event/event.repository'
-import { type GuestRepository } from '~/server/domains/guest/guest.repository'
-import { type HouseholdRepository } from '~/server/domains/household/household.repository'
-import { type HouseholdWithGuestsAndGifts } from '~/server/domains/household/household.types'
-import { type InvitationRepository } from '~/server/domains/invitation/invitation.repository'
-import { type Invitation } from '~/server/domains/invitation/invitation.types'
-import { type QuestionRepository } from '~/server/domains/question/question.repository'
-import { type UserRepository } from '~/server/domains/user/user.repository'
-import { type WebsiteRepository } from '~/server/domains/website/website.repository'
-import { type WeddingRepository } from '~/server/domains/wedding/wedding.repository'
+import type { EventRepository } from '~/server/domains/event/event.repository'
+import type { GuestRepository } from '~/server/domains/guest/guest.repository'
+import type { HouseholdRepository } from '~/server/domains/household/household.repository'
+import type { HouseholdWithGuestsAndGifts } from '~/server/domains/household/household.types'
+import type { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
+import type { Invitation } from '~/server/domains/invitation/invitation.types'
+import type { QuestionRepository } from '~/server/domains/question/question.repository'
+import type { UserRepository } from '~/server/domains/user/user.repository'
+import type { WebsiteRepository } from '~/server/domains/website/website.repository'
+import type { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
 
 export class DashboardService {
   constructor(
@@ -160,7 +160,7 @@ export class DashboardService {
         website.generalQuestions.map(async (question) => {
           // Questions from database always have IDs
           const recentAnswer = await this.questionRepo.findMostRecentAnswerByQuestionId(
-            question.id!
+            question.id ?? ''
           )
           return {
             ...question,
@@ -227,7 +227,7 @@ export class DashboardService {
           event.questions.map(async (question) => {
             // Questions from database always have IDs
             const recentAnswer = await this.questionRepo.findMostRecentAnswerByQuestionId(
-              question.id!
+              question.id ?? ''
             )
             return {
               ...question,

@@ -16,11 +16,12 @@ export default function DeleteConfirmation({
 }: DeleteConfirmationProps) {
   return (
     <SidePaneWrapper>
-      <div className="flex h-screen flex-col justify-center gap-3 px-7 text-center">
-        <h1 className="text-xl font-semibold">Are you sure?</h1>
+      <div className='flex h-screen flex-col justify-center gap-3 px-7 text-center'>
+        <h1 className='font-semibold text-xl'>Are you sure?</h1>
         {disclaimerText && <p>{disclaimerText}</p>}
-        <div className="mt-4 flex gap-5">
+        <div className='mt-4 flex gap-5'>
           <button
+            type='button'
             disabled={isProcessing}
             onClick={() => noHandler()}
             className={`${sharedStyles.secondaryButton({
@@ -31,6 +32,7 @@ export default function DeleteConfirmation({
             No
           </button>
           <button
+            type='button'
             disabled={isProcessing}
             className={`w-1/2 ${sharedStyles.primaryButton({
               py: 'py-2',

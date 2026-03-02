@@ -5,9 +5,9 @@
  * This layer handles all direct database access for websites.
  */
 
-import { type PrismaClient } from '@prisma/client'
+import type { PrismaClient } from '@prisma/client'
 
-import { type Website, type WebsiteWithQuestions } from '~/server/domains/website/website.types'
+import type { Website, WebsiteWithQuestions } from '~/server/domains/website/website.types'
 
 export class WebsiteRepository {
   constructor(private db: PrismaClient) {}

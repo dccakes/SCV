@@ -1,14 +1,13 @@
-import { useEffect, useState } from 'react'
-import { type Dispatch, type SetStateAction } from 'react'
+import { type Dispatch, type SetStateAction, useEffect, useState } from 'react'
 import { FaMagnifyingGlass } from 'react-icons/fa6'
 import { IoIosArrowDown, IoMdCheckmark } from 'react-icons/io'
 
 import { useOuterClick } from '~/app/_components/hooks'
 import { sharedStyles } from '~/app/utils/shared-styles'
-import { type Event } from '~/app/utils/shared-types'
+import type { Event } from '~/app/utils/shared-types'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
-import { type HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
+import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 
 type TSelectedRsvpFilter = {
   eventId: string
@@ -39,7 +38,7 @@ export default function GuestSearchFilter({
     setSelectedRsvpFilter(null)
 
     setSearchInput('')
-  }, [selectedEventId])
+  }, [])
 
   const eventsToMap =
     selectedEventId === 'all' ? events : [events.find((event) => event.id === selectedEventId)]
@@ -71,31 +70,31 @@ export default function GuestSearchFilter({
   }
 
   return (
-    <div className="flex items-center gap-4">
-      <div className="relative flex items-center">
+    <div className='flex items-center gap-4'>
+      <div className='relative flex items-center'>
         <Input
-          id="search-guests-input"
-          className="w-64 pr-12"
-          placeholder="Find Guests"
+          id='search-guests-input'
+          className='w-64 pr-12'
+          placeholder='Find Guests'
           value={searchInput}
           onChange={(e) => filterHouseholdsBySearch(e.target.value)}
         />
-        <div className="absolute right-0 flex h-full w-12 items-center justify-center rounded-r-md bg-primary">
-          <FaMagnifyingGlass className="text-primary-foreground" size={18} />
+        <div className='absolute right-0 flex h-full w-12 items-center justify-center rounded-r-md bg-primary'>
+          <FaMagnifyingGlass className='text-primary-foreground' size={18} />
         </div>
       </div>
 
       <div ref={invitationFilterRef}>
-        <div className="relative">
+        <div className='relative'>
           <Button
-            variant="outline"
+            variant='outline'
             onClick={() => setShowInvitationDropdown((prev) => !prev)}
-            className="w-48 justify-between"
+            className='w-48 justify-between'
           >
             {selectedRsvpFilter === null ? (
               <span>Filter By</span>
             ) : (
-              <div className="flex items-center gap-1.5">
+              <div className='flex items-center gap-1.5'>
                 <span
                   className={`h-1.5 w-1.5 rounded-full ${sharedStyles.getRSVPcolor(
                     selectedRsvpFilter.rsvpValue
@@ -107,15 +106,15 @@ export default function GuestSearchFilter({
             <IoIosArrowDown size={16} />
           </Button>
           {showInvitationDropdown && (
-            <div className="absolute left-0 top-full z-10 mt-1 max-h-64 w-48 overflow-auto rounded-md border bg-popover p-3 shadow-md">
+            <div className='absolute top-full left-0 z-10 mt-1 max-h-64 w-48 overflow-auto rounded-md border bg-popover p-3 shadow-md'>
               {eventsToMap?.map(
                 (event) =>
                   event && (
                     <div
                       key={event.id}
-                      className="mb-4 flex flex-col border-b pb-2 last:mb-0 last:border-0"
+                      className='mb-4 flex flex-col border-b pb-2 last:mb-0 last:border-0'
                     >
-                      <h5 className="mb-2 text-xs font-medium uppercase text-muted-foreground">
+                      <h5 className='mb-2 font-medium text-muted-foreground text-xs uppercase'>
                         {event.name}
                       </h5>
                       {['Not Invited', 'Invited', 'Attending', 'Declined'].map((rsvp) => (
@@ -140,9 +139,9 @@ export default function GuestSearchFilter({
       </div>
       {!!selectedRsvpFilter && (
         <Button
-          variant="ghost"
-          size="sm"
-          className="text-primary"
+          variant='ghost'
+          size='sm'
+          className='text-primary'
           onClick={() => {
             setFilteredHouseholds(households)
             setSearchInput('')
@@ -171,22 +170,22 @@ const InvitationOption = ({
   filterHouseholdsByInvitation,
   isSelected,
 }: InvitationOptionProps) => {
-  const handleChangeOption = (e: React.MouseEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLElement
-    setSelectedRsvpFilter({ eventId, rsvpValue: target.innerText })
-    filterHouseholdsByInvitation({ eventId, rsvpValue: target.innerText })
+  const handleChangeOption = () => {
+    setSelectedRsvpFilter({ eventId, rsvpValue })
+    filterHouseholdsByInvitation({ eventId, rsvpValue })
   }
 
   return (
-    <div
-      className="flex cursor-pointer items-center justify-between rounded-sm p-2 text-sm transition-colors hover:bg-accent"
-      onClick={(e) => handleChangeOption(e)}
+    <button
+      type='button'
+      className='flex w-full cursor-pointer items-center justify-between rounded-sm p-2 text-sm transition-colors hover:bg-accent'
+      onClick={handleChangeOption}
     >
-      <div className="flex items-center gap-1.5">
+      <div className='flex items-center gap-1.5'>
         <span className={`h-1.5 w-1.5 rounded-full ${sharedStyles.getRSVPcolor(rsvpValue)}`} />
         <span>{rsvpValue}</span>
       </div>
-      {isSelected && <IoMdCheckmark size={16} className="text-primary" />}
-    </div>
+      {isSelected && <IoMdCheckmark size={16} className='text-primary' />}
+    </button>
   )
 }

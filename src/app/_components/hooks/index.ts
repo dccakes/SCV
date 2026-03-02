@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
-import { type ReactElement } from 'react'
+import { type ReactElement, useEffect, useRef, useState } from 'react'
 
 const useDisablePageScroll = () => {
   useEffect(() => {

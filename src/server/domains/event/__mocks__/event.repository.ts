@@ -4,7 +4,7 @@
  * This mock is automatically used when jest.mock('~/server/domains/event/event.repository') is called.
  */
 
-import { type Event, type EventWithStats } from '~/server/domains/event/event.types'
+import type { Event, EventWithStats } from '~/server/domains/event/event.types'
 
 export const mockEvent: Event = {
   id: 'event-123',

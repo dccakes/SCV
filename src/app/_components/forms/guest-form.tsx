@@ -21,7 +21,7 @@ import {
 } from '~/app/_components/forms/guest-form.schema'
 import SidePaneWrapper from '~/app/_components/forms/wrapper'
 import { getDirtyValues } from '~/app/utils/form-helpers'
-import { type Event, type FormInvites } from '~/app/utils/shared-types'
+import type { Event, FormInvites } from '~/app/utils/shared-types'
 import {
   Accordion,
   AccordionContent,
@@ -155,14 +155,16 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
     if (!isEditMode || !prefillFormData) return 'Add Party'
     const primaryContact = prefillFormData.guestParty.find((guest) => guest.isPrimaryContact)
     const numGuests = prefillFormData.guestParty.length
-    const primaryContactName = primaryContact?.firstName + ' ' + primaryContact?.lastName
+    const primaryContactName = `${primaryContact?.firstName} ${primaryContact?.lastName}`
 
     return numGuests > 1 ? `${primaryContactName} + ${numGuests - 1}` : primaryContactName
   }
 
   const handleAddGuestToParty = () => {
     const invites: FormInvites = {}
-    events.forEach((event: Event) => (invites[event.id] = 'Not Invited'))
+    events.forEach((event: Event) => {
+      invites[event.id] = 'Not Invited'
+    })
 
     append({
       firstName: '',
@@ -226,39 +228,39 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
 
   return (
     <SidePaneWrapper>
-      <form className="flex h-full flex-col" onSubmit={handleSubmit(onSubmit)}>
+      <form className='flex h-full flex-col' onSubmit={handleSubmit(onSubmit)}>
         {/* Header */}
-        <div className="flex items-center justify-between border-b bg-background p-6">
-          <h1 className="mr-4 truncate text-2xl font-bold">{getTitle()}</h1>
+        <div className='flex items-center justify-between border-b bg-background p-6'>
+          <h1 className='mr-4 truncate font-bold text-2xl'>{getTitle()}</h1>
           <button
-            type="button"
+            type='button'
             onClick={() => toggleGuestForm()}
-            aria-label="Close guest form"
-            className="text-muted-foreground transition-colors hover:text-foreground"
+            aria-label='Close guest form'
+            className='text-muted-foreground transition-colors hover:text-foreground'
           >
-            <IoMdClose size={24} aria-hidden="true" />
+            <IoMdClose size={24} aria-hidden='true' />
           </button>
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto pb-32">
+        <div className='flex-1 overflow-y-auto pb-32'>
           {/* Display validation error for guestParty array */}
           {errors.guestParty && typeof errors.guestParty.message === 'string' && (
-            <div className="bg-destructive/10 mx-6 mt-4 rounded-lg border border-destructive p-4">
-              <p className="text-sm font-medium text-destructive">{errors.guestParty.message}</p>
+            <div className='mx-6 mt-4 rounded-lg border border-destructive bg-destructive/10 p-4'>
+              <p className='font-medium text-destructive text-sm'>{errors.guestParty.message}</p>
             </div>
           )}
 
           <Accordion
-            type="multiple"
+            type='multiple'
             defaultValue={['guests', 'contact', 'notes']}
-            className="w-full"
+            className='w-full'
           >
-            <AccordionItem value="guests" className="border-b-0">
-              <AccordionTrigger className="px-6 py-4 text-lg font-semibold hover:no-underline">
+            <AccordionItem value='guests' className='border-b-0'>
+              <AccordionTrigger className='px-6 py-4 font-semibold text-lg hover:no-underline'>
                 Guest Party ({fields.length})
               </AccordionTrigger>
-              <AccordionContent className="pb-0">
+              <AccordionContent className='pb-0'>
                 {fields.map((field, index) => (
                   <GuestNameForm
                     key={field.id}
@@ -275,50 +277,50 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
                 ))}
 
                 <button
-                  type="button"
+                  type='button'
                   onClick={handleAddGuestToParty}
-                  className="hover:bg-muted/50 w-full border-t py-4 text-sm font-medium text-primary transition-colors"
+                  className='w-full border-t py-4 font-medium text-primary text-sm transition-colors hover:bg-muted/50'
                 >
                   + Add A Guest To This Party
                 </button>
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="contact" className="border-b-0">
-              <AccordionTrigger className="px-6 py-4 text-lg font-semibold hover:no-underline">
+            <AccordionItem value='contact' className='border-b-0'>
+              <AccordionTrigger className='px-6 py-4 font-semibold text-lg hover:no-underline'>
                 Contact Information
               </AccordionTrigger>
-              <AccordionContent className="px-6 pb-6">
+              <AccordionContent className='px-6 pb-6'>
                 <ContactForm register={register} errors={errors} />
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="notes" className="border-b-0">
-              <AccordionTrigger className="px-6 py-4 text-lg font-semibold hover:no-underline">
+            <AccordionItem value='notes' className='border-b-0'>
+              <AccordionTrigger className='px-6 py-4 font-semibold text-lg hover:no-underline'>
                 Notes
               </AccordionTrigger>
-              <AccordionContent className="px-6 pb-6">
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Additional Information</Label>
+              <AccordionContent className='px-6 pb-6'>
+                <div className='space-y-2'>
+                  <Label htmlFor='notes'>Additional Information</Label>
                   <textarea
-                    id="notes"
+                    id='notes'
                     {...register('notes')}
-                    placeholder="Enter notes about your guests, like food allergies or special requests"
-                    className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder='Enter notes about your guests, like food allergies or special requests'
+                    className='flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
                   />
                   {errors.notes && (
-                    <p className="text-sm text-destructive">{errors.notes.message}</p>
+                    <p className='text-destructive text-sm'>{errors.notes.message}</p>
                   )}
                 </div>
               </AccordionContent>
             </AccordionItem>
 
             {isEditMode && (
-              <AccordionItem value="gifts" className="border-b-0">
-                <AccordionTrigger className="px-6 py-4 text-lg font-semibold hover:no-underline">
+              <AccordionItem value='gifts' className='border-b-0'>
+                <AccordionTrigger className='px-6 py-4 font-semibold text-lg hover:no-underline'>
                   Gifts
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pb-6">
+                <AccordionContent className='px-6 pb-6'>
                   <GiftSection
                     control={control}
                     register={register}
@@ -362,9 +364,9 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
                 deleteMutation.mutate({ householdId })
               }}
               disabled={deleteMutation.isPending}
-              className="flex items-center gap-2 bg-red-600 hover:bg-red-700"
+              className='flex items-center gap-2 bg-red-600 hover:bg-red-700'
             >
-              {deleteMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              {deleteMutation.isPending && <Loader2 className='h-4 w-4 animate-spin' />}
               {deleteMutation.isPending ? 'Deleting...' : 'Delete Party'}
             </AlertDialogAction>
           </AlertDialogFooter>

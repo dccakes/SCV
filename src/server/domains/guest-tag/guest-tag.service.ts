@@ -1,11 +1,11 @@
 import { TRPCError } from '@trpc/server'
 
-import { type GuestTagRepository } from '~/server/domains/guest-tag/guest-tag.repository'
-import {
-  type CreateGuestTagInput,
-  type GuestTag,
-  type GuestTagWithGuestCount,
-  type UpdateGuestTagInput,
+import type { GuestTagRepository } from '~/server/domains/guest-tag/guest-tag.repository'
+import type {
+  CreateGuestTagInput,
+  GuestTag,
+  GuestTagWithGuestCount,
+  UpdateGuestTagInput,
 } from '~/server/domains/guest-tag/guest-tag.types'
 
 export class GuestTagService {

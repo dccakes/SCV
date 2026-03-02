@@ -4,10 +4,10 @@
  * This mock is automatically used when jest.mock('~/server/domains/household/household.repository') is called.
  */
 
-import {
-  type Household,
-  type HouseholdSearchResult,
-  type HouseholdWithGuestsAndGifts,
+import type {
+  Household,
+  HouseholdSearchResult,
+  HouseholdWithGuestsAndGifts,
 } from '~/server/domains/household/household.types'
 
 export const mockHousehold: Household = {

@@ -12,8 +12,8 @@ import {
 import { FiMinusCircle, FiTag } from 'react-icons/fi'
 
 import { TagsModal } from '~/app/_components/forms/guest/tags-modal'
-import { type HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
-import { type Event } from '~/app/utils/shared-types'
+import type { HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
+import type { Event } from '~/app/utils/shared-types'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
@@ -99,22 +99,22 @@ export const GuestNameForm = ({
   }
 
   return (
-    <div className="border-b last:border-b-0">
-      <div className="space-y-6 p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h3 className="text-lg font-semibold">Guest {guestIndex + 1}</h3>
+    <div className='border-b last:border-b-0'>
+      <div className='space-y-6 p-6'>
+        <div className='flex items-center justify-between'>
+          <div className='flex items-center gap-3'>
+            <h3 className='font-semibold text-lg'>Guest {guestIndex + 1}</h3>
             <Button
-              type="button"
-              variant="outline"
-              size="sm"
+              type='button'
+              variant='outline'
+              size='sm'
               onClick={handleOpenTagsModal}
-              className="h-7 gap-1.5 px-2 text-xs"
+              className='h-7 gap-1.5 px-2 text-xs'
             >
-              <FiTag className="h-3 w-3" />
+              <FiTag className='h-3 w-3' />
               Tags
               {selectedTagIds.length > 0 && (
-                <Badge variant="secondary" className="ml-0.5 h-4 px-1 text-[10px]">
+                <Badge variant='secondary' className='ml-0.5 h-4 px-1 text-[10px]'>
                   {selectedTagIds.length}
                 </Badge>
               )}
@@ -122,12 +122,12 @@ export const GuestNameForm = ({
           </div>
           {guestIndex > 0 && (
             <button
-              type="button"
+              type='button'
               onClick={() => handleRemoveGuest(guestIndex)}
               aria-label={`Remove Guest ${guestIndex + 1}`}
-              className="text-muted-foreground transition-colors hover:text-destructive"
+              className='text-muted-foreground transition-colors hover:text-destructive'
             >
-              <FiMinusCircle size={24} aria-hidden="true" />
+              <FiMinusCircle size={24} aria-hidden='true' />
             </button>
           )}
         </div>
@@ -143,15 +143,15 @@ export const GuestNameForm = ({
 
         {/* Display selected tags */}
         {selectedTagIds.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className='flex flex-wrap gap-2'>
             {selectedTagIds.map((tagId) => {
               const tag = tags.find((t) => t.id === tagId)
               if (!tag) return null
               return (
-                <Badge key={tag.id} variant="secondary" className="flex items-center gap-1.5">
+                <Badge key={tag.id} variant='secondary' className='flex items-center gap-1.5'>
                   {tag.color && (
                     <span
-                      className="h-2.5 w-2.5 rounded-full"
+                      className='h-2.5 w-2.5 rounded-full'
                       style={{ backgroundColor: tag.color }}
                     />
                   )}
@@ -162,10 +162,10 @@ export const GuestNameForm = ({
           </div>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
+        <div className='grid gap-4 sm:grid-cols-2'>
+          <div className='space-y-2'>
             <Label htmlFor={`guest${guestIndex}-firstName`}>
-              First Name <span className="text-destructive">*</span>
+              First Name <span className='text-destructive'>*</span>
             </Label>
             <Input
               id={`guest${guestIndex}-firstName`}
@@ -173,13 +173,13 @@ export const GuestNameForm = ({
               className={guestErrors?.firstName ? 'border-destructive' : ''}
             />
             {guestErrors?.firstName && (
-              <p className="text-sm text-destructive">{guestErrors.firstName.message}</p>
+              <p className='text-destructive text-sm'>{guestErrors.firstName.message}</p>
             )}
           </div>
 
-          <div className="space-y-2">
+          <div className='space-y-2'>
             <Label htmlFor={`guest${guestIndex}-lastName`}>
-              Last Name <span className="text-destructive">*</span>
+              Last Name <span className='text-destructive'>*</span>
             </Label>
             <Input
               id={`guest${guestIndex}-lastName`}
@@ -187,26 +187,26 @@ export const GuestNameForm = ({
               className={guestErrors?.lastName ? 'border-destructive' : ''}
             />
             {guestErrors?.lastName && (
-              <p className="text-sm text-destructive">{guestErrors.lastName.message}</p>
+              <p className='text-destructive text-sm'>{guestErrors.lastName.message}</p>
             )}
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
+        <div className='grid gap-4 sm:grid-cols-2'>
+          <div className='space-y-2'>
             <Label htmlFor={`guest${guestIndex}-email`}>Email</Label>
             <Input
               id={`guest${guestIndex}-email`}
               {...register(`guestParty.${guestIndex}.email`)}
-              type="email"
+              type='email'
               className={guestErrors?.email ? 'border-destructive' : ''}
             />
             {guestErrors?.email && (
-              <p className="text-sm text-destructive">{guestErrors.email.message}</p>
+              <p className='text-destructive text-sm'>{guestErrors.email.message}</p>
             )}
           </div>
 
-          <div className="space-y-2">
+          <div className='space-y-2'>
             <Label htmlFor={`guest${guestIndex}-phone`}>Phone</Label>
             <Input
               id={`guest${guestIndex}-phone`}
@@ -214,14 +214,14 @@ export const GuestNameForm = ({
               className={guestErrors?.phone ? 'border-destructive' : ''}
             />
             {guestErrors?.phone && (
-              <p className="text-sm text-destructive">{guestErrors.phone.message}</p>
+              <p className='text-destructive text-sm'>{guestErrors.phone.message}</p>
             )}
           </div>
         </div>
 
-        <div className="space-y-2">
+        <div className='space-y-2'>
           <Label htmlFor={`guest${guestIndex}-ageGroup`}>
-            Age Group <span className="text-destructive">*</span>
+            Age Group <span className='text-destructive'>*</span>
           </Label>
           <Controller
             name={`guestParty.${guestIndex}.ageGroup`}
@@ -229,7 +229,7 @@ export const GuestNameForm = ({
             render={({ field }) => (
               <Select value={field.value ?? 'ADULT'} onValueChange={field.onChange}>
                 <SelectTrigger id={`guest${guestIndex}-ageGroup`}>
-                  <SelectValue placeholder="Select age group" />
+                  <SelectValue placeholder='Select age group' />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={GuestAgeGroup.INFANT}>Infant (0-2 years)</SelectItem>
@@ -241,16 +241,16 @@ export const GuestNameForm = ({
             )}
           />
           {guestErrors?.ageGroup && (
-            <p className="text-sm text-destructive">{guestErrors.ageGroup.message}</p>
+            <p className='text-destructive text-sm'>{guestErrors.ageGroup.message}</p>
           )}
         </div>
 
-        <div className="bg-muted/50 flex items-center justify-between rounded-lg border p-4">
-          <div className="space-y-0.5">
-            <Label htmlFor={`guest${guestIndex}-isPrimaryContact`} className="text-base">
+        <div className='flex items-center justify-between rounded-lg border bg-muted/50 p-4'>
+          <div className='space-y-0.5'>
+            <Label htmlFor={`guest${guestIndex}-isPrimaryContact`} className='text-base'>
               Primary Contact
             </Label>
-            <p className="text-sm text-muted-foreground">This guest will receive correspondence</p>
+            <p className='text-muted-foreground text-sm'>This guest will receive correspondence</p>
           </div>
           <Controller
             name={`guestParty.${guestIndex}.isPrimaryContact`}
@@ -268,25 +268,25 @@ export const GuestNameForm = ({
           />
         </div>
 
-        <div className="space-y-4">
-          <h4 className="text-sm font-medium text-muted-foreground">Event Invitations</h4>
-          <div className="space-y-2">
+        <div className='space-y-4'>
+          <h4 className='font-medium text-muted-foreground text-sm'>Event Invitations</h4>
+          <div className='space-y-2'>
             {events?.map((event: Event) => (
               <Controller
                 key={event.id}
                 name={`guestParty.${guestIndex}.invites.${event.id}`}
                 control={control}
                 render={({ field }) => (
-                  <div className="hover:bg-muted/50 flex items-center justify-between rounded-lg border bg-card p-3 transition-colors">
-                    <div className="mr-3 min-w-0 flex-1">
+                  <div className='flex items-center justify-between rounded-lg border bg-card p-3 transition-colors hover:bg-muted/50'>
+                    <div className='mr-3 min-w-0 flex-1'>
                       <Label
                         htmlFor={`guest${guestIndex}-event-${event.id}`}
-                        className="cursor-pointer font-medium"
+                        className='cursor-pointer font-medium'
                       >
                         {event.name}
                       </Label>
                       {event.date && (
-                        <p className="mt-0.5 text-xs text-muted-foreground">
+                        <p className='mt-0.5 text-muted-foreground text-xs'>
                           {new Date(event.date).toLocaleDateString()}
                         </p>
                       )}

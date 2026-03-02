@@ -7,11 +7,11 @@ import { useEventForm } from '~/app/_components/contexts/event-form-context'
 import { useGuestForm } from '~/app/_components/contexts/guest-form-context'
 import EventForm from '~/app/_components/forms/event-form'
 import GuestForm from '~/app/_components/forms/guest-form'
-import { type HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
+import type { HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
 import EventsTabs from '~/app/_components/guest-list/event-tabs'
 import GuestsView from '~/app/_components/guest-list/guests-view'
 import NoGuestsView from '~/app/_components/guest-list/no-guests-view'
-import { type DashboardData, type EventFormData } from '~/app/utils/shared-types'
+import type { DashboardData, EventFormData } from '~/app/utils/shared-types'
 
 export default function GuestList({ dashboardData }: { dashboardData: DashboardData }) {
   const isEventFormOpen = useEventForm()
@@ -51,9 +51,9 @@ export default function GuestList({ dashboardData }: { dashboardData: DashboardD
 
   if (dashboardData === null) {
     return (
-      <div className="flex min-h-96 items-center justify-center">
-        <div className="flex flex-col gap-5 text-center">
-          <h1 className="text-3xl">Something went wrong!</h1>
+      <div className='flex min-h-96 items-center justify-center'>
+        <div className='flex flex-col gap-5 text-center'>
+          <h1 className='text-3xl'>Something went wrong!</h1>
           <p>Sorry about that. Please refresh the page in a moment.</p>
         </div>
       </div>

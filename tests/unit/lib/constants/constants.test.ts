@@ -2,7 +2,13 @@
  * Tests for lib/constants
  */
 
-import { QUESTION_TYPE, QUESTION_TYPE_VALUES, ROUTES,RSVP_STATUS, RSVP_STATUS_VALUES } from '~/lib/constants'
+import {
+  QUESTION_TYPE,
+  QUESTION_TYPE_VALUES,
+  ROUTES,
+  RSVP_STATUS,
+  RSVP_STATUS_VALUES,
+} from '~/lib/constants'
 
 describe('RSVP_STATUS', () => {
   it('should have correct status values', () => {

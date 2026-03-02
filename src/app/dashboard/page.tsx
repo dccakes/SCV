@@ -22,8 +22,8 @@ const s3 = isS3Enabled
   ? new S3Client({
       region,
       credentials: {
-        accessKeyId: process.env.AWS_S3_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_S3_SECRET_ACCESS_KEY!,
+        accessKeyId: process.env.AWS_S3_ACCESS_KEY_ID ?? '',
+        secretAccessKey: process.env.AWS_S3_SECRET_ACCESS_KEY ?? '',
       },
     })
   : null
@@ -54,7 +54,7 @@ const uploadImage = async (formData: FormData): Promise<{ ok: boolean }> => {
     })
   )
     .then(async () => {
-      const photoName = files[0]!.name
+      const photoName = files[0]?.name
       const objectUrl = `https://${Bucket}.s3.${region}.amazonaws.com/${photoName}`
       await api.website.updateCoverPhoto.mutate({
         coverPhotoUrl: objectUrl,

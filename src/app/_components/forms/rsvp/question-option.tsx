@@ -1,8 +1,8 @@
-import { type Dispatch, type SetStateAction } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
 import { FiMinusCircle } from 'react-icons/fi'
 
 import AnimatedInputLabel from '~/app/_components/forms/animated-input-label'
-import { type TQuestionOption } from '~/app/utils/shared-types'
+import type { TQuestionOption } from '~/app/utils/shared-types'
 
 type QuestionOptionProps = {
   option: TQuestionOption
@@ -19,7 +19,7 @@ export default function QuestionOption({
 }: QuestionOptionProps) {
   const handleRemoveOption = (option: TQuestionOption) => {
     setQuestionOptions((prev) => prev.filter((_, i) => i !== optionIndex))
-    if (option.id) setDeletedOptions((prev) => [...prev, option.id!])
+    if (option.id) setDeletedOptions((prev) => [...prev, option.id ?? ''])
   }
 
   const handleOnChange = ({ field, inputValue }: { field: string; inputValue: string }) => {
@@ -37,27 +37,27 @@ export default function QuestionOption({
   }
 
   return (
-    <div className="flex w-full pb-5 pt-2">
+    <div className='flex w-full pt-2 pb-5'>
       <FiMinusCircle
         size={32}
         color={optionIndex < 2 ? 'lightgray' : 'gray'}
-        className={`-ml-0.5 mr-3 mt-2 ${optionIndex < 2 ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+        className={`mt-2 mr-3 -ml-0.5 ${optionIndex < 2 ? 'cursor-not-allowed' : 'cursor-pointer'}`}
         onClick={() => optionIndex > 1 && handleRemoveOption(option)}
       />
-      <div className="flex w-full flex-col gap-3">
+      <div className='flex w-full flex-col gap-3'>
         <AnimatedInputLabel
-          id="question-input"
+          id='question-input'
           inputValue={option.text}
-          fieldName="text"
-          labelText="Option*"
+          fieldName='text'
+          labelText='Option*'
           required={true}
           handleOnChange={handleOnChange}
         />
         <textarea
-          placeholder="Description"
+          placeholder='Description'
           value={option.description}
           onChange={(e) => handleOnChange({ field: 'description', inputValue: e.target.value })}
-          className="h-24 w-full rounded-lg border p-3 text-sm"
+          className='h-24 w-full rounded-lg border p-3 text-sm'
           style={{ resize: 'none' }}
         />
       </div>

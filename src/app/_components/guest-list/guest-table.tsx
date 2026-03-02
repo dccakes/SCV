@@ -1,23 +1,28 @@
 'use client'
 
+import { ArrowUpDown } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
-import { type Dispatch, type SetStateAction } from 'react'
+import { type Dispatch, type SetStateAction, useEffect, useState } from 'react'
 import { AiOutlineHome } from 'react-icons/ai'
 import { CiMail } from 'react-icons/ci'
-import { ArrowUpDown } from 'lucide-react'
 import { HiOutlinePhone } from 'react-icons/hi2'
 import { toast } from 'sonner'
 
 import { useToggleGuestForm } from '~/app/_components/contexts/guest-form-context'
-import { type HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
+import type { HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
 import { LoadingSpinner } from '~/app/_components/loaders'
 import { sharedStyles } from '~/app/utils/shared-styles'
-import { type Event, type FormInvites, type Guest } from '~/app/utils/shared-types'
+import type { Event, FormInvites, Guest } from '~/app/utils/shared-types'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader } from '~/components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
-import { type HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/ui/select'
+import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 import { api } from '~/trpc/react'
 
 type GuestTableProps = {
@@ -37,7 +42,7 @@ export default function GuestTable({
   const [partySort, setPartySort] = useState('none')
   const [sortedHouseholds, setSortedHouseholds] = useState(households)
   const selectedEvent = events.find((event) => event.id === selectedEventId)
-  const gridColumns =
+  const _gridColumns =
     selectedEventId === 'all'
       ? `40px 240px 100px 125px repeat(${events.length}, 175px) 175px`
       : '40px 240px 100px 125px 175px 175px 150px 100px'
@@ -51,12 +56,12 @@ export default function GuestTable({
       if (nameSort === 'none') {
         setNameSort('ascending')
         return [...households].sort((a, b) =>
-          a.guests[0]!.firstName.localeCompare(b.guests[0]!.firstName)
+          a.guests[0]?.firstName.localeCompare(b.guests[0]?.firstName)
         )
       } else if (nameSort === 'ascending') {
         setNameSort('descending')
         return [...households].sort((a, b) =>
-          b.guests[0]!.firstName.localeCompare(a.guests[0]!.firstName)
+          b.guests[0]?.firstName.localeCompare(a.guests[0]?.firstName)
         )
       } else {
         setNameSort('none')
@@ -82,18 +87,18 @@ export default function GuestTable({
 
   return (
     <>
-      <div className="mb-4 flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={() => sortByName()}>
-          <ArrowUpDown className="mr-2 h-3 w-3" />
+      <div className='mb-4 flex items-center gap-2'>
+        <Button variant='outline' size='sm' onClick={() => sortByName()}>
+          <ArrowUpDown className='mr-2 h-3 w-3' />
           Sort by Name
         </Button>
-        <Button variant="outline" size="sm" onClick={() => sortByParty()}>
-          <ArrowUpDown className="mr-2 h-3 w-3" />
+        <Button variant='outline' size='sm' onClick={() => sortByParty()}>
+          <ArrowUpDown className='mr-2 h-3 w-3' />
           Sort by Party Size
         </Button>
       </div>
 
-      <div className="max-h-[75vh] space-y-3 overflow-auto pr-2">
+      <div className='max-h-[75vh] space-y-3 overflow-auto pr-2'>
         {sortedHouseholds?.map((household) =>
           selectedEventId === 'all' ? (
             <DefaultCard
@@ -141,7 +146,7 @@ const DefaultCard = ({ household, events, setPrefillHousehold }: DefaultCardProp
       guestParty: household.guests.map((guest) => {
         const invitations: FormInvites = {}
         guest?.invitations?.forEach((inv) => {
-          invitations[inv.eventId] = inv.rsvp!
+          invitations[inv.eventId] = inv.rsvp ?? 'Not Invited'
         })
         return {
           guestId: guest.id,
@@ -161,30 +166,30 @@ const DefaultCard = ({ household, events, setPrefillHousehold }: DefaultCardProp
 
   return (
     <Card
-      className="cursor-pointer transition-all hover:shadow-lg"
+      className='cursor-pointer transition-all hover:shadow-lg'
       onClick={() => handleEditHousehold()}
     >
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="mb-2 flex items-center gap-2">
-              <h3 className="text-lg font-semibold">
+      <CardHeader className='pb-3'>
+        <div className='flex items-start justify-between'>
+          <div className='flex-1'>
+            <div className='mb-2 flex items-center gap-2'>
+              <h3 className='font-semibold text-lg'>
                 {household.guests[0]?.firstName} {household.guests[0]?.lastName}
                 {household.guests.length > 1 && ` +${household.guests.length - 1}`}
               </h3>
-              <span className="inline-flex items-center rounded-full bg-secondary px-2 py-1 text-xs font-medium">
+              <span className='inline-flex items-center rounded-full bg-secondary px-2 py-1 font-medium text-xs'>
                 Party of {household.guests.length}
               </span>
             </div>
 
-            <div className="mb-3 space-y-1 text-sm text-muted-foreground">
+            <div className='mb-3 space-y-1 text-muted-foreground text-sm'>
               {household.guests.map((guest) => (
-                <div key={guest.id} className="flex items-center gap-2">
+                <div key={guest.id} className='flex items-center gap-2'>
                   <span>
                     {guest.firstName} {guest.lastName}
                   </span>
                   {guest.isPrimaryContact && (
-                    <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+                    <span className='inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 font-medium text-primary text-xs'>
                       Primary
                     </span>
                   )}
@@ -192,20 +197,20 @@ const DefaultCard = ({ household, events, setPrefillHousehold }: DefaultCardProp
               ))}
             </div>
 
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <AiOutlineHome className="h-4 w-4" />
-                <span className="text-xs">{household.address1 ? 'Address' : 'No address'}</span>
+            <div className='flex items-center gap-3 text-muted-foreground text-sm'>
+              <div className='flex items-center gap-1'>
+                <AiOutlineHome className='h-4 w-4' />
+                <span className='text-xs'>{household.address1 ? 'Address' : 'No address'}</span>
               </div>
-              <div className="flex items-center gap-1">
-                <HiOutlinePhone className="h-4 w-4" />
-                <span className="text-xs">
+              <div className='flex items-center gap-1'>
+                <HiOutlinePhone className='h-4 w-4' />
+                <span className='text-xs'>
                   {household.guests.some((g) => g.phone) ? 'Phone' : 'No phone'}
                 </span>
               </div>
-              <div className="flex items-center gap-1">
-                <CiMail className="h-4 w-4" />
-                <span className="text-xs">
+              <div className='flex items-center gap-1'>
+                <CiMail className='h-4 w-4' />
+                <span className='text-xs'>
                   {household.guests.some((g) => g.email) ? 'Email' : 'No email'}
                 </span>
               </div>
@@ -214,15 +219,15 @@ const DefaultCard = ({ household, events, setPrefillHousehold }: DefaultCardProp
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-2">
+      <CardContent className='space-y-2'>
         {/* RSVP Status for all events */}
         {events.map((event) => (
           <div
             key={event.id}
-            className="bg-muted/50 flex items-center justify-between rounded-md p-2"
+            className='flex items-center justify-between rounded-md bg-muted/50 p-2'
           >
-            <span className="text-sm font-medium">{event.name}</span>
-            <div className="flex flex-wrap gap-2">
+            <span className='font-medium text-sm'>{event.name}</span>
+            <div className='flex flex-wrap gap-2'>
               {household.guests.map((guest) => {
                 const rsvp = guest.invitations?.find((inv) => inv.eventId === event.id)?.rsvp
                 return (
@@ -239,8 +244,8 @@ const DefaultCard = ({ household, events, setPrefillHousehold }: DefaultCardProp
         ))}
 
         {household.notes && (
-          <div className="mt-2 rounded-md border border-border bg-muted/40 p-2 text-sm">
-            <span className="font-medium">Notes:</span> {household.notes}
+          <div className='mt-2 rounded-md border border-border bg-muted/40 p-2 text-sm'>
+            <span className='font-medium'>Notes:</span> {household.notes}
           </div>
         )}
       </CardContent>
@@ -286,7 +291,7 @@ const SingleEventCard = ({
       guestParty: household.guests.map((guest) => {
         const invitations: FormInvites = {}
         guest?.invitations?.forEach((inv) => {
-          invitations[inv.eventId] = inv.rsvp!
+          invitations[inv.eventId] = inv.rsvp ?? 'Not Invited'
         })
         return {
           guestId: guest.id,
@@ -306,30 +311,30 @@ const SingleEventCard = ({
 
   return (
     <Card
-      className="cursor-pointer transition-all hover:shadow-lg"
+      className='cursor-pointer transition-all hover:shadow-lg'
       onClick={() => handleEditHousehold()}
     >
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="mb-2 flex items-center gap-2">
-              <h3 className="text-lg font-semibold">
+      <CardHeader className='pb-3'>
+        <div className='flex items-start justify-between'>
+          <div className='flex-1'>
+            <div className='mb-2 flex items-center gap-2'>
+              <h3 className='font-semibold text-lg'>
                 {household.guests[0]?.firstName} {household.guests[0]?.lastName}
                 {household.guests.length > 1 && ` +${household.guests.length - 1}`}
               </h3>
-              <span className="inline-flex items-center rounded-full bg-secondary px-2 py-1 text-xs font-medium">
+              <span className='inline-flex items-center rounded-full bg-secondary px-2 py-1 font-medium text-xs'>
                 Party of {household.guests.length}
               </span>
             </div>
 
-            <div className="mb-3 space-y-1 text-sm text-muted-foreground">
+            <div className='mb-3 space-y-1 text-muted-foreground text-sm'>
               {household.guests.map((guest) => (
-                <div key={guest.id} className="flex items-center gap-2">
+                <div key={guest.id} className='flex items-center gap-2'>
                   <span>
                     {guest.firstName} {guest.lastName}
                   </span>
                   {guest.isPrimaryContact && (
-                    <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+                    <span className='inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 font-medium text-primary text-xs'>
                       Primary
                     </span>
                   )}
@@ -337,20 +342,20 @@ const SingleEventCard = ({
               ))}
             </div>
 
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <AiOutlineHome className="h-4 w-4" />
-                <span className="text-xs">{household.address1 ? 'Address' : 'No address'}</span>
+            <div className='flex items-center gap-3 text-muted-foreground text-sm'>
+              <div className='flex items-center gap-1'>
+                <AiOutlineHome className='h-4 w-4' />
+                <span className='text-xs'>{household.address1 ? 'Address' : 'No address'}</span>
               </div>
-              <div className="flex items-center gap-1">
-                <HiOutlinePhone className="h-4 w-4" />
-                <span className="text-xs">
+              <div className='flex items-center gap-1'>
+                <HiOutlinePhone className='h-4 w-4' />
+                <span className='text-xs'>
                   {household.guests.some((g) => g.phone) ? 'Phone' : 'No phone'}
                 </span>
               </div>
-              <div className="flex items-center gap-1">
-                <CiMail className="h-4 w-4" />
-                <span className="text-xs">
+              <div className='flex items-center gap-1'>
+                <CiMail className='h-4 w-4' />
+                <span className='text-xs'>
                   {household.guests.some((g) => g.email) ? 'Email' : 'No email'}
                 </span>
               </div>
@@ -359,21 +364,21 @@ const SingleEventCard = ({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent className='space-y-3'>
         {/* RSVP Status for selected event */}
         <div>
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-sm font-medium">{selectedEvent.name} RSVPs</span>
+          <div className='mb-2 flex items-center justify-between'>
+            <span className='font-medium text-sm'>{selectedEvent.name} RSVPs</span>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className='flex flex-wrap gap-2'>
             {household.guests.map((guest) => {
               const rsvp = guest.invitations?.find((inv) => inv.eventId === selectedEvent.id)?.rsvp
               return (
                 <div
                   key={guest.id}
-                  className="bg-muted/50 flex items-center gap-2 rounded-md p-1.5"
+                  className='flex items-center gap-2 rounded-md bg-muted/50 p-1.5'
                 >
-                  <span className="text-xs text-muted-foreground">
+                  <span className='text-muted-foreground text-xs'>
                     {guest.firstName.charAt(0)}.{guest.lastName.charAt(0)}:
                   </span>
                   <InvitationDropdown
@@ -389,22 +394,22 @@ const SingleEventCard = ({
 
         {/* Gift section */}
         {selectedEventGift && (
-          <div className="rounded-md border border-border bg-accent/10 p-3">
-            <div className="flex items-center justify-between">
-              <div className="text-sm">
-                <span className="font-medium">Gift:</span>{' '}
-                <span className="text-muted-foreground">
+          <div className='rounded-md border border-border bg-accent/10 p-3'>
+            <div className='flex items-center justify-between'>
+              <div className='text-sm'>
+                <span className='font-medium'>Gift:</span>{' '}
+                <span className='text-muted-foreground'>
                   {selectedEventGift.description || 'Not specified'}
                 </span>
               </div>
               {updateGift.isPending ? (
                 <LoadingSpinner />
               ) : (
-                <label className="flex cursor-pointer items-center gap-2 text-sm">
+                <label className='flex cursor-pointer items-center gap-2 text-sm'>
                   <input
-                    className="h-4 w-4 cursor-pointer"
+                    className='h-4 w-4 cursor-pointer'
                     style={{ accentColor: sharedStyles.primaryColorHex }}
-                    type="checkbox"
+                    type='checkbox'
                     onClick={(e) => e.stopPropagation()}
                     checked={selectedEventGift.thankyou}
                     onChange={(e) =>
@@ -423,8 +428,8 @@ const SingleEventCard = ({
         )}
 
         {household.notes && (
-          <div className="rounded-md border border-border bg-muted/40 p-2 text-sm">
-            <span className="font-medium">Notes:</span> {household.notes}
+          <div className='rounded-md border border-border bg-muted/40 p-2 text-sm'>
+            <span className='font-medium'>Notes:</span> {household.notes}
           </div>
         )}
       </CardContent>
@@ -449,12 +454,12 @@ const InvitationDropdown = ({ guest, event, rsvp }: InvitationDropdownProps) => 
   })
 
   return (
-    <div key={guest.id} className="flex items-center">
+    <div key={guest.id} className='flex items-center'>
       <span
         className={`mr-2 inline-block h-1.5 w-1.5 rounded-full ${sharedStyles.getRSVPcolor(rsvp)}`}
       ></span>
       {updateInvitation.isPending ? (
-        <div className="m-auto w-[65%]">
+        <div className='m-auto w-[65%]'>
           <LoadingSpinner />
         </div>
       ) : (
@@ -468,17 +473,14 @@ const InvitationDropdown = ({ guest, event, rsvp }: InvitationDropdownProps) => 
             })
           }}
         >
-          <SelectTrigger
-            className="h-7 w-36 text-xs"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <SelectTrigger className='h-7 w-36 text-xs' onClick={(e) => e.stopPropagation()}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent onClick={(e) => e.stopPropagation()}>
-            <SelectItem value="Not Invited">Not Invited</SelectItem>
-            <SelectItem value="Invited">Invited</SelectItem>
-            <SelectItem value="Attending">Attending</SelectItem>
-            <SelectItem value="Declined">Declined</SelectItem>
+            <SelectItem value='Not Invited'>Not Invited</SelectItem>
+            <SelectItem value='Invited'>Invited</SelectItem>
+            <SelectItem value='Attending'>Attending</SelectItem>
+            <SelectItem value='Declined'>Declined</SelectItem>
           </SelectContent>
         </Select>
       )}

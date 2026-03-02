@@ -114,10 +114,7 @@ describe('upsertQuestionSchema', () => {
       text: 'Updated question',
       type: 'Option',
       isRequired: true,
-      options: [
-        { text: 'Option A' },
-        { text: 'Option B' },
-      ],
+      options: [{ text: 'Option A' }, { text: 'Option B' }],
       deletedOptions: ['option-to-delete-1', 'option-to-delete-2'],
     }
 

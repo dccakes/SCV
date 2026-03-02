@@ -1,4 +1,4 @@
-import { type GuestTag } from '@prisma/client'
+import type { GuestTag } from '@prisma/client'
 
 export type { GuestTag }
 

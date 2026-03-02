@@ -15,7 +15,7 @@ import DashboardSettingsForm from '~/app/_components/forms/dashboard-settings-fo
 import EventForm from '~/app/_components/forms/event-form'
 import EditRsvpSettingsForm from '~/app/_components/forms/rsvp/edit-rsvp-settings'
 import RsvpFormSettings from '~/app/_components/forms/rsvp-form-settings'
-import { type DashboardData, type EventFormData } from '~/app/utils/shared-types'
+import type { DashboardData, EventFormData } from '~/app/utils/shared-types'
 
 export default function Dashboard({
   dashboardData,
@@ -63,12 +63,12 @@ export default function Dashboard({
         websiteUrl={dashboardData?.weddingData?.website?.url}
         setShowWebsiteSettings={setShowWebsiteSettings}
       />
-      <div className="border-t border-border" />
+      <div className='border-border border-t' />
       {showRegistrySetup && <RegistrySetup setShowRegistrySetup={setShowRegistrySetup} />}
-      <div className="border-t border-border" />
-      <div className="mt-10">
-        <div className="mb-6 flex justify-between">
-          <h2 className="font-serif text-xl font-semibold">Pages</h2>
+      <div className='border-border border-t' />
+      <div className='mt-10'>
+        <div className='mb-6 flex justify-between'>
+          <h2 className='font-semibold font-serif text-xl'>Pages</h2>
           <DashboardControls
             collapseSections={collapseSections}
             setCollapseSections={setCollapseSections}

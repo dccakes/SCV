@@ -28,9 +28,7 @@ export type PaginatedResponse<T> = {
 /**
  * Generic service result for operations that may fail
  */
-export type ServiceResult<T, E = string> =
-  | { success: true; data: T }
-  | { success: false; error: E }
+export type ServiceResult<T, E = string> = { success: true; data: T } | { success: false; error: E }
 
 /**
  * Base entity type with common audit fields

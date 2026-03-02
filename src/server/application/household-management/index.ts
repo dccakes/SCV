@@ -26,6 +26,8 @@ export const householdManagementService = new HouseholdManagementService(
   db
 )
 
+// Export classes for testing/DI
+export { HouseholdManagementService } from '~/server/application/household-management/household-management.service'
 // Export types
 export type {
   CreateHouseholdResult,
@@ -33,20 +35,16 @@ export type {
   UpdateHouseholdResult,
   UpdateHouseholdWithGuestsInput,
 } from '~/server/application/household-management/household-management.types'
-
 // Export validators
 export {
-  createHouseholdWithGuestsSchema,
   type CreateHouseholdWithGuestsSchemaInput,
-  deleteHouseholdSchema,
+  createHouseholdWithGuestsSchema,
   type DeleteHouseholdSchemaInput,
-  giftInputSchema,
+  deleteHouseholdSchema,
   type GiftInputSchemaInput,
-  guestPartyInputSchema,
   type GuestPartyInputSchemaInput,
-  updateHouseholdWithGuestsSchema,
+  giftInputSchema,
+  guestPartyInputSchema,
   type UpdateHouseholdWithGuestsSchemaInput,
+  updateHouseholdWithGuestsSchema,
 } from '~/server/application/household-management/household-management.validator'
-
-// Export classes for testing/DI
-export { HouseholdManagementService } from '~/server/application/household-management/household-management.service'

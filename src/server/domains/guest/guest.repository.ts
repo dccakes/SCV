@@ -5,9 +5,9 @@
  * This layer handles all direct database access for guests.
  */
 
-import { type GuestAgeGroup, type PrismaClient } from '@prisma/client'
+import type { GuestAgeGroup, PrismaClient } from '@prisma/client'
 
-import { type Guest, type GuestWithInvitations } from '~/server/domains/guest/guest.types'
+import type { Guest, GuestWithInvitations } from '~/server/domains/guest/guest.types'
 
 export class GuestRepository {
   constructor(private db: PrismaClient) {}

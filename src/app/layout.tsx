@@ -1,7 +1,7 @@
 import '~/styles/globals.css'
 
 // import { Inter } from "next/font/google";
-import { type Viewport } from 'next/types'
+import type { Viewport } from 'next/types'
 import { Toaster as SonnerToaster } from 'sonner'
 
 import { EventFormProvider } from '~/app/_components/contexts/event-form-context'
@@ -28,15 +28,15 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="bg-background font-sans text-foreground antialiased">
+    <html lang='en' suppressHydrationWarning>
+      <body className='bg-background font-sans text-foreground antialiased'>
         <Providers>
           <TRPCReactProvider>
             <EventFormProvider>
               <GuestFormProvider>
                 {children}
                 <Toaster />
-                <SonnerToaster richColors position="top-right" />
+                <SonnerToaster richColors position='top-right' />
               </GuestFormProvider>
             </EventFormProvider>
           </TRPCReactProvider>

@@ -1,10 +1,10 @@
-import { type PrismaClient } from '@prisma/client'
+import type { PrismaClient } from '@prisma/client'
 
-import {
-  type CreateGuestTagInput,
-  type GuestTag,
-  type GuestTagWithGuestCount,
-  type UpdateGuestTagInput,
+import type {
+  CreateGuestTagInput,
+  GuestTag,
+  GuestTagWithGuestCount,
+  UpdateGuestTagInput,
 } from '~/server/domains/guest-tag/guest-tag.types'
 
 export class GuestTagRepository {

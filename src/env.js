@@ -1,5 +1,5 @@
-import { createEnv } from "@t3-oss/env-nextjs";
-import { z } from "zod";
+import { createEnv } from '@t3-oss/env-nextjs'
+import { z } from 'zod'
 
 export const env = createEnv({
   /**
@@ -11,13 +11,11 @@ export const env = createEnv({
       .string()
       .url()
       .refine(
-        (str) => !str.includes("YOUR_DATABASE_URL_HERE"),
-        "You forgot to change the default URL"
+        (str) => !str.includes('YOUR_DATABASE_URL_HERE'),
+        'You forgot to change the default URL'
       ),
     DIRECT_URL: z.string().url().optional(),
-    NODE_ENV: z
-      .enum(["development", "test", "production"])
-      .default("development"),
+    NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     // Optional: AWS S3 Storage (can be disabled for local dev)
     AWS_S3_BUCKET_NAME: z.string().min(1).optional(),
     AWS_S3_REGION: z.string().min(1).optional(),
@@ -59,4 +57,4 @@ export const env = createEnv({
    * `SOME_VAR=''` will throw an error.
    */
   emptyStringAsUndefined: true,
-});
+})
