@@ -24,20 +24,15 @@ type VendorListProps = {
 
 export default function VendorList({ initialVendors }: VendorListProps) {
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null)
-  const [detailVendor, setDetailVendor] = useState<VendorWithQuotes | null>(null)
 
   const { data: vendors, refetch } = api.vendor.getAll.useQuery(
     {},
     { initialData: initialVendors }
   )
 
-  api.vendor.getById.useQuery(
-    { vendorId: selectedVendorId ?? '' },
-    {
-      enabled: !!selectedVendorId,
-      onSuccess: (data) => setDetailVendor(data ?? null),
-    }
-  )
+  const detailVendor = selectedVendorId
+    ? ((vendors ?? []).find((v) => v.id === selectedVendorId) ?? null)
+    : null
 
   const handleViewDetails = (vendorId: string) => {
     setSelectedVendorId(vendorId)
@@ -45,7 +40,6 @@ export default function VendorList({ initialVendors }: VendorListProps) {
 
   const handleCloseDetail = () => {
     setSelectedVendorId(null)
-    setDetailVendor(null)
   }
 
   const vendorsByCategory = (category: VendorCategory): VendorWithQuotes[] =>

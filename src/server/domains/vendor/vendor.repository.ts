@@ -5,7 +5,7 @@
  */
 
 import {
-  type Prisma,
+  Prisma,
   type PrismaClient,
   type VendorCategory,
   type VendorQuote as PrismaVendorQuote,
