@@ -7,6 +7,7 @@ import { db } from '~/server/db'
 
 export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
+  trustedOrigins: ['https://oswp.carvallo.io', 'https://scv-teal.vercel.app'],
   database: prismaAdapter(db, {
     provider: 'postgresql',
   }),
