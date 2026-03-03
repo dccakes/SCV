@@ -4,6 +4,8 @@
  * This mock is automatically used when jest.mock('~/server/infrastructure/database/client') is called.
  */
 
+import type { PrismaClient } from '@prisma/client'
+
 export const mockUserFindUnique = jest.fn()
 export const mockUserFindFirst = jest.fn()
 export const mockUserFindMany = jest.fn()
@@ -66,7 +68,7 @@ export const db = {
     create: mockWeddingCreate,
     update: mockWeddingUpdate,
   },
-}
+} as unknown as PrismaClient
 
 // Helper to reset all mocks
 export const resetMocks = (): void => {
