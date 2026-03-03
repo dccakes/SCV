@@ -10,7 +10,7 @@ import type { PrismaClient } from '@prisma/client'
 import type { SelfFillWeddingData } from '~/server/domains/self-fill/self-fill.types'
 
 /** Tokens older than this many days are considered expired */
-const TOKEN_EXPIRY_DAYS = 30
+export const TOKEN_EXPIRY_DAYS = 30
 
 /** Build the Prisma WHERE clause for a valid (non-expired) token */
 function validTokenWhere(token: string) {
@@ -85,14 +85,15 @@ export class SelfFillRepository {
   }
 
   /**
-   * Get the self-fill token for a wedding
+   * Get the self-fill token and its generation timestamp for a wedding
    */
-  async getToken(weddingId: string): Promise<string | null> {
+  async getToken(weddingId: string): Promise<{ token: string; generatedAt: Date | null } | null> {
     const wedding = await this.db.wedding.findUnique({
       where: { id: weddingId },
-      select: { selfFillToken: true },
+      select: { selfFillToken: true, selfFillTokenGeneratedAt: true },
     })
 
-    return wedding?.selfFillToken ?? null
+    if (!wedding?.selfFillToken) return null
+    return { token: wedding.selfFillToken, generatedAt: wedding.selfFillTokenGeneratedAt }
   }
 }

@@ -87,12 +87,25 @@ export function createSelfFillRouter(registrationService: ISelfFillRegistration)
 
     /**
      * Get the current self-fill token (protected)
-     * Returns null if no token is set.
+     * Returns null token if no token is set.
+     * Also returns expiresAt (null for legacy tokens with no timestamp) and
+     * earliestEventDate so the UI can warn if the link expires before the wedding.
      */
     getToken: protectedProcedure.query(async ({ ctx }) => {
       const wedding = await getOwnedWedding(ctx.auth.userId)
-      const token = await selfFillService.getToken(wedding.id)
-      return { token }
+      const tokenData = await selfFillService.getToken(wedding.id)
+
+      const earliestEvent = await ctx.db.event.findFirst({
+        where: { weddingId: wedding.id, date: { not: null } },
+        orderBy: { date: 'asc' },
+        select: { date: true },
+      })
+
+      return {
+        token: tokenData?.token ?? null,
+        expiresAt: tokenData?.expiresAt ?? null,
+        earliestEventDate: earliestEvent?.date ?? null,
+      }
     }),
   })
 }

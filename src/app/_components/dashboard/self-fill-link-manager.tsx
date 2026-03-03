@@ -1,6 +1,6 @@
 'use client'
 
-import { Check, Copy, Link2, Loader2, Trash2 } from 'lucide-react'
+import { AlertTriangle, Check, Copy, Link2, Loader2, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -15,6 +15,38 @@ import {
   AlertDialogTitle,
 } from '~/components/ui/alert-dialog'
 import { api } from '~/trpc/react'
+
+function LinkExpiryNotice({
+  expiresAt,
+  earliestEventDate,
+}: {
+  expiresAt: Date
+  earliestEventDate: Date | null
+}) {
+  const formatted = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(
+    new Date(expiresAt)
+  )
+  const expiresBefore =
+    earliestEventDate && new Date(expiresAt) < new Date(earliestEventDate)
+
+  if (expiresBefore) {
+    return (
+      <div className='flex items-start gap-2 border-b py-2 text-amber-800 dark:text-amber-300'>
+        <AlertTriangle className='mt-0.5 h-3.5 w-3.5 shrink-0' />
+        <p className='text-xs'>
+          Link expires <span className='font-medium'>{formatted}</span> — before your wedding.
+          Generate a new link closer to the date.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <p className='border-b py-2 text-muted-foreground text-xs'>
+      Link expires <span className='font-medium'>{formatted}</span>
+    </p>
+  )
+}
 
 export default function SelfFillLinkManager() {
   const [showRevokeDialog, setShowRevokeDialog] = useState(false)
@@ -104,6 +136,13 @@ export default function SelfFillLinkManager() {
           </>
         )}
       </div>
+
+      {tokenData?.token && tokenData.expiresAt && (
+        <LinkExpiryNotice
+          expiresAt={tokenData.expiresAt}
+          earliestEventDate={tokenData.earliestEventDate ?? null}
+        />
+      )}
 
       <AlertDialog open={showRevokeDialog} onOpenChange={setShowRevokeDialog}>
         <AlertDialogContent>

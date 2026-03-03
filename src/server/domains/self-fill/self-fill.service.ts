@@ -10,7 +10,7 @@
 
 import { randomBytes } from 'node:crypto'
 
-import type { SelfFillRepository } from '~/server/domains/self-fill/self-fill.repository'
+import { TOKEN_EXPIRY_DAYS, type SelfFillRepository } from '~/server/domains/self-fill/self-fill.repository'
 import type { SelfFillWeddingData } from '~/server/domains/self-fill/self-fill.types'
 
 export class SelfFillService {
@@ -45,9 +45,19 @@ export class SelfFillService {
   }
 
   /**
-   * Get the current self-fill token for a wedding
+   * Get the current self-fill token for a wedding, along with its expiry date.
+   * expiresAt is null for legacy tokens (generated before timestamp tracking was added).
    */
-  async getToken(weddingId: string): Promise<string | null> {
-    return this.selfFillRepo.getToken(weddingId)
+  async getToken(weddingId: string): Promise<{ token: string; expiresAt: Date | null } | null> {
+    const result = await this.selfFillRepo.getToken(weddingId)
+    if (!result) return null
+
+    let expiresAt: Date | null = null
+    if (result.generatedAt) {
+      expiresAt = new Date(result.generatedAt)
+      expiresAt.setDate(expiresAt.getDate() + TOKEN_EXPIRY_DAYS)
+    }
+
+    return { token: result.token, expiresAt }
   }
 }
