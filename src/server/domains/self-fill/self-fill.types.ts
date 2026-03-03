@@ -49,3 +49,12 @@ export type SelfFillRegistrationResult = {
   householdId: string
   message: string
 }
+
+/**
+ * Minimal interface for the guest registration dependency.
+ * Defined in the domain so the router can depend on this abstraction
+ * without importing from the application layer (clean architecture).
+ */
+export interface ISelfFillRegistration {
+  registerGuest(token: string, data: SelfFillGuestInput): Promise<SelfFillRegistrationResult>
+}

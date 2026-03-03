@@ -16,8 +16,8 @@ export const selfFillService = new SelfFillService(selfFillRepository)
 
 // Export classes for testing/DI
 export { SelfFillRepository } from '~/server/domains/self-fill/self-fill.repository'
-// Export router
-export { selfFillRouter } from '~/server/domains/self-fill/self-fill.router'
+// Export router factory (created at root.ts with injected registration service)
+export { createSelfFillRouter } from '~/server/domains/self-fill/self-fill.router'
 export { SelfFillService } from '~/server/domains/self-fill/self-fill.service'
 // Export types
 export type {

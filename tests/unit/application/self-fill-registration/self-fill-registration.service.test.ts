@@ -4,7 +4,9 @@
  * TDD: Tests define expected behavior for cross-domain guest registration.
  * This service orchestrates: token validation → household creation → guest creation.
  *
- * Covers: Priority 2 (transaction), 3 (arch), 5 (dedup), 12 (logging), 13 (error handling)
+ * Covers: P1 (DB constraint), P2 (dedup inside tx), P5 (expiry via repo),
+ *         P6 (email normalization), P8 (unified error messages), P10 (empty events),
+ *         P11 (single token query), P12 (constants)
  */
 
 jest.mock('~/server/domains/self-fill/self-fill.repository')
@@ -15,7 +17,6 @@ jest.mock('~/server/domains/guest/guest.repository')
 import {
   SelfFillRepository,
   mockFindByToken,
-  mockGetWeddingIdByToken,
   mockSelfFillWeddingData,
   resetMocks as resetSelfFillMocks,
 } from '~/server/domains/self-fill/self-fill.repository'
@@ -41,7 +42,6 @@ import { SelfFillRegistrationService } from '~/server/application/self-fill-regi
 
 // ── Typed aliases ─────────────────────────────────────────────────────────────
 const mockFindByTokenFn = mockFindByToken as jest.Mock
-const mockGetWeddingIdByTokenFn = mockGetWeddingIdByToken as jest.Mock
 const mockCreateWithGiftsFn = mockCreateWithGifts as jest.Mock
 const mockCreateFn = mockCreate as jest.Mock
 const mockFindByEmailAndWeddingIdFn = mockFindByEmailAndWeddingId as jest.Mock
@@ -86,9 +86,8 @@ describe('SelfFillRegistrationService', () => {
 
   describe('registerGuest - happy path', () => {
     beforeEach(() => {
-      mockGetWeddingIdByTokenFn.mockResolvedValue('wedding-123')
       mockFindByTokenFn.mockResolvedValue(mockSelfFillWeddingData)
-      mockFindByEmailAndWeddingIdFn.mockResolvedValue(null) // No duplicate
+      mockFindByEmailAndWeddingIdFn.mockResolvedValue(null)
       mockCreateWithGiftsFn.mockResolvedValue(mockHousehold)
       mockCreateFn.mockResolvedValue(mockGuest)
     })
@@ -100,6 +99,13 @@ describe('SelfFillRegistrationService', () => {
       expect(result.guestId).toBe(mockGuest.id)
       expect(result.householdId).toBe(mockHousehold.id)
       expect(result.message).toContain('Alice')
+    })
+
+    it('should use a single findByToken call — no separate getWeddingIdByToken (P11)', async () => {
+      await service.registerGuest(validToken, validGuestInput)
+
+      expect(mockFindByTokenFn).toHaveBeenCalledTimes(1)
+      expect(mockFindByTokenFn).toHaveBeenCalledWith(validToken)
     })
 
     it('should create a household for the guest', async () => {
@@ -160,11 +166,11 @@ describe('SelfFillRegistrationService', () => {
     })
   })
 
-  // ─── Invalid token ──────────────────────────────────────────────────────────
+  // ─── Token validation — single query (P11) ────────────────────────────────
 
-  describe('registerGuest - invalid token', () => {
-    it('should throw NOT_FOUND when token does not exist', async () => {
-      mockGetWeddingIdByTokenFn.mockResolvedValue(null)
+  describe('registerGuest - invalid or expired token (P11)', () => {
+    it('should throw NOT_FOUND when findByToken returns null', async () => {
+      mockFindByTokenFn.mockResolvedValue(null)
 
       await expect(service.registerGuest(validToken, validGuestInput)).rejects.toMatchObject({
         code: 'NOT_FOUND',
@@ -172,68 +178,135 @@ describe('SelfFillRegistrationService', () => {
       })
     })
 
-    it('should throw NOT_FOUND when wedding data cannot be loaded', async () => {
-      mockGetWeddingIdByTokenFn.mockResolvedValue('wedding-123')
+    it('should only call findByToken once — no second query (P11)', async () => {
       mockFindByTokenFn.mockResolvedValue(null)
 
-      await expect(service.registerGuest(validToken, validGuestInput)).rejects.toMatchObject({
-        code: 'NOT_FOUND',
-        message: expect.stringContaining('Wedding not found'),
-      })
+      await expect(service.registerGuest(validToken, validGuestInput)).rejects.toBeDefined()
+
+      expect(mockFindByTokenFn).toHaveBeenCalledTimes(1)
     })
   })
 
-  // ─── Duplicate guest prevention (Priority 5) ─────────────────────────────
+  // ─── Empty events guard (P10) ─────────────────────────────────────────────
 
-  describe('registerGuest - duplicate prevention', () => {
-    it('should throw CONFLICT when guest with same email already registered', async () => {
-      mockGetWeddingIdByTokenFn.mockResolvedValue('wedding-123')
-      mockFindByTokenFn.mockResolvedValue(mockSelfFillWeddingData)
-      mockFindByEmailAndWeddingIdFn.mockResolvedValue(mockGuest) // Duplicate found
+  describe('registerGuest - empty events guard (P10)', () => {
+    it('should throw NOT_FOUND when wedding has no events', async () => {
+      mockFindByTokenFn.mockResolvedValue({ ...mockSelfFillWeddingData, events: [] })
 
       await expect(service.registerGuest(validToken, validGuestInput)).rejects.toMatchObject({
-        code: 'CONFLICT',
-        message: expect.stringContaining('already registered'),
+        code: 'NOT_FOUND',
+        message: expect.stringContaining('registration link'),
       })
     })
 
+    it('should not create household or guest when events are empty', async () => {
+      mockFindByTokenFn.mockResolvedValue({ ...mockSelfFillWeddingData, events: [] })
+
+      await expect(service.registerGuest(validToken, validGuestInput)).rejects.toBeDefined()
+
+      expect(mockCreateWithGiftsFn).not.toHaveBeenCalled()
+      expect(mockCreateFn).not.toHaveBeenCalled()
+    })
+  })
+
+  // ─── Duplicate prevention inside transaction (P2) ────────────────────────
+
+  describe('registerGuest - duplicate prevention inside transaction (P2)', () => {
+    it('should throw CONFLICT when guest with same email already registered', async () => {
+      mockFindByTokenFn.mockResolvedValue(mockSelfFillWeddingData)
+      mockFindByEmailAndWeddingIdFn.mockResolvedValue(mockGuest)
+
+      await expect(service.registerGuest(validToken, validGuestInput)).rejects.toMatchObject({
+        code: 'CONFLICT',
+        message: 'You are already registered for this wedding.',
+      })
+    })
+
+    it('should perform duplicate check inside the transaction (P2)', async () => {
+      mockFindByTokenFn.mockResolvedValue(mockSelfFillWeddingData)
+      mockFindByEmailAndWeddingIdFn.mockResolvedValue(null)
+      mockCreateWithGiftsFn.mockResolvedValue(mockHousehold)
+      mockCreateFn.mockResolvedValue(mockGuest)
+
+      await service.registerGuest(validToken, validGuestInput)
+
+      expect(mockDb.$transaction).toHaveBeenCalledTimes(1)
+      expect(mockFindByEmailAndWeddingIdFn).toHaveBeenCalledWith('alice@example.com', 'wedding-123')
+    })
+
     it('should skip duplicate check when email is null', async () => {
-      mockGetWeddingIdByTokenFn.mockResolvedValue('wedding-123')
       mockFindByTokenFn.mockResolvedValue(mockSelfFillWeddingData)
       mockCreateWithGiftsFn.mockResolvedValue(mockHousehold)
       mockCreateFn.mockResolvedValue(mockGuest)
 
-      const inputWithoutEmail = { ...validGuestInput, email: null }
-      const result = await service.registerGuest(validToken, inputWithoutEmail)
+      const result = await service.registerGuest(validToken, { ...validGuestInput, email: null })
 
       expect(result.success).toBe(true)
       expect(mockFindByEmailAndWeddingIdFn).not.toHaveBeenCalled()
     })
   })
 
-  // ─── Email normalization ─────────────────────────────────────────────────
+  // ─── Email normalization (P6) ─────────────────────────────────────────────
 
-  describe('registerGuest - email normalization', () => {
-    it('should convert empty string email to null', async () => {
-      mockGetWeddingIdByTokenFn.mockResolvedValue('wedding-123')
+  describe('registerGuest - email normalization (P6)', () => {
+    beforeEach(() => {
       mockFindByTokenFn.mockResolvedValue(mockSelfFillWeddingData)
       mockFindByEmailAndWeddingIdFn.mockResolvedValue(null)
       mockCreateWithGiftsFn.mockResolvedValue(mockHousehold)
       mockCreateFn.mockResolvedValue(mockGuest)
+    })
 
+    it('should convert empty string email to null', async () => {
       await service.registerGuest(validToken, { ...validGuestInput, email: '' })
 
       expect(mockCreateFn).toHaveBeenCalledWith(
         expect.objectContaining({ email: null })
       )
     })
+
+    it('should lowercase email before duplicate check and storage', async () => {
+      await service.registerGuest(validToken, { ...validGuestInput, email: 'ALICE@EXAMPLE.COM' })
+
+      expect(mockFindByEmailAndWeddingIdFn).toHaveBeenCalledWith('alice@example.com', 'wedding-123')
+      expect(mockCreateFn).toHaveBeenCalledWith(
+        expect.objectContaining({ email: 'alice@example.com' })
+      )
+    })
+
+    it('should trim whitespace from email', async () => {
+      await service.registerGuest(validToken, { ...validGuestInput, email: '  alice@example.com  ' })
+
+      expect(mockFindByEmailAndWeddingIdFn).toHaveBeenCalledWith('alice@example.com', 'wedding-123')
+    })
   })
 
-  // ─── Error handling (Priority 13) ─────────────────────────────────────────
+  // ─── Unified error messages (P8) ─────────────────────────────────────────
+
+  describe('registerGuest - unified error messages (P8)', () => {
+    it('should use same error message for invalid token as for expired token', async () => {
+      mockFindByTokenFn.mockResolvedValue(null)
+
+      await expect(service.registerGuest(validToken, validGuestInput)).rejects.toMatchObject({
+        code: 'NOT_FOUND',
+        message: 'Invalid or expired registration link',
+      })
+    })
+
+    it('CONFLICT message should not reveal which field was duplicate', async () => {
+      mockFindByTokenFn.mockResolvedValue(mockSelfFillWeddingData)
+      mockFindByEmailAndWeddingIdFn.mockResolvedValue(mockGuest)
+
+      await expect(service.registerGuest(validToken, validGuestInput)).rejects.toMatchObject({
+        code: 'CONFLICT',
+        message: 'You are already registered for this wedding.',
+      })
+    })
+  })
+
+  // ─── Error handling ────────────────────────────────────────────────────────
 
   describe('registerGuest - error handling', () => {
-    it('should propagate database errors with meaningful context', async () => {
-      mockGetWeddingIdByTokenFn.mockResolvedValue('wedding-123')
+    it('should wrap database errors as INTERNAL_SERVER_ERROR', async () => {
       mockFindByTokenFn.mockResolvedValue(mockSelfFillWeddingData)
       mockFindByEmailAndWeddingIdFn.mockResolvedValue(null)
       mockCreateWithGiftsFn.mockRejectedValue(new Error('DB connection failed'))
@@ -244,7 +317,6 @@ describe('SelfFillRegistrationService', () => {
     })
 
     it('should log errors for debugging', async () => {
-      mockGetWeddingIdByTokenFn.mockResolvedValue('wedding-123')
       mockFindByTokenFn.mockResolvedValue(mockSelfFillWeddingData)
       mockFindByEmailAndWeddingIdFn.mockResolvedValue(null)
       mockCreateWithGiftsFn.mockRejectedValue(new Error('DB connection failed'))

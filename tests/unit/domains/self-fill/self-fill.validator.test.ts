@@ -167,6 +167,24 @@ describe('selfFillGuestSchema', () => {
     expect(result.success).toBe(false)
   })
 
+  it('should lowercase email on parse', () => {
+    const result = selfFillGuestSchema.safeParse({ ...validInput, email: 'ALICE@EXAMPLE.COM' })
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.email).toBe('alice@example.com')
+  })
+
+  it('should trim whitespace from email', () => {
+    const result = selfFillGuestSchema.safeParse({ ...validInput, email: '  alice@example.com  ' })
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.email).toBe('alice@example.com')
+  })
+
+  it('should convert empty string email to null', () => {
+    const result = selfFillGuestSchema.safeParse({ ...validInput, email: '' })
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.email).toBeNull()
+  })
+
   // phone validation
   it('should accept null phone', () => {
     const result = selfFillGuestSchema.safeParse({ ...validInput, phone: null })

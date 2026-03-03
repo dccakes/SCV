@@ -311,3 +311,31 @@ declare module '~/server/domains/self-fill/self-fill.repository' {
   export const SelfFillRepository: jest.Mock
   export const resetMocks: () => void
 }
+
+// ---------------------------------------------------------------------------
+// ~/server/domains/self-fill (barrel — mocks selfFillService singleton)
+// ---------------------------------------------------------------------------
+declare module '~/server/domains/self-fill' {
+  import type { SelfFillWeddingData } from '~/server/domains/self-fill/self-fill.types'
+
+  export const mockSelfFillWeddingData: SelfFillWeddingData
+  export const mockFindByToken: jest.Mock
+  export const mockGenerateToken: jest.Mock
+  export const mockRevokeToken: jest.Mock
+  export const mockGetToken: jest.Mock
+  export const resetMocks: () => void
+}
+
+// ---------------------------------------------------------------------------
+// ~/server/domains/wedding (barrel — mocks weddingService singleton)
+// ---------------------------------------------------------------------------
+declare module '~/server/domains/wedding' {
+  import type { Wedding } from '~/server/domains/wedding/wedding.types'
+
+  export const mockWedding: Wedding
+  export const mockGetByUserId: jest.Mock
+  export const mockGetById: jest.Mock
+  export const mockCreate: jest.Mock
+  export const mockUpdate: jest.Mock
+  export const resetMocks: () => void
+}

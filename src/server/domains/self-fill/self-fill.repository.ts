@@ -9,15 +9,32 @@ import type { PrismaClient } from '@prisma/client'
 
 import type { SelfFillWeddingData } from '~/server/domains/self-fill/self-fill.types'
 
+/** Tokens older than this many days are considered expired */
+const TOKEN_EXPIRY_DAYS = 30
+
+/** Build the Prisma WHERE clause for a valid (non-expired) token */
+function validTokenWhere(token: string) {
+  const expiryDate = new Date()
+  expiryDate.setDate(expiryDate.getDate() - TOKEN_EXPIRY_DAYS)
+  return {
+    selfFillToken: token,
+    OR: [
+      { selfFillTokenGeneratedAt: null as Date | null }, // Legacy tokens: treat as non-expiring
+      { selfFillTokenGeneratedAt: { gte: expiryDate } },
+    ],
+  }
+}
+
 export class SelfFillRepository {
   constructor(private db: PrismaClient) {}
 
   /**
-   * Find a wedding by self-fill token
+   * Find a wedding by self-fill token.
+   * Returns null if the token does not exist or has expired (> TOKEN_EXPIRY_DAYS old).
    */
   async findByToken(token: string): Promise<SelfFillWeddingData | null> {
-    const wedding = await this.db.wedding.findUnique({
-      where: { selfFillToken: token },
+    const wedding = await this.db.wedding.findFirst({
+      where: validTokenWhere(token),
       select: {
         id: true,
         groomFirstName: true,
@@ -40,11 +57,12 @@ export class SelfFillRepository {
   }
 
   /**
-   * Get wedding ID by self-fill token
+   * Get wedding ID by self-fill token.
+   * Returns null if the token does not exist or has expired.
    */
   async getWeddingIdByToken(token: string): Promise<string | null> {
-    const wedding = await this.db.wedding.findUnique({
-      where: { selfFillToken: token },
+    const wedding = await this.db.wedding.findFirst({
+      where: validTokenWhere(token),
       select: { id: true },
     })
 

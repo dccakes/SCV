@@ -240,6 +240,7 @@ model Guest {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
+  @@unique([weddingId, email])  // Prevent duplicate email registrations per wedding (NULLs excluded)
   @@index([weddingId])
   @@index([householdId])
   // not supported in postgres - TODO: ensure rsvp search functionality is unaffected
