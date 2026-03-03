@@ -116,4 +116,19 @@ export class WeddingService {
   async hasWedding(userId: string): Promise<boolean> {
     return this.weddingRepository.existsForUser(userId)
   }
+
+  /**
+   * Get the wedding ID for a given user, throwing if not found.
+   * Centralised helper used by domain routers to avoid duplication.
+   */
+  async getWeddingIdByUserId(userId: string): Promise<string> {
+    const wedding = await this.weddingRepository.findByUserId(userId)
+    if (!wedding) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'No wedding found for user. Please complete onboarding first.',
+      })
+    }
+    return wedding.id
+  }
 }

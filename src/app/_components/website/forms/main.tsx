@@ -49,7 +49,6 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
     const newSteps: ReactNode[] =
       weddingData?.events?.reduce((acc: ReactNode[], event: Event) => {
         if (!event.collectRsvp) return acc
-        // TODO: invitedGuests need to be filtered based on rsvp selection - shouldnt show question step forms for those who declined rsvp
         const invitedGuests = rsvpFormData.selectedHousehold?.guests.filter((guest) =>
           guest.invitations.some(
             (invite) =>
@@ -60,8 +59,20 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
 
         if (invitedGuests !== undefined && invitedGuests.length > 0) {
           acc.push(<EventRsvpForm event={event} invitedGuests={invitedGuests} />)
+          // Only show question steps for guests who confirmed attendance.
+          // Fall back to all invited guests if responses haven't been recorded yet.
+          const hasResponsesForEvent = rsvpFormData.rsvpResponses.some(
+            (r) => r.eventId === event.id
+          )
+          const guestsForQuestions = hasResponsesForEvent
+            ? invitedGuests.filter((guest) =>
+                rsvpFormData.rsvpResponses.some(
+                  (r) => r.guestId === guest.id && r.eventId === event.id && r.rsvp === 'Attending'
+                )
+              )
+            : invitedGuests
           for (const question of event.questions) {
-            invitedGuests.forEach((guest) => {
+            guestsForQuestions.forEach((guest) => {
               if (question.type === 'Text') {
                 acc.push(<QuestionShortAnswer question={question} guest={guest} />)
               } else {
@@ -83,7 +94,7 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
 
     numSteps.current = newSteps.length + NUM_STATIC_STEPS
     return newSteps
-  }, [weddingData, rsvpFormData.selectedHousehold])
+  }, [weddingData, rsvpFormData.selectedHousehold, rsvpFormData.rsvpResponses])
 
   return (
     <div className='pb-20 font-serif'>

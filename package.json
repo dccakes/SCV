@@ -5,7 +5,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "SKIP_ENV_VALIDATION=true next build",
+    "build": "npx prisma generate && npx prisma migrate deploy && next build",
+    "build:ci": "SKIP_ENV_VALIDATION=true next build",
     "build:analyze": "SKIP_ENV_VALIDATION=true next build --analyze",
     "build:turbo": "NODE_OPTIONS='--trace-uncaught' SKIP_ENV_VALIDATION=true next build --turbopack",
     "db:push": "prisma db push",
