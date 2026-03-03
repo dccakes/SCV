@@ -39,10 +39,13 @@ export type SelfFillGuestInput = {
 
 /**
  * Result of self-fill guest registration
+ *
+ * Note: guestId is number because Guest.id is Int (autoincrement) in the schema.
+ * householdId is string (UUID) because Household.id uses @default(uuid()).
  */
 export type SelfFillRegistrationResult = {
   success: boolean
-  guestId: number
+  guestId: number // Int (autoincrement) — matches Guest model schema
   householdId: string
   message: string
 }

@@ -1,25 +1,18 @@
 /**
  * Self-Fill Domain - Barrel Export
  *
- * Exports all self-fill domain components for use throughout the application.
+ * Token management only. Guest registration orchestration lives in:
+ *   ~/server/application/self-fill-registration
  */
 
-import { GuestRepository } from '~/server/domains/guest/guest.repository'
-import { HouseholdRepository } from '~/server/domains/household/household.repository'
 import { SelfFillRepository } from '~/server/domains/self-fill/self-fill.repository'
 import { SelfFillService } from '~/server/domains/self-fill/self-fill.service'
 import { db } from '~/server/infrastructure/database'
 
-// Create singleton instances
+// Create singleton instances (token management only)
 const selfFillRepository = new SelfFillRepository(db)
-const householdRepository = new HouseholdRepository(db)
-const guestRepository = new GuestRepository(db)
 
-export const selfFillService = new SelfFillService(
-  selfFillRepository,
-  householdRepository,
-  guestRepository
-)
+export const selfFillService = new SelfFillService(selfFillRepository)
 
 // Export classes for testing/DI
 export { SelfFillRepository } from '~/server/domains/self-fill/self-fill.repository'

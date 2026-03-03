@@ -33,10 +33,23 @@ export default function SelfFillPage() {
     { enabled: !!token }
   )
 
+  const [mutationError, setMutationError] = useState<string | null>(null)
+
   const registerMutation = api.selfFill.registerGuest.useMutation({
     onSuccess: (data) => {
       setSuccessMessage(data.message)
       setIsSubmitted(true)
+      setMutationError(null)
+    },
+    onError: (error) => {
+      // Map known error codes to user-friendly messages
+      if (error.data?.code === 'NOT_FOUND') {
+        setMutationError('This registration link is no longer valid. Please contact the couple.')
+      } else if (error.data?.code === 'CONFLICT') {
+        setMutationError('You are already registered for this wedding.')
+      } else {
+        setMutationError('Something went wrong. Please try again or contact the couple.')
+      }
     },
   })
 
@@ -174,9 +187,9 @@ export default function SelfFillPage() {
               {errors.phone && <p className='text-red-500 text-sm'>{errors.phone.message}</p>}
             </div>
 
-            {registerMutation.error && (
+            {mutationError && (
               <div className='rounded-md bg-red-50 p-3 text-red-700 text-sm'>
-                {registerMutation.error.message}
+                {mutationError}
               </div>
             )}
 

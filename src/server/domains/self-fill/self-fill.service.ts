@@ -1,28 +1,20 @@
 /**
  * Self-Fill Domain - Service
  *
- * Business logic for the Self-Fill guest registration feature.
- * Handles token generation, validation, and guest self-registration.
+ * Business logic for Self-Fill TOKEN MANAGEMENT only.
+ * Handles generating, revoking, and retrieving self-fill tokens.
+ *
+ * Guest registration orchestration (cross-domain) lives in:
+ *   ~/server/application/self-fill-registration/self-fill-registration.service.ts
  */
 
 import { randomBytes } from 'node:crypto'
-import { TRPCError } from '@trpc/server'
 
-import type { GuestRepository } from '~/server/domains/guest/guest.repository'
-import type { HouseholdRepository } from '~/server/domains/household/household.repository'
 import type { SelfFillRepository } from '~/server/domains/self-fill/self-fill.repository'
-import type {
-  SelfFillGuestInput,
-  SelfFillRegistrationResult,
-  SelfFillWeddingData,
-} from '~/server/domains/self-fill/self-fill.types'
+import type { SelfFillWeddingData } from '~/server/domains/self-fill/self-fill.types'
 
 export class SelfFillService {
-  constructor(
-    private selfFillRepo: SelfFillRepository,
-    private householdRepo: HouseholdRepository,
-    private guestRepo: GuestRepository
-  ) {}
+  constructor(private selfFillRepo: SelfFillRepository) {}
 
   /**
    * Get wedding data by self-fill token (for public form display)
@@ -32,19 +24,24 @@ export class SelfFillService {
   }
 
   /**
-   * Generate a new self-fill token for a wedding
+   * Generate a new self-fill token for a wedding.
+   * Records the generation timestamp for future expiry checks.
    */
   async generateToken(weddingId: string): Promise<string> {
     const token = randomBytes(16).toString('hex')
-    await this.selfFillRepo.updateToken(weddingId, token)
+    const generatedAt = new Date()
+    await this.selfFillRepo.updateToken(weddingId, token, generatedAt)
+    console.log(`[SelfFill] Token generated for weddingId=${weddingId}`, { generatedAt })
     return token
   }
 
   /**
-   * Revoke (disable) the self-fill token for a wedding
+   * Revoke (disable) the self-fill token for a wedding.
+   * Sets both token and generatedAt to null.
    */
   async revokeToken(weddingId: string): Promise<void> {
-    await this.selfFillRepo.updateToken(weddingId, null)
+    await this.selfFillRepo.updateToken(weddingId, null, null)
+    console.log(`[SelfFill] Token revoked for weddingId=${weddingId}`, { revokedAt: new Date() })
   }
 
   /**
@@ -52,70 +49,5 @@ export class SelfFillService {
    */
   async getToken(weddingId: string): Promise<string | null> {
     return this.selfFillRepo.getToken(weddingId)
-  }
-
-  /**
-   * Register a guest via self-fill form
-   *
-   * This creates:
-   * 1. A new household for the guest
-   * 2. The guest as primary contact
-   * 3. Invitations for all events (with 'Invited' status)
-   */
-  async registerGuest(
-    token: string,
-    data: SelfFillGuestInput
-  ): Promise<SelfFillRegistrationResult> {
-    // Verify token and get wedding ID
-    const weddingId = await this.selfFillRepo.getWeddingIdByToken(token)
-    if (!weddingId) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'Invalid or expired registration link',
-      })
-    }
-
-    // Get wedding with events to create invitations
-    const wedding = await this.selfFillRepo.findByToken(token)
-    if (!wedding) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'Wedding not found',
-      })
-    }
-
-    const eventIds = wedding.events.map((e) => e.id)
-
-    // Create a new household for this guest
-    const household = await this.householdRepo.createWithGifts(
-      {
-        weddingId,
-      },
-      eventIds
-    )
-
-    // Create the guest with invitations for all events
-    const guest = await this.guestRepo.create({
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email ?? null,
-      phone: data.phone ?? null,
-      weddingId,
-      householdId: household.id,
-      isPrimaryContact: true,
-      ageGroup: 'ADULT',
-      invitations: eventIds.map((eventId) => ({
-        eventId,
-        rsvp: 'Invited',
-        weddingId,
-      })),
-    })
-
-    return {
-      success: true,
-      guestId: guest.id,
-      householdId: household.id,
-      message: `Thank you, ${data.firstName}! You have been added to the guest list.`,
-    }
   }
 }

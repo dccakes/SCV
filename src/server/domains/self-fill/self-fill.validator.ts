@@ -7,10 +7,31 @@
 import { z } from 'zod'
 
 /**
+ * Token must be a 32-character lowercase hex string (output of randomBytes(16).toString('hex')).
+ * Trimmed before validation to reject whitespace-padded inputs.
+ */
+const tokenSchema = z
+  .string()
+  .trim()
+  .regex(/^[a-f0-9]{32}$/, 'Invalid token format')
+
+/**
+ * Name fields must not contain HTML injection characters (< or >).
+ * Allows letters (including accented/unicode), spaces, hyphens, apostrophes, and periods.
+ */
+const nameSchema = (label: string) =>
+  z
+    .string()
+    .trim()
+    .min(1, `${label} is required`)
+    .max(100, `${label} must be 100 characters or fewer`)
+    .refine((val) => !/[<>]/.test(val), `${label} contains invalid characters`)
+
+/**
  * Schema for fetching wedding data by self-fill token
  */
 export const getByTokenSchema = z.object({
-  token: z.string().min(1, 'Token is required'),
+  token: tokenSchema,
 })
 
 export type GetByTokenSchemaInput = z.infer<typeof getByTokenSchema>
@@ -19,9 +40,9 @@ export type GetByTokenSchemaInput = z.infer<typeof getByTokenSchema>
  * Schema for guest self-registration
  */
 export const selfFillGuestSchema = z.object({
-  token: z.string().min(1, 'Token is required'),
-  firstName: z.string().min(1, 'First name is required').max(100),
-  lastName: z.string().min(1, 'Last name is required').max(100),
+  token: tokenSchema,
+  firstName: nameSchema('First name'),
+  lastName: nameSchema('Last name'),
   email: z.string().email('Please enter a valid email address').nullish().or(z.literal('')),
   phone: z.string().max(20).nullish(),
 })

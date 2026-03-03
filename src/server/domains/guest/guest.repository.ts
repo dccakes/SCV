@@ -268,6 +268,15 @@ export class GuestRepository {
   }
 
   /**
+   * Find a guest by email and wedding ID (used for duplicate self-fill registration checks)
+   */
+  async findByEmailAndWeddingId(email: string, weddingId: string): Promise<Guest | null> {
+    return this.db.guest.findFirst({
+      where: { email, weddingId },
+    })
+  }
+
+  /**
    * Count guests by wedding ID
    */
   async countByWeddingId(weddingId: string): Promise<number> {

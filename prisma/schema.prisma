@@ -17,7 +17,8 @@ model Wedding {
   brideFirstName String
   brideLastName  String
   enabledAddOns  String[]        @default([]) // e.g., ["website", "tasks", "gifts"]
-  selfFillToken  String?         @unique // Unique token for self-fill guest registration link
+  selfFillToken            String?   @unique  // Unique token for self-fill guest registration link
+  selfFillTokenGeneratedAt DateTime?           // When the current token was generated (enables expiry)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
