@@ -5,12 +5,12 @@
  * This layer handles all direct database access for households.
  */
 
-import { type PrismaClient } from '@prisma/client'
+import type { PrismaClient } from '@prisma/client'
 
-import {
-  type Household,
-  type HouseholdSearchResult,
-  type HouseholdWithGuestsAndGifts,
+import type {
+  Household,
+  HouseholdSearchResult,
+  HouseholdWithGuestsAndGifts,
 } from '~/server/domains/household/household.types'
 
 export class HouseholdRepository {

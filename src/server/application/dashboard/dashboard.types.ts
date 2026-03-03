@@ -4,10 +4,10 @@
  * Types for the dashboard overview data that aggregates multiple domains.
  */
 
-import { type Gift } from '~/server/domains/gift'
-import { type GuestWithInvitations } from '~/server/domains/guest'
-import { type Household } from '~/server/domains/household'
-import { type Option, type Question } from '~/server/domains/question'
+import type { Gift } from '~/server/domains/gift'
+import type { GuestWithInvitations } from '~/server/domains/guest'
+import type { Household } from '~/server/domains/household'
+import type { Option, Question } from '~/server/domains/question'
 
 /**
  * Wedding date format

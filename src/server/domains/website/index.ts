@@ -12,6 +12,11 @@ import { db } from '~/server/infrastructure/database'
 const websiteRepository = new WebsiteRepository(db)
 export const websiteService = new WebsiteService(websiteRepository, db)
 
+// Export classes for testing/DI
+export { WebsiteRepository } from '~/server/domains/website/website.repository'
+// Export router
+export { websiteRouter } from '~/server/domains/website/website.router'
+export { WebsiteService } from '~/server/domains/website/website.service'
 // Export types
 export type {
   CreateWebsiteInput,
@@ -23,25 +28,20 @@ export type {
   WeddingDate,
   WeddingPageData,
 } from '~/server/domains/website/website.types'
-
 // Export validators
 export {
   type AnswerToQuestion,
-  createWebsiteSchema,
   type CreateWebsiteSchemaInput,
+  createWebsiteSchema,
   fetchWeddingDataSchema,
   getBySubUrlSchema,
   type RsvpResponse,
-  submitRsvpSchema,
   type SubmitRsvpSchemaInput,
-  updateCoverPhotoSchema,
+  submitRsvpSchema,
   type UpdateCoverPhotoSchemaInput,
-  updateRsvpEnabledSchema,
   type UpdateRsvpEnabledSchemaInput,
-  updateWebsiteSchema,
   type UpdateWebsiteSchemaInput,
+  updateCoverPhotoSchema,
+  updateRsvpEnabledSchema,
+  updateWebsiteSchema,
 } from '~/server/domains/website/website.validator'
-
-// Export classes for testing/DI
-export { WebsiteRepository } from '~/server/domains/website/website.repository'
-export { WebsiteService } from '~/server/domains/website/website.service'

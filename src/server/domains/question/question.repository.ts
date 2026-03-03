@@ -5,13 +5,13 @@
  * This layer handles all direct database access for questions, options, and answers.
  */
 
-import { type PrismaClient } from '@prisma/client'
+import type { PrismaClient } from '@prisma/client'
 
-import {
-  type Answer,
-  type OptionInput,
-  type Question,
-  type QuestionWithOptions,
+import type {
+  Answer,
+  OptionInput,
+  Question,
+  QuestionWithOptions,
 } from '~/server/domains/question/question.types'
 
 export class QuestionRepository {

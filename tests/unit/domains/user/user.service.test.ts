@@ -8,7 +8,14 @@ import { TRPCError } from '@trpc/server'
 jest.mock('~/server/domains/user/user.repository')
 
 // @ts-expect-error - Importing mock functions from mocked module
-import { mockExists, mockFindById, mockUpdate, mockUser, resetMocks, UserRepository } from '~/server/domains/user/user.repository'
+import {
+  mockExists,
+  mockFindById,
+  mockUpdate,
+  mockUser,
+  resetMocks,
+  UserRepository,
+} from '~/server/domains/user/user.repository'
 import { UserService } from '~/server/domains/user/user.service'
 
 // Create typed aliases for mocked functions

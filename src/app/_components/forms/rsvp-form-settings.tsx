@@ -15,11 +15,7 @@ import NoRsvpView from '~/app/_components/forms/rsvp/no-rsvp-view'
 import { useScrollToTop } from '~/app/_components/hooks'
 import { LoadingSpinner } from '~/app/_components/loaders'
 import { sharedStyles } from '~/app/utils/shared-styles'
-import {
-  type DashboardData,
-  type EventWithResponses,
-  type Question,
-} from '~/app/utils/shared-types'
+import type { DashboardData, EventWithResponses, Question } from '~/app/utils/shared-types'
 import { Switch } from '~/components/ui/switch'
 import { api } from '~/trpc/react'
 
@@ -38,25 +34,29 @@ export default function RsvpFormSettings({
 
   return (
     <>
-      {showQuestionForm && (
+      {showQuestionForm && prefillQuestion && (
         <QuestionForm
           isEditMode={useEditMode}
-          question={prefillQuestion!}
+          question={prefillQuestion}
           setShowQuestionForm={setShowQuestionForm}
         />
       )}
-      <div className="absolute left-0 top-0 flex h-[120px] w-screen items-center bg-white pl-10">
-        <div className="flex cursor-pointer gap-3" onClick={() => setShowRsvpSettings(false)}>
+      <div className='absolute top-0 left-0 flex h-[120px] w-screen items-center bg-white pl-10'>
+        <button
+          type='button'
+          className='flex cursor-pointer gap-3'
+          onClick={() => setShowRsvpSettings(false)}
+        >
           <GoArrowLeft size={36} />
-          <span className="text-2xl font-semibold">Online RSVP</span>
-        </div>
+          <span className='font-semibold text-2xl'>Online RSVP</span>
+        </button>
       </div>
-      <div className="m-auto w-[800px]">
-        <div className="mt-10 flex items-center gap-2 bg-blue-50 p-4">
-          <TiEyeOutline size={30} color="blue" />
+      <div className='m-auto w-[800px]'>
+        <div className='mt-10 flex items-center gap-2 bg-blue-50 p-4'>
+          <TiEyeOutline size={30} color='blue' />
           <p>
             This form is <b>visible</b> on your Website. Guests on your Guest List can RVSP{' '}
-            <button className="underline" onClick={toggleEditRsvpSettingsForm}>
+            <button type='button' className='underline' onClick={toggleEditRsvpSettingsForm}>
               View Settings
             </button>
           </p>
@@ -66,7 +66,7 @@ export default function RsvpFormSettings({
             const { attending, invited, declined } = event.guestResponses
             const numGuests = attending + invited + declined
             return (
-              <section key={event.id} className="border-b py-12">
+              <section key={event.id} className='border-b py-12'>
                 <EventRsvpSection
                   event={event}
                   numGuests={numGuests}
@@ -126,9 +126,9 @@ const EventRsvpSection = ({
   }
   return (
     <>
-      <div className="flex items-center justify-between pb-4">
-        <h2 className="text-2xl font-bold">{event.name}</h2>
-        <div className="flex items-center gap-3">
+      <div className='flex items-center justify-between pb-4'>
+        <h2 className='font-bold text-2xl'>{event.name}</h2>
+        <div className='flex items-center gap-3'>
           <span>Collect RSVPs</span>
           {updateEventRsvpSetting.isPending ? (
             <LoadingSpinner size={20} />
@@ -150,26 +150,26 @@ const EventRsvpSection = ({
         <>
           <p>
             Questions will be asked to all of the {numGuests} guests on the{' '}
-            <span className="font-semibold underline">{event.name}</span> list who RSVP
+            <span className='font-semibold underline'>{event.name}</span> list who RSVP
             &apos;Yes&apos;
           </p>
-          <ul className="mt-5 flex flex-col gap-3">
+          <ul className='mt-5 flex flex-col gap-3'>
             {event.questions?.map((question) => {
               return (
-                <li key={question.id} className="border-2 p-4">
-                  <div className="flex items-center justify-between">
+                <li key={question.id} className='border-2 p-4'>
+                  <div className='flex items-center justify-between'>
                     {question.type === 'Text' ? (
                       <p>{question.text}</p>
                     ) : (
                       <div>
                         <p>{question.text}</p>
-                        <span className="text-sm">{question.options?.length} options</span>
+                        <span className='text-sm'>{question.options?.length} options</span>
                       </div>
                     )}
                     <BsPencil
                       size={20}
                       color={sharedStyles.primaryColorHex}
-                      className="cursor-pointer"
+                      className='cursor-pointer'
                       onClick={() => {
                         setUseEditMode(true)
                         setPrefillQuestion(question)
@@ -181,13 +181,14 @@ const EventRsvpSection = ({
               )
             })}
           </ul>
-          <div
-            className="mt-5 flex w-fit cursor-pointer gap-2 decoration-pink-400 hover:underline"
+          <button
+            type='button'
+            className='mt-5 flex w-fit cursor-pointer gap-2 decoration-pink-400 hover:underline'
             onClick={() => onAddQuestion(event.id)}
           >
             <AiOutlinePlusCircle size={25} color={sharedStyles.primaryColorHex} />
             <span className={`text-${sharedStyles.primaryColor}`}>Add a Follow-Up Question</span>
-          </div>
+          </button>
         </>
       ) : event.collectRsvp ? (
         <NoQuestionsView event={event} onAddQuestion={onAddQuestion} />

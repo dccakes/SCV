@@ -1,18 +1,12 @@
 'use client'
 
-import { useState } from 'react'
-import { type Dispatch, type SetStateAction } from 'react'
+import { type Dispatch, type SetStateAction, useState } from 'react'
 import { AiOutlineCalendar } from 'react-icons/ai'
 import { IoIosCheckmarkCircleOutline } from 'react-icons/io'
 
 import { useRsvpForm, useUpdateRsvpForm } from '~/app/_components/contexts/rsvp-form-context'
 import { formatDateStandard } from '~/app/utils/helpers'
-import {
-  type Event,
-  type Guest,
-  type RsvpFormResponse,
-  type StepFormProps,
-} from '~/app/utils/shared-types'
+import type { Event, Guest, RsvpFormResponse, StepFormProps } from '~/app/utils/shared-types'
 
 interface EventRsvpFormProps extends StepFormProps {
   event: Event
@@ -30,10 +24,10 @@ export default function EventRsvpForm({
   const [rsvpResponses, setRsvpResponses] = useState<RsvpFormResponse[]>([])
 
   return (
-    <div className="flex flex-col gap-5">
-      <h2 className="text-2xl tracking-widest">{event.name}</h2>
+    <div className='flex flex-col gap-5'>
+      <h2 className='text-2xl tracking-widest'>{event.name}</h2>
       {!!event.date && (
-        <div className="flex gap-2">
+        <div className='flex gap-2'>
           <AiOutlineCalendar size={20} />
           <span>
             {formatDateStandard(event.date)}
@@ -44,8 +38,8 @@ export default function EventRsvpForm({
       <ul>
         {invitedGuests.map((guest) => {
           return (
-            <li key={guest.id} className="mb-3">
-              <div className="flex items-center justify-between">
+            <li key={guest.id} className='mb-3'>
+              <div className='flex items-center justify-between'>
                 <span>
                   {guest.firstName} {guest.lastName}
                 </span>
@@ -61,9 +55,9 @@ export default function EventRsvpForm({
         })}
       </ul>
       <button
-        className={`mt-3 py-3 text-xl tracking-wide text-white ${rsvpResponses.length < invitedGuests.length ? 'cursor-not-allowed bg-stone-400' : 'bg-stone-700'}`}
+        className={`mt-3 py-3 text-white text-xl tracking-wide ${rsvpResponses.length < invitedGuests.length ? 'cursor-not-allowed bg-stone-400' : 'bg-stone-700'}`}
         disabled={rsvpResponses.length < invitedGuests.length}
-        type="button"
+        type='button'
         onClick={() => {
           updateRsvpForm({
             rsvpResponses: [...rsvpFormData.rsvpResponses, ...rsvpResponses],
@@ -74,8 +68,8 @@ export default function EventRsvpForm({
         CONTINUE
       </button>
       <button
-        className={`mt-3 bg-gray-700 py-3 text-xl tracking-wide text-white`}
-        type="submit"
+        className={`mt-3 bg-gray-700 py-3 text-white text-xl tracking-wide`}
+        type='submit'
         onClick={() => goBack?.()}
       >
         BACK
@@ -106,21 +100,23 @@ function RsvpSelection({ eventId, guestId, setRsvpResponses, guestName }: RsvpSe
     })
   }
   return (
-    <div className="flex gap-3">
-      <div
+    <div className='flex gap-3'>
+      <button
+        type='button'
         className={`flex w-32 cursor-pointer items-center justify-center gap-1 border border-stone-400 py-2 ${rsvpSelection === 'Attending' ? 'bg-stone-700 text-white' : 'text-stone-400'}`}
         onClick={() => handleOnSelect('Attending', guestId)}
       >
         {rsvpSelection === 'Attending' && <IoIosCheckmarkCircleOutline size={20} />}
         Accept{rsvpSelection === 'Attending' && 'ed'}
-      </div>
-      <div
+      </button>
+      <button
+        type='button'
         className={`flex w-32 cursor-pointer items-center justify-center gap-1 border border-stone-400 py-2 ${rsvpSelection === 'Declined' ? 'bg-stone-700 text-white' : 'text-stone-400'}`}
         onClick={() => handleOnSelect('Declined', guestId)}
       >
         {rsvpSelection === 'Declined' && <IoIosCheckmarkCircleOutline size={20} />}
         Decline{rsvpSelection === 'Declined' && 'd'}
-      </div>
+      </button>
     </div>
   )
 }

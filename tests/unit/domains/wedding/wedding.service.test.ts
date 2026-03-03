@@ -29,11 +29,7 @@ import {
   resetMocks as resetTagMocks,
 } from '~/server/domains/guest-tag/guest-tag.service'
 // @ts-expect-error - Importing mock functions from mocked module
-import {
-  mockUpdateProfile,
-  resetMocks as resetUserMocks,
-  UserService,
-} from '~/server/domains/user/user.service'
+import { mockUpdateProfile, resetMocks as resetUserMocks } from '~/server/domains/user/user.service'
 import {
   mockCreate,
   mockExistsForUser,

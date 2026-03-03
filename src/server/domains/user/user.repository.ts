@@ -5,9 +5,9 @@
  * This layer handles all direct database access for users.
  */
 
-import { type PrismaClient } from '@prisma/client'
+import type { PrismaClient } from '@prisma/client'
 
-import { type CreateUserInput, type UpdateUserInput, type User } from '~/server/domains/user/user.types'
+import type { CreateUserInput, UpdateUserInput, User } from '~/server/domains/user/user.types'
 
 export class UserRepository {
   constructor(private db: PrismaClient) {}

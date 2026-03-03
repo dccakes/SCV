@@ -14,6 +14,11 @@ import { db } from '~/server/infrastructure/database'
 const weddingRepository = new WeddingRepository(db)
 export const weddingService = new WeddingService(weddingRepository, eventService, guestTagService)
 
+// Export classes for testing/DI
+export { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
+// Export router
+export { weddingRouter } from '~/server/domains/wedding/wedding.router'
+export { WeddingService } from '~/server/domains/wedding/wedding.service'
 // Export types
 export type {
   CreateWeddingInput,
@@ -21,16 +26,11 @@ export type {
   UserWedding,
   Wedding,
 } from '~/server/domains/wedding/wedding.types'
-
 // Export validators
 export {
-  createWeddingSchema,
   type CreateWeddingSchemaInput,
+  createWeddingSchema,
   getByUserIdSchema,
-  updateWeddingSchema,
   type UpdateWeddingSchemaInput,
+  updateWeddingSchema,
 } from '~/server/domains/wedding/wedding.validator'
-
-// Export classes for testing/DI
-export { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
-export { WeddingService } from '~/server/domains/wedding/wedding.service'

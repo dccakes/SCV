@@ -18,7 +18,7 @@ import {
   getEventFormDefaults,
   transformToServerInput,
 } from '~/app/_components/forms/event/event-form.schema'
-import { type Event } from '~/server/domains/event/event.types'
+import type { Event } from '~/server/domains/event/event.types'
 
 // Mock event for edit mode tests - use a future date
 const createMockEventDate = () => {
@@ -58,7 +58,7 @@ describe('EventForm - Create Event', () => {
     // Use a future date
     const futureDate = new Date()
     futureDate.setFullYear(futureDate.getFullYear() + 1)
-    const futureDateString = futureDate.toISOString().split('T')[0]!
+    const futureDateString = futureDate.toISOString().split('T')[0] ?? ''
 
     // Fill in all form fields
     act(() => {
@@ -154,11 +154,7 @@ describe('EventForm - Create Event', () => {
 
     // Event name with 51 characters (exceeds limit)
     act(() => {
-      result.current.setValue(
-        'eventName',
-        'A'.repeat(51),
-        { shouldDirty: true }
-      )
+      result.current.setValue('eventName', 'A'.repeat(51), { shouldDirty: true })
     })
 
     const isValid = await act(async () => {
@@ -184,11 +180,7 @@ describe('EventForm - Create Event', () => {
 
     // Event name with exactly 50 characters
     act(() => {
-      result.current.setValue(
-        'eventName',
-        'A'.repeat(50),
-        { shouldDirty: true }
-      )
+      result.current.setValue('eventName', 'A'.repeat(50), { shouldDirty: true })
     })
 
     const isValid = await act(async () => {

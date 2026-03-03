@@ -1,7 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { type ReactNode } from 'react'
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { IoMdClose } from 'react-icons/io'
 
 import { useRsvpForm, useUpdateRsvpForm } from '~/app/_components/contexts/rsvp-form-context'
@@ -14,7 +13,7 @@ import QuestionMultipleChoice from '~/app/_components/website/forms/steps/questi
 import QuestionShortAnswer from '~/app/_components/website/forms/steps/question-short-answer'
 import SendRsvp from '~/app/_components/website/forms/steps/send-rsvp'
 import RsvpConfirmation from '~/app/_components/website/rsvp-confirmation'
-import { type Event, type Question, type RsvpPageData } from '~/app/utils/shared-types'
+import type { Event, Question, RsvpPageData } from '~/app/utils/shared-types'
 import { api } from '~/trpc/react'
 
 type MainRsvpFormProps = {
@@ -33,7 +32,7 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
   useEffect(() => {
     updateRsvpForm({ weddingData })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [updateRsvpForm, weddingData])
 
   const submitRsvpForm = api.website.submitRsvpForm.useMutation({
     onSuccess: () => {
@@ -98,7 +97,7 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
   }, [weddingData, rsvpFormData.selectedHousehold, rsvpFormData.rsvpResponses])
 
   return (
-    <div className="pb-20 font-serif">
+    <div className='pb-20 font-serif'>
       <ProgressBar
         currentStep={currentStep}
         progress={progress}
@@ -106,7 +105,7 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
         basePath={basePath}
       />
       <form
-        className="m-auto w-[450px] py-5"
+        className='m-auto w-[450px] py-5'
         onSubmit={(e) => {
           e.preventDefault()
           submitRsvpForm.mutate(rsvpFormData)
@@ -136,10 +135,10 @@ const ProgressBar = ({
   basePath: string
 }) => {
   return (
-    <div className="fixed top-0 z-10 w-full bg-white px-10 py-1 text-center">
+    <div className='fixed top-0 z-10 w-full bg-white px-10 py-1 text-center'>
       <IoMdClose
         size={25}
-        className="absolute right-3 top-2 z-20 cursor-pointer"
+        className='absolute top-2 right-3 z-20 cursor-pointer'
         onClick={() => {
           if (
             currentStep <= 1 ||
@@ -149,10 +148,10 @@ const ProgressBar = ({
           }
         }}
       />
-      <h1 className="py-3 text-2xl">RSVP</h1>
-      <div className="relative mb-2.5 h-3 w-full rounded-full bg-gray-200">
+      <h1 className='py-3 text-2xl'>RSVP</h1>
+      <div className='relative mb-2.5 h-3 w-full rounded-full bg-gray-200'>
         <div
-          className="absolute left-0 top-0 mb-2.5 h-3 rounded-full bg-gray-700 transition-[width]"
+          className='absolute top-0 left-0 mb-2.5 h-3 rounded-full bg-gray-700 transition-[width]'
           style={{
             width: currentStep < 3 ? '3%' : currentStep === numSteps - 1 ? '99%' : `${progress}%`,
           }}

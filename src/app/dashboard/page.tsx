@@ -1,10 +1,9 @@
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-
-import { env } from '~/env'
 import Dashboard from '~/app/_components/dashboard'
 import { sharedStyles } from '~/app/utils/shared-styles'
+import { env } from '~/env'
 import { api } from '~/trpc/server'
 
 // Check if S3 is configured
@@ -23,8 +22,8 @@ const s3 = isS3Enabled
   ? new S3Client({
       region,
       credentials: {
-        accessKeyId: env.AWS_S3_ACCESS_KEY_ID!,
-        secretAccessKey: env.AWS_S3_SECRET_ACCESS_KEY!,
+        accessKeyId: env.AWS_S3_ACCESS_KEY_ID ?? '',
+        secretAccessKey: env.AWS_S3_SECRET_ACCESS_KEY ?? '',
       },
     })
   : null
@@ -55,7 +54,7 @@ const uploadImage = async (formData: FormData): Promise<{ ok: boolean }> => {
     })
   )
     .then(async () => {
-      const photoName = files[0]!.name
+      const photoName = files[0]?.name
       const objectUrl = `https://${Bucket}.s3.${region}.amazonaws.com/${photoName}`
       await api.website.updateCoverPhoto.mutate({
         coverPhotoUrl: objectUrl,

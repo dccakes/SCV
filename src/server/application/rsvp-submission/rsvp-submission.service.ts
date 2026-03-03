@@ -15,9 +15,10 @@
  * See ARCHITECTURAL_VIOLATIONS.md for details.
  */
 
-import { type Prisma, type PrismaClient } from '@prisma/client'
+// biome-ignore lint/style/noRestrictedImports: architectural violation, tracked in ARCHITECTURAL_VIOLATIONS.md
+import type { Prisma, PrismaClient } from '@prisma/client'
 
-import { type SubmitRsvpSchemaInput } from '~/server/application/rsvp-submission/rsvp-submission.validator'
+import type { SubmitRsvpSchemaInput } from '~/server/application/rsvp-submission/rsvp-submission.validator'
 
 // Re-use types from validator for internal use
 type RsvpResponse = SubmitRsvpSchemaInput['rsvpResponses'][number]

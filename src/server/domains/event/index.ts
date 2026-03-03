@@ -12,9 +12,13 @@ import { db } from '~/server/infrastructure/database'
 const eventRepository = new EventRepository(db)
 export const eventService = new EventService(eventRepository, db)
 
+// Export classes for testing/DI
+export { EventRepository } from '~/server/domains/event/event.repository'
+// Export router
+export { eventRouter } from '~/server/domains/event/event.router'
+export { EventService } from '~/server/domains/event/event.service'
 // Export types
 export type { Event, EventWithQuestions, EventWithStats } from '~/server/domains/event/event.types'
-
 // Export input types from validator (schema-first pattern)
 export type {
   CreateEventInput,
@@ -22,7 +26,6 @@ export type {
   UpdateCollectRsvpInput,
   UpdateEventInput,
 } from '~/server/domains/event/event.validator'
-
 // Export validators (schemas only, types already exported above)
 export {
   createEventSchema,
@@ -31,7 +34,3 @@ export {
   updateCollectRsvpSchema,
   updateEventSchema,
 } from '~/server/domains/event/event.validator'
-
-// Export classes for testing/DI
-export { EventRepository } from '~/server/domains/event/event.repository'
-export { EventService } from '~/server/domains/event/event.service'

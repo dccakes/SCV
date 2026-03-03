@@ -7,6 +7,10 @@
  * Use HouseholdManagementService from the application layer instead.
  */
 
+// Export classes for testing/DI
+export { HouseholdRepository } from '~/server/domains/household/household.repository'
+// Export router
+export { householdRouter } from '~/server/domains/household/household.router'
 // Export types
 export type {
   CreateHouseholdInput,
@@ -20,24 +24,20 @@ export type {
   SearchHouseholdInput,
   UpdateHouseholdInput,
 } from '~/server/domains/household/household.types'
-
 // Export validators
 export {
-  createHouseholdSchema,
   type CreateHouseholdSchemaInput,
-  deleteHouseholdSchema,
+  createHouseholdSchema,
   type DeleteHouseholdSchemaInput,
-  giftInputSchema,
+  deleteHouseholdSchema,
   type GiftInputSchemaInput,
-  guestPartyInputSchema,
   type GuestPartyInputSchemaInput,
-  householdIdSchema,
+  giftInputSchema,
+  guestPartyInputSchema,
   type HouseholdIdSchemaInput,
-  searchHouseholdSchema,
+  householdIdSchema,
   type SearchHouseholdSchemaInput,
-  updateHouseholdSchema,
+  searchHouseholdSchema,
   type UpdateHouseholdSchemaInput,
+  updateHouseholdSchema,
 } from '~/server/domains/household/household.validator'
-
-// Export classes for testing/DI
-export { HouseholdRepository } from '~/server/domains/household/household.repository'

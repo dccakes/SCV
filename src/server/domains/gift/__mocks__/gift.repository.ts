@@ -4,7 +4,7 @@
  * This mock is automatically used when jest.mock('~/server/domains/gift/gift.repository') is called.
  */
 
-import { type Gift } from '~/server/domains/gift/gift.types'
+import type { Gift } from '~/server/domains/gift/gift.types'
 
 export const mockGift: Gift = {
   householdId: 'household-123',

@@ -1,4 +1,4 @@
-import { type GuestTag } from '~/server/domains/guest-tag/guest-tag.types'
+import type { GuestTag } from '~/server/domains/guest-tag/guest-tag.types'
 
 // Export test fixtures
 export const mockGuestTag: GuestTag = {

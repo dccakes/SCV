@@ -22,10 +22,10 @@ export default async function EventsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 md:py-8">
-      <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Events</h1>
-        <p className="mt-1 text-sm text-muted-foreground md:mt-2 md:text-base">
+    <div className='container mx-auto px-4 py-6 md:py-8'>
+      <div className='mb-6 md:mb-8'>
+        <h1 className='font-bold text-2xl tracking-tight md:text-3xl'>Events</h1>
+        <p className='mt-1 text-muted-foreground text-sm md:mt-2 md:text-base'>
           Manage your wedding events and ceremonies
         </p>
       </div>

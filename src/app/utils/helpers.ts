@@ -12,12 +12,12 @@ function formatDateStandard(date: Date | null | undefined) {
 function formatDateNumber(date: Date | null | undefined) {
   if (!date) return
   const d = new Date(date)
-  let month = '' + (d.getMonth() + 1)
-  let day = '' + d.getDate()
+  let month = `${d.getMonth() + 1}`
+  let day = `${d.getDate()}`
   const year = d.getFullYear()
 
-  if (month.length < 2) month = '0' + month
-  if (day.length < 2) day = '0' + day
+  if (month.length < 2) month = `0${month}`
+  if (day.length < 2) day = `0${day}`
 
   return [month, day, year].join('.')
 }
@@ -26,12 +26,12 @@ function formatDateNumber(date: Date | null | undefined) {
 function formatDateHTML5(date: Date | null | undefined) {
   if (!date) return undefined
   const d = new Date(date)
-  let month = '' + (d.getMonth() + 1)
-  let day = '' + d.getDate()
+  let month = `${d.getMonth() + 1}`
+  let day = `${d.getDate()}`
   const year = d.getFullYear()
 
-  if (month.length < 2) month = '0' + month
-  if (day.length < 2) day = '0' + day
+  if (month.length < 2) month = `0${month}`
+  if (day.length < 2) day = `0${day}`
 
   return [year, month, day].join('-')
 }
@@ -89,7 +89,7 @@ function generateTimes() {
   for (let i = 720; i <= 2145; i += 15) {
     let hours = Math.floor(i / 60)
     let minutes: number | string = i % 60
-    if (minutes < 10) minutes = '0' + minutes.toString()
+    if (minutes < 10) minutes = `0${minutes.toString()}`
     const ampm = hours % 24 < 12 ? 'AM' : 'PM'
     hours = hours % 12
     if (hours === 0) hours = 12
@@ -135,11 +135,11 @@ function debounce<T = unknown, R = void>(
 const dataUrlToFile = (url: string, fileName: string) => {
   const [mediaType, data] = url.split(',')
   const mime = mediaType?.match(/:(.*?);/)?.[1]
-  let n = data!.length
+  let n = data?.length ?? 0
   const arr = new Uint8Array(n)
 
   while (n--) {
-    arr[n] = data!.charCodeAt(n)
+    arr[n] = data?.charCodeAt(n) ?? 0
   }
 
   return new File([arr], fileName, { type: mime })

@@ -1,4 +1,4 @@
-import { type Dispatch, type SetStateAction } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
 import { BiCollapseVertical } from 'react-icons/bi'
 import { HiOutlineArrowsUpDown } from 'react-icons/hi2'
 import { RiExpandUpDownLine } from 'react-icons/ri'
@@ -13,27 +13,28 @@ export default function DashboardControls({
   setCollapseSections,
 }: DashboardControlsProps) {
   return (
-    <div className="flex items-center gap-4">
-      <div className="flex cursor-pointer items-center gap-1 text-sm text-primary transition-colors hover:text-primary/80">
-        <HiOutlineArrowsUpDown size={16} className="text-primary" />
-        <button>Reorder</button>
+    <div className='flex items-center gap-4'>
+      <div className='flex cursor-pointer items-center gap-1 text-primary text-sm transition-colors hover:text-primary/80'>
+        <HiOutlineArrowsUpDown size={16} className='text-primary' />
+        <button type='button'>Reorder</button>
       </div>
-      <div
-        className="flex cursor-pointer items-center gap-1 text-sm text-primary transition-colors hover:text-primary/80"
+      <button
+        type='button'
+        className='flex cursor-pointer items-center gap-1 text-primary text-sm transition-colors hover:text-primary/80'
         onClick={() => setCollapseSections((prev) => !prev)}
       >
         {collapseSections ? (
           <>
-            <RiExpandUpDownLine size={16} className="text-primary" />
-            <button>Expand All</button>
+            <RiExpandUpDownLine size={16} className='text-primary' />
+            <span>Expand All</span>
           </>
         ) : (
           <>
-            <BiCollapseVertical size={16} className="text-primary" />
-            <button>Collapse All</button>
+            <BiCollapseVertical size={16} className='text-primary' />
+            <span>Collapse All</span>
           </>
         )}
-      </div>
+      </button>
     </div>
   )
 }

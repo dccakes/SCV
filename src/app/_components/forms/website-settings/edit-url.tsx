@@ -1,8 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { type Dispatch, type SetStateAction } from 'react'
+import { type Dispatch, type SetStateAction, useState } from 'react'
 import { GoArrowLeft } from 'react-icons/go'
 
 import AnimatedInputLabel from '~/app/_components/forms/animated-input-label'
@@ -35,17 +34,21 @@ export default function EditUrlView({ setShowEditUrlView, websiteUrl }: EditUrlV
 
   return (
     <div>
-      <div className="flex justify-between border-b p-5">
-        <div className="flex gap-4">
-          <span className="cursor-pointer" onClick={() => setShowEditUrlView(false)}>
+      <div className='flex justify-between border-b p-5'>
+        <div className='flex gap-4'>
+          <button
+            type='button'
+            className='cursor-pointer'
+            onClick={() => setShowEditUrlView(false)}
+          >
             <GoArrowLeft size={28} />
-          </span>
-          <span className="border-r"></span>
-          <h1 className="text-2xl font-bold">Edit URL</h1>
+          </button>
+          <span className='border-r'></span>
+          <h1 className='font-bold text-2xl'>Edit URL</h1>
         </div>
       </div>
 
-      <div className="mt-7 px-5">
+      <div className='mt-7 px-5'>
         <AnimatedInputLabel
           id={'edit-url'}
           inputValue={urlInput}
@@ -58,6 +61,7 @@ export default function EditUrlView({ setShowEditUrlView, websiteUrl }: EditUrlV
         className={`fixed bottom-0 flex flex-col gap-3 border-t px-8 py-5 ${sharedStyles.sidebarFormWidth}`}
       >
         <button
+          type='button'
           disabled={updateWebsite.isPending}
           className={`w-[100%] ${sharedStyles.primaryButton({
             py: 'py-2',

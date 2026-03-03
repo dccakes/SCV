@@ -5,12 +5,12 @@
  * Handles invitation creation, RSVP updates, and retrieval.
  */
 
-import { type InvitationRepository } from '~/server/domains/invitation/invitation.repository'
-import {
-  type CreateInvitationInput,
-  type Invitation,
-  type RsvpStats,
-  type UpdateInvitationInput,
+import type { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
+import type {
+  CreateInvitationInput,
+  Invitation,
+  RsvpStats,
+  UpdateInvitationInput,
 } from '~/server/domains/invitation/invitation.types'
 
 export class InvitationService {

@@ -7,13 +7,13 @@
 
 import { TRPCError } from '@trpc/server'
 
-import { type EventService } from '~/server/domains/event/event.service'
-import { type GuestTagService } from '~/server/domains/guest-tag/guest-tag.service'
-import { type WeddingRepository } from '~/server/domains/wedding/wedding.repository'
-import {
-  type CreateWeddingInput,
-  type UpdateWeddingInput,
-  type Wedding,
+import type { EventService } from '~/server/domains/event/event.service'
+import type { GuestTagService } from '~/server/domains/guest-tag/guest-tag.service'
+import type { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
+import type {
+  CreateWeddingInput,
+  UpdateWeddingInput,
+  Wedding,
 } from '~/server/domains/wedding/wedding.types'
 
 /**

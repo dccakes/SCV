@@ -14,16 +14,14 @@
  * for details.
  */
 
-import { type Guest as PrismaGuest, type PrismaClient } from '@prisma/client'
+// biome-ignore lint/style/noRestrictedImports: architectural violation, tracked in ARCHITECTURAL_VIOLATIONS.md
+import type { PrismaClient, Guest as PrismaGuest } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 
 import { RSVP_STATUS } from '~/lib/constants'
-import { type EventRepository } from '~/server/domains/event/event.repository'
-import { type Event, type EventWithStats } from '~/server/domains/event/event.types'
-import {
-  type CreateEventInput,
-  type UpdateEventInput,
-} from '~/server/domains/event/event.validator'
+import type { EventRepository } from '~/server/domains/event/event.repository'
+import type { Event, EventWithStats } from '~/server/domains/event/event.types'
+import type { CreateEventInput, UpdateEventInput } from '~/server/domains/event/event.validator'
 
 export class EventService {
   constructor(

@@ -20,7 +20,7 @@ export default function GuestListLayout({ children }: { children: React.ReactNod
       <GuestHeader />
       {children}
       <Footer />
-      <Toaster position="top-right" richColors />
+      <Toaster position='top-right' richColors />
     </TRPCReactProvider>
   )
 }

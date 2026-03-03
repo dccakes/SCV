@@ -12,6 +12,11 @@ import { db } from '~/server/infrastructure/database'
 const giftRepository = new GiftRepository(db)
 export const giftService = new GiftService(giftRepository)
 
+// Export classes for testing/DI
+export { GiftRepository } from '~/server/domains/gift/gift.repository'
+// Export router
+export { giftRouter } from '~/server/domains/gift/gift.router'
+export { GiftService } from '~/server/domains/gift/gift.service'
 // Export types
 export type {
   CreateGiftInput,
@@ -19,19 +24,14 @@ export type {
   UpdateGiftInput,
   UpsertGiftInput,
 } from '~/server/domains/gift/gift.types'
-
 // Export validators
 export {
-  createGiftSchema,
   type CreateGiftSchemaInput,
-  giftIdSchema,
+  createGiftSchema,
   type GiftIdSchemaInput,
-  updateGiftSchema,
+  giftIdSchema,
   type UpdateGiftSchemaInput,
-  upsertGiftSchema,
   type UpsertGiftSchemaInput,
+  updateGiftSchema,
+  upsertGiftSchema,
 } from '~/server/domains/gift/gift.validator'
-
-// Export classes for testing/DI
-export { GiftRepository } from '~/server/domains/gift/gift.repository'
-export { GiftService } from '~/server/domains/gift/gift.service'

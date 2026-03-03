@@ -12,6 +12,11 @@ import { db } from '~/server/infrastructure/database'
 const questionRepository = new QuestionRepository(db)
 export const questionService = new QuestionService(questionRepository)
 
+// Export classes for testing/DI
+export { QuestionRepository } from '~/server/domains/question/question.repository'
+// Export router
+export { questionRouter } from '~/server/domains/question/question.router'
+export { QuestionService } from '~/server/domains/question/question.service'
 // Export types
 export type {
   Answer,
@@ -23,19 +28,14 @@ export type {
   QuestionWithOptions,
   UpsertQuestionInput,
 } from '~/server/domains/question/question.types'
-
 // Export validators
 export {
-  deleteQuestionSchema,
   type DeleteQuestionSchemaInput,
-  optionInputSchema,
+  deleteQuestionSchema,
   type OptionInputSchemaInput,
-  questionIdSchema,
+  optionInputSchema,
   type QuestionIdSchemaInput,
-  upsertQuestionSchema,
+  questionIdSchema,
   type UpsertQuestionSchemaInput,
+  upsertQuestionSchema,
 } from '~/server/domains/question/question.validator'
-
-// Export classes for testing/DI
-export { QuestionRepository } from '~/server/domains/question/question.repository'
-export { QuestionService } from '~/server/domains/question/question.service'

@@ -1,5 +1,5 @@
-import { createEnv } from "@t3-oss/env-nextjs";
-import { z } from "zod";
+import { createEnv } from '@t3-oss/env-nextjs'
+import { z } from 'zod'
 
 export const env = createEnv({
   /**
@@ -11,13 +11,11 @@ export const env = createEnv({
       .string()
       .url()
       .refine(
-        (str) => !str.includes("YOUR_DATABASE_URL_HERE"),
-        "You forgot to change the default URL"
+        (str) => !str.includes('YOUR_DATABASE_URL_HERE'),
+        'You forgot to change the default URL'
       ),
     DIRECT_URL: z.string().url().optional(),
-    NODE_ENV: z
-      .enum(["development", "test", "production"])
-      .default("development"),
+    NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     // Better Auth secret key
     BETTER_AUTH_SECRET: z.string().min(1),
     // Optional: AWS S3 Storage (can be disabled for local dev)
@@ -45,8 +43,8 @@ export const env = createEnv({
     NEXT_PUBLIC_APP_URL: z
       .string()
       .optional()
-      .transform((val) =>
-        val ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined)
+      .transform(
+        (val) => val ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined)
       )
       .pipe(z.string().url().optional()),
   },
@@ -82,4 +80,4 @@ export const env = createEnv({
    * `SOME_VAR=''` will throw an error.
    */
   emptyStringAsUndefined: true,
-});
+})
