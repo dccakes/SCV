@@ -113,6 +113,7 @@ declare module '~/server/domains/guest/guest.repository' {
   export const mockExists: jest.Mock
   export const mockBelongsToWedding: jest.Mock
   export const mockCountByWeddingId: jest.Mock
+  export const mockFindByEmailAndWeddingId: jest.Mock
   export const resetMocks: () => void
 }
 
@@ -293,5 +294,20 @@ declare module '~/server/infrastructure/database/client' {
   export const mockWeddingCreate: jest.Mock
   export const mockWeddingUpdate: jest.Mock
   export const mockInvitationCreate: jest.Mock
+  export const resetMocks: () => void
+}
+
+// ---------------------------------------------------------------------------
+// ~/server/domains/self-fill/self-fill.repository
+// ---------------------------------------------------------------------------
+declare module '~/server/domains/self-fill/self-fill.repository' {
+  import type { SelfFillWeddingData } from '~/server/domains/self-fill/self-fill.types'
+
+  export const mockSelfFillWeddingData: SelfFillWeddingData
+  export const mockFindByToken: jest.Mock
+  export const mockGetWeddingIdByToken: jest.Mock
+  export const mockUpdateToken: jest.Mock
+  export const mockGetToken: jest.Mock
+  export const SelfFillRepository: jest.Mock
   export const resetMocks: () => void
 }
