@@ -5,7 +5,7 @@ import { useState } from 'react'
 
 import { VendorCategorySection } from '~/app/_components/vendor/vendor-category-section'
 import { VendorDetailPanel } from '~/app/_components/vendor/vendor-detail-panel'
-import { type VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
+import type { VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
 
 const CATEGORY_ORDER: VendorCategory[] = [
@@ -25,10 +25,7 @@ type VendorListProps = {
 export default function VendorList({ initialVendors }: VendorListProps) {
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null)
 
-  const { data: vendors, refetch } = api.vendor.getAll.useQuery(
-    {},
-    { initialData: initialVendors }
-  )
+  const { data: vendors, refetch } = api.vendor.getAll.useQuery({}, { initialData: initialVendors })
 
   const detailVendor = selectedVendorId
     ? ((vendors ?? []).find((v) => v.id === selectedVendorId) ?? null)
@@ -47,8 +44,8 @@ export default function VendorList({ initialVendors }: VendorListProps) {
 
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-3xl font-light tracking-wide text-gray-800">Vendors</h1>
+      <div className='mb-8 flex items-center justify-between'>
+        <h1 className='font-light text-3xl text-gray-800 tracking-wide'>Vendors</h1>
       </div>
 
       {CATEGORY_ORDER.map((category) => (
@@ -61,10 +58,7 @@ export default function VendorList({ initialVendors }: VendorListProps) {
         />
       ))}
 
-      <VendorDetailPanel
-        vendor={detailVendor}
-        onClose={handleCloseDetail}
-      />
+      <VendorDetailPanel vendor={detailVendor} onClose={handleCloseDetail} />
     </div>
   )
 }

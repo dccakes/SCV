@@ -5,16 +5,21 @@
  * Handles vendor and quote CRUD with ownership verification.
  */
 
-import { type VendorCategory, type VendorStatus } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 
-import { type VendorRepository } from '~/server/domains/vendor/vendor.repository'
-import { type Vendor, type VendorQuote, type VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
-import {
-  type CreateQuoteInput,
-  type CreateVendorInput,
-  type UpdateQuoteInput,
-  type UpdateVendorInput,
+import type { VendorRepository } from '~/server/domains/vendor/vendor.repository'
+import type {
+  Vendor,
+  VendorCategory,
+  VendorQuote,
+  VendorStatus,
+  VendorWithQuotes,
+} from '~/server/domains/vendor/vendor.types'
+import type {
+  CreateQuoteInput,
+  CreateVendorInput,
+  UpdateQuoteInput,
+  UpdateVendorInput,
 } from '~/server/domains/vendor/vendor.validator'
 
 export class VendorService {
@@ -76,11 +81,7 @@ export class VendorService {
   /**
    * Update vendor status with ownership verification
    */
-  async updateStatus(
-    vendorId: string,
-    weddingId: string,
-    status: VendorStatus
-  ): Promise<Vendor> {
+  async updateStatus(vendorId: string, weddingId: string, status: VendorStatus): Promise<Vendor> {
     await this.assertVendorOwnership(vendorId, weddingId)
     return this.vendorRepository.updateStatus(vendorId, status)
   }

@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
-import { type Vendor } from '~/server/domains/vendor/vendor.types'
+import type { Vendor } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
 
 const CATEGORY_LABELS: Record<VendorCategory, string> = {
@@ -90,15 +90,12 @@ export function VendorForm({ defaultCategory, vendor, onSuccess, onCancel }: Ven
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit} className='flex flex-col gap-4'>
       {!isEditing && (
         <div>
-          <Label className="text-sm font-medium">Category</Label>
-          <Select
-            value={category}
-            onValueChange={(v) => setCategory(v as VendorCategory)}
-          >
-            <SelectTrigger className="mt-1">
+          <Label className='font-medium text-sm'>Category</Label>
+          <Select value={category} onValueChange={(v) => setCategory(v as VendorCategory)}>
+            <SelectTrigger className='mt-1'>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -113,112 +110,116 @@ export function VendorForm({ defaultCategory, vendor, onSuccess, onCancel }: Ven
       )}
 
       <div>
-        <Label htmlFor="name" className="text-sm font-medium">
-          Name <span className="text-red-500">*</span>
+        <Label htmlFor='name' className='font-medium text-sm'>
+          Name <span className='text-red-500'>*</span>
         </Label>
         <Input
-          id="name"
+          id='name'
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Vendor or business name"
+          placeholder='Vendor or business name'
           required
-          className="mt-1"
+          className='mt-1'
         />
       </div>
 
       <div>
-        <Label htmlFor="location" className="text-sm font-medium">
+        <Label htmlFor='location' className='font-medium text-sm'>
           Location
         </Label>
         <Input
-          id="location"
+          id='location'
           value={location}
           onChange={(e) => setLocation(e.target.value)}
-          placeholder="City, State"
-          className="mt-1"
+          placeholder='City, State'
+          className='mt-1'
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className='grid grid-cols-2 gap-3'>
         <div>
-          <Label htmlFor="website" className="text-sm font-medium">
+          <Label htmlFor='website' className='font-medium text-sm'>
             Website
           </Label>
           <Input
-            id="website"
-            type="url"
+            id='website'
+            type='url'
             value={website}
             onChange={(e) => setWebsite(e.target.value)}
-            placeholder="https://…"
-            className="mt-1"
+            placeholder='https://…'
+            className='mt-1'
           />
         </div>
         <div>
-          <Label htmlFor="instagram" className="text-sm font-medium">
+          <Label htmlFor='instagram' className='font-medium text-sm'>
             Instagram
           </Label>
           <Input
-            id="instagram"
+            id='instagram'
             value={instagram}
             onChange={(e) => setInstagram(e.target.value)}
-            placeholder="@handle"
-            className="mt-1"
+            placeholder='@handle'
+            className='mt-1'
           />
         </div>
       </div>
 
-      <div className="border-t pt-3">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+      <div className='border-t pt-3'>
+        <p className='mb-2 font-semibold text-gray-500 text-xs uppercase tracking-wide'>
           Main Contact
         </p>
-        <div className="flex flex-col gap-3">
+        <div className='flex flex-col gap-3'>
           <div>
-            <Label htmlFor="contactName" className="text-sm">
+            <Label htmlFor='contactName' className='text-sm'>
               Name
             </Label>
             <Input
-              id="contactName"
+              id='contactName'
               value={contactName}
               onChange={(e) => setContactName(e.target.value)}
-              placeholder="Contact name"
-              className="mt-1"
+              placeholder='Contact name'
+              className='mt-1'
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className='grid grid-cols-2 gap-3'>
             <div>
-              <Label htmlFor="contactEmail" className="text-sm">
+              <Label htmlFor='contactEmail' className='text-sm'>
                 Email
               </Label>
               <Input
-                id="contactEmail"
-                type="email"
+                id='contactEmail'
+                type='email'
                 value={contactEmail}
                 onChange={(e) => setContactEmail(e.target.value)}
-                placeholder="email@example.com"
-                className="mt-1"
+                placeholder='email@example.com'
+                className='mt-1'
               />
             </div>
             <div>
-              <Label htmlFor="contactPhone" className="text-sm">
+              <Label htmlFor='contactPhone' className='text-sm'>
                 Phone
               </Label>
               <Input
-                id="contactPhone"
+                id='contactPhone'
                 value={contactPhone}
                 onChange={(e) => setContactPhone(e.target.value)}
-                placeholder="+1 (555) 000-0000"
-                className="mt-1"
+                placeholder='+1 (555) 000-0000'
+                className='mt-1'
               />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex gap-2 self-end pt-2">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
+      <div className='flex gap-2 self-end pt-2'>
+        <Button type='button' variant='outline' onClick={onCancel} disabled={isPending}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isPending} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+        <Button
+          type='submit'
+          disabled={isPending}
+          className='bg-primary text-primary-foreground hover:bg-primary/90'
+        >
           {isPending ? 'Saving…' : isEditing ? 'Save Changes' : 'Add Vendor'}
         </Button>
       </div>

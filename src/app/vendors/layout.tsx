@@ -18,7 +18,7 @@ export default function VendorsLayout({ children }: { children: React.ReactNode 
       <Navbar />
       {children}
       <Footer />
-      <Toaster position="top-right" richColors />
+      <Toaster position='top-right' richColors />
     </TRPCReactProvider>
   )
 }

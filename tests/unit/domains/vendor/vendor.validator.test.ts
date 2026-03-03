@@ -94,7 +94,15 @@ describe('createVendorSchema', () => {
   })
 
   it('should accept all valid categories', () => {
-    const categories = ['VENUE', 'CATERING', 'PHOTOGRAPHER', 'VIDEOGRAPHER', 'MUSIC', 'FLOWERS', 'OTHER']
+    const categories = [
+      'VENUE',
+      'CATERING',
+      'PHOTOGRAPHER',
+      'VIDEOGRAPHER',
+      'MUSIC',
+      'FLOWERS',
+      'OTHER',
+    ]
     for (const category of categories) {
       const result = createVendorSchema.safeParse({ category, name: 'Test' })
       expect(result.success).toBe(true)
@@ -114,7 +122,7 @@ describe('createVendorSchema', () => {
     const result = createVendorSchema.safeParse({
       category: 'VENUE',
       name: 'Test',
-      instagram: '@' + 'a'.repeat(100),
+      instagram: `@${'a'.repeat(100)}`,
     })
     expect(result.success).toBe(false)
   })
@@ -166,7 +174,14 @@ describe('updateVendorSchema', () => {
 
 describe('updateVendorStatusSchema', () => {
   it('should validate all valid statuses', () => {
-    const statuses = ['NOT_AVAILABLE', 'DECLINED', 'IN_REVIEW', 'PRE_SELECTED', 'IN_NEGOTIATION', 'SELECTED']
+    const statuses = [
+      'NOT_AVAILABLE',
+      'DECLINED',
+      'IN_REVIEW',
+      'PRE_SELECTED',
+      'IN_NEGOTIATION',
+      'SELECTED',
+    ]
     for (const status of statuses) {
       const result = updateVendorStatusSchema.safeParse({ vendorId: 'vendor-123', status })
       expect(result.success).toBe(true)
@@ -205,7 +220,7 @@ describe('createQuoteSchema', () => {
   it('should validate a valid quote', () => {
     const input = {
       vendorId: 'vendor-123',
-      price: 1500.00,
+      price: 1500.0,
       quoteDate: '2026-03-01',
       notes: 'Includes travel',
     }
@@ -254,7 +269,11 @@ describe('createQuoteSchema', () => {
   it('should reject quoteDate not in YYYY-MM-DD format', () => {
     const invalid = ['03/01/2026', '2026/03/01', '01-03-2026', 'March 1 2026', '2026-3-1']
     for (const date of invalid) {
-      const result = createQuoteSchema.safeParse({ vendorId: 'vendor-123', price: 500, quoteDate: date })
+      const result = createQuoteSchema.safeParse({
+        vendorId: 'vendor-123',
+        price: 500,
+        quoteDate: date,
+      })
       expect(result.success).toBe(false)
     }
   })

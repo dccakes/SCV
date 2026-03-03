@@ -12,6 +12,9 @@ import { db } from '~/server/infrastructure/database'
 const vendorRepository = new VendorRepository(db)
 export const vendorService = new VendorService(vendorRepository)
 
+// Export classes for testing/DI
+export { VendorRepository } from '~/server/domains/vendor/vendor.repository'
+export { VendorService } from '~/server/domains/vendor/vendor.service'
 // Export types
 export type {
   Vendor,
@@ -20,28 +23,23 @@ export type {
   VendorStatus,
   VendorWithQuotes,
 } from '~/server/domains/vendor/vendor.types'
-
 // Export validators
 export {
-  createQuoteSchema,
   type CreateQuoteInput,
-  createVendorSchema,
   type CreateVendorInput,
-  deleteQuoteSchema,
+  createQuoteSchema,
+  createVendorSchema,
   type DeleteQuoteInput,
-  deleteVendorSchema,
   type DeleteVendorInput,
+  deleteQuoteSchema,
+  deleteVendorSchema,
+  type GetVendorsByCategoryInput,
   getVendorSchema,
   getVendorsByCategorySchema,
-  type GetVendorsByCategoryInput,
-  updateQuoteSchema,
   type UpdateQuoteInput,
-  updateVendorSchema,
   type UpdateVendorInput,
-  updateVendorStatusSchema,
   type UpdateVendorStatusInput,
+  updateQuoteSchema,
+  updateVendorSchema,
+  updateVendorStatusSchema,
 } from '~/server/domains/vendor/vendor.validator'
-
-// Export classes for testing/DI
-export { VendorRepository } from '~/server/domains/vendor/vendor.repository'
-export { VendorService } from '~/server/domains/vendor/vendor.service'

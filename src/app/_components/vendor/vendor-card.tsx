@@ -2,8 +2,8 @@
 
 import { toast } from 'sonner'
 
-import { StatusBadge, VendorStatusSelect } from '~/app/_components/vendor/vendor-status-select'
-import { type Vendor } from '~/server/domains/vendor/vendor.types'
+import { VendorStatusSelect } from '~/app/_components/vendor/vendor-status-select'
+import type { Vendor } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
 
 type VendorCardProps = {
@@ -13,7 +13,12 @@ type VendorCardProps = {
   onDeleted: () => void
 }
 
-export function VendorCard({ vendor, latestQuotePrice, onViewDetails, onDeleted }: VendorCardProps) {
+export function VendorCard({
+  vendor,
+  latestQuotePrice,
+  onViewDetails,
+  onDeleted,
+}: VendorCardProps) {
   const utils = api.useUtils()
 
   const updateStatus = api.vendor.updateStatus.useMutation({
@@ -37,27 +42,28 @@ export function VendorCard({ vendor, latestQuotePrice, onViewDetails, onDeleted 
   }
 
   const formatPrice = (price: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(price)
+    new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0,
+    }).format(price)
 
   return (
-    <div className="flex items-center justify-between rounded-lg border bg-white px-4 py-3 shadow-sm">
-      <div className="flex flex-col gap-1">
+    <div className='flex items-center justify-between rounded-lg border bg-white px-4 py-3 shadow-sm'>
+      <div className='flex flex-col gap-1'>
         <button
-          className="text-left text-sm font-semibold text-foreground hover:text-primary"
+          type='button'
+          className='text-left font-semibold text-foreground text-sm hover:text-primary'
           onClick={() => onViewDetails(vendor.id)}
         >
           {vendor.name}
         </button>
-        {vendor.location && (
-          <span className="text-xs text-gray-400">{vendor.location}</span>
-        )}
+        {vendor.location && <span className='text-gray-400 text-xs'>{vendor.location}</span>}
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className='flex items-center gap-4'>
         {latestQuotePrice != null && (
-          <span className="text-sm font-medium text-gray-700">
-            {formatPrice(latestQuotePrice)}
-          </span>
+          <span className='font-medium text-gray-700 text-sm'>{formatPrice(latestQuotePrice)}</span>
         )}
         <VendorStatusSelect
           value={vendor.status}
@@ -65,7 +71,8 @@ export function VendorCard({ vendor, latestQuotePrice, onViewDetails, onDeleted 
           disabled={updateStatus.isPending}
         />
         <button
-          className="text-xs text-gray-400 hover:text-red-500"
+          type='button'
+          className='text-gray-400 text-xs hover:text-red-500'
           onClick={handleDelete}
           disabled={deleteVendor.isPending}
         >

@@ -7,12 +7,12 @@
 import {
   Prisma,
   type PrismaClient,
-  type VendorCategory,
   type VendorQuote as PrismaVendorQuote,
+  type VendorCategory,
   type VendorStatus,
 } from '@prisma/client'
 
-import { type Vendor, type VendorQuote, type VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
+import type { Vendor, VendorQuote, VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
 
 export class VendorRepository {
   constructor(private db: PrismaClient) {}
@@ -20,7 +20,10 @@ export class VendorRepository {
   /**
    * Find all vendors for a wedding (with latest quote), optionally filtered by category
    */
-  async findAllByWeddingId(weddingId: string, category?: VendorCategory): Promise<VendorWithQuotes[]> {
+  async findAllByWeddingId(
+    weddingId: string,
+    category?: VendorCategory
+  ): Promise<VendorWithQuotes[]> {
     const rows = await this.db.vendor.findMany({
       where: { weddingId, ...(category ? { category } : {}) },
       include: { quotes: { orderBy: { quoteDate: 'desc' } } },

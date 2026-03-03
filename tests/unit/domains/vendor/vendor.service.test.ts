@@ -2,30 +2,30 @@
  * Tests for Vendor Domain Service
  */
 
-import { TRPCError } from '@trpc/server'
 import { VendorCategory, VendorStatus } from '@prisma/client'
+import { TRPCError } from '@trpc/server'
 
 jest.mock('~/server/domains/vendor/vendor.repository')
 
 // @ts-expect-error - Importing mock functions from mocked module
 import {
-  VendorRepository,
   mockBelongsToWedding,
   mockCreate,
   mockCreateQuote,
   mockDelete,
   mockDeleteQuote,
-  mockFindAllByWeddingId,
   mockFindAllByUserId,
+  mockFindAllByWeddingId,
   mockFindByIdWithQuotes,
+  mockQuote,
   mockQuoteBelongsToVendor,
   mockUpdate,
   mockUpdateQuote,
   mockUpdateStatus,
   mockVendor,
   mockVendorWithQuotes,
-  mockQuote,
   resetMocks,
+  VendorRepository,
 } from '~/server/domains/vendor/vendor.repository'
 import { VendorService } from '~/server/domains/vendor/vendor.service'
 
@@ -68,7 +68,10 @@ describe('VendorService', () => {
 
       await vendorService.getVendors('wedding-123', VendorCategory.PHOTOGRAPHER)
 
-      expect(mockFindAllByWeddingIdFn).toHaveBeenCalledWith('wedding-123', VendorCategory.PHOTOGRAPHER)
+      expect(mockFindAllByWeddingIdFn).toHaveBeenCalledWith(
+        'wedding-123',
+        VendorCategory.PHOTOGRAPHER
+      )
     })
 
     it('should return empty array when no vendors exist', async () => {
@@ -194,7 +197,11 @@ describe('VendorService', () => {
       mockBelongsToWeddingFn.mockResolvedValue(true)
       mockUpdateStatusFn.mockResolvedValue(updated)
 
-      const result = await vendorService.updateStatus('vendor-123', 'wedding-123', VendorStatus.SELECTED)
+      const result = await vendorService.updateStatus(
+        'vendor-123',
+        'wedding-123',
+        VendorStatus.SELECTED
+      )
 
       expect(result.status).toBe(VendorStatus.SELECTED)
     })
@@ -224,9 +231,11 @@ describe('VendorService', () => {
     it('should throw FORBIDDEN when vendor does not belong to the wedding', async () => {
       mockBelongsToWeddingFn.mockResolvedValue(false)
 
-      await expect(vendorService.deleteVendor('vendor-123', 'other-wedding')).rejects.toMatchObject({
-        code: 'FORBIDDEN',
-      })
+      await expect(vendorService.deleteVendor('vendor-123', 'other-wedding')).rejects.toMatchObject(
+        {
+          code: 'FORBIDDEN',
+        }
+      )
     })
   })
 

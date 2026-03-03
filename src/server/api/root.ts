@@ -12,8 +12,8 @@ import { householdRouter } from '~/server/domains/household/household.router'
 import { invitationRouter } from '~/server/domains/invitation/invitation.router'
 import { questionRouter } from '~/server/domains/question/question.router'
 import { userRouter } from '~/server/domains/user/user.router'
-import { websiteRouter } from '~/server/domains/website/website.router'
 import { vendorRouter } from '~/server/domains/vendor/vendor.router'
+import { websiteRouter } from '~/server/domains/website/website.router'
 import { weddingRouter } from '~/server/domains/wedding/wedding.router'
 
 /**

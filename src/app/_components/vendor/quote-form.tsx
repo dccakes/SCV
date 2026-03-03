@@ -43,57 +43,62 @@ export function QuoteForm({ vendorId, onSuccess, onCancel }: QuoteFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3 rounded-lg border p-4">
-      <h4 className="text-sm font-semibold text-gray-700">New Quote</h4>
-      <div className="grid grid-cols-2 gap-3">
+    <form onSubmit={handleSubmit} className='flex flex-col gap-3 rounded-lg border p-4'>
+      <h4 className='font-semibold text-gray-700 text-sm'>New Quote</h4>
+      <div className='grid grid-cols-2 gap-3'>
         <div>
-          <Label htmlFor="price" className="text-xs">
+          <Label htmlFor='price' className='text-xs'>
             Price ($)
           </Label>
           <Input
-            id="price"
-            type="number"
-            min="0.01"
-            step="0.01"
-            placeholder="0.00"
+            id='price'
+            type='number'
+            min='0.01'
+            step='0.01'
+            placeholder='0.00'
             value={price}
             onChange={(e) => setPrice(e.target.value)}
             required
-            className="mt-1 h-8 text-sm"
+            className='mt-1 h-8 text-sm'
           />
         </div>
         <div>
-          <Label htmlFor="quoteDate" className="text-xs">
+          <Label htmlFor='quoteDate' className='text-xs'>
             Date
           </Label>
           <Input
-            id="quoteDate"
-            type="date"
+            id='quoteDate'
+            type='date'
             value={quoteDate}
             onChange={(e) => setQuoteDate(e.target.value)}
             required
-            className="mt-1 h-8 text-sm"
+            className='mt-1 h-8 text-sm'
           />
         </div>
       </div>
       <div>
-        <Label htmlFor="notes" className="text-xs">
+        <Label htmlFor='notes' className='text-xs'>
           Notes
         </Label>
         <Textarea
-          id="notes"
-          placeholder="Package details, inclusions, conditions…"
+          id='notes'
+          placeholder='Package details, inclusions, conditions…'
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
-          className="mt-1 text-sm"
+          className='mt-1 text-sm'
         />
       </div>
-      <div className="flex gap-2 self-end">
-        <Button type="button" variant="outline" size="sm" onClick={onCancel}>
+      <div className='flex gap-2 self-end'>
+        <Button type='button' variant='outline' size='sm' onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit" size="sm" disabled={addQuote.isPending} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+        <Button
+          type='submit'
+          size='sm'
+          disabled={addQuote.isPending}
+          className='bg-primary text-primary-foreground hover:bg-primary/90'
+        >
           {addQuote.isPending ? 'Saving…' : 'Add Quote'}
         </Button>
       </div>

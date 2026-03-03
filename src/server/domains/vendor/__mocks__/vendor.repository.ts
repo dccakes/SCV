@@ -6,7 +6,7 @@
 
 import { VendorCategory, VendorStatus } from '@prisma/client'
 
-import { type Vendor, type VendorQuote, type VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
+import type { Vendor, VendorQuote, VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
 
 export const mockVendor: Vendor = {
   id: 'vendor-123',

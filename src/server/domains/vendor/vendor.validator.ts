@@ -15,7 +15,10 @@ const vendorStatusValues = Object.values(VendorStatus) as [string, ...string[]]
 
 export const createVendorSchema = z.object({
   category: z.enum(vendorCategoryValues as [VendorCategory, ...VendorCategory[]]),
-  name: z.string().min(1, 'Vendor name is required').max(100, 'Name must be 100 characters or less'),
+  name: z
+    .string()
+    .min(1, 'Vendor name is required')
+    .max(100, 'Name must be 100 characters or less'),
   location: z.string().max(200, 'Location must be 200 characters or less').optional(),
   website: z.string().max(500).url('Must be a valid URL').optional().or(z.literal('')),
   instagram: z.string().max(100, 'Instagram handle must be 100 characters or less').optional(),
@@ -54,13 +57,14 @@ export const getVendorsByCategorySchema = z.object({
 
 // ─── Quote schemas ────────────────────────────────────────────────────────────
 
-const quoteDateSchema = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
+const quoteDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
 
 export const createQuoteSchema = z.object({
   vendorId: z.string().min(1, 'Vendor ID is required'),
-  price: z.number().positive('Price must be greater than zero').max(10_000_000, 'Price must be less than $10,000,000'),
+  price: z
+    .number()
+    .positive('Price must be greater than zero')
+    .max(10_000_000, 'Price must be less than $10,000,000'),
   quoteDate: quoteDateSchema,
   notes: z.string().max(5000, 'Notes must be 5000 characters or less').optional(),
 })
@@ -68,7 +72,11 @@ export const createQuoteSchema = z.object({
 export const updateQuoteSchema = z.object({
   quoteId: z.string().min(1, 'Quote ID is required'),
   vendorId: z.string().min(1, 'Vendor ID is required'),
-  price: z.number().positive('Price must be greater than zero').max(10_000_000, 'Price must be less than $10,000,000').optional(),
+  price: z
+    .number()
+    .positive('Price must be greater than zero')
+    .max(10_000_000, 'Price must be less than $10,000,000')
+    .optional(),
   quoteDate: quoteDateSchema.optional(),
   notes: z.string().max(5000, 'Notes must be 5000 characters or less').optional(),
 })
