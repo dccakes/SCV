@@ -7,12 +7,18 @@
 import {
   Prisma,
   type PrismaClient,
+  type VendorQuoteFile as PrismaVendorQuoteFile,
   type VendorQuote as PrismaVendorQuote,
   type VendorCategory,
   type VendorStatus,
 } from '@prisma/client'
 
-import type { Vendor, VendorQuote, VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
+import type {
+  Vendor,
+  VendorQuote,
+  VendorQuoteFile,
+  VendorWithQuotes,
+} from '~/server/domains/vendor/vendor.types'
 
 export class VendorRepository {
   constructor(private db: PrismaClient) {}
@@ -26,7 +32,7 @@ export class VendorRepository {
   ): Promise<VendorWithQuotes[]> {
     const rows = await this.db.vendor.findMany({
       where: { weddingId, ...(category ? { category } : {}) },
-      include: { quotes: { orderBy: { quoteDate: 'desc' } } },
+      include: { quotes: { include: { files: true }, orderBy: { quoteDate: 'desc' } } },
       orderBy: [{ category: 'asc' }, { createdAt: 'asc' }],
     })
     return rows.map(this.serializeVendorWithQuotes)
@@ -41,7 +47,7 @@ export class VendorRepository {
         wedding: { userWeddings: { some: { userId } } },
         ...(category ? { category } : {}),
       },
-      include: { quotes: { orderBy: { quoteDate: 'desc' } } },
+      include: { quotes: { include: { files: true }, orderBy: { quoteDate: 'desc' } } },
       orderBy: [{ category: 'asc' }, { createdAt: 'asc' }],
     })
     return rows.map(this.serializeVendorWithQuotes)
@@ -53,7 +59,7 @@ export class VendorRepository {
   async findByIdWithQuotes(id: string): Promise<VendorWithQuotes | null> {
     const row = await this.db.vendor.findUnique({
       where: { id },
-      include: { quotes: { orderBy: { quoteDate: 'desc' } } },
+      include: { quotes: { include: { files: true }, orderBy: { quoteDate: 'desc' } } },
     })
     if (!row) return null
     return this.serializeVendorWithQuotes(row)
@@ -130,6 +136,7 @@ export class VendorRepository {
   }): Promise<VendorQuote> {
     const row = await this.db.vendorQuote.create({
       data: { ...data, price: new Prisma.Decimal(data.price) },
+      include: { files: true },
     })
     return this.serializeQuote(row)
   }
@@ -151,6 +158,7 @@ export class VendorRepository {
         ...data,
         ...(data.price !== undefined ? { price: new Prisma.Decimal(data.price) } : {}),
       },
+      include: { files: true },
     })
     return this.serializeQuote(row)
   }
@@ -159,7 +167,7 @@ export class VendorRepository {
    * Delete a quote
    */
   async deleteQuote(id: string): Promise<VendorQuote> {
-    const row = await this.db.vendorQuote.delete({ where: { id } })
+    const row = await this.db.vendorQuote.delete({ where: { id }, include: { files: true } })
     return this.serializeQuote(row)
   }
 
@@ -174,14 +182,50 @@ export class VendorRepository {
     return quote !== null
   }
 
+  // ─── Quote file operations ────────────────────────────────────────────────
+
+  /**
+   * Create file records for a quote (batch)
+   */
+  async createQuoteFiles(
+    quoteId: string,
+    files: { name: string; url: string; key: string; size: number }[]
+  ): Promise<VendorQuoteFile[]> {
+    await this.db.vendorQuoteFile.createMany({
+      data: files.map((f) => ({ ...f, quoteId })),
+    })
+    return this.db.vendorQuoteFile.findMany({
+      where: { quoteId },
+      orderBy: { createdAt: 'desc' },
+    })
+  }
+
+  /**
+   * Delete a single file record
+   */
+  async deleteQuoteFile(fileId: string): Promise<VendorQuoteFile> {
+    return this.db.vendorQuoteFile.delete({ where: { id: fileId } })
+  }
+
+  /**
+   * Check if a file belongs to a quote
+   */
+  async fileBelongsToQuote(fileId: string, quoteId: string): Promise<boolean> {
+    const file = await this.db.vendorQuoteFile.findFirst({
+      where: { id: fileId, quoteId },
+      select: { id: true },
+    })
+    return file !== null
+  }
+
   // ─── Private serializers ────────────────────────────────────────────────────
 
-  private serializeQuote(row: PrismaVendorQuote): VendorQuote {
+  private serializeQuote(row: PrismaVendorQuote & { files: PrismaVendorQuoteFile[] }): VendorQuote {
     return { ...row, price: parseFloat(row.price.toString()) }
   }
 
   private serializeVendorWithQuotes = (
-    row: Vendor & { quotes: PrismaVendorQuote[] }
+    row: Vendor & { quotes: (PrismaVendorQuote & { files: PrismaVendorQuoteFile[] })[] }
   ): VendorWithQuotes => {
     return { ...row, quotes: row.quotes.map((q) => this.serializeQuote(q)) }
   }

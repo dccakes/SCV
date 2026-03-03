@@ -12,12 +12,16 @@ import {
   mockBelongsToWedding,
   mockCreate,
   mockCreateQuote,
+  mockCreateQuoteFiles,
   mockDelete,
   mockDeleteQuote,
+  mockDeleteQuoteFile,
+  mockFileBelongsToQuote,
   mockFindAllByUserId,
   mockFindAllByWeddingId,
   mockFindByIdWithQuotes,
   mockQuote,
+  mockQuoteFile,
   mockQuoteBelongsToVendor,
   mockUpdate,
   mockUpdateQuote,
@@ -41,6 +45,9 @@ const mockCreateQuoteFn = mockCreateQuote as jest.Mock
 const mockUpdateQuoteFn = mockUpdateQuote as jest.Mock
 const mockDeleteQuoteFn = mockDeleteQuote as jest.Mock
 const mockQuoteBelongsToVendorFn = mockQuoteBelongsToVendor as jest.Mock
+const mockCreateQuoteFilesFn = mockCreateQuoteFiles as jest.Mock
+const mockDeleteQuoteFileFn = mockDeleteQuoteFile as jest.Mock
+const mockFileBelongsToQuoteFn = mockFileBelongsToQuote as jest.Mock
 
 describe('VendorService', () => {
   let vendorService: VendorService
@@ -378,6 +385,95 @@ describe('VendorService', () => {
       await expect(
         vendorService.deleteQuote('quote-123', 'vendor-123', 'wedding-123')
       ).rejects.toThrow('Record not found')
+    })
+  })
+
+  // ─── saveQuoteFiles ─────────────────────────────────────────────────────────
+
+  describe('saveQuoteFiles', () => {
+    const fileInput = {
+      quoteId: 'quote-123',
+      vendorId: 'vendor-123',
+      files: [
+        { name: 'proposal.pdf', url: 'https://utfs.io/f/abc123', key: 'abc123', size: 102400 },
+      ],
+    }
+
+    it('should save files when vendor and quote ownership is valid', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockQuoteBelongsToVendorFn.mockResolvedValue(true)
+      mockCreateQuoteFilesFn.mockResolvedValue([mockQuoteFile])
+
+      const result = await vendorService.saveQuoteFiles('vendor-123', 'wedding-123', fileInput)
+
+      expect(result).toEqual([mockQuoteFile])
+      expect(mockCreateQuoteFilesFn).toHaveBeenCalledWith('quote-123', fileInput.files)
+    })
+
+    it('should throw FORBIDDEN when vendor does not belong to wedding', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(false)
+
+      await expect(
+        vendorService.saveQuoteFiles('vendor-123', 'other-wedding', fileInput)
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+
+    it('should throw FORBIDDEN when quote does not belong to vendor', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockQuoteBelongsToVendorFn.mockResolvedValue(false)
+
+      await expect(
+        vendorService.saveQuoteFiles('vendor-123', 'wedding-123', fileInput)
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+  })
+
+  // ─── deleteQuoteFile ────────────────────────────────────────────────────────
+
+  describe('deleteQuoteFile', () => {
+    const deleteInput = {
+      fileId: 'file-123',
+      quoteId: 'quote-123',
+      vendorId: 'vendor-123',
+    }
+
+    it('should delete file when all ownership checks pass', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockQuoteBelongsToVendorFn.mockResolvedValue(true)
+      mockFileBelongsToQuoteFn.mockResolvedValue(true)
+      mockDeleteQuoteFileFn.mockResolvedValue(mockQuoteFile)
+
+      const result = await vendorService.deleteQuoteFile('vendor-123', 'wedding-123', deleteInput)
+
+      expect(result).toEqual(mockQuoteFile)
+      expect(mockDeleteQuoteFileFn).toHaveBeenCalledWith('file-123')
+    })
+
+    it('should throw FORBIDDEN when vendor does not belong to wedding', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(false)
+
+      await expect(
+        vendorService.deleteQuoteFile('vendor-123', 'other-wedding', deleteInput)
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+
+    it('should throw FORBIDDEN when quote does not belong to vendor', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockQuoteBelongsToVendorFn.mockResolvedValue(false)
+
+      await expect(
+        vendorService.deleteQuoteFile('vendor-123', 'wedding-123', deleteInput)
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+
+    it('should throw FORBIDDEN when file does not belong to quote', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockQuoteBelongsToVendorFn.mockResolvedValue(true)
+      mockFileBelongsToQuoteFn.mockResolvedValue(false)
+
+      await expect(
+        vendorService.deleteQuoteFile('vendor-123', 'wedding-123', deleteInput)
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
     })
   })
 })

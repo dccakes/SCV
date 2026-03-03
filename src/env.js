@@ -31,6 +31,8 @@ export const env = createEnv({
     GITHUB_CLIENT_SECRET: z.string().min(1).optional(),
     GOOGLE_CLIENT_ID: z.string().min(1).optional(),
     GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
+    // Optional: UploadThing file storage
+    UPLOADTHING_TOKEN: z.string().min(1).optional(),
   },
 
   /**
@@ -71,6 +73,7 @@ export const env = createEnv({
     GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+    UPLOADTHING_TOKEN: process.env.UPLOADTHING_TOKEN,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

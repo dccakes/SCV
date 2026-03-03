@@ -20,6 +20,7 @@ export type {
   Vendor,
   VendorCategory,
   VendorQuote,
+  VendorQuoteFile,
   VendorStatus,
   VendorWithQuotes,
 } from '~/server/domains/vendor/vendor.types'
@@ -39,6 +40,10 @@ export {
   type UpdateQuoteInput,
   type UpdateVendorInput,
   type UpdateVendorStatusInput,
+  type SaveQuoteFilesInput,
+  type DeleteQuoteFileInput,
+  deleteQuoteFileSchema,
+  saveQuoteFilesSchema,
   updateQuoteSchema,
   updateVendorSchema,
   updateVendorStatusSchema,
