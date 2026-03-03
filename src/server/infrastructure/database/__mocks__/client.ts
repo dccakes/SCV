@@ -33,7 +33,7 @@ export const mockWeddingFindFirst = jest.fn()
 export const mockWeddingCreate = jest.fn()
 export const mockWeddingUpdate = jest.fn()
 
-export const db = ({
+export const db = {
   user: {
     findUnique: mockUserFindUnique,
     findFirst: mockUserFindFirst,
@@ -68,7 +68,7 @@ export const db = ({
     create: mockWeddingCreate,
     update: mockWeddingUpdate,
   },
-}) as unknown as PrismaClient
+} as unknown as PrismaClient
 
 // Helper to reset all mocks
 export const resetMocks = (): void => {
