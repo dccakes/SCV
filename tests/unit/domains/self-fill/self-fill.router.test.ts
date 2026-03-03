@@ -9,7 +9,9 @@
  */
 
 // Mock heavy ESM/generated dependencies loaded transitively by trpc.ts
-jest.mock('~/lib/auth', () => ({ auth: { api: { getSession: jest.fn().mockResolvedValue(null) } } }))
+jest.mock('~/lib/auth', () => ({
+  auth: { api: { getSession: jest.fn().mockResolvedValue(null) } },
+}))
 jest.mock('~/server/db', () => ({ db: {} }))
 
 jest.mock('~/server/domains/self-fill')
@@ -24,16 +26,18 @@ import {
   mockSelfFillWeddingData,
   resetMocks as resetSelfFillMocks,
 } from '~/server/domains/self-fill'
+import { createSelfFillRouter } from '~/server/domains/self-fill/self-fill.router'
 
+import type {
+  ISelfFillRegistration,
+  SelfFillRegistrationResult,
+} from '~/server/domains/self-fill/self-fill.types'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   mockGetByUserId,
   mockWedding,
   resetMocks as resetWeddingMocks,
 } from '~/server/domains/wedding'
-
-import type { ISelfFillRegistration, SelfFillRegistrationResult } from '~/server/domains/self-fill/self-fill.types'
-import { createSelfFillRouter } from '~/server/domains/self-fill/self-fill.router'
 
 // ── Typed mock aliases ───────────────────────────────────────────────────────
 const mockFindByTokenFn = mockFindByToken as jest.Mock

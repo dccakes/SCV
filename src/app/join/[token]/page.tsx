@@ -188,9 +188,7 @@ export default function SelfFillPage() {
             </div>
 
             {mutationError && (
-              <div className='rounded-md bg-red-50 p-3 text-red-700 text-sm'>
-                {mutationError}
-              </div>
+              <div className='rounded-md bg-red-50 p-3 text-red-700 text-sm'>{mutationError}</div>
             )}
 
             <Button

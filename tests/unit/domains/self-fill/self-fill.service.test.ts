@@ -14,13 +14,13 @@ jest.mock('~/server/domains/self-fill/self-fill.repository')
 
 // @ts-expect-error - Importing mock functions from mocked module
 import {
-  SelfFillRepository,
   mockFindByToken,
-  mockGetWeddingIdByToken,
   mockGetToken,
-  mockUpdateToken,
+  mockGetWeddingIdByToken,
   mockSelfFillWeddingData,
+  mockUpdateToken,
   resetMocks,
+  SelfFillRepository,
 } from '~/server/domains/self-fill/self-fill.repository'
 import { SelfFillService } from '~/server/domains/self-fill/self-fill.service'
 
@@ -75,11 +75,7 @@ describe('SelfFillService', () => {
 
       const token = await service.generateToken('wedding-123')
 
-      expect(mockUpdateTokenFn).toHaveBeenCalledWith(
-        'wedding-123',
-        token,
-        expect.any(Date)
-      )
+      expect(mockUpdateTokenFn).toHaveBeenCalledWith('wedding-123', token, expect.any(Date))
     })
 
     it('should log token generation for audit purposes', async () => {

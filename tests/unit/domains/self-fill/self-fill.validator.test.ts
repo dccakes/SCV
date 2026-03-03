@@ -100,7 +100,10 @@ describe('selfFillGuestSchema', () => {
   })
 
   it('should reject firstName with HTML/script injection characters', () => {
-    const result = selfFillGuestSchema.safeParse({ ...validInput, firstName: '<script>alert(1)</script>' })
+    const result = selfFillGuestSchema.safeParse({
+      ...validInput,
+      firstName: '<script>alert(1)</script>',
+    })
     expect(result.success).toBe(false)
   })
 

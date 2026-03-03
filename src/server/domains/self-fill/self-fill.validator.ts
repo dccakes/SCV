@@ -43,14 +43,11 @@ export const selfFillGuestSchema = z.object({
   token: tokenSchema,
   firstName: nameSchema('First name'),
   lastName: nameSchema('Last name'),
-  email: z.preprocess(
-    (val) => {
-      if (val === '' || val === null || val === undefined) return null
-      if (typeof val === 'string') return val.toLowerCase().trim()
-      return val
-    },
-    z.string().email('Please enter a valid email address').nullable().optional()
-  ),
+  email: z.preprocess((val) => {
+    if (val === '' || val === null || val === undefined) return null
+    if (typeof val === 'string') return val.toLowerCase().trim()
+    return val
+  }, z.string().email('Please enter a valid email address').nullable().optional()),
   phone: z.string().max(20).nullish(),
 })
 

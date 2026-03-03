@@ -13,22 +13,7 @@ jest.mock('~/server/domains/self-fill/self-fill.repository')
 jest.mock('~/server/domains/household/household.repository')
 jest.mock('~/server/domains/guest/guest.repository')
 
-// @ts-expect-error - Importing mock functions from mocked module
-import {
-  SelfFillRepository,
-  mockFindByToken,
-  mockSelfFillWeddingData,
-  resetMocks as resetSelfFillMocks,
-} from '~/server/domains/self-fill/self-fill.repository'
-
-// @ts-expect-error - Importing mock functions from mocked module
-import {
-  HouseholdRepository,
-  mockCreateWithGifts,
-  mockHousehold,
-  resetMocks as resetHouseholdMocks,
-} from '~/server/domains/household/household.repository'
-
+import { SelfFillRegistrationService } from '~/server/application/self-fill-registration/self-fill-registration.service'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   GuestRepository,
@@ -37,8 +22,20 @@ import {
   mockGuest,
   resetMocks as resetGuestMocks,
 } from '~/server/domains/guest/guest.repository'
-
-import { SelfFillRegistrationService } from '~/server/application/self-fill-registration/self-fill-registration.service'
+// @ts-expect-error - Importing mock functions from mocked module
+import {
+  HouseholdRepository,
+  mockCreateWithGifts,
+  mockHousehold,
+  resetMocks as resetHouseholdMocks,
+} from '~/server/domains/household/household.repository'
+// @ts-expect-error - Importing mock functions from mocked module
+import {
+  mockFindByToken,
+  mockSelfFillWeddingData,
+  resetMocks as resetSelfFillMocks,
+  SelfFillRepository,
+} from '~/server/domains/self-fill/self-fill.repository'
 
 // ── Typed aliases ─────────────────────────────────────────────────────────────
 const mockFindByTokenFn = mockFindByToken as jest.Mock
@@ -48,7 +45,9 @@ const mockFindByEmailAndWeddingIdFn = mockFindByEmailAndWeddingId as jest.Mock
 
 // ── Mock db with $transaction ─────────────────────────────────────────────────
 const createMockDb = () => ({
-  $transaction: jest.fn().mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => fn({})),
+  $transaction: jest
+    .fn()
+    .mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => fn({})),
 })
 
 const validToken = 'a'.repeat(32)
@@ -259,9 +258,7 @@ describe('SelfFillRegistrationService', () => {
     it('should convert empty string email to null', async () => {
       await service.registerGuest(validToken, { ...validGuestInput, email: '' })
 
-      expect(mockCreateFn).toHaveBeenCalledWith(
-        expect.objectContaining({ email: null })
-      )
+      expect(mockCreateFn).toHaveBeenCalledWith(expect.objectContaining({ email: null }))
     })
 
     it('should lowercase email before duplicate check and storage', async () => {
@@ -274,7 +271,10 @@ describe('SelfFillRegistrationService', () => {
     })
 
     it('should trim whitespace from email', async () => {
-      await service.registerGuest(validToken, { ...validGuestInput, email: '  alice@example.com  ' })
+      await service.registerGuest(validToken, {
+        ...validGuestInput,
+        email: '  alice@example.com  ',
+      })
 
       expect(mockFindByEmailAndWeddingIdFn).toHaveBeenCalledWith('alice@example.com', 'wedding-123')
     })

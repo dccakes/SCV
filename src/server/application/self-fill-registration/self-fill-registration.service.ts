@@ -141,7 +141,10 @@ export class SelfFillRegistrationService implements ISelfFillRegistration {
         })
       }
 
-      console.error(`[SelfFillRegistration] Failed to register guest for weddingId=${weddingId}`, error)
+      console.error(
+        `[SelfFillRegistration] Failed to register guest for weddingId=${weddingId}`,
+        error
+      )
 
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',

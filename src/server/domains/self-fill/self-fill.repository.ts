@@ -73,7 +73,11 @@ export class SelfFillRepository {
    * Update the self-fill token for a wedding.
    * Pass generatedAt=null when revoking (token=null).
    */
-  async updateToken(weddingId: string, token: string | null, generatedAt: Date | null): Promise<void> {
+  async updateToken(
+    weddingId: string,
+    token: string | null,
+    generatedAt: Date | null
+  ): Promise<void> {
     await this.db.wedding.update({
       where: { id: weddingId },
       data: { selfFillToken: token, selfFillTokenGeneratedAt: generatedAt },
