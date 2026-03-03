@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertTriangle, Check, Copy, Link2, Loader2, Trash2 } from 'lucide-react'
+import { AlertTriangle, Check, Copy, Link2, Loader2, RefreshCw, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -50,6 +50,7 @@ function LinkExpiryNotice({
 
 export default function SelfFillLinkManager() {
   const [showRevokeDialog, setShowRevokeDialog] = useState(false)
+  const [showRenewDialog, setShowRenewDialog] = useState(false)
   const [copied, setCopied] = useState(false)
   const utils = api.useUtils()
 
@@ -65,6 +66,15 @@ export default function SelfFillLinkManager() {
       utils.selfFill.getToken.invalidate()
     },
     onError: () => toast.error('Failed to generate link'),
+  })
+
+  const renewMutation = api.selfFill.generateToken.useMutation({
+    onSuccess: () => {
+      toast.success('Invite link renewed!')
+      setShowRenewDialog(false)
+      utils.selfFill.getToken.invalidate()
+    },
+    onError: () => toast.error('Failed to renew link'),
   })
 
   const revokeMutation = api.selfFill.revokeToken.useMutation({
@@ -113,6 +123,15 @@ export default function SelfFillLinkManager() {
             <span className='text-border select-none'>·</span>
             <button
               type='button'
+              className='flex shrink-0 items-center gap-1 text-muted-foreground hover:text-foreground'
+              onClick={() => setShowRenewDialog(true)}
+            >
+              <RefreshCw className='h-3.5 w-3.5' />
+              <span>Renew</span>
+            </button>
+            <span className='text-border select-none'>·</span>
+            <button
+              type='button'
               className='shrink-0 text-muted-foreground hover:text-destructive'
               onClick={() => setShowRevokeDialog(true)}
             >
@@ -143,6 +162,33 @@ export default function SelfFillLinkManager() {
           earliestEventDate={tokenData.earliestEventDate ?? null}
         />
       )}
+
+      <AlertDialog open={showRenewDialog} onOpenChange={setShowRenewDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Renew Invite Link?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This generates a new link and invalidates the current one. Anyone who has already
+              received the old link won&apos;t be able to use it. Make sure to share the new link.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={renewMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                renewMutation.mutate({})
+              }}
+              disabled={renewMutation.isPending}
+              className='flex items-center gap-2'
+            >
+              {renewMutation.isPending && <Loader2 className='h-4 w-4 animate-spin' />}
+              <RefreshCw className='h-4 w-4' />
+              Renew Link
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={showRevokeDialog} onOpenChange={setShowRevokeDialog}>
         <AlertDialogContent>

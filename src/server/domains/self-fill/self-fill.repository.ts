@@ -10,7 +10,7 @@ import type { PrismaClient } from '@prisma/client'
 import type { SelfFillWeddingData } from '~/server/domains/self-fill/self-fill.types'
 
 /** Tokens older than this many days are considered expired */
-export const TOKEN_EXPIRY_DAYS = 30
+export const TOKEN_EXPIRY_DAYS = 90
 
 /** Build the Prisma WHERE clause for a valid (non-expired) token */
 function validTokenWhere(token: string) {
