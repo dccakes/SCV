@@ -289,7 +289,7 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
 
             <AccordionItem value='contact' className='border-b-0'>
               <AccordionTrigger className='px-6 py-4 font-semibold text-lg hover:no-underline'>
-                Contact Information
+                Mailing Address
               </AccordionTrigger>
               <AccordionContent className='px-6 pb-6'>
                 <ContactForm register={register} errors={errors} />

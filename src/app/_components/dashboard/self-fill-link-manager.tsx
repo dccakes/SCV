@@ -1,7 +1,6 @@
 'use client'
 
 import { Check, Copy, Link2, Loader2, Trash2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -15,131 +14,104 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '~/components/ui/alert-dialog'
-import { Button } from '~/components/ui/button'
 import { api } from '~/trpc/react'
 
 export default function SelfFillLinkManager() {
-  const router = useRouter()
   const [showRevokeDialog, setShowRevokeDialog] = useState(false)
   const [copied, setCopied] = useState(false)
+  const utils = api.useUtils()
 
   const { data: tokenData, isLoading } = api.selfFill.getToken.useQuery()
 
+  const url = tokenData?.token
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/join/${tokenData.token}`
+    : ''
+
   const generateMutation = api.selfFill.generateToken.useMutation({
     onSuccess: () => {
-      toast.success('Self-fill link generated!')
-      router.refresh()
+      toast.success('Invite link generated!')
+      utils.selfFill.getToken.invalidate()
     },
-    onError: () => {
-      toast.error('Failed to generate link')
-    },
+    onError: () => toast.error('Failed to generate link'),
   })
 
   const revokeMutation = api.selfFill.revokeToken.useMutation({
     onSuccess: () => {
-      toast.success('Self-fill link disabled')
+      toast.success('Invite link disabled')
       setShowRevokeDialog(false)
-      router.refresh()
+      utils.selfFill.getToken.invalidate()
     },
-    onError: () => {
-      toast.error('Failed to disable link')
-    },
+    onError: () => toast.error('Failed to disable link'),
   })
 
-  const getSelfFillUrl = () => {
-    if (!tokenData?.token) return ''
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
-    return `${baseUrl}/join/${tokenData.token}`
-  }
-
   const handleCopy = async () => {
-    const url = getSelfFillUrl()
-    if (url) {
-      await navigator.clipboard.writeText(url)
-      setCopied(true)
-      toast.success('Link copied to clipboard!')
-      setTimeout(() => setCopied(false), 2000)
-    }
+    if (!url) return
+    await navigator.clipboard.writeText(url)
+    setCopied(true)
+    toast.success('Link copied!')
+    setTimeout(() => setCopied(false), 2000)
   }
 
   if (isLoading) {
     return (
-      <div className='flex items-center justify-between'>
-        <h2 className='font-semibold text-xl'>Self-Fill Link</h2>
-        <Loader2 className='h-4 w-4 animate-spin' />
+      <div className='flex items-center gap-2 border-b py-3 text-muted-foreground text-sm'>
+        <Loader2 className='h-3.5 w-3.5 animate-spin' />
       </div>
     )
   }
 
   return (
     <>
-      <div>
-        <div className='mb-3 flex items-center justify-between'>
-          <h2 className='font-semibold text-xl'>Self-Fill Link</h2>
-          {tokenData?.token ? (
+      <div className='flex items-center gap-3 border-b py-3 text-sm'>
+        <Link2 className='h-3.5 w-3.5 shrink-0 text-muted-foreground' />
+
+        {tokenData?.token ? (
+          <>
+            <span className='min-w-0 flex-1 truncate font-mono text-muted-foreground text-xs'>
+              {url}
+            </span>
             <button
               type='button'
-              className='cursor-pointer text-lg text-primary hover:underline'
+              className='flex shrink-0 items-center gap-1 text-muted-foreground hover:text-foreground'
+              onClick={handleCopy}
+            >
+              {copied ? <Check className='h-3.5 w-3.5' /> : <Copy className='h-3.5 w-3.5' />}
+              <span>{copied ? 'Copied!' : 'Copy'}</span>
+            </button>
+            <span className='text-border select-none'>·</span>
+            <button
+              type='button'
+              className='shrink-0 text-muted-foreground hover:text-destructive'
               onClick={() => setShowRevokeDialog(true)}
             >
               Disable
             </button>
-          ) : (
+          </>
+        ) : (
+          <>
+            <span className='flex-1 text-muted-foreground'>
+              Let guests add themselves to your list
+            </span>
             <button
               type='button'
-              className='cursor-pointer text-lg text-primary hover:underline'
+              className='flex shrink-0 items-center gap-1.5 text-primary hover:underline disabled:opacity-50'
               onClick={() => generateMutation.mutate({})}
+              disabled={generateMutation.isPending}
             >
-              {generateMutation.isPending ? 'Generating...' : 'Generate'}
+              {generateMutation.isPending && <Loader2 className='h-3.5 w-3.5 animate-spin' />}
+              {generateMutation.isPending ? 'Generating…' : 'Generate invite link →'}
             </button>
-          )}
-        </div>
-
-        <p className='mb-3 text-muted-foreground text-sm'>
-          {tokenData?.token
-            ? 'Share this link with guests so they can add themselves to your guest list.'
-            : 'Generate a link that guests can use to add themselves to your guest list.'}
-        </p>
-
-        {tokenData?.token && (
-          <div className='flex gap-2'>
-            <Button
-              variant='outline'
-              size='sm'
-              className='flex-1'
-              onClick={handleCopy}
-              disabled={copied}
-            >
-              {copied ? (
-                <>
-                  <Check className='mr-2 h-4 w-4' />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className='mr-2 h-4 w-4' />
-                  Copy Link
-                </>
-              )}
-            </Button>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => window.open(getSelfFillUrl(), '_blank')}
-            >
-              <Link2 className='h-4 w-4' />
-            </Button>
-          </div>
+          </>
         )}
       </div>
 
       <AlertDialog open={showRevokeDialog} onOpenChange={setShowRevokeDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Disable Self-Fill Link?</AlertDialogTitle>
+            <AlertDialogTitle>Disable Invite Link?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will disable the current self-fill link. Anyone with the old link will no longer
-              be able to add themselves to your guest list. You can generate a new link at any time.
+              Anyone with the current link will no longer be able to add themselves. You can
+              generate a new link at any time.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -154,7 +126,7 @@ export default function SelfFillLinkManager() {
             >
               {revokeMutation.isPending && <Loader2 className='h-4 w-4 animate-spin' />}
               <Trash2 className='h-4 w-4' />
-              Disable Link
+              Disable
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
