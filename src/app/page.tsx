@@ -66,8 +66,7 @@ const jsonLd = {
         {
           '@type': 'Offer',
           name: 'Couple',
-          description:
-            'Fully managed cloud hosting with automated backups and Etta included.',
+          description: 'Fully managed cloud hosting with automated backups and Etta included.',
           price: '12',
           priceCurrency: 'GBP',
           priceSpecification: {
@@ -142,6 +141,7 @@ export default async function Home() {
     <>
       <script
         type='application/ld+json'
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD structured data requires dangerouslySetInnerHTML per Next.js convention
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       {!isSignedIn ? <NonAuthenticatedView /> : <AuthenticatedView />}

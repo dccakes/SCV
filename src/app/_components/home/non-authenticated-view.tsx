@@ -51,7 +51,11 @@ const stack = [
   { layer: 'API Layer', name: 'Hono + TypeScript', detail: 'REST + Webhooks · Type-safe schemas' },
   { layer: 'Database', name: 'PostgreSQL / Supabase', detail: 'Drizzle ORM · Bring your own host' },
   { layer: 'Etta / AI', name: 'Claude / OpenAI', detail: 'Tool use · Agentic actions · Pluggable' },
-  { layer: 'Email & Invites', name: 'Resend / Postmark', detail: 'MJML templates · Tracking pixels' },
+  {
+    layer: 'Email & Invites',
+    name: 'Resend / Postmark',
+    detail: 'MJML templates · Tracking pixels',
+  },
   { layer: 'Auth', name: 'Better Auth', detail: 'Guest magic links · Admin OAuth' },
   { layer: 'Deployment', name: 'Docker / Railway', detail: 'One-click · Self-hosted · Edge-ready' },
 ]
@@ -113,12 +117,11 @@ export default function NonAuthenticatedView() {
       `}</style>
 
       <div className='overflow-x-hidden bg-background text-foreground'>
-
         {/* ── NAV ─────────────────────────────────────────────── */}
-        <nav className='fixed top-0 right-0 left-0 z-50 flex items-center justify-between border-b border-border bg-background/90 px-6 py-4 backdrop-blur-md md:px-12'>
+        <nav className='fixed top-0 right-0 left-0 z-50 flex items-center justify-between border-border border-b bg-background/90 px-6 py-4 backdrop-blur-md md:px-12'>
           <Link
             href='/'
-            className='flex items-center gap-1 font-mono text-[0.82rem] font-medium uppercase tracking-[.2em] text-foreground'
+            className='flex items-center gap-1 font-medium font-mono text-[0.82rem] text-foreground uppercase tracking-[.2em]'
           >
             OSWP
             <span className='ml-0.5 inline-block h-1.5 w-1.5 rounded-full bg-primary align-super' />
@@ -141,7 +144,7 @@ export default function NonAuthenticatedView() {
                   href={href}
                   target={external ? '_blank' : undefined}
                   rel={external ? 'noopener noreferrer' : undefined}
-                  className='font-mono text-[0.65rem] uppercase tracking-[.12em] text-muted-foreground transition-colors hover:text-foreground'
+                  className='font-mono text-[0.65rem] text-muted-foreground uppercase tracking-[.12em] transition-colors hover:text-foreground'
                 >
                   {label}
                 </a>
@@ -155,29 +158,29 @@ export default function NonAuthenticatedView() {
         {/* ── HERO ─────────────────────────────────────────────── */}
         <section className='grid min-h-screen grid-cols-1 pt-16 md:grid-cols-2'>
           <div className='flex flex-col justify-center px-6 py-24 md:px-12 md:py-20'>
-            <p className='fu mb-6 flex items-center gap-3 font-mono text-[0.62rem] uppercase tracking-[.2em] text-primary'>
+            <p className='fu mb-6 flex items-center gap-3 font-mono text-[0.62rem] text-primary uppercase tracking-[.2em]'>
               <span className='block h-px w-7 bg-primary' />
               Open Source Wedding Platform
             </p>
-            <h1 className='fu fu1 font-serif text-[clamp(3rem,5.5vw,5rem)] font-normal leading-[1.06] tracking-tight'>
-              The <em className='italic text-primary'>infrastructure</em>
+            <h1 className='fu fu1 font-normal font-serif text-[clamp(3rem,5.5vw,5rem)] leading-[1.06] tracking-tight'>
+              The <em className='text-primary italic'>infrastructure</em>
               <br />
               for your forever
             </h1>
-            <p className='fu fu2 mt-6 max-w-md font-serif text-[1.05rem] font-light leading-[1.75] text-muted-foreground'>
-              A self-hosted platform with everything your wedding needs — invitations, RSVPs, planning,
-              and Etta, your AI wedding planner, thinking with you every step of the way.
+            <p className='fu fu2 mt-6 max-w-md font-light font-serif text-[1.05rem] text-muted-foreground leading-[1.75]'>
+              A self-hosted platform with everything your wedding needs — invitations, RSVPs,
+              planning, and Etta, your AI wedding planner, thinking with you every step of the way.
             </p>
             <div className='fu fu3 mt-10 flex flex-wrap items-center gap-5'>
               <Link
                 href='/auth/signin'
-                className='inline-flex items-center gap-2 rounded-sm bg-foreground px-6 py-3.5 font-mono text-[0.68rem] uppercase tracking-[.1em] text-background transition-all hover:-translate-y-0.5 hover:bg-primary'
+                className='inline-flex items-center gap-2 rounded-sm bg-foreground px-6 py-3.5 font-mono text-[0.68rem] text-background uppercase tracking-[.1em] transition-all hover:-translate-y-0.5 hover:bg-primary'
               >
                 ⌘ Get Started
               </Link>
               <a
                 href='#features'
-                className='inline-flex items-center gap-1.5 border-b border-transparent font-mono text-[0.68rem] uppercase tracking-[.1em] text-muted-foreground transition-colors hover:border-foreground hover:text-foreground'
+                className='inline-flex items-center gap-1.5 border-transparent border-b font-mono text-[0.68rem] text-muted-foreground uppercase tracking-[.1em] transition-colors hover:border-foreground hover:text-foreground'
               >
                 Explore features →
               </a>
@@ -187,11 +190,11 @@ export default function NonAuthenticatedView() {
           {/* Terminal */}
           <div className='fu fu2 flex items-center justify-center px-6 py-16 md:px-10'>
             <div className='term-float w-full max-w-[500px] overflow-hidden rounded-lg bg-foreground shadow-2xl'>
-              <div className='flex items-center gap-1.5 border-b border-white/5 bg-white/[.03] px-4 py-3'>
+              <div className='flex items-center gap-1.5 border-white/5 border-b bg-white/[.03] px-4 py-3'>
                 <span className='h-2.5 w-2.5 rounded-full bg-[#FF5F57]' />
                 <span className='h-2.5 w-2.5 rounded-full bg-[#FFBD2E]' />
                 <span className='h-2.5 w-2.5 rounded-full bg-[#28C840]' />
-                <span className='mx-auto translate-x-5 font-mono text-[0.58rem] tracking-[.1em] text-white/25'>
+                <span className='mx-auto translate-x-5 font-mono text-[0.58rem] text-white/25 tracking-[.1em]'>
                   OSWP — bash
                 </span>
               </div>
@@ -229,7 +232,7 @@ export default function NonAuthenticatedView() {
           </div>
 
           {/* Stats strip */}
-          <div className='col-span-full flex flex-wrap border-t border-border'>
+          <div className='col-span-full flex flex-wrap border-border border-t'>
             {[
               { n: '∞', label: 'Guest capacity' },
               { n: '100%', label: 'Self-hostable' },
@@ -238,10 +241,10 @@ export default function NonAuthenticatedView() {
             ].map(({ n, label }, i) => (
               <div
                 key={label}
-                className={`flex flex-1 basis-1/2 items-baseline gap-2.5 px-6 py-6 md:basis-0 ${i < 3 ? 'border-r border-border' : ''}`}
+                className={`flex flex-1 basis-1/2 items-baseline gap-2.5 px-6 py-6 md:basis-0 ${i < 3 ? 'border-border border-r' : ''}`}
               >
                 <span className='font-serif text-[2rem] leading-none'>{n}</span>
-                <span className='font-mono text-[0.6rem] uppercase tracking-[.12em] text-muted-foreground'>
+                <span className='font-mono text-[0.6rem] text-muted-foreground uppercase tracking-[.12em]'>
                   {label}
                 </span>
               </div>
@@ -251,14 +254,14 @@ export default function NonAuthenticatedView() {
 
         {/* ── FEATURES ─────────────────────────────────────────── */}
         <section id='features' className='mx-auto w-full max-w-6xl px-6 py-28 md:px-12'>
-          <p className='mb-3 flex items-center gap-3 font-mono text-[0.6rem] uppercase tracking-[.2em] text-primary'>
+          <p className='mb-3 flex items-center gap-3 font-mono text-[0.6rem] text-primary uppercase tracking-[.2em]'>
             <span className='block h-px w-5 bg-primary' />
             What's inside
           </p>
-          <h2 className='font-serif text-[clamp(2rem,4vw,3rem)] font-normal leading-[1.1] tracking-tight'>
+          <h2 className='font-normal font-serif text-[clamp(2rem,4vw,3rem)] leading-[1.1] tracking-tight'>
             Everything you need,
             <br />
-            <em className='italic text-primary'>nothing you don't</em>
+            <em className='text-primary italic'>nothing you don't</em>
           </h2>
 
           <div className='mt-14 overflow-hidden rounded border border-border bg-border'>
@@ -268,15 +271,15 @@ export default function NonAuthenticatedView() {
                   key={f.n}
                   className='group relative overflow-hidden bg-background px-8 py-10 transition-colors hover:bg-muted/50'
                 >
-                  <span className='pointer-events-none absolute top-4 right-5 font-serif text-[4.5rem] leading-none text-foreground/[.04] transition-colors group-hover:text-primary/[.07]'>
+                  <span className='pointer-events-none absolute top-4 right-5 font-serif text-[4.5rem] text-foreground/[.04] leading-none transition-colors group-hover:text-primary/[.07]'>
                     {f.n}
                   </span>
                   <span className='mb-5 block text-[1.35rem]'>{f.icon}</span>
                   <h3 className='mb-2 font-serif text-[1.2rem] leading-snug'>{f.title}</h3>
-                  <p className='font-serif text-[0.9rem] font-light leading-[1.65] text-muted-foreground'>
+                  <p className='font-light font-serif text-[0.9rem] text-muted-foreground leading-[1.65]'>
                     {f.desc}
                   </p>
-                  <span className='mt-5 inline-block rounded-sm bg-emerald-500/10 px-2.5 py-1 font-mono text-[0.57rem] uppercase tracking-[.1em] text-emerald-600'>
+                  <span className='mt-5 inline-block rounded-sm bg-emerald-500/10 px-2.5 py-1 font-mono text-[0.57rem] text-emerald-600 uppercase tracking-[.1em]'>
                     {f.tag}
                   </span>
                 </div>
@@ -285,7 +288,7 @@ export default function NonAuthenticatedView() {
           </div>
         </section>
 
-        <p className='py-2 text-center font-serif text-[1.1rem] tracking-[.8em] text-muted-foreground/35'>
+        <p className='py-2 text-center font-serif text-[1.1rem] text-muted-foreground/35 tracking-[.8em]'>
           ❧ ✦ ❧
         </p>
 
@@ -293,16 +296,16 @@ export default function NonAuthenticatedView() {
         <section id='etta' className='bg-foreground py-28 text-background'>
           <div className='mx-auto grid max-w-6xl grid-cols-1 items-center gap-16 px-6 md:grid-cols-2 md:px-12'>
             <div>
-              <p className='mb-3 flex items-center gap-3 font-mono text-[0.6rem] uppercase tracking-[.2em] text-accent'>
+              <p className='mb-3 flex items-center gap-3 font-mono text-[0.6rem] text-accent uppercase tracking-[.2em]'>
                 <span className='block h-px w-5 bg-accent' />
                 Meet Etta
               </p>
-              <h2 className='font-serif text-[clamp(2rem,4vw,3rem)] font-normal leading-[1.1] tracking-tight text-background'>
+              <h2 className='font-normal font-serif text-[clamp(2rem,4vw,3rem)] text-background leading-[1.1] tracking-tight'>
                 Your AI wedding
                 <br />
-                <em className='italic text-accent'>planner, Etta</em>
+                <em className='text-accent italic'>planner, Etta</em>
               </h2>
-              <p className='mt-6 max-w-md font-serif text-[1rem] font-light leading-[1.75] text-background/60'>
+              <p className='mt-6 max-w-md font-light font-serif text-[1rem] text-background/60 leading-[1.75]'>
                 Etta is OSWP's built-in AI wedding planner. She lives inside your planning data,
                 understands your wedding end-to-end, and can actually take actions — not just answer
                 questions.
@@ -311,7 +314,7 @@ export default function NonAuthenticatedView() {
                 {ettaExamples.map((q) => (
                   <li
                     key={q}
-                    className='flex items-start gap-3 font-mono text-[0.73rem] tracking-[.02em] text-background/60'
+                    className='flex items-start gap-3 font-mono text-[0.73rem] text-background/60 tracking-[.02em]'
                   >
                     <span className='mt-px flex-shrink-0 text-accent'>→</span>
                     {q}
@@ -322,13 +325,13 @@ export default function NonAuthenticatedView() {
 
             {/* Chat widget */}
             <div className='overflow-hidden rounded-lg border border-white/10 bg-white/[.04]'>
-              <div className='flex items-center gap-3 border-b border-white/10 px-5 py-4'>
-                <div className='flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-accent to-primary font-serif text-[1rem] italic text-background'>
+              <div className='flex items-center gap-3 border-white/10 border-b px-5 py-4'>
+                <div className='flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-accent to-primary font-serif text-[1rem] text-background italic'>
                   E
                 </div>
                 <div>
-                  <span className='font-serif text-[0.95rem] italic text-background/95'>Etta</span>
-                  <span className='ml-1.5 font-mono text-[0.57rem] tracking-[.08em] text-background/35'>
+                  <span className='font-serif text-[0.95rem] text-background/95 italic'>Etta</span>
+                  <span className='ml-1.5 font-mono text-[0.57rem] text-background/35 tracking-[.08em]'>
                     · OSWP AI Planner
                   </span>
                 </div>
@@ -340,7 +343,7 @@ export default function NonAuthenticatedView() {
 
               <div className='flex flex-col gap-4 p-5'>
                 <div>
-                  <div className='ml-auto max-w-[85%] rounded rounded-br-none bg-white/[.07] px-4 py-3 font-serif text-[0.84rem] italic leading-relaxed text-background/80'>
+                  <div className='ml-auto max-w-[85%] rounded rounded-br-none bg-white/[.07] px-4 py-3 font-serif text-[0.84rem] text-background/80 italic leading-relaxed'>
                     "We're 3 weeks out. What's most urgent?"
                   </div>
                   <p className='mt-1 text-right font-mono text-[0.57rem] text-background/25'>
@@ -348,15 +351,17 @@ export default function NonAuthenticatedView() {
                   </p>
                 </div>
                 <div>
-                  <div className='mr-auto max-w-[85%] rounded rounded-bl-none border border-accent/20 bg-accent/10 px-4 py-3 font-serif text-[0.84rem] leading-relaxed text-background/80'>
-                    Looking at your timeline — 3 things need attention: caterer headcount due Friday,
-                    12 guests haven't RSVP'd, and the rehearsal dinner deposit is 4 days overdue. Want
-                    me to handle any of these?
+                  <div className='mr-auto max-w-[85%] rounded rounded-bl-none border border-accent/20 bg-accent/10 px-4 py-3 font-serif text-[0.84rem] text-background/80 leading-relaxed'>
+                    Looking at your timeline — 3 things need attention: caterer headcount due
+                    Friday, 12 guests haven't RSVP'd, and the rehearsal dinner deposit is 4 days
+                    overdue. Want me to handle any of these?
                   </div>
-                  <p className='mt-1 font-mono text-[0.57rem] text-background/25'>Etta · just now</p>
+                  <p className='mt-1 font-mono text-[0.57rem] text-background/25'>
+                    Etta · just now
+                  </p>
                 </div>
                 <div>
-                  <div className='ml-auto max-w-[85%] rounded rounded-br-none bg-white/[.07] px-4 py-3 font-serif text-[0.84rem] italic leading-relaxed text-background/80'>
+                  <div className='ml-auto max-w-[85%] rounded rounded-br-none bg-white/[.07] px-4 py-3 font-serif text-[0.84rem] text-background/80 italic leading-relaxed'>
                     "Yes, chase the guests and flag the deposit."
                   </div>
                   <p className='mt-1 text-right font-mono text-[0.57rem] text-background/25'>
@@ -364,20 +369,22 @@ export default function NonAuthenticatedView() {
                   </p>
                 </div>
                 <div>
-                  <div className='mr-auto max-w-[85%] rounded rounded-bl-none border border-accent/20 bg-accent/10 px-4 py-3 font-serif text-[0.84rem] leading-relaxed text-background/80'>
+                  <div className='mr-auto max-w-[85%] rounded rounded-bl-none border border-accent/20 bg-accent/10 px-4 py-3 font-serif text-[0.84rem] text-background/80 leading-relaxed'>
                     Sent nudges to 12 guests with your custom message. Emailed the Rosewood deposit
                     reminder — add it to your urgent board?
                   </div>
-                  <p className='mt-1 font-mono text-[0.57rem] text-background/25'>Etta · just now</p>
+                  <p className='mt-1 font-mono text-[0.57rem] text-background/25'>
+                    Etta · just now
+                  </p>
                 </div>
               </div>
 
-              <div className='flex items-center gap-3 border-t border-white/10 px-5 py-3'>
+              <div className='flex items-center gap-3 border-white/10 border-t px-5 py-3'>
                 <input
                   type='text'
                   placeholder='Ask Etta anything…'
                   readOnly
-                  className='flex-1 bg-transparent font-serif text-[0.82rem] italic text-background/35 outline-none placeholder:text-background/35'
+                  className='flex-1 bg-transparent font-serif text-[0.82rem] text-background/35 italic outline-none placeholder:text-background/35'
                 />
                 <div className='flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary font-mono text-[0.65rem] text-background'>
                   →
@@ -388,22 +395,26 @@ export default function NonAuthenticatedView() {
         </section>
 
         {/* ── ARCHITECTURE ─────────────────────────────────────── */}
-        <section id='stack' className='mx-auto w-full max-w-6xl border-t border-border px-6 py-28 md:px-12'>
+        <section
+          id='stack'
+          className='mx-auto w-full max-w-6xl border-border border-t px-6 py-28 md:px-12'
+        >
           <div className='mb-14 grid grid-cols-1 items-end gap-10 md:grid-cols-2'>
             <div>
-              <p className='mb-3 flex items-center gap-3 font-mono text-[0.6rem] uppercase tracking-[.2em] text-primary'>
+              <p className='mb-3 flex items-center gap-3 font-mono text-[0.6rem] text-primary uppercase tracking-[.2em]'>
                 <span className='block h-px w-5 bg-primary' />
                 Built for developers
               </p>
-              <h2 className='font-serif text-[clamp(2rem,4vw,3rem)] font-normal leading-[1.1] tracking-tight'>
+              <h2 className='font-normal font-serif text-[clamp(2rem,4vw,3rem)] leading-[1.1] tracking-tight'>
                 A backend you
                 <br />
-                <em className='italic text-primary'>actually own</em>
+                <em className='text-primary italic'>actually own</em>
               </h2>
             </div>
-            <p className='font-serif text-[0.95rem] font-light leading-[1.75] text-muted-foreground'>
-              OSWP is a self-hosted TypeScript backend with a clean REST API. Bring your own database,
-              cloud, and AI provider. Everything is modular, documented, and ready to extend.
+            <p className='font-light font-serif text-[0.95rem] text-muted-foreground leading-[1.75]'>
+              OSWP is a self-hosted TypeScript backend with a clean REST API. Bring your own
+              database, cloud, and AI provider. Everything is modular, documented, and ready to
+              extend.
             </p>
           </div>
 
@@ -414,11 +425,11 @@ export default function NonAuthenticatedView() {
                   key={s.layer}
                   className='bg-background px-6 py-6 transition-colors hover:bg-muted/50'
                 >
-                  <p className='mb-1 font-mono text-[0.57rem] uppercase tracking-[.15em] text-emerald-600'>
+                  <p className='mb-1 font-mono text-[0.57rem] text-emerald-600 uppercase tracking-[.15em]'>
                     {s.layer}
                   </p>
                   <p className='font-serif text-[1.1rem]'>{s.name}</p>
-                  <p className='mt-0.5 font-mono text-[0.62rem] tracking-[.04em] text-muted-foreground'>
+                  <p className='mt-0.5 font-mono text-[0.62rem] text-muted-foreground tracking-[.04em]'>
                     {s.detail}
                   </p>
                 </div>
@@ -428,36 +439,38 @@ export default function NonAuthenticatedView() {
         </section>
 
         {/* ── PRICING ──────────────────────────────────────────── */}
-        <section id='pricing' className='mx-auto w-full max-w-6xl border-t border-border px-6 py-28 md:px-12'>
-          <p className='mb-3 flex items-center gap-3 font-mono text-[0.6rem] uppercase tracking-[.2em] text-primary'>
+        <section
+          id='pricing'
+          className='mx-auto w-full max-w-6xl border-border border-t px-6 py-28 md:px-12'
+        >
+          <p className='mb-3 flex items-center gap-3 font-mono text-[0.6rem] text-primary uppercase tracking-[.2em]'>
             <span className='block h-px w-5 bg-primary' />
             Pricing
           </p>
-          <h2 className='font-serif text-[clamp(2rem,4vw,3rem)] font-normal leading-[1.1] tracking-tight'>
+          <h2 className='font-normal font-serif text-[clamp(2rem,4vw,3rem)] leading-[1.1] tracking-tight'>
             Self-host free.
             <br />
-            <em className='italic text-primary'>Or let us handle it.</em>
+            <em className='text-primary italic'>Or let us handle it.</em>
           </h2>
-          <p className='mt-5 max-w-xl font-serif text-[1rem] font-light leading-[1.75] text-muted-foreground'>
+          <p className='mt-5 max-w-xl font-light font-serif text-[1rem] text-muted-foreground leading-[1.75]'>
             Run OSWP on your own infrastructure forever, or choose our fully managed cloud — no ops,
             no maintenance, just your wedding.
           </p>
 
           <div className='mt-14 overflow-hidden rounded border border-border bg-border'>
             <div className='grid grid-cols-1 gap-px sm:grid-cols-3'>
-
               {/* Community */}
               <div className='flex flex-col bg-background px-8 py-9 transition-colors hover:bg-muted/50'>
-                <p className='mb-5 font-mono text-[0.57rem] uppercase tracking-[.18em] text-muted-foreground'>
+                <p className='mb-5 font-mono text-[0.57rem] text-muted-foreground uppercase tracking-[.18em]'>
                   Community
                 </p>
                 <div className='mb-3 flex items-baseline gap-1.5'>
                   <span className='font-serif text-[3rem] leading-none'>£0</span>
-                  <span className='font-mono text-[0.62rem] tracking-[.06em] text-muted-foreground'>
+                  <span className='font-mono text-[0.62rem] text-muted-foreground tracking-[.06em]'>
                     forever
                   </span>
                 </div>
-                <p className='mb-6 min-h-[3.5rem] font-serif text-[0.88rem] font-light leading-relaxed text-muted-foreground'>
+                <p className='mb-6 min-h-[3.5rem] font-light font-serif text-[0.88rem] text-muted-foreground leading-relaxed'>
                   The full OSWP platform, self-hosted on your own infrastructure. No limits, no
                   lock-in.
                 </p>
@@ -474,7 +487,7 @@ export default function NonAuthenticatedView() {
                   {freeMissing.map((item) => (
                     <li
                       key={item}
-                      className='flex items-center gap-2.5 font-mono text-[0.67rem] tracking-[.02em] text-muted-foreground/40'
+                      className='flex items-center gap-2.5 font-mono text-[0.67rem] text-muted-foreground/40 tracking-[.02em]'
                     >
                       <span>–</span> {item}
                     </li>
@@ -484,7 +497,7 @@ export default function NonAuthenticatedView() {
                   href='https://github.com/dccakes/SCV'
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='mt-auto block rounded-sm border border-border py-3.5 text-center font-mono text-[0.67rem] uppercase tracking-[.1em] text-foreground transition-all hover:-translate-y-0.5 hover:border-foreground'
+                  className='mt-auto block rounded-sm border border-border py-3.5 text-center font-mono text-[0.67rem] text-foreground uppercase tracking-[.1em] transition-all hover:-translate-y-0.5 hover:border-foreground'
                 >
                   ⌘ Deploy yourself →
                 </a>
@@ -493,16 +506,16 @@ export default function NonAuthenticatedView() {
               {/* Couple — featured */}
               <div className='relative flex flex-col bg-foreground px-8 py-9 text-background'>
                 <div className='absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r from-primary to-accent' />
-                <p className='mb-5 font-mono text-[0.57rem] uppercase tracking-[.18em] text-accent'>
+                <p className='mb-5 font-mono text-[0.57rem] text-accent uppercase tracking-[.18em]'>
                   Couple
                 </p>
                 <div className='mb-3 flex items-baseline gap-1.5'>
-                  <span className='font-serif text-[3rem] leading-none text-background'>£12</span>
-                  <span className='font-mono text-[0.62rem] tracking-[.06em] text-background/40'>
+                  <span className='font-serif text-[3rem] text-background leading-none'>£12</span>
+                  <span className='font-mono text-[0.62rem] text-background/40 tracking-[.06em]'>
                     / month
                   </span>
                 </div>
-                <p className='mb-6 min-h-[3.5rem] font-serif text-[0.88rem] font-light leading-relaxed text-background/55'>
+                <p className='mb-6 min-h-[3.5rem] font-light font-serif text-[0.88rem] text-background/55 leading-relaxed'>
                   Fully managed. We handle the servers, backups, and updates so you can focus on the
                   wedding.
                 </p>
@@ -511,38 +524,38 @@ export default function NonAuthenticatedView() {
                   {coupleFeatures.map((item) => (
                     <li
                       key={item}
-                      className='flex items-center gap-2.5 font-mono text-[0.67rem] tracking-[.02em] text-background/75'
+                      className='flex items-center gap-2.5 font-mono text-[0.67rem] text-background/75 tracking-[.02em]'
                     >
                       <span className='text-accent'>✓</span> {item}
                     </li>
                   ))}
-                  <li className='flex items-center gap-2.5 font-mono text-[0.67rem] tracking-[.02em] text-background/25'>
+                  <li className='flex items-center gap-2.5 font-mono text-[0.67rem] text-background/25 tracking-[.02em]'>
                     <span>–</span> White-glove concierge
                   </li>
                 </ul>
                 <Link
                   href='/auth/signin'
-                  className='mt-auto block rounded-sm bg-primary py-3.5 text-center font-mono text-[0.67rem] uppercase tracking-[.1em] text-background transition-all hover:-translate-y-0.5 hover:bg-accent'
+                  className='mt-auto block rounded-sm bg-primary py-3.5 text-center font-mono text-[0.67rem] text-background uppercase tracking-[.1em] transition-all hover:-translate-y-0.5 hover:bg-accent'
                 >
                   Start free trial →
                 </Link>
-                <p className='mt-3 text-center font-mono text-[0.57rem] tracking-[.04em] text-background/25'>
+                <p className='mt-3 text-center font-mono text-[0.57rem] text-background/25 tracking-[.04em]'>
                   14-day free trial · Cancel anytime
                 </p>
               </div>
 
               {/* Planner */}
               <div className='flex flex-col bg-background px-8 py-9 transition-colors hover:bg-muted/50'>
-                <p className='mb-5 font-mono text-[0.57rem] uppercase tracking-[.18em] text-muted-foreground'>
+                <p className='mb-5 font-mono text-[0.57rem] text-muted-foreground uppercase tracking-[.18em]'>
                   Planner
                 </p>
                 <div className='mb-3 flex items-baseline gap-1.5'>
                   <span className='font-serif text-[3rem] leading-none'>£49</span>
-                  <span className='font-mono text-[0.62rem] tracking-[.06em] text-muted-foreground'>
+                  <span className='font-mono text-[0.62rem] text-muted-foreground tracking-[.06em]'>
                     / month
                   </span>
                 </div>
-                <p className='mb-6 min-h-[3.5rem] font-serif text-[0.88rem] font-light leading-relaxed text-muted-foreground'>
+                <p className='mb-6 min-h-[3.5rem] font-light font-serif text-[0.88rem] text-muted-foreground leading-relaxed'>
                   For wedding planners managing multiple couples. One dashboard, multiple events,
                   white-label ready.
                 </p>
@@ -558,26 +571,25 @@ export default function NonAuthenticatedView() {
                   ))}
                 </ul>
                 <a
-                  href='#'
-                  className='mt-auto block rounded-sm border border-border py-3.5 text-center font-mono text-[0.67rem] uppercase tracking-[.1em] text-foreground transition-all hover:-translate-y-0.5 hover:border-foreground'
+                  href='mailto:hello@oswp.dev'
+                  className='mt-auto block rounded-sm border border-border py-3.5 text-center font-mono text-[0.67rem] text-foreground uppercase tracking-[.1em] transition-all hover:-translate-y-0.5 hover:border-foreground'
                 >
                   Get in touch →
                 </a>
               </div>
-
             </div>
           </div>
 
-          <p className='mt-12 text-center font-mono text-[0.63rem] leading-[1.9] tracking-[.04em] text-muted-foreground'>
-            OSWP is source-available under FSL-1.1 — self-hosting is free forever, commercial hosting
-            rights are reserved.
+          <p className='mt-12 text-center font-mono text-[0.63rem] text-muted-foreground leading-[1.9] tracking-[.04em]'>
+            OSWP is source-available under FSL-1.1 — self-hosting is free forever, commercial
+            hosting rights are reserved.
             <br />
             Cloud hosting is how we fund continued development.{' '}
             <a
               href='https://github.com/dccakes/SCV'
               target='_blank'
               rel='noopener noreferrer'
-              className='border-b border-transparent text-primary transition-colors hover:border-primary'
+              className='border-transparent border-b text-primary transition-colors hover:border-primary'
             >
               Read our license ↗
             </a>
@@ -586,15 +598,15 @@ export default function NonAuthenticatedView() {
 
         {/* ── OSS BAND ─────────────────────────────────────────── */}
         <div className='relative overflow-hidden bg-primary px-6 py-24 text-center'>
-          <p className='mb-5 font-mono text-[0.63rem] uppercase tracking-[.2em] text-white/55'>
+          <p className='mb-5 font-mono text-[0.63rem] text-white/55 uppercase tracking-[.2em]'>
             Free &amp; Open Source
           </p>
-          <h2 className='font-serif text-[clamp(2rem,4vw,3rem)] font-normal text-white'>
+          <h2 className='font-normal font-serif text-[clamp(2rem,4vw,3rem)] text-white'>
             Built with love.
             <br />
             Shared with everyone.
           </h2>
-          <p className='mx-auto mt-5 max-w-lg font-serif text-[1rem] font-light leading-[1.75] text-white/70'>
+          <p className='mx-auto mt-5 max-w-lg font-light font-serif text-[1rem] text-white/70 leading-[1.75]'>
             OSWP is source-available under FSL-1.1 and built in the open. Star it, fork it,
             contribute, or self-host for free. No guest limits. No data harvested. Etta included.
           </p>
@@ -603,13 +615,15 @@ export default function NonAuthenticatedView() {
               href='https://github.com/dccakes/SCV'
               target='_blank'
               rel='noopener noreferrer'
-              className='inline-flex items-center gap-2 rounded-sm bg-background px-7 py-3.5 font-mono text-[0.67rem] uppercase tracking-[.1em] text-primary transition-all hover:-translate-y-0.5 hover:opacity-90'
+              className='inline-flex items-center gap-2 rounded-sm bg-background px-7 py-3.5 font-mono text-[0.67rem] text-primary uppercase tracking-[.1em] transition-all hover:-translate-y-0.5 hover:opacity-90'
             >
               ⌘ Star on GitHub
             </a>
             <a
-              href='#'
-              className='inline-flex items-center gap-2 rounded-sm border border-white/35 px-7 py-3.5 font-mono text-[0.67rem] uppercase tracking-[.1em] text-white transition-all hover:-translate-y-0.5 hover:border-white'
+              href='https://github.com/dccakes/SCV#readme'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='inline-flex items-center gap-2 rounded-sm border border-white/35 px-7 py-3.5 font-mono text-[0.67rem] text-white uppercase tracking-[.1em] transition-all hover:-translate-y-0.5 hover:border-white'
             >
               Read the docs →
             </a>
@@ -617,30 +631,36 @@ export default function NonAuthenticatedView() {
         </div>
 
         {/* ── FOOTER ───────────────────────────────────────────── */}
-        <footer className='mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-6 border-t border-border px-6 py-8 sm:flex-row md:px-12'>
+        <footer className='mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-6 border-border border-t px-6 py-8 sm:flex-row md:px-12'>
           <Link
             href='/'
-            className='font-mono text-[0.78rem] font-medium uppercase tracking-[.2em] text-foreground'
+            className='font-medium font-mono text-[0.78rem] text-foreground uppercase tracking-[.2em]'
           >
             OSWP
           </Link>
-          <p className='font-mono text-[0.6rem] tracking-[.08em] text-muted-foreground'>
+          <p className='font-mono text-[0.6rem] text-muted-foreground tracking-[.08em]'>
             FSL-1.1 License · Made with intention
           </p>
           <ul className='flex gap-6'>
-            {['Docs', 'GitHub', 'Discord', 'Changelog'].map((item) => (
-              <li key={item}>
+            {[
+              { label: 'Docs', href: 'https://github.com/dccakes/SCV#readme' },
+              { label: 'GitHub', href: 'https://github.com/dccakes/SCV' },
+              { label: 'Discord', href: 'https://github.com/dccakes/SCV/discussions' },
+              { label: 'Changelog', href: 'https://github.com/dccakes/SCV/releases' },
+            ].map(({ label, href }) => (
+              <li key={label}>
                 <a
-                  href='#'
-                  className='font-mono text-[0.6rem] uppercase tracking-[.1em] text-muted-foreground transition-colors hover:text-foreground'
+                  href={href}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='font-mono text-[0.6rem] text-muted-foreground uppercase tracking-[.1em] transition-colors hover:text-foreground'
                 >
-                  {item}
+                  {label}
                 </a>
               </li>
             ))}
           </ul>
         </footer>
-
       </div>
     </>
   )
