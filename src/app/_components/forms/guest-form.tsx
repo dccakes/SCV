@@ -9,6 +9,7 @@ import { IoMdClose } from 'react-icons/io'
 import { toast } from 'sonner'
 
 import { useToggleGuestForm } from '~/app/_components/contexts/guest-form-context'
+import InviteLinkBanner from '~/app/_components/dashboard/invite-link-banner'
 import AddFormButtons from '~/app/_components/forms/guest/add-buttons'
 import ContactForm from '~/app/_components/forms/guest/contact-form'
 import EditFormButtons from '~/app/_components/forms/guest/edit-buttons'
@@ -331,6 +332,15 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
               </AccordionItem>
             )}
           </Accordion>
+
+          {!isEditMode && (
+            <div className='border-t px-6 py-4'>
+              <p className='mb-2 text-muted-foreground text-xs'>
+                Tip: guests can also register themselves using your invite link.
+              </p>
+              <InviteLinkBanner />
+            </div>
+          )}
         </div>
 
         {isEditMode ? (

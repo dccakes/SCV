@@ -1,8 +1,8 @@
-import { Link2, Lock, Palette, Users } from 'lucide-react'
+import { Lock, Palette, Users } from 'lucide-react'
 import Link from 'next/link'
 import type { Dispatch, SetStateAction } from 'react'
 
-import SelfFillLinkManager from '~/app/_components/dashboard/self-fill-link-manager'
+import InviteLinkCard from '~/app/_components/dashboard/invite-link-card'
 import { Card, CardContent } from '~/components/ui/card'
 
 type SidebarPanelProps = {
@@ -55,14 +55,7 @@ export default function SidebarPanel({ setShowWebsiteSettings }: SidebarPanelPro
         </CardContent>
       </Card>
 
-      <Card className='border bg-card shadow-sm sm:col-span-3'>
-        <CardContent className='p-6'>
-          <div className='mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10'>
-            <Link2 className='h-4 w-4 text-primary' />
-          </div>
-          <SelfFillLinkManager />
-        </CardContent>
-      </Card>
+      <InviteLinkCard />
     </section>
   )
 }
