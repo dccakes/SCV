@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, act } from '@testing-library/react'
 import { usePathname } from 'next/navigation'
 
 import DashboardSidebar from '~/app/_components/dashboard/dashboard-sidebar'
@@ -31,21 +31,30 @@ describe('DashboardSidebar', () => {
     expect(dashboardLink).toHaveClass('border-primary')
   })
 
-  it('renders mobile hamburger button', () => {
+  it('does not mark inactive nav item as active', () => {
+    mockUsePathname.mockReturnValue('/dashboard')
     render(<DashboardSidebar />)
-    expect(screen.getByRole('button', { name: /open menu/i })).toBeInTheDocument()
+    const vendorsLink = screen.getByRole('link', { name: /vendors/i })
+    expect(vendorsLink).not.toHaveClass('border-primary')
   })
 
   it('shows couple names when coupleName prop is provided', () => {
-    render(<DashboardSidebar coupleName="Holly & Diego" weddingDate="17 May 2027" />)
+    render(<DashboardSidebar coupleName='Holly & Diego' weddingDate='17 May 2027' />)
     expect(screen.getByText('Holly & Diego')).toBeInTheDocument()
     expect(screen.getByText(/17 May 2027/)).toBeInTheDocument()
   })
 
-  it('opens mobile drawer when hamburger is clicked', () => {
+  it('does not render wedding chip when no coupleName or weddingDate is provided', () => {
     render(<DashboardSidebar />)
-    const hamburger = screen.getByRole('button', { name: /open menu/i })
-    fireEvent.click(hamburger)
+    expect(screen.queryByText(/May/)).not.toBeInTheDocument()
+  })
+
+  it('opens mobile drawer when dashboard:open-sidebar event is dispatched', () => {
+    render(<DashboardSidebar />)
+    expect(screen.queryByRole('button', { name: /close menu/i })).not.toBeInTheDocument()
+    act(() => {
+      window.dispatchEvent(new Event('dashboard:open-sidebar'))
+    })
     expect(screen.getByRole('button', { name: /close menu/i })).toBeInTheDocument()
   })
 })

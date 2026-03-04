@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 interface Message {
   id: string
@@ -28,6 +28,12 @@ export default function EttaPanel() {
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES)
   const [input, setInput] = useState('')
   const [proactiveDismissed, setProactiveDismissed] = useState(false)
+  const idCounter = useRef(100)
+
+  const nextId = () => {
+    idCounter.current += 1
+    return idCounter.current.toString()
+  }
 
   const now = () =>
     new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
@@ -36,9 +42,9 @@ export default function EttaPanel() {
     const text = input.trim()
     if (!text) return
 
-    const userMsg: Message = { id: Date.now().toString(), role: 'user', text, time: now() }
+    const userMsg: Message = { id: nextId(), role: 'user', text, time: now() }
     const ettaReply: Message = {
-      id: (Date.now() + 1).toString(),
+      id: nextId(),
       role: 'etta',
       text: "I'm processing that for you. I'll have an answer shortly — this feature is coming soon!",
       time: now(),

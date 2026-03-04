@@ -40,7 +40,6 @@ export default function Dashboard({
   const [collapseSections, setCollapseSections] = useState<boolean>(false)
   const [showRsvpSettings, setShowRsvpSettings] = useState<boolean>(false)
   const [showWebsiteSettings, setShowWebsiteSettings] = useState<boolean>(false)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const events = dashboardData?.events ?? []
 
@@ -64,37 +63,10 @@ export default function Dashboard({
         <EditRsvpSettingsForm website={dashboardData?.weddingData?.website} />
       )}
 
-      {/* Mobile sidebar drawer */}
-      {sidebarOpen && (
-        <div className='fixed inset-0 z-50 lg:hidden'>
-          <div
-            className='absolute inset-0 bg-black/50'
-            onClick={() => setSidebarOpen(false)}
-            aria-hidden='true'
-          />
-          <aside className='relative flex h-full w-64 flex-col bg-sidebar-ink'>
-            <button
-              type='button'
-              aria-label='Close sidebar'
-              onClick={() => setSidebarOpen(false)}
-              className='absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-md text-sidebar-cream/60 hover:text-sidebar-cream'
-            >
-              <svg
-                className='h-4 w-4'
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-                strokeWidth={1.5}
-              >
-                <path strokeLinecap='round' strokeLinejoin='round' d='M6 18L18 6M6 6l12 12' />
-              </svg>
-            </button>
-          </aside>
-        </div>
-      )}
-
       {/* Top bar */}
-      <DashboardTopbar onMenuToggle={() => setSidebarOpen(true)} />
+      <DashboardTopbar
+        onMenuToggle={() => window.dispatchEvent(new Event('dashboard:open-sidebar'))}
+      />
 
       {/* Content + Etta panel */}
       <div className='flex flex-1 overflow-hidden'>

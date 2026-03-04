@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import type { DashboardData, EventWithResponses } from '~/app/utils/shared-types'
 
@@ -52,8 +52,13 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData }) {
   const days = weddingData?.daysRemaining ?? 0
   const dateLabel = weddingData?.date?.standardFormat ?? ''
 
-  const hours = new Date().getHours()
-  const mins = new Date().getMinutes()
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60_000)
+    return () => clearInterval(timer)
+  }, [])
+  const hours = now.getHours()
+  const mins = now.getMinutes()
 
   // Rough planning progress (placeholder — 67% until real task tracking exists)
   const planningPct = 67

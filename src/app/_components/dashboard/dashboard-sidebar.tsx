@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 interface DashboardSidebarProps {
   coupleName?: string
@@ -47,6 +47,13 @@ function NavItem({ label, href, icon, isActive, onClick }: NavItemProps) {
 export default function DashboardSidebar({ coupleName, weddingDate }: DashboardSidebarProps) {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
+
+  // Listen for open-sidebar events dispatched by DashboardTopbar's hamburger
+  useEffect(() => {
+    const handler = () => setIsOpen(true)
+    window.addEventListener('dashboard:open-sidebar', handler)
+    return () => window.removeEventListener('dashboard:open-sidebar', handler)
+  }, [])
 
   const isActive = (href: string) => {
     if (href.includes('#')) return pathname === href.split('#')[0]
@@ -127,24 +134,6 @@ export default function DashboardSidebar({ coupleName, weddingDate }: DashboardS
 
   return (
     <>
-      {/* Mobile hamburger trigger — rendered outside sidebar, used by topbar */}
-      <button
-        type='button'
-        aria-label='Open menu'
-        onClick={() => setIsOpen(true)}
-        className='fixed top-3.5 left-3.5 z-40 flex h-8 w-8 items-center justify-center rounded-md text-foreground lg:hidden'
-      >
-        <svg
-          className='h-5 w-5'
-          fill='none'
-          stroke='currentColor'
-          viewBox='0 0 24 24'
-          strokeWidth={1.5}
-        >
-          <path strokeLinecap='round' strokeLinejoin='round' d='M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5' />
-        </svg>
-      </button>
-
       {/* Desktop sidebar */}
       <aside className='hidden lg:flex w-56 flex-shrink-0 flex-col overflow-hidden'>
         <SidebarContent />

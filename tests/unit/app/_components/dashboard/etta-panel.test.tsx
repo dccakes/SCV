@@ -23,9 +23,23 @@ describe('EttaPanel', () => {
     expect(screen.getByText(/etta noticed/i)).toBeInTheDocument()
   })
 
+  it('dismisses nudge when "Yes, help me" is clicked', () => {
+    render(<EttaPanel />)
+    const yesBtn = screen.getByRole('button', { name: /yes, help me/i })
+    fireEvent.click(yesBtn)
+    expect(screen.queryByText(/etta noticed/i)).not.toBeInTheDocument()
+  })
+
+  it('dismisses nudge when "Remind me later" is clicked', () => {
+    render(<EttaPanel />)
+    const laterBtn = screen.getByRole('button', { name: /remind me later/i })
+    fireEvent.click(laterBtn)
+    expect(screen.queryByText(/etta noticed/i)).not.toBeInTheDocument()
+  })
+
   it('renders at least 3 buttons (quick actions + suggestions + send)', () => {
     render(<EttaPanel />)
-    expect(screen.getAllByRole('button').length).toBeGreaterThan(2)
+    expect(screen.getAllByRole('button').length).toBeGreaterThanOrEqual(3)
   })
 
   it('renders the message input with correct placeholder', () => {
@@ -50,5 +64,33 @@ describe('EttaPanel', () => {
     const sendBtn = screen.getByRole('button', { name: /send/i })
     fireEvent.click(sendBtn)
     expect((input as HTMLInputElement).value).toBe('')
+    // User message should appear in the thread
+    expect(screen.getByText('Hello Etta')).toBeInTheDocument()
+  })
+
+  it('sends message and clears input when Enter key is pressed', () => {
+    render(<EttaPanel />)
+    const input = screen.getByPlaceholderText(/ask etta/i)
+    fireEvent.change(input, { target: { value: 'Enter key test' } })
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' })
+    expect((input as HTMLInputElement).value).toBe('')
+    expect(screen.getByText('Enter key test')).toBeInTheDocument()
+  })
+
+  it('does not send empty message when send button is clicked', () => {
+    render(<EttaPanel />)
+    const initialMessageCount = screen.getAllByText(/Etta · |You ·/).length
+    const sendBtn = screen.getByRole('button', { name: /send/i })
+    fireEvent.click(sendBtn)
+    // No new messages should be added
+    expect(screen.getAllByText(/Etta · |You ·/).length).toBe(initialMessageCount)
+  })
+
+  it('shows Etta reply after user sends a message', () => {
+    render(<EttaPanel />)
+    const input = screen.getByPlaceholderText(/ask etta/i)
+    fireEvent.change(input, { target: { value: 'Any reply?' } })
+    fireEvent.click(screen.getByRole('button', { name: /send/i }))
+    expect(screen.getByText(/coming soon/i)).toBeInTheDocument()
   })
 })
