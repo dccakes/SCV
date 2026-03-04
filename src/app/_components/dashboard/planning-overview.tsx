@@ -9,6 +9,7 @@ interface PlanningOverviewProps {
   dashboardData: DashboardData | null
 }
 
+// CardShell action link: uses text-foreground for accessible contrast on light card bg
 function CardShell({
   title,
   icon,
@@ -25,14 +26,14 @@ function CardShell({
   return (
     <div className='overflow-hidden rounded-lg border border-border bg-card'>
       <div className='flex items-center justify-between border-border border-b px-4 py-3'>
-        <p className='flex items-center gap-2 font-mono text-[0.62rem] text-muted-foreground uppercase tracking-widest'>
+        <p className='flex items-center gap-2 font-mono text-[0.62rem] text-foreground/60 uppercase tracking-widest'>
           <span>{icon}</span>
           {title}
         </p>
         {action && actionHref && (
           <Link
             href={actionHref}
-            className='font-mono text-[0.58rem] text-primary uppercase tracking-widest transition-opacity hover:opacity-70'
+            className='font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
           >
             {action}
           </Link>
@@ -148,7 +149,7 @@ function MiniStats({ dashboardData }: { dashboardData: DashboardData | null }) {
           <span className='text-xl opacity-60'>{s.icon}</span>
           <div className='min-w-0'>
             <div className='font-serif text-[1.4rem] text-foreground leading-none'>{s.val}</div>
-            <div className='font-mono text-[0.56rem] text-muted-foreground uppercase tracking-widest'>
+            <div className='font-mono text-[0.56rem] text-foreground/60 uppercase tracking-widest'>
               {s.label}
             </div>
           </div>
@@ -180,35 +181,39 @@ function RsvpCard({ dashboardData }: { dashboardData: DashboardData | null }) {
       <div className='mb-3 grid grid-cols-4 divide-x divide-border'>
         {[
           { val: attending, label: 'Confirmed', color: 'text-success' },
-          { val: pending, label: 'Pending', color: 'text-primary' },
-          { val: declined, label: 'Declined', color: 'text-muted-foreground' },
+          { val: pending, label: 'Pending', color: 'text-foreground' },
+          { val: declined, label: 'Declined', color: 'text-foreground/60' },
           { val: total, label: 'Invited', color: 'text-foreground' },
         ].map((s) => (
           <div key={s.label} className='px-2 text-center first:pl-0 last:pr-0'>
             <span className={`block font-serif text-[2rem] leading-none ${s.color}`}>{s.val}</span>
-            <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
+            <span className='font-mono text-[0.55rem] text-foreground/60 uppercase tracking-widest'>
               {s.label}
             </span>
           </div>
         ))}
       </div>
 
-      {/* Bar */}
-      <div className='mb-2 flex h-1.5 overflow-hidden rounded-full bg-border'>
+      {/* Bar — aria-label describes the segments */}
+      <div
+        className='mb-2 flex h-1.5 overflow-hidden rounded-full bg-border'
+        role='img'
+        aria-label={`RSVP breakdown: ${Math.round(confirmedPct)}% confirmed, ${Math.round(pendingPct)}% pending, ${Math.round(declinedPct)}% declined`}
+      >
         <div className='bg-success' style={{ width: `${confirmedPct}%` }} />
         <div className='bg-primary/50' style={{ width: `${pendingPct}%` }} />
-        <div className='bg-muted-foreground/30' style={{ width: `${declinedPct}%` }} />
+        <div className='bg-foreground/30' style={{ width: `${declinedPct}%` }} />
       </div>
 
       {pending > 0 && (
-        <p className='mb-3 font-mono text-[0.58rem] text-muted-foreground tracking-wider'>
+        <p className='mb-3 font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
           Still waiting on {pending} — check guest list for details
         </p>
       )}
 
       <Link
         href='/guest-list'
-        className='inline-block rounded-sm border border-primary/30 px-3 py-1 font-mono text-[0.58rem] text-primary uppercase tracking-widest transition-all hover:bg-primary hover:text-primary-foreground'
+        className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
       >
         Manage RSVPs →
       </Link>
@@ -278,7 +283,7 @@ function TasksCard() {
   const tagClass: Record<string, string> = {
     Vendor: 'bg-success/12 text-success',
     Admin: 'bg-accent/12 text-accent-foreground',
-    Urgent: 'bg-primary/10 text-primary',
+    Urgent: 'bg-primary/10 text-foreground',
     Overdue: 'bg-destructive/10 text-destructive',
   }
 
@@ -290,10 +295,10 @@ function TasksCard() {
             type='button'
             key={task.id}
             onClick={() => toggle(task.id)}
-            className='flex w-full items-center gap-2.5 rounded px-2 py-2 text-left transition-colors hover:bg-muted'
+            className='flex min-h-[44px] w-full items-center gap-2.5 rounded px-2 py-2.5 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
           >
             <span
-              className={`flex h-3.5 w-3.5 flex-shrink-0 items-center justify-center rounded-sm border text-[0.55rem] transition-all ${
+              className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-sm border text-[0.6rem] transition-all ${
                 task.done
                   ? 'border-success bg-success text-white'
                   : 'border-border hover:border-success/70'
@@ -304,26 +309,26 @@ function TasksCard() {
             <span
               className={`flex-1 font-serif text-[0.9rem] leading-tight ${
                 task.done
-                  ? 'text-muted-foreground line-through decoration-muted-foreground/40'
+                  ? 'text-foreground/50 line-through decoration-foreground/25'
                   : 'text-foreground'
               }`}
             >
               {task.text}
             </span>
             <span
-              className={`flex-shrink-0 rounded-full px-2 py-0.5 font-mono text-[0.52rem] uppercase tracking-wider ${tagClass[task.tag] ?? 'bg-muted text-muted-foreground'}`}
+              className={`flex-shrink-0 rounded-full px-2 py-0.5 font-mono text-[0.52rem] uppercase tracking-wider ${tagClass[task.tag] ?? 'bg-muted text-foreground/60'}`}
             >
               {task.tag}
             </span>
             <span
-              className={`flex-shrink-0 font-mono text-[0.56rem] tracking-wider ${task.urgent ? 'text-primary' : 'text-muted-foreground'}`}
+              className={`flex-shrink-0 font-mono text-[0.56rem] tracking-wider ${task.urgent ? 'text-foreground/80' : 'text-foreground/50'}`}
             >
               {task.due}
             </span>
           </button>
         ))}
       </div>
-      <p className='mt-3 font-mono text-[0.56rem] text-muted-foreground/60 tracking-wider'>
+      <p className='mt-3 font-mono text-[0.56rem] text-foreground/50 tracking-wider'>
         Task tracking coming soon — these are placeholders
       </p>
     </CardShell>
@@ -335,7 +340,7 @@ function BudgetCard() {
     { name: 'Venue', pct: 90, color: 'bg-success' },
     { name: 'Catering', pct: 60, color: 'bg-accent' },
     { name: 'Photography', pct: 45, color: 'bg-primary' },
-    { name: 'Flowers', pct: 30, color: 'bg-muted-foreground' },
+    { name: 'Flowers', pct: 30, color: 'bg-foreground/40' },
     { name: 'Other', pct: 12, color: 'bg-border' },
   ]
 
@@ -343,14 +348,14 @@ function BudgetCard() {
     <CardShell title='Budget' icon='◧' action='Details →' actionHref='/dashboard#website-editor'>
       <div className='mb-3 flex items-baseline gap-2'>
         <span className='font-serif text-[2.2rem] text-foreground leading-none'>—</span>
-        <span className='font-mono text-[0.65rem] text-muted-foreground tracking-wider'>
+        <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
           Budget tracking coming soon
         </span>
       </div>
       <div className='mb-2 h-2 overflow-hidden rounded-full bg-border'>
         <div className='h-full w-0 rounded-full bg-gradient-to-r from-success to-accent' />
       </div>
-      <div className='mb-4 font-mono text-[0.58rem] text-muted-foreground tracking-wider'>
+      <div className='mb-4 font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
         Set up your budget to track spending
       </div>
       <div className='flex flex-col gap-2'>
@@ -361,7 +366,7 @@ function BudgetCard() {
             <div className='h-[3px] w-14 overflow-hidden rounded-full bg-border'>
               <div className={`h-full rounded-full ${c.color}`} style={{ width: `${c.pct}%` }} />
             </div>
-            <span className='w-10 text-right font-mono text-[0.6rem] text-muted-foreground tracking-wider'>
+            <span className='w-10 text-right font-mono text-[0.6rem] text-foreground/60 tracking-wider'>
               —
             </span>
           </div>
@@ -371,60 +376,60 @@ function BudgetCard() {
   )
 }
 
-function VendorsCard() {
-  const placeholderVendors = [
-    {
-      initials: 'V1',
-      name: 'Ceremony Venue',
-      type: 'Venue',
-      status: 'Confirmed',
-      statusColor: 'bg-success/12 text-success',
-    },
-    {
-      initials: 'V2',
-      name: 'Photographer',
-      type: 'Photography',
-      status: 'Confirmed',
-      statusColor: 'bg-success/12 text-success',
-    },
-    {
-      initials: 'V3',
-      name: 'Caterer',
-      type: 'Catering',
-      status: 'Deposit due',
-      statusColor: 'bg-destructive/10 text-destructive',
-    },
-    {
-      initials: 'V4',
-      name: 'Florist',
-      type: 'Flowers',
-      status: 'Confirmed',
-      statusColor: 'bg-success/12 text-success',
-    },
-    {
-      initials: '—',
-      name: 'Hair & Makeup',
-      type: 'Beauty',
-      status: 'Searching',
-      statusColor: 'bg-accent/12 text-accent-foreground',
-    },
-  ]
+const PLACEHOLDER_VENDORS = [
+  {
+    initials: 'V1',
+    name: 'Ceremony Venue',
+    type: 'Venue',
+    status: 'Confirmed',
+    statusColor: 'bg-success/12 text-success',
+  },
+  {
+    initials: 'V2',
+    name: 'Photographer',
+    type: 'Photography',
+    status: 'Confirmed',
+    statusColor: 'bg-success/12 text-success',
+  },
+  {
+    initials: 'V3',
+    name: 'Caterer',
+    type: 'Catering',
+    status: 'Deposit due',
+    statusColor: 'bg-destructive/10 text-destructive',
+  },
+  {
+    initials: 'V4',
+    name: 'Florist',
+    type: 'Flowers',
+    status: 'Confirmed',
+    statusColor: 'bg-success/12 text-success',
+  },
+  {
+    initials: '—',
+    name: 'Hair & Makeup',
+    type: 'Beauty',
+    status: 'Searching',
+    statusColor: 'bg-accent/12 text-accent-foreground',
+  },
+]
 
+function VendorsCard() {
   return (
     <CardShell title='Vendors' icon='◐' action='Manage →' actionHref='/vendors'>
       <div className='flex flex-col gap-1'>
-        {placeholderVendors.map((v) => (
+        {PLACEHOLDER_VENDORS.map((v) => (
           <Link
             key={v.name}
             href='/vendors'
-            className='flex items-center gap-2.5 rounded px-2 py-2 transition-colors hover:bg-muted'
+            className='flex min-h-[44px] items-center gap-2.5 rounded px-2 py-2 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
           >
-            <span className='flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-muted font-medium font-mono text-[0.6rem] text-muted-foreground uppercase'>
+            <span className='flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-muted font-medium font-mono text-[0.6rem] text-foreground/60 uppercase'>
               {v.initials}
             </span>
             <div className='min-w-0 flex-1'>
               <p className='truncate font-serif text-[0.88rem] text-foreground'>{v.name}</p>
-              <p className='font-mono text-[0.56rem] text-muted-foreground uppercase tracking-widest'>
+              <p className='font-mono text-[0.56rem] text-foreground/60 uppercase tracking-widest'>
                 {v.type}
               </p>
             </div>
@@ -436,7 +441,7 @@ function VendorsCard() {
           </Link>
         ))}
       </div>
-      <p className='mt-3 font-mono text-[0.56rem] text-muted-foreground/60 tracking-wider'>
+      <p className='mt-3 font-mono text-[0.56rem] text-foreground/50 tracking-wider'>
         Showing placeholder data — manage real vendors →
       </p>
     </CardShell>
@@ -485,7 +490,9 @@ function MilestonesCard({ dashboardData }: { dashboardData: DashboardData | null
             <div>
               <p
                 className={`font-serif text-[0.88rem] leading-tight ${
-                  'highlight' in m && m.highlight ? 'text-primary italic' : 'text-foreground'
+                  'highlight' in m && m.highlight
+                    ? 'font-semibold text-foreground italic'
+                    : 'text-foreground'
                 }`}
               >
                 {m.title}
@@ -493,7 +500,7 @@ function MilestonesCard({ dashboardData }: { dashboardData: DashboardData | null
               </p>
               <p
                 className={`mt-0.5 font-mono text-[0.58rem] tracking-wider ${
-                  m.status === 'today' ? 'text-primary' : 'text-muted-foreground'
+                  m.status === 'today' ? 'text-foreground/80' : 'text-foreground/60'
                 }`}
               >
                 {m.date}

@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { useEditRsvpSettingsForm } from '~/app/_components/contexts/edit-rsvp-settings-form-context'
 import { useEventForm } from '~/app/_components/contexts/event-form-context'
+import { useSidebar } from '~/app/_components/dashboard/dashboard-shell'
 import DashboardTopbar from '~/app/_components/dashboard/dashboard-topbar'
 import EttaPanel from '~/app/_components/dashboard/etta-panel'
 import DashboardHeader from '~/app/_components/dashboard/header'
@@ -28,18 +29,19 @@ export default function Dashboard({
   uploadImage: (formData: FormData) => Promise<{ ok: boolean }>
   deleteImage: (imageKey: string) => Promise<{ ok: boolean }>
 }) {
+  const { openSidebar } = useSidebar()
   const isEventFormOpen = useEventForm()
   const showEditRsvpSettings = useEditRsvpSettingsForm()
-  const [showRegistrySetup, setShowRegistrySetup] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('registrySectionStatus') !== 'hidden'
-    }
-    return true
-  })
+  // SSR-safe: start true, sync from localStorage after mount
+  const [showRegistrySetup, setShowRegistrySetup] = useState(true)
   const [prefillEvent, setPrefillEvent] = useState<EventFormData | undefined>()
   const [collapseSections, _setCollapseSections] = useState<boolean>(false)
   const [showRsvpSettings, setShowRsvpSettings] = useState<boolean>(false)
   const [showWebsiteSettings, setShowWebsiteSettings] = useState<boolean>(false)
+
+  useEffect(() => {
+    setShowRegistrySetup(localStorage.getItem('registrySectionStatus') !== 'hidden')
+  }, [])
 
   const events = dashboardData?.events ?? []
 
@@ -64,9 +66,7 @@ export default function Dashboard({
       )}
 
       {/* Top bar */}
-      <DashboardTopbar
-        onMenuToggle={() => window.dispatchEvent(new Event('dashboard:open-sidebar'))}
-      />
+      <DashboardTopbar onMenuToggle={openSidebar} />
 
       {/* Content + Etta panel */}
       <div className='flex min-h-0 flex-1 overflow-hidden'>

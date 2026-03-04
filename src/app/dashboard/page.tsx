@@ -101,10 +101,6 @@ export default async function DashboardPage() {
   }
 
   return (
-    <Dashboard
-      dashboardData={dashboardData}
-      uploadImage={uploadImage}
-      deleteImage={deleteImage}
-    />
+    <Dashboard dashboardData={dashboardData} uploadImage={uploadImage} deleteImage={deleteImage} />
   )
 }

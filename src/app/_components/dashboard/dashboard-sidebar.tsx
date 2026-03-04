@@ -2,9 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface DashboardSidebarProps {
+  isOpen: boolean
+  setIsOpen: (open: boolean) => void
   coupleName?: string
   weddingDate?: string
 }
@@ -35,7 +37,7 @@ function NavItem({ label, href, icon, isActive, isCollapsed, onClick }: NavItemP
       onClick={onClick}
       title={label}
       aria-label={label}
-      className={`flex items-center border-l-2 py-2.5 font-mono text-xs uppercase tracking-widest transition-all ${
+      className={`flex items-center border-l-2 py-2.5 font-mono text-xs uppercase tracking-widest transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-inset ${
         isCollapsed ? 'justify-center px-2' : 'gap-2.5 px-4'
       } ${
         isActive
@@ -89,8 +91,9 @@ function SidebarContent({
           <button
             type='button'
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-expanded={!isCollapsed}
             onClick={onToggleCollapse}
-            className='flex h-7 w-7 items-center justify-center rounded-md text-sidebar-cream/55 transition-colors hover:bg-white/[0.08] hover:text-sidebar-cream'
+            className='flex h-11 w-11 items-center justify-center rounded-md text-sidebar-cream/55 transition-colors hover:bg-white/[0.08] hover:text-sidebar-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar-ink'
           >
             <svg
               aria-hidden='true'
@@ -135,7 +138,7 @@ function SidebarContent({
       {/* Nav */}
       <nav className='flex flex-1 flex-col gap-px py-3'>
         {!isCollapsed && (
-          <p className='px-4 pt-2 pb-1 font-mono text-[0.55rem] text-sidebar-cream/50 uppercase tracking-[0.18em]'>
+          <p className='px-4 pt-2 pb-1 font-mono text-[0.55rem] text-sidebar-cream/80 uppercase tracking-[0.18em]'>
             Planning
           </p>
         )}
@@ -150,7 +153,7 @@ function SidebarContent({
         ))}
 
         {!isCollapsed && (
-          <p className='mt-2 px-4 pt-2 pb-1 font-mono text-[0.55rem] text-sidebar-cream/50 uppercase tracking-[0.18em]'>
+          <p className='mt-2 px-4 pt-2 pb-1 font-mono text-[0.55rem] text-sidebar-cream/80 uppercase tracking-[0.18em]'>
             Settings
           </p>
         )}
@@ -191,20 +194,61 @@ function SidebarContent({
   )
 }
 
-export default function DashboardSidebar({ coupleName, weddingDate }: DashboardSidebarProps) {
+export default function DashboardSidebar({
+  isOpen,
+  setIsOpen,
+  coupleName,
+  weddingDate,
+}: DashboardSidebarProps) {
   const pathname = usePathname()
-  const [isOpen, setIsOpen] = useState(false)
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return localStorage.getItem('sidebar-collapsed') === 'true'
-  })
+  // Start collapsed=false for SSR safety; sync from localStorage on client after mount
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const drawerRef = useRef<HTMLDivElement>(null)
+  const closeButtonRef = useRef<HTMLButtonElement>(null)
 
-  // Listen for open-sidebar events dispatched by DashboardTopbar's hamburger
   useEffect(() => {
-    const handler = () => setIsOpen(true)
-    window.addEventListener('dashboard:open-sidebar', handler)
-    return () => window.removeEventListener('dashboard:open-sidebar', handler)
+    const saved = localStorage.getItem('sidebar-collapsed') === 'true'
+    setIsCollapsed(saved)
   }, [])
+
+  // Focus trap + Escape key handler when mobile drawer is open
+  useEffect(() => {
+    if (!isOpen) return
+
+    closeButtonRef.current?.focus()
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false)
+        return
+      }
+      if (e.key !== 'Tab') return
+
+      const drawer = drawerRef.current
+      if (!drawer) return
+
+      const focusable = drawer.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault()
+          last?.focus()
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault()
+          first?.focus()
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, setIsOpen])
 
   const isActive = (href: string) => {
     if (href.includes('#')) return pathname === href.split('#')[0]
@@ -223,7 +267,7 @@ export default function DashboardSidebar({ coupleName, weddingDate }: DashboardS
     <>
       {/* Desktop sidebar — collapses between w-14 and w-56 */}
       <aside
-        className={`hidden flex-shrink-0 flex-col overflow-hidden transition-[width] duration-200 lg:flex ${
+        className={`hidden flex-shrink-0 flex-col overflow-hidden motion-safe:transition-[width] motion-safe:duration-200 lg:flex ${
           isCollapsed ? 'w-14' : 'w-56'
         }`}
       >
@@ -238,7 +282,13 @@ export default function DashboardSidebar({ coupleName, weddingDate }: DashboardS
 
       {/* Mobile drawer — full-width overlay, never collapsed */}
       {isOpen && (
-        <div className='fixed inset-0 z-50 lg:hidden'>
+        <div
+          ref={drawerRef}
+          role='dialog'
+          aria-modal='true'
+          aria-label='Navigation menu'
+          className='fixed inset-0 z-50 lg:hidden'
+        >
           <div
             className='absolute inset-0 bg-black/60'
             onClick={() => setIsOpen(false)}
@@ -255,10 +305,11 @@ export default function DashboardSidebar({ coupleName, weddingDate }: DashboardS
               showCollapseToggle={false}
             />
             <button
+              ref={closeButtonRef}
               type='button'
               aria-label='Close menu'
               onClick={() => setIsOpen(false)}
-              className='absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-md text-sidebar-cream/50 transition-colors hover:bg-white/[0.06] hover:text-sidebar-cream'
+              className='absolute top-4 right-4 flex h-11 w-11 items-center justify-center rounded-md text-sidebar-cream/50 transition-colors hover:bg-white/[0.06] hover:text-sidebar-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar-ink'
             >
               <svg
                 aria-hidden='true'

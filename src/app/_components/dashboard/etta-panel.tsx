@@ -70,7 +70,7 @@ export default function EttaPanel() {
           </p>
         </div>
         <span className='flex items-center gap-1.5 font-mono text-[0.58rem] text-emerald-400'>
-          <span className='h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400' />
+          <span className='h-1.5 w-1.5 rounded-full bg-emerald-400 motion-safe:animate-pulse' />
           online
         </span>
       </div>
@@ -88,14 +88,14 @@ export default function EttaPanel() {
             <button
               type='button'
               onClick={() => setProactiveDismissed(true)}
-              className='rounded-sm bg-primary px-3 py-1 font-mono text-[0.58rem] text-white uppercase tracking-widest transition-all hover:bg-accent'
+              className='min-h-[44px] rounded-sm bg-primary px-3 py-2 font-mono text-[0.58rem] text-white uppercase tracking-widest transition-all hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-etta-ink'
             >
               Yes, help me
             </button>
             <button
               type='button'
               onClick={() => setProactiveDismissed(true)}
-              className='rounded-sm border border-white/25 px-3 py-1 font-mono text-[0.58rem] text-sidebar-cream/75 uppercase tracking-widest transition-all hover:border-accent/60 hover:text-accent'
+              className='min-h-[44px] rounded-sm border border-white/25 px-3 py-2 font-mono text-[0.58rem] text-sidebar-cream/75 uppercase tracking-widest transition-all hover:border-accent/60 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-etta-ink'
             >
               Remind me later
             </button>
@@ -104,7 +104,12 @@ export default function EttaPanel() {
       )}
 
       {/* ── Messages ────────────────────────────────────────────────────── */}
-      <div className='flex flex-1 flex-col gap-3 overflow-y-auto px-3 py-3 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:bg-white/15 [&::-webkit-scrollbar]:w-[3px]'>
+      <div
+        role='log'
+        aria-live='polite'
+        aria-label='Conversation with Etta'
+        className='flex flex-1 flex-col gap-3 overflow-y-auto px-3 py-3 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:bg-white/15 [&::-webkit-scrollbar]:w-[3px]'
+      >
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -137,7 +142,7 @@ export default function EttaPanel() {
             key={s}
             type='button'
             onClick={() => setInput(s)}
-            className='rounded border border-white/15 bg-white/[0.05] px-3 py-2 text-left font-mono text-[0.58rem] text-sidebar-cream/70 tracking-wider transition-all hover:border-accent/50 hover:bg-accent/[0.08] hover:text-sidebar-cream'
+            className='min-h-[44px] rounded border border-white/15 bg-white/[0.05] px-3 py-2 text-left font-mono text-[0.58rem] text-sidebar-cream/70 tracking-wider transition-all hover:border-accent/50 hover:bg-accent/[0.08] hover:text-sidebar-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-etta-ink'
           >
             &ldquo;{s}&rdquo;
           </button>
@@ -152,13 +157,13 @@ export default function EttaPanel() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder='Ask Etta anything…'
-          className='flex-1 rounded border border-white/15 bg-white/[0.07] px-3 py-2 font-serif text-[0.82rem] text-sidebar-cream/80 italic outline-none placeholder:text-sidebar-cream/40 focus:border-accent/60 focus:text-sidebar-cream'
+          className='flex-1 rounded border border-white/15 bg-white/[0.07] px-3 py-2 font-serif text-[0.82rem] text-sidebar-cream/80 italic placeholder:text-sidebar-cream/40 focus:border-accent/60 focus:text-sidebar-cream focus:outline-none focus:ring-2 focus:ring-accent/40'
         />
         <button
           type='button'
           aria-label='Send'
           onClick={sendMessage}
-          className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary text-sm text-white shadow transition-all hover:bg-accent hover:shadow-md'
+          className='flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-primary text-sm text-white shadow transition-all hover:bg-accent hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-etta-ink'
         >
           →
         </button>

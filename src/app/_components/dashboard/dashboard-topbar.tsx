@@ -15,12 +15,12 @@ export default function DashboardTopbar({ onMenuToggle }: DashboardTopbarProps) 
   return (
     <header className='flex h-14 flex-shrink-0 items-center justify-between border-border border-b bg-background/95 px-4 backdrop-blur-sm lg:px-6'>
       <div className='flex items-center gap-3'>
-        {/* Mobile menu trigger */}
+        {/* Mobile menu trigger — 44×44 touch target */}
         <button
           type='button'
           aria-label='Open sidebar'
           onClick={onMenuToggle}
-          className='flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:hidden'
+          className='flex h-11 w-11 items-center justify-center rounded-md text-foreground/60 transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2 lg:hidden'
         >
           <svg
             aria-hidden='true'
@@ -40,7 +40,7 @@ export default function DashboardTopbar({ onMenuToggle }: DashboardTopbarProps) 
 
         <div className='flex items-baseline gap-3'>
           <h1 className='font-serif text-foreground text-xl'>Dashboard</h1>
-          <span className='hidden font-mono text-[0.62rem] text-muted-foreground tracking-wider sm:block'>
+          <span className='hidden font-mono text-[0.62rem] text-foreground/60 tracking-wider sm:block'>
             {today}
           </span>
         </div>
@@ -50,21 +50,21 @@ export default function DashboardTopbar({ onMenuToggle }: DashboardTopbarProps) 
         <button
           type='button'
           aria-label='Export guest list'
-          className='hidden items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 font-mono text-[0.62rem] text-muted-foreground uppercase tracking-widest transition-all hover:border-foreground hover:text-foreground sm:flex'
+          className='hidden min-h-[44px] items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 font-mono text-[0.62rem] text-foreground/70 uppercase tracking-widest transition-all hover:border-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2 sm:flex'
         >
           Export guest list
         </button>
         <button
           type='button'
           aria-label='Send update'
-          className='hidden items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 font-mono text-[0.62rem] text-muted-foreground uppercase tracking-widest transition-all hover:border-foreground hover:text-foreground md:flex'
+          className='hidden min-h-[44px] items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 font-mono text-[0.62rem] text-foreground/70 uppercase tracking-widest transition-all hover:border-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2 md:flex'
         >
           Send update
         </button>
         <button
           type='button'
           aria-label='Add task'
-          className='flex items-center gap-1.5 rounded-sm bg-foreground px-3 py-1.5 font-mono text-[0.62rem] text-background uppercase tracking-widest transition-all hover:bg-primary hover:text-primary-foreground'
+          className='flex min-h-[44px] items-center gap-1.5 rounded-sm bg-foreground px-3 py-1.5 font-mono text-[0.62rem] text-background uppercase tracking-widest transition-all hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
         >
           + Add task
         </button>
