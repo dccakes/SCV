@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
+import { signOut } from '~/lib/auth-client'
 
 interface DashboardSidebarProps {
   isOpen: boolean
@@ -168,8 +169,8 @@ function SidebarContent({
         ))}
       </nav>
 
-      {/* Bottom profile */}
-      <div className='border-white/10 border-t p-3'>
+      {/* Bottom profile + sign out */}
+      <div className='border-white/10 border-t p-3 flex flex-col gap-1.5'>
         <div
           className={`flex items-center gap-2 rounded-md px-2 py-1.5 font-mono text-sidebar-cream/70 text-xs ${
             isCollapsed ? 'justify-center' : ''
@@ -189,6 +190,15 @@ function SidebarContent({
             </div>
           )}
         </div>
+        <button
+          type='button'
+          onClick={() => signOut({ fetchOptions: { onSuccess: () => { window.location.href = '/' } } })}
+          className={`flex items-center gap-2 rounded-sm border border-white/10 px-2 py-1.5 font-mono text-[0.58rem] text-sidebar-cream/45 uppercase tracking-widest transition-all hover:border-white/20 hover:text-sidebar-cream/75 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sidebar-cream/40 ${isCollapsed ? 'justify-center' : ''}`}
+          title='Sign out'
+        >
+          <span className='text-[0.7rem]'>↪</span>
+          {!isCollapsed && 'Sign out'}
+        </button>
       </div>
     </div>
   )

@@ -15,14 +15,14 @@ const cormorantGaramond = Cormorant_Garamond({
   subsets: ['latin'],
   weight: ['300', '400', '600'],
   style: ['normal', 'italic'],
-  variable: '--font-serif',
+  variable: '--font-cormorant',
   display: 'swap',
 })
 
 const dmMono = DM_Mono({
   subsets: ['latin'],
   weight: ['300', '400', '500'],
-  variable: '--font-mono',
+  variable: '--font-dm-mono',
   display: 'swap',
 })
 
@@ -30,7 +30,7 @@ const instrumentSerif = Instrument_Serif({
   subsets: ['latin'],
   weight: ['400'],
   style: ['normal', 'italic'],
-  variable: '--font-display',
+  variable: '--font-instrument',
   display: 'swap',
 })
 
@@ -90,7 +90,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang='en'
       suppressHydrationWarning
-      className={`${cormorantGaramond.variable} ${dmMono.variable} ${instrumentSerif.variable}`}
+      className={`${cormorantGaramond.variable} ${dmMono.variable} ${instrumentSerif.variable} font-serif antialiased`}
     >
       <body className='bg-background font-serif text-foreground antialiased'>
         <Providers>
