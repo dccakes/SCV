@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 
-import SidebarPanel from '~/app/_components/dashboard/sidebar-panel'
+import SidebarPanel from '~/app/_components/old_dashboard/sidebar-panel'
 
 describe('SidebarPanel', () => {
   it('should not show vendors in the dashboard sidebar panel', () => {

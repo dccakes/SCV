@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
-import EttaPanel from '~/app/_components/dashboard/etta-panel'
+import EttaPanel from '~/app/_components/old_dashboard/etta-panel'
 
 describe('EttaPanel', () => {
   it('renders the Etta heading', () => {

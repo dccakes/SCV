@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
-import SidebarNav, { type SidebarSection } from '~/components/nav/sidebar-nav'
+import SidebarNavContent, { type SidebarSection } from '~/components/nav/sidebar-nav-content'
 
 const sections: readonly SidebarSection[] = [
   {
@@ -16,10 +16,10 @@ const sections: readonly SidebarSection[] = [
   },
 ]
 
-describe('SidebarNav', () => {
+describe('SidebarNavContent', () => {
   it('should render section titles and links when expanded', () => {
     render(
-      <SidebarNav
+      <SidebarNavContent
         sections={sections}
         isCollapsed={false}
         isActive={(href) => href === '/dashboard'}
@@ -36,7 +36,12 @@ describe('SidebarNav', () => {
     const onNavClick = jest.fn()
 
     render(
-      <SidebarNav sections={sections} isCollapsed isActive={() => false} onNavClick={onNavClick} />
+      <SidebarNavContent
+        sections={sections}
+        isCollapsed
+        isActive={() => false}
+        onNavClick={onNavClick}
+      />
     )
 
     expect(screen.queryByText('Planning')).not.toBeInTheDocument()

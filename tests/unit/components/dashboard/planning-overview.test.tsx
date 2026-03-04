@@ -1,7 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
-
-import PlanningOverview from '~/app/_components/dashboard/planning-overview'
 import type { DashboardData } from '~/app/utils/shared-types'
+import PlanningOverview from '~/components/dashboard/planning-overview'
 
 const mockDashboardData = {
   weddingData: {

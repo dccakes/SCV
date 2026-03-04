@@ -1,4 +1,4 @@
-import { getSidebarWeddingInfo } from '~/app/_components/dashboard/sidebar-wedding-info'
+import { getSidebarWeddingInfo } from '~/app/_components/old_dashboard/sidebar-wedding-info'
 
 describe('getSidebarWeddingInfo', () => {
   it('returns formatted couple name and date when both first names are present', () => {

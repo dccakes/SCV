@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react'
 
-import AuthenicatedLayout from '~/app/[authenicated]/layout'
+import AuthenicatedLayout from '~/app/(authenicated)/layout'
 
-jest.mock('~/app/_components/dashboard/app-layout-shell', () => ({
-  AppLayoutShell: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid='app-layout-shell'>{children}</div>
+jest.mock('~/components/layout/authenticated-layout-frame', () => ({
+  AuthenticatedLayoutFrame: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid='authenticated-layout-frame'>{children}</div>
   ),
 }))
 
@@ -14,7 +14,7 @@ describe('AuthenicatedLayout', () => {
 
     render(element)
 
-    expect(screen.getByTestId('app-layout-shell')).toBeInTheDocument()
+    expect(screen.getByTestId('authenticated-layout-frame')).toBeInTheDocument()
     expect(screen.getByText('Protected Page')).toBeInTheDocument()
   })
 })
