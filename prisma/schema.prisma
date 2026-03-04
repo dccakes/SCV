@@ -34,6 +34,7 @@ model Wedding {
 
   // Add-on relationships
   website        Website?
+  vendors        Vendor[]
 }
 
 // Join table: Allows multiple users per wedding (co-management)
@@ -429,4 +430,69 @@ model GuestTagAssignment {
   @@unique([guestId, guestTagId]) // Prevent duplicate tag assignments
   @@index([guestId])
   @@index([guestTagId])
+}
+
+// Enum: Vendor service categories
+enum VendorCategory {
+  VENUE
+  CATERING
+  PHOTOGRAPHER
+  VIDEOGRAPHER
+  MUSIC
+  FLOWERS
+  OTHER
+}
+
+// Enum: Vendor selection lifecycle status
+enum VendorStatus {
+  NOT_AVAILABLE
+  DECLINED
+  IN_REVIEW
+  PRE_SELECTED
+  IN_NEGOTIATION
+  SELECTED
+}
+
+// Add-on: Vendor tracking per wedding
+model Vendor {
+  id           String         @id @default(uuid())
+  weddingId    String
+  wedding      Wedding        @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
+  category     VendorCategory
+  name         String
+  location     String?
+  website      String?
+  instagram    String?
+  status       VendorStatus   @default(IN_REVIEW)
+
+  // Main point of contact
+  contactName  String?
+  contactEmail String?
+  contactPhone String?
+
+  quotes       VendorQuote[]
+
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([weddingId])
+  @@index([weddingId, category])
+  @@index([weddingId, category, createdAt])
+}
+
+// Quotes submitted by a vendor for a wedding
+model VendorQuote {
+  id        String   @id @default(uuid())
+  vendorId  String
+  vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  price     Decimal  @db.Decimal(10, 2)
+  quoteDate DateTime @db.Date
+  notes     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([vendorId])
 }

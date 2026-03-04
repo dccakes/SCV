@@ -25,6 +25,7 @@ export const env = createEnv({
     AWS_S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
     // Optional: Vercel deployment vars
     VERCEL_BRANCH_URL: z.string().min(1).optional(),
+    VERCEL_URL: z.string().min(1).optional(),
     PORT: z.string().min(1).optional(),
     // Optional: OAuth providers
     GITHUB_CLIENT_ID: z.string().min(1).optional(),
@@ -39,7 +40,7 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
-    // NEXT_PUBLIC_APP_URL for Better Auth — falls back to https://${VERCEL_URL} if not set
+    // NEXT_PUBLIC_APP_URL for Better Auth — falls back to https://${VERCEL_BRANCH_URL} if not set
     NEXT_PUBLIC_APP_URL: z
       .string()
       .optional()
@@ -66,6 +67,7 @@ export const env = createEnv({
     AWS_S3_ACCESS_KEY_ID: process.env.AWS_S3_ACCESS_KEY_ID,
     AWS_S3_SECRET_ACCESS_KEY: process.env.AWS_S3_SECRET_ACCESS_KEY,
     VERCEL_BRANCH_URL: process.env.VERCEL_BRANCH_URL,
+    VERCEL_URL: process.env.VERCEL_URL,
     PORT: process.env.PORT,
     GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
     GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,

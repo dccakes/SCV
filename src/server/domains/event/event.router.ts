@@ -5,8 +5,6 @@
  * This is a thin layer that handles input validation and delegates to the service.
  */
 
-import { TRPCError } from '@trpc/server'
-
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
 import { eventService } from '~/server/domains/event'
 import {
@@ -15,27 +13,7 @@ import {
   updateCollectRsvpSchema,
   updateEventSchema,
 } from '~/server/domains/event/event.validator'
-import { db } from '~/server/infrastructure/database/client'
-
-/**
- * Helper to get user's wedding ID
- * TODO: Move to Wedding service or Application layer when refactoring cross-domain logic
- */
-async function getUserWeddingId(userId: string): Promise<string> {
-  const userWedding = await db.userWedding.findFirst({
-    where: { userId },
-    orderBy: { isPrimary: 'desc' },
-  })
-
-  if (!userWedding) {
-    throw new TRPCError({
-      code: 'NOT_FOUND',
-      message: 'No wedding found for user. Please complete onboarding first.',
-    })
-  }
-
-  return userWedding.weddingId
-}
+import { weddingService } from '~/server/domains/wedding'
 
 export const eventRouter = createTRPCRouter({
   /**
@@ -43,7 +21,7 @@ export const eventRouter = createTRPCRouter({
    * Auto-creates invitations for all existing guests
    */
   create: protectedProcedure.input(createEventSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await getUserWeddingId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
     return eventService.createEvent(weddingId, input)
   }),
 
@@ -52,7 +30,7 @@ export const eventRouter = createTRPCRouter({
    */
   getAllByUserId: publicProcedure.query(async ({ ctx }) => {
     if (!ctx.auth.userId) return undefined
-    const weddingId = await getUserWeddingId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
     return eventService.getWeddingEvents(weddingId)
   }),
 
@@ -61,7 +39,7 @@ export const eventRouter = createTRPCRouter({
    */
   getAllByUserIdWithStats: publicProcedure.query(async ({ ctx }) => {
     if (!ctx.auth.userId) return undefined
-    const weddingId = await getUserWeddingId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
     return eventService.getWeddingEventsWithStats(weddingId)
   }),
 
@@ -69,7 +47,7 @@ export const eventRouter = createTRPCRouter({
    * Update an existing event
    */
   update: protectedProcedure.input(updateEventSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await getUserWeddingId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
     return eventService.updateEvent(weddingId, input)
   }),
 
@@ -86,7 +64,7 @@ export const eventRouter = createTRPCRouter({
    * Delete an event
    */
   delete: protectedProcedure.input(deleteEventSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await getUserWeddingId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
     return eventService.deleteEvent(input.eventId, weddingId)
   }),
 })

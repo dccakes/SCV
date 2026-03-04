@@ -26,7 +26,7 @@ const config = {
     ],
   },
   env: {
-    // Resolve app URL: explicit env var → Vercel system var → localhost fallback
+    // Resolve app URL: explicit env var → Vercel branch URL → localhost fallback
     NEXT_PUBLIC_APP_URL:
       process.env.NEXT_PUBLIC_APP_URL ??
       (process.env.VERCEL_BRANCH_URL

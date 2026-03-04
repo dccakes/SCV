@@ -7,6 +7,7 @@ const NAV_LINKS = [
   { label: 'Dashboard', href: '/dashboard' },
   { label: 'Guest List', href: '/guest-list' },
   { label: 'Events', href: '/events' },
+  { label: 'Vendors', href: '/vendors' },
 ]
 
 export default function NavLinks() {
