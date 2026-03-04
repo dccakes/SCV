@@ -15,7 +15,7 @@ export default function DashboardTopbar({ onMenuToggle }: DashboardTopbarProps) 
   })
 
   return (
-    <header className='flex h-14 flex-shrink-0 items-center justify-between border-border border-b bg-background/95 px-4 backdrop-blur-sm lg:px-6'>
+    <header className='flex h-14 flex-shrink-0 items-center justify-between border-border/80 border-b bg-card/70 px-4 backdrop-blur-sm lg:px-6'>
       <div className='flex items-center gap-3'>
         {/* Mobile menu trigger — 44×44 touch target */}
         <button
@@ -42,7 +42,7 @@ export default function DashboardTopbar({ onMenuToggle }: DashboardTopbarProps) 
 
         <div className='flex items-baseline gap-3'>
           <h1 className='font-serif text-foreground text-xl'>Dashboard</h1>
-          <span className='hidden font-mono text-[0.62rem] text-foreground/60 tracking-wider sm:block'>
+          <span className='hidden font-mono text-[0.62rem] text-foreground/50 tracking-wider sm:block'>
             {today}
           </span>
         </div>

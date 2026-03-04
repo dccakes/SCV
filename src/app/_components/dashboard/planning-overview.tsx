@@ -24,16 +24,16 @@ function CardShell({
   children: React.ReactNode
 }) {
   return (
-    <div className='overflow-hidden rounded-lg border border-border bg-card'>
+    <div className='overflow-hidden rounded-lg border border-border/90 bg-card/85'>
       <div className='flex items-center justify-between border-border border-b px-4 py-3'>
-        <p className='flex items-center gap-2 font-mono text-[0.62rem] text-foreground/60 uppercase tracking-widest'>
+        <p className='flex items-center gap-2 font-mono text-[0.62rem] text-foreground/55 uppercase tracking-widest'>
           <span>{icon}</span>
           {title}
         </p>
         {action && actionHref && (
           <Link
             href={actionHref}
-            className='font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+            className='font-mono text-[0.58rem] text-primary uppercase tracking-widest transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
           >
             {action}
           </Link>
@@ -140,16 +140,16 @@ function MiniStats({ dashboardData }: { dashboardData: DashboardData | null }) {
   ]
 
   return (
-    <div className='grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border lg:grid-cols-4'>
+    <div className='grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border/90 bg-border lg:grid-cols-4'>
       {stats.map((s) => (
         <div
           key={s.label}
-          className='flex items-center gap-3 bg-card px-4 py-3 transition-colors hover:bg-muted'
+          className='flex items-center gap-3 bg-card/90 px-4 py-3 transition-colors hover:bg-secondary'
         >
-          <span className='text-xl opacity-60'>{s.icon}</span>
+          <span className='text-xl opacity-55'>{s.icon}</span>
           <div className='min-w-0'>
             <div className='font-serif text-[1.4rem] text-foreground leading-none'>{s.val}</div>
-            <div className='font-mono text-[0.56rem] text-foreground/60 uppercase tracking-widest'>
+            <div className='font-mono text-[0.56rem] text-foreground/55 uppercase tracking-widest'>
               {s.label}
             </div>
           </div>
@@ -472,7 +472,7 @@ function MilestonesCard({ dashboardData }: { dashboardData: DashboardData | null
 
   const dotClass = {
     done: 'bg-success border-success',
-    today: 'bg-primary border-primary shadow-[0_0_0_3px_rgba(var(--primary),0.15)]',
+    today: 'bg-primary border-primary shadow-[0_0_0_3px_rgba(196,99,58,0.18)]',
     upcoming: 'bg-card border-border',
   }
 

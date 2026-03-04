@@ -125,6 +125,16 @@ describe('DashboardSidebar', () => {
     expect(screen.getByRole('link', { name: /dashboard/i })).toHaveAttribute('title', 'Dashboard')
   })
 
+  it('uses softer default nav text opacity before hover', () => {
+    renderSidebar()
+    expect(screen.getByRole('link', { name: /vendors/i })).toHaveClass('text-sidebar-cream/50')
+  })
+
+  it('uses subtle section label color in the sidebar', () => {
+    renderSidebar()
+    expect(screen.getByText('Planning')).toHaveClass('text-sidebar-cream/25')
+  })
+
   // ── Mobile drawer ─────────────────────────────────────────────────────────────
 
   it('renders mobile drawer close button when isOpen is true', () => {

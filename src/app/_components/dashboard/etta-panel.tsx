@@ -65,7 +65,7 @@ export default function EttaPanel() {
         </div>
         <div className='min-w-0 flex-1'>
           <p className='font-serif text-[1rem] text-sidebar-cream italic leading-tight'>Etta</p>
-          <p className='font-mono text-[0.55rem] text-sidebar-cream/60 uppercase tracking-widest'>
+          <p className='font-mono text-[0.55rem] text-sidebar-cream/32 uppercase tracking-widest'>
             OSWP AI Planner
           </p>
         </div>
@@ -77,11 +77,11 @@ export default function EttaPanel() {
 
       {/* ── Proactive nudge ─────────────────────────────────────────────── */}
       {!proactiveDismissed && (
-        <div className='mx-3 mt-3 rounded-md border border-accent/40 bg-accent/[0.12] px-3 py-2.5'>
+        <div className='mx-3 mt-3 rounded-md border border-accent/24 bg-accent/[0.1] px-3 py-2.5'>
           <p className='mb-1.5 flex items-center gap-1.5 font-mono text-[0.58rem] text-accent uppercase tracking-widest'>
             ✦ Etta noticed
           </p>
-          <p className='font-serif text-[0.85rem] text-sidebar-cream/85 italic leading-relaxed'>
+          <p className='font-serif text-[0.85rem] text-sidebar-cream/75 italic leading-relaxed'>
             You have pending RSVPs and upcoming deadlines. Want me to help you stay on track?
           </p>
           <div className='mt-2.5 flex gap-2'>
@@ -95,7 +95,7 @@ export default function EttaPanel() {
             <button
               type='button'
               onClick={() => setProactiveDismissed(true)}
-              className='min-h-[44px] rounded-sm border border-white/25 px-3 py-2 font-mono text-[0.58rem] text-sidebar-cream/75 uppercase tracking-widest transition-all hover:border-accent/60 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-etta-ink'
+              className='min-h-[44px] rounded-sm border border-white/18 px-3 py-2 font-mono text-[0.58rem] text-sidebar-cream/60 uppercase tracking-widest transition-all hover:border-accent/60 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-etta-ink'
             >
               Remind me later
             </button>
@@ -118,14 +118,14 @@ export default function EttaPanel() {
             <div
               className={`max-w-[88%] rounded px-3 py-2 font-serif text-[0.82rem] leading-relaxed ${
                 msg.role === 'etta'
-                  ? 'rounded-tl-none bg-white/[0.08] text-sidebar-cream/95'
-                  : 'rounded-tr-none border border-primary/40 bg-primary/20 text-sidebar-cream italic'
+                  ? 'rounded-tl-none bg-white/[0.05] text-sidebar-cream/82'
+                  : 'rounded-tr-none border border-primary/25 bg-primary/18 text-sidebar-cream/88 italic'
               }`}
             >
               {msg.text}
             </div>
             <p
-              className={`mt-1 font-mono text-[0.52rem] text-sidebar-cream/50 tracking-wider ${
+              className={`mt-1 font-mono text-[0.52rem] text-sidebar-cream/22 tracking-wider ${
                 msg.role === 'user' ? 'text-right' : 'text-left'
               }`}
             >
@@ -142,7 +142,7 @@ export default function EttaPanel() {
             key={s}
             type='button'
             onClick={() => setInput(s)}
-            className='min-h-[44px] rounded border border-white/15 bg-white/[0.05] px-3 py-2 text-left font-mono text-[0.58rem] text-sidebar-cream/70 tracking-wider transition-all hover:border-accent/50 hover:bg-accent/[0.08] hover:text-sidebar-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-etta-ink'
+            className='min-h-[44px] rounded border border-white/7 bg-white/[0.04] px-3 py-2 text-left font-mono text-[0.58rem] text-sidebar-cream/45 tracking-wider transition-all hover:border-accent/30 hover:bg-accent/[0.06] hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-etta-ink'
           >
             &ldquo;{s}&rdquo;
           </button>
@@ -157,7 +157,7 @@ export default function EttaPanel() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder='Ask Etta anything…'
-          className='flex-1 rounded border border-white/15 bg-white/[0.07] px-3 py-2 font-serif text-[0.82rem] text-sidebar-cream/80 italic placeholder:text-sidebar-cream/40 focus:border-accent/60 focus:text-sidebar-cream focus:outline-none focus:ring-2 focus:ring-accent/40'
+          className='flex-1 rounded border border-white/8 bg-white/[0.05] px-3 py-2 font-serif text-[0.82rem] text-sidebar-cream/60 italic placeholder:text-sidebar-cream/28 focus:border-accent/40 focus:text-sidebar-cream/85 focus:outline-none focus:ring-2 focus:ring-accent/32'
         />
         <button
           type='button'

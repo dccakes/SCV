@@ -34,4 +34,9 @@ describe('DashboardTopbar', () => {
     render(<DashboardTopbar onMenuToggle={jest.fn()} />)
     expect(screen.getByRole('button', { name: /toggle theme/i })).toBeInTheDocument()
   })
+
+  it('uses the warm translucent topbar styling', () => {
+    render(<DashboardTopbar onMenuToggle={jest.fn()} />)
+    expect(screen.getByRole('banner')).toHaveClass('bg-card/70')
+  })
 })

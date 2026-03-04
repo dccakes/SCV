@@ -43,7 +43,7 @@ function NavItem({ label, href, icon, isActive, isCollapsed, onClick }: NavItemP
       } ${
         isActive
           ? 'border-primary bg-primary/15 text-sidebar-cream'
-          : 'border-transparent text-sidebar-cream/65 hover:bg-white/[0.06] hover:text-sidebar-cream'
+          : 'border-transparent text-sidebar-cream/50 hover:bg-white/[0.06] hover:text-sidebar-cream/85'
       }`}
     >
       <span className='flex-shrink-0 text-center text-base leading-none'>{icon}</span>
@@ -139,7 +139,7 @@ function SidebarContent({
       {/* Nav */}
       <nav className='flex flex-1 flex-col gap-px py-3'>
         {!isCollapsed && (
-          <p className='px-4 pt-2 pb-1 font-mono text-[0.55rem] text-sidebar-cream/80 uppercase tracking-[0.18em]'>
+          <p className='px-4 pt-2 pb-1 font-mono text-[0.55rem] text-sidebar-cream/25 uppercase tracking-[0.18em]'>
             Planning
           </p>
         )}
@@ -154,7 +154,7 @@ function SidebarContent({
         ))}
 
         {!isCollapsed && (
-          <p className='mt-2 px-4 pt-2 pb-1 font-mono text-[0.55rem] text-sidebar-cream/80 uppercase tracking-[0.18em]'>
+          <p className='mt-2 px-4 pt-2 pb-1 font-mono text-[0.55rem] text-sidebar-cream/25 uppercase tracking-[0.18em]'>
             Settings
           </p>
         )}
@@ -192,7 +192,15 @@ function SidebarContent({
         </div>
         <button
           type='button'
-          onClick={() => signOut({ fetchOptions: { onSuccess: () => { window.location.href = '/' } } })}
+          onClick={() =>
+            signOut({
+              fetchOptions: {
+                onSuccess: () => {
+                  window.location.href = '/'
+                },
+              },
+            })
+          }
           className={`flex items-center gap-2 rounded-sm border border-white/10 px-2 py-1.5 font-mono text-[0.58rem] text-sidebar-cream/45 uppercase tracking-widest transition-all hover:border-white/20 hover:text-sidebar-cream/75 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sidebar-cream/40 ${isCollapsed ? 'justify-center' : ''}`}
           title='Sign out'
         >

@@ -93,4 +93,9 @@ describe('EttaPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: /send/i }))
     expect(screen.getByText(/coming soon/i)).toBeInTheDocument()
   })
+
+  it('uses muted metadata styling for message timestamps', () => {
+    render(<EttaPanel />)
+    expect(screen.getByText(/Etta ·/)).toHaveClass('text-sidebar-cream/22')
+  })
 })
