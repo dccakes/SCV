@@ -17,8 +17,12 @@ model Wedding {
   brideFirstName String
   brideLastName  String
   enabledAddOns  String[]        @default([]) // e.g., ["website", "tasks", "gifts"]
+  selfFillToken            String?   @unique  // Unique token for self-fill guest registration link
+  selfFillTokenGeneratedAt DateTime?           // When the current token was generated (enables expiry)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+
+  @@index([selfFillToken, selfFillTokenGeneratedAt])
 
   // User relationships (many-to-many through UserWedding)
   userWeddings   UserWedding[]
@@ -239,6 +243,7 @@ model Guest {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
+  @@unique([weddingId, email])  // Prevent duplicate email registrations per wedding (NULLs excluded)
   @@index([weddingId])
   @@index([householdId])
   // not supported in postgres - TODO: ensure rsvp search functionality is unaffected

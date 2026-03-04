@@ -2,6 +2,7 @@ import { Lock, Palette, Users } from 'lucide-react'
 import Link from 'next/link'
 import type { Dispatch, SetStateAction } from 'react'
 
+import InviteLinkCard from '~/app/_components/dashboard/invite-link-card'
 import { Card, CardContent } from '~/components/ui/card'
 
 type SidebarPanelProps = {
@@ -53,6 +54,8 @@ export default function SidebarPanel({ setShowWebsiteSettings }: SidebarPanelPro
           </button>
         </CardContent>
       </Card>
+
+      <InviteLinkCard />
     </section>
   )
 }

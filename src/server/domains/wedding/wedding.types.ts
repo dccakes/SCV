@@ -15,6 +15,8 @@ export type Wedding = {
   brideFirstName: string
   brideLastName: string
   enabledAddOns: string[] // e.g., ["website", "tasks", "gifts"]
+  selfFillToken: string | null
+  selfFillTokenGeneratedAt: Date | null
   createdAt: Date
   updatedAt: Date
 }
