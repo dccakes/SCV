@@ -59,6 +59,8 @@ const config = {
           DEFAULT: 'var(--card)',
           foreground: 'var(--card-foreground)',
         },
+        'sidebar-ink': 'var(--sidebar-ink)',
+        'sidebar-cream': 'var(--sidebar-cream)',
       },
       borderRadius: {
         lg: 'var(--radius)',

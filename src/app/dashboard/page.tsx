@@ -2,7 +2,6 @@ import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Dashboard from '~/app/_components/dashboard'
-import { sharedStyles } from '~/app/utils/shared-styles'
 import { env } from '~/env'
 import { api } from '~/trpc/server'
 
@@ -102,12 +101,10 @@ export default async function DashboardPage() {
   }
 
   return (
-    <main className={`${sharedStyles.desktopPaddingSides} ${sharedStyles.minPageWidth}`}>
-      <Dashboard
-        dashboardData={dashboardData}
-        uploadImage={uploadImage}
-        deleteImage={deleteImage}
-      />
-    </main>
+    <Dashboard
+      dashboardData={dashboardData}
+      uploadImage={uploadImage}
+      deleteImage={deleteImage}
+    />
   )
 }

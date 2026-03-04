@@ -1,8 +1,7 @@
 import '~/styles/globals.css'
 
 import { EditRsvpSettingsFormProvider } from '~/app/_components/contexts/edit-rsvp-settings-form-context'
-import Footer from '~/app/_components/footer'
-import Navbar from '~/app/_components/navbar'
+import DashboardSidebar from '~/app/_components/dashboard/dashboard-sidebar'
 import { TRPCReactProvider } from '~/trpc/react'
 
 export const metadata = {
@@ -15,9 +14,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <TRPCReactProvider>
       <EditRsvpSettingsFormProvider>
-        <Navbar />
-        {children}
-        <Footer />
+        <div className='flex h-screen overflow-hidden bg-background'>
+          <DashboardSidebar />
+          <div className='flex flex-1 flex-col overflow-hidden'>{children}</div>
+        </div>
       </EditRsvpSettingsFormProvider>
     </TRPCReactProvider>
   )

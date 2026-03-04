@@ -63,6 +63,9 @@
 
     --sidebar-ring: oklch(0.7357 0.1641 34.7091);
 
+    --sidebar-ink: oklch(0.22 0.015 28);
+    --sidebar-cream: oklch(0.96 0.01 56);
+
     --font-sans: Montserrat, sans-serif;
 
     --font-serif: Merriweather, serif;
@@ -152,6 +155,8 @@
     --sidebar-accent-foreground: oklch(0.2569 0.0169 352.4042);
     --sidebar-border: oklch(0.3637 0.0203 342.2664);
     --sidebar-ring: oklch(0.7357 0.1641 34.7091);
+    --sidebar-ink: oklch(0.22 0.015 28);
+    --sidebar-cream: oklch(0.96 0.01 56);
     --font-sans: Montserrat, sans-serif;
     --font-serif: Merriweather, serif;
     --font-mono: Ubuntu Mono, monospace;

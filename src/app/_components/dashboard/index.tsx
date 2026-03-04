@@ -4,9 +4,11 @@ import { useState } from 'react'
 
 import { useEditRsvpSettingsForm } from '~/app/_components/contexts/edit-rsvp-settings-form-context'
 import { useEventForm } from '~/app/_components/contexts/event-form-context'
-import DashboardControls from '~/app/_components/dashboard/controls'
+import DashboardTopbar from '~/app/_components/dashboard/dashboard-topbar'
+import EttaPanel from '~/app/_components/dashboard/etta-panel'
 import DashboardHeader from '~/app/_components/dashboard/header'
 import PageSectionsTemplate from '~/app/_components/dashboard/page-section-template'
+import PlanningOverview from '~/app/_components/dashboard/planning-overview'
 import RegistrySetup from '~/app/_components/dashboard/registry-setup'
 import HomeContent from '~/app/_components/dashboard/section-content/home'
 import RsvpContent from '~/app/_components/dashboard/section-content/rsvp'
@@ -38,8 +40,8 @@ export default function Dashboard({
   const [collapseSections, setCollapseSections] = useState<boolean>(false)
   const [showRsvpSettings, setShowRsvpSettings] = useState<boolean>(false)
   const [showWebsiteSettings, setShowWebsiteSettings] = useState<boolean>(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  // Derive events directly from dashboardData instead of duplicating state
   const events = dashboardData?.events ?? []
 
   if (showRsvpSettings) {
@@ -47,8 +49,10 @@ export default function Dashboard({
       <RsvpFormSettings dashboardData={dashboardData} setShowRsvpSettings={setShowRsvpSettings} />
     )
   }
+
   return (
     <>
+      {/* Overlaid modals */}
       {isEventFormOpen && <EventForm prefillFormData={prefillEvent} />}
       {showWebsiteSettings && (
         <DashboardSettingsForm
@@ -59,48 +63,94 @@ export default function Dashboard({
       {showEditRsvpSettings && (
         <EditRsvpSettingsForm website={dashboardData?.weddingData?.website} />
       )}
-      <DashboardHeader
-        websiteUrl={dashboardData?.weddingData?.website?.url}
-        setShowWebsiteSettings={setShowWebsiteSettings}
-      />
-      <div className='border-border border-t' />
-      {showRegistrySetup && <RegistrySetup setShowRegistrySetup={setShowRegistrySetup} />}
-      <div className='border-border border-t' />
-      <div className='mt-10'>
-        <div className='mb-6 flex justify-between'>
-          <h2 className='font-semibold font-serif text-xl'>Pages</h2>
-          <DashboardControls
-            collapseSections={collapseSections}
-            setCollapseSections={setCollapseSections}
+
+      {/* Mobile sidebar drawer */}
+      {sidebarOpen && (
+        <div className='fixed inset-0 z-50 lg:hidden'>
+          <div
+            className='absolute inset-0 bg-black/50'
+            onClick={() => setSidebarOpen(false)}
+            aria-hidden='true'
           />
+          <aside className='relative flex h-full w-64 flex-col bg-sidebar-ink'>
+            <button
+              type='button'
+              aria-label='Close sidebar'
+              onClick={() => setSidebarOpen(false)}
+              className='absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-md text-sidebar-cream/60 hover:text-sidebar-cream'
+            >
+              <svg
+                className='h-4 w-4'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+                strokeWidth={1.5}
+              >
+                <path strokeLinecap='round' strokeLinejoin='round' d='M6 18L18 6M6 6l12 12' />
+              </svg>
+            </button>
+          </aside>
         </div>
-        <PageSectionsTemplate title={'Home'} collapse={collapseSections}>
-          <HomeContent
-            dashboardData={dashboardData}
-            events={events}
-            setPrefillEvent={setPrefillEvent}
-            uploadImage={uploadImage}
-            deleteImage={deleteImage}
-          />
-        </PageSectionsTemplate>
-        <PageSectionsTemplate title={'Our Story'} collapse={collapseSections} />
-        <PageSectionsTemplate title={'Wedding Party'} collapse={collapseSections} />
-        <PageSectionsTemplate title={'Photos'} collapse={collapseSections} />
-        <PageSectionsTemplate title={'Q + A'} collapse={collapseSections} />
-        <PageSectionsTemplate title={'Travel'} collapse={collapseSections} />
-        <PageSectionsTemplate title={'Things to Do'} collapse={collapseSections} />
-        <PageSectionsTemplate
-          title={'RSVP'}
-          collapse={collapseSections}
-          setShowRsvpSettings={setShowRsvpSettings}
-        >
-          <RsvpContent
-            events={dashboardData?.events}
-            totalGuests={dashboardData?.totalGuests ?? 0}
-            generalQuestions={dashboardData?.weddingData.website?.generalQuestions ?? []}
-          />
-        </PageSectionsTemplate>
-        <SidebarPanel setShowWebsiteSettings={setShowWebsiteSettings} />
+      )}
+
+      {/* Top bar */}
+      <DashboardTopbar onMenuToggle={() => setSidebarOpen(true)} />
+
+      {/* Content + Etta panel */}
+      <div className='flex flex-1 overflow-hidden'>
+        {/* Scrollable main content */}
+        <div className='flex-1 overflow-y-auto px-4 py-5 lg:px-6 lg:py-6'>
+          {/* Planning overview hub */}
+          <PlanningOverview dashboardData={dashboardData} />
+
+          {/* Website editor — anchored for sidebar "Website" link */}
+          <div id='website-editor' className='mt-8 border-t border-border pt-8'>
+            <h2 className='mb-5 font-serif text-xl font-semibold text-foreground'>
+              Website Editor
+            </h2>
+            <DashboardHeader
+              websiteUrl={dashboardData?.weddingData?.website?.url}
+              setShowWebsiteSettings={setShowWebsiteSettings}
+            />
+            <div className='border-border border-t' />
+            {showRegistrySetup && (
+              <RegistrySetup setShowRegistrySetup={setShowRegistrySetup} />
+            )}
+            <div className='border-border border-t' />
+            <div className='mt-8'>
+              <PageSectionsTemplate title={'Home'} collapse={collapseSections}>
+                <HomeContent
+                  dashboardData={dashboardData}
+                  events={events}
+                  setPrefillEvent={setPrefillEvent}
+                  uploadImage={uploadImage}
+                  deleteImage={deleteImage}
+                />
+              </PageSectionsTemplate>
+              <PageSectionsTemplate title={'Our Story'} collapse={collapseSections} />
+              <PageSectionsTemplate title={'Wedding Party'} collapse={collapseSections} />
+              <PageSectionsTemplate title={'Photos'} collapse={collapseSections} />
+              <PageSectionsTemplate title={'Q + A'} collapse={collapseSections} />
+              <PageSectionsTemplate title={'Travel'} collapse={collapseSections} />
+              <PageSectionsTemplate title={'Things to Do'} collapse={collapseSections} />
+              <PageSectionsTemplate
+                title={'RSVP'}
+                collapse={collapseSections}
+                setShowRsvpSettings={setShowRsvpSettings}
+              >
+                <RsvpContent
+                  events={dashboardData?.events}
+                  totalGuests={dashboardData?.totalGuests ?? 0}
+                  generalQuestions={dashboardData?.weddingData.website?.generalQuestions ?? []}
+                />
+              </PageSectionsTemplate>
+              <SidebarPanel setShowWebsiteSettings={setShowWebsiteSettings} />
+            </div>
+          </div>
+        </div>
+
+        {/* Etta AI panel — desktop only */}
+        <EttaPanel />
       </div>
     </>
   )
