@@ -26,8 +26,7 @@ function LinkExpiryNotice({
   const formatted = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(
     new Date(expiresAt)
   )
-  const expiresBefore =
-    earliestEventDate && new Date(expiresAt) < new Date(earliestEventDate)
+  const expiresBefore = earliestEventDate && new Date(expiresAt) < new Date(earliestEventDate)
 
   if (expiresBefore) {
     return (
