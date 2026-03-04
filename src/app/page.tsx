@@ -144,7 +144,9 @@ export default async function Home() {
         // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD structured data requires dangerouslySetInnerHTML per Next.js convention
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      {!isSignedIn ? <NonAuthenticatedView /> : <AuthenticatedView />}
+      <div className='landing-main-theme font-sans'>
+        {!isSignedIn ? <NonAuthenticatedView /> : <AuthenticatedView />}
+      </div>
     </>
   )
 }
