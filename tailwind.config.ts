@@ -61,6 +61,7 @@ const config = {
         },
         'sidebar-ink': 'var(--sidebar-ink)',
         'sidebar-cream': 'var(--sidebar-cream)',
+        'etta-ink': 'var(--etta-ink)',
       },
       borderRadius: {
         lg: 'var(--radius)',
