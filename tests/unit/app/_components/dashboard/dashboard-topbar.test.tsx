@@ -29,4 +29,9 @@ describe('DashboardTopbar', () => {
     render(<DashboardTopbar onMenuToggle={jest.fn()} />)
     expect(screen.getByRole('button', { name: /send update/i })).toBeInTheDocument()
   })
+
+  it('renders a theme toggle button', () => {
+    render(<DashboardTopbar onMenuToggle={jest.fn()} />)
+    expect(screen.getByRole('button', { name: /toggle theme/i })).toBeInTheDocument()
+  })
 })

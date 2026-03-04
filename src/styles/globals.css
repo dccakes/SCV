@@ -67,13 +67,13 @@
     --sidebar-cream: oklch(0.96 0.01 56);
     --etta-ink: oklch(0.19 0.022 48);
 
-    --font-sans: var(--font-cormorant, 'Cormorant Garamond', serif);
+    --font-sans: var(--font-cormorant, "Cormorant Garamond", serif);
 
-    --font-serif: var(--font-cormorant, 'Cormorant Garamond', serif);
+    --font-serif: var(--font-cormorant, "Cormorant Garamond", serif);
 
-    --font-mono: var(--font-dm-mono, 'DM Mono', monospace);
+    --font-mono: var(--font-dm-mono, "DM Mono", monospace);
 
-    --font-display: var(--font-instrument, 'Instrument Serif', serif);
+    --font-display: var(--font-instrument, "Instrument Serif", serif);
 
     --shadow-color: hsl(0 0% 0%);
 
@@ -161,10 +161,10 @@
     --sidebar-ink: oklch(0.19 0.022 48);
     --sidebar-cream: oklch(0.96 0.01 56);
     --etta-ink: oklch(0.19 0.022 48);
-    --font-sans: var(--font-cormorant, 'Cormorant Garamond', serif);
-    --font-serif: var(--font-cormorant, 'Cormorant Garamond', serif);
-    --font-mono: var(--font-dm-mono, 'DM Mono', monospace);
-    --font-display: var(--font-instrument, 'Instrument Serif', serif);
+    --font-sans: var(--font-cormorant, "Cormorant Garamond", serif);
+    --font-serif: var(--font-cormorant, "Cormorant Garamond", serif);
+    --font-mono: var(--font-dm-mono, "DM Mono", monospace);
+    --font-display: var(--font-instrument, "Instrument Serif", serif);
     --shadow-color: hsl(0 0% 0%);
     --shadow-opacity: 0.09;
     --shadow-blur: 12px;
@@ -183,9 +183,9 @@
     --shadow-2xl: 0px 6px 12px -3px hsl(0 0% 0% / 0.22);
   }
   .theme {
-    --font-sans: var(--font-cormorant, 'Cormorant Garamond', serif);
-    --font-mono: var(--font-dm-mono, 'DM Mono', monospace);
-    --font-serif: var(--font-cormorant, 'Cormorant Garamond', serif);
+    --font-sans: var(--font-cormorant, "Cormorant Garamond", serif);
+    --font-mono: var(--font-dm-mono, "DM Mono", monospace);
+    --font-serif: var(--font-cormorant, "Cormorant Garamond", serif);
     --radius: 0.625rem;
     --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
     --tracking-tight: calc(var(--tracking-normal) - 0.025em);
@@ -204,6 +204,80 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  .dashboard-theme {
+    --background: #f5efe4;
+    --foreground: #1a1510;
+
+    --card: rgb(245 239 228 / 60%);
+    --card-foreground: #1a1510;
+
+    --popover: #f5efe4;
+    --popover-foreground: #1a1510;
+
+    --primary: #c4633a;
+    --primary-foreground: #f5efe4;
+
+    --secondary: #ede5d5;
+    --secondary-foreground: #2e2620;
+
+    --muted: #ede5d5;
+    --muted-foreground: #8b7355;
+
+    --accent: #b89a5c;
+    --accent-foreground: #2e2620;
+
+    --success: 104 13% 42%;
+    --success-foreground: 96 20% 96%;
+
+    --destructive: #c4633a;
+    --destructive-foreground: #f5efe4;
+
+    --border: rgb(26 21 16 / 10%);
+    --input: rgb(26 21 16 / 18%);
+    --ring: #c4633a;
+
+    --sidebar-ink: #2e2620;
+    --sidebar-cream: #f5efe4;
+    --etta-ink: #2e2620;
+  }
+
+  .dark .dashboard-theme {
+    --background: #1f1a16;
+    --foreground: #f5efe4;
+
+    --card: rgb(46 38 32 / 62%);
+    --card-foreground: #f5efe4;
+
+    --popover: #2e2620;
+    --popover-foreground: #f5efe4;
+
+    --primary: #d07a55;
+    --primary-foreground: #1a1510;
+
+    --secondary: #3a3129;
+    --secondary-foreground: #f5efe4;
+
+    --muted: #3a3129;
+    --muted-foreground: #cfbca0;
+
+    --accent: #c8ab6d;
+    --accent-foreground: #1a1510;
+
+    --success: 104 22% 62%;
+    --success-foreground: 96 44% 14%;
+
+    --destructive: #e08862;
+    --destructive-foreground: #1a1510;
+
+    --border: rgb(245 239 228 / 12%);
+    --input: rgb(245 239 228 / 22%);
+    --ring: #d07a55;
+
+    --sidebar-ink: #231d18;
+    --sidebar-cream: #f5efe4;
+    --etta-ink: #231d18;
   }
 }
 

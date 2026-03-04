@@ -1,5 +1,7 @@
 'use client'
 
+import { ThemeToggle } from '~/app/_components/theme-toggle'
+
 interface DashboardTopbarProps {
   onMenuToggle: () => void
 }
@@ -47,6 +49,7 @@ export default function DashboardTopbar({ onMenuToggle }: DashboardTopbarProps) 
       </div>
 
       <div className='flex items-center gap-2'>
+        <ThemeToggle />
         <button
           type='button'
           aria-label='Export guest list'

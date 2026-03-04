@@ -31,7 +31,7 @@ export default function DashboardShell({ children, coupleName, weddingDate }: Da
 
   return (
     <SidebarContext.Provider value={{ openSidebar: () => setIsOpen(true) }}>
-      <div className='flex h-screen overflow-hidden bg-background'>
+      <div className='dashboard-theme flex h-screen overflow-hidden bg-background'>
         <DashboardSidebar
           isOpen={isOpen}
           setIsOpen={setIsOpen}
