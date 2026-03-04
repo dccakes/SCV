@@ -1,12 +1,9 @@
-import Footer from '~/app/_components/footer'
-import Navbar from '~/app/_components/navbar'
+import type { ReactNode } from 'react'
 
-export default function EventsLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <>
-      <Navbar />
-      {children}
-      <Footer />
-    </>
-  )
+import { AppLayoutShell } from '~/app/_components/dashboard/app-layout-shell'
+
+export const dynamic = 'force-dynamic'
+
+export default function EventsLayout({ children }: { children: ReactNode }) {
+  return <AppLayoutShell>{children}</AppLayoutShell>
 }

@@ -1,11 +1,13 @@
 import '~/styles/globals.css'
 
+import type { ReactNode } from 'react'
+
 import { Toaster } from 'sonner'
 
-import Footer from '~/app/_components/footer'
-import GuestHeader from '~/app/_components/guest-list/header'
-import Navbar from '~/app/_components/navbar'
+import { AppLayoutShell } from '~/app/_components/dashboard/app-layout-shell'
 import { TRPCReactProvider } from '~/trpc/react'
+
+export const dynamic = 'force-dynamic'
 
 export const metadata = {
   title: 'Your Wedding Website',
@@ -13,13 +15,10 @@ export const metadata = {
   icons: [{ rel: 'icon', url: '/favicon.ico' }],
 }
 
-export default function GuestListLayout({ children }: { children: React.ReactNode }) {
+export default function GuestListLayout({ children }: { children: ReactNode }) {
   return (
     <TRPCReactProvider>
-      <Navbar />
-      <GuestHeader />
-      {children}
-      <Footer />
+      <AppLayoutShell>{children}</AppLayoutShell>
       <Toaster position='top-right' richColors />
     </TRPCReactProvider>
   )
