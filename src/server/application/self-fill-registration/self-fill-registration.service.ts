@@ -124,6 +124,7 @@ export class SelfFillRegistrationService implements ISelfFillRegistration {
         return { householdId: household.id, guestId: guest.id }
       })
 
+      // biome-ignore lint/suspicious/noConsole: audit log
       console.log(`[SelfFillRegistration] Guest registered for weddingId=${weddingId}`, {
         guestId,
         householdId,
@@ -152,6 +153,7 @@ export class SelfFillRegistrationService implements ISelfFillRegistration {
         })
       }
 
+      // biome-ignore lint/suspicious/noConsole: audit log
       console.error(
         `[SelfFillRegistration] Failed to register guest for weddingId=${weddingId}`,
         error

@@ -10,7 +10,10 @@
 
 import { randomBytes } from 'node:crypto'
 
-import { TOKEN_EXPIRY_DAYS, type SelfFillRepository } from '~/server/domains/self-fill/self-fill.repository'
+import {
+  type SelfFillRepository,
+  TOKEN_EXPIRY_DAYS,
+} from '~/server/domains/self-fill/self-fill.repository'
 import type { SelfFillWeddingData } from '~/server/domains/self-fill/self-fill.types'
 
 export class SelfFillService {
@@ -31,6 +34,7 @@ export class SelfFillService {
     const token = randomBytes(16).toString('hex')
     const generatedAt = new Date()
     await this.selfFillRepo.updateToken(weddingId, token, generatedAt)
+    // biome-ignore lint/suspicious/noConsole: audit log
     console.log(`[SelfFill] Token generated for weddingId=${weddingId}`, { generatedAt })
     return token
   }
@@ -40,8 +44,10 @@ export class SelfFillService {
    * Sets both token and generatedAt to null.
    */
   async revokeToken(weddingId: string): Promise<void> {
+    const revokedAt = new Date()
     await this.selfFillRepo.updateToken(weddingId, null, null)
-    console.log(`[SelfFill] Token revoked for weddingId=${weddingId}`, { revokedAt: new Date() })
+    // biome-ignore lint/suspicious/noConsole: audit log
+    console.log(`[SelfFill] Token revoked for weddingId=${weddingId}`, { revokedAt })
   }
 
   /**

@@ -23,12 +23,12 @@ import {
   mockUpdateToken,
   resetMocks,
   SelfFillRepository,
+  TOKEN_EXPIRY_DAYS,
 } from '~/server/domains/self-fill/self-fill.repository'
-import { TOKEN_EXPIRY_DAYS } from '~/server/domains/self-fill/self-fill.repository'
 import { SelfFillService } from '~/server/domains/self-fill/self-fill.service'
 
 const mockFindByTokenFn = mockFindByToken as jest.Mock
-const mockGetWeddingIdByTokenFn = mockGetWeddingIdByToken as jest.Mock
+const _mockGetWeddingIdByTokenFn = mockGetWeddingIdByToken as jest.Mock
 const mockGetTokenFn = mockGetToken as jest.Mock
 const mockGetEarliestEventDateFn = mockGetEarliestEventDate as jest.Mock
 const mockUpdateTokenFn = mockUpdateToken as jest.Mock
@@ -133,7 +133,10 @@ describe('SelfFillService', () => {
     })
 
     it('should return token with null expiresAt for a legacy token (no generatedAt)', async () => {
-      mockGetTokenFn.mockResolvedValue({ token: 'abc123token00000000000000000000', generatedAt: null })
+      mockGetTokenFn.mockResolvedValue({
+        token: 'abc123token00000000000000000000',
+        generatedAt: null,
+      })
 
       const result = await service.getToken('wedding-123')
 
@@ -173,7 +176,7 @@ describe('SelfFillService', () => {
 
       // expiresAt should be in the future (89 days ago + 90 days = 1 day from now)
       expect(result?.expiresAt).not.toBeNull()
-      expect(result!.expiresAt!.getTime()).toBeGreaterThan(Date.now())
+      expect(result?.expiresAt?.getTime()).toBeGreaterThan(Date.now())
     })
 
     it('should compute an expiresAt in the past for a token generated 91 days ago (expired)', async () => {
@@ -185,7 +188,7 @@ describe('SelfFillService', () => {
 
       // expiresAt should be in the past (91 days ago + 90 days = 1 day ago)
       expect(result?.expiresAt).not.toBeNull()
-      expect(result!.expiresAt!.getTime()).toBeLessThan(Date.now())
+      expect(result?.expiresAt?.getTime()).toBeLessThan(Date.now())
     })
 
     it('should compute expiresAt as approximately today for a token generated exactly 90 days ago', async () => {
@@ -197,7 +200,7 @@ describe('SelfFillService', () => {
 
       // expiresAt = generatedAt + 90 days ≈ today (within a minute of test execution)
       expect(result?.expiresAt).not.toBeNull()
-      const diffMs = Math.abs(result!.expiresAt!.getTime() - Date.now())
+      const diffMs = Math.abs(result?.expiresAt?.getTime() - Date.now())
       expect(diffMs).toBeLessThan(60_000) // within 1 minute
     })
   })
@@ -230,7 +233,10 @@ describe('SelfFillService', () => {
     })
 
     it('should return null expiresAt for a legacy token with no generatedAt', async () => {
-      mockGetTokenFn.mockResolvedValue({ token: 'abc123token00000000000000000000', generatedAt: null })
+      mockGetTokenFn.mockResolvedValue({
+        token: 'abc123token00000000000000000000',
+        generatedAt: null,
+      })
       mockGetEarliestEventDateFn.mockResolvedValue(new Date('2026-06-15'))
 
       const result = await service.getTokenWithContext('wedding-123')
