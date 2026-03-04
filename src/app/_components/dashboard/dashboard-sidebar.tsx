@@ -1,29 +1,44 @@
 'use client'
 
-import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
+import SidebarNav, { type SidebarSection } from '~/components/nav/sidebar-nav'
+import SidebarUserAvatarButton from '~/components/nav/sidebar-user-avatar-button'
+import WeddingChipCard from '~/components/nav/wedding-chip-card'
 import { signOut } from '~/lib/auth-client'
-import NavItem from '~/components/nav/sidebar-nav-item'
 
 interface DashboardSidebarProps {
   isOpen: boolean
   setIsOpen: (open: boolean) => void
   coupleName?: string
   weddingDate?: string
+  weddingLocation?: string
 }
 
-const PLANNING_NAV = [
-  { label: 'Dashboard', href: '/dashboard', icon: '◈' },
-  { label: 'RSVPs', href: '/guest-list', icon: '◉' },
-  { label: 'Guest List', href: '/guest-list', icon: '☷' },
-  { label: 'Vendors', href: '/vendors', icon: '◐' },
-  { label: 'Website', href: '/my-site', icon: '✦' },
+export type SidebarNavItem = { label: string; href: string; icon: string }
+
+const SIDEBAR_SECTIONS: readonly SidebarSection[] = [
+  {
+    title: 'Planning',
+    items: [
+      { label: 'Dashboard', href: '/dashboard', icon: '◈' },
+      { label: 'RSVPs', href: '/guest-list', icon: '◉' },
+      { label: 'Events', href: '/events', icon: '☷' },
+      { label: 'Vendors', href: '/vendors', icon: '◐' },
+    ],
+  },
+  {
+    title: 'Guests',
+    items: [
+      { label: 'Guest List', href: '/guest-list', icon: '☷' },
+      { label: 'Website', href: '/my-site', icon: '✦' },
+    ],
+  },
+  {
+    title: 'Settings',
+    items: [{ label: 'Settings', href: '/settings', icon: '⚙' }],
+  },
 ]
-
-const SETTINGS_NAV = [{ label: 'Settings', href: '/settings', icon: '⚙' }]
-
-
 
 interface SidebarContentProps {
   isCollapsed: boolean
@@ -31,6 +46,8 @@ interface SidebarContentProps {
   isActive: (href: string) => boolean
   coupleName?: string
   weddingDate?: string
+  weddingLocation?: string
+  onSignOut: () => void
   onNavClick?: () => void
   showCollapseToggle?: boolean
 }
@@ -41,6 +58,8 @@ function SidebarContent({
   isActive,
   coupleName,
   weddingDate,
+  weddingLocation,
+  onSignOut,
   onNavClick,
   showCollapseToggle = true,
 }: SidebarContentProps) {
@@ -94,93 +113,22 @@ function SidebarContent({
       </div>
 
       {/* Wedding chip — hidden when collapsed */}
-      {!isCollapsed && (coupleName ?? weddingDate) && (
-        <div className='mx-3 mt-3 mb-1 rounded-md border border-white/15 bg-white/[0.07] px-3 py-2.5'>
-          {coupleName && (
-            <p className='mb-1 font-serif text-base text-sidebar-cream italic leading-tight'>
-              {coupleName}
-            </p>
-          )}
-          {weddingDate && (
-            <p className='font-mono text-[0.6rem] text-accent uppercase tracking-widest'>
-              {weddingDate}
-            </p>
-          )}
-        </div>
+      {!isCollapsed && (coupleName ?? weddingDate ?? weddingLocation) && (
+        <WeddingChipCard
+          coupleName={coupleName}
+          weddingDate={weddingDate}
+          weddingLocation={weddingLocation}
+        />
       )}
 
-      {/* Nav */}
-      <nav className='flex flex-1 flex-col gap-px py-3'>
-        {!isCollapsed && (
-          <p className='px-4 pt-2 pb-1 font-mono text-[0.55rem] text-muted-foreground uppercase tracking-[0.18em]'>
-            Planning
-          </p>
-        )}
-        {PLANNING_NAV.map((item) => (
-          <NavItem
-            key={item.href + item.label}
-            {...item}
-            isActive={isActive(item.href)}
-            isCollapsed={isCollapsed}
-            onClick={onNavClick}
-          />
-        ))}
+      <SidebarNav
+        sections={SIDEBAR_SECTIONS}
+        isCollapsed={isCollapsed}
+        isActive={isActive}
+        onNavClick={onNavClick}
+      />
 
-        {!isCollapsed && (
-          <p className='mt-2 px-4 pt-2 pb-1 font-mono text-[0.55rem] text-muted-foreground  uppercase tracking-[0.18em]'>
-            Settings
-          </p>
-        )}
-        {SETTINGS_NAV.map((item) => (
-          <NavItem
-            key={item.href}
-            {...item}
-            isActive={isActive(item.href)}
-            isCollapsed={isCollapsed}
-            onClick={onNavClick}
-          />
-        ))}
-      </nav>
-
-      {/* Bottom profile + sign out */}
-      <div className='border-white/10 border-t p-3 flex flex-col gap-1.5'>
-        <div
-          className={`flex items-center gap-2 rounded-md px-2 py-1.5 font-mono text-sidebar-cream/70 text-xs ${
-            isCollapsed ? 'justify-center' : ''
-          }`}
-        >
-          <span className='flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent font-serif text-white text-xs italic'>
-            W
-          </span>
-          {!isCollapsed && (
-            <div>
-              <div className='font-serif text-[0.75rem] text-muted-foreground leading-tight'>
-                Couple
-              </div>
-              <div className='text-[0.55rem] text-muted-foreground uppercase tracking-wider'>
-                Admin
-              </div>
-            </div>
-          )}
-        </div>
-        <button
-          type='button'
-          onClick={() =>
-            signOut({
-              fetchOptions: {
-                onSuccess: () => {
-                  window.location.href = '/'
-                },
-              },
-            })
-          }
-          className={`flex items-center gap-2 rounded-sm border border-white/25 px-2 py-1.5 font-mono text-[0.58rem] text-muted-foreground uppercase tracking-widest transition-all hover:border-white/20 hover:text-sidebar-cream/75 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sidebar-cream/40 ${isCollapsed ? 'justify-center' : ''}`}
-          title='Sign out'
-        >
-          <span className='text-[0.7rem]'>↪</span>
-          {!isCollapsed && 'Sign out'}
-        </button>
-      </div>
+      <SidebarUserAvatarButton isCollapsed={isCollapsed} onSignOut={onSignOut} />
     </div>
   )
 }
@@ -190,6 +138,7 @@ export default function DashboardSidebar({
   setIsOpen,
   coupleName,
   weddingDate,
+  weddingLocation,
 }: DashboardSidebarProps) {
   const pathname = usePathname()
   // Start collapsed=false for SSR safety; sync from localStorage on client after mount
@@ -197,13 +146,9 @@ export default function DashboardSidebar({
   const drawerRef = useRef<HTMLDivElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
 
-  // if coupleName or weddingDate is not set, set it to the default values
-  if (!coupleName) {
-    coupleName = 'Holly & Diego'
-  }
-  if (!weddingDate) {
-    weddingDate = '17 May 2027 · Oaxaca, Mexico'
-  }
+  const resolvedCoupleName = coupleName ?? 'Holly & Diego'
+  const resolvedWeddingDate = weddingDate ?? '17 May 2027'
+  const resolvedWeddingLocation = weddingLocation ?? 'Oaxaca, Mexico'
 
   useEffect(() => {
     const saved = localStorage.getItem('sidebar-collapsed') === 'true'
@@ -262,6 +207,16 @@ export default function DashboardSidebar({
     })
   }
 
+  const handleSignOut = () => {
+    signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          window.location.href = '/'
+        },
+      },
+    })
+  }
+
   return (
     <>
       {/* Desktop sidebar — collapses between w-14 and w-56 */}
@@ -274,8 +229,10 @@ export default function DashboardSidebar({
           isCollapsed={isCollapsed}
           onToggleCollapse={toggleCollapse}
           isActive={isActive}
-          coupleName={coupleName}
-          weddingDate={weddingDate}
+          coupleName={resolvedCoupleName}
+          weddingDate={resolvedWeddingDate}
+          weddingLocation={resolvedWeddingLocation}
+          onSignOut={handleSignOut}
         />
       </aside>
 
@@ -298,8 +255,10 @@ export default function DashboardSidebar({
               isCollapsed={false}
               onToggleCollapse={() => {}}
               isActive={isActive}
-              coupleName={coupleName}
-              weddingDate={weddingDate}
+              coupleName={resolvedCoupleName}
+              weddingDate={resolvedWeddingDate}
+              weddingLocation={resolvedWeddingLocation}
+              onSignOut={handleSignOut}
               onNavClick={() => setIsOpen(false)}
               showCollapseToggle={false}
             />
