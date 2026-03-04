@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { signOut } from '~/lib/auth-client'
+import NavItem from '~/components/nav/sidebar-nav-item'
 
 interface DashboardSidebarProps {
   isOpen: boolean
@@ -17,40 +18,12 @@ const PLANNING_NAV = [
   { label: 'RSVPs', href: '/guest-list', icon: '◉' },
   { label: 'Guest List', href: '/guest-list', icon: '☷' },
   { label: 'Vendors', href: '/vendors', icon: '◐' },
-  { label: 'Website', href: '/dashboard#website-editor', icon: '✦' },
+  { label: 'Website', href: '/my-site', icon: '✦' },
 ]
 
 const SETTINGS_NAV = [{ label: 'Settings', href: '/settings', icon: '⚙' }]
 
-interface NavItemProps {
-  label: string
-  href: string
-  icon: string
-  isActive: boolean
-  isCollapsed: boolean
-  onClick?: () => void
-}
 
-function NavItem({ label, href, icon, isActive, isCollapsed, onClick }: NavItemProps) {
-  return (
-    <Link
-      href={href}
-      onClick={onClick}
-      title={label}
-      aria-label={label}
-      className={`flex items-center border-l-2 py-2.5 font-mono text-xs uppercase tracking-widest transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-inset ${
-        isCollapsed ? 'justify-center px-2' : 'gap-2.5 px-4'
-      } ${
-        isActive
-          ? 'border-primary bg-primary/15 text-sidebar-cream'
-          : 'border-transparent text-sidebar-cream/50 hover:bg-white/[0.06] hover:text-sidebar-cream/85'
-      }`}
-    >
-      <span className='flex-shrink-0 text-center text-base leading-none'>{icon}</span>
-      {!isCollapsed && <span>{label}</span>}
-    </Link>
-  )
-}
 
 interface SidebarContentProps {
   isCollapsed: boolean
@@ -129,7 +102,7 @@ function SidebarContent({
             </p>
           )}
           {weddingDate && (
-            <p className='font-mono text-[0.6rem] text-primary uppercase tracking-widest'>
+            <p className='font-mono text-[0.6rem] text-accent uppercase tracking-widest'>
               {weddingDate}
             </p>
           )}
@@ -139,7 +112,7 @@ function SidebarContent({
       {/* Nav */}
       <nav className='flex flex-1 flex-col gap-px py-3'>
         {!isCollapsed && (
-          <p className='px-4 pt-2 pb-1 font-mono text-[0.55rem] text-sidebar-cream/25 uppercase tracking-[0.18em]'>
+          <p className='px-4 pt-2 pb-1 font-mono text-[0.55rem] text-muted-foreground uppercase tracking-[0.18em]'>
             Planning
           </p>
         )}
@@ -154,7 +127,7 @@ function SidebarContent({
         ))}
 
         {!isCollapsed && (
-          <p className='mt-2 px-4 pt-2 pb-1 font-mono text-[0.55rem] text-sidebar-cream/25 uppercase tracking-[0.18em]'>
+          <p className='mt-2 px-4 pt-2 pb-1 font-mono text-[0.55rem] text-muted-foreground  uppercase tracking-[0.18em]'>
             Settings
           </p>
         )}
@@ -181,10 +154,10 @@ function SidebarContent({
           </span>
           {!isCollapsed && (
             <div>
-              <div className='font-serif text-[0.75rem] text-sidebar-cream/90 leading-tight'>
+              <div className='font-serif text-[0.75rem] text-muted-foreground leading-tight'>
                 Couple
               </div>
-              <div className='text-[0.55rem] text-sidebar-cream/55 uppercase tracking-wider'>
+              <div className='text-[0.55rem] text-muted-foreground uppercase tracking-wider'>
                 Admin
               </div>
             </div>
@@ -201,7 +174,7 @@ function SidebarContent({
               },
             })
           }
-          className={`flex items-center gap-2 rounded-sm border border-white/10 px-2 py-1.5 font-mono text-[0.58rem] text-sidebar-cream/45 uppercase tracking-widest transition-all hover:border-white/20 hover:text-sidebar-cream/75 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sidebar-cream/40 ${isCollapsed ? 'justify-center' : ''}`}
+          className={`flex items-center gap-2 rounded-sm border border-white/25 px-2 py-1.5 font-mono text-[0.58rem] text-muted-foreground uppercase tracking-widest transition-all hover:border-white/20 hover:text-sidebar-cream/75 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sidebar-cream/40 ${isCollapsed ? 'justify-center' : ''}`}
           title='Sign out'
         >
           <span className='text-[0.7rem]'>↪</span>
@@ -223,6 +196,14 @@ export default function DashboardSidebar({
   const [isCollapsed, setIsCollapsed] = useState(false)
   const drawerRef = useRef<HTMLDivElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
+
+  // if coupleName or weddingDate is not set, set it to the default values
+  if (!coupleName) {
+    coupleName = 'Holly & Diego'
+  }
+  if (!weddingDate) {
+    weddingDate = '17 May 2027 · Oaxaca, Mexico'
+  }
 
   useEffect(() => {
     const saved = localStorage.getItem('sidebar-collapsed') === 'true'
