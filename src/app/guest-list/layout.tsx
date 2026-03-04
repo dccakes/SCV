@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 
 import { Toaster } from 'sonner'
 
-import { AppLayoutShell } from '~/app/_components/dashboard/app-layout-shell'
+import { AuthenticatedLayoutFrame } from '@/components/layout/authenticated-layout-frame'
 import { TRPCReactProvider } from '~/trpc/react'
 
 export const dynamic = 'force-dynamic'
@@ -15,10 +15,10 @@ export const metadata = {
   icons: [{ rel: 'icon', url: '/favicon.ico' }],
 }
 
-export default function GuestListLayout({ children }: { children: ReactNode }) {
+export default async function GuestListLayout({ children }: { children: ReactNode }) {
   return (
     <TRPCReactProvider>
-      <AppLayoutShell>{children}</AppLayoutShell>
+      <AuthenticatedLayoutFrame>{children}</AuthenticatedLayoutFrame>
       <Toaster position='top-right' richColors />
     </TRPCReactProvider>
   )

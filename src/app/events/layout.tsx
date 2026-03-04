@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react'
 
-import { AppLayoutShell } from '~/app/_components/dashboard/app-layout-shell'
+import { AuthenticatedLayoutFrame } from '@/components/layout/authenticated-layout-frame'
 
 export const dynamic = 'force-dynamic'
 
-export default function EventsLayout({ children }: { children: ReactNode }) {
-  return <AppLayoutShell>{children}</AppLayoutShell>
+export default async function EventsLayout({ children }: { children: ReactNode }) {
+  return <AuthenticatedLayoutFrame>{children}</AuthenticatedLayoutFrame>
 }

@@ -4,19 +4,19 @@ import { useEffect, useState } from 'react'
 
 import { useEditRsvpSettingsForm } from '~/app/_components/contexts/edit-rsvp-settings-form-context'
 import { useEventForm } from '~/app/_components/contexts/event-form-context'
-import { useSidebar } from '~/app/_components/dashboard/dashboard-shell'
-import DashboardTopbar from '~/app/_components/dashboard/dashboard-topbar'
-import DashboardHeader from '~/app/_components/dashboard/header'
-import PageSectionsTemplate from '~/app/_components/dashboard/page-section-template'
-import PlanningOverview from '~/app/_components/dashboard/planning-overview'
-import RegistrySetup from '~/app/_components/dashboard/registry-setup'
-import HomeContent from '~/app/_components/dashboard/section-content/home'
-import RsvpContent from '~/app/_components/dashboard/section-content/rsvp'
-import SidebarPanel from '~/app/_components/dashboard/sidebar-panel'
+import DashboardTopbar from '@/components/dashboard/dashboard-topbar'
+import DashboardHeader from '@/app/_components/old_dashboard/header'
+import PageSectionsTemplate from '@/app/_components/old_dashboard/page-section-template'
+import PlanningOverview from '@/components/dashboard/planning-overview'
+import RegistrySetup from '@/app/_components/old_dashboard/registry-setup'
+import HomeContent from '@/app/_components/old_dashboard/section-content/home'
+import RsvpContent from '@/app/_components/old_dashboard/section-content/rsvp'
+import SidebarPanel from '@/app/_components/old_dashboard/sidebar-panel'
 import DashboardSettingsForm from '~/app/_components/forms/dashboard-settings-form'
 import EventForm from '~/app/_components/forms/event-form'
 import EditRsvpSettingsForm from '~/app/_components/forms/rsvp/edit-rsvp-settings'
 import RsvpFormSettings from '~/app/_components/forms/rsvp-form-settings'
+import { useAuthenticatedSidebar } from '@/components/layout/authenticated-app-shell'
 import type { DashboardData, EventFormData } from '~/app/utils/shared-types'
 
 export default function Dashboard({
@@ -28,7 +28,7 @@ export default function Dashboard({
   uploadImage: (formData: FormData) => Promise<{ ok: boolean }>
   deleteImage: (imageKey: string) => Promise<{ ok: boolean }>
 }) {
-  const { openSidebar } = useSidebar()
+  const { openSidebar } = useAuthenticatedSidebar()
   const isEventFormOpen = useEventForm()
   const showEditRsvpSettings = useEditRsvpSettingsForm()
   // SSR-safe: start true, sync from localStorage after mount

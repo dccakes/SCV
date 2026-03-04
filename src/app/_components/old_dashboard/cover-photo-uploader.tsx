@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { type FileWithPath, useDropzone } from 'react-dropzone'
 import { AiOutlinePlusCircle } from 'react-icons/ai'
 
-import ImageCropperModal from '~/app/_components/dashboard/cropper-modal'
+import ImageCropperModal from '@/app/_components/old_dashboard/cropper-modal'
 import { sharedStyles } from '~/app/utils/shared-styles'
 import type { CoverPhoto } from '~/app/utils/shared-types'
 
