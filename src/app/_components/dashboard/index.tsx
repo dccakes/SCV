@@ -69,9 +69,9 @@ export default function Dashboard({
       />
 
       {/* Content + Etta panel */}
-      <div className='flex flex-1 overflow-hidden'>
+      <div className='flex min-h-0 flex-1 overflow-hidden'>
         {/* Scrollable main content */}
-        <div className='flex-1 overflow-y-auto px-4 py-5 lg:px-6 lg:py-6'>
+        <div className='min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-6 lg:py-6'>
           {/* Planning overview hub */}
           <PlanningOverview dashboardData={dashboardData} />
 

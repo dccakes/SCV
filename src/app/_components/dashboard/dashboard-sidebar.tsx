@@ -39,8 +39,8 @@ function NavItem({ label, href, icon, isActive, isCollapsed, onClick }: NavItemP
         isCollapsed ? 'justify-center px-2' : 'gap-2.5 px-4'
       } ${
         isActive
-          ? 'border-primary bg-primary/10 text-sidebar-cream'
-          : 'border-transparent text-sidebar-cream/50 hover:bg-white/[0.04] hover:text-sidebar-cream/85'
+          ? 'border-primary bg-primary/15 text-sidebar-cream'
+          : 'border-transparent text-sidebar-cream/65 hover:bg-white/[0.06] hover:text-sidebar-cream'
       }`}
     >
       <span className='flex-shrink-0 text-center text-base leading-none'>{icon}</span>
@@ -72,7 +72,7 @@ function SidebarContent({
     <div className='flex h-full flex-col bg-sidebar-ink'>
       {/* Header: logo + collapse toggle */}
       <div
-        className={`flex items-center border-white/[0.06] border-b py-4 ${
+        className={`flex items-center border-white/10 border-b py-4 ${
           isCollapsed ? 'justify-center px-2' : 'justify-between px-4'
         }`}
       >
@@ -90,7 +90,7 @@ function SidebarContent({
             type='button'
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             onClick={onToggleCollapse}
-            className='flex h-7 w-7 items-center justify-center rounded-md text-sidebar-cream/35 transition-colors hover:bg-white/[0.06] hover:text-sidebar-cream'
+            className='flex h-7 w-7 items-center justify-center rounded-md text-sidebar-cream/55 transition-colors hover:bg-white/[0.08] hover:text-sidebar-cream'
           >
             <svg
               aria-hidden='true'
@@ -118,9 +118,9 @@ function SidebarContent({
 
       {/* Wedding chip — hidden when collapsed */}
       {!isCollapsed && (coupleName ?? weddingDate) && (
-        <div className='mx-3 mt-3 mb-1 rounded-md border border-white/[0.08] bg-white/[0.05] px-3 py-2.5'>
+        <div className='mx-3 mt-3 mb-1 rounded-md border border-white/15 bg-white/[0.07] px-3 py-2.5'>
           {coupleName && (
-            <p className='mb-1 font-serif text-base text-sidebar-cream/95 italic leading-tight'>
+            <p className='mb-1 font-serif text-base text-sidebar-cream italic leading-tight'>
               {coupleName}
             </p>
           )}
@@ -135,7 +135,7 @@ function SidebarContent({
       {/* Nav */}
       <nav className='flex flex-1 flex-col gap-px py-3'>
         {!isCollapsed && (
-          <p className='px-4 pt-2 pb-1 font-mono text-[0.55rem] text-sidebar-cream/25 uppercase tracking-[0.18em]'>
+          <p className='px-4 pt-2 pb-1 font-mono text-[0.55rem] text-sidebar-cream/50 uppercase tracking-[0.18em]'>
             Planning
           </p>
         )}
@@ -150,7 +150,7 @@ function SidebarContent({
         ))}
 
         {!isCollapsed && (
-          <p className='mt-2 px-4 pt-2 pb-1 font-mono text-[0.55rem] text-sidebar-cream/25 uppercase tracking-[0.18em]'>
+          <p className='mt-2 px-4 pt-2 pb-1 font-mono text-[0.55rem] text-sidebar-cream/50 uppercase tracking-[0.18em]'>
             Settings
           </p>
         )}
@@ -166,9 +166,9 @@ function SidebarContent({
       </nav>
 
       {/* Bottom profile */}
-      <div className='border-white/[0.06] border-t p-3'>
+      <div className='border-white/10 border-t p-3'>
         <div
-          className={`flex items-center gap-2 rounded-md px-2 py-1.5 font-mono text-sidebar-cream/60 text-xs ${
+          className={`flex items-center gap-2 rounded-md px-2 py-1.5 font-mono text-sidebar-cream/70 text-xs ${
             isCollapsed ? 'justify-center' : ''
           }`}
         >
@@ -177,10 +177,10 @@ function SidebarContent({
           </span>
           {!isCollapsed && (
             <div>
-              <div className='font-serif text-[0.75rem] text-sidebar-cream/80 leading-tight'>
+              <div className='font-serif text-[0.75rem] text-sidebar-cream/90 leading-tight'>
                 Couple
               </div>
-              <div className='text-[0.55rem] text-sidebar-cream/30 uppercase tracking-wider'>
+              <div className='text-[0.55rem] text-sidebar-cream/55 uppercase tracking-wider'>
                 Admin
               </div>
             </div>
