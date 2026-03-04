@@ -85,6 +85,19 @@ export class SelfFillRepository {
   }
 
   /**
+   * Get the earliest dated event for a wedding.
+   * Used by the service to warn owners when the invite link expires before their wedding.
+   */
+  async getEarliestEventDate(weddingId: string): Promise<Date | null> {
+    const event = await this.db.event.findFirst({
+      where: { weddingId, date: { not: null } },
+      orderBy: { date: 'asc' },
+      select: { date: true },
+    })
+    return event?.date ?? null
+  }
+
+  /**
    * Get the self-fill token and its generation timestamp for a wedding
    */
   async getToken(weddingId: string): Promise<{ token: string; generatedAt: Date | null } | null> {

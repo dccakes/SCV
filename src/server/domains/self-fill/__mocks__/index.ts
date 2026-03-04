@@ -34,6 +34,7 @@ export const mockFindByToken = jest.fn()
 export const mockGenerateToken = jest.fn()
 export const mockRevokeToken = jest.fn()
 export const mockGetToken = jest.fn()
+export const mockGetTokenWithContext = jest.fn()
 
 // Mock selfFillService singleton
 export const selfFillService = {
@@ -41,6 +42,7 @@ export const selfFillService = {
   generateToken: mockGenerateToken,
   revokeToken: mockRevokeToken,
   getToken: mockGetToken,
+  getTokenWithContext: mockGetTokenWithContext,
 }
 
 export const resetMocks = (): void => {
@@ -48,4 +50,5 @@ export const resetMocks = (): void => {
   mockGenerateToken.mockReset()
   mockRevokeToken.mockReset()
   mockGetToken.mockReset()
+  mockGetTokenWithContext.mockReset()
 }

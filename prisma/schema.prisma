@@ -22,6 +22,8 @@ model Wedding {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
+  @@index([selfFillToken, selfFillTokenGeneratedAt])
+
   // User relationships (many-to-many through UserWedding)
   userWeddings   UserWedding[]
 

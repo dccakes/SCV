@@ -93,19 +93,7 @@ export function createSelfFillRouter(registrationService: ISelfFillRegistration)
      */
     getToken: protectedProcedure.query(async ({ ctx }) => {
       const wedding = await getOwnedWedding(ctx.auth.userId)
-      const tokenData = await selfFillService.getToken(wedding.id)
-
-      const earliestEvent = await ctx.db.event.findFirst({
-        where: { weddingId: wedding.id, date: { not: null } },
-        orderBy: { date: 'asc' },
-        select: { date: true },
-      })
-
-      return {
-        token: tokenData?.token ?? null,
-        expiresAt: tokenData?.expiresAt ?? null,
-        earliestEventDate: earliestEvent?.date ?? null,
-      }
+      return selfFillService.getTokenWithContext(wedding.id)
     }),
   })
 }

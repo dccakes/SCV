@@ -1,7 +1,7 @@
 'use client'
 
 import { AlertTriangle, Check, Copy, Link2, Loader2, RefreshCw, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import {
@@ -54,7 +54,11 @@ export default function SelfFillLinkManager() {
   const [copied, setCopied] = useState(false)
   const utils = api.useUtils()
 
-  const { data: tokenData, isLoading } = api.selfFill.getToken.useQuery()
+  const { data: tokenData, isLoading, isError } = api.selfFill.getToken.useQuery()
+
+  useEffect(() => {
+    if (isError) toast.error('Failed to load invite link')
+  }, [isError])
 
   const url = tokenData?.token
     ? `${typeof window !== 'undefined' ? window.location.origin : ''}/join/${tokenData.token}`

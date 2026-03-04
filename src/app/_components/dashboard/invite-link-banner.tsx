@@ -1,7 +1,7 @@
 'use client'
 
 import { Check, Copy } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '~/components/ui/button'
@@ -14,7 +14,11 @@ import { api } from '~/trpc/react'
  */
 export default function InviteLinkBanner() {
   const [copied, setCopied] = useState(false)
-  const { data: tokenData } = api.selfFill.getToken.useQuery()
+  const { data: tokenData, isError } = api.selfFill.getToken.useQuery()
+
+  useEffect(() => {
+    if (isError) toast.error('Failed to load invite link')
+  }, [isError])
 
   if (!tokenData?.token) return null
 

@@ -60,4 +60,25 @@ export class SelfFillService {
 
     return { token: result.token, expiresAt }
   }
+
+  /**
+   * Get the token, its expiry date, and the wedding's earliest event date in one call.
+   * Keeps the router free of direct DB access for the expiry-warning feature.
+   */
+  async getTokenWithContext(weddingId: string): Promise<{
+    token: string | null
+    expiresAt: Date | null
+    earliestEventDate: Date | null
+  }> {
+    const [tokenData, earliestEventDate] = await Promise.all([
+      this.getToken(weddingId),
+      this.selfFillRepo.getEarliestEventDate(weddingId),
+    ])
+
+    return {
+      token: tokenData?.token ?? null,
+      expiresAt: tokenData?.expiresAt ?? null,
+      earliestEventDate,
+    }
+  }
 }

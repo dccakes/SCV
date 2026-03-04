@@ -21,7 +21,7 @@ jest.mock('~/server/domains/wedding')
 import {
   mockFindByToken,
   mockGenerateToken,
-  mockGetToken,
+  mockGetTokenWithContext,
   mockRevokeToken,
   mockSelfFillWeddingData,
   resetMocks as resetSelfFillMocks,
@@ -42,7 +42,7 @@ import {
 // ── Typed mock aliases ───────────────────────────────────────────────────────
 const mockFindByTokenFn = mockFindByToken as jest.Mock
 const mockGenerateTokenFn = mockGenerateToken as jest.Mock
-const mockGetTokenFn = mockGetToken as jest.Mock
+const mockGetTokenWithContextFn = mockGetTokenWithContext as jest.Mock
 const mockRevokeTokenFn = mockRevokeToken as jest.Mock
 const mockGetByUserIdFn = mockGetByUserId as jest.Mock
 
@@ -253,25 +253,65 @@ describe('selfFillRouter', () => {
   // ─── getToken (protected query) ────────────────────────────────────────────
 
   describe('getToken', () => {
-    it('should return the current token', async () => {
+    const weddingDate = new Date('2026-09-20')
+    const expiresAt = new Date('2026-06-01')
+
+    it('should return token, expiresAt, and earliestEventDate', async () => {
       mockGetByUserIdFn.mockResolvedValue(mockWedding)
-      mockGetTokenFn.mockResolvedValue(validToken)
+      mockGetTokenWithContextFn.mockResolvedValue({
+        token: validToken,
+        expiresAt,
+        earliestEventDate: weddingDate,
+      })
 
       const caller = makeAuthCaller()
       const result = await caller.getToken()
 
-      expect(result).toEqual({ token: validToken })
-      expect(mockGetTokenFn).toHaveBeenCalledWith(mockWedding.id)
+      expect(result).toEqual({ token: validToken, expiresAt, earliestEventDate: weddingDate })
+      expect(mockGetTokenWithContextFn).toHaveBeenCalledWith(mockWedding.id)
     })
 
-    it('should return null token when none is set', async () => {
+    it('should return null token, null expiresAt, and null earliestEventDate when no token is set', async () => {
       mockGetByUserIdFn.mockResolvedValue(mockWedding)
-      mockGetTokenFn.mockResolvedValue(null)
+      mockGetTokenWithContextFn.mockResolvedValue({
+        token: null,
+        expiresAt: null,
+        earliestEventDate: null,
+      })
 
       const caller = makeAuthCaller()
       const result = await caller.getToken()
 
-      expect(result).toEqual({ token: null })
+      expect(result).toEqual({ token: null, expiresAt: null, earliestEventDate: null })
+    })
+
+    it('should return null expiresAt for legacy tokens with no timestamp', async () => {
+      mockGetByUserIdFn.mockResolvedValue(mockWedding)
+      mockGetTokenWithContextFn.mockResolvedValue({
+        token: validToken,
+        expiresAt: null,
+        earliestEventDate: weddingDate,
+      })
+
+      const caller = makeAuthCaller()
+      const result = await caller.getToken()
+
+      expect(result.token).toBe(validToken)
+      expect(result.expiresAt).toBeNull()
+    })
+
+    it('should return null earliestEventDate when wedding has no dated events', async () => {
+      mockGetByUserIdFn.mockResolvedValue(mockWedding)
+      mockGetTokenWithContextFn.mockResolvedValue({
+        token: validToken,
+        expiresAt,
+        earliestEventDate: null,
+      })
+
+      const caller = makeAuthCaller()
+      const result = await caller.getToken()
+
+      expect(result.earliestEventDate).toBeNull()
     })
 
     it('should throw NOT_FOUND if user has no wedding', async () => {

@@ -28,16 +28,21 @@ export const mockSelfFillWeddingData: SelfFillWeddingData = {
   ],
 }
 
+/** Re-exported so service tests can use it without hitting the mocked module boundary */
+export const TOKEN_EXPIRY_DAYS = 90
+
 export const mockFindByToken = jest.fn()
 export const mockGetWeddingIdByToken = jest.fn()
 export const mockUpdateToken = jest.fn()
 export const mockGetToken = jest.fn()
+export const mockGetEarliestEventDate = jest.fn()
 
 export const SelfFillRepository = jest.fn().mockImplementation(() => ({
   findByToken: mockFindByToken,
   getWeddingIdByToken: mockGetWeddingIdByToken,
   updateToken: mockUpdateToken,
   getToken: mockGetToken,
+  getEarliestEventDate: mockGetEarliestEventDate,
 }))
 
 // Helper to reset all mocks
@@ -46,5 +51,6 @@ export const resetMocks = (): void => {
   mockGetWeddingIdByToken.mockReset()
   mockUpdateToken.mockReset()
   mockGetToken.mockReset()
+  mockGetEarliestEventDate.mockReset()
   SelfFillRepository.mockClear()
 }
