@@ -92,7 +92,18 @@ export class SelfFillRegistrationService implements ISelfFillRegistration {
           }
         }
 
-        const household = await this.householdRepo.createWithGifts({ weddingId }, eventIds)
+        const household = await this.householdRepo.createWithGifts(
+          {
+            weddingId,
+            address1: data.address1 ?? null,
+            address2: data.address2 ?? null,
+            city: data.city ?? null,
+            state: data.state ?? null,
+            zipCode: data.zipCode ?? null,
+            country: data.country ?? null,
+          },
+          eventIds
+        )
 
         const guest = await this.guestRepo.create({
           firstName: data.firstName,

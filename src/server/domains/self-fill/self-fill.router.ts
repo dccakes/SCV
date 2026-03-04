@@ -60,8 +60,14 @@ export function createSelfFillRouter(registrationService: ISelfFillRegistration)
       return registrationService.registerGuest(input.token, {
         firstName: input.firstName,
         lastName: input.lastName,
-        email: input.email ?? null,
+        email: input.email,
         phone: input.phone ?? null,
+        address1: input.address1 ?? null,
+        address2: input.address2 ?? null,
+        city: input.city ?? null,
+        state: input.state ?? null,
+        zipCode: input.zipCode ?? null,
+        country: input.country ?? null,
       })
     }),
 

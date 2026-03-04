@@ -149,20 +149,21 @@ describe('selfFillGuestSchema', () => {
     expect(result.success).toBe(false)
   })
 
-  // email validation
-  it('should accept null email', () => {
+  // email validation — required
+  it('should require email', () => {
+    const { email: _, ...rest } = validInput
+    const result = selfFillGuestSchema.safeParse(rest)
+    expect(result.success).toBe(false)
+  })
+
+  it('should reject null email', () => {
     const result = selfFillGuestSchema.safeParse({ ...validInput, email: null })
-    expect(result.success).toBe(true)
+    expect(result.success).toBe(false)
   })
 
-  it('should accept undefined email', () => {
-    const result = selfFillGuestSchema.safeParse({ ...validInput, email: undefined })
-    expect(result.success).toBe(true)
-  })
-
-  it('should accept empty string email', () => {
+  it('should reject empty string email', () => {
     const result = selfFillGuestSchema.safeParse({ ...validInput, email: '' })
-    expect(result.success).toBe(true)
+    expect(result.success).toBe(false)
   })
 
   it('should reject invalid email format', () => {
@@ -180,12 +181,6 @@ describe('selfFillGuestSchema', () => {
     const result = selfFillGuestSchema.safeParse({ ...validInput, email: '  alice@example.com  ' })
     expect(result.success).toBe(true)
     if (result.success) expect(result.data.email).toBe('alice@example.com')
-  })
-
-  it('should convert empty string email to null', () => {
-    const result = selfFillGuestSchema.safeParse({ ...validInput, email: '' })
-    expect(result.success).toBe(true)
-    if (result.success) expect(result.data.email).toBeNull()
   })
 
   // phone validation

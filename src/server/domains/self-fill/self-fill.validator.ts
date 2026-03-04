@@ -43,12 +43,19 @@ export const selfFillGuestSchema = z.object({
   token: tokenSchema,
   firstName: nameSchema('First name'),
   lastName: nameSchema('Last name'),
-  email: z.preprocess((val) => {
-    if (val === '' || val === null || val === undefined) return null
-    if (typeof val === 'string') return val.toLowerCase().trim()
-    return val
-  }, z.string().email('Please enter a valid email address').nullable().optional()),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'Email is required')
+    .email('Please enter a valid email address')
+    .transform((v) => v.toLowerCase()),
   phone: z.string().max(20).nullish(),
+  address1: z.string().trim().max(200).nullish(),
+  address2: z.string().trim().max(200).nullish(),
+  city: z.string().trim().max(100).nullish(),
+  state: z.string().trim().max(100).nullish(),
+  zipCode: z.string().trim().max(20).nullish(),
+  country: z.string().trim().max(100).nullish(),
 })
 
 export type SelfFillGuestSchemaInput = z.infer<typeof selfFillGuestSchema>

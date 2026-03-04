@@ -111,7 +111,7 @@ describe('SelfFillRegistrationService', () => {
       await service.registerGuest(validToken, validGuestInput)
 
       expect(mockCreateWithGiftsFn).toHaveBeenCalledWith(
-        { weddingId: 'wedding-123' },
+        expect.objectContaining({ weddingId: 'wedding-123' }),
         expect.arrayContaining(['event-123', 'event-456'])
       )
     })

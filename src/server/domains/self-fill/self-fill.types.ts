@@ -35,6 +35,12 @@ export type SelfFillGuestInput = {
   lastName: string
   email: string | null
   phone: string | null
+  address1?: string | null
+  address2?: string | null
+  city?: string | null
+  state?: string | null
+  zipCode?: string | null
+  country?: string | null
 }
 
 /**

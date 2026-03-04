@@ -16,8 +16,14 @@ import { api } from '~/trpc/react'
 const selfFillFormSchema = z.object({
   firstName: z.string().min(1, 'First name is required').max(100),
   lastName: z.string().min(1, 'Last name is required').max(100),
-  email: z.string().email('Please enter a valid email').or(z.literal('')).optional(),
+  email: z.string().trim().min(1, 'Email is required').email('Please enter a valid email'),
   phone: z.string().max(20).optional(),
+  address1: z.string().trim().max(200).optional(),
+  address2: z.string().trim().max(200).optional(),
+  city: z.string().trim().max(100).optional(),
+  state: z.string().trim().max(100).optional(),
+  zipCode: z.string().trim().max(20).optional(),
+  country: z.string().trim().max(100).optional(),
 })
 
 type SelfFillFormData = z.infer<typeof selfFillFormSchema>
@@ -64,6 +70,12 @@ export default function SelfFillPage() {
       lastName: '',
       email: '',
       phone: '',
+      address1: '',
+      address2: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      country: '',
     },
   })
 
@@ -72,8 +84,14 @@ export default function SelfFillPage() {
       token,
       firstName: data.firstName,
       lastName: data.lastName,
-      email: data.email || null,
+      email: data.email,
       phone: data.phone || null,
+      address1: data.address1 || null,
+      address2: data.address2 || null,
+      city: data.city || null,
+      state: data.state || null,
+      zipCode: data.zipCode || null,
+      country: data.country || null,
     })
   }
 
@@ -135,7 +153,8 @@ export default function SelfFillPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
+          <form onSubmit={handleSubmit(onSubmit)} className='space-y-6'>
+            {/* Name */}
             <div className='grid grid-cols-2 gap-4'>
               <div className='space-y-2'>
                 <Label htmlFor='firstName'>First Name *</Label>
@@ -163,8 +182,9 @@ export default function SelfFillPage() {
               </div>
             </div>
 
+            {/* Contact */}
             <div className='space-y-2'>
-              <Label htmlFor='email'>Email (optional)</Label>
+              <Label htmlFor='email'>Email *</Label>
               <Input
                 id='email'
                 type='email'
@@ -185,6 +205,92 @@ export default function SelfFillPage() {
                 className={errors.phone ? 'border-red-500' : ''}
               />
               {errors.phone && <p className='text-red-500 text-sm'>{errors.phone.message}</p>}
+            </div>
+
+            {/* Mailing Address */}
+            <div className='space-y-4'>
+              <div>
+                <p className='font-medium text-sm'>Mailing Address (optional)</p>
+                <p className='text-muted-foreground text-xs'>
+                  Used for sending invitations and save the dates.
+                </p>
+              </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='address1'>Street Address</Label>
+                <Input
+                  id='address1'
+                  placeholder='123 Main St'
+                  {...register('address1')}
+                  className={errors.address1 ? 'border-red-500' : ''}
+                />
+                {errors.address1 && (
+                  <p className='text-red-500 text-sm'>{errors.address1.message}</p>
+                )}
+              </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='address2'>Apt / Suite / Other</Label>
+                <Input
+                  id='address2'
+                  placeholder='Apt 4B'
+                  {...register('address2')}
+                  className={errors.address2 ? 'border-red-500' : ''}
+                />
+                {errors.address2 && (
+                  <p className='text-red-500 text-sm'>{errors.address2.message}</p>
+                )}
+              </div>
+
+              <div className='grid grid-cols-3 gap-4'>
+                <div className='col-span-2 space-y-2'>
+                  <Label htmlFor='city'>City</Label>
+                  <Input
+                    id='city'
+                    placeholder='San Francisco'
+                    {...register('city')}
+                    className={errors.city ? 'border-red-500' : ''}
+                  />
+                  {errors.city && <p className='text-red-500 text-sm'>{errors.city.message}</p>}
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='state'>State</Label>
+                  <Input
+                    id='state'
+                    placeholder='CA'
+                    {...register('state')}
+                    className={errors.state ? 'border-red-500' : ''}
+                  />
+                  {errors.state && <p className='text-red-500 text-sm'>{errors.state.message}</p>}
+                </div>
+              </div>
+
+              <div className='grid grid-cols-2 gap-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='zipCode'>Zip / Postal Code</Label>
+                  <Input
+                    id='zipCode'
+                    placeholder='94102'
+                    {...register('zipCode')}
+                    className={errors.zipCode ? 'border-red-500' : ''}
+                  />
+                  {errors.zipCode && (
+                    <p className='text-red-500 text-sm'>{errors.zipCode.message}</p>
+                  )}
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='country'>Country</Label>
+                  <Input
+                    id='country'
+                    placeholder='United States'
+                    {...register('country')}
+                    className={errors.country ? 'border-red-500' : ''}
+                  />
+                  {errors.country && (
+                    <p className='text-red-500 text-sm'>{errors.country.message}</p>
+                  )}
+                </div>
+              </div>
             </div>
 
             {mutationError && (
