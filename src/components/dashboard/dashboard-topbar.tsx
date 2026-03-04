@@ -1,12 +1,10 @@
 'use client'
 
 import { ThemeToggle } from '~/app/_components/theme-toggle'
+import { useAuthenticatedSidebar } from '@/components/layout/authenticated-app-shell'
 
-interface DashboardTopbarProps {
-  onMenuToggle: () => void
-}
-
-export default function DashboardTopbar({ onMenuToggle }: DashboardTopbarProps) {
+export default function DashboardTopbar() {
+  const { openSidebar } = useAuthenticatedSidebar()
   const today = new Date().toLocaleDateString('en-GB', {
     weekday: 'long',
     day: 'numeric',
@@ -21,7 +19,7 @@ export default function DashboardTopbar({ onMenuToggle }: DashboardTopbarProps) 
         <button
           type='button'
           aria-label='Open sidebar'
-          onClick={onMenuToggle}
+          onClick={openSidebar}
           className='flex h-11 w-11 items-center justify-center rounded-md text-foreground/60 transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2 lg:hidden'
         >
           <svg
