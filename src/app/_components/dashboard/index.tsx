@@ -37,7 +37,7 @@ export default function Dashboard({
     return true
   })
   const [prefillEvent, setPrefillEvent] = useState<EventFormData | undefined>()
-  const [collapseSections, setCollapseSections] = useState<boolean>(false)
+  const [collapseSections, _setCollapseSections] = useState<boolean>(false)
   const [showRsvpSettings, setShowRsvpSettings] = useState<boolean>(false)
   const [showWebsiteSettings, setShowWebsiteSettings] = useState<boolean>(false)
 
@@ -76,8 +76,8 @@ export default function Dashboard({
           <PlanningOverview dashboardData={dashboardData} />
 
           {/* Website editor — anchored for sidebar "Website" link */}
-          <div id='website-editor' className='mt-8 border-t border-border pt-8'>
-            <h2 className='mb-5 font-serif text-xl font-semibold text-foreground'>
+          <div id='website-editor' className='mt-8 border-border border-t pt-8'>
+            <h2 className='mb-5 font-semibold font-serif text-foreground text-xl'>
               Website Editor
             </h2>
             <DashboardHeader
@@ -85,9 +85,7 @@ export default function Dashboard({
               setShowWebsiteSettings={setShowWebsiteSettings}
             />
             <div className='border-border border-t' />
-            {showRegistrySetup && (
-              <RegistrySetup setShowRegistrySetup={setShowRegistrySetup} />
-            )}
+            {showRegistrySetup && <RegistrySetup setShowRegistrySetup={setShowRegistrySetup} />}
             <div className='border-border border-t' />
             <div className='mt-8'>
               <PageSectionsTemplate title={'Home'} collapse={collapseSections}>

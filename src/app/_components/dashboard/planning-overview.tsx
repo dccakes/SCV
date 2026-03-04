@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import type { DashboardData, EventWithResponses } from '~/app/utils/shared-types'
 
 interface PlanningOverviewProps {
-  dashboardData: DashboardData
+  dashboardData: DashboardData | null
 }
 
 function CardShell({
@@ -23,16 +23,16 @@ function CardShell({
   children: React.ReactNode
 }) {
   return (
-    <div className='rounded-lg border border-border bg-card overflow-hidden'>
-      <div className='flex items-center justify-between border-b border-border px-4 py-3'>
-        <p className='flex items-center gap-2 font-mono text-[0.62rem] uppercase tracking-widest text-muted-foreground'>
+    <div className='overflow-hidden rounded-lg border border-border bg-card'>
+      <div className='flex items-center justify-between border-border border-b px-4 py-3'>
+        <p className='flex items-center gap-2 font-mono text-[0.62rem] text-muted-foreground uppercase tracking-widest'>
           <span>{icon}</span>
           {title}
         </p>
         {action && actionHref && (
           <Link
             href={actionHref}
-            className='font-mono text-[0.58rem] uppercase tracking-widest text-primary transition-opacity hover:opacity-70'
+            className='font-mono text-[0.58rem] text-primary uppercase tracking-widest transition-opacity hover:opacity-70'
           >
             {action}
           </Link>
@@ -43,12 +43,11 @@ function CardShell({
   )
 }
 
-function CountdownHero({ dashboardData }: { dashboardData: DashboardData }) {
-  const { weddingData } = dashboardData
+function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null }) {
+  const weddingData = dashboardData?.weddingData
   const bride = weddingData?.brideFirstName ?? ''
   const groom = weddingData?.groomFirstName ?? ''
-  const coupleName =
-    bride && groom ? `${bride} & ${groom}` : bride || groom || 'Your Wedding'
+  const coupleName = bride && groom ? `${bride} & ${groom}` : bride || groom || 'Your Wedding'
   const days = weddingData?.daysRemaining ?? 0
   const dateLabel = weddingData?.date?.standardFormat ?? ''
 
@@ -66,16 +65,18 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData }) {
   return (
     <div className='relative overflow-hidden rounded-lg bg-sidebar-ink px-6 py-5'>
       {/* decorative glow */}
-      <div className='pointer-events-none absolute right-[-20px] top-[-40px] h-48 w-48 rounded-full bg-primary/20 blur-2xl' />
+      <div className='pointer-events-none absolute top-[-40px] right-[-20px] h-48 w-48 rounded-full bg-primary/20 blur-2xl' />
 
       <div className='relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div>
-          <p className='mb-1 font-mono text-[0.6rem] uppercase tracking-[0.18em] text-sidebar-cream/40'>
+          <p className='mb-1 font-mono text-[0.6rem] text-sidebar-cream/40 uppercase tracking-[0.18em]'>
             Days until the big day
           </p>
-          <p className='font-serif text-2xl italic leading-tight text-sidebar-cream'>{coupleName}</p>
+          <p className='font-serif text-2xl text-sidebar-cream italic leading-tight'>
+            {coupleName}
+          </p>
           {dateLabel && (
-            <p className='mt-0.5 font-mono text-[0.62rem] tracking-wider text-sidebar-cream/40'>
+            <p className='mt-0.5 font-mono text-[0.62rem] text-sidebar-cream/40 tracking-wider'>
               {dateLabel}
             </p>
           )}
@@ -85,33 +86,35 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData }) {
               style={{ width: `${planningPct}%` }}
             />
           </div>
-          <p className='mt-1 font-mono text-[0.55rem] tracking-widest text-sidebar-cream/30'>
+          <p className='mt-1 font-mono text-[0.55rem] text-sidebar-cream/30 tracking-widest'>
             {planningPct}% of planning complete
           </p>
         </div>
 
         <div className='flex items-end gap-3'>
           <div className='text-center'>
-            <span className='block font-serif text-5xl leading-none text-sidebar-cream'>{days}</span>
-            <span className='mt-1 block font-mono text-[0.55rem] uppercase tracking-[0.14em] text-sidebar-cream/30'>
+            <span className='block font-serif text-5xl text-sidebar-cream leading-none'>
+              {days}
+            </span>
+            <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
               Days
             </span>
           </div>
           <span className='pb-1 font-serif text-3xl text-sidebar-cream/15'>:</span>
           <div className='text-center'>
-            <span className='block font-serif text-5xl leading-none text-sidebar-cream'>
+            <span className='block font-serif text-5xl text-sidebar-cream leading-none'>
               {String(hours).padStart(2, '0')}
             </span>
-            <span className='mt-1 block font-mono text-[0.55rem] uppercase tracking-[0.14em] text-sidebar-cream/30'>
+            <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
               Hours
             </span>
           </div>
           <span className='pb-1 font-serif text-3xl text-sidebar-cream/15'>:</span>
           <div className='text-center'>
-            <span className='block font-serif text-5xl leading-none text-sidebar-cream'>
+            <span className='block font-serif text-5xl text-sidebar-cream leading-none'>
               {String(mins).padStart(2, '0')}
             </span>
-            <span className='mt-1 block font-mono text-[0.55rem] uppercase tracking-[0.14em] text-sidebar-cream/30'>
+            <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
               Mins
             </span>
           </div>
@@ -121,9 +124,9 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData }) {
   )
 }
 
-function MiniStats({ dashboardData }: { dashboardData: DashboardData }) {
+function MiniStats({ dashboardData }: { dashboardData: DashboardData | null }) {
   const total = dashboardData?.totalGuests ?? 0
-  const firstEvent = (dashboardData?.events?.[0] as EventWithResponses | undefined)
+  const firstEvent = dashboardData?.events?.[0] as EventWithResponses | undefined
   const confirmed = firstEvent?.guestResponses?.attending ?? 0
   const pending = firstEvent?.guestResponses?.invited ?? 0
   const pct = total > 0 ? Math.round((confirmed / total) * 100) : 0
@@ -144,13 +147,13 @@ function MiniStats({ dashboardData }: { dashboardData: DashboardData }) {
         >
           <span className='text-xl opacity-60'>{s.icon}</span>
           <div className='min-w-0'>
-            <div className='font-serif text-[1.4rem] leading-none text-foreground'>{s.val}</div>
-            <div className='font-mono text-[0.56rem] uppercase tracking-widest text-muted-foreground'>
+            <div className='font-serif text-[1.4rem] text-foreground leading-none'>{s.val}</div>
+            <div className='font-mono text-[0.56rem] text-muted-foreground uppercase tracking-widest'>
               {s.label}
             </div>
           </div>
           {s.delta && (
-            <span className='ml-auto font-mono text-[0.58rem] tracking-wider text-success'>
+            <span className='ml-auto font-mono text-[0.58rem] text-success tracking-wider'>
               {s.delta}
             </span>
           )}
@@ -160,8 +163,8 @@ function MiniStats({ dashboardData }: { dashboardData: DashboardData }) {
   )
 }
 
-function RsvpCard({ dashboardData }: { dashboardData: DashboardData }) {
-  const firstEvent = (dashboardData?.events?.[0] as EventWithResponses | undefined)
+function RsvpCard({ dashboardData }: { dashboardData: DashboardData | null }) {
+  const firstEvent = dashboardData?.events?.[0] as EventWithResponses | undefined
   const attending = firstEvent?.guestResponses?.attending ?? 0
   const pending = firstEvent?.guestResponses?.invited ?? 0
   const declined = firstEvent?.guestResponses?.declined ?? 0
@@ -183,7 +186,7 @@ function RsvpCard({ dashboardData }: { dashboardData: DashboardData }) {
         ].map((s) => (
           <div key={s.label} className='px-2 text-center first:pl-0 last:pr-0'>
             <span className={`block font-serif text-[2rem] leading-none ${s.color}`}>{s.val}</span>
-            <span className='font-mono text-[0.55rem] uppercase tracking-widest text-muted-foreground'>
+            <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
               {s.label}
             </span>
           </div>
@@ -198,14 +201,14 @@ function RsvpCard({ dashboardData }: { dashboardData: DashboardData }) {
       </div>
 
       {pending > 0 && (
-        <p className='mb-3 font-mono text-[0.58rem] tracking-wider text-muted-foreground'>
+        <p className='mb-3 font-mono text-[0.58rem] text-muted-foreground tracking-wider'>
           Still waiting on {pending} — check guest list for details
         </p>
       )}
 
       <Link
         href='/guest-list'
-        className='inline-block rounded-sm border border-primary/30 px-3 py-1 font-mono text-[0.58rem] uppercase tracking-widest text-primary transition-all hover:bg-primary hover:text-primary-foreground'
+        className='inline-block rounded-sm border border-primary/30 px-3 py-1 font-mono text-[0.58rem] text-primary uppercase tracking-widest transition-all hover:bg-primary hover:text-primary-foreground'
       >
         Manage RSVPs →
       </Link>
@@ -224,11 +227,46 @@ interface TaskItem {
 
 const PLACEHOLDER_TASKS: TaskItem[] = [
   { id: '1', text: 'Book ceremony venue', tag: 'Vendor', due: 'Done', done: true, urgent: false },
-  { id: '2', text: 'Finalise guest list (first pass)', tag: 'Admin', due: 'Done', done: true, urgent: false },
-  { id: '3', text: 'Confirm catering headcount', tag: 'Urgent', due: 'This week', done: false, urgent: true },
-  { id: '4', text: 'Pay rehearsal dinner deposit', tag: 'Overdue', due: 'Overdue', done: false, urgent: true },
-  { id: '5', text: 'Book hair & makeup artist', tag: 'Vendor', due: 'Mar 20', done: false, urgent: false },
-  { id: '6', text: 'Finalise ceremony music playlist', tag: 'Admin', due: 'Apr 1', done: false, urgent: false },
+  {
+    id: '2',
+    text: 'Finalise guest list (first pass)',
+    tag: 'Admin',
+    due: 'Done',
+    done: true,
+    urgent: false,
+  },
+  {
+    id: '3',
+    text: 'Confirm catering headcount',
+    tag: 'Urgent',
+    due: 'This week',
+    done: false,
+    urgent: true,
+  },
+  {
+    id: '4',
+    text: 'Pay rehearsal dinner deposit',
+    tag: 'Overdue',
+    due: 'Overdue',
+    done: false,
+    urgent: true,
+  },
+  {
+    id: '5',
+    text: 'Book hair & makeup artist',
+    tag: 'Vendor',
+    due: 'Mar 20',
+    done: false,
+    urgent: false,
+  },
+  {
+    id: '6',
+    text: 'Finalise ceremony music playlist',
+    tag: 'Admin',
+    due: 'Apr 1',
+    done: false,
+    urgent: false,
+  },
 ]
 
 function TasksCard() {
@@ -265,7 +303,9 @@ function TasksCard() {
             </span>
             <span
               className={`flex-1 font-serif text-[0.9rem] leading-tight ${
-                task.done ? 'text-muted-foreground line-through decoration-muted-foreground/40' : 'text-foreground'
+                task.done
+                  ? 'text-muted-foreground line-through decoration-muted-foreground/40'
+                  : 'text-foreground'
               }`}
             >
               {task.text}
@@ -283,7 +323,7 @@ function TasksCard() {
           </button>
         ))}
       </div>
-      <p className='mt-3 font-mono text-[0.56rem] tracking-wider text-muted-foreground/60'>
+      <p className='mt-3 font-mono text-[0.56rem] text-muted-foreground/60 tracking-wider'>
         Task tracking coming soon — these are placeholders
       </p>
     </CardShell>
@@ -302,15 +342,15 @@ function BudgetCard() {
   return (
     <CardShell title='Budget' icon='◧' action='Details →' actionHref='/dashboard#website-editor'>
       <div className='mb-3 flex items-baseline gap-2'>
-        <span className='font-serif text-[2.2rem] leading-none text-foreground'>—</span>
-        <span className='font-mono text-[0.65rem] tracking-wider text-muted-foreground'>
+        <span className='font-serif text-[2.2rem] text-foreground leading-none'>—</span>
+        <span className='font-mono text-[0.65rem] text-muted-foreground tracking-wider'>
           Budget tracking coming soon
         </span>
       </div>
       <div className='mb-2 h-2 overflow-hidden rounded-full bg-border'>
         <div className='h-full w-0 rounded-full bg-gradient-to-r from-success to-accent' />
       </div>
-      <div className='mb-4 font-mono text-[0.58rem] tracking-wider text-muted-foreground'>
+      <div className='mb-4 font-mono text-[0.58rem] text-muted-foreground tracking-wider'>
         Set up your budget to track spending
       </div>
       <div className='flex flex-col gap-2'>
@@ -318,10 +358,10 @@ function BudgetCard() {
           <div key={c.name} className='flex items-center gap-2'>
             <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${c.color}`} />
             <span className='flex-1 font-serif text-[0.85rem] text-foreground'>{c.name}</span>
-            <div className='w-14 overflow-hidden rounded-full h-[3px] bg-border'>
+            <div className='h-[3px] w-14 overflow-hidden rounded-full bg-border'>
               <div className={`h-full rounded-full ${c.color}`} style={{ width: `${c.pct}%` }} />
             </div>
-            <span className='w-10 text-right font-mono text-[0.6rem] tracking-wider text-muted-foreground'>
+            <span className='w-10 text-right font-mono text-[0.6rem] text-muted-foreground tracking-wider'>
               —
             </span>
           </div>
@@ -333,11 +373,41 @@ function BudgetCard() {
 
 function VendorsCard() {
   const placeholderVendors = [
-    { initials: 'V1', name: 'Ceremony Venue', type: 'Venue', status: 'Confirmed', statusColor: 'bg-success/12 text-success' },
-    { initials: 'V2', name: 'Photographer', type: 'Photography', status: 'Confirmed', statusColor: 'bg-success/12 text-success' },
-    { initials: 'V3', name: 'Caterer', type: 'Catering', status: 'Deposit due', statusColor: 'bg-destructive/10 text-destructive' },
-    { initials: 'V4', name: 'Florist', type: 'Flowers', status: 'Confirmed', statusColor: 'bg-success/12 text-success' },
-    { initials: '—', name: 'Hair & Makeup', type: 'Beauty', status: 'Searching', statusColor: 'bg-accent/12 text-accent-foreground' },
+    {
+      initials: 'V1',
+      name: 'Ceremony Venue',
+      type: 'Venue',
+      status: 'Confirmed',
+      statusColor: 'bg-success/12 text-success',
+    },
+    {
+      initials: 'V2',
+      name: 'Photographer',
+      type: 'Photography',
+      status: 'Confirmed',
+      statusColor: 'bg-success/12 text-success',
+    },
+    {
+      initials: 'V3',
+      name: 'Caterer',
+      type: 'Catering',
+      status: 'Deposit due',
+      statusColor: 'bg-destructive/10 text-destructive',
+    },
+    {
+      initials: 'V4',
+      name: 'Florist',
+      type: 'Flowers',
+      status: 'Confirmed',
+      statusColor: 'bg-success/12 text-success',
+    },
+    {
+      initials: '—',
+      name: 'Hair & Makeup',
+      type: 'Beauty',
+      status: 'Searching',
+      statusColor: 'bg-accent/12 text-accent-foreground',
+    },
   ]
 
   return (
@@ -349,12 +419,12 @@ function VendorsCard() {
             href='/vendors'
             className='flex items-center gap-2.5 rounded px-2 py-2 transition-colors hover:bg-muted'
           >
-            <span className='flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-muted font-mono text-[0.6rem] font-medium uppercase text-muted-foreground'>
+            <span className='flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-muted font-medium font-mono text-[0.6rem] text-muted-foreground uppercase'>
               {v.initials}
             </span>
             <div className='min-w-0 flex-1'>
               <p className='truncate font-serif text-[0.88rem] text-foreground'>{v.name}</p>
-              <p className='font-mono text-[0.56rem] uppercase tracking-widest text-muted-foreground'>
+              <p className='font-mono text-[0.56rem] text-muted-foreground uppercase tracking-widest'>
                 {v.type}
               </p>
             </div>
@@ -366,14 +436,14 @@ function VendorsCard() {
           </Link>
         ))}
       </div>
-      <p className='mt-3 font-mono text-[0.56rem] tracking-wider text-muted-foreground/60'>
+      <p className='mt-3 font-mono text-[0.56rem] text-muted-foreground/60 tracking-wider'>
         Showing placeholder data — manage real vendors →
       </p>
     </CardShell>
   )
 }
 
-function MilestonesCard({ dashboardData }: { dashboardData: DashboardData }) {
+function MilestonesCard({ dashboardData }: { dashboardData: DashboardData | null }) {
   const weddingDateLabel = dashboardData?.weddingData?.date?.standardFormat ?? ''
   const events = dashboardData?.events ?? []
 
@@ -407,7 +477,7 @@ function MilestonesCard({ dashboardData }: { dashboardData: DashboardData }) {
         {allMilestones.map((m, i) => (
           <div key={m.title} className='relative flex gap-3 pb-3 last:pb-0'>
             {i < allMilestones.length - 1 && (
-              <div className='absolute left-[5px] top-4 bottom-0 w-px bg-border' />
+              <div className='absolute top-4 bottom-0 left-[5px] w-px bg-border' />
             )}
             <span
               className={`relative z-10 mt-1 h-3 w-3 flex-shrink-0 rounded-full border-2 ${dotClass[m.status]}`}
@@ -415,10 +485,11 @@ function MilestonesCard({ dashboardData }: { dashboardData: DashboardData }) {
             <div>
               <p
                 className={`font-serif text-[0.88rem] leading-tight ${
-                  'highlight' in m && m.highlight ? 'italic text-primary' : 'text-foreground'
+                  'highlight' in m && m.highlight ? 'text-primary italic' : 'text-foreground'
                 }`}
               >
-                {m.title}{'highlight' in m && m.highlight ? ' ✦' : ''}
+                {m.title}
+                {'highlight' in m && m.highlight ? ' ✦' : ''}
               </p>
               <p
                 className={`mt-0.5 font-mono text-[0.58rem] tracking-wider ${

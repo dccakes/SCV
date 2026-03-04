@@ -32,10 +32,10 @@ function NavItem({ label, href, icon, isActive, onClick }: NavItemProps) {
     <Link
       href={href}
       onClick={onClick}
-      className={`flex items-center gap-2.5 px-4 py-2 text-xs uppercase tracking-widest font-mono transition-all border-l-2 ${
+      className={`flex items-center gap-2.5 border-l-2 px-4 py-2 font-mono text-xs uppercase tracking-widest transition-all ${
         isActive
           ? 'border-primary bg-primary/10 text-sidebar-cream'
-          : 'border-transparent text-sidebar-cream/50 hover:text-sidebar-cream/85 hover:bg-white/[0.04]'
+          : 'border-transparent text-sidebar-cream/50 hover:bg-white/[0.04] hover:text-sidebar-cream/85'
       }`}
     >
       <span className='w-4 text-center text-sm'>{icon}</span>
@@ -63,8 +63,8 @@ export default function DashboardSidebar({ coupleName, weddingDate }: DashboardS
   const SidebarContent = ({ onNavClick }: { onNavClick?: () => void }) => (
     <div className='flex h-full flex-col bg-sidebar-ink'>
       {/* Logo */}
-      <div className='flex items-center gap-2 border-b border-white/[0.06] px-5 py-4'>
-        <span className='font-mono text-xs font-medium uppercase tracking-[0.2em] text-sidebar-cream'>
+      <div className='flex items-center gap-2 border-white/[0.06] border-b px-5 py-4'>
+        <span className='font-medium font-mono text-sidebar-cream text-xs uppercase tracking-[0.2em]'>
           OSWP
         </span>
         <span className='mt-[-6px] h-1.5 w-1.5 rounded-full bg-primary' />
@@ -74,12 +74,12 @@ export default function DashboardSidebar({ coupleName, weddingDate }: DashboardS
       {(coupleName ?? weddingDate) && (
         <div className='mx-3 mt-3 mb-1 rounded-md border border-white/[0.08] bg-white/[0.05] px-3 py-2.5'>
           {coupleName && (
-            <p className='font-serif text-base italic text-sidebar-cream/95 leading-tight mb-1'>
+            <p className='mb-1 font-serif text-base text-sidebar-cream/95 italic leading-tight'>
               {coupleName}
             </p>
           )}
           {weddingDate && (
-            <p className='font-mono text-[0.6rem] uppercase tracking-widest text-primary'>
+            <p className='font-mono text-[0.6rem] text-primary uppercase tracking-widest'>
               {weddingDate}
             </p>
           )}
@@ -88,7 +88,7 @@ export default function DashboardSidebar({ coupleName, weddingDate }: DashboardS
 
       {/* Nav */}
       <nav className='flex flex-1 flex-col gap-px py-3'>
-        <p className='px-4 pt-2 pb-1 font-mono text-[0.55rem] uppercase tracking-[0.18em] text-sidebar-cream/25'>
+        <p className='px-4 pt-2 pb-1 font-mono text-[0.55rem] text-sidebar-cream/25 uppercase tracking-[0.18em]'>
           Planning
         </p>
         {PLANNING_NAV.map((item) => (
@@ -100,30 +100,25 @@ export default function DashboardSidebar({ coupleName, weddingDate }: DashboardS
           />
         ))}
 
-        <p className='mt-2 px-4 pt-2 pb-1 font-mono text-[0.55rem] uppercase tracking-[0.18em] text-sidebar-cream/25'>
+        <p className='mt-2 px-4 pt-2 pb-1 font-mono text-[0.55rem] text-sidebar-cream/25 uppercase tracking-[0.18em]'>
           Settings
         </p>
         {SETTINGS_NAV.map((item) => (
-          <NavItem
-            key={item.href}
-            {...item}
-            isActive={isActive(item.href)}
-            onClick={onNavClick}
-          />
+          <NavItem key={item.href} {...item} isActive={isActive(item.href)} onClick={onNavClick} />
         ))}
       </nav>
 
       {/* Bottom spacer */}
-      <div className='border-t border-white/[0.06] p-3'>
-        <div className='flex items-center gap-2 rounded-md px-2 py-1.5 text-sidebar-cream/60 text-xs font-mono'>
-          <span className='h-6 w-6 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-xs font-serif italic flex-shrink-0'>
+      <div className='border-white/[0.06] border-t p-3'>
+        <div className='flex items-center gap-2 rounded-md px-2 py-1.5 font-mono text-sidebar-cream/60 text-xs'>
+          <span className='flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent font-serif text-white text-xs italic'>
             W
           </span>
           <div>
-            <div className='text-sidebar-cream/80 text-[0.75rem] font-serif leading-tight'>
+            <div className='font-serif text-[0.75rem] text-sidebar-cream/80 leading-tight'>
               Couple
             </div>
-            <div className='text-sidebar-cream/30 text-[0.55rem] uppercase tracking-wider'>
+            <div className='text-[0.55rem] text-sidebar-cream/30 uppercase tracking-wider'>
               Admin
             </div>
           </div>
@@ -135,7 +130,7 @@ export default function DashboardSidebar({ coupleName, weddingDate }: DashboardS
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className='hidden lg:flex w-56 flex-shrink-0 flex-col overflow-hidden'>
+      <aside className='hidden w-56 flex-shrink-0 flex-col overflow-hidden lg:flex'>
         <SidebarContent />
       </aside>
 
@@ -155,7 +150,14 @@ export default function DashboardSidebar({ coupleName, weddingDate }: DashboardS
               onClick={() => setIsOpen(false)}
               className='absolute top-3 right-3 flex h-7 w-7 items-center justify-center rounded-md text-sidebar-cream/60 hover:text-sidebar-cream'
             >
-              <svg className='h-4 w-4' fill='none' stroke='currentColor' viewBox='0 0 24 24' strokeWidth={1.5}>
+              <svg
+                aria-hidden='true'
+                className='h-4 w-4'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+                strokeWidth={1.5}
+              >
                 <path strokeLinecap='round' strokeLinejoin='round' d='M6 18L18 6M6 6l12 12' />
               </svg>
             </button>
