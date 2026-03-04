@@ -267,7 +267,7 @@ export default function DashboardSidebar({
     <>
       {/* Desktop sidebar — collapses between w-14 and w-56 */}
       <aside
-        className={`hidden flex-shrink-0 flex-col overflow-hidden motion-safe:transition-[width] motion-safe:duration-200 lg:flex ${
+        className={`hidden h-full flex-shrink-0 flex-col overflow-hidden motion-safe:transition-[width] motion-safe:duration-200 lg:flex ${
           isCollapsed ? 'w-14' : 'w-56'
         }`}
       >

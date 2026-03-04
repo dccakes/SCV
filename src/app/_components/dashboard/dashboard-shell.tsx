@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 
 import DashboardSidebar from '~/app/_components/dashboard/dashboard-sidebar'
 
@@ -22,6 +22,12 @@ interface DashboardShellProps {
 
 export default function DashboardShell({ children, coupleName, weddingDate }: DashboardShellProps) {
   const [isOpen, setIsOpen] = useState(false)
+
+  // Prevent body-level scroll so the sidebar and Etta panel stay fixed in the viewport
+  useEffect(() => {
+    document.body.classList.add('overflow-hidden')
+    return () => document.body.classList.remove('overflow-hidden')
+  }, [])
 
   return (
     <SidebarContext.Provider value={{ openSidebar: () => setIsOpen(true) }}>

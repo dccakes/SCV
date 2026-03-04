@@ -57,7 +57,7 @@ export default function EttaPanel() {
   }
 
   return (
-    <aside className='hidden w-80 flex-shrink-0 flex-col overflow-hidden border-white/10 border-l bg-etta-ink lg:flex'>
+    <aside className='hidden h-full w-80 flex-shrink-0 flex-col overflow-hidden border-white/10 border-l bg-etta-ink lg:flex'>
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className='flex items-center gap-3 border-white/10 border-b px-4 py-3.5'>
         <div className='flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent to-primary font-serif text-lg text-white italic shadow-md'>
