@@ -21,6 +21,9 @@ const config = {
       },
     },
     extend: {
+      fontFamily: {
+        display: ['var(--font-display)', 'Instrument Serif', 'serif'],
+      },
       colors: {
         border: 'var(--border)',
         input: 'var(--input)',
