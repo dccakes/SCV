@@ -8,7 +8,7 @@
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 
-import { EventsPageClient } from '~/app/events/_components/events-page-client'
+import { EventsPageClient } from '@/app/(authenicated)/events/_components/events-page-client'
 import { api } from '~/trpc/server'
 
 export default async function EventsPage() {

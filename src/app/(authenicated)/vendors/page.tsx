@@ -5,6 +5,13 @@ import VendorList from '~/app/_components/vendor'
 import { sharedStyles } from '~/app/utils/shared-styles'
 import { api } from '~/trpc/server'
 
+export const metadata = {
+  title: 'Vendors | Your Wedding Website',
+  description: 'Manage your wedding vendors',
+  icons: [{ rel: 'icon', url: '/favicon.ico' }],
+}
+
+
 export default async function VendorsPage() {
   headers() // Make this page dynamic (requires authentication)
 
