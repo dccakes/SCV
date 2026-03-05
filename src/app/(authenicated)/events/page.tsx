@@ -5,21 +5,11 @@
  * Events are ordered by creation date (oldest first).
  */
 
-import { headers } from 'next/headers'
-import { redirect } from 'next/navigation'
-
 import { EventsPageClient } from '@/app/(authenicated)/events/_components/events-page-client'
-import { api } from '~/trpc/server'
+import { getRequiredWedding } from '~/server/application/authenticated-route/authenticated-route-data'
 
 export default async function EventsPage() {
-  headers() // Make this page dynamic (requires authentication)
-
-  // Fetch wedding to ensure user has completed onboarding
-  const wedding = await api.wedding.getByUserId.query()
-
-  if (!wedding) {
-    redirect('/')
-  }
+  await getRequiredWedding()
 
   return (
     <div className='container mx-auto px-4 py-6 md:py-8'>

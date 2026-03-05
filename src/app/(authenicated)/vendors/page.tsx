@@ -1,4 +1,3 @@
-import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 
 import VendorList from '~/app/_components/vendor'
@@ -11,10 +10,7 @@ export const metadata = {
   icons: [{ rel: 'icon', url: '/favicon.ico' }],
 }
 
-
 export default async function VendorsPage() {
-  headers() // Make this page dynamic (requires authentication)
-
   const vendors = await api.vendor.getAll.query({})
 
   if (vendors === null) {

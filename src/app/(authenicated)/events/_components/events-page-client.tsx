@@ -294,9 +294,6 @@ function EventCard({ event, onEdit, onDelete }: EventCardProps) {
           )}
 
           <div className='flex gap-2 pt-2'>
-            <Button variant='outline' size='sm' className='flex-1 text-xs md:text-sm'>
-              View Details
-            </Button>
             <Button variant='ghost' size='sm' className='text-xs md:text-sm' onClick={onEdit}>
               Edit
             </Button>
