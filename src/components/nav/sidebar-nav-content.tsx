@@ -22,7 +22,7 @@ export default function SidebarNavContent(props: Readonly<SidebarNavContentProps
   const { sections, isCollapsed, isActive, onNavClick } = props
 
   return (
-    <nav className='flex flex-1 flex-col gap-px py-3'>
+    <nav className='flex min-h-0 flex-1 flex-col gap-px overflow-y-auto py-3'>
       {sections.map((section, sectionIndex) => (
         <div key={section.title}>
           {!isCollapsed && (

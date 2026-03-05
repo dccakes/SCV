@@ -55,4 +55,20 @@ describe('SidebarNavFrame', () => {
 
     expect(setIsOpen).toHaveBeenCalledWith(false)
   })
+
+  it('positions mobile close button away from header divider', () => {
+    render(<SidebarNavFrame isOpen setIsOpen={jest.fn()} />)
+
+    expect(screen.getByRole('button', { name: /close menu/i })).toHaveClass('top-2', 'h-9', 'w-9')
+  })
+
+  it('uses a scrollable nav region in mobile drawer', () => {
+    render(<SidebarNavFrame isOpen setIsOpen={jest.fn()} />)
+
+    const navElements = screen.getAllByRole('navigation')
+    expect(navElements.length).toBeGreaterThan(0)
+    expect(
+      navElements.every((navElement) => navElement.classList.contains('overflow-y-auto'))
+    ).toBe(true)
+  })
 })

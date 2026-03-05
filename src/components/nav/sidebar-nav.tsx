@@ -62,7 +62,7 @@ function SidebarNav({
   showCollapseToggle = true,
 }: SidebarNavProps) {
   return (
-    <div className='flex h-full flex-col bg-sidebar-ink'>
+    <div className='flex h-full min-h-0 flex-col overflow-hidden bg-sidebar-ink'>
       {/* Header: logo + collapse toggle */}
       <div
         className={`flex items-center border-white/10 border-b py-4 ${
@@ -243,7 +243,7 @@ export default function SidebarNavFrame(props: SidebarNavFrameProps) {
             onClick={() => setIsOpen(false)}
             aria-hidden='true'
           />
-          <aside className='relative flex h-full w-full flex-col'>
+          <aside className='relative flex h-full w-full flex-col overflow-y-auto overscroll-contain'>
             <SidebarNav
               isCollapsed={false}
               onToggleCollapse={() => {}}
@@ -260,11 +260,11 @@ export default function SidebarNavFrame(props: SidebarNavFrameProps) {
               type='button'
               aria-label='Close menu'
               onClick={() => setIsOpen(false)}
-              className='absolute top-4 right-4 flex h-11 w-11 items-center justify-center rounded-md text-sidebar-cream/50 transition-colors hover:bg-white/[0.06] hover:text-sidebar-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar-ink'
+              className='absolute top-2 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-md text-sidebar-cream/50 transition-colors hover:bg-white/[0.06] hover:text-sidebar-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar-ink'
             >
               <svg
                 aria-hidden='true'
-                className='h-5 w-5'
+                className='h-4 w-4'
                 fill='none'
                 stroke='currentColor'
                 viewBox='0 0 24 24'

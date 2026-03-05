@@ -44,6 +44,7 @@ export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppSh
         />
         <div className='flex min-h-0 flex-1 overflow-hidden'>
           <div className='flex min-h-0 flex-1 flex-col overflow-hidden'>
+            {/* TODO: Remove this floating trigger once mobile navigation is fully integrated in final layout. */}
             <button
               type='button'
               aria-label='Open sidebar'
