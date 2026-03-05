@@ -8,6 +8,8 @@
       "!dist",
       "!build",
       "!coverage",
+      "!.agents",
+      "!.claude",
       "!tests/resources",
       "!next-env.d.ts",
       "!src/types.gen.ts",

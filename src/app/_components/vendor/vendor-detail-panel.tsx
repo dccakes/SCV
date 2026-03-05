@@ -59,6 +59,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
 
         {showEditForm ? (
           <VendorForm
+            mode='edit'
             vendor={vendorData}
             onSuccess={async () => {
               await refetch()

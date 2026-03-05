@@ -7,9 +7,11 @@
 
 import { EventsPageClient } from '@/app/(authenicated)/events/_components/events-page-client'
 import { getRequiredWedding } from '~/server/application/authenticated-route/authenticated-route-data'
+import { api } from '~/trpc/server'
 
 export default async function EventsPage() {
   await getRequiredWedding()
+  const initialEvents = (await api.event.getAllByUserIdWithStats.query()) ?? []
 
   return (
     <div className='container mx-auto px-4 py-6 md:py-8'>
@@ -20,7 +22,7 @@ export default async function EventsPage() {
         </p>
       </div>
 
-      <EventsPageClient />
+      <EventsPageClient initialEvents={initialEvents} />
     </div>
   )
 }

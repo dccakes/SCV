@@ -6,8 +6,6 @@ type AuthenicatedLayoutProps = {
   children: ReactNode
 }
 
-export const dynamic = 'force-dynamic'
-
 export default async function AuthenicatedLayout({ children }: Readonly<AuthenicatedLayoutProps>) {
   return <AuthenticatedLayoutFrame>{children}</AuthenticatedLayoutFrame>
 }

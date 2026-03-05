@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react'
-
-import AuthenicatedLayout from '~/app/(authenicated)/layout'
+import AuthenicatedLayout, * as AuthenticatedLayoutModule from '~/app/(authenicated)/layout'
 
 const mockTrpcReactProvider = jest.fn(({ children }: { children: React.ReactNode }) => (
   <div data-testid='trpc-react-provider'>{children}</div>
@@ -47,5 +46,9 @@ describe('AuthenicatedLayout', () => {
     expect(mockSonnerToaster).not.toHaveBeenCalled()
     expect(screen.queryByTestId('trpc-react-provider')).not.toBeInTheDocument()
     expect(screen.queryByTestId('auth-layout-sonner-toaster')).not.toBeInTheDocument()
+  })
+
+  it('should not force dynamic rendering for entire authenticated route group', () => {
+    expect(AuthenticatedLayoutModule).not.toHaveProperty('dynamic')
   })
 })

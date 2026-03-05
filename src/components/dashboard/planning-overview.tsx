@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
 import type { DashboardData, EventWithResponses } from '~/app/utils/shared-types'
+import { TaskListItem } from '~/components/dashboard/planning-overview/task-list-item'
+import { useTasksCardState } from '~/components/dashboard/planning-overview/use-tasks-card-state'
 
 interface PlanningOverviewProps {
   dashboardData: DashboardData | null
@@ -221,111 +223,14 @@ function RsvpCard({ dashboardData }: { dashboardData: DashboardData | null }) {
   )
 }
 
-interface TaskItem {
-  id: string
-  text: string
-  tag: string
-  due: string
-  done: boolean
-  urgent: boolean
-}
-
-const PLACEHOLDER_TASKS: TaskItem[] = [
-  { id: '1', text: 'Book ceremony venue', tag: 'Vendor', due: 'Done', done: true, urgent: false },
-  {
-    id: '2',
-    text: 'Finalise guest list (first pass)',
-    tag: 'Admin',
-    due: 'Done',
-    done: true,
-    urgent: false,
-  },
-  {
-    id: '3',
-    text: 'Confirm catering headcount',
-    tag: 'Urgent',
-    due: 'This week',
-    done: false,
-    urgent: true,
-  },
-  {
-    id: '4',
-    text: 'Pay rehearsal dinner deposit',
-    tag: 'Overdue',
-    due: 'Overdue',
-    done: false,
-    urgent: true,
-  },
-  {
-    id: '5',
-    text: 'Book hair & makeup artist',
-    tag: 'Vendor',
-    due: 'Mar 20',
-    done: false,
-    urgent: false,
-  },
-  {
-    id: '6',
-    text: 'Finalise ceremony music playlist',
-    tag: 'Admin',
-    due: 'Apr 1',
-    done: false,
-    urgent: false,
-  },
-]
-
 function TasksCard() {
-  const [tasks, setTasks] = useState<TaskItem[]>(PLACEHOLDER_TASKS)
-
-  const toggle = (id: string) =>
-    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)))
-
-  const tagClass: Record<string, string> = {
-    Vendor: 'bg-success/12 text-success',
-    Admin: 'bg-accent/12 text-accent-foreground',
-    Urgent: 'bg-primary/10 text-foreground',
-    Overdue: 'bg-destructive/10 text-destructive',
-  }
+  const { tasks, toggleTask } = useTasksCardState()
 
   return (
     <CardShell title='Upcoming tasks' icon='◈'>
       <div className='flex flex-col gap-1.5'>
         {tasks.map((task) => (
-          <button
-            type='button'
-            key={task.id}
-            onClick={() => toggle(task.id)}
-            className='flex min-h-[44px] w-full items-center gap-2.5 rounded px-2 py-2.5 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
-          >
-            <span
-              className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-sm border text-[0.6rem] transition-all ${
-                task.done
-                  ? 'border-success bg-success text-white'
-                  : 'border-border hover:border-success/70'
-              }`}
-            >
-              {task.done && '✓'}
-            </span>
-            <span
-              className={`flex-1 font-serif text-[0.9rem] leading-tight ${
-                task.done
-                  ? 'text-foreground/50 line-through decoration-foreground/25'
-                  : 'text-foreground'
-              }`}
-            >
-              {task.text}
-            </span>
-            <span
-              className={`flex-shrink-0 rounded-full px-2 py-0.5 font-mono text-[0.52rem] uppercase tracking-wider ${tagClass[task.tag] ?? 'bg-muted text-foreground/60'}`}
-            >
-              {task.tag}
-            </span>
-            <span
-              className={`flex-shrink-0 font-mono text-[0.56rem] tracking-wider ${task.urgent ? 'text-foreground/80' : 'text-foreground/50'}`}
-            >
-              {task.due}
-            </span>
-          </button>
+          <TaskListItem key={task.id} task={task} onToggle={toggleTask} />
         ))}
       </div>
       <p className='mt-3 font-mono text-[0.56rem] text-foreground/50 tracking-wider'>

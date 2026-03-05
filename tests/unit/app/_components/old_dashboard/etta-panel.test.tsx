@@ -51,8 +51,10 @@ describe('EttaPanel', () => {
     render(<EttaPanel />)
     const chips = screen.getAllByRole('button')
     const budgetChip = chips.find((b) => b.textContent?.toLowerCase().includes('budget risk'))
-    expect(budgetChip).toBeDefined()
-    fireEvent.click(budgetChip!)
+    if (!budgetChip) {
+      throw new Error('Expected budget risk suggestion chip to be present')
+    }
+    fireEvent.click(budgetChip)
     const input = screen.getByPlaceholderText(/ask etta/i) as HTMLInputElement
     expect(input.value).toMatch(/budget/i)
   })

@@ -68,6 +68,7 @@ export function VendorCategorySection({
             <DialogTitle>Add {CATEGORY_LABELS[category]}</DialogTitle>
           </DialogHeader>
           <VendorForm
+            mode='create'
             defaultCategory={category}
             onSuccess={() => {
               setShowAddForm(false)

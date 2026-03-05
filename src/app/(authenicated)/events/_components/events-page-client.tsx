@@ -7,11 +7,10 @@
  * Client component to enable interactivity (create/edit/delete).
  */
 
-import { format } from 'date-fns'
-import { Calendar, Loader2, MapPin, Plus } from 'lucide-react'
-import { useState } from 'react'
+import { Calendar, Loader2, Plus } from 'lucide-react'
+import { useCallback, useState } from 'react'
 import { toast } from 'sonner'
-
+import { EventCard } from '@/app/(authenicated)/events/_components/event-card'
 import {
   type EventFormData,
   transformToServerInput,
@@ -27,20 +26,28 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '~/components/ui/alert-dialog'
-import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
+import { Card, CardContent } from '~/components/ui/card'
 import type { EventWithStats } from '~/server/domains/event/event.types'
 import { api } from '~/trpc/react'
 
-export function EventsPageClient() {
+type EventsPageClientProps = Readonly<{
+  initialEvents: EventWithStats[]
+}>
+
+export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState<EventWithStats | undefined>(undefined)
   const [deletingEvent, setDeletingEvent] = useState<EventWithStats | undefined>(undefined)
   const utils = api.useUtils()
 
   // Fetch events with RSVP statistics
-  const { data: events = [], isLoading } = api.event.getAllByUserIdWithStats.useQuery()
+  const { data: events = initialEvents, isLoading } = api.event.getAllByUserIdWithStats.useQuery(
+    undefined,
+    {
+      initialData: initialEvents,
+    }
+  )
 
   const createEvent = api.event.create.useMutation({
     onSuccess: async () => {
@@ -101,8 +108,26 @@ export function EventsPageClient() {
     })
   }
 
+  const handleEditEvent = useCallback(
+    (eventId: string) => {
+      const eventToEdit = events.find((event) => event.id === eventId)
+      if (!eventToEdit) return
+      setEditingEvent(eventToEdit)
+    },
+    [events]
+  )
+
+  const handleDeleteEvent = useCallback(
+    (eventId: string) => {
+      const eventToDelete = events.find((event) => event.id === eventId)
+      if (!eventToDelete) return
+      setDeletingEvent(eventToDelete)
+    },
+    [events]
+  )
+
   // Show loading state
-  if (isLoading) {
+  if (isLoading && initialEvents.length === 0) {
     return (
       <div className='flex items-center justify-center py-12'>
         <p className='text-muted-foreground text-sm'>Loading events...</p>
@@ -130,12 +155,15 @@ export function EventsPageClient() {
           </CardContent>
         </Card>
 
-        <ModernEventForm
-          open={isCreateDialogOpen}
-          onOpenChange={setIsCreateDialogOpen}
-          onSubmit={handleCreateEvent}
-          isSubmitting={createEvent.isPending}
-        />
+        {isCreateDialogOpen ? (
+          <ModernEventForm
+            mode='create'
+            open={isCreateDialogOpen}
+            onOpenChange={setIsCreateDialogOpen}
+            onSubmit={handleCreateEvent}
+            isSubmitting={createEvent.isPending}
+          />
+        ) : null}
       </>
     )
   }
@@ -157,26 +185,32 @@ export function EventsPageClient() {
           <EventCard
             key={event.id}
             event={event}
-            onEdit={() => setEditingEvent(event)}
-            onDelete={() => setDeletingEvent(event)}
+            onEdit={handleEditEvent}
+            onDelete={handleDeleteEvent}
           />
         ))}
       </div>
 
-      <ModernEventForm
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        onSubmit={handleCreateEvent}
-        isSubmitting={createEvent.isPending}
-      />
+      {isCreateDialogOpen ? (
+        <ModernEventForm
+          mode='create'
+          open={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
+          onSubmit={handleCreateEvent}
+          isSubmitting={createEvent.isPending}
+        />
+      ) : null}
 
-      <ModernEventForm
-        open={!!editingEvent}
-        onOpenChange={(open) => !open && setEditingEvent(undefined)}
-        onSubmit={handleUpdateEvent}
-        event={editingEvent}
-        isSubmitting={updateEvent.isPending}
-      />
+      {editingEvent ? (
+        <ModernEventForm
+          mode='edit'
+          open
+          onOpenChange={(open) => !open && setEditingEvent(undefined)}
+          onSubmit={handleUpdateEvent}
+          event={editingEvent}
+          isSubmitting={updateEvent.isPending}
+        />
+      ) : null}
 
       <AlertDialog
         open={!!deletingEvent}
@@ -209,105 +243,5 @@ export function EventsPageClient() {
         </AlertDialogContent>
       </AlertDialog>
     </>
-  )
-}
-
-type EventCardProps = Readonly<{
-  event: EventWithStats
-  onEdit: () => void
-  onDelete: () => void
-}>
-
-function EventCard({ event, onEdit, onDelete }: EventCardProps) {
-  const { guestResponses } = event
-  const totalGuests =
-    guestResponses.attending +
-    guestResponses.invited +
-    guestResponses.declined +
-    guestResponses.notInvited
-  const totalInvited = guestResponses.attending + guestResponses.invited + guestResponses.declined
-
-  return (
-    <Card className='transition-shadow hover:shadow-md'>
-      <CardHeader className='pb-3'>
-        <div className='flex items-start justify-between gap-2'>
-          <div className='min-w-0 flex-1'>
-            <CardTitle className='text-lg md:text-xl'>{event.name}</CardTitle>
-            {event.date && (
-              <CardDescription className='mt-1.5 flex items-center gap-1.5'>
-                <Calendar className='h-3.5 w-3.5 shrink-0' />
-                <span className='text-xs md:text-sm'>{format(new Date(event.date), 'PPP')}</span>
-              </CardDescription>
-            )}
-          </div>
-          {event.collectRsvp && (
-            <Badge variant='secondary' className='shrink-0 text-xs'>
-              RSVPs
-            </Badge>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className='pt-0'>
-        <div className='space-y-2.5'>
-          {event.venue && (
-            <div className='flex items-start gap-2 text-sm'>
-              <MapPin className='mt-0.5 h-4 w-4 shrink-0 text-muted-foreground' />
-              <span className='text-muted-foreground text-xs md:text-sm'>{event.venue}</span>
-            </div>
-          )}
-
-          {event.startTime && event.endTime && (
-            <div className='text-muted-foreground text-xs md:text-sm'>
-              {event.startTime} - {event.endTime}
-            </div>
-          )}
-
-          {event.description && (
-            <p className='line-clamp-2 text-muted-foreground text-xs md:text-sm'>
-              {event.description}
-            </p>
-          )}
-
-          {event.collectRsvp && totalGuests > 0 && (
-            <div className='rounded-md border bg-muted/50 p-2'>
-              <div className='font-medium text-muted-foreground text-xs'>
-                RSVP Status {totalInvited > 0 && `(${totalInvited} invited)`}
-              </div>
-              <div className='mt-1.5 flex gap-3 text-xs'>
-                <div className='flex items-center gap-1'>
-                  <div className='h-2 w-2 rounded-full bg-green-500' />
-                  <span className='font-medium'>{guestResponses.attending}</span>
-                  <span className='text-muted-foreground'>Attending</span>
-                </div>
-                <div className='flex items-center gap-1'>
-                  <div className='h-2 w-2 rounded-full bg-yellow-500' />
-                  <span className='font-medium'>{guestResponses.invited}</span>
-                  <span className='text-muted-foreground'>Pending</span>
-                </div>
-                <div className='flex items-center gap-1'>
-                  <div className='h-2 w-2 rounded-full bg-red-500' />
-                  <span className='font-medium'>{guestResponses.declined}</span>
-                  <span className='text-muted-foreground'>Declined</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className='flex gap-2 pt-2'>
-            <Button variant='ghost' size='sm' className='text-xs md:text-sm' onClick={onEdit}>
-              Edit
-            </Button>
-            <Button
-              variant='ghost'
-              size='sm'
-              className='text-red-600 text-xs hover:text-red-700 md:text-sm'
-              onClick={onDelete}
-            >
-              Delete
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   )
 }
