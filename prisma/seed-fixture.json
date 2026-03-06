@@ -1,0 +1,569 @@
+{
+  "users": [
+    {
+      "id": "user-seed-shrek",
+      "firstName": "Shrek",
+      "lastName": "Ogre",
+      "email": "shrek@swamp.wed",
+      "password": "password123",
+      "isPrimary": true
+    },
+    {
+      "id": "user-seed-fiona",
+      "firstName": "Fiona",
+      "lastName": "Ogre",
+      "email": "fiona@swamp.wed",
+      "password": "password123",
+      "isPrimary": false
+    }
+  ],
+  "wedding": {
+    "id": "wedding-seed-shrek-fiona",
+    "groomFirstName": "Shrek",
+    "groomLastName": "Ogre",
+    "brideFirstName": "Fiona",
+    "brideLastName": "Ogre",
+    "enabledAddOns": ["website", "tasks", "gifts", "vendors"],
+    "selfFillToken": "swamp-join-portal",
+    "selfFillTokenGeneratedAt": "2026-03-01T10:00:00.000Z"
+  },
+  "website": {
+    "id": "website-seed-shrek-fiona",
+    "url": "https://shrek-fiona.swamp.wed",
+    "subUrl": "shrek-fiona",
+    "isPasswordEnabled": false,
+    "isRsvpEnabled": true,
+    "coverPhotoUrl": "https://cdn.swamp.wed/covers/shrek-fiona.jpg"
+  },
+  "events": [
+    {
+      "id": "event-seed-ceremony",
+      "slug": "ceremony",
+      "name": "Swamp Ceremony",
+      "date": "2026-07-12",
+      "startTime": "15:00",
+      "endTime": "16:15",
+      "venue": "Old Oak Grove, The Swamp",
+      "attire": "Fairy Tale Formal",
+      "description": "Vows beside the lily pond.",
+      "collectRsvp": true
+    },
+    {
+      "id": "event-seed-feast",
+      "slug": "welcome-feast",
+      "name": "Welcome Feast",
+      "date": "2026-07-12",
+      "startTime": "18:00",
+      "endTime": "22:00",
+      "venue": "Far Far Away Banquet Hall",
+      "attire": "Festive",
+      "description": "Live music and giant parfait towers.",
+      "collectRsvp": true
+    },
+    {
+      "id": "event-seed-breakfast",
+      "slug": "breakfast",
+      "name": "Morning-After Breakfast",
+      "date": "2026-07-13",
+      "startTime": "09:30",
+      "endTime": "11:00",
+      "venue": "Swamp Cottage Courtyard",
+      "attire": "Casual",
+      "description": "Waffles and coffee for overnight guests.",
+      "collectRsvp": true
+    }
+  ],
+  "guestTags": [
+    { "id": "tag-seed-family", "slug": "family", "name": "Family", "color": "#16A34A" },
+    { "id": "tag-seed-friends", "slug": "friends", "name": "Friends", "color": "#0EA5E9" },
+    {
+      "id": "tag-seed-bridal-party",
+      "slug": "bridal-party",
+      "name": "Bridal Party",
+      "color": "#7C3AED"
+    },
+    { "id": "tag-seed-vip", "slug": "vip", "name": "VIP", "color": "#CA8A04" },
+    {
+      "id": "tag-seed-out-of-town",
+      "slug": "out-of-town",
+      "name": "Out of Town",
+      "color": "#0284C7"
+    },
+    { "id": "tag-seed-kids", "slug": "kids", "name": "Kids", "color": "#F97316" }
+  ],
+  "households": [
+    {
+      "id": "household-seed-donkey-dragon",
+      "address1": "1 Mud Lane",
+      "address2": null,
+      "city": "Swampside",
+      "state": "FFA",
+      "zipCode": "10001",
+      "country": "Far Far Away",
+      "notes": "Needs high-chair seating for dragonlets.",
+      "guests": [
+        {
+          "key": "donkey",
+          "firstName": "Donkey",
+          "lastName": "The Donkey",
+          "email": "donkey@swamp.wed",
+          "phone": "+1-555-0101",
+          "isPrimaryContact": true,
+          "ageGroup": "ADULT",
+          "tagSlugs": ["family", "bridal-party"],
+          "invitations": [
+            { "eventSlug": "ceremony", "rsvp": "Attending", "dietaryRestrictions": null },
+            {
+              "eventSlug": "welcome-feast",
+              "rsvp": "Attending",
+              "dietaryRestrictions": "No onions"
+            },
+            { "eventSlug": "breakfast", "rsvp": "Attending", "dietaryRestrictions": null }
+          ]
+        },
+        {
+          "key": "dragon",
+          "firstName": "Dragon",
+          "lastName": "The Dragon",
+          "email": null,
+          "phone": "+1-555-0102",
+          "isPrimaryContact": false,
+          "ageGroup": "ADULT",
+          "tagSlugs": ["family", "vip"],
+          "invitations": [
+            { "eventSlug": "ceremony", "rsvp": "Attending", "dietaryRestrictions": null },
+            { "eventSlug": "welcome-feast", "rsvp": "Attending", "dietaryRestrictions": null },
+            { "eventSlug": "breakfast", "rsvp": "Invited", "dietaryRestrictions": null }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "household-seed-gingy",
+      "address1": "7 Cookie Crumble Ave",
+      "address2": "Suite B",
+      "city": "Far Far Away",
+      "state": "FFA",
+      "zipCode": "10002",
+      "country": "Far Far Away",
+      "notes": null,
+      "guests": [
+        {
+          "key": "gingy",
+          "firstName": "Gingy",
+          "lastName": "Cookie",
+          "email": "gingy@swamp.wed",
+          "phone": null,
+          "isPrimaryContact": true,
+          "ageGroup": "ADULT",
+          "tagSlugs": ["friends", "out-of-town"],
+          "invitations": [
+            { "eventSlug": "ceremony", "rsvp": "Attending", "dietaryRestrictions": "Nut-free" },
+            { "eventSlug": "welcome-feast", "rsvp": "Attending", "dietaryRestrictions": null },
+            { "eventSlug": "breakfast", "rsvp": "Declined", "dietaryRestrictions": null }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "household-seed-wolf-pigs",
+      "address1": null,
+      "address2": null,
+      "city": null,
+      "state": null,
+      "zipCode": null,
+      "country": null,
+      "notes": "Arriving with plus-ones pending.",
+      "guests": [
+        {
+          "key": "wolf",
+          "firstName": "Big",
+          "lastName": "Bad Wolf",
+          "email": null,
+          "phone": null,
+          "isPrimaryContact": true,
+          "ageGroup": "ADULT",
+          "tagSlugs": ["vip"],
+          "invitations": [
+            { "eventSlug": "ceremony", "rsvp": "Invited", "dietaryRestrictions": null },
+            { "eventSlug": "welcome-feast", "rsvp": "Invited", "dietaryRestrictions": null },
+            { "eventSlug": "breakfast", "rsvp": "Not Invited", "dietaryRestrictions": null }
+          ]
+        },
+        {
+          "key": "pig-1",
+          "firstName": "Practical",
+          "lastName": "Pig",
+          "email": "practical.pig@swamp.wed",
+          "phone": null,
+          "isPrimaryContact": false,
+          "ageGroup": "ADULT",
+          "tagSlugs": ["family"],
+          "invitations": [
+            { "eventSlug": "ceremony", "rsvp": "Declined", "dietaryRestrictions": null },
+            { "eventSlug": "welcome-feast", "rsvp": "Not Invited", "dietaryRestrictions": null },
+            { "eventSlug": "breakfast", "rsvp": "Not Invited", "dietaryRestrictions": null }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "household-seed-fairy-godmother",
+      "address1": "99 Royal Tower",
+      "address2": null,
+      "city": "Far Far Away",
+      "state": "FFA",
+      "zipCode": "10003",
+      "country": "Far Far Away",
+      "notes": "Requires stage access for grand entrance.",
+      "guests": [
+        {
+          "key": "fairy-godmother",
+          "firstName": "Fairy",
+          "lastName": "Godmother",
+          "email": "fairy.godmother@swamp.wed",
+          "phone": "+1-555-0104",
+          "isPrimaryContact": true,
+          "ageGroup": "ADULT",
+          "tagSlugs": ["vip", "out-of-town"],
+          "invitations": [
+            { "eventSlug": "ceremony", "rsvp": "Attending", "dietaryRestrictions": null },
+            { "eventSlug": "welcome-feast", "rsvp": "Attending", "dietaryRestrictions": null },
+            { "eventSlug": "breakfast", "rsvp": "Invited", "dietaryRestrictions": null }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "household-seed-three-mice",
+      "address1": "12 Tiny Wheel Rd",
+      "address2": null,
+      "city": "Swampside",
+      "state": "FFA",
+      "zipCode": "10004",
+      "country": "Far Far Away",
+      "notes": null,
+      "guests": [
+        {
+          "key": "mouse-1",
+          "firstName": "Blind",
+          "lastName": "Mouse One",
+          "email": null,
+          "phone": "+1-555-0105",
+          "isPrimaryContact": true,
+          "ageGroup": "ADULT",
+          "tagSlugs": ["family"],
+          "invitations": [
+            { "eventSlug": "ceremony", "rsvp": "Attending", "dietaryRestrictions": null },
+            { "eventSlug": "welcome-feast", "rsvp": "Attending", "dietaryRestrictions": null },
+            { "eventSlug": "breakfast", "rsvp": "Attending", "dietaryRestrictions": null }
+          ]
+        },
+        {
+          "key": "mouse-2",
+          "firstName": "Blind",
+          "lastName": "Mouse Two",
+          "email": null,
+          "phone": null,
+          "isPrimaryContact": false,
+          "ageGroup": "TEEN",
+          "tagSlugs": ["kids"],
+          "invitations": [
+            { "eventSlug": "ceremony", "rsvp": "Attending", "dietaryRestrictions": null },
+            { "eventSlug": "welcome-feast", "rsvp": "Invited", "dietaryRestrictions": null },
+            { "eventSlug": "breakfast", "rsvp": "Invited", "dietaryRestrictions": null }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "household-seed-pinocchio",
+      "address1": "5 Puppet Plaza",
+      "address2": null,
+      "city": "Far Far Away",
+      "state": "FFA",
+      "zipCode": "10005",
+      "country": "Far Far Away",
+      "notes": "Peanut allergy alert.",
+      "guests": [
+        {
+          "key": "pinocchio",
+          "firstName": "Pinocchio",
+          "lastName": "Wooden",
+          "email": "pinocchio@swamp.wed",
+          "phone": "+1-555-0106",
+          "isPrimaryContact": true,
+          "ageGroup": "TEEN",
+          "tagSlugs": ["bridal-party", "kids"],
+          "invitations": [
+            { "eventSlug": "ceremony", "rsvp": "Attending", "dietaryRestrictions": "Peanut-free" },
+            {
+              "eventSlug": "welcome-feast",
+              "rsvp": "Attending",
+              "dietaryRestrictions": "Peanut-free"
+            },
+            { "eventSlug": "breakfast", "rsvp": "Attending", "dietaryRestrictions": null }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "household-seed-prince-charming",
+      "address1": "1 Regal Court",
+      "address2": null,
+      "city": "Far Far Away",
+      "state": "FFA",
+      "zipCode": "10006",
+      "country": "Far Far Away",
+      "notes": "Seat away from donkey to avoid drama.",
+      "guests": [
+        {
+          "key": "prince-charming",
+          "firstName": "Prince",
+          "lastName": "Charming",
+          "email": "prince.charming@swamp.wed",
+          "phone": "+1-555-0107",
+          "isPrimaryContact": true,
+          "ageGroup": "ADULT",
+          "tagSlugs": ["vip", "out-of-town"],
+          "invitations": [
+            { "eventSlug": "ceremony", "rsvp": "Attending", "dietaryRestrictions": null },
+            { "eventSlug": "welcome-feast", "rsvp": "Declined", "dietaryRestrictions": null },
+            { "eventSlug": "breakfast", "rsvp": "Not Invited", "dietaryRestrictions": null }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "household-seed-captain-hook",
+      "address1": "13 Jolly Roger Dock",
+      "address2": null,
+      "city": "Neverland Harbor",
+      "state": "NL",
+      "zipCode": "20001",
+      "country": "Neverland",
+      "notes": null,
+      "guests": [
+        {
+          "key": "captain-hook",
+          "firstName": "Captain",
+          "lastName": "Hook",
+          "email": null,
+          "phone": "+1-555-0108",
+          "isPrimaryContact": true,
+          "ageGroup": "ADULT",
+          "tagSlugs": ["friends", "out-of-town"],
+          "invitations": [
+            { "eventSlug": "ceremony", "rsvp": "Invited", "dietaryRestrictions": null },
+            { "eventSlug": "welcome-feast", "rsvp": "Attending", "dietaryRestrictions": null },
+            { "eventSlug": "breakfast", "rsvp": "Declined", "dietaryRestrictions": null }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "household-seed-three-bears",
+      "address1": "3 Forest Path",
+      "address2": null,
+      "city": "Whispering Woods",
+      "state": "WW",
+      "zipCode": "30001",
+      "country": "Enchanted Forest",
+      "notes": "Need child-friendly breakfast menu.",
+      "guests": [
+        {
+          "key": "papa-bear",
+          "firstName": "Papa",
+          "lastName": "Bear",
+          "email": "papa.bear@swamp.wed",
+          "phone": "+1-555-0109",
+          "isPrimaryContact": true,
+          "ageGroup": "ADULT",
+          "tagSlugs": ["family"],
+          "invitations": [
+            { "eventSlug": "ceremony", "rsvp": "Attending", "dietaryRestrictions": null },
+            { "eventSlug": "welcome-feast", "rsvp": "Attending", "dietaryRestrictions": null },
+            { "eventSlug": "breakfast", "rsvp": "Attending", "dietaryRestrictions": null }
+          ]
+        },
+        {
+          "key": "mama-bear",
+          "firstName": "Mama",
+          "lastName": "Bear",
+          "email": "mama.bear@swamp.wed",
+          "phone": null,
+          "isPrimaryContact": false,
+          "ageGroup": "ADULT",
+          "tagSlugs": ["family"],
+          "invitations": [
+            { "eventSlug": "ceremony", "rsvp": "Attending", "dietaryRestrictions": null },
+            { "eventSlug": "welcome-feast", "rsvp": "Attending", "dietaryRestrictions": null },
+            { "eventSlug": "breakfast", "rsvp": "Attending", "dietaryRestrictions": null }
+          ]
+        },
+        {
+          "key": "baby-bear",
+          "firstName": "Baby",
+          "lastName": "Bear",
+          "email": null,
+          "phone": null,
+          "isPrimaryContact": false,
+          "ageGroup": "CHILD",
+          "tagSlugs": ["kids", "family"],
+          "invitations": [
+            { "eventSlug": "ceremony", "rsvp": "Attending", "dietaryRestrictions": null },
+            { "eventSlug": "welcome-feast", "rsvp": "Invited", "dietaryRestrictions": null },
+            { "eventSlug": "breakfast", "rsvp": "Attending", "dietaryRestrictions": null }
+          ]
+        }
+      ]
+    }
+  ],
+  "gifts": [
+    {
+      "householdId": "household-seed-donkey-dragon",
+      "eventSlug": "welcome-feast",
+      "description": "Golden waffle maker",
+      "thankyou": true
+    },
+    {
+      "householdId": "household-seed-fairy-godmother",
+      "eventSlug": "ceremony",
+      "description": "Crystal carriage centerpiece",
+      "thankyou": false
+    }
+  ],
+  "vendors": [
+    {
+      "id": "vendor-seed-venue",
+      "category": "VENUE",
+      "name": "Far Far Away Banquet Hall",
+      "location": "Far Far Away",
+      "website": "https://banquet.swamp.wed",
+      "instagram": "@ffa_banquethall",
+      "status": "SELECTED",
+      "contactName": "Lord Farquaad Assistant",
+      "contactEmail": "venue@swamp.wed",
+      "contactPhone": "+1-555-0201",
+      "quotes": [
+        { "price": "8500.00", "quoteDate": "2026-01-10", "notes": "Includes ceremony grove" }
+      ]
+    },
+    {
+      "id": "vendor-seed-venue-swamp-lodge",
+      "category": "VENUE",
+      "name": "Swampview Lodge",
+      "location": "Swampside",
+      "website": "https://lodge.swamp.wed",
+      "instagram": "@swampviewlodge",
+      "status": "IN_REVIEW",
+      "contactName": "Lodge Keeper",
+      "contactEmail": "lodge@swamp.wed",
+      "contactPhone": "+1-555-0205",
+      "quotes": [{ "price": "6400.00", "quoteDate": "2026-01-15", "notes": "Feast hall only" }]
+    },
+    {
+      "id": "vendor-seed-catering",
+      "category": "CATERING",
+      "name": "Dragonfire Catering",
+      "location": "Swampside",
+      "website": "https://catering.swamp.wed",
+      "instagram": "@dragonfire_catering",
+      "status": "IN_NEGOTIATION",
+      "contactName": "Chef Maurice",
+      "contactEmail": "chef@swamp.wed",
+      "contactPhone": "+1-555-0202",
+      "quotes": [
+        { "price": "4200.00", "quoteDate": "2026-01-12", "notes": "Standard buffet" },
+        { "price": "5100.00", "quoteDate": "2026-01-20", "notes": "Premium dessert stations" }
+      ]
+    },
+    {
+      "id": "vendor-seed-photo",
+      "category": "PHOTOGRAPHER",
+      "name": "Magic Mirror Studios",
+      "location": "Far Far Away",
+      "website": "https://photos.swamp.wed",
+      "instagram": "@magicmirrorstudios",
+      "status": "PRE_SELECTED",
+      "contactName": "Mirror Mirror",
+      "contactEmail": "bookings@swamp.wed",
+      "contactPhone": null,
+      "quotes": [{ "price": "3000.00", "quoteDate": "2026-01-18", "notes": "Full day coverage" }]
+    },
+    {
+      "id": "vendor-seed-music",
+      "category": "MUSIC",
+      "name": "Pied Piper Collective",
+      "location": "Far Far Away",
+      "website": "https://music.swamp.wed",
+      "instagram": "@piedpipercollective",
+      "status": "IN_REVIEW",
+      "contactName": "Piper",
+      "contactEmail": "music@swamp.wed",
+      "contactPhone": "+1-555-0204",
+      "quotes": [
+        { "price": "1800.00", "quoteDate": "2026-01-22", "notes": "Ceremony and feast set" }
+      ]
+    }
+  ],
+  "questions": {
+    "event": [
+      {
+        "slug": "ceremony-song-request",
+        "eventSlug": "ceremony",
+        "text": "Any song requests for the ceremony?",
+        "type": "Text",
+        "isRequired": false,
+        "options": []
+      },
+      {
+        "slug": "feast-meal-choice",
+        "eventSlug": "welcome-feast",
+        "text": "Choose your feast meal preference",
+        "type": "Option",
+        "isRequired": true,
+        "options": [
+          { "slug": "meal-veg", "text": "Vegetarian", "description": "Garden platter" },
+          { "slug": "meal-roast", "text": "Roast", "description": "Roasted boar" },
+          { "slug": "meal-fish", "text": "Fish", "description": "River catch" }
+        ]
+      }
+    ],
+    "website": [
+      {
+        "slug": "site-accessibility-needs",
+        "text": "Do you have accessibility needs we should plan for?",
+        "type": "Text",
+        "isRequired": false,
+        "options": []
+      }
+    ]
+  },
+  "responses": [
+    {
+      "guestKey": "donkey",
+      "questionSlug": "ceremony-song-request",
+      "type": "text",
+      "response": "Please play I'm a Believer during recessional."
+    },
+    {
+      "guestKey": "gingy",
+      "questionSlug": "site-accessibility-needs",
+      "type": "text",
+      "response": "Need low table seating."
+    },
+    {
+      "guestKey": "pinocchio",
+      "questionSlug": "feast-meal-choice",
+      "type": "option",
+      "optionSlug": "meal-veg"
+    },
+    {
+      "guestKey": "fairy-godmother",
+      "questionSlug": "feast-meal-choice",
+      "type": "option",
+      "optionSlug": "meal-fish"
+    }
+  ]
+}
