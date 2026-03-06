@@ -35,27 +35,37 @@ import { Textarea } from '~/components/ui/textarea'
 import { cn } from '~/lib/utils'
 import type { Event } from '~/server/domains/event/event.types'
 
-type ModernEventFormProps = Readonly<{
+type ModernEventFormBaseProps = Readonly<{
   open: boolean
   onOpenChange: (open: boolean) => void
   onSubmit: (data: EventFormData) => Promise<void> | void
-  event?: Event // If provided, form is in edit mode
   isSubmitting?: boolean
 }>
 
+type ModernEventFormProps =
+  | (ModernEventFormBaseProps & {
+      mode: 'create'
+      event?: never
+    })
+  | (ModernEventFormBaseProps & {
+      mode: 'edit'
+      event: Event
+    })
+
 export function ModernEventForm({
+  mode,
   open,
   onOpenChange,
   onSubmit,
   event,
   isSubmitting = false,
 }: ModernEventFormProps) {
-  const isEditMode = !!event
+  const isEditMode = mode === 'edit'
 
   // Initialize form with defaults or event data
   const form = useForm<EventFormData>({
     resolver: zodResolver(EventFormSchema),
-    defaultValues: event
+    defaultValues: isEditMode
       ? {
           eventName: event.name,
           date: event.date ? format(new Date(event.date), 'yyyy-MM-dd') : '',
@@ -83,7 +93,7 @@ export function ModernEventForm({
     if (open) {
       // When dialog opens, reset to event data or defaults
       form.reset(
-        event
+        isEditMode
           ? {
               eventName: event.name,
               date: event.date ? format(new Date(event.date), 'yyyy-MM-dd') : '',
@@ -96,7 +106,7 @@ export function ModernEventForm({
           : getEventFormDefaults()
       )
     }
-  }, [open, event, form])
+  }, [open, event, form, isEditMode])
 
   // Parse date string to Date object for calendar
   const selectedDate = dateValue ? new Date(dateValue) : undefined

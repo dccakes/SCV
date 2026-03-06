@@ -44,6 +44,7 @@ export const mockFindByIdWithInvitations = jest.fn()
 export const mockFindByWeddingId = jest.fn()
 export const mockFindByHouseholdId = jest.fn()
 export const mockFindByHouseholdIdWithInvitations = jest.fn()
+export const mockFindByEmailAndWeddingId = jest.fn()
 export const mockCreate = jest.fn()
 export const mockUpdate = jest.fn()
 export const mockUpdateTags = jest.fn()
@@ -60,6 +61,7 @@ export const GuestRepository = jest.fn().mockImplementation(() => ({
   findByWeddingId: mockFindByWeddingId,
   findByHouseholdId: mockFindByHouseholdId,
   findByHouseholdIdWithInvitations: mockFindByHouseholdIdWithInvitations,
+  findByEmailAndWeddingId: mockFindByEmailAndWeddingId,
   create: mockCreate,
   update: mockUpdate,
   updateTags: mockUpdateTags,
@@ -78,6 +80,7 @@ export const resetMocks = (): void => {
   mockFindByWeddingId.mockReset()
   mockFindByHouseholdId.mockReset()
   mockFindByHouseholdIdWithInvitations.mockReset()
+  mockFindByEmailAndWeddingId.mockReset()
   mockCreate.mockReset()
   mockUpdate.mockReset()
   mockUpdateTags.mockReset()

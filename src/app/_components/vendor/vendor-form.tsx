@@ -27,15 +27,28 @@ const CATEGORY_LABELS: Record<VendorCategory, string> = {
   OTHER: 'Other',
 }
 
-type VendorFormProps = {
-  defaultCategory?: VendorCategory
-  vendor?: Vendor
+type VendorFormBaseProps = {
   onSuccess: () => void
   onCancel: () => void
 }
 
-export function VendorForm({ defaultCategory, vendor, onSuccess, onCancel }: VendorFormProps) {
-  const isEditing = !!vendor
+type VendorFormProps =
+  | (VendorFormBaseProps & {
+      mode: 'create'
+      defaultCategory?: VendorCategory
+      vendor?: never
+    })
+  | (VendorFormBaseProps & {
+      mode: 'edit'
+      vendor: Vendor
+      defaultCategory?: never
+    })
+
+export function VendorForm(props: Readonly<VendorFormProps>) {
+  const { mode, onSuccess, onCancel } = props
+  const isEditing = mode === 'edit'
+  const vendor = mode === 'edit' ? props.vendor : undefined
+  const defaultCategory = mode === 'create' ? props.defaultCategory : undefined
   const utils = api.useUtils()
 
   const [category, setCategory] = useState<VendorCategory>(
@@ -83,7 +96,7 @@ export function VendorForm({ defaultCategory, vendor, onSuccess, onCancel }: Ven
       contactPhone: contactPhone || undefined,
     }
     if (isEditing) {
-      updateVendor.mutate({ vendorId: vendor.id, ...common })
+      updateVendor.mutate({ vendorId: props.vendor.id, ...common })
     } else {
       createVendor.mutate({ category, ...common })
     }

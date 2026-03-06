@@ -26,4 +26,19 @@ const config: Config = {
   },
 }
 
-export default createJestConfig(config)
+// nextJest sets transformIgnorePatterns; we extend it to include ESM-only packages
+// (copy-anything, is-what) pulled in transitively by superjson → @trpc/server.
+export default async () => {
+  const cfg = await (createJestConfig(config) as () => Promise<Config>)()
+
+  const esmPackages = ['geist', 'copy-anything', 'is-what']
+  const pkg = esmPackages.join('|')
+
+  cfg.transformIgnorePatterns = [
+    `/node_modules/(?!.pnpm)(?!(${pkg})/)`,
+    `/node_modules/.pnpm/(?!(${pkg})@)`,
+    '^.+\\.module\\.(css|sass|scss)$',
+  ]
+
+  return cfg
+}

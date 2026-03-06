@@ -1,6 +1,7 @@
 import '~/styles/globals.css'
 
 import type { Metadata, Viewport } from 'next'
+import { Cormorant_Garamond, DM_Mono, Instrument_Serif } from 'next/font/google'
 import { Toaster as SonnerToaster } from 'sonner'
 
 import { EventFormProvider } from '~/app/_components/contexts/event-form-context'
@@ -8,6 +9,30 @@ import { GuestFormProvider } from '~/app/_components/contexts/guest-form-context
 import { Providers } from '~/app/providers'
 import { Toaster } from '~/components/ui/toaster'
 import { TRPCReactProvider } from '~/trpc/react'
+
+// Design fonts matching the HTML prototype
+const cormorantGaramond = Cormorant_Garamond({
+  subsets: ['latin'],
+  weight: ['300', '400', '600'],
+  style: ['normal', 'italic'],
+  variable: '--font-cormorant',
+  display: 'swap',
+})
+
+const dmMono = DM_Mono({
+  subsets: ['latin'],
+  weight: ['300', '400', '500'],
+  variable: '--font-dm-mono',
+  display: 'swap',
+})
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ['latin'],
+  weight: ['400'],
+  style: ['normal', 'italic'],
+  variable: '--font-instrument',
+  display: 'swap',
+})
 
 export const viewport: Viewport = {
   initialScale: 1,
@@ -62,8 +87,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang='en' suppressHydrationWarning>
-      <body className='bg-background font-sans text-foreground antialiased'>
+    <html
+      lang='en'
+      suppressHydrationWarning
+      className={`${cormorantGaramond.variable} ${dmMono.variable} ${instrumentSerif.variable} font-serif antialiased`}
+    >
+      <body className='bg-background font-serif text-foreground antialiased'>
         <Providers>
           <TRPCReactProvider>
             <EventFormProvider>
