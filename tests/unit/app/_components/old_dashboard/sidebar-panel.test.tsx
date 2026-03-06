@@ -1,3 +1,13 @@
+jest.mock('~/trpc/react', () => ({
+  api: {
+    selfFill: {
+      getToken: {
+        useQuery: jest.fn(() => ({ data: null })),
+      },
+    },
+  },
+}))
+
 import { render, screen } from '@testing-library/react'
 
 import SidebarPanel from '~/app/_components/old_dashboard/sidebar-panel'

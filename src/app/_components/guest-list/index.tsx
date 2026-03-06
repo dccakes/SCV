@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react'
 
 import { useEventForm } from '~/app/_components/contexts/event-form-context'
 import { useGuestForm } from '~/app/_components/contexts/guest-form-context'
+import SelfFillLinkManager from '~/app/_components/dashboard/self-fill-link-manager'
 import EventForm from '~/app/_components/forms/event-form'
 import GuestForm from '~/app/_components/forms/guest-form'
 import type { HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
@@ -67,6 +68,7 @@ export default function GuestList({ dashboardData }: { dashboardData: DashboardD
       )}
       {isEventFormOpen && <EventForm prefillFormData={prefillEvent} />}
       <EventsTabs events={dashboardData?.events} selectedEventId={selectedEventId} />
+      <SelfFillLinkManager />
       {totalGuests > 0 ? (
         <GuestsView
           events={dashboardData.events}

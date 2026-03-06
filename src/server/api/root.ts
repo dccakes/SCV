@@ -4,6 +4,7 @@
 import { createTRPCRouter } from '~/server/api/trpc'
 import { dashboardRouter } from '~/server/application/dashboard/dashboard.router'
 import { rsvpSubmissionRouter } from '~/server/application/rsvp-submission/rsvp-submission.router'
+import { selfFillRegistrationService } from '~/server/application/self-fill-registration'
 import { eventRouter } from '~/server/domains/event/event.router'
 import { giftRouter } from '~/server/domains/gift/gift.router'
 import { guestRouter } from '~/server/domains/guest/guest.router'
@@ -11,6 +12,7 @@ import { guestTagRouter } from '~/server/domains/guest-tag/guest-tag.router'
 import { householdRouter } from '~/server/domains/household/household.router'
 import { invitationRouter } from '~/server/domains/invitation/invitation.router'
 import { questionRouter } from '~/server/domains/question/question.router'
+import { createSelfFillRouter } from '~/server/domains/self-fill'
 import { userRouter } from '~/server/domains/user/user.router'
 import { vendorRouter } from '~/server/domains/vendor/vendor.router'
 import { websiteRouter } from '~/server/domains/website/website.router'
@@ -43,6 +45,9 @@ export const appRouter = createTRPCRouter({
   // Phase 3 domains (migrated)
   question: questionRouter,
   household: householdRouter,
+
+  // Self-fill guest registration (router created with injected application service)
+  selfFill: createSelfFillRouter(selfFillRegistrationService),
 
   // Phase 4 application services (migrated)
   dashboard: dashboardRouter,

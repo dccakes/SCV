@@ -12,6 +12,10 @@ type ContactFormProps = {
 export default function ContactForm({ register, errors }: ContactFormProps) {
   return (
     <div className='space-y-4'>
+      <p className='text-muted-foreground text-xs'>
+        Used for posting save the dates, invitations, and thank you cards.
+      </p>
+
       <div className='space-y-2'>
         <Label htmlFor='household-address1'>Street Address</Label>
         <Input
@@ -24,7 +28,7 @@ export default function ContactForm({ register, errors }: ContactFormProps) {
       </div>
 
       <div className='space-y-2'>
-        <Label htmlFor='household-address2'>Apt/Suite/Other</Label>
+        <Label htmlFor='household-address2'>Apt / Suite / Other</Label>
         <Input
           id='household-address2'
           {...register('address2')}
@@ -47,24 +51,20 @@ export default function ContactForm({ register, errors }: ContactFormProps) {
         </div>
 
         <div className='space-y-2'>
-          <Label htmlFor='household-state'>State</Label>
-          <select
+          <Label htmlFor='household-state'>State / Province</Label>
+          <Input
             id='household-state'
             {...register('state')}
-            className='flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
-          >
-            <option value=''>Select</option>
-            <option>AL</option>
-            <option>AR</option>
-            <option>WY</option>
-          </select>
+            placeholder='CA'
+            className={errors.state ? 'border-destructive' : ''}
+          />
           {errors.state && <p className='text-destructive text-sm'>{errors.state.message}</p>}
         </div>
       </div>
 
       <div className='grid gap-4 sm:grid-cols-2'>
         <div className='space-y-2'>
-          <Label htmlFor='household-zipCode'>Zip Code</Label>
+          <Label htmlFor='household-zipCode'>Zip / Postal Code</Label>
           <Input
             id='household-zipCode'
             {...register('zipCode')}
@@ -76,16 +76,12 @@ export default function ContactForm({ register, errors }: ContactFormProps) {
 
         <div className='space-y-2'>
           <Label htmlFor='household-country'>Country</Label>
-          <select
+          <Input
             id='household-country'
             {...register('country')}
-            className='flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
-          >
-            <option value=''>Select</option>
-            <option>United States</option>
-            <option>Mexico</option>
-            <option>Canada</option>
-          </select>
+            placeholder='United States'
+            className={errors.country ? 'border-destructive' : ''}
+          />
           {errors.country && <p className='text-destructive text-sm'>{errors.country.message}</p>}
         </div>
       </div>
