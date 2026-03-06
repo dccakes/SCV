@@ -109,7 +109,7 @@ function QuoteFileUploader({
       <div
         {...getRootProps()}
         className={`cursor-pointer rounded-md border-2 border-dashed p-2 text-center text-xs transition-colors ${
-          isDragActive ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-gray-400'
+          isDragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-border/80'
         }`}
       >
         <input {...getInputProps()} />
@@ -124,13 +124,13 @@ function QuoteFileUploader({
             {selectedFiles.map((file, i) => (
               <li
                 key={`${file.name}-${i}`}
-                className='flex items-center justify-between rounded bg-gray-50 px-2 py-1 text-xs'
+                className='flex items-center justify-between rounded bg-muted px-2 py-1 text-xs'
               >
                 <span className='truncate'>{file.name}</span>
                 <button
                   type='button'
                   onClick={() => removeFile(i)}
-                  className='ml-2 shrink-0 text-gray-400 hover:text-red-500'
+                  className='ml-2 shrink-0 text-foreground/40 hover:text-destructive'
                 >
                   ✕
                 </button>
@@ -211,7 +211,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
           <div className='flex flex-col gap-5'>
             {/* Status */}
             <div className='flex items-center gap-3'>
-              <span className='text-gray-500 text-sm'>Status:</span>
+              <span className='text-foreground/60 text-sm'>Status:</span>
               <VendorStatusSelect
                 value={vendorData.status}
                 onChange={(status) => updateStatus.mutate({ vendorId: vendorData.id, status })}
@@ -223,13 +223,13 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
             <div className='grid grid-cols-2 gap-x-8 gap-y-2 text-sm'>
               {vendorData.location && (
                 <>
-                  <span className='text-gray-500'>Location</span>
+                  <span className='text-foreground/60'>Location</span>
                   <span>{vendorData.location}</span>
                 </>
               )}
               {vendorData.website && (
                 <>
-                  <span className='text-gray-500'>Website</span>
+                  <span className='text-foreground/60'>Website</span>
                   <a
                     href={vendorData.website}
                     target='_blank'
@@ -242,7 +242,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
               )}
               {vendorData.instagram && (
                 <>
-                  <span className='text-gray-500'>Instagram</span>
+                  <span className='text-foreground/60'>Instagram</span>
                   <span>{vendorData.instagram}</span>
                 </>
               )}
@@ -251,19 +251,19 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
             {/* Contact */}
             {(vendorData.contactName || vendorData.contactEmail || vendorData.contactPhone) && (
               <div>
-                <p className='mb-2 font-semibold text-gray-400 text-xs uppercase tracking-wide'>
+                <p className='mb-2 font-semibold text-muted-foreground text-xs uppercase tracking-wide'>
                   Contact
                 </p>
                 <div className='grid grid-cols-2 gap-x-8 gap-y-1 text-sm'>
                   {vendorData.contactName && (
                     <>
-                      <span className='text-gray-500'>Name</span>
+                      <span className='text-foreground/60'>Name</span>
                       <span>{vendorData.contactName}</span>
                     </>
                   )}
                   {vendorData.contactEmail && (
                     <>
-                      <span className='text-gray-500'>Email</span>
+                      <span className='text-foreground/60'>Email</span>
                       <a
                         href={`mailto:${vendorData.contactEmail}`}
                         className='text-primary hover:underline'
@@ -274,7 +274,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                   )}
                   {vendorData.contactPhone && (
                     <>
-                      <span className='text-gray-500'>Phone</span>
+                      <span className='text-foreground/60'>Phone</span>
                       <span>{vendorData.contactPhone}</span>
                     </>
                   )}
@@ -285,7 +285,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
             {/* Quotes */}
             <div>
               <div className='mb-2 flex items-center justify-between'>
-                <p className='font-semibold text-gray-400 text-xs uppercase tracking-wide'>
+                <p className='font-semibold text-muted-foreground text-xs uppercase tracking-wide'>
                   Quotes ({vendorData.quotes.length})
                 </p>
                 {!showQuoteForm && (
@@ -312,7 +312,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
               )}
 
               {vendorData.quotes.length === 0 && !showQuoteForm && (
-                <p className='text-gray-400 text-sm'>No quotes yet.</p>
+                <p className='text-muted-foreground text-sm'>No quotes yet.</p>
               )}
 
               {vendorData.quotes.length > 0 && (
@@ -321,15 +321,15 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                     <div key={quote.id} className='rounded-lg border px-4 py-3'>
                       <div className='flex items-start justify-between'>
                         <div>
-                          <p className='font-semibold text-gray-800'>{formatPrice(quote.price)}</p>
-                          <p className='text-gray-500 text-xs'>{formatDate(quote.quoteDate)}</p>
+                          <p className='font-semibold text-foreground'>{formatPrice(quote.price)}</p>
+                          <p className='text-foreground/50 text-xs'>{formatDate(quote.quoteDate)}</p>
                           {quote.notes && (
-                            <p className='mt-1 text-gray-600 text-sm'>{quote.notes}</p>
+                            <p className='mt-1 text-foreground/70 text-sm'>{quote.notes}</p>
                           )}
                         </div>
                         <button
                           type='button'
-                          className='ml-4 text-red-400 text-xs hover:text-red-600'
+                          className='ml-4 text-destructive/70 text-xs hover:text-destructive'
                           onClick={() =>
                             deleteQuote.mutate({ quoteId: quote.id, vendorId: vendorData.id })
                           }
@@ -345,7 +345,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                           {quote.files.map((file) => (
                             <div
                               key={file.id}
-                              className='flex items-center gap-2 rounded bg-gray-50 px-2 py-1 text-xs'
+                              className='flex items-center gap-2 rounded bg-muted px-2 py-1 text-xs'
                             >
                               <a
                                 href={file.url}
@@ -355,7 +355,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                               >
                                 {file.name}
                               </a>
-                              <span className='shrink-0 text-gray-400'>
+                              <span className='shrink-0 text-foreground/40'>
                                 {formatFileSize(file.size)}
                               </span>
                               <button
@@ -368,7 +368,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                                   })
                                 }
                                 disabled={deleteFile.isPending}
-                                className='shrink-0 text-gray-400 hover:text-red-500'
+                                className='shrink-0 text-foreground/40 hover:text-destructive'
                               >
                                 ✕
                               </button>
@@ -390,7 +390,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                       ) : (
                         <button
                           type='button'
-                          className='mt-2 text-gray-400 text-xs hover:text-primary'
+                          className='mt-2 text-foreground/40 text-xs hover:text-primary'
                           onClick={() => setAttachingQuoteId(quote.id)}
                         >
                           + Attach files

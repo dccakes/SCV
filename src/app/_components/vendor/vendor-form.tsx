@@ -178,7 +178,7 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
       </div>
 
       <div className='border-t pt-3'>
-        <p className='mb-2 font-semibold text-gray-500 text-xs uppercase tracking-wide'>
+        <p className='mb-2 font-semibold text-muted-foreground text-xs uppercase tracking-wide'>
           Main Contact
         </p>
         <div className='flex flex-col gap-3'>

@@ -113,8 +113,8 @@ export function QuoteForm({ vendorId, onSuccess, onCancel }: QuoteFormProps) {
   const busy = isSubmitting || isUploading
 
   return (
-    <form onSubmit={handleSubmit} className='flex flex-col gap-3 rounded-lg border p-4'>
-      <h4 className='font-semibold text-gray-700 text-sm'>New Quote</h4>
+    <form onSubmit={handleSubmit} className='flex flex-col gap-3 rounded-lg border border-border/90 p-4'>
+      <h4 className='font-semibold text-foreground text-sm'>New Quote</h4>
       <div className='grid grid-cols-2 gap-3'>
         <div>
           <Label htmlFor='price' className='text-xs'>
@@ -166,7 +166,7 @@ export function QuoteForm({ vendorId, onSuccess, onCancel }: QuoteFormProps) {
         <div
           {...getRootProps()}
           className={`mt-1 cursor-pointer rounded-md border-2 border-dashed p-3 text-center text-xs transition-colors ${
-            isDragActive ? 'border-primary bg-primary/5' : 'border-gray-300 hover:border-gray-400'
+            isDragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-border/80'
           }`}
         >
           <input {...getInputProps()} />
@@ -187,13 +187,13 @@ export function QuoteForm({ vendorId, onSuccess, onCancel }: QuoteFormProps) {
             {selectedFiles.map((file, i) => (
               <li
                 key={`${file.name}-${i}`}
-                className='flex items-center justify-between rounded bg-gray-50 px-2 py-1 text-xs'
+                className='flex items-center justify-between rounded bg-muted px-2 py-1 text-xs'
               >
                 <span className='truncate'>{file.name}</span>
                 <button
                   type='button'
                   onClick={() => removeFile(i)}
-                  className='ml-2 shrink-0 text-gray-400 hover:text-red-500'
+                  className='ml-2 shrink-0 text-foreground/40 hover:text-destructive'
                 >
                   ✕
                 </button>

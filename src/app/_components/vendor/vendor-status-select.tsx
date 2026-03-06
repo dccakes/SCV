@@ -20,12 +20,12 @@ const STATUS_LABELS: Record<VendorStatus, string> = {
 }
 
 const STATUS_COLORS: Record<VendorStatus, string> = {
-  NOT_AVAILABLE: 'bg-gray-100 text-gray-600',
-  DECLINED: 'bg-red-100 text-red-700',
-  IN_REVIEW: 'bg-yellow-100 text-yellow-700',
-  PRE_SELECTED: 'bg-blue-100 text-blue-700',
-  IN_NEGOTIATION: 'bg-orange-100 text-orange-700',
-  SELECTED: 'bg-green-100 text-green-700',
+  NOT_AVAILABLE: 'bg-muted text-muted-foreground',
+  DECLINED: 'bg-destructive/10 text-destructive',
+  IN_REVIEW: 'bg-accent/12 text-foreground/70',
+  PRE_SELECTED: 'bg-primary/10 text-primary',
+  IN_NEGOTIATION: 'bg-accent/20 text-foreground/80',
+  SELECTED: 'bg-success/12 text-success',
 }
 
 export function StatusBadge({ status }: { status: VendorStatus }) {

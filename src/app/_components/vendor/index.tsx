@@ -45,7 +45,7 @@ export default function VendorList({ initialVendors }: VendorListProps) {
   return (
     <div>
       <div className='mb-8 flex items-center justify-between'>
-        <h1 className='font-light text-3xl text-gray-800 tracking-wide'>Vendors</h1>
+        <h1 className='font-light text-3xl text-foreground tracking-wide'>Vendors</h1>
       </div>
 
       {CATEGORY_ORDER.map((category) => (

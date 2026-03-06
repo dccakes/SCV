@@ -37,7 +37,7 @@ export function VendorCategorySection({
   return (
     <section className='mb-8'>
       <div className='mb-3 flex items-center justify-between border-b pb-2'>
-        <h2 className='font-semibold text-gray-800 text-lg'>{CATEGORY_LABELS[category]}</h2>
+        <h2 className='font-semibold text-foreground text-lg'>{CATEGORY_LABELS[category]}</h2>
         <Button
           size='sm'
           variant='outline'
@@ -48,7 +48,7 @@ export function VendorCategorySection({
         </Button>
       </div>
 
-      {vendors.length === 0 && <p className='py-2 text-gray-400 text-sm'>No vendors added yet.</p>}
+      {vendors.length === 0 && <p className='py-2 text-muted-foreground text-sm'>No vendors added yet.</p>}
 
       <div className='flex flex-col gap-2'>
         {vendors.map((vendor) => (
