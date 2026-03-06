@@ -1,8 +1,16 @@
 import { readFileSync } from 'node:fs'
+import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '@prisma/client'
 import { hashPassword } from 'better-auth/crypto'
+import { Pool } from 'pg'
 
-const prisma = new PrismaClient()
+const connectionString = process.env.DIRECT_URL ?? process.env.DATABASE_URL
+const pool = new Pool({ connectionString })
+const adapter = new PrismaPg(pool)
+const prisma = new PrismaClient({
+  adapter,
+  transactionOptions: { timeout: 60_000 },
+})
 
 const fixturePath = new URL('./seed-fixture.json', import.meta.url)
 
