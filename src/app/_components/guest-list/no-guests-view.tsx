@@ -9,9 +9,10 @@ import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '~/comp
 
 type NoGuestsViewProps = {
   setPrefillHousehold: Dispatch<SetStateAction<HouseholdFormData | undefined>>
+  onImportClick: () => void
 }
 
-export default function NoGuestsView({ setPrefillHousehold }: NoGuestsViewProps) {
+export default function NoGuestsView({ setPrefillHousehold, onImportClick }: NoGuestsViewProps) {
   const toggleGuestForm = useToggleGuestForm()
   return (
     <section className={sharedStyles.desktopPaddingSidesGuestList}>
@@ -24,7 +25,9 @@ export default function NoGuestsView({ setPrefillHousehold }: NoGuestsViewProps)
           </CardDescription>
         </CardHeader>
         <CardFooter className='gap-4'>
-          <Button variant='outline'>Import Guests</Button>
+          <Button variant='outline' onClick={onImportClick}>
+            Import Guests
+          </Button>
           <Button
             onClick={() => {
               setPrefillHousehold(undefined)

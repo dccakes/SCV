@@ -32,6 +32,7 @@ type GuestsViewProps = {
   selectedEventId: string
   setPrefillHousehold: Dispatch<SetStateAction<HouseholdFormData | undefined>>
   setPrefillEvent: Dispatch<SetStateAction<EventFormData | undefined>>
+  onImportClick: () => void
 }
 
 export default function GuestsView({
@@ -40,6 +41,7 @@ export default function GuestsView({
   selectedEventId,
   setPrefillHousehold,
   setPrefillEvent,
+  onImportClick,
 }: GuestsViewProps) {
   const toggleGuestForm = useToggleGuestForm()
   const [filteredHouseholds, setFilteredHouseholds] = useState(households)
@@ -329,7 +331,9 @@ export default function GuestsView({
           selectedEventId={selectedEventId}
         />
         <div className='flex gap-3'>
-          <Button variant='outline'>Download List</Button>
+          <Button variant='outline' onClick={onImportClick}>
+            Import Guests
+          </Button>
           <Button
             onClick={() => {
               setPrefillHousehold(undefined)

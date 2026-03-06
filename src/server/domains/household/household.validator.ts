@@ -101,6 +101,13 @@ export const householdIdSchema = z.object({
   householdId: z.string().min(1, 'Household ID is required'),
 })
 
+/**
+ * Schema for bulk creating multiple households (CSV import)
+ */
+export const bulkCreateHouseholdsSchema = z.object({
+  households: z.array(createHouseholdSchema).min(1, 'At least one household is required'),
+})
+
 // Export inferred types
 export type GuestPartyInputSchemaInput = z.infer<typeof guestPartyInputSchema>
 export type GiftInputSchemaInput = z.infer<typeof giftInputSchema>
@@ -109,3 +116,4 @@ export type UpdateHouseholdSchemaInput = z.infer<typeof updateHouseholdSchema>
 export type DeleteHouseholdSchemaInput = z.infer<typeof deleteHouseholdSchema>
 export type SearchHouseholdSchemaInput = z.infer<typeof searchHouseholdSchema>
 export type HouseholdIdSchemaInput = z.infer<typeof householdIdSchema>
+export type BulkCreateHouseholdsSchemaInput = z.infer<typeof bulkCreateHouseholdsSchema>

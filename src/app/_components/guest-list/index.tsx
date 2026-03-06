@@ -8,6 +8,7 @@ import { useGuestForm } from '~/app/_components/contexts/guest-form-context'
 import EventForm from '~/app/_components/forms/event-form'
 import GuestForm from '~/app/_components/forms/guest-form'
 import type { HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
+import { CsvUploadDialog } from '~/app/_components/guest-list/csv-upload-dialog'
 import EventsTabs from '~/app/_components/guest-list/event-tabs'
 import GuestsView from '~/app/_components/guest-list/guests-view'
 import NoGuestsView from '~/app/_components/guest-list/no-guests-view'
@@ -21,6 +22,7 @@ export default function GuestList({ dashboardData }: { dashboardData: DashboardD
 
   const [prefillEvent, setPrefillEvent] = useState<EventFormData | undefined>()
   const [prefillHousehold, setPrefillHousehold] = useState<HouseholdFormData | undefined>()
+  const [csvDialogOpen, setCsvDialogOpen] = useState(false)
 
   const filteredHouseholdsByEvent = useMemo(
     () =>
@@ -66,6 +68,11 @@ export default function GuestList({ dashboardData }: { dashboardData: DashboardD
         <GuestForm events={dashboardData?.events} prefillFormData={prefillHousehold} />
       )}
       {isEventFormOpen && <EventForm prefillFormData={prefillEvent} />}
+      <CsvUploadDialog
+        open={csvDialogOpen}
+        onOpenChange={setCsvDialogOpen}
+        events={dashboardData.events}
+      />
       <EventsTabs events={dashboardData?.events} selectedEventId={selectedEventId} />
       {totalGuests > 0 ? (
         <GuestsView
@@ -74,9 +81,13 @@ export default function GuestList({ dashboardData }: { dashboardData: DashboardD
           selectedEventId={selectedEventId}
           setPrefillHousehold={setPrefillHousehold}
           setPrefillEvent={setPrefillEvent}
+          onImportClick={() => setCsvDialogOpen(true)}
         />
       ) : (
-        <NoGuestsView setPrefillHousehold={setPrefillHousehold} />
+        <NoGuestsView
+          setPrefillHousehold={setPrefillHousehold}
+          onImportClick={() => setCsvDialogOpen(true)}
+        />
       )}
     </>
   )

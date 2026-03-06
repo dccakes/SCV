@@ -11,6 +11,7 @@
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
 import { householdManagementService } from '~/server/application/household-management'
 import {
+  bulkCreateHouseholdsSchema,
   createHouseholdSchema,
   deleteHouseholdSchema,
   searchHouseholdSchema,
@@ -34,6 +35,16 @@ export const householdRouter = createTRPCRouter({
     const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
     return householdManagementService.updateHouseholdWithGuests(weddingId, input)
   }),
+
+  /**
+   * Bulk create households from CSV import
+   */
+  bulkCreate: protectedProcedure
+    .input(bulkCreateHouseholdsSchema)
+    .mutation(async ({ ctx, input }) => {
+      const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+      return householdManagementService.bulkCreateHouseholds(weddingId, input.households)
+    }),
 
   /**
    * Delete a household
