@@ -1,6 +1,51 @@
 import type { Config } from 'tailwindcss'
 import tailwindcssAnimate from 'tailwindcss-animate'
 
+const oklchToken = (tokenName: string): string => `oklch(var(${tokenName}) / <alpha-value>)`
+
+const themeColorTokens = {
+  border: oklchToken('--border'),
+  input: oklchToken('--input'),
+  ring: oklchToken('--ring'),
+  background: oklchToken('--background'),
+  foreground: oklchToken('--foreground'),
+  primary: {
+    DEFAULT: oklchToken('--primary'),
+    foreground: oklchToken('--primary-foreground'),
+  },
+  secondary: {
+    DEFAULT: oklchToken('--secondary'),
+    foreground: oklchToken('--secondary-foreground'),
+  },
+  success: {
+    DEFAULT: oklchToken('--success'),
+    foreground: oklchToken('--success-foreground'),
+  },
+  destructive: {
+    DEFAULT: oklchToken('--destructive'),
+    foreground: oklchToken('--destructive-foreground'),
+  },
+  muted: {
+    DEFAULT: oklchToken('--muted'),
+    foreground: oklchToken('--muted-foreground'),
+  },
+  accent: {
+    DEFAULT: oklchToken('--accent'),
+    foreground: oklchToken('--accent-foreground'),
+  },
+  popover: {
+    DEFAULT: oklchToken('--popover'),
+    foreground: oklchToken('--popover-foreground'),
+  },
+  card: {
+    DEFAULT: oklchToken('--card'),
+    foreground: oklchToken('--card-foreground'),
+  },
+  'sidebar-ink': oklchToken('--sidebar-ink'),
+  'sidebar-cream': oklchToken('--sidebar-cream'),
+  'etta-ink': oklchToken('--etta-ink'),
+} as const
+
 const config = {
   darkMode: ['class'],
   content: [
@@ -21,45 +66,10 @@ const config = {
       },
     },
     extend: {
-      colors: {
-        border: 'var(--border)',
-        input: 'var(--input)',
-        ring: 'var(--ring)',
-        background: 'var(--background)',
-        foreground: 'var(--foreground)',
-        primary: {
-          DEFAULT: 'var(--primary)',
-          foreground: 'var(--primary-foreground)',
-        },
-        secondary: {
-          DEFAULT: 'var(--secondary)',
-          foreground: 'var(--secondary-foreground)',
-        },
-        success: {
-          DEFAULT: 'hsl(var(--success))',
-          foreground: 'hsl(var(--success-foreground))',
-        },
-        destructive: {
-          DEFAULT: 'var(--destructive)',
-          foreground: 'var(--destructive-foreground)',
-        },
-        muted: {
-          DEFAULT: 'var(--muted)',
-          foreground: 'var(--muted-foreground)',
-        },
-        accent: {
-          DEFAULT: 'var(--accent)',
-          foreground: 'var(--accent-foreground)',
-        },
-        popover: {
-          DEFAULT: 'var(--popover)',
-          foreground: 'var(--popover-foreground)',
-        },
-        card: {
-          DEFAULT: 'var(--card)',
-          foreground: 'var(--card-foreground)',
-        },
+      fontFamily: {
+        display: ['var(--font-display)', 'Instrument Serif', 'serif'],
       },
+      colors: themeColorTokens,
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
