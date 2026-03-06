@@ -1,17 +1,27 @@
+import type { Metadata } from 'next'
 import { Suspense } from 'react'
 
 import GuestList from '~/app/_components/guest-list'
-import { sharedStyles } from '~/app/utils/shared-styles'
+import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
 import { getRequiredDashboardOverview } from '~/server/application/authenticated-route/authenticated-route-data'
+
+export const metadata: Metadata = {
+  title: 'Guest List | Your Wedding Website',
+  description: 'Manage guests, households, and RSVP details',
+  icons: [{ rel: 'icon', url: '/favicon.ico' }],
+}
 
 export default async function DashboardPage() {
   const dashboardData = await getRequiredDashboardOverview()
 
   return (
-    <main className={`${sharedStyles.desktopPaddingSidesGuestList}`}>
-      <Suspense fallback={<div>Loading guest list...</div>}>
-        <GuestList dashboardData={dashboardData} />
-      </Suspense>
-    </main>
+    <>
+      <DashboardTopbar title='Guest List' showManagementActions={false} />
+      <main className='min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-6 lg:py-6'>
+        <Suspense fallback={<div>Loading guest list…</div>}>
+          <GuestList dashboardData={dashboardData} />
+        </Suspense>
+      </main>
+    </>
   )
 }

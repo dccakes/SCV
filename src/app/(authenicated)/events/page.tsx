@@ -5,24 +5,29 @@
  * Events are ordered by creation date (oldest first).
  */
 
+import type { Metadata } from 'next'
+
 import { EventsPageClient } from '@/app/(authenicated)/events/_components/events-page-client'
+import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
 import { getRequiredWedding } from '~/server/application/authenticated-route/authenticated-route-data'
 import { api } from '~/trpc/server'
+
+export const metadata: Metadata = {
+  title: 'Events | Your Wedding Website',
+  description: 'Manage your wedding events and ceremonies',
+  icons: [{ rel: 'icon', url: '/favicon.ico' }],
+}
 
 export default async function EventsPage() {
   await getRequiredWedding()
   const initialEvents = (await api.event.getAllByUserIdWithStats.query()) ?? []
 
   return (
-    <div className='container mx-auto px-4 py-6 md:py-8'>
-      <div className='mb-6 md:mb-8'>
-        <h1 className='font-bold text-2xl tracking-tight md:text-3xl'>Events</h1>
-        <p className='mt-1 text-muted-foreground text-sm md:mt-2 md:text-base'>
-          Manage your wedding events and ceremonies
-        </p>
-      </div>
-
-      <EventsPageClient initialEvents={initialEvents} />
-    </div>
+    <>
+      <DashboardTopbar title='Events' showManagementActions={false} />
+      <main className='min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-6 lg:py-6'>
+        <EventsPageClient initialEvents={initialEvents} />
+      </main>
+    </>
   )
 }
