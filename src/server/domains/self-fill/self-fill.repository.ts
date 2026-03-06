@@ -5,7 +5,7 @@
  * Handles wedding lookup by token and token management.
  */
 
-import type { PrismaClient } from '@prisma/client'
+import type { Prisma, PrismaClient } from '@prisma/client'
 
 import type { SelfFillWeddingData } from '~/server/domains/self-fill/self-fill.types'
 
@@ -13,13 +13,14 @@ import type { SelfFillWeddingData } from '~/server/domains/self-fill/self-fill.t
 export const TOKEN_EXPIRY_DAYS = 90
 
 /** Build the Prisma WHERE clause for a valid (non-expired) token */
-function validTokenWhere(token: string) {
+function validTokenWhere(token: string): Prisma.WeddingWhereInput {
   const expiryDate = new Date()
   expiryDate.setDate(expiryDate.getDate() - TOKEN_EXPIRY_DAYS)
+
   return {
     selfFillToken: token,
     OR: [
-      { selfFillTokenGeneratedAt: null as Date | null }, // Legacy tokens: treat as non-expiring
+      { selfFillTokenGeneratedAt: { equals: null } }, // Legacy tokens: treat as non-expiring
       { selfFillTokenGeneratedAt: { gte: expiryDate } },
     ],
   }
