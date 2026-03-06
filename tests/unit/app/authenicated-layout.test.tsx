@@ -48,7 +48,7 @@ describe('AuthenicatedLayout', () => {
     expect(screen.queryByTestId('auth-layout-sonner-toaster')).not.toBeInTheDocument()
   })
 
-  it('should not force dynamic rendering for entire authenticated route group', () => {
-    expect(AuthenticatedLayoutModule).not.toHaveProperty('dynamic')
+  it('should force dynamic rendering for authenticated route group', () => {
+    expect(AuthenticatedLayoutModule).toHaveProperty('dynamic', 'force-dynamic')
   })
 })

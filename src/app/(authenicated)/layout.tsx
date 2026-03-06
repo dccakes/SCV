@@ -2,6 +2,8 @@ import type { ReactNode } from 'react'
 
 import { AuthenticatedLayoutFrame } from '@/components/layout/authenticated-layout-frame'
 
+export const dynamic = 'force-dynamic'
+
 type AuthenicatedLayoutProps = {
   children: ReactNode
 }

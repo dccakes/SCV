@@ -2,6 +2,8 @@ import DashboardTopbar from '@/components/dashboard/dashboard-topbar'
 import PlanningOverview from '@/components/dashboard/planning-overview'
 import { getRequiredDashboardOverview } from '~/server/application/authenticated-route/authenticated-route-data'
 
+export const dynamic = 'force-dynamic'
+
 export default async function MePage() {
   const dashboardData = await getRequiredDashboardOverview()
 
