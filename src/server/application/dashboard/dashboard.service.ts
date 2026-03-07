@@ -97,8 +97,10 @@ export class DashboardService {
     // Build events with RSVP statistics
     const eventsWithStats = await this.buildEventsWithStats(events, invitations)
 
-    // Get total guest count
-    const totalGuests = await this.guestRepo.countByWeddingId(weddingId)
+    // Get total guest count (excluding tag-alongs)
+    const totalGuests = await this.guestRepo.countByWeddingId(weddingId, {
+      excludeTagAlongs: true,
+    })
 
     return {
       weddingData,

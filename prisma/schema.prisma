@@ -233,6 +233,7 @@ model Guest {
 
   // Guest classification
   ageGroup              GuestAgeGroup?          @default(ADULT)
+  isTagAlong            Boolean                 @default(false) // Tags along with household but not formally invited
   guestTagAssignments   GuestTagAssignment[]    @relation(name: "Guest_GuestTagAssignments")
 
   // Relations
@@ -264,7 +265,8 @@ model Event {
   venue       String?
   attire      String?
   description String?
-  collectRsvp Boolean      @default(false)
+  collectRsvp                Boolean      @default(false)
+  includeTagAlongsInHeadcount Boolean     @default(false)
 
   // Relations
   invitations Invitation[] @relation(name: "Event_Invitations")

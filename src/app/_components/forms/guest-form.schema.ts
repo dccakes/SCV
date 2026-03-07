@@ -33,8 +33,9 @@ const baseHouseholdFormSchema = baseHouseholdFields.extend({
  */
 export const HouseholdFormSchema = baseHouseholdFormSchema.refine(
   (data) => {
-    // Ensure exactly one guest is marked as primary contact
-    const primaryContacts = data.guestParty.filter((guest) => guest.isPrimaryContact)
+    // Ensure exactly one non-tag-along guest is marked as primary contact
+    const invitedGuests = data.guestParty.filter((guest) => !guest.isTagAlong)
+    const primaryContacts = invitedGuests.filter((guest) => guest.isPrimaryContact)
     return primaryContacts.length === 1
   },
   {
@@ -89,6 +90,7 @@ export const getDefaultHouseholdFormData = (events: Array<{ id: string }>): Hous
         phone: null,
         isPrimaryContact: true,
         ageGroup: 'ADULT' as const,
+        isTagAlong: false,
         tagIds: [],
         invites,
       },

@@ -47,32 +47,34 @@ const getHouseholdTags = (household: HouseholdWithGuests): string[] => {
 }
 
 const getRsvpSummary = (household: HouseholdWithGuests): RsvpSummary => {
-  return household.guests.reduce<RsvpSummary>(
-    (summary, guest) => {
-      for (const invitation of guest.invitations) {
-        if (invitation.rsvp === 'Attending') {
-          summary.attending += 1
-          continue
+  return household.guests
+    .filter((guest) => !guest.isTagAlong)
+    .reduce<RsvpSummary>(
+      (summary, guest) => {
+        for (const invitation of guest.invitations) {
+          if (invitation.rsvp === 'Attending') {
+            summary.attending += 1
+            continue
+          }
+
+          if (invitation.rsvp === 'Invited') {
+            summary.invited += 1
+            continue
+          }
+
+          if (invitation.rsvp === 'Declined') {
+            summary.declined += 1
+          }
         }
 
-        if (invitation.rsvp === 'Invited') {
-          summary.invited += 1
-          continue
-        }
-
-        if (invitation.rsvp === 'Declined') {
-          summary.declined += 1
-        }
+        return summary
+      },
+      {
+        attending: 0,
+        invited: 0,
+        declined: 0,
       }
-
-      return summary
-    },
-    {
-      attending: 0,
-      invited: 0,
-      declined: 0,
-    }
-  )
+    )
 }
 
 const getPrimaryGuestName = (household: HouseholdWithGuests): string => {
@@ -90,6 +92,8 @@ function GuestCardComponent({
   isSelected = false,
 }: Readonly<GuestCardProps>) {
   const primaryGuestName = getPrimaryGuestName(household)
+  const invitedGuests = household.guests.filter((guest) => !guest.isTagAlong)
+  const tagAlongCount = household.guests.length - invitedGuests.length
   const extraGuestsCount = Math.max(household.guests.length - 1, 0)
   const summaryName =
     extraGuestsCount > 0 ? `${primaryGuestName} +${extraGuestsCount}` : primaryGuestName
@@ -136,7 +140,8 @@ function GuestCardComponent({
               variant='secondary'
               className='shrink-0 font-mono text-[0.54rem] uppercase tracking-wider'
             >
-              Party of {household.guests.length}
+              Party of {invitedGuests.length}
+              {tagAlongCount > 0 && ` +${tagAlongCount}`}
             </Badge>
           </div>
 
@@ -191,7 +196,11 @@ function GuestCardComponent({
                 return (
                   <span
                     key={`${guest.id}-${index}`}
-                    className='-ml-1.5 flex h-5 w-5 items-center justify-center rounded-full border border-card bg-muted font-mono text-[0.45rem] text-foreground/65 uppercase first:ml-0'
+                    className={`-ml-1.5 flex h-5 w-5 items-center justify-center rounded-full font-mono text-[0.45rem] uppercase first:ml-0 ${
+                      guest.isTagAlong
+                        ? 'border border-foreground/30 border-dashed bg-muted/40 text-foreground/45'
+                        : 'border border-card bg-muted text-foreground/65'
+                    }`}
                   >
                     {partyInitials}
                   </span>

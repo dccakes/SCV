@@ -11,7 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { format } from 'date-fns'
 import { Calendar as CalendarIcon, Clock } from 'lucide-react'
 import { useEffect } from 'react'
-import { type SubmitHandler, useForm } from 'react-hook-form'
+import { type Resolver, type SubmitHandler, useForm } from 'react-hook-form'
 
 import {
   type EventFormData,
@@ -64,7 +64,7 @@ export function ModernEventForm({
 
   // Initialize form with defaults or event data
   const form = useForm<EventFormData>({
-    resolver: zodResolver(EventFormSchema),
+    resolver: zodResolver(EventFormSchema) as Resolver<EventFormData>,
     defaultValues: isEditMode
       ? {
           eventName: event.name,
@@ -74,6 +74,7 @@ export function ModernEventForm({
           venue: event.venue ?? '',
           attire: event.attire ?? '',
           description: event.description ?? '',
+          includeTagAlongsInHeadcount: event.includeTagAlongsInHeadcount ?? false,
         }
       : getEventFormDefaults(),
   })
@@ -102,6 +103,7 @@ export function ModernEventForm({
               venue: event.venue ?? '',
               attire: event.attire ?? '',
               description: event.description ?? '',
+              includeTagAlongsInHeadcount: event.includeTagAlongsInHeadcount ?? false,
             }
           : getEventFormDefaults()
       )

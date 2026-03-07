@@ -269,19 +269,29 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
                       Primary
                     </Badge>
                   ) : null}
-                  <Badge
-                    variant='outline'
-                    className={
-                      guest.invitations.some((invitation) => invitation.rsvp === 'Attending')
-                        ? 'border-success/35 bg-success/12 text-success'
-                        : guest.invitations.some((invitation) => invitation.rsvp === 'Declined')
-                          ? 'border-destructive/30 bg-destructive/10 text-destructive'
-                          : 'border-foreground/20 bg-accent/12 text-foreground/80'
-                    }
-                  >
-                    {guest.invitations.find((invitation) => invitation.eventId === selectedEventId)
-                      ?.rsvp ?? 'Invited'}
-                  </Badge>
+                  {guest.isTagAlong ? (
+                    <Badge
+                      variant='outline'
+                      className='border-foreground/20 bg-foreground/[0.04] text-[0.62rem] text-foreground/60'
+                    >
+                      Tag-along
+                    </Badge>
+                  ) : (
+                    <Badge
+                      variant='outline'
+                      className={
+                        guest.invitations.some((invitation) => invitation.rsvp === 'Attending')
+                          ? 'border-success/35 bg-success/12 text-success'
+                          : guest.invitations.some((invitation) => invitation.rsvp === 'Declined')
+                            ? 'border-destructive/30 bg-destructive/10 text-destructive'
+                            : 'border-foreground/20 bg-accent/12 text-foreground/80'
+                      }
+                    >
+                      {guest.invitations.find(
+                        (invitation) => invitation.eventId === selectedEventId
+                      )?.rsvp ?? 'Invited'}
+                    </Badge>
+                  )}
                 </div>
               </li>
             ))}

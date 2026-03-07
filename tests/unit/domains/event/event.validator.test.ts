@@ -23,7 +23,10 @@ describe('createEventSchema', () => {
 
     const result = createEventSchema.safeParse(validInput)
     expect(result.success).toBe(true)
-    expect(result.data).toEqual(validInput)
+    expect(result.data).toEqual({
+      ...validInput,
+      includeTagAlongsInHeadcount: false,
+    })
   })
 
   it('should require eventName', () => {
@@ -80,7 +83,10 @@ describe('updateEventSchema', () => {
 
     const result = updateEventSchema.safeParse(validInput)
     expect(result.success).toBe(true)
-    expect(result.data).toEqual(validInput)
+    expect(result.data).toEqual({
+      ...validInput,
+      includeTagAlongsInHeadcount: false,
+    })
   })
 
   it('should require eventId', () => {

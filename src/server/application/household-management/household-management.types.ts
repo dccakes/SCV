@@ -19,6 +19,7 @@ export type GuestPartyInput = Omit<
 > & {
   isPrimaryContact?: boolean
   ageGroup?: 'INFANT' | 'CHILD' | 'TEEN' | 'ADULT'
+  isTagAlong?: boolean
   tagIds?: string[]
 }
 

@@ -30,6 +30,7 @@ export type Guest = {
   weddingId: string
   isPrimaryContact: boolean
   ageGroup: GuestAgeGroup | null
+  isTagAlong: boolean
   guestTags?: Array<{ tagId: string }>
   createdAt: Date
   updatedAt: Date

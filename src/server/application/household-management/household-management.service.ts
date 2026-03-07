@@ -80,6 +80,7 @@ export class HouseholdManagementService {
     // 2. Create guests with their invitations and tags
     const guests = await Promise.all(
       data.guestParty.map(async (guest, index) => {
+        const isTagAlong = guest.isTagAlong ?? false
         const newGuest = await this.guestRepo.create({
           firstName: guest.firstName,
           lastName: guest.lastName,
@@ -87,13 +88,17 @@ export class HouseholdManagementService {
           phone: guest.phone,
           weddingId,
           householdId: household.id,
-          isPrimaryContact: guest.isPrimaryContact ?? index === 0,
+          isPrimaryContact: isTagAlong ? false : (guest.isPrimaryContact ?? index === 0),
           ageGroup: guest.ageGroup,
-          invitations: Object.entries(guest.invites).map(([eventId, rsvp]) => ({
-            eventId,
-            rsvp,
-            weddingId,
-          })),
+          isTagAlong,
+          // Tag-alongs don't get invitations
+          invitations: isTagAlong
+            ? undefined
+            : Object.entries(guest.invites).map(([eventId, rsvp]) => ({
+                eventId,
+                rsvp,
+                weddingId,
+              })),
           tagIds: guest.tagIds,
         })
 
@@ -169,6 +174,8 @@ export class HouseholdManagementService {
     // 4. Upsert guests and their invitations
     const updatedGuests = await Promise.all(
       data.guestParty.map(async (guest) => {
+        const isTagAlong = guest.isTagAlong ?? false
+
         const updatedGuest = await this.guestRepo.upsert(
           guest.guestId,
           {
@@ -178,37 +185,50 @@ export class HouseholdManagementService {
             phone: guest.phone,
             householdId: data.householdId,
             weddingId,
-            isPrimaryContact: guest.isPrimaryContact ?? false,
+            isPrimaryContact: isTagAlong ? false : (guest.isPrimaryContact ?? false),
             ageGroup: guest.ageGroup,
+            isTagAlong,
           },
-          Object.entries(guest.invites).map(([eventId, rsvp]) => ({
-            eventId,
-            rsvp,
-            weddingId,
-          }))
+          // Tag-alongs don't get invitations
+          isTagAlong
+            ? undefined
+            : Object.entries(guest.invites).map(([eventId, rsvp]) => ({
+                eventId,
+                rsvp,
+                weddingId,
+              }))
         )
+
+        // If guest was changed to tag-along, remove their existing invitations
+        if (isTagAlong && guest.guestId) {
+          await this.db.invitation.deleteMany({
+            where: { guestId: guest.guestId },
+          })
+        }
 
         // Update guest tag assignments
         if (guest.tagIds !== undefined) {
           await this.guestRepo.updateTags(updatedGuest.id, guest.tagIds)
         }
 
-        // 5. Update invitations for existing guests
-        const updatedInvitations: Invitation[] = await Promise.all(
-          Object.entries(guest.invites).map(async ([inviteEventId, inputRsvp]) => {
-            return await this.invitationRepo.update(
-              guest.guestId ?? updatedGuest.id,
-              inviteEventId,
-              { rsvp: inputRsvp }
-            )
-          })
-        )
+        // 5. Update invitations for non-tag-along guests
+        if (!isTagAlong) {
+          const updatedInvitations: Invitation[] = await Promise.all(
+            Object.entries(guest.invites).map(async ([inviteEventId, inputRsvp]) => {
+              return await this.invitationRepo.update(
+                guest.guestId ?? updatedGuest.id,
+                inviteEventId,
+                { rsvp: inputRsvp }
+              )
+            })
+          )
 
-        if (updatedInvitations.length !== Object.keys(guest.invites).length) {
-          throw new TRPCError({
-            code: 'INTERNAL_SERVER_ERROR',
-            message: 'Failed to update all invitations',
-          })
+          if (updatedInvitations.length !== Object.keys(guest.invites).length) {
+            throw new TRPCError({
+              code: 'INTERNAL_SERVER_ERROR',
+              message: 'Failed to update all invitations',
+            })
+          }
         }
 
         // Refetch guest with tag assignments to include in response

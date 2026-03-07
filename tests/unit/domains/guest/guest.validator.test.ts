@@ -25,6 +25,7 @@ describe('createGuestSchema', () => {
       ...validInput,
       ageGroup: 'ADULT',
       tagIds: [],
+      isTagAlong: false,
     })
   })
 
@@ -44,6 +45,7 @@ describe('createGuestSchema', () => {
       ...validInput,
       ageGroup: 'ADULT',
       tagIds: [],
+      isTagAlong: false,
     })
   })
 

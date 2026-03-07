@@ -17,6 +17,7 @@ export const mockEvent: Event = {
   description: 'Our special day!',
   weddingId: 'wedding-123',
   collectRsvp: true,
+  includeTagAlongsInHeadcount: false,
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
 }

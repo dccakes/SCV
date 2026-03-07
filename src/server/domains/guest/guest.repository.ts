@@ -80,6 +80,7 @@ export class GuestRepository {
     weddingId: string
     isPrimaryContact?: boolean
     ageGroup?: GuestAgeGroup | null
+    isTagAlong?: boolean
     invitations?: Array<{
       eventId: string
       rsvp: string
@@ -97,6 +98,7 @@ export class GuestRepository {
         weddingId: data.weddingId,
         isPrimaryContact: data.isPrimaryContact ?? false,
         ageGroup: data.ageGroup ?? null,
+        isTagAlong: data.isTagAlong ?? false,
         invitations: data.invitations
           ? {
               createMany: {
@@ -127,6 +129,7 @@ export class GuestRepository {
       phone?: string | null
       ageGroup?: GuestAgeGroup | null
       isPrimaryContact?: boolean
+      isTagAlong?: boolean
     }
   ): Promise<Guest> {
     return this.db.guest.update({
@@ -138,6 +141,7 @@ export class GuestRepository {
         phone: data.phone,
         ageGroup: data.ageGroup,
         isPrimaryContact: data.isPrimaryContact,
+        isTagAlong: data.isTagAlong,
       },
     })
   }
@@ -157,6 +161,7 @@ export class GuestRepository {
       weddingId: string
       isPrimaryContact?: boolean
       ageGroup?: GuestAgeGroup | null
+      isTagAlong?: boolean
     },
     invitations?: Array<{
       eventId: string
@@ -174,6 +179,7 @@ export class GuestRepository {
         phone: data.phone ?? null,
         isPrimaryContact: data.isPrimaryContact,
         ageGroup: data.ageGroup,
+        isTagAlong: data.isTagAlong,
       },
       create: {
         firstName: data.firstName,
@@ -184,6 +190,7 @@ export class GuestRepository {
         weddingId: data.weddingId,
         isPrimaryContact: data.isPrimaryContact ?? false,
         ageGroup: data.ageGroup ?? null,
+        isTagAlong: data.isTagAlong ?? false,
         invitations: invitations
           ? {
               createMany: {
@@ -279,9 +286,24 @@ export class GuestRepository {
   /**
    * Count guests by wedding ID
    */
-  async countByWeddingId(weddingId: string): Promise<number> {
+  async countByWeddingId(
+    weddingId: string,
+    options?: { excludeTagAlongs?: boolean }
+  ): Promise<number> {
     return this.db.guest.count({
-      where: { weddingId },
+      where: {
+        weddingId,
+        ...(options?.excludeTagAlongs ? { isTagAlong: false } : {}),
+      },
+    })
+  }
+
+  /**
+   * Count tag-along guests by wedding ID
+   */
+  async countTagAlongsByWeddingId(weddingId: string): Promise<number> {
+    return this.db.guest.count({
+      where: { weddingId, isTagAlong: true },
     })
   }
 }

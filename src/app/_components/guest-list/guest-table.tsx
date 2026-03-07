@@ -156,6 +156,7 @@ const DefaultCard = ({ household, events, setPrefillHousehold }: DefaultCardProp
           phone: guest.phone,
           isPrimaryContact: guest.isPrimaryContact,
           ageGroup: guest.ageGroup ?? 'ADULT',
+          isTagAlong: guest.isTagAlong ?? false,
           tagIds: guest.guestTags?.map((gt) => gt.tagId) ?? [],
           invites: invitations,
         }
@@ -301,6 +302,7 @@ const SingleEventCard = ({
           phone: guest.phone,
           isPrimaryContact: guest.isPrimaryContact,
           ageGroup: guest.ageGroup ?? 'ADULT',
+          isTagAlong: guest.isTagAlong ?? false,
           tagIds: guest.guestTags?.map((gt) => gt.tagId) ?? [],
           invites: invitations,
         }

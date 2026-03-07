@@ -18,6 +18,7 @@ export const createGuestSchema = z.object({
   householdId: z.string().min(1, 'Household ID is required'),
   isPrimaryContact: z.boolean().optional().default(false),
   ageGroup: z.nativeEnum(GuestAgeGroup).default(GuestAgeGroup.ADULT),
+  isTagAlong: z.boolean().default(false),
   tagIds: z.array(z.string().uuid()).max(10, 'Maximum 10 tags allowed').optional().default([]),
 })
 
@@ -31,6 +32,7 @@ export const updateGuestSchema = z.object({
   email: z.string().email('Valid email required').optional().nullable(),
   phone: z.string().optional().nullable(),
   ageGroup: z.nativeEnum(GuestAgeGroup).optional(),
+  isTagAlong: z.boolean().optional(),
   tagIds: z.array(z.string().uuid()).max(10, 'Maximum 10 tags allowed').optional(),
 })
 
@@ -67,6 +69,7 @@ export const guestPartySchema = z.object({
   phone: z.string().optional().nullable(),
   isPrimaryContact: z.boolean().default(false),
   ageGroup: z.nativeEnum(GuestAgeGroup).default(GuestAgeGroup.ADULT),
+  isTagAlong: z.boolean().default(false),
   tagIds: z.array(z.string().uuid()).max(10, 'Maximum 10 tags allowed').default([]),
   invites: z.record(z.string(), z.string()),
 })

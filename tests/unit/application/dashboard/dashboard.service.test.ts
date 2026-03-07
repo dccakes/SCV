@@ -532,7 +532,9 @@ describe('DashboardService', () => {
       expect(mockHouseholdFindByWeddingIdWithGuestsAndGifts).toHaveBeenCalledWith('wedding-123')
       expect(mockInvitationFindByWeddingIdFn).toHaveBeenCalledWith('wedding-123')
       expect(mockEventFindByWeddingIdWithQuestionsFn).toHaveBeenCalledWith('wedding-123')
-      expect(mockGuestCountByWeddingIdFn).toHaveBeenCalledWith('wedding-123')
+      expect(mockGuestCountByWeddingIdFn).toHaveBeenCalledWith('wedding-123', {
+        excludeTagAlongs: true,
+      })
       expect(mockWebsiteFindByWeddingIdWithQuestionsFn).toHaveBeenCalledWith('wedding-123')
     })
 

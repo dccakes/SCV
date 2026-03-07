@@ -37,7 +37,16 @@ export class EventService {
    * - Auto-creates invitations for all existing guests with "Not Invited" status
    */
   async createEvent(weddingId: string, data: CreateEventInput): Promise<Event> {
-    const { eventName: name, date, startTime, endTime, venue, attire, description } = data
+    const {
+      eventName: name,
+      date,
+      startTime,
+      endTime,
+      venue,
+      attire,
+      description,
+      includeTagAlongsInHeadcount,
+    } = data
 
     // Create the event
     const newEvent = await this.eventRepository.create({
@@ -49,11 +58,12 @@ export class EventService {
       venue,
       attire,
       description,
+      includeTagAlongsInHeadcount,
     })
 
-    // Create invitations for all pre-existing guests
+    // Create invitations for all pre-existing guests (excluding tag-alongs)
     const guests = await this.db.guest.findMany({
-      where: { weddingId },
+      where: { weddingId, isTagAlong: false },
     })
 
     await Promise.all(
@@ -137,6 +147,7 @@ export class EventService {
       venue: data.venue,
       attire: data.attire,
       description: data.description,
+      includeTagAlongsInHeadcount: data.includeTagAlongsInHeadcount,
     })
   }
 

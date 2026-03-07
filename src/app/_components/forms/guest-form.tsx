@@ -173,6 +173,7 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
       phone: null,
       isPrimaryContact: false,
       ageGroup: 'ADULT' as const,
+      isTagAlong: false,
       tagIds: [],
       invites,
     })

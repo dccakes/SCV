@@ -26,6 +26,7 @@ const defaultFormData = {
   attire: undefined,
   description: undefined,
   eventId: '',
+  includeTagAlongsInHeadcount: false,
 }
 
 export default function EventForm({ prefillFormData }: EventFormProps) {
@@ -129,6 +130,29 @@ export default function EventForm({ prefillFormData }: EventFormProps) {
               handleOnChange={handleOnChange}
             />
           </div>
+          <label
+            htmlFor='includeTagAlongsInHeadcount'
+            className='mt-5 flex cursor-pointer items-start gap-3 rounded-lg border bg-muted/50 p-4'
+          >
+            <input
+              id='includeTagAlongsInHeadcount'
+              type='checkbox'
+              checked={eventFormData.includeTagAlongsInHeadcount ?? false}
+              onChange={(e) =>
+                setEventFormData((prev) => ({
+                  ...prev,
+                  includeTagAlongsInHeadcount: e.target.checked,
+                }))
+              }
+              className='mt-0.5 h-4 w-4 rounded border-gray-300'
+            />
+            <div>
+              <span className='font-medium text-sm'>Include tag-alongs in headcount</span>
+              <p className='text-muted-foreground text-xs'>
+                Count babies, children, and other tag-alongs toward this event&apos;s total
+              </p>
+            </div>
+          </label>
         </div>
         <div
           className={`fixed bottom-0 flex ${sharedStyles.sidebarFormWidth} flex-col gap-3 border-t px-8 py-5`}
