@@ -30,6 +30,7 @@ import {
   db,
   mockGuestFindMany,
   mockInvitationCreate,
+  mockInvitationDeleteMany,
   resetMocks as resetDbMocks,
 } from '~/server/infrastructure/database/client'
 
@@ -44,6 +45,7 @@ const mockDeleteFn = mockDelete as jest.Mock
 const mockBelongsToWeddingFn = mockBelongsToWedding as jest.Mock
 const mockGuestFindManyFn = mockGuestFindMany as jest.Mock
 const mockInvitationCreateFn = mockInvitationCreate as jest.Mock
+const mockInvitationDeleteManyFn = mockInvitationDeleteMany as jest.Mock
 
 describe('EventService', () => {
   let eventService: EventService
@@ -92,6 +94,57 @@ describe('EventService', () => {
         eventName: 'Wedding Day',
       })
 
+      expect(mockInvitationCreateFn).toHaveBeenCalledTimes(2)
+    })
+
+    it('should exclude tag-along guests from invitations by default', async () => {
+      const allGuests = [
+        {
+          id: 1,
+          firstName: 'Regular',
+          lastName: 'Guest',
+          weddingId: 'wedding-123',
+          isTagAlong: false,
+        },
+        { id: 2, firstName: 'Tag', lastName: 'Along', weddingId: 'wedding-123', isTagAlong: true },
+      ]
+      mockCreateFn.mockResolvedValue(mockEvent)
+      mockGuestFindManyFn.mockResolvedValue([allGuests[0]])
+
+      await eventService.createEvent('wedding-123', {
+        eventName: 'Ceremony',
+      })
+
+      // Should query excluding tag-alongs (isTagAlong: false)
+      expect(mockGuestFindManyFn).toHaveBeenCalledWith({
+        where: { weddingId: 'wedding-123', isTagAlong: false },
+      })
+      expect(mockInvitationCreateFn).toHaveBeenCalledTimes(1)
+    })
+
+    it('should include tag-along guests in invitations when allowTagAlongs is true', async () => {
+      const allGuests = [
+        {
+          id: 1,
+          firstName: 'Regular',
+          lastName: 'Guest',
+          weddingId: 'wedding-123',
+          isTagAlong: false,
+        },
+        { id: 2, firstName: 'Tag', lastName: 'Along', weddingId: 'wedding-123', isTagAlong: true },
+      ]
+      mockCreateFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: true })
+      mockGuestFindManyFn.mockResolvedValue(allGuests)
+
+      await eventService.createEvent('wedding-123', {
+        eventName: 'Welcome Party',
+        allowTagAlongs: true,
+      })
+
+      // Should query ALL guests (no isTagAlong filter)
+      expect(mockGuestFindManyFn).toHaveBeenCalledWith({
+        where: { weddingId: 'wedding-123' },
+      })
       expect(mockInvitationCreateFn).toHaveBeenCalledTimes(2)
     })
 
@@ -229,6 +282,84 @@ describe('EventService', () => {
       })
 
       expect(result.name).toBe('Updated Event')
+    })
+
+    it('should create tag-along invitations when allowTagAlongs toggled from false to true', async () => {
+      const tagAlongGuests = [
+        { id: 10, firstName: 'Baby', lastName: 'Doe', weddingId: 'wedding-123', isTagAlong: true },
+        { id: 11, firstName: 'Child', lastName: 'Doe', weddingId: 'wedding-123', isTagAlong: true },
+      ]
+      // Current event has allowTagAlongs: false
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockFindByIdFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: false })
+      mockGuestFindManyFn.mockResolvedValue(tagAlongGuests)
+      mockUpdateFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: true })
+
+      await eventService.updateEvent('wedding-123', {
+        eventId: 'event-123',
+        eventName: 'Wedding Day',
+        allowTagAlongs: true,
+      })
+
+      // Should fetch tag-along guests
+      expect(mockGuestFindManyFn).toHaveBeenCalledWith({
+        where: { weddingId: 'wedding-123', isTagAlong: true },
+      })
+      // Should create invitations for each tag-along
+      expect(mockInvitationCreateFn).toHaveBeenCalledTimes(2)
+      expect(mockInvitationCreateFn).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          guestId: 10,
+          eventId: 'event-123',
+          rsvp: 'Not Invited',
+        }),
+      })
+    })
+
+    it('should delete tag-along invitations when allowTagAlongs toggled from true to false', async () => {
+      const tagAlongGuests = [{ id: 10 }, { id: 11 }]
+      // Current event has allowTagAlongs: true
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockFindByIdFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: true })
+      mockGuestFindManyFn.mockResolvedValue(tagAlongGuests)
+      mockInvitationDeleteManyFn.mockResolvedValue({ count: 2 })
+      mockUpdateFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: false })
+
+      await eventService.updateEvent('wedding-123', {
+        eventId: 'event-123',
+        eventName: 'Wedding Day',
+        allowTagAlongs: false,
+      })
+
+      // Should fetch tag-along guest IDs
+      expect(mockGuestFindManyFn).toHaveBeenCalledWith({
+        where: { weddingId: 'wedding-123', isTagAlong: true },
+        select: { id: true },
+      })
+      // Should delete invitations for tag-alongs
+      expect(mockInvitationDeleteManyFn).toHaveBeenCalledWith({
+        where: {
+          eventId: 'event-123',
+          guestId: { in: [10, 11] },
+        },
+      })
+    })
+
+    it('should not modify invitations when allowTagAlongs stays the same', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockFindByIdFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: false })
+      mockUpdateFn.mockResolvedValue(mockEvent)
+
+      await eventService.updateEvent('wedding-123', {
+        eventId: 'event-123',
+        eventName: 'Wedding Day',
+        allowTagAlongs: false,
+      })
+
+      // Should not touch guest queries or invitations
+      expect(mockGuestFindManyFn).not.toHaveBeenCalled()
+      expect(mockInvitationCreateFn).not.toHaveBeenCalled()
+      expect(mockInvitationDeleteManyFn).not.toHaveBeenCalled()
     })
 
     it('should throw FORBIDDEN when wedding does not own event', async () => {

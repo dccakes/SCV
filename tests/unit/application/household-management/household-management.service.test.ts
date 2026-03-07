@@ -68,6 +68,9 @@ const createMockDb = () => ({
     createMany: jest.fn(),
     deleteMany: jest.fn(),
   },
+  invitation: {
+    deleteMany: jest.fn(),
+  },
 })
 
 describe('HouseholdManagementService', () => {
@@ -202,6 +205,59 @@ describe('HouseholdManagementService', () => {
       // Verify createWithGifts was called with both event IDs
       const eventIds = mockCreateWithGiftsFn.mock.calls[0][1]
       expect(eventIds).toEqual(['event-123', 'event-456'])
+    })
+
+    it('should create invitations for tag-along guests with allowTagAlongs events', async () => {
+      mockCreateWithGiftsFn.mockResolvedValue(mockHousehold)
+      mockCreateFn.mockResolvedValue(mockGuestWithInvitations)
+      mockFindByIdWithInvitationsFn.mockResolvedValue(mockGuestWithInvitations)
+
+      await service.createHouseholdWithGuests('wedding-123', {
+        guestParty: [
+          {
+            firstName: 'Baby',
+            lastName: 'Doe',
+            isTagAlong: true,
+            invites: { 'event-456': 'Invited' }, // Only the allowTagAlongs event
+          },
+        ],
+      })
+
+      // Tag-along should get invitations passed through from frontend
+      expect(mockCreateFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isTagAlong: true,
+          isPrimaryContact: false,
+          invitations: [{ eventId: 'event-456', rsvp: 'Invited', weddingId: 'wedding-123' }],
+        })
+      )
+    })
+
+    it('should set isPrimaryContact to false for tag-along guests', async () => {
+      mockCreateWithGiftsFn.mockResolvedValue(mockHousehold)
+      mockCreateFn.mockResolvedValue(mockGuestWithInvitations)
+      mockFindByIdWithInvitationsFn.mockResolvedValue(mockGuestWithInvitations)
+
+      await service.createHouseholdWithGuests('wedding-123', {
+        guestParty: [
+          {
+            firstName: 'Regular',
+            lastName: 'Guest',
+            isPrimaryContact: true,
+            invites: {},
+          },
+          {
+            firstName: 'Tag',
+            lastName: 'Along',
+            isTagAlong: true,
+            isPrimaryContact: true, // Attempted, but should be overridden
+            invites: {},
+          },
+        ],
+      })
+
+      // Tag-along should have isPrimaryContact forced to false
+      expect(mockCreateFn.mock.calls[1][0].isPrimaryContact).toBe(false)
     })
 
     it('should throw error if household creation fails', async () => {
@@ -413,6 +469,92 @@ describe('HouseholdManagementService', () => {
       expect(mockDb.guest.updateMany).toHaveBeenCalledWith({
         where: { householdId: 'household-123' },
         data: { isPrimaryContact: false },
+      })
+    })
+
+    it('should update invitations for tag-along guests during update', async () => {
+      mockUpdateFn.mockResolvedValue(mockHousehold)
+      mockDb.guest.updateMany.mockResolvedValue({ count: 1 })
+      mockGuestUpsertFn.mockResolvedValue(mockGuestWithInvitations)
+      mockFindByIdWithInvitationsFn.mockResolvedValue(mockGuestWithInvitations)
+      mockInvitationUpdateFn.mockResolvedValue(mockInvitation)
+      mockGiftUpsertFn.mockResolvedValue(mockGift)
+
+      await service.updateHouseholdWithGuests('wedding-123', {
+        householdId: 'household-123',
+        guestParty: [
+          {
+            guestId: 5,
+            firstName: 'Baby',
+            lastName: 'Doe',
+            isTagAlong: true,
+            invites: { 'event-456': 'Attending' },
+          },
+        ],
+        gifts: [],
+      })
+
+      // Tag-along guests should still get their invitations updated
+      expect(mockInvitationUpdateFn).toHaveBeenCalledWith(5, 'event-456', { rsvp: 'Attending' })
+    })
+
+    it('should delete non-allowed event invitations when guest is tag-along', async () => {
+      mockUpdateFn.mockResolvedValue(mockHousehold)
+      mockDb.guest.updateMany.mockResolvedValue({ count: 1 })
+      mockGuestUpsertFn.mockResolvedValue(mockGuestWithInvitations)
+      mockFindByIdWithInvitationsFn.mockResolvedValue(mockGuestWithInvitations)
+      mockInvitationUpdateFn.mockResolvedValue(mockInvitation)
+      mockGiftUpsertFn.mockResolvedValue(mockGift)
+      mockDb.invitation.deleteMany.mockResolvedValue({ count: 1 })
+
+      await service.updateHouseholdWithGuests('wedding-123', {
+        householdId: 'household-123',
+        guestParty: [
+          {
+            guestId: 5,
+            firstName: 'Baby',
+            lastName: 'Doe',
+            isTagAlong: true,
+            invites: { 'event-456': 'Invited' }, // Only one event allowed
+          },
+        ],
+        gifts: [],
+      })
+
+      // Should delete invitations for events NOT in the allowed list
+      expect(mockDb.invitation.deleteMany).toHaveBeenCalledWith({
+        where: {
+          guestId: 5,
+          eventId: { notIn: ['event-456'] },
+        },
+      })
+    })
+
+    it('should delete all invitations when tag-along has no allowed events', async () => {
+      mockUpdateFn.mockResolvedValue(mockHousehold)
+      mockDb.guest.updateMany.mockResolvedValue({ count: 1 })
+      mockGuestUpsertFn.mockResolvedValue(mockGuestWithInvitations)
+      mockFindByIdWithInvitationsFn.mockResolvedValue(mockGuestWithInvitations)
+      mockGiftUpsertFn.mockResolvedValue(mockGift)
+      mockDb.invitation.deleteMany.mockResolvedValue({ count: 2 })
+
+      await service.updateHouseholdWithGuests('wedding-123', {
+        householdId: 'household-123',
+        guestParty: [
+          {
+            guestId: 5,
+            firstName: 'Baby',
+            lastName: 'Doe',
+            isTagAlong: true,
+            invites: {}, // No events allow tag-alongs
+          },
+        ],
+        gifts: [],
+      })
+
+      // Should delete ALL invitations for this tag-along
+      expect(mockDb.invitation.deleteMany).toHaveBeenCalledWith({
+        where: { guestId: 5 },
       })
     })
   })
