@@ -9,6 +9,7 @@ import { IoMdClose } from 'react-icons/io'
 import { toast } from 'sonner'
 
 import { useToggleGuestForm } from '~/app/_components/contexts/guest-form-context'
+import { SelfInviteLinkManager } from '~/app/_components/guest-list/self-invite-link-manager'
 import AddFormButtons from '~/app/_components/forms/guest/add-buttons'
 import ContactForm from '~/app/_components/forms/guest/contact-form'
 import EditFormButtons from '~/app/_components/forms/guest/edit-buttons'
@@ -241,6 +242,16 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
             <IoMdClose size={24} aria-hidden='true' />
           </button>
         </div>
+
+        {/* Invite link banner — shown only when adding a new party */}
+        {!isEditMode && (
+          <div className='border-b bg-muted/20 px-6 py-3'>
+            <p className='mb-2 font-mono text-[0.58rem] text-foreground/55 uppercase tracking-widest'>
+              Or let guests add themselves
+            </p>
+            <SelfInviteLinkManager />
+          </div>
+        )}
 
         {/* Scrollable Content */}
         <div className='flex-1 overflow-y-auto pb-32'>
