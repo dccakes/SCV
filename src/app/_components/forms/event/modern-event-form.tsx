@@ -74,7 +74,7 @@ export function ModernEventForm({
           venue: event.venue ?? '',
           attire: event.attire ?? '',
           description: event.description ?? '',
-          includeTagAlongsInHeadcount: event.includeTagAlongsInHeadcount ?? false,
+          allowTagAlongs: event.allowTagAlongs ?? false,
         }
       : getEventFormDefaults(),
   })
@@ -103,7 +103,7 @@ export function ModernEventForm({
               venue: event.venue ?? '',
               attire: event.attire ?? '',
               description: event.description ?? '',
-              includeTagAlongsInHeadcount: event.includeTagAlongsInHeadcount ?? false,
+              allowTagAlongs: event.allowTagAlongs ?? false,
             }
           : getEventFormDefaults()
       )

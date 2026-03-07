@@ -269,14 +269,15 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
                       Primary
                     </Badge>
                   ) : null}
-                  {guest.isTagAlong ? (
+                  {guest.isTagAlong && (
                     <Badge
                       variant='outline'
                       className='border-foreground/20 bg-foreground/[0.04] text-[0.62rem] text-foreground/60'
                     >
                       Tag-along
                     </Badge>
-                  ) : (
+                  )}
+                  {guest.invitations.length > 0 && (
                     <Badge
                       variant='outline'
                       className={

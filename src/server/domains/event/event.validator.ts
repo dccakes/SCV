@@ -21,7 +21,7 @@ export const createEventSchema = z
     venue: z.string().optional(),
     attire: z.string().optional(),
     description: z.string().optional(),
-    includeTagAlongsInHeadcount: z.boolean().default(false),
+    allowTagAlongs: z.boolean().default(false),
   })
   .refine(
     (data) => {
@@ -57,7 +57,7 @@ export const updateEventSchema = z
     venue: z.string().optional(),
     attire: z.string().optional(),
     description: z.string().optional(),
-    includeTagAlongsInHeadcount: z.boolean().default(false),
+    allowTagAlongs: z.boolean().default(false),
   })
   .refine(
     (data) => {

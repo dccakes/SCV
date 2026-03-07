@@ -45,7 +45,7 @@ export class EventService {
       venue,
       attire,
       description,
-      includeTagAlongsInHeadcount,
+      allowTagAlongs,
     } = data
 
     // Create the event
@@ -58,12 +58,13 @@ export class EventService {
       venue,
       attire,
       description,
-      includeTagAlongsInHeadcount,
+      allowTagAlongs,
     })
 
-    // Create invitations for all pre-existing guests (excluding tag-alongs)
+    // Create invitations for pre-existing guests
+    // Tag-alongs only get invitations if this event allows them
     const guests = await this.db.guest.findMany({
-      where: { weddingId, isTagAlong: false },
+      where: { weddingId, ...(allowTagAlongs ? {} : { isTagAlong: false }) },
     })
 
     await Promise.all(
@@ -128,6 +129,10 @@ export class EventService {
 
   /**
    * Update an existing event
+   *
+   * When allowTagAlongs changes:
+   * - false → true: Create invitations for all tag-along guests
+   * - true → false: Delete invitations for all tag-along guests
    */
   async updateEvent(weddingId: string, data: UpdateEventInput): Promise<Event> {
     // Verify event belongs to wedding
@@ -139,6 +144,45 @@ export class EventService {
       })
     }
 
+    // Check if allowTagAlongs is changing
+    const currentEvent = await this.eventRepository.findById(data.eventId)
+    const wasAllowed = currentEvent?.allowTagAlongs ?? false
+    const nowAllowed = data.allowTagAlongs ?? false
+
+    if (!wasAllowed && nowAllowed) {
+      // Create invitations for all tag-along guests
+      const tagAlongGuests = await this.db.guest.findMany({
+        where: { weddingId, isTagAlong: true },
+      })
+      await Promise.all(
+        tagAlongGuests.map(async (guest: PrismaGuest) => {
+          await this.db.invitation.create({
+            data: {
+              weddingId,
+              guestId: guest.id,
+              eventId: data.eventId,
+              rsvp: RSVP_STATUS.NOT_INVITED,
+            },
+          })
+        })
+      )
+    } else if (wasAllowed && !nowAllowed) {
+      // Delete invitations for all tag-along guests
+      const tagAlongGuests = await this.db.guest.findMany({
+        where: { weddingId, isTagAlong: true },
+        select: { id: true },
+      })
+      const tagAlongIds = tagAlongGuests.map((g) => g.id)
+      if (tagAlongIds.length > 0) {
+        await this.db.invitation.deleteMany({
+          where: {
+            eventId: data.eventId,
+            guestId: { in: tagAlongIds },
+          },
+        })
+      }
+    }
+
     return this.eventRepository.update(data.eventId, {
       name: data.eventName,
       date: data.date ? new Date(data.date) : undefined,
@@ -147,7 +191,7 @@ export class EventService {
       venue: data.venue,
       attire: data.attire,
       description: data.description,
-      includeTagAlongsInHeadcount: data.includeTagAlongsInHeadcount,
+      allowTagAlongs: data.allowTagAlongs,
     })
   }
 

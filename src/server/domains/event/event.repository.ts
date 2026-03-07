@@ -120,7 +120,7 @@ export class EventRepository {
     attire?: string
     description?: string
     collectRsvp?: boolean
-    includeTagAlongsInHeadcount?: boolean
+    allowTagAlongs?: boolean
   }): Promise<Event> {
     return this.db.event.create({
       data: {
@@ -133,7 +133,7 @@ export class EventRepository {
         attire: data.attire,
         description: data.description,
         collectRsvp: data.collectRsvp ?? false,
-        includeTagAlongsInHeadcount: data.includeTagAlongsInHeadcount ?? false,
+        allowTagAlongs: data.allowTagAlongs ?? false,
       },
     })
   }
@@ -151,7 +151,7 @@ export class EventRepository {
       venue?: string
       attire?: string
       description?: string
-      includeTagAlongsInHeadcount?: boolean
+      allowTagAlongs?: boolean
     }
   ): Promise<Event> {
     return this.db.event.update({
@@ -164,7 +164,7 @@ export class EventRepository {
         venue: data.venue,
         attire: data.attire,
         description: data.description,
-        includeTagAlongsInHeadcount: data.includeTagAlongsInHeadcount,
+        allowTagAlongs: data.allowTagAlongs,
       },
     })
   }

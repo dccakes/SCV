@@ -91,14 +91,13 @@ export class HouseholdManagementService {
           isPrimaryContact: isTagAlong ? false : (guest.isPrimaryContact ?? index === 0),
           ageGroup: guest.ageGroup,
           isTagAlong,
-          // Tag-alongs don't get invitations
-          invitations: isTagAlong
-            ? undefined
-            : Object.entries(guest.invites).map(([eventId, rsvp]) => ({
-                eventId,
-                rsvp,
-                weddingId,
-              })),
+          // Tag-alongs get invitations only for events that allow them
+          // (frontend sends only applicable events in guest.invites)
+          invitations: Object.entries(guest.invites).map(([eventId, rsvp]) => ({
+            eventId,
+            rsvp,
+            weddingId,
+          })),
           tagIds: guest.tagIds,
         })
 
@@ -189,21 +188,32 @@ export class HouseholdManagementService {
             ageGroup: guest.ageGroup,
             isTagAlong,
           },
-          // Tag-alongs don't get invitations
-          isTagAlong
-            ? undefined
-            : Object.entries(guest.invites).map(([eventId, rsvp]) => ({
-                eventId,
-                rsvp,
-                weddingId,
-              }))
+          // Tag-alongs get invitations only for events that allow them
+          // (frontend sends only applicable events in guest.invites)
+          Object.entries(guest.invites).map(([eventId, rsvp]) => ({
+            eventId,
+            rsvp,
+            weddingId,
+          }))
         )
 
-        // If guest was changed to tag-along, remove their existing invitations
+        // If guest was changed to tag-along, remove invitations for events that don't allow tag-alongs
+        // (the frontend only sends invites for allowTagAlongs events, so we clean up the rest)
         if (isTagAlong && guest.guestId) {
-          await this.db.invitation.deleteMany({
-            where: { guestId: guest.guestId },
-          })
+          const allowedEventIds = Object.keys(guest.invites)
+          // Delete invitations for events NOT in the allowed list
+          if (allowedEventIds.length > 0) {
+            await this.db.invitation.deleteMany({
+              where: {
+                guestId: guest.guestId,
+                eventId: { notIn: allowedEventIds },
+              },
+            })
+          } else {
+            await this.db.invitation.deleteMany({
+              where: { guestId: guest.guestId },
+            })
+          }
         }
 
         // Update guest tag assignments
@@ -211,24 +221,22 @@ export class HouseholdManagementService {
           await this.guestRepo.updateTags(updatedGuest.id, guest.tagIds)
         }
 
-        // 5. Update invitations for non-tag-along guests
-        if (!isTagAlong) {
-          const updatedInvitations: Invitation[] = await Promise.all(
-            Object.entries(guest.invites).map(async ([inviteEventId, inputRsvp]) => {
-              return await this.invitationRepo.update(
-                guest.guestId ?? updatedGuest.id,
-                inviteEventId,
-                { rsvp: inputRsvp }
-              )
-            })
-          )
+        // 5. Update invitations
+        const updatedInvitations: Invitation[] = await Promise.all(
+          Object.entries(guest.invites).map(async ([inviteEventId, inputRsvp]) => {
+            return await this.invitationRepo.update(
+              guest.guestId ?? updatedGuest.id,
+              inviteEventId,
+              { rsvp: inputRsvp }
+            )
+          })
+        )
 
-          if (updatedInvitations.length !== Object.keys(guest.invites).length) {
-            throw new TRPCError({
-              code: 'INTERNAL_SERVER_ERROR',
-              message: 'Failed to update all invitations',
-            })
-          }
+        if (updatedInvitations.length !== Object.keys(guest.invites).length) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to update all invitations',
+          })
         }
 
         // Refetch guest with tag assignments to include in response

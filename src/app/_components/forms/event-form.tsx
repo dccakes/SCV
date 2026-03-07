@@ -26,7 +26,7 @@ const defaultFormData = {
   attire: undefined,
   description: undefined,
   eventId: '',
-  includeTagAlongsInHeadcount: false,
+  allowTagAlongs: false,
 }
 
 export default function EventForm({ prefillFormData }: EventFormProps) {
@@ -131,25 +131,25 @@ export default function EventForm({ prefillFormData }: EventFormProps) {
             />
           </div>
           <label
-            htmlFor='includeTagAlongsInHeadcount'
+            htmlFor='allowTagAlongs'
             className='mt-5 flex cursor-pointer items-start gap-3 rounded-lg border bg-muted/50 p-4'
           >
             <input
-              id='includeTagAlongsInHeadcount'
+              id='allowTagAlongs'
               type='checkbox'
-              checked={eventFormData.includeTagAlongsInHeadcount ?? false}
+              checked={eventFormData.allowTagAlongs ?? false}
               onChange={(e) =>
                 setEventFormData((prev) => ({
                   ...prev,
-                  includeTagAlongsInHeadcount: e.target.checked,
+                  allowTagAlongs: e.target.checked,
                 }))
               }
               className='mt-0.5 h-4 w-4 rounded border-gray-300'
             />
             <div>
-              <span className='font-medium text-sm'>Include tag-alongs in headcount</span>
+              <span className='font-medium text-sm'>Allow tag-alongs to be invited</span>
               <p className='text-muted-foreground text-xs'>
-                Count babies, children, and other tag-alongs toward this event&apos;s total
+                Tag-alongs (babies, children, etc.) can be invited and RSVP for this event
               </p>
             </div>
           </label>

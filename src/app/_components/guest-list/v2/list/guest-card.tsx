@@ -47,34 +47,33 @@ const getHouseholdTags = (household: HouseholdWithGuests): string[] => {
 }
 
 const getRsvpSummary = (household: HouseholdWithGuests): RsvpSummary => {
-  return household.guests
-    .filter((guest) => !guest.isTagAlong)
-    .reduce<RsvpSummary>(
-      (summary, guest) => {
-        for (const invitation of guest.invitations) {
-          if (invitation.rsvp === 'Attending') {
-            summary.attending += 1
-            continue
-          }
-
-          if (invitation.rsvp === 'Invited') {
-            summary.invited += 1
-            continue
-          }
-
-          if (invitation.rsvp === 'Declined') {
-            summary.declined += 1
-          }
+  // Include all guests — tag-alongs now have invitations for events that allow them
+  return household.guests.reduce<RsvpSummary>(
+    (summary, guest) => {
+      for (const invitation of guest.invitations) {
+        if (invitation.rsvp === 'Attending') {
+          summary.attending += 1
+          continue
         }
 
-        return summary
-      },
-      {
-        attending: 0,
-        invited: 0,
-        declined: 0,
+        if (invitation.rsvp === 'Invited') {
+          summary.invited += 1
+          continue
+        }
+
+        if (invitation.rsvp === 'Declined') {
+          summary.declined += 1
+        }
       }
-    )
+
+      return summary
+    },
+    {
+      attending: 0,
+      invited: 0,
+      declined: 0,
+    }
+  )
 }
 
 const getPrimaryGuestName = (household: HouseholdWithGuests): string => {

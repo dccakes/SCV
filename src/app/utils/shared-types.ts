@@ -15,7 +15,7 @@ type Event = {
   weddingId: string
   questions: Question[]
   collectRsvp?: boolean
-  includeTagAlongsInHeadcount?: boolean
+  allowTagAlongs?: boolean
 }
 
 interface EventWithResponses extends Event {
@@ -119,7 +119,7 @@ type EventFormData = {
   attire: string | undefined
   description: string | undefined
   eventId: string
-  includeTagAlongsInHeadcount?: boolean
+  allowTagAlongs?: boolean
 }
 
 type EventId = string

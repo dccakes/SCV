@@ -154,7 +154,7 @@ describe('WeddingService', () => {
         eventName: 'Ceremony',
         date: weddingDate,
         venue: 'Beach Resort',
-        includeTagAlongsInHeadcount: false,
+        allowTagAlongs: false,
       })
     })
 

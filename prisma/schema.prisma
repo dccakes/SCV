@@ -266,7 +266,7 @@ model Event {
   attire      String?
   description String?
   collectRsvp                Boolean      @default(false)
-  includeTagAlongsInHeadcount Boolean     @default(false)
+  allowTagAlongs             Boolean      @default(false)
 
   // Relations
   invitations Invitation[] @relation(name: "Event_Invitations")

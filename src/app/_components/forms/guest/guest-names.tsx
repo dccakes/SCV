@@ -257,7 +257,7 @@ export const GuestNameForm = ({
               Tag-Along
             </Label>
             <p className='text-muted-foreground text-sm'>
-              This person travels with the household but is not invited to events
+              This person travels with the household but is not formally invited
             </p>
           </div>
           <Controller
@@ -280,36 +280,50 @@ export const GuestNameForm = ({
         </div>
 
         {!isTagAlong && (
-          <>
-            <div className='flex items-center justify-between rounded-lg border bg-muted/50 p-4'>
-              <div className='space-y-0.5'>
-                <Label htmlFor={`guest${guestIndex}-isPrimaryContact`} className='text-base'>
-                  Primary Contact
-                </Label>
-                <p className='text-muted-foreground text-sm'>
-                  This guest will receive correspondence
-                </p>
-              </div>
-              <Controller
-                name={`guestParty.${guestIndex}.isPrimaryContact`}
-                control={control}
-                render={({ field }) => (
-                  <Switch
-                    id={`guest${guestIndex}-isPrimaryContact`}
-                    checked={field.value ?? false}
-                    onCheckedChange={(checked) => {
-                      field.onChange(checked)
-                      handlePrimaryContactChange(checked)
-                    }}
-                  />
-                )}
-              />
+          <div className='flex items-center justify-between rounded-lg border bg-muted/50 p-4'>
+            <div className='space-y-0.5'>
+              <Label htmlFor={`guest${guestIndex}-isPrimaryContact`} className='text-base'>
+                Primary Contact
+              </Label>
+              <p className='text-muted-foreground text-sm'>
+                This guest will receive correspondence
+              </p>
             </div>
+            <Controller
+              name={`guestParty.${guestIndex}.isPrimaryContact`}
+              control={control}
+              render={({ field }) => (
+                <Switch
+                  id={`guest${guestIndex}-isPrimaryContact`}
+                  checked={field.value ?? false}
+                  onCheckedChange={(checked) => {
+                    field.onChange(checked)
+                    handlePrimaryContactChange(checked)
+                  }}
+                />
+              )}
+            />
+          </div>
+        )}
 
+        {(() => {
+          // Tag-alongs only see events that allow them; regular guests see all events
+          const visibleEvents = isTagAlong
+            ? events?.filter((event) => event.allowTagAlongs)
+            : events
+
+          if (!visibleEvents || visibleEvents.length === 0) return null
+
+          return (
             <div className='space-y-4'>
-              <h4 className='font-medium text-muted-foreground text-sm'>Event Invitations</h4>
+              <h4 className='font-medium text-muted-foreground text-sm'>
+                Event Invitations
+                {isTagAlong && (
+                  <span className='ml-1 font-normal text-xs'>(tag-along eligible events)</span>
+                )}
+              </h4>
               <div className='space-y-2'>
-                {events?.map((event: Event) => (
+                {visibleEvents.map((event: Event) => (
                   <Controller
                     key={event.id}
                     name={`guestParty.${guestIndex}.invites.${event.id}`}
@@ -342,8 +356,8 @@ export const GuestNameForm = ({
                 ))}
               </div>
             </div>
-          </>
-        )}
+          )
+        })()}
       </div>
     </div>
   )

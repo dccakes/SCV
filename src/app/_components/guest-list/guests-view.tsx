@@ -513,7 +513,6 @@ const SelectedEventTableHeader = ({
 
     households.forEach((household) => {
       household.guests.forEach((guest) => {
-        if (guest.isTagAlong) return
         if (!guest.invitations) return
         const matchingInvitation = guest.invitations.find(
           (inv) => inv.eventId === selectedEvent?.id
@@ -550,7 +549,7 @@ const SelectedEventTableHeader = ({
       attire: event.attire ?? undefined,
       description: event.description ?? undefined,
       eventId: event.id,
-      includeTagAlongsInHeadcount: event.includeTagAlongsInHeadcount ?? false,
+      allowTagAlongs: event.allowTagAlongs ?? false,
     })
     toggleEventForm()
   }

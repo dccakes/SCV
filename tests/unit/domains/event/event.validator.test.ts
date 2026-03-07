@@ -25,7 +25,7 @@ describe('createEventSchema', () => {
     expect(result.success).toBe(true)
     expect(result.data).toEqual({
       ...validInput,
-      includeTagAlongsInHeadcount: false,
+      allowTagAlongs: false,
     })
   })
 
@@ -85,7 +85,7 @@ describe('updateEventSchema', () => {
     expect(result.success).toBe(true)
     expect(result.data).toEqual({
       ...validInput,
-      includeTagAlongsInHeadcount: false,
+      allowTagAlongs: false,
     })
   })
 
