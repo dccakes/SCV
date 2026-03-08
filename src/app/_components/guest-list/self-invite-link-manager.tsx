@@ -45,24 +45,21 @@ export function SelfInviteLinkManager() {
   }
 
   if (isLoading) {
-    return <div className='h-9 w-full animate-pulse rounded-md bg-muted' />
+    return null
   }
 
   if (!tokenData?.token) {
     return (
-      <div className='flex flex-wrap items-center gap-3'>
-        <p className='text-muted-foreground text-sm'>No invite link active.</p>
-        <Button
-          type='button'
-          variant='outline'
-          size='sm'
-          onClick={() => generateToken.mutate({})}
-          disabled={generateToken.isPending}
-        >
-          <Link2 className='mr-2 h-3.5 w-3.5' aria-hidden='true' />
-          Generate Link
-        </Button>
-      </div>
+      <Button
+        type='button'
+        variant='outline'
+        size='sm'
+        onClick={() => generateToken.mutate({})}
+        disabled={generateToken.isPending}
+      >
+        <Link2 className='mr-2 h-3.5 w-3.5' aria-hidden='true' />
+        Generate Invite Link
+      </Button>
     )
   }
 
