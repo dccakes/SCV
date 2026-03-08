@@ -17,7 +17,6 @@ import {
   type RsvpSummary,
 } from '~/app/_components/guest-list/guest-detail-panel-content'
 import GuestSearchFilter from '~/app/_components/guest-list/guest-search-filter'
-import { SelfInviteLinkManager } from '~/app/_components/guest-list/self-invite-link-manager'
 import { GuestDetailDrawer } from '~/app/_components/guest-list/v2/drawer/guest-detail-drawer'
 import { GuestCardsList } from '~/app/_components/guest-list/v2/list/guest-cards-list'
 import { ListToolbar } from '~/app/_components/guest-list/v2/list/list-toolbar'
@@ -49,7 +48,6 @@ export default function GuestsView({
   const [selectedHousehold, setSelectedHousehold] = useState<HouseholdWithGuests | undefined>()
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [isDrawerEditMode, setIsDrawerEditMode] = useState(false)
-  const [showInviteLink, setShowInviteLink] = useState(false)
   const [drawerDraft, setDrawerDraft] = useState<DrawerDraft>({
     email: '',
     phone: '',
@@ -333,13 +331,6 @@ export default function GuestsView({
         <div className='flex gap-3'>
           <Button variant='outline'>Download List</Button>
           <Button
-            variant='outline'
-            onClick={() => setShowInviteLink((v) => !v)}
-            aria-expanded={showInviteLink}
-          >
-            Invite Link
-          </Button>
-          <Button
             onClick={() => {
               setPrefillHousehold(undefined)
               toggleGuestForm()
@@ -349,17 +340,6 @@ export default function GuestsView({
           </Button>
         </div>
       </div>
-      {showInviteLink && (
-        <div className='mb-6 rounded-lg border border-border bg-muted/20 p-4'>
-          <p className='mb-3 font-mono text-[0.58rem] text-foreground/60 uppercase tracking-widest'>
-            Guest Self-Invite Link
-          </p>
-          <p className='mb-3 text-muted-foreground text-sm'>
-            Share this link so guests can add their own contact details to your list.
-          </p>
-          <SelfInviteLinkManager />
-        </div>
-      )}
       <div className='space-y-4'>
         <ListToolbar
           totalHouseholds={sortedHouseholds.length}

@@ -52,18 +52,23 @@ const JOIN_URL = `http://localhost/join/${TOKEN}`
 function setupMocks({
   token,
   expiresAt,
+  earliestEventDate,
   isLoading = false,
   generateIsPending = false,
   revokeIsPending = false,
 }: {
   token?: string | null
   expiresAt?: string | null
+  earliestEventDate?: string | null
   isLoading?: boolean
   generateIsPending?: boolean
   revokeIsPending?: boolean
 } = {}) {
   mockGetTokenQuery.mockReturnValue({
-    data: token !== undefined ? { token, expiresAt: expiresAt ?? null } : undefined,
+    data:
+      token !== undefined
+        ? { token, expiresAt: expiresAt ?? null, earliestEventDate: earliestEventDate ?? null }
+        : undefined,
     isLoading,
     refetch: mockRefetch,
   })
@@ -187,7 +192,7 @@ describe('copy', () => {
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Copy invite link' }))
     })
-    const btn = screen.getByRole('button', { name: 'Copy invite link' })
+    const btn = screen.getByRole('button', { name: 'Copied!' })
     expect(btn.querySelector('.text-green-600')).toBeInTheDocument()
   })
 
@@ -200,7 +205,7 @@ describe('copy', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Copy invite link' }))
     })
     expect(
-      screen.getByRole('button', { name: 'Copy invite link' }).querySelector('.text-green-600')
+      screen.getByRole('button', { name: 'Copied!' }).querySelector('.text-green-600')
     ).toBeInTheDocument()
 
     act(() => {
@@ -313,5 +318,84 @@ describe('revokeToken mutation', () => {
       capturedRevokeOnError?.()
     })
     expect(mockToastError).toHaveBeenCalledWith('Failed to revoke invite link')
+  })
+})
+
+// ── Copy aria-label updates ─────────────────────────────────────────────────
+describe('copy aria-label', () => {
+  it('aria-label updates to "Copied!" after successful copy', async () => {
+    setupMocks({ token: TOKEN })
+    render(<SelfInviteLinkManager />)
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Copy invite link' }))
+    })
+    expect(screen.getByRole('button', { name: 'Copied!' })).toBeInTheDocument()
+  })
+
+  it('aria-label reverts to "Copy invite link" after 2 seconds', async () => {
+    jest.useFakeTimers()
+    setupMocks({ token: TOKEN })
+    render(<SelfInviteLinkManager />)
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Copy invite link' }))
+    })
+    expect(screen.getByRole('button', { name: 'Copied!' })).toBeInTheDocument()
+
+    act(() => {
+      jest.advanceTimersByTime(2000)
+    })
+    expect(screen.getByRole('button', { name: 'Copy invite link' })).toBeInTheDocument()
+
+    jest.useRealTimers()
+  })
+})
+
+// ── Expiry warning ──────────────────────────────────────────────────────────
+describe('expiry warning', () => {
+  it('shows warning when expiresAt is before earliestEventDate', () => {
+    setupMocks({
+      token: TOKEN,
+      expiresAt: '2026-05-01T00:00:00.000Z',
+      earliestEventDate: '2026-06-01T00:00:00.000Z',
+    })
+    render(<SelfInviteLinkManager />)
+    expect(screen.getByText('This link expires before your earliest event')).toBeInTheDocument()
+  })
+
+  it('does not show warning when expiresAt is after earliestEventDate', () => {
+    setupMocks({
+      token: TOKEN,
+      expiresAt: '2026-07-01T00:00:00.000Z',
+      earliestEventDate: '2026-06-01T00:00:00.000Z',
+    })
+    render(<SelfInviteLinkManager />)
+    expect(
+      screen.queryByText('This link expires before your earliest event')
+    ).not.toBeInTheDocument()
+  })
+
+  it('does not show warning when earliestEventDate is null', () => {
+    setupMocks({
+      token: TOKEN,
+      expiresAt: '2026-05-01T00:00:00.000Z',
+      earliestEventDate: null,
+    })
+    render(<SelfInviteLinkManager />)
+    expect(
+      screen.queryByText('This link expires before your earliest event')
+    ).not.toBeInTheDocument()
+  })
+
+  it('does not show warning when expiresAt is null', () => {
+    setupMocks({
+      token: TOKEN,
+      expiresAt: null,
+      earliestEventDate: '2026-06-01T00:00:00.000Z',
+    })
+    render(<SelfInviteLinkManager />)
+    expect(
+      screen.queryByText('This link expires before your earliest event')
+    ).not.toBeInTheDocument()
   })
 })

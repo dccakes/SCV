@@ -78,7 +78,7 @@ export function SelfInviteLinkManager() {
           variant='outline'
           size='sm'
           onClick={handleCopy}
-          aria-label='Copy invite link'
+          aria-label={copied ? 'Copied!' : 'Copy invite link'}
         >
           {copied ? (
             <Check className='h-4 w-4 text-green-600' aria-hidden='true' />
@@ -118,6 +118,11 @@ export function SelfInviteLinkManager() {
           Link expires {new Date(tokenData.expiresAt).toLocaleDateString()}
         </p>
       )}
+      {tokenData.expiresAt &&
+        tokenData.earliestEventDate &&
+        new Date(tokenData.expiresAt) < new Date(tokenData.earliestEventDate) && (
+          <p className='text-destructive text-xs'>This link expires before your earliest event</p>
+        )}
     </div>
   )
 }

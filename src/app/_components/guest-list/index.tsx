@@ -10,7 +10,9 @@ import GuestForm from '~/app/_components/forms/guest-form'
 import type { HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
 import EventsTabs from '~/app/_components/guest-list/event-tabs'
 import GuestsView from '~/app/_components/guest-list/guests-view'
+import { InviteLinkPanel } from '~/app/_components/guest-list/invite-link-panel'
 import NoGuestsView from '~/app/_components/guest-list/no-guests-view'
+import { sharedStyles } from '~/app/utils/shared-styles'
 import type { DashboardData, EventFormData } from '~/app/utils/shared-types'
 
 export default function GuestList({ dashboardData }: { dashboardData: DashboardData }) {
@@ -67,6 +69,9 @@ export default function GuestList({ dashboardData }: { dashboardData: DashboardD
       )}
       {isEventFormOpen && <EventForm prefillFormData={prefillEvent} />}
       <EventsTabs events={dashboardData?.events} selectedEventId={selectedEventId} />
+      <div className={sharedStyles.desktopPaddingSidesGuestList}>
+        <InviteLinkPanel />
+      </div>
       {totalGuests > 0 ? (
         <GuestsView
           events={dashboardData.events}
