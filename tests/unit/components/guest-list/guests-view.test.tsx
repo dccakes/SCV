@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import GuestsView from '~/app/_components/guest-list/guests-view'
+import GuestsView from '~/components/guest-list/guests-view'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 
 const mockToggleGuestForm = jest.fn()

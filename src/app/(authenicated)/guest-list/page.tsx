@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
-
-import GuestList from '~/app/_components/guest-list'
 import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
+import GuestList from '~/components/guest-list'
 import { getRequiredDashboardOverview } from '~/server/application/authenticated-route/authenticated-route-data'
 
 export const metadata: Metadata = {

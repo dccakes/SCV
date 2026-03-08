@@ -16,7 +16,7 @@ jest.mock('~/server/application/authenticated-route/authenticated-route-data', (
   getRequiredDashboardOverview: () => mockGetRequiredDashboardOverview(),
 }))
 
-jest.mock('~/app/_components/guest-list', () => ({
+jest.mock('~/components/guest-list', () => ({
   __esModule: true,
   default: ({ dashboardData }: { dashboardData: unknown }) => mockGuestList({ dashboardData }),
 }))
