@@ -284,7 +284,7 @@ describe('EventService', () => {
       expect(result.name).toBe('Updated Event')
     })
 
-    it('should create tag-along invitations when allowTagAlongs toggled from false to true', async () => {
+    it('should create invitations only for tag-alongs without existing ones when toggled on', async () => {
       const tagAlongGuests = [
         { id: 10, firstName: 'Baby', lastName: 'Doe', weddingId: 'wedding-123', isTagAlong: true },
         { id: 11, firstName: 'Child', lastName: 'Doe', weddingId: 'wedding-123', isTagAlong: true },
@@ -301,11 +301,15 @@ describe('EventService', () => {
         allowTagAlongs: true,
       })
 
-      // Should fetch tag-along guests
+      // Should fetch only tag-along guests WITHOUT existing invitations for this event
       expect(mockGuestFindManyFn).toHaveBeenCalledWith({
-        where: { weddingId: 'wedding-123', isTagAlong: true },
+        where: {
+          weddingId: 'wedding-123',
+          isTagAlong: true,
+          invitations: { none: { eventId: 'event-123' } },
+        },
       })
-      // Should create invitations for each tag-along
+      // Should create invitations for each tag-along that doesn't have one
       expect(mockInvitationCreateFn).toHaveBeenCalledTimes(2)
       expect(mockInvitationCreateFn).toHaveBeenCalledWith({
         data: expect.objectContaining({
@@ -316,13 +320,10 @@ describe('EventService', () => {
       })
     })
 
-    it('should delete tag-along invitations when allowTagAlongs toggled from true to false', async () => {
-      const tagAlongGuests = [{ id: 10 }, { id: 11 }]
+    it('should NOT delete tag-along invitations when toggled off (preserve RSVP data)', async () => {
       // Current event has allowTagAlongs: true
       mockBelongsToWeddingFn.mockResolvedValue(true)
       mockFindByIdFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: true })
-      mockGuestFindManyFn.mockResolvedValue(tagAlongGuests)
-      mockInvitationDeleteManyFn.mockResolvedValue({ count: 2 })
       mockUpdateFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: false })
 
       await eventService.updateEvent('wedding-123', {
@@ -331,18 +332,37 @@ describe('EventService', () => {
         allowTagAlongs: false,
       })
 
-      // Should fetch tag-along guest IDs
-      expect(mockGuestFindManyFn).toHaveBeenCalledWith({
-        where: { weddingId: 'wedding-123', isTagAlong: true },
-        select: { id: true },
+      // Should NOT query for guests or delete invitations — data is preserved
+      expect(mockGuestFindManyFn).not.toHaveBeenCalled()
+      expect(mockInvitationDeleteManyFn).not.toHaveBeenCalled()
+      // The flag update itself controls visibility in counts/display
+    })
+
+    it('should not create duplicate invitations when re-toggling on after off', async () => {
+      // Scenario: event was toggled on (invitations created), toggled off (preserved),
+      // now toggled on again — should not create duplicates
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockFindByIdFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: false })
+      // Query returns empty — all tag-alongs already have invitations from before
+      mockGuestFindManyFn.mockResolvedValue([])
+      mockUpdateFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: true })
+
+      await eventService.updateEvent('wedding-123', {
+        eventId: 'event-123',
+        eventName: 'Wedding Day',
+        allowTagAlongs: true,
       })
-      // Should delete invitations for tag-alongs
-      expect(mockInvitationDeleteManyFn).toHaveBeenCalledWith({
+
+      // Should query with invitations: { none: { eventId } } filter
+      expect(mockGuestFindManyFn).toHaveBeenCalledWith({
         where: {
-          eventId: 'event-123',
-          guestId: { in: [10, 11] },
+          weddingId: 'wedding-123',
+          isTagAlong: true,
+          invitations: { none: { eventId: 'event-123' } },
         },
       })
+      // No guests returned = no invitations created (idempotent)
+      expect(mockInvitationCreateFn).not.toHaveBeenCalled()
     })
 
     it('should not modify invitations when allowTagAlongs stays the same', async () => {

@@ -37,6 +37,7 @@ const mockEvent: Event = {
   attire: 'Black Tie',
   description: 'Join us for our wedding ceremony',
   collectRsvp: true,
+  allowTagAlongs: false,
   weddingId: 'wedding-123',
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -302,6 +303,82 @@ describe('EventForm - Edit Event', () => {
     expect(data.venue).toBe('')
     expect(data.attire).toBe('')
     expect(data.description).toBe('')
+  })
+})
+
+describe('EventForm - allowTagAlongs Toggle', () => {
+  it('should default allowTagAlongs to false in create mode', () => {
+    const { result } = renderHook(() =>
+      useForm<EventFormData>({
+        defaultValues: getEventFormDefaults(),
+      })
+    )
+
+    expect(result.current.getValues().allowTagAlongs).toBe(false)
+  })
+
+  it('should pre-populate allowTagAlongs from event data in edit mode', () => {
+    const { result } = renderHook(() =>
+      useForm<EventFormData>({
+        defaultValues: {
+          eventName: 'Welcome Party',
+          allowTagAlongs: true,
+        },
+      })
+    )
+
+    expect(result.current.getValues().allowTagAlongs).toBe(true)
+  })
+
+  it('should toggle allowTagAlongs and mark form as dirty', () => {
+    const { result } = renderHook(() => {
+      const form = useForm<EventFormData>({
+        mode: 'onChange',
+        defaultValues: getEventFormDefaults(),
+      })
+      void form.formState.isDirty
+      return form
+    })
+
+    expect(result.current.getValues().allowTagAlongs).toBe(false)
+
+    act(() => {
+      result.current.setValue('allowTagAlongs', true, { shouldDirty: true })
+    })
+
+    expect(result.current.getValues().allowTagAlongs).toBe(true)
+    expect(result.current.formState.isDirty).toBe(true)
+  })
+
+  it('should include allowTagAlongs in transformed server input', () => {
+    const formData: EventFormData = {
+      eventName: 'Welcome Party',
+      date: '',
+      startTime: '',
+      endTime: '',
+      venue: '',
+      attire: '',
+      description: '',
+      allowTagAlongs: true,
+    }
+
+    const serverInput = transformToServerInput(formData)
+    expect(serverInput.allowTagAlongs).toBe(true)
+  })
+
+  it('should default allowTagAlongs to false in server input when not set', () => {
+    const formData: EventFormData = {
+      eventName: 'Ceremony',
+      date: '',
+      startTime: '',
+      endTime: '',
+      venue: '',
+      attire: '',
+      description: '',
+    }
+
+    const serverInput = transformToServerInput(formData)
+    expect(serverInput.allowTagAlongs).toBe(false)
   })
 })
 

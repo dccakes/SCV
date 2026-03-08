@@ -131,8 +131,8 @@ export class EventService {
    * Update an existing event
    *
    * When allowTagAlongs changes:
-   * - false → true: Create invitations for all tag-along guests
-   * - true → false: Delete invitations for all tag-along guests
+   * - false → true: Create invitations for tag-alongs that don't already have one (idempotent)
+   * - true → false: Preserve existing invitations (flag controls visibility in counts/display)
    */
   async updateEvent(weddingId: string, data: UpdateEventInput): Promise<Event> {
     // Verify event belongs to wedding
@@ -144,15 +144,19 @@ export class EventService {
       })
     }
 
-    // Check if allowTagAlongs is changing
+    // Check if allowTagAlongs is being toggled on
     const currentEvent = await this.eventRepository.findById(data.eventId)
     const wasAllowed = currentEvent?.allowTagAlongs ?? false
     const nowAllowed = data.allowTagAlongs ?? false
 
     if (!wasAllowed && nowAllowed) {
-      // Create invitations for all tag-along guests
+      // Create invitations only for tag-alongs that don't already have one for this event
       const tagAlongGuests = await this.db.guest.findMany({
-        where: { weddingId, isTagAlong: true },
+        where: {
+          weddingId,
+          isTagAlong: true,
+          invitations: { none: { eventId: data.eventId } },
+        },
       })
       await Promise.all(
         tagAlongGuests.map(async (guest: PrismaGuest) => {
@@ -166,22 +170,10 @@ export class EventService {
           })
         })
       )
-    } else if (wasAllowed && !nowAllowed) {
-      // Delete invitations for all tag-along guests
-      const tagAlongGuests = await this.db.guest.findMany({
-        where: { weddingId, isTagAlong: true },
-        select: { id: true },
-      })
-      const tagAlongIds = tagAlongGuests.map((g) => g.id)
-      if (tagAlongIds.length > 0) {
-        await this.db.invitation.deleteMany({
-          where: {
-            eventId: data.eventId,
-            guestId: { in: tagAlongIds },
-          },
-        })
-      }
     }
+    // When toggling off (wasAllowed && !nowAllowed): do nothing.
+    // Invitations are preserved — the allowTagAlongs flag controls
+    // whether they appear in counts and display.
 
     return this.eventRepository.update(data.eventId, {
       name: data.eventName,
