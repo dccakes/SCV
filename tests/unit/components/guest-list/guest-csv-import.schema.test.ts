@@ -5,10 +5,7 @@
  * ageGroup coercion, and parseCsvFile() row mapping.
  */
 
-import {
-  guestCsvRowSchema,
-  parseCsvFile,
-} from '~/components/guest-list/guest-csv-import.schema'
+import { guestCsvRowSchema, parseCsvFile } from '~/components/guest-list/guest-csv-import.schema'
 
 // ---------------------------------------------------------------------------
 // guestCsvRowSchema
