@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
-import { GuestCardsList } from '~/app/_components/guest-list/v2/list/guest-cards-list'
+import { GuestCardsList } from '~/components/guest-list/v2/list/guest-cards-list'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 
 const buildHousehold = (

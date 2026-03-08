@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
-import { ListToolbar } from '~/app/_components/guest-list/v2/list/list-toolbar'
+import { ListToolbar } from '~/components/guest-list/v2/list/list-toolbar'
 
 describe('ListToolbar', () => {
   it('shows household count and sort actions', () => {
