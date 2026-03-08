@@ -1,9 +1,15 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
-
+import type { Event } from '~/app/utils/shared-types'
+import {
+  downloadGuestCsvTemplate,
+  type GuestCsvRowOutput,
+  type ParsedCsvRow,
+  parseCsvFile,
+} from '~/components/guest-list/guest-csv-import.schema'
 import { Button } from '~/components/ui/button'
 import {
   Dialog,
@@ -14,13 +20,6 @@ import {
   DialogTitle,
 } from '~/components/ui/dialog'
 import { FileDropzone } from '~/components/ui/file-dropzone'
-import {
-  type GuestCsvRowOutput,
-  type ParsedCsvRow,
-  downloadGuestCsvTemplate,
-  parseCsvFile,
-} from '~/components/guest-list/guest-csv-import.schema'
-import type { Event } from '~/app/utils/shared-types'
 import { api } from '~/trpc/react'
 
 // ---------------------------------------------------------------------------

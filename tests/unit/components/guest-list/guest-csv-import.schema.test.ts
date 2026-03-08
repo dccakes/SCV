@@ -5,7 +5,10 @@
  * ageGroup coercion, and parseCsvFile() row mapping.
  */
 
-import { guestCsvRowSchema, parseCsvFile } from '~/app/_components/guest-list/guest-csv-import.schema'
+import {
+  guestCsvRowSchema,
+  parseCsvFile,
+} from '~/components/guest-list/guest-csv-import.schema'
 
 // ---------------------------------------------------------------------------
 // guestCsvRowSchema
@@ -141,7 +144,7 @@ describe('guestCsvRowSchema', () => {
       })
 
       expect(result.success).toBe(false)
-      const paths = result.error?.issues.map((i) => i.path).flat()
+      const paths = result.error?.issues.flatMap((i) => i.path)
       expect(paths).toContain('firstName')
     })
 
@@ -152,7 +155,7 @@ describe('guestCsvRowSchema', () => {
       })
 
       expect(result.success).toBe(false)
-      const paths = result.error?.issues.map((i) => i.path).flat()
+      const paths = result.error?.issues.flatMap((i) => i.path)
       expect(paths).toContain('firstName')
     })
 
@@ -162,7 +165,7 @@ describe('guestCsvRowSchema', () => {
       })
 
       expect(result.success).toBe(false)
-      const paths = result.error?.issues.map((i) => i.path).flat()
+      const paths = result.error?.issues.flatMap((i) => i.path)
       expect(paths).toContain('lastName')
     })
 
@@ -173,7 +176,7 @@ describe('guestCsvRowSchema', () => {
       })
 
       expect(result.success).toBe(false)
-      const paths = result.error?.issues.map((i) => i.path).flat()
+      const paths = result.error?.issues.flatMap((i) => i.path)
       expect(paths).toContain('lastName')
     })
   })
@@ -187,7 +190,7 @@ describe('guestCsvRowSchema', () => {
       })
 
       expect(result.success).toBe(false)
-      const paths = result.error?.issues.map((i) => i.path).flat()
+      const paths = result.error?.issues.flatMap((i) => i.path)
       expect(paths).toContain('email')
     })
 
@@ -301,7 +304,8 @@ describe('parseCsvFile', () => {
     return new File([blob], 'test.csv', { type: 'text/csv' })
   }
 
-  const HEADERS = 'firstName,lastName,email,phone,ageGroup,address1,address2,city,state,zipCode,country,notes'
+  const HEADERS =
+    'firstName,lastName,email,phone,ageGroup,address1,address2,city,state,zipCode,country,notes'
 
   it('should return a valid ParsedCsvRow for a well-formed row', async () => {
     const csv = [
@@ -367,7 +371,7 @@ describe('parseCsvFile', () => {
     const csv = [
       HEADERS,
       'Alice,Jones,alice@example.com,,,,,,,,,', // valid
-      ',Brown,bad-email,,,,,,,,,',               // invalid: missing firstName, bad email
+      ',Brown,bad-email,,,,,,,,,', // invalid: missing firstName, bad email
     ].join('\n')
 
     const rows = await parseCsvFile(makeCsvFile(csv))

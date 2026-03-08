@@ -191,9 +191,7 @@ describe('bulkCreateHouseholdsSchema', () => {
       const result = bulkCreateHouseholdsSchema.safeParse({
         households: [
           {
-            guestParty: [
-              { firstName: '', lastName: 'Doe', isPrimaryContact: true, invites: {} },
-            ],
+            guestParty: [{ firstName: '', lastName: 'Doe', isPrimaryContact: true, invites: {} }],
           },
         ],
       })
@@ -205,9 +203,7 @@ describe('bulkCreateHouseholdsSchema', () => {
       const result = bulkCreateHouseholdsSchema.safeParse({
         households: [
           {
-            guestParty: [
-              { firstName: 'John', lastName: '', isPrimaryContact: true, invites: {} },
-            ],
+            guestParty: [{ firstName: 'John', lastName: '', isPrimaryContact: true, invites: {} }],
           },
         ],
       })

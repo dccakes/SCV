@@ -15,10 +15,7 @@ jest.mock('~/server/domains/gift/gift.repository')
 
 // @ts-expect-error - Importing mock functions from mocked module
 import { HouseholdManagementService } from '~/server/application/household-management/household-management.service'
-import {
-  GiftRepository,
-  resetMocks as resetGiftMocks,
-} from '~/server/domains/gift/gift.repository'
+import { GiftRepository, resetMocks as resetGiftMocks } from '~/server/domains/gift/gift.repository'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   GuestRepository,
@@ -118,7 +115,7 @@ describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
 
       const result = await service.bulkCreateHouseholds('wedding-123', [SINGLE_GUEST_HOUSEHOLD])
 
-      expect(result).toEqual({ created: 1 })
+      expect(result).toEqual({ created: 1, failed: 0 })
     })
 
     it('should return { created: 2 } when two households succeed', async () => {
@@ -131,7 +128,7 @@ describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
         SECOND_HOUSEHOLD,
       ])
 
-      expect(result).toEqual({ created: 2 })
+      expect(result).toEqual({ created: 2, failed: 0 })
     })
 
     it('should call createHouseholdWithGuests once per household', async () => {
@@ -181,7 +178,7 @@ describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
 
       const result = await service.bulkCreateHouseholds('wedding-123', [householdWithAddress])
 
-      expect(result).toEqual({ created: 1 })
+      expect(result).toEqual({ created: 1, failed: 0 })
       expect(mockCreateWithGiftsFn).toHaveBeenCalledWith(
         expect.objectContaining({
           address1: '123 Main St',
@@ -197,7 +194,7 @@ describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
     it('should return { created: 0 } for an empty households array', async () => {
       const result = await service.bulkCreateHouseholds('wedding-123', [])
 
-      expect(result).toEqual({ created: 0 })
+      expect(result).toEqual({ created: 0, failed: 0 })
     })
 
     it('should not call the household repository when given an empty array', async () => {
@@ -209,54 +206,54 @@ describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
   })
 
   describe('partial failure', () => {
-    it('should propagate a TRPCError thrown by the second household and stop processing', async () => {
-      // First household succeeds
+    it('should count the second household as failed when it throws', async () => {
+      // First household succeeds, second returns null → internal TRPCError
       mockCreateWithGiftsFn
         .mockResolvedValueOnce(mockHousehold) // household #1 creation succeeds
-        .mockResolvedValueOnce(null)           // household #2 creation returns null → TRPCError
+        .mockResolvedValueOnce(null) // household #2 creation returns null → TRPCError
 
       mockCreateFn.mockResolvedValue(mockGuestWithInvitations)
       mockFindByIdWithInvitationsFn.mockResolvedValue(mockGuestWithInvitations)
 
-      await expect(
-        service.bulkCreateHouseholds('wedding-123', [SINGLE_GUEST_HOUSEHOLD, SECOND_HOUSEHOLD])
-      ).rejects.toThrow(TRPCError)
+      const result = await service.bulkCreateHouseholds('wedding-123', [
+        SINGLE_GUEST_HOUSEHOLD,
+        SECOND_HOUSEHOLD,
+      ])
+
+      expect(result).toEqual({ created: 1, failed: 1 })
     })
 
-    it('should only have created 1 household when the second fails', async () => {
-      // Track calls before the rejection
+    it('should continue processing after a failure and report all results', async () => {
       let createCallCount = 0
       mockCreateWithGiftsFn.mockImplementation(() => {
         createCallCount++
-        if (createCallCount === 1) return Promise.resolve(mockHousehold)
-        return Promise.resolve(null) // triggers TRPCError on second call
+        if (createCallCount === 2) return Promise.resolve(null) // household #2 fails
+        return Promise.resolve(mockHousehold)
       })
 
       mockCreateFn.mockResolvedValue(mockGuestWithInvitations)
       mockFindByIdWithInvitationsFn.mockResolvedValue(mockGuestWithInvitations)
 
-      await expect(
-        service.bulkCreateHouseholds('wedding-123', [
-          SINGLE_GUEST_HOUSEHOLD,
-          SECOND_HOUSEHOLD,
-          // A third household that should never be reached
-          { guestParty: [{ firstName: 'Never', lastName: 'Reached', invites: {} }] },
-        ])
-      ).rejects.toThrow(TRPCError)
+      const result = await service.bulkCreateHouseholds('wedding-123', [
+        SINGLE_GUEST_HOUSEHOLD,
+        SECOND_HOUSEHOLD,
+        { guestParty: [{ firstName: 'Third', lastName: 'Guest', invites: {} }] },
+      ])
 
-      // createWithGifts called for #1 (succeeds) and #2 (fails); #3 never reached
-      expect(mockCreateWithGiftsFn).toHaveBeenCalledTimes(2)
+      // All three are attempted; #1 and #3 succeed, #2 fails
+      expect(mockCreateWithGiftsFn).toHaveBeenCalledTimes(3)
+      expect(result).toEqual({ created: 2, failed: 1 })
     })
 
-    it('should propagate a TRPCError when the guest creation fails', async () => {
+    it('should count guest creation failure in failed tally', async () => {
       mockCreateWithGiftsFn.mockResolvedValue(mockHousehold)
-      // Simulate guest refetch returning null → TRPCError
+      // Simulate guest refetch returning null → TRPCError inside createHouseholdWithGuests
       mockCreateFn.mockResolvedValue(mockGuestWithInvitations)
       mockFindByIdWithInvitationsFn.mockResolvedValue(null)
 
-      await expect(
-        service.bulkCreateHouseholds('wedding-123', [SINGLE_GUEST_HOUSEHOLD])
-      ).rejects.toThrow(TRPCError)
+      const result = await service.bulkCreateHouseholds('wedding-123', [SINGLE_GUEST_HOUSEHOLD])
+
+      expect(result).toEqual({ created: 0, failed: 1 })
     })
   })
 })
