@@ -10,6 +10,7 @@ import GuestForm from '~/app/_components/forms/guest-form'
 import type { HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
 import { sharedStyles } from '~/app/utils/shared-styles'
 import type { DashboardData, EventFormData } from '~/app/utils/shared-types'
+import { CsvUploadDialog } from '~/components/guest-list/csv-upload-dialog'
 import EventsTabs from '~/components/guest-list/event-tabs'
 import GuestsView from '~/components/guest-list/guests-view'
 import { InviteLinkPanel } from '~/components/guest-list/invite-link-panel'
@@ -23,6 +24,7 @@ export default function GuestList({ dashboardData }: { dashboardData: DashboardD
 
   const [prefillEvent, setPrefillEvent] = useState<EventFormData | undefined>()
   const [prefillHousehold, setPrefillHousehold] = useState<HouseholdFormData | undefined>()
+  const [csvDialogOpen, setCsvDialogOpen] = useState(false)
 
   const filteredHouseholdsByEvent = useMemo(
     () =>
@@ -68,6 +70,11 @@ export default function GuestList({ dashboardData }: { dashboardData: DashboardD
         <GuestForm events={dashboardData?.events} prefillFormData={prefillHousehold} />
       )}
       {isEventFormOpen && <EventForm prefillFormData={prefillEvent} />}
+      <CsvUploadDialog
+        open={csvDialogOpen}
+        onOpenChange={setCsvDialogOpen}
+        events={dashboardData.events}
+      />
       <EventsTabs events={dashboardData?.events} selectedEventId={selectedEventId} />
       <div className={sharedStyles.desktopPaddingSidesGuestList}>
         <InviteLinkPanel />
@@ -79,9 +86,13 @@ export default function GuestList({ dashboardData }: { dashboardData: DashboardD
           selectedEventId={selectedEventId}
           setPrefillHousehold={setPrefillHousehold}
           setPrefillEvent={setPrefillEvent}
+          onImportClick={() => setCsvDialogOpen(true)}
         />
       ) : (
-        <NoGuestsView setPrefillHousehold={setPrefillHousehold} />
+        <NoGuestsView
+          setPrefillHousehold={setPrefillHousehold}
+          onImportClick={() => setCsvDialogOpen(true)}
+        />
       )}
     </>
   )
