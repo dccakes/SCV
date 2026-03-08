@@ -897,7 +897,7 @@ export type UpdateEventInput = z.infer<typeof updateEventSchema>
 ### Form Schemas with Defaults
 
 ```typescript
-// app/_components/event/event-form.schema.ts
+// components/event/event-form.schema.ts
 import { z } from 'zod'
 
 export const EventFormSchema = z.object({
@@ -927,7 +927,7 @@ export const getSchemaDefaults = <T extends z.ZodTypeAny>(schema: T): z.infer<T>
 ### Standard Form Pattern
 
 ```typescript
-// app/_components/event/event-form.tsx
+// components/event/event-form.tsx
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'

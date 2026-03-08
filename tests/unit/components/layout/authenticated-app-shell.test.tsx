@@ -9,7 +9,7 @@ jest.mock('~/components/nav/sidebar-nav', () => ({
   ),
 }))
 
-jest.mock('@/app/_components/old_dashboard/etta-panel', () => ({
+jest.mock('@/components/old_dashboard/etta-panel', () => ({
   __esModule: true,
   default: () => <div data-testid='etta-panel' />,
 }))

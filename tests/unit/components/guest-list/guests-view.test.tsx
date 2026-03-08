@@ -4,11 +4,11 @@ import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboa
 
 const mockToggleGuestForm = jest.fn()
 
-jest.mock('~/app/_components/contexts/guest-form-context', () => ({
+jest.mock('~/components/contexts/guest-form-context', () => ({
   useToggleGuestForm: () => mockToggleGuestForm,
 }))
 
-jest.mock('~/app/_components/contexts/event-form-context', () => ({
+jest.mock('~/components/contexts/event-form-context', () => ({
   useToggleEventForm: () => jest.fn(),
 }))
 

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 
-import VendorList from '~/app/_components/vendor'
+import VendorList from '~/components/vendor'
 import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
 import { api } from '~/trpc/server'
 

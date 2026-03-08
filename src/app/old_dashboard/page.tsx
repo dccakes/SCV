@@ -1,7 +1,7 @@
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import Dashboard from '@/app/_components/old_dashboard'
+import Dashboard from '@/components/old_dashboard'
 import { env } from '~/env'
 import { api } from '~/trpc/server'
 

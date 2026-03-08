@@ -2,7 +2,7 @@ import { type Dispatch, type SetStateAction, useEffect, useState } from 'react'
 import { FaMagnifyingGlass } from 'react-icons/fa6'
 import { IoIosArrowDown, IoMdCheckmark } from 'react-icons/io'
 
-import { useOuterClick } from '~/app/_components/hooks'
+import { useOuterClick } from '~/components/hooks'
 import { sharedStyles } from '~/app/utils/shared-styles'
 import type { Event } from '~/app/utils/shared-types'
 import { Button } from '~/components/ui/button'

@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import { unstable_noStore as noStore } from 'next/cache'
 import { headers } from 'next/headers'
 
-import AuthenticatedView from '~/app/_components/home/authenticated-view'
-import NonAuthenticatedView from '~/app/_components/home/non-authenticated-view'
+import AuthenticatedView from '~/components/home/authenticated-view'
+import NonAuthenticatedView from '~/components/home/non-authenticated-view'
 import { auth } from '~/lib/auth'
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'

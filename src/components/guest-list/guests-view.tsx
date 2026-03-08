@@ -8,9 +8,9 @@ import {
 } from 'react'
 import { BiPencil } from 'react-icons/bi'
 
-import { useToggleEventForm } from '~/app/_components/contexts/event-form-context'
-import { useToggleGuestForm } from '~/app/_components/contexts/guest-form-context'
-import type { HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
+import { useToggleEventForm } from '~/components/contexts/event-form-context'
+import { useToggleGuestForm } from '~/components/contexts/guest-form-context'
+import type { HouseholdFormData } from '~/components/forms/guest-form.schema'
 import { formatDateStandard } from '~/app/utils/helpers'
 import type { Event, EventFormData, FormInvites } from '~/app/utils/shared-types'
 import {

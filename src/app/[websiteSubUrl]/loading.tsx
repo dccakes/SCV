@@ -1,4 +1,4 @@
-import { LoadingPage } from '~/app/_components/loaders'
+import { LoadingPage } from '~/components/loaders'
 
 export default function Loading() {
   return <LoadingPage />

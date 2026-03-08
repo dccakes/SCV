@@ -2,22 +2,22 @@ import { render, screen } from '@testing-library/react'
 
 import GuestList from '~/components/guest-list/index'
 
-jest.mock('~/app/_components/contexts/guest-form-context', () => ({
+jest.mock('~/components/contexts/guest-form-context', () => ({
   useGuestForm: () => false,
   useToggleGuestForm: () => jest.fn(),
 }))
 
-jest.mock('~/app/_components/contexts/event-form-context', () => ({
+jest.mock('~/components/contexts/event-form-context', () => ({
   useEventForm: () => false,
   useToggleEventForm: () => jest.fn(),
 }))
 
-jest.mock('~/app/_components/forms/guest-form', () => ({
+jest.mock('~/components/forms/guest-form', () => ({
   __esModule: true,
   default: () => <div data-testid='guest-form' />,
 }))
 
-jest.mock('~/app/_components/forms/event-form', () => ({
+jest.mock('~/components/forms/event-form', () => ({
   __esModule: true,
   default: () => <div data-testid='event-form' />,
 }))

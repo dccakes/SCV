@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-import { getSidebarWeddingInfo } from '@/app/_components/old_dashboard/sidebar-wedding-info'
+import { getSidebarWeddingInfo } from '@/components/old_dashboard/sidebar-wedding-info'
 import AuthenticatedAppShell from '@/components/layout/authenticated-app-shell'
 import { getDashboardOverview } from '~/server/application/dashboard/dashboard-request-data'
 

@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 
-import PasswordPage from '~/app/_components/website/password-page'
-import WeddingWebsite from '~/app/_components/website/wedding'
+import PasswordPage from '~/components/website/password-page'
+import WeddingWebsite from '~/components/website/wedding'
 import { api } from '~/trpc/server'
 
 export async function generateMetadata(): Promise<Metadata> {

@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react'
 
-import { useToggleGuestForm } from '~/app/_components/contexts/guest-form-context'
-import type { HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
+import { useToggleGuestForm } from '~/components/contexts/guest-form-context'
+import type { HouseholdFormData } from '~/components/forms/guest-form.schema'
 import { sharedStyles } from '~/app/utils/shared-styles'
 import ExampleTable from '~/components/guest-list/example-table'
 import { Button } from '~/components/ui/button'
