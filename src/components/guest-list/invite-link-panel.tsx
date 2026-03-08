@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-import { SelfInviteLinkManager } from '~/app/_components/guest-list/self-invite-link-manager'
+import { SelfInviteLinkManager } from '~/components/guest-list/self-invite-link-manager'
 import { Button } from '~/components/ui/button'
 
 export function InviteLinkPanel() {

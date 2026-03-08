@@ -8,12 +8,12 @@ import { useGuestForm } from '~/app/_components/contexts/guest-form-context'
 import EventForm from '~/app/_components/forms/event-form'
 import GuestForm from '~/app/_components/forms/guest-form'
 import type { HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
-import EventsTabs from '~/app/_components/guest-list/event-tabs'
-import GuestsView from '~/app/_components/guest-list/guests-view'
-import { InviteLinkPanel } from '~/app/_components/guest-list/invite-link-panel'
-import NoGuestsView from '~/app/_components/guest-list/no-guests-view'
 import { sharedStyles } from '~/app/utils/shared-styles'
 import type { DashboardData, EventFormData } from '~/app/utils/shared-types'
+import EventsTabs from '~/components/guest-list/event-tabs'
+import GuestsView from '~/components/guest-list/guests-view'
+import { InviteLinkPanel } from '~/components/guest-list/invite-link-panel'
+import NoGuestsView from '~/components/guest-list/no-guests-view'
 
 export default function GuestList({ dashboardData }: { dashboardData: DashboardData }) {
   const isEventFormOpen = useEventForm()

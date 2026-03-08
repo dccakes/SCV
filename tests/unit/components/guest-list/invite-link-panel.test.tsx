@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
-import { InviteLinkPanel } from '~/app/_components/guest-list/invite-link-panel'
+import { InviteLinkPanel } from '~/components/guest-list/invite-link-panel'
 
-jest.mock('~/app/_components/guest-list/self-invite-link-manager', () => ({
+jest.mock('~/components/guest-list/self-invite-link-manager', () => ({
   SelfInviteLinkManager: () => <div data-testid='self-invite-link-manager' />,
 }))
 

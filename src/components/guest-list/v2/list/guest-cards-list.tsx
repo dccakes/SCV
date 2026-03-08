@@ -1,6 +1,6 @@
 import { memo } from 'react'
 
-import { GuestCard } from '~/app/_components/guest-list/v2/list/guest-card'
+import { GuestCard } from '~/components/guest-list/v2/list/guest-card'
 import { Card, CardContent } from '~/components/ui/card'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 

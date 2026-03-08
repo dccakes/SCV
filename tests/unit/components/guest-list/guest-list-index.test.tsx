@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 
-import GuestList from '~/app/_components/guest-list/index'
+import GuestList from '~/components/guest-list/index'
 
 jest.mock('~/app/_components/contexts/guest-form-context', () => ({
   useGuestForm: () => false,
@@ -22,22 +22,22 @@ jest.mock('~/app/_components/forms/event-form', () => ({
   default: () => <div data-testid='event-form' />,
 }))
 
-jest.mock('~/app/_components/guest-list/event-tabs', () => ({
+jest.mock('~/components/guest-list/event-tabs', () => ({
   __esModule: true,
   default: () => <div data-testid='events-tabs' />,
 }))
 
-jest.mock('~/app/_components/guest-list/guests-view', () => ({
+jest.mock('~/components/guest-list/guests-view', () => ({
   __esModule: true,
   default: () => <div data-testid='guests-view' />,
 }))
 
-jest.mock('~/app/_components/guest-list/no-guests-view', () => ({
+jest.mock('~/components/guest-list/no-guests-view', () => ({
   __esModule: true,
   default: () => <div data-testid='no-guests-view' />,
 }))
 
-jest.mock('~/app/_components/guest-list/invite-link-panel', () => ({
+jest.mock('~/components/guest-list/invite-link-panel', () => ({
   InviteLinkPanel: () => <div data-testid='invite-link-panel' />,
 }))
 

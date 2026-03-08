@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 
-import { SelfInviteLinkManager } from '~/app/_components/guest-list/self-invite-link-manager'
+import { SelfInviteLinkManager } from '~/components/guest-list/self-invite-link-manager'
 
 // ── Captured mutation callbacks ────────────────────────────────────────────
 let capturedGenerateOnSuccess: (() => void) | undefined

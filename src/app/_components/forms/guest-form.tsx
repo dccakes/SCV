@@ -9,7 +9,6 @@ import { IoMdClose } from 'react-icons/io'
 import { toast } from 'sonner'
 
 import { useToggleGuestForm } from '~/app/_components/contexts/guest-form-context'
-import { SelfInviteLinkManager } from '~/app/_components/guest-list/self-invite-link-manager'
 import AddFormButtons from '~/app/_components/forms/guest/add-buttons'
 import ContactForm from '~/app/_components/forms/guest/contact-form'
 import EditFormButtons from '~/app/_components/forms/guest/edit-buttons'
@@ -23,6 +22,7 @@ import {
 import SidePaneWrapper from '~/app/_components/forms/wrapper'
 import { getDirtyValues } from '~/app/utils/form-helpers'
 import type { Event, FormInvites } from '~/app/utils/shared-types'
+import { SelfInviteLinkManager } from '~/components/guest-list/self-invite-link-manager'
 import {
   Accordion,
   AccordionContent,
