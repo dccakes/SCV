@@ -22,6 +22,7 @@ import {
 import SidePaneWrapper from '~/app/_components/forms/wrapper'
 import { getDirtyValues } from '~/app/utils/form-helpers'
 import type { Event, FormInvites } from '~/app/utils/shared-types'
+import { SelfInviteLinkManager } from '~/components/guest-list/self-invite-link-manager'
 import {
   Accordion,
   AccordionContent,
@@ -242,6 +243,16 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
             <IoMdClose size={24} aria-hidden='true' />
           </button>
         </div>
+
+        {/* Invite link banner — shown only when adding a new party */}
+        {!isEditMode && (
+          <div className='border-b bg-muted/20 px-6 py-3'>
+            <p className='mb-2 font-mono text-[0.58rem] text-foreground/55 uppercase tracking-widest'>
+              Or let guests add themselves
+            </p>
+            <SelfInviteLinkManager />
+          </div>
+        )}
 
         {/* Scrollable Content */}
         <div className='flex-1 overflow-y-auto pb-32'>

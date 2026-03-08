@@ -1,10 +1,9 @@
 import { type Dispatch, type SetStateAction, useMemo } from 'react'
-
+import type { Event } from '~/app/utils/shared-types'
 import {
   GuestDetailSection,
   GuestDetailSections,
-} from '~/app/_components/guest-list/v2/drawer/guest-detail-sections'
-import type { Event } from '~/app/utils/shared-types'
+} from '~/components/guest-list/v2/drawer/guest-detail-sections'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
