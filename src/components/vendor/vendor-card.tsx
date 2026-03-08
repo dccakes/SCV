@@ -8,14 +8,14 @@ import { api } from '~/trpc/react'
 
 type VendorCardProps = {
   vendor: Vendor
-  latestQuotePrice?: number | null
+  quotePrices: number[]
   onViewDetails: (vendorId: string) => void
   onDeleted: () => void
 }
 
 export function VendorCard({
   vendor,
-  latestQuotePrice,
+  quotePrices,
   onViewDetails,
   onDeleted,
 }: VendorCardProps) {
@@ -48,8 +48,19 @@ export function VendorCard({
       maximumFractionDigits: 0,
     }).format(price)
 
+  const quoteCount = quotePrices.length
+
+  const priceDisplay = () => {
+    if (quoteCount === 0) return null
+    if (quoteCount === 1) return formatPrice(quotePrices[0]!)
+    const min = Math.min(...quotePrices)
+    const max = Math.max(...quotePrices)
+    if (min === max) return formatPrice(min)
+    return `${formatPrice(min)} – ${formatPrice(max)}`
+  }
+
   return (
-    <div className='flex items-center justify-between rounded-lg border border-border/90 bg-card px-4 py-3'>
+    <div className='flex flex-col gap-2 rounded-lg border border-border/90 bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between'>
       <div className='flex flex-col gap-1'>
         <button
           type='button'
@@ -58,12 +69,22 @@ export function VendorCard({
         >
           {vendor.name}
         </button>
-        {vendor.location && <span className='text-foreground/50 text-xs'>{vendor.location}</span>}
+        <div className='flex items-center gap-2'>
+          {vendor.location && <span className='text-foreground/50 text-xs'>{vendor.location}</span>}
+          {quoteCount > 0 && (
+            <>
+              {vendor.location && <span className='text-foreground/30 text-xs'>·</span>}
+              <span className='text-foreground/50 text-xs'>
+                {quoteCount} {quoteCount === 1 ? 'quote' : 'quotes'}
+              </span>
+            </>
+          )}
+        </div>
       </div>
 
       <div className='flex items-center gap-4'>
-        {latestQuotePrice != null && (
-          <span className='font-medium text-foreground/80 text-sm'>{formatPrice(latestQuotePrice)}</span>
+        {priceDisplay() && (
+          <span className='font-medium text-foreground/80 text-sm'>{priceDisplay()}</span>
         )}
         <VendorStatusSelect
           value={vendor.status}
@@ -75,6 +96,7 @@ export function VendorCard({
           className='text-foreground/40 text-xs hover:text-destructive'
           onClick={handleDelete}
           disabled={deleteVendor.isPending}
+          aria-label={`Remove ${vendor.name}`}
         >
           ✕
         </button>

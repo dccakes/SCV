@@ -55,7 +55,7 @@ export function VendorCategorySection({
           <VendorCard
             key={vendor.id}
             vendor={vendor}
-            latestQuotePrice={vendor.quotes[0]?.price ?? null}
+            quotePrices={vendor.quotes.map((q) => q.price)}
             onViewDetails={onViewDetails}
             onDeleted={onRefresh}
           />
