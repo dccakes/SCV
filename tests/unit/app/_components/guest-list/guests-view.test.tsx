@@ -12,6 +12,16 @@ jest.mock('~/app/_components/contexts/event-form-context', () => ({
   useToggleEventForm: () => jest.fn(),
 }))
 
+jest.mock('~/trpc/react', () => ({
+  api: {
+    selfFill: {
+      getToken: { useQuery: () => ({ data: undefined, isLoading: false, refetch: jest.fn() }) },
+      generateToken: { useMutation: () => ({ mutate: jest.fn(), isPending: false }) },
+      revokeToken: { useMutation: () => ({ mutate: jest.fn(), isPending: false }) },
+    },
+  },
+}))
+
 const events = [
   {
     id: 'event-1',

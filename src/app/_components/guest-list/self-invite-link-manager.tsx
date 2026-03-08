@@ -39,9 +39,13 @@ export function SelfInviteLinkManager() {
 
   const handleCopy = async () => {
     if (!joinUrl) return
-    await navigator.clipboard.writeText(joinUrl)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    try {
+      await navigator.clipboard.writeText(joinUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      toast.error('Failed to copy link')
+    }
   }
 
   if (isLoading) {
