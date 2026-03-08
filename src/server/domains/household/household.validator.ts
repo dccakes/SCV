@@ -105,7 +105,10 @@ export const householdIdSchema = z.object({
  * Schema for bulk creating multiple households (CSV import)
  */
 export const bulkCreateHouseholdsSchema = z.object({
-  households: z.array(createHouseholdSchema).min(1, 'At least one household is required'),
+  households: z
+    .array(createHouseholdSchema)
+    .min(1, 'At least one household is required')
+    .max(500, 'Cannot import more than 500 households at once'),
 })
 
 // Export inferred types

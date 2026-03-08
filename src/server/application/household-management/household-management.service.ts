@@ -270,13 +270,18 @@ export class HouseholdManagementService {
   async bulkCreateHouseholds(
     weddingId: string,
     households: Parameters<HouseholdManagementService['createHouseholdWithGuests']>[1][]
-  ): Promise<{ created: number }> {
+  ): Promise<{ created: number; failed: number }> {
     let created = 0
+    let failed = 0
     for (const household of households) {
-      await this.createHouseholdWithGuests(weddingId, household)
-      created++
+      try {
+        await this.createHouseholdWithGuests(weddingId, household)
+        created++
+      } catch {
+        failed++
+      }
     }
-    return { created }
+    return { created, failed }
   }
 
   /**

@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import {
   GuestDetailDrawer,
   type GuestDetailDrawerProps,
-} from '~/app/_components/guest-list/v2/drawer/guest-detail-drawer'
+} from '~/components/guest-list/v2/drawer/guest-detail-drawer'
 
 const renderDrawer = (props: Partial<GuestDetailDrawerProps> = {}) => {
   const onOpenChange = jest.fn()

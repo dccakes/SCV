@@ -11,17 +11,17 @@ import { BiPencil } from 'react-icons/bi'
 import { useToggleEventForm } from '~/app/_components/contexts/event-form-context'
 import { useToggleGuestForm } from '~/app/_components/contexts/guest-form-context'
 import type { HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
+import { formatDateStandard } from '~/app/utils/helpers'
+import type { Event, EventFormData, FormInvites } from '~/app/utils/shared-types'
 import {
   type DrawerDraft,
   GuestDetailPanelContent,
   type RsvpSummary,
-} from '~/app/_components/guest-list/guest-detail-panel-content'
-import GuestSearchFilter from '~/app/_components/guest-list/guest-search-filter'
-import { GuestDetailDrawer } from '~/app/_components/guest-list/v2/drawer/guest-detail-drawer'
-import { GuestCardsList } from '~/app/_components/guest-list/v2/list/guest-cards-list'
-import { ListToolbar } from '~/app/_components/guest-list/v2/list/list-toolbar'
-import { formatDateStandard } from '~/app/utils/helpers'
-import type { Event, EventFormData, FormInvites } from '~/app/utils/shared-types'
+} from '~/components/guest-list/guest-detail-panel-content'
+import GuestSearchFilter from '~/components/guest-list/guest-search-filter'
+import { GuestDetailDrawer } from '~/components/guest-list/v2/drawer/guest-detail-drawer'
+import { GuestCardsList } from '~/components/guest-list/v2/list/guest-cards-list'
+import { ListToolbar } from '~/components/guest-list/v2/list/list-toolbar'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
@@ -323,7 +323,7 @@ export default function GuestsView({
           setPrefillEvent={setPrefillEvent}
         />
       )}
-      <div className='mb-8 flex justify-between'>
+      <div className='mb-4 flex justify-between'>
         <GuestSearchFilter
           setFilteredHouseholds={setFilteredHouseholds}
           households={households}

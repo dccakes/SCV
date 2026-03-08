@@ -83,19 +83,25 @@ export function downloadGuestCsvTemplate() {
   a.href = url
   a.download = 'guest-import-template.csv'
   a.click()
-  URL.revokeObjectURL(url)
+  setTimeout(() => URL.revokeObjectURL(url), 100)
 }
 
 // ---------------------------------------------------------------------------
 // Parsing
 // ---------------------------------------------------------------------------
 
+const MAX_CSV_ROWS = 500
+
 export function parseCsvFile(file: File): Promise<ParsedCsvRow[]> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     Papa.parse<GuestCsvRowInput>(file, {
       header: true,
       skipEmptyLines: true,
       complete: ({ data }) => {
+        if (data.length > MAX_CSV_ROWS) {
+          reject(new Error(`CSV exceeds the ${MAX_CSV_ROWS}-row limit (found ${data.length} rows)`))
+          return
+        }
         const rows = data.map((raw, index) => {
           const result = guestCsvRowSchema.safeParse(raw)
           if (result.success) {
@@ -109,6 +115,9 @@ export function parseCsvFile(file: File): Promise<ParsedCsvRow[]> {
           }
         })
         resolve(rows)
+      },
+      error: (err) => {
+        reject(err)
       },
     })
   })

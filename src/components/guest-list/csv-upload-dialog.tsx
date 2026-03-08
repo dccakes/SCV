@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
@@ -19,7 +19,7 @@ import {
   type ParsedCsvRow,
   downloadGuestCsvTemplate,
   parseCsvFile,
-} from '~/app/_components/guest-list/guest-csv-import.schema'
+} from '~/components/guest-list/guest-csv-import.schema'
 import type { Event } from '~/app/utils/shared-types'
 import { api } from '~/trpc/react'
 
@@ -67,11 +67,8 @@ function PreviewTable({ rows }: PreviewTableProps) {
                 {row.valid ? (
                   <span className='font-medium text-success text-xs'>Valid</span>
                 ) : (
-                  <span
-                    className='font-medium text-destructive text-xs'
-                    title={row.errors.join('; ')}
-                  >
-                    Error: {row.errors[0]}
+                  <span className='font-medium text-destructive text-xs'>
+                    {row.errors.join('; ')}
                   </span>
                 )}
               </td>
@@ -98,35 +95,55 @@ export function CsvUploadDialog({ open, onOpenChange, events }: CsvUploadDialogP
   const [step, setStep] = useState<Step>('upload')
   const [parsedRows, setParsedRows] = useState<ParsedCsvRow[]>([])
   const [fileName, setFileName] = useState('')
+  const [isParsing, setIsParsing] = useState(false)
 
   const validRows = parsedRows.filter((r): r is ValidRow => r.valid)
   const invalidCount = parsedRows.length - validRows.length
 
+  // Reset dialog state when it closes
+  useEffect(() => {
+    if (!open) {
+      setStep('upload')
+      setParsedRows([])
+      setFileName('')
+      setIsParsing(false)
+    }
+  }, [open])
+
   const bulkCreateMutation = api.household.bulkCreate.useMutation({
-    onSuccess: ({ created }) => {
-      toast.success(`Successfully imported ${created} guest${created === 1 ? '' : 's'}!`)
+    onSuccess: ({ created, failed }) => {
+      if (failed > 0) {
+        toast.warning(
+          `Imported ${created} guest${created === 1 ? '' : 's'}, ${failed} skipped due to errors.`
+        )
+      } else {
+        toast.success(`Successfully imported ${created} guest${created === 1 ? '' : 's'}!`)
+      }
       router.refresh()
-      handleClose()
+      onOpenChange(false)
     },
-    onError: () => {
-      toast.error('Failed to import guests. Please try again.')
+    onError: (error) => {
+      toast.error(error.message || 'Failed to import guests. Please try again.')
     },
   })
 
   const handleClose = useCallback(() => {
     onOpenChange(false)
-    setTimeout(() => {
-      setStep('upload')
-      setParsedRows([])
-      setFileName('')
-    }, 200)
   }, [onOpenChange])
 
   const handleFile = useCallback(async (file: File) => {
     setFileName(file.name)
-    const rows = await parseCsvFile(file)
-    setParsedRows(rows)
-    setStep('preview')
+    setIsParsing(true)
+    try {
+      const rows = await parseCsvFile(file)
+      setParsedRows(rows)
+      setStep('preview')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to parse CSV file'
+      toast.error(message)
+    } finally {
+      setIsParsing(false)
+    }
   }, [])
 
   const handleImport = () => {
@@ -173,6 +190,7 @@ export function CsvUploadDialog({ open, onOpenChange, events }: CsvUploadDialogP
               accept={{ 'text/csv': ['.csv'] }}
               label='Drag & drop a CSV file, or click to browse'
               sublabel='.csv files only'
+              disabled={isParsing}
             />
 
             <DialogFooter className='mt-2 flex-row items-center justify-between sm:justify-between'>

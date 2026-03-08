@@ -8,8 +8,11 @@
  * to eliminate redundancy between HouseholdService and HouseholdManagementService.
  */
 
-import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
+import { TRPCError } from '@trpc/server'
+
+import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { householdManagementService } from '~/server/application/household-management'
+import { eventService } from '~/server/domains/event'
 import {
   bulkCreateHouseholdsSchema,
   createHouseholdSchema,
@@ -43,6 +46,23 @@ export const householdRouter = createTRPCRouter({
     .input(bulkCreateHouseholdsSchema)
     .mutation(async ({ ctx, input }) => {
       const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+
+      // Validate that all invites event IDs belong to this wedding
+      const validEvents = await eventService.getWeddingEvents(weddingId)
+      const validEventIds = new Set((validEvents ?? []).map((e) => e.id))
+      for (const household of input.households) {
+        for (const guest of household.guestParty) {
+          for (const eventId of Object.keys(guest.invites)) {
+            if (!validEventIds.has(eventId)) {
+              throw new TRPCError({
+                code: 'FORBIDDEN',
+                message: `Event ${eventId} does not belong to your wedding`,
+              })
+            }
+          }
+        }
+      }
+
       return householdManagementService.bulkCreateHouseholds(weddingId, input.households)
     }),
 
@@ -56,7 +76,7 @@ export const householdRouter = createTRPCRouter({
   /**
    * Search households by guest name
    */
-  findBySearch: publicProcedure.input(searchHouseholdSchema).query(async ({ input }) => {
+  findBySearch: protectedProcedure.input(searchHouseholdSchema).query(async ({ input }) => {
     return householdManagementService.searchHouseholds(input.searchText)
   }),
 })

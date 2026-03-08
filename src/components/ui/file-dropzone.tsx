@@ -8,13 +8,15 @@ type FileDropzoneProps = {
   accept?: Record<string, string[]>
   label?: string
   sublabel?: string
+  disabled?: boolean
 }
 
 export function FileDropzone({
   onFile,
-  accept = { 'text/csv': ['.csv'] },
+  accept,
   label = 'Drag & drop a file, or click to browse',
   sublabel,
+  disabled = false,
 }: FileDropzoneProps) {
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
@@ -28,6 +30,7 @@ export function FileDropzone({
     onDrop,
     accept,
     multiple: false,
+    disabled,
   })
 
   return (
