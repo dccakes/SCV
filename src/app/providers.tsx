@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { ReactNode } from 'react'
 
-import { ThemeProvider } from '~/app/_components/theme-provider'
+import { ThemeProvider } from '~/components/theme-provider'
 import { authClient } from '~/lib/auth-client'
 
 export function Providers({ children }: { children: ReactNode }) {

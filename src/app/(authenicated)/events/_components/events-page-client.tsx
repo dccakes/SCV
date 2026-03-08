@@ -14,8 +14,8 @@ import { EventCard } from '@/app/(authenicated)/events/_components/event-card'
 import {
   type EventFormData,
   transformToServerInput,
-} from '~/app/_components/forms/event/event-form.schema'
-import { ModernEventForm } from '~/app/_components/forms/event/modern-event-form'
+} from '~/components/forms/event/event-form.schema'
+import { ModernEventForm } from '~/components/forms/event/modern-event-form'
 import {
   AlertDialog,
   AlertDialogAction,

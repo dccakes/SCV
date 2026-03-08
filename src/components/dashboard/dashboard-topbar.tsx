@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 
 import { useAuthenticatedSidebar } from '@/components/layout/authenticated-app-shell'
-import { ThemeToggle } from '~/app/_components/theme-toggle'
+import { ThemeToggle } from '~/components/theme-toggle'
 
 type DashboardTopbarProps = {
   title?: string

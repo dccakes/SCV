@@ -27,7 +27,7 @@ jest.mock('~/trpc/server', () => ({
   },
 }))
 
-jest.mock('~/app/_components/vendor', () => ({
+jest.mock('~/components/vendor', () => ({
   __esModule: true,
   default: ({ initialVendors }: { initialVendors: unknown[] }) =>
     mockVendorList({ initialVendors }),

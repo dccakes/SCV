@@ -3,10 +3,9 @@ import '~/styles/globals.css'
 import type { Metadata, Viewport } from 'next'
 import { Cormorant_Garamond, DM_Mono, Instrument_Serif } from 'next/font/google'
 import { Toaster as SonnerToaster } from 'sonner'
-
-import { EventFormProvider } from '~/app/_components/contexts/event-form-context'
-import { GuestFormProvider } from '~/app/_components/contexts/guest-form-context'
 import { Providers } from '~/app/providers'
+import { EventFormProvider } from '~/components/contexts/event-form-context'
+import { GuestFormProvider } from '~/components/contexts/guest-form-context'
 import { Toaster } from '~/components/ui/toaster'
 import { TRPCReactProvider } from '~/trpc/react'
 

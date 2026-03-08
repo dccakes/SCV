@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 
 import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
 
-jest.mock('~/app/_components/theme-toggle', () => ({
+jest.mock('~/components/theme-toggle', () => ({
   ThemeToggle: () => <button type='button'>Toggle theme</button>,
 }))
 

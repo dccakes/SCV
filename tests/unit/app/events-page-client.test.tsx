@@ -12,7 +12,7 @@ const mockModernEventForm = jest.fn(({ event }: { event?: { id: string } }) => (
   <div data-testid={event ? 'edit-event-form' : 'create-event-form'} />
 ))
 
-jest.mock('~/app/_components/forms/event/modern-event-form', () => ({
+jest.mock('~/components/forms/event/modern-event-form', () => ({
   ModernEventForm: (props: { event?: { id: string } }) => mockModernEventForm(props),
 }))
 

@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react'
 import { createContext, useContext, useEffect, useState } from 'react'
-import EttaPanel from '@/app/_components/old_dashboard/etta-panel'
+import EttaPanel from '@/components/old_dashboard/etta-panel'
 import SidebarNavFrame from '~/components/nav/sidebar-nav'
 
 type AuthenticatedSidebarContextValue = {
