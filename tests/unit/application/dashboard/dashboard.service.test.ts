@@ -38,7 +38,7 @@ import {
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   InvitationRepository,
-  mockFindByWeddingId as mockInvitationFindByWeddingId,
+  mockFindByWeddingIdWithGuestTagAlong as mockInvitationFindByWeddingIdWithGuestTagAlong,
   resetMocks as resetInvitationMocks,
 } from '~/server/domains/invitation/invitation.repository'
 // @ts-expect-error - Importing mock functions from mocked module
@@ -69,7 +69,7 @@ import {
 // Cast to jest.Mock for type safety
 const mockHouseholdFindByWeddingIdWithGuestsAndGifts =
   mockFindByWeddingIdWithGuestsAndGifts as jest.Mock
-const mockInvitationFindByWeddingIdFn = mockInvitationFindByWeddingId as jest.Mock
+const mockInvitationFindByWeddingIdFn = mockInvitationFindByWeddingIdWithGuestTagAlong as jest.Mock
 const mockEventFindByWeddingIdWithQuestionsFn = mockFindByWeddingIdWithQuestions as jest.Mock
 const mockUserFindByIdFn = mockUserFindById as jest.Mock
 const mockWebsiteFindByWeddingIdWithQuestionsFn =
@@ -133,6 +133,7 @@ const mockEvents = [
     description: 'Main wedding ceremony and reception',
     weddingId: 'wedding-123',
     collectRsvp: true,
+    allowTagAlongs: false,
     createdAt: new Date(),
     updatedAt: new Date(),
     questions: [
@@ -180,6 +181,7 @@ const mockEvents = [
     description: null,
     weddingId: 'wedding-123',
     collectRsvp: true,
+    allowTagAlongs: false,
     createdAt: new Date(),
     updatedAt: new Date(),
     questions: [],
@@ -289,6 +291,7 @@ const mockInvitations = [
     invitedAt: new Date(),
     createdAt: new Date(),
     updatedAt: new Date(),
+    guest: { isTagAlong: false },
   },
   {
     id: 'inv-2',
@@ -302,6 +305,7 @@ const mockInvitations = [
     invitedAt: new Date(),
     createdAt: new Date(),
     updatedAt: new Date(),
+    guest: { isTagAlong: false },
   },
   {
     id: 'inv-3',
@@ -315,6 +319,7 @@ const mockInvitations = [
     invitedAt: new Date(),
     createdAt: new Date(),
     updatedAt: new Date(),
+    guest: { isTagAlong: false },
   },
   {
     id: 'inv-4',
@@ -328,6 +333,7 @@ const mockInvitations = [
     invitedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    guest: { isTagAlong: false },
   },
   {
     id: 'inv-5',
@@ -341,6 +347,7 @@ const mockInvitations = [
     invitedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    guest: { isTagAlong: false },
   },
 ]
 
@@ -530,7 +537,7 @@ describe('DashboardService', () => {
       await service.getOverview('user-123')
 
       expect(mockHouseholdFindByWeddingIdWithGuestsAndGifts).toHaveBeenCalledWith('wedding-123')
-      expect(mockInvitationFindByWeddingIdFn).toHaveBeenCalledWith('wedding-123')
+      expect(mockInvitationFindByWeddingIdFn).toHaveBeenCalledWith('wedding-123') // findByWeddingIdWithGuestTagAlong
       expect(mockEventFindByWeddingIdWithQuestionsFn).toHaveBeenCalledWith('wedding-123')
       expect(mockGuestCountByWeddingIdFn).toHaveBeenCalledWith('wedding-123', {
         excludeTagAlongs: true,

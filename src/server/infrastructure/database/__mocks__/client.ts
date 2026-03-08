@@ -22,19 +22,30 @@ export const mockEventDelete = jest.fn()
 
 export const mockGuestFindUnique = jest.fn()
 export const mockGuestFindMany = jest.fn()
+export const mockGuestCreate = jest.fn()
+export const mockGuestUpsert = jest.fn()
 export const mockGuestUpdateMany = jest.fn()
+export const mockGuestDeleteMany = jest.fn()
+
 export const mockInvitationCreate = jest.fn()
+export const mockInvitationCreateMany = jest.fn()
+export const mockInvitationUpdate = jest.fn()
 export const mockInvitationDeleteMany = jest.fn()
 
 export const mockGuestTagAssignmentCreateMany = jest.fn()
 export const mockGuestTagAssignmentDeleteMany = jest.fn()
+
+export const mockHouseholdCreate = jest.fn()
+export const mockHouseholdUpdate = jest.fn()
+
+export const mockGiftUpsert = jest.fn()
 
 export const mockWeddingFindUnique = jest.fn()
 export const mockWeddingFindFirst = jest.fn()
 export const mockWeddingCreate = jest.fn()
 export const mockWeddingUpdate = jest.fn()
 
-export const db = {
+const dbModels = {
   user: {
     findUnique: mockUserFindUnique,
     findFirst: mockUserFindFirst,
@@ -54,7 +65,10 @@ export const db = {
   guest: {
     findUnique: mockGuestFindUnique,
     findMany: mockGuestFindMany,
+    create: mockGuestCreate,
+    upsert: mockGuestUpsert,
     updateMany: mockGuestUpdateMany,
+    deleteMany: mockGuestDeleteMany,
   },
   guestTagAssignment: {
     createMany: mockGuestTagAssignmentCreateMany,
@@ -62,7 +76,16 @@ export const db = {
   },
   invitation: {
     create: mockInvitationCreate,
+    createMany: mockInvitationCreateMany,
+    update: mockInvitationUpdate,
     deleteMany: mockInvitationDeleteMany,
+  },
+  household: {
+    create: mockHouseholdCreate,
+    update: mockHouseholdUpdate,
+  },
+  gift: {
+    upsert: mockGiftUpsert,
   },
   wedding: {
     findUnique: mockWeddingFindUnique,
@@ -70,7 +93,19 @@ export const db = {
     create: mockWeddingCreate,
     update: mockWeddingUpdate,
   },
+}
+
+// $transaction executes the callback with the same mock db (tx = db)
+const mock$transaction = jest.fn().mockImplementation(async (fn: (tx: unknown) => unknown) => {
+  return fn(dbModels)
+})
+
+export const db = {
+  ...dbModels,
+  $transaction: mock$transaction,
 } as unknown as PrismaClient
+
+export { mock$transaction }
 
 // Helper to reset all mocks
 export const resetMocks = (): void => {
@@ -88,13 +123,26 @@ export const resetMocks = (): void => {
   mockEventDelete.mockReset()
   mockGuestFindUnique.mockReset()
   mockGuestFindMany.mockReset()
+  mockGuestCreate.mockReset()
+  mockGuestUpsert.mockReset()
   mockGuestUpdateMany.mockReset()
+  mockGuestDeleteMany.mockReset()
+  mockInvitationCreate.mockReset()
+  mockInvitationCreateMany.mockReset()
+  mockInvitationUpdate.mockReset()
+  mockInvitationDeleteMany.mockReset()
   mockGuestTagAssignmentCreateMany.mockReset()
   mockGuestTagAssignmentDeleteMany.mockReset()
-  mockInvitationCreate.mockReset()
-  mockInvitationDeleteMany.mockReset()
+  mockHouseholdCreate.mockReset()
+  mockHouseholdUpdate.mockReset()
+  mockGiftUpsert.mockReset()
   mockWeddingFindUnique.mockReset()
   mockWeddingFindFirst.mockReset()
   mockWeddingCreate.mockReset()
   mockWeddingUpdate.mockReset()
+  mock$transaction.mockClear()
+  // Re-implement $transaction after clear
+  mock$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) => {
+    return fn(dbModels)
+  })
 }

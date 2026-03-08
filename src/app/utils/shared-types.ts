@@ -2,17 +2,17 @@ import type { inferRouterOutputs } from '@trpc/server'
 import type { FileWithPath } from 'react-dropzone'
 
 import type { AppRouter } from '~/server/api/root'
+import type { Event as ServerEvent } from '~/server/domains/event/event.types'
 
-type Event = {
-  id: string
-  name: string
-  date: Date | null
-  startTime: string | null
-  endTime: string | null
-  venue: string | null
-  attire: string | null
-  description: string | null
-  weddingId: string
+/**
+ * Client Event type — derived from the canonical server Event entity.
+ *
+ * Differences from the server type:
+ * - Adds `questions` (always present in client views)
+ * - Omits `createdAt`/`updatedAt` (not needed in client)
+ * - Relaxes `collectRsvp`/`allowTagAlongs` to optional (form contexts may not set them)
+ */
+type Event = Omit<ServerEvent, 'createdAt' | 'updatedAt' | 'collectRsvp' | 'allowTagAlongs'> & {
   questions: Question[]
   collectRsvp?: boolean
   allowTagAlongs?: boolean
