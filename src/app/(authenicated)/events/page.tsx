@@ -23,9 +23,9 @@ type EventsPageSearchParams = {
   tab?: string
 }
 
-export default async function EventsPage(
-  props: { searchParams?: Promise<EventsPageSearchParams> } = {}
-) {
+export default async function EventsPage(props: {
+  searchParams?: Promise<EventsPageSearchParams>
+}) {
   const searchParams = (await props.searchParams) ?? {}
   await getRequiredWedding()
   const initialEvents = (await api.event.getAllByUserIdWithStats.query()) ?? []
