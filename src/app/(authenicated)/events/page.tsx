@@ -18,7 +18,15 @@ export const metadata: Metadata = {
   icons: [{ rel: 'icon', url: '/favicon.ico' }],
 }
 
-export default async function EventsPage() {
+type EventsPageSearchParams = {
+  eventId?: string
+  tab?: string
+}
+
+export default async function EventsPage(
+  props: { searchParams?: Promise<EventsPageSearchParams> } = {}
+) {
+  const searchParams = (await props.searchParams) ?? {}
   await getRequiredWedding()
   const initialEvents = (await api.event.getAllByUserIdWithStats.query()) ?? []
 
@@ -26,7 +34,10 @@ export default async function EventsPage() {
     <>
       <DashboardTopbar title='Events' showManagementActions={false} />
       <main className='min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-6 lg:py-6'>
-        <EventsPageClient initialEvents={initialEvents} />
+        <EventsPageClient
+          initialEvents={initialEvents}
+          initialRsvpEventId={searchParams.tab === 'rsvps' ? searchParams.eventId : undefined}
+        />
       </main>
     </>
   )

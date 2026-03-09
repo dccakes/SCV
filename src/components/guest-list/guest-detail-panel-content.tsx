@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { type Dispatch, type SetStateAction, useMemo } from 'react'
 import type { Event } from '~/app/utils/shared-types'
 import {
@@ -74,9 +75,11 @@ type GuestDetailPanelContentProps = {
   selectedEventResponses?: SelectedEventResponse[]
   communicationLog: CommunicationLogItem[]
   allEventRsvpSummary: Map<string, RsvpSummary>
-  drawerMode: 'display' | 'edit'
+  editingSections: Set<'contactAddress' | 'notes'>
+  toggleEditingSection: (section: 'contactAddress' | 'notes') => void
   drawerDraft: DrawerDraft
   setDrawerDraft: Dispatch<SetStateAction<DrawerDraft>>
+  rsvpManageHref: string
 }
 
 export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentProps>) {
@@ -87,9 +90,11 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
     selectedEventResponses,
     communicationLog,
     allEventRsvpSummary,
-    drawerMode,
+    editingSections,
+    toggleEditingSection,
     drawerDraft,
     setDrawerDraft,
+    rsvpManageHref,
   } = props
 
   const primaryContact = useMemo(
@@ -123,7 +128,8 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
 
       <GuestDetailSections>
         <ContactAddressSection
-          drawerMode={drawerMode}
+          isEditing={editingSections.has('contactAddress')}
+          onToggleEdit={() => toggleEditingSection('contactAddress')}
           drawerDraft={drawerDraft}
           updateDraft={updateDraft}
           primaryContactEmail={primaryContact?.email}
@@ -166,7 +172,18 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
         </GuestDetailSection>
 
         {selectedEventId === 'all' ? (
-          <GuestDetailSection title='Seating & Event' contentClassName='space-y-2'>
+          <GuestDetailSection
+            title='Seating & Event'
+            contentClassName='space-y-2'
+            action={
+              <Link
+                href={rsvpManageHref}
+                className='font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:underline'
+              >
+                Manage RSVPs in Events
+              </Link>
+            }
+          >
             <ul className='space-y-2'>
               {events.map((event) => {
                 const rsvpSummary = allEventRsvpSummary.get(event.id) ?? {
@@ -204,7 +221,18 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
             </ul>
           </GuestDetailSection>
         ) : (
-          <GuestDetailSection title='Seating & Event' contentClassName='space-y-2'>
+          <GuestDetailSection
+            title='Seating & Event'
+            contentClassName='space-y-2'
+            action={
+              <Link
+                href={rsvpManageHref}
+                className='font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:underline'
+              >
+                Manage RSVPs in Events
+              </Link>
+            }
+          >
             <ul className='space-y-2'>
               {selectedEventResponses?.map((response) => (
                 <li
@@ -222,7 +250,8 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
         )}
 
         <NotesSection
-          drawerMode={drawerMode}
+          isEditing={editingSections.has('notes')}
+          onToggleEdit={() => toggleEditingSection('notes')}
           notes={selectedHousehold.notes}
           draftNotes={drawerDraft.notes}
           updateDraft={updateDraft}
@@ -256,7 +285,8 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
 }
 
 type ContactAddressSectionProps = {
-  drawerMode: 'display' | 'edit'
+  isEditing: boolean
+  onToggleEdit: () => void
   drawerDraft: DrawerDraft
   updateDraft: DraftUpdater
   primaryContactEmail: string | null | undefined
@@ -266,7 +296,8 @@ type ContactAddressSectionProps = {
 
 function ContactAddressSection(props: Readonly<ContactAddressSectionProps>) {
   const {
-    drawerMode,
+    isEditing,
+    onToggleEdit,
     drawerDraft,
     updateDraft,
     primaryContactEmail,
@@ -283,9 +314,21 @@ function ContactAddressSection(props: Readonly<ContactAddressSectionProps>) {
     selectedHousehold.country,
   ]
 
-  if (drawerMode === 'edit') {
+  if (isEditing) {
     return (
-      <GuestDetailSection title='Contact & Address' contentClassName='space-y-3'>
+      <GuestDetailSection
+        title='Contact & Address'
+        contentClassName='space-y-3'
+        action={
+          <button
+            type='button'
+            onClick={onToggleEdit}
+            className='font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:underline'
+          >
+            Done
+          </button>
+        }
+      >
         <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
           <label className='space-y-1'>
             <span className='font-mono text-[0.55rem] text-foreground/55 uppercase tracking-widest'>
@@ -397,7 +440,20 @@ function ContactAddressSection(props: Readonly<ContactAddressSectionProps>) {
   }
 
   return (
-    <GuestDetailSection title='Contact & Address' contentClassName='space-y-3'>
+    <GuestDetailSection
+      title='Contact & Address'
+      contentClassName='space-y-3'
+      action={
+        <button
+          type='button'
+          onClick={onToggleEdit}
+          className='font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:underline'
+          aria-label='Edit Contact & Address'
+        >
+          Edit
+        </button>
+      }
+    >
       <dl className='grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2'>
         <div>
           <dt className='font-mono text-[0.55rem] text-foreground/55 uppercase tracking-widest'>
@@ -426,18 +482,31 @@ function ContactAddressSection(props: Readonly<ContactAddressSectionProps>) {
 }
 
 type NotesSectionProps = {
-  drawerMode: 'display' | 'edit'
+  isEditing: boolean
+  onToggleEdit: () => void
   notes: string | null | undefined
   draftNotes: string
   updateDraft: DraftUpdater
 }
 
 function NotesSection(props: Readonly<NotesSectionProps>) {
-  const { drawerMode, notes, draftNotes, updateDraft } = props
+  const { isEditing, onToggleEdit, notes, draftNotes, updateDraft } = props
 
   return (
-    <GuestDetailSection title='Notes'>
-      {drawerMode === 'edit' ? (
+    <GuestDetailSection
+      title='Notes'
+      action={
+        <button
+          type='button'
+          onClick={onToggleEdit}
+          className='font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:underline'
+          aria-label='Edit Notes'
+        >
+          {isEditing ? 'Done' : 'Edit'}
+        </button>
+      }
+    >
+      {isEditing ? (
         <textarea
           name='notes'
           value={draftNotes}

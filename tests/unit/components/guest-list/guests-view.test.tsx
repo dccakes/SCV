@@ -1,8 +1,19 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import GuestsView from '~/components/guest-list/guests-view'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 
 const mockToggleGuestForm = jest.fn()
+const mockRefresh = jest.fn()
+const mockHouseholdUpdateMutate = jest.fn()
+let shouldMutationFail = false
+let deferMutationResolution = false
+let pendingMutationSuccess: (() => void) | undefined
+
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    refresh: mockRefresh,
+  }),
+}))
 
 jest.mock('~/app/_components/contexts/guest-form-context', () => ({
   useToggleGuestForm: () => mockToggleGuestForm,
@@ -10,6 +21,42 @@ jest.mock('~/app/_components/contexts/guest-form-context', () => ({
 
 jest.mock('~/app/_components/contexts/event-form-context', () => ({
   useToggleEventForm: () => jest.fn(),
+}))
+
+jest.mock('~/trpc/react', () => ({
+  api: {
+    household: {
+      update: {
+        useMutation: () => ({
+          mutate: (
+            payload: unknown,
+            options?: {
+              onSuccess?: () => void
+              onError?: () => void
+            }
+          ) => {
+            mockHouseholdUpdateMutate(payload)
+
+            const resolveSuccess = () => options?.onSuccess?.()
+            const resolveError = () => options?.onError?.()
+
+            if (deferMutationResolution) {
+              pendingMutationSuccess = resolveSuccess
+              return
+            }
+
+            if (shouldMutationFail) {
+              resolveError()
+              return
+            }
+
+            resolveSuccess()
+          },
+          isPending: false,
+        }),
+      },
+    },
+  },
 }))
 
 const events = [
@@ -201,9 +248,134 @@ const householdsWithSecondFamily: HouseholdWithGuests[] = [
   },
 ]
 
+const householdsWithFilteredGuests: {
+  displayed: HouseholdWithGuests[]
+  canonical: HouseholdWithGuests[]
+} = {
+  displayed: [
+    {
+      ...households[0],
+      guests: households[0].guests.filter((guest) => guest.id !== 4),
+    },
+  ],
+  canonical: [
+    {
+      ...households[0],
+      guests: [
+        ...households[0].guests,
+        {
+          id: 4,
+          firstName: 'Taylor',
+          lastName: 'Rivera',
+          email: null,
+          phone: null,
+          householdId: 'household-1',
+          weddingId: 'wedding-1',
+          isPrimaryContact: false,
+          ageGroup: 'ADULT',
+          guestTags: [],
+          createdAt: new Date('2026-01-03T00:00:00.000Z'),
+          updatedAt: new Date('2026-01-03T00:00:00.000Z'),
+          invitations: [
+            {
+              id: 'inv-5',
+              weddingId: 'wedding-1',
+              guestId: 4,
+              eventId: 'event-2',
+              rsvp: 'Attending',
+              dietaryRestrictions: null,
+              submittedBy: null,
+              submittedAt: null,
+              invitedAt: new Date('2026-01-03T00:00:00.000Z'),
+              createdAt: new Date('2026-01-03T00:00:00.000Z'),
+              updatedAt: new Date('2026-01-03T00:00:00.000Z'),
+            },
+          ],
+        },
+      ],
+    },
+  ],
+}
+
 describe('GuestsView', () => {
   beforeEach(() => {
     mockToggleGuestForm.mockReset()
+    mockRefresh.mockReset()
+    mockHouseholdUpdateMutate.mockReset()
+    shouldMutationFail = false
+    deferMutationResolution = false
+    pendingMutationSuccess = undefined
+  })
+
+  it('should save using canonical household guest party when displayed list is filtered', async () => {
+    render(
+      <GuestsView
+        events={events}
+        households={householdsWithFilteredGuests.displayed}
+        allHouseholds={householdsWithFilteredGuests.canonical}
+        selectedEventId='event-1'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Contact & Address' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Email' }), {
+      target: { value: 'updated@example.com' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    await waitFor(() => {
+      expect(mockHouseholdUpdateMutate).toHaveBeenCalled()
+    })
+
+    const payload = mockHouseholdUpdateMutate.mock.calls[0]?.[0] as {
+      guestParty: Array<{ guestId: number }>
+    }
+    expect(payload.guestParty).toHaveLength(3)
+    expect(payload.guestParty.map((guest) => guest.guestId)).toEqual([1, 2, 4])
+  })
+
+  it('should patch the saved household even if selection changes before mutation resolves', async () => {
+    deferMutationResolution = true
+
+    render(
+      <GuestsView
+        events={events}
+        households={householdsWithSecondFamily}
+        selectedEventId='all'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Contact & Address' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Email' }), {
+      target: { value: 'late-success@example.com' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close guest details' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Discard and close' }))
+    fireEvent.click(screen.getByRole('button', { name: /select brooke chen household/i }))
+
+    await act(async () => {
+      pendingMutationSuccess?.()
+    })
+
+    await waitFor(() => {
+      expect(mockRefresh).toHaveBeenCalled()
+    })
+
+    expect(screen.getByText('brooke@example.com')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Close guest details' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Discard and close' }))
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+    expect(screen.getByText('late-success@example.com')).toBeInTheDocument()
   })
 
   it('should keep search/filter and add guest while rendering slim cards', () => {
@@ -226,45 +398,7 @@ describe('GuestsView', () => {
     ).toBeInTheDocument()
   })
 
-  it('should open drawer and edit selected household with existing prefill flow', () => {
-    const setPrefillHousehold = jest.fn()
-    const setPrefillEvent = jest.fn()
-
-    render(
-      <GuestsView
-        events={events}
-        households={households}
-        selectedEventId='event-1'
-        setPrefillHousehold={setPrefillHousehold}
-        setPrefillEvent={setPrefillEvent}
-        onImportClick={jest.fn()}
-      />
-    )
-
-    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
-
-    expect(screen.getByRole('dialog')).toHaveClass('h-screen')
-    expect(screen.getByRole('button', { name: 'Close guest details' })).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Open Full Editor' }))
-
-    expect(setPrefillHousehold).toHaveBeenCalledWith(
-      expect.objectContaining({
-        householdId: 'household-1',
-        guestParty: expect.arrayContaining([
-          expect.objectContaining({
-            firstName: 'Alex',
-            invites: expect.objectContaining({ 'event-1': 'Attending' }),
-          }),
-        ]),
-        gifts: expect.arrayContaining([expect.objectContaining({ eventId: 'event-1' })]),
-      })
-    )
-    expect(setPrefillEvent).not.toHaveBeenCalled()
-    expect(mockToggleGuestForm).toHaveBeenCalled()
-  })
-
-  it('should open drawer in display mode and switch to edit mode with continue action', () => {
+  it('should open drawer with section-level edit controls and no full-editor update actions', () => {
     render(
       <GuestsView
         events={events}
@@ -280,16 +414,15 @@ describe('GuestsView', () => {
 
     expect(screen.getByText('alex@example.com')).toBeInTheDocument()
     expect(screen.queryByRole('textbox', { name: 'Email' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Change' })).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
-
-    expect(screen.getByRole('textbox', { name: 'Email' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Continue in Full Editor' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Edit Contact & Address' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Edit Notes' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Open Full Editor' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Continue in Full Editor' })
+    ).not.toBeInTheDocument()
   })
 
-  it('should cancel edit mode and restore original draft values', () => {
+  it('should show dirty actions and save updated values in drawer', async () => {
     render(
       <GuestsView
         events={events}
@@ -302,61 +435,27 @@ describe('GuestsView', () => {
     )
 
     fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
-    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Contact & Address' }))
 
     const emailInput = screen.getByRole('textbox', { name: 'Email' })
     fireEvent.change(emailInput, { target: { value: 'updated@example.com' } })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Discard changes' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    await waitFor(() => {
+      expect(mockHouseholdUpdateMutate).toHaveBeenCalled()
+      expect(mockRefresh).toHaveBeenCalled()
+    })
 
     expect(screen.queryByRole('textbox', { name: 'Email' })).not.toBeInTheDocument()
-    expect(screen.getByText('alex@example.com')).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
-    expect(screen.getByRole('textbox', { name: 'Email' })).toHaveValue('alex@example.com')
+    expect(screen.getByText('updated@example.com')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Save changes' })).not.toBeInTheDocument()
   })
 
-  it('should continue to full editor with updated draft values', () => {
-    const setPrefillHousehold = jest.fn()
-
-    render(
-      <GuestsView
-        events={events}
-        households={households}
-        selectedEventId='event-1'
-        setPrefillHousehold={setPrefillHousehold}
-        setPrefillEvent={jest.fn()}
-        onImportClick={jest.fn()}
-      />
-    )
-
-    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
-    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
-
-    fireEvent.change(screen.getByRole('textbox', { name: 'Email' }), {
-      target: { value: 'updated@example.com' },
-    })
-    fireEvent.change(screen.getByPlaceholderText('No notes yet'), {
-      target: { value: 'Bring high chair' },
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: 'Continue in Full Editor' }))
-
-    expect(setPrefillHousehold).toHaveBeenCalledWith(
-      expect.objectContaining({
-        notes: 'Bring high chair',
-        guestParty: expect.arrayContaining([
-          expect.objectContaining({
-            firstName: 'Alex',
-            email: 'updated@example.com',
-          }),
-        ]),
-      })
-    )
-    expect(mockToggleGuestForm).toHaveBeenCalled()
-  })
-
-  it('should reset mode and draft when drawer is closed and reopened', () => {
+  it('should discard dirty changes and restore baseline values', () => {
     render(
       <GuestsView
         events={events}
@@ -369,17 +468,112 @@ describe('GuestsView', () => {
     )
 
     fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
-    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Notes' }))
+
+    fireEvent.change(screen.getByPlaceholderText('No notes yet'), {
+      target: { value: 'Bring high chair' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
+
+    expect(screen.queryByRole('textbox', { name: 'Email' })).not.toBeInTheDocument()
+    expect(screen.getByText('Vegetarian meals only')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Save changes' })).not.toBeInTheDocument()
+  })
+
+  it('should preserve dirty draft when save fails', () => {
+    shouldMutationFail = true
+
+    render(
+      <GuestsView
+        events={events}
+        households={households}
+        selectedEventId='event-1'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Contact & Address' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Email' }), {
+      target: { value: 'failed-save@example.com' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    expect(screen.getByRole('textbox', { name: 'Email' })).toHaveValue('failed-save@example.com')
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument()
+  })
+
+  it('should guard closing when there are unsaved changes', () => {
+    render(
+      <GuestsView
+        events={events}
+        households={households}
+        selectedEventId='event-1'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Notes' }))
+    fireEvent.change(screen.getByPlaceholderText('No notes yet'), {
+      target: { value: 'Unsaved text' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close guest details' }))
+
+    expect(screen.getByText('Discard unsaved changes?')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Keep editing' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Discard and close' })).toBeInTheDocument()
+  })
+
+  it('should include a link to manage RSVPs in events page', () => {
+    render(
+      <GuestsView
+        events={events}
+        households={households}
+        selectedEventId='event-1'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+
+    const manageLink = screen.getByRole('link', { name: 'Manage RSVPs in Events' })
+    expect(manageLink).toHaveAttribute('href', '/events?eventId=event-1&tab=rsvps')
+  })
+
+  it('should reset drawer values when drawer is discarded and closed', () => {
+    render(
+      <GuestsView
+        events={events}
+        households={households}
+        selectedEventId='event-1'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Contact & Address' }))
     fireEvent.change(screen.getByRole('textbox', { name: 'Email' }), {
       target: { value: 'temp@example.com' },
     })
 
     fireEvent.click(screen.getByRole('button', { name: 'Close guest details' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Discard and close' }))
 
     fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
     expect(screen.queryByRole('textbox', { name: 'Email' })).not.toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Contact & Address' }))
     expect(screen.getByRole('textbox', { name: 'Email' })).toHaveValue('alex@example.com')
   })
 
@@ -396,12 +590,13 @@ describe('GuestsView', () => {
     )
 
     fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
-    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Contact & Address' }))
     fireEvent.change(screen.getByRole('textbox', { name: 'Email' }), {
       target: { value: 'temp@example.com' },
     })
 
     fireEvent.click(screen.getByRole('button', { name: 'Close guest details' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Discard and close' }))
     fireEvent.click(screen.getByRole('button', { name: /select brooke chen household/i }))
 
     expect(screen.queryByRole('textbox', { name: 'Email' })).not.toBeInTheDocument()

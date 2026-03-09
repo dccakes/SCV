@@ -14,6 +14,7 @@ type GuestDetailSectionProps = {
   children: React.ReactNode
   className?: string
   contentClassName?: string
+  action?: React.ReactNode
 }
 
 export function GuestDetailSections(props: Readonly<GuestDetailSectionsProps>) {
@@ -23,7 +24,7 @@ export function GuestDetailSections(props: Readonly<GuestDetailSectionsProps>) {
 }
 
 export function GuestDetailSection(props: Readonly<GuestDetailSectionProps>) {
-  const { title, children, className, contentClassName } = props
+  const { title, children, className, contentClassName, action } = props
 
   return (
     <section
@@ -32,9 +33,12 @@ export function GuestDetailSection(props: Readonly<GuestDetailSectionProps>) {
         className
       )}
     >
-      <h3 className='font-mono text-[0.58rem] text-foreground/60 uppercase tracking-widest'>
-        {title}
-      </h3>
+      <div className='flex items-center justify-between gap-3'>
+        <h3 className='font-mono text-[0.58rem] text-foreground/60 uppercase tracking-widest'>
+          {title}
+        </h3>
+        {action}
+      </div>
       <div className={cn('text-muted-foreground text-sm', contentClassName)}>{children}</div>
     </section>
   )
