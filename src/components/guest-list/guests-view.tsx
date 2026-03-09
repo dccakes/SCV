@@ -47,9 +47,9 @@ export default function GuestsView({
   const [filteredHouseholds, setFilteredHouseholds] = useState(households)
   const [nameSort, setNameSort] = useState<'none' | 'ascending' | 'descending'>('none')
   const [partySort, setPartySort] = useState<'none' | 'ascending' | 'descending'>('none')
-  const [selectedHousehold, setSelectedHousehold] = useState<HouseholdWithGuests | undefined>()
+  const [selectedHouseholdId, setSelectedHouseholdId] = useState<string | undefined>()
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
-  const [isDrawerEditMode, setIsDrawerEditMode] = useState(false)
+  const [drawerMode, setDrawerMode] = useState<'display' | 'edit'>('display')
   const [drawerDraft, setDrawerDraft] = useState<DrawerDraft>({
     email: '',
     phone: '',
@@ -71,18 +71,6 @@ export default function GuestsView({
   useEffect(() => {
     setFilteredHouseholds(households)
   }, [households])
-
-  useEffect(() => {
-    if (!isDrawerOpen) return
-    const selectedHouseholdId = selectedHousehold?.id
-    if (!selectedHouseholdId) return
-    const hasSelectedHousehold = filteredHouseholds.some(
-      (household) => household.id === selectedHouseholdId
-    )
-    if (hasSelectedHousehold) return
-    setIsDrawerOpen(false)
-    setSelectedHousehold(undefined)
-  }, [filteredHouseholds, isDrawerOpen, selectedHousehold])
 
   const sortByName = useCallback(() => {
     setNameSort((previous) => {
@@ -118,6 +106,20 @@ export default function GuestsView({
 
     return filteredHouseholds
   }, [filteredHouseholds, nameSort, partySort])
+
+  const selectedHousehold = useMemo(
+    () => filteredHouseholds.find((household) => household.id === selectedHouseholdId),
+    [filteredHouseholds, selectedHouseholdId]
+  )
+
+  useEffect(() => {
+    if (!isDrawerOpen) return
+    if (!selectedHouseholdId) return
+    if (selectedHousehold) return
+    setIsDrawerOpen(false)
+    setSelectedHouseholdId(undefined)
+    setDrawerMode('display')
+  }, [isDrawerOpen, selectedHousehold, selectedHouseholdId])
 
   const getHouseholdFormData = (household: HouseholdWithGuests): HouseholdFormData => {
     return {
@@ -163,7 +165,7 @@ export default function GuestsView({
     toggleGuestForm()
   }
 
-  const handleContinueWithDraft = () => {
+  const handleDrawerPrimaryAction = () => {
     if (!selectedHousehold) return
 
     const prefill = getHouseholdFormData(selectedHousehold)
@@ -192,13 +194,28 @@ export default function GuestsView({
     })
 
     setIsDrawerOpen(false)
-    setIsDrawerEditMode(false)
+    setDrawerMode('display')
     toggleGuestForm()
   }
 
   const eventNameById = useMemo(() => {
     return new Map(events.map((event) => [event.id, event.name]))
   }, [events])
+
+  const resetDrawerDraft = useCallback((household: HouseholdWithGuests) => {
+    const primary = household.guests.find((guest) => guest.isPrimaryContact)
+    setDrawerDraft({
+      email: primary?.email ?? '',
+      phone: primary?.phone ?? '',
+      address1: household.address1 ?? '',
+      address2: household.address2 ?? '',
+      city: household.city ?? '',
+      state: household.state ?? '',
+      zipCode: household.zipCode ?? '',
+      country: household.country ?? '',
+      notes: household.notes ?? '',
+    })
+  }, [])
 
   const selectedEvent = useMemo(
     () => events.find((event) => event.id === selectedEventId),
@@ -230,20 +247,13 @@ export default function GuestsView({
 
   useEffect(() => {
     if (!selectedHousehold) return
+    resetDrawerDraft(selectedHousehold)
+  }, [resetDrawerDraft, selectedHousehold])
 
-    const primary = selectedHousehold.guests.find((guest) => guest.isPrimaryContact)
-    setDrawerDraft({
-      email: primary?.email ?? '',
-      phone: primary?.phone ?? '',
-      address1: selectedHousehold.address1 ?? '',
-      address2: selectedHousehold.address2 ?? '',
-      city: selectedHousehold.city ?? '',
-      state: selectedHousehold.state ?? '',
-      zipCode: selectedHousehold.zipCode ?? '',
-      country: selectedHousehold.country ?? '',
-      notes: selectedHousehold.notes ?? '',
-    })
-  }, [selectedHousehold])
+  const handleCancelDrawerEdit = useCallback(() => {
+    if (selectedHousehold) resetDrawerDraft(selectedHousehold)
+    setDrawerMode('display')
+  }, [resetDrawerDraft, selectedHousehold])
 
   const communicationLog = useMemo(() => {
     if (!selectedHousehold) return []
@@ -295,16 +305,16 @@ export default function GuestsView({
   }, [selectedEventId, selectedHousehold])
 
   const handleSelectHousehold = useCallback((household: HouseholdWithGuests) => {
-    setSelectedHousehold(household)
-    setIsDrawerEditMode(false)
+    setSelectedHouseholdId(household.id)
+    setDrawerMode('display')
     setIsDrawerOpen(true)
   }, [])
 
   const handleDrawerOpenChange = useCallback((open: boolean) => {
     setIsDrawerOpen(open)
     if (open) return
-    setSelectedHousehold(undefined)
-    setIsDrawerEditMode(false)
+    setSelectedHouseholdId(undefined)
+    setDrawerMode('display')
   }, [])
 
   return (
@@ -352,7 +362,7 @@ export default function GuestsView({
         />
         <GuestCardsList
           households={sortedHouseholds}
-          selectedHouseholdId={selectedHousehold?.id}
+          selectedHouseholdId={selectedHouseholdId}
           onSelectHousehold={handleSelectHousehold}
         />
       </div>
@@ -381,18 +391,18 @@ export default function GuestsView({
         }
         footer={
           <div className='flex gap-2'>
-            {isDrawerEditMode ? (
+            {drawerMode === 'edit' ? (
               <>
                 <Button
                   type='button'
                   variant='outline'
                   className='flex-1'
-                  onClick={() => setIsDrawerEditMode(false)}
+                  onClick={handleCancelDrawerEdit}
                 >
                   Cancel
                 </Button>
-                <Button type='button' className='flex-1' onClick={handleContinueWithDraft}>
-                  Continue in Form
+                <Button type='button' className='flex-1' onClick={handleDrawerPrimaryAction}>
+                  Continue in Full Editor
                 </Button>
               </>
             ) : (
@@ -401,9 +411,9 @@ export default function GuestsView({
                   type='button'
                   variant='outline'
                   className='flex-1'
-                  onClick={() => setIsDrawerEditMode(true)}
+                  onClick={() => setDrawerMode('edit')}
                 >
-                  Edit Details
+                  Edit
                 </Button>
                 <Button type='button' className='flex-1' onClick={handleEditHousehold}>
                   Open Full Editor
@@ -421,8 +431,7 @@ export default function GuestsView({
             selectedEventResponses={selectedEventResponses}
             communicationLog={communicationLog}
             allEventRsvpSummary={allEventRsvpSummary}
-            isDrawerEditMode={isDrawerEditMode}
-            setIsDrawerEditMode={setIsDrawerEditMode}
+            drawerMode={drawerMode}
             drawerDraft={drawerDraft}
             setDrawerDraft={setDrawerDraft}
           />
