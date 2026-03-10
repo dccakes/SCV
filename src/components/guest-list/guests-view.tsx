@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import { BiPencil } from 'react-icons/bi'
@@ -21,6 +22,7 @@ import {
   type RsvpSummary,
 } from '~/components/guest-list/guest-detail-panel-content'
 import GuestSearchFilter from '~/components/guest-list/guest-search-filter'
+import type { HouseholdMemberDraft } from '~/components/guest-list/household-members-modal'
 import { GuestDetailDrawer } from '~/components/guest-list/v2/drawer/guest-detail-drawer'
 import { GuestCardsList } from '~/components/guest-list/v2/list/guest-cards-list'
 import { ListToolbar } from '~/components/guest-list/v2/list/list-toolbar'
@@ -89,6 +91,7 @@ export default function GuestsView({
     country: '',
     notes: '',
   })
+  const initializedDrawerHouseholdIdRef = useRef<string | undefined>(undefined)
 
   const totalGuests =
     useMemo(
@@ -299,6 +302,143 @@ export default function GuestsView({
     updateHouseholdMutation,
   ])
 
+  const saveMembersChanges = useCallback(
+    async (nextMembers: HouseholdMemberDraft[]) => {
+      if (!selectedCanonicalHousehold || !selectedHousehold) return false
+
+      const activeHouseholdId = selectedCanonicalHousehold.id
+      const canonicalGuestsById = new Map(
+        selectedCanonicalHousehold.guests.map((guest) => [guest.id, guest])
+      )
+      const editableGuestIds = new Set(selectedHousehold.guests.map((guest) => guest.id))
+
+      const guestParty = nextMembers.map((member) => {
+        const canonicalGuest =
+          member.id !== undefined ? canonicalGuestsById.get(member.id) : undefined
+        const invites: FormInvites = {}
+        canonicalGuest?.invitations.forEach((invitation) => {
+          invites[invitation.eventId] = invitation.rsvp ?? 'Not Invited'
+        })
+
+        return {
+          guestId: member.id,
+          firstName: member.firstName,
+          lastName: member.lastName,
+          email: member.email,
+          phone: member.phone,
+          isPrimaryContact: member.isPrimaryContact,
+          ageGroup: member.ageGroup,
+          tagIds: canonicalGuest?.guestTags?.map((guestTag) => guestTag.tagId) ?? [],
+          invites,
+        }
+      })
+
+      const nextMemberIds = new Set(
+        nextMembers
+          .map((member) => member.id)
+          .filter((memberId): memberId is number => memberId !== undefined)
+      )
+      const hiddenCanonicalGuestParty = selectedCanonicalHousehold.guests
+        .filter((guest) => !editableGuestIds.has(guest.id))
+        .map((guest) => {
+          const invites: FormInvites = {}
+          guest.invitations.forEach((invitation) => {
+            invites[invitation.eventId] = invitation.rsvp ?? 'Not Invited'
+          })
+
+          return {
+            guestId: guest.id,
+            firstName: guest.firstName,
+            lastName: guest.lastName,
+            email: guest.email,
+            phone: guest.phone,
+            isPrimaryContact: guest.isPrimaryContact,
+            ageGroup: guest.ageGroup ?? 'ADULT',
+            tagIds: guest.guestTags?.map((guestTag) => guestTag.tagId) ?? [],
+            invites,
+          }
+        })
+
+      const deletedGuests = selectedHousehold.guests
+        .filter((guest) => !nextMemberIds.has(guest.id))
+        .map((guest) => guest.id)
+
+      return await new Promise<boolean>((resolve) => {
+        updateHouseholdMutation.mutate(
+          {
+            householdId: activeHouseholdId,
+            address1: selectedCanonicalHousehold.address1,
+            address2: selectedCanonicalHousehold.address2,
+            city: selectedCanonicalHousehold.city,
+            state: selectedCanonicalHousehold.state,
+            zipCode: selectedCanonicalHousehold.zipCode,
+            country: selectedCanonicalHousehold.country,
+            notes: selectedCanonicalHousehold.notes,
+            guestParty: [...guestParty, ...hiddenCanonicalGuestParty],
+            deletedGuests: deletedGuests.length > 0 ? deletedGuests : undefined,
+            gifts: selectedCanonicalHousehold.gifts.map((gift) => ({
+              eventId: gift.eventId,
+              thankyou: gift.thankyou,
+              description: gift.description ?? null,
+            })),
+          },
+          {
+            onSuccess: () => {
+              setFilteredHouseholds((previous) =>
+                previous.map((household) => {
+                  if (household.id !== activeHouseholdId) return household
+
+                  const displayedGuestsById = new Map(
+                    household.guests.map((guest) => [guest.id, guest])
+                  )
+
+                  return {
+                    ...household,
+                    guests: nextMembers.map((member, index) => {
+                      const guestId = member.id ?? -(index + 1)
+                      const sourceGuest =
+                        (member.id !== undefined
+                          ? canonicalGuestsById.get(member.id)
+                          : undefined) ??
+                        (member.id !== undefined ? displayedGuestsById.get(member.id) : undefined)
+
+                      return {
+                        ...(sourceGuest ?? {
+                          id: guestId,
+                          householdId: household.id,
+                          weddingId: household.weddingId,
+                          createdAt: household.createdAt,
+                          updatedAt: household.updatedAt,
+                          guestTags: [],
+                          invitations: [],
+                        }),
+                        id: guestId,
+                        firstName: member.firstName,
+                        lastName: member.lastName,
+                        email: member.email,
+                        phone: member.phone,
+                        ageGroup: member.ageGroup,
+                        isPrimaryContact: member.isPrimaryContact,
+                      }
+                    }),
+                  }
+                })
+              )
+              toast.success('Household members saved')
+              router.refresh()
+              resolve(true)
+            },
+            onError: () => {
+              toast.error('Failed to save household members')
+              resolve(false)
+            },
+          }
+        )
+      })
+    },
+    [router, selectedCanonicalHousehold, selectedHousehold, updateHouseholdMutation]
+  )
+
   const selectedEvent = useMemo(
     () => events.find((event) => event.id === selectedEventId),
     [events, selectedEventId]
@@ -328,9 +468,11 @@ export default function GuestsView({
   }, [selectedHousehold])
 
   useEffect(() => {
-    if (!selectedHousehold) return
+    if (!isDrawerOpen || !selectedHousehold) return
+    if (initializedDrawerHouseholdIdRef.current === selectedHousehold.id) return
     resetDrawerDraft(selectedHousehold)
-  }, [resetDrawerDraft, selectedHousehold])
+    initializedDrawerHouseholdIdRef.current = selectedHousehold.id
+  }, [isDrawerOpen, resetDrawerDraft, selectedHousehold])
 
   const handleDiscardChanges = useCallback(() => {
     setDrawerDraft(drawerBaseline)
@@ -416,6 +558,7 @@ export default function GuestsView({
       setIsDrawerOpen(open)
       if (open) return
       setSelectedHouseholdId(undefined)
+      initializedDrawerHouseholdIdRef.current = undefined
       setEditingSections(new Set())
     },
     [isDrawerDirty]
@@ -529,6 +672,7 @@ export default function GuestsView({
             drawerDraft={drawerDraft}
             setDrawerDraft={setDrawerDraft}
             rsvpManageHref={rsvpManageHref}
+            onSaveMembers={saveMembersChanges}
           />
         ) : null}
       </GuestDetailDrawer>
@@ -547,6 +691,7 @@ export default function GuestsView({
                 setShowDiscardDialog(false)
                 setIsDrawerOpen(false)
                 setSelectedHouseholdId(undefined)
+                initializedDrawerHouseholdIdRef.current = undefined
                 setEditingSections(new Set())
               }}
             >

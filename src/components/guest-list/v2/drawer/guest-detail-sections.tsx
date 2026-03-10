@@ -15,6 +15,7 @@ type GuestDetailSectionProps = {
   className?: string
   contentClassName?: string
   action?: React.ReactNode
+  actionClassName?: string
 }
 
 export function GuestDetailSections(props: Readonly<GuestDetailSectionsProps>) {
@@ -24,7 +25,7 @@ export function GuestDetailSections(props: Readonly<GuestDetailSectionsProps>) {
 }
 
 export function GuestDetailSection(props: Readonly<GuestDetailSectionProps>) {
-  const { title, children, className, contentClassName, action } = props
+  const { title, children, className, contentClassName, action, actionClassName } = props
 
   return (
     <section
@@ -37,7 +38,7 @@ export function GuestDetailSection(props: Readonly<GuestDetailSectionProps>) {
         <h3 className='font-mono text-[0.58rem] text-foreground/60 uppercase tracking-widest'>
           {title}
         </h3>
-        {action}
+        {action ? <div className={cn('shrink-0', actionClassName)}>{action}</div> : null}
       </div>
       <div className={cn('text-muted-foreground text-sm', contentClassName)}>{children}</div>
     </section>

@@ -307,7 +307,7 @@ describe('GuestsView', () => {
     pendingMutationSuccess = undefined
   })
 
-  it('should save using canonical household guest party when displayed list is filtered', async () => {
+  it('should save canonical household guest party when members modal is saved from a filtered list', async () => {
     render(
       <GuestsView
         events={events}
@@ -321,11 +321,8 @@ describe('GuestsView', () => {
     )
 
     fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
-    fireEvent.click(screen.getByRole('button', { name: 'Edit Contact & Address' }))
-    fireEvent.change(screen.getByRole('textbox', { name: 'Email' }), {
-      target: { value: 'updated@example.com' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Manage members' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save members' }))
 
     await waitFor(() => {
       expect(mockHouseholdUpdateMutate).toHaveBeenCalled()
@@ -420,6 +417,175 @@ describe('GuestsView', () => {
     expect(
       screen.queryByRole('button', { name: 'Continue in Full Editor' })
     ).not.toBeInTheDocument()
+  })
+
+  it('should open Manage Household Members modal from Party Members section', () => {
+    render(
+      <GuestsView
+        events={events}
+        households={households}
+        selectedEventId='event-1'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Manage members' }))
+
+    expect(screen.getByRole('dialog', { name: 'Manage Household Members' })).toBeInTheDocument()
+  })
+
+  it('should keeps drawer draft intact when members modal is saved', async () => {
+    render(
+      <GuestsView
+        events={events}
+        households={householdsWithFilteredGuests.displayed}
+        allHouseholds={householdsWithFilteredGuests.canonical}
+        selectedEventId='event-1'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Contact & Address' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Email' }), {
+      target: { value: 'draft-only@example.com' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Manage members' }))
+    fireEvent.click(screen.getByRole('button', { name: /add guest/i }))
+    fireEvent.change(screen.getByLabelText('First name (member 3)'), {
+      target: { value: 'Taylor' },
+    })
+    fireEvent.change(screen.getByLabelText('Last name (member 3)'), {
+      target: { value: 'Rivera' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save members' }))
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Taylor Rivera').length).toBeGreaterThan(0)
+    })
+
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: 'Email' })).toHaveValue('draft-only@example.com')
+  })
+
+  it('should updates drawer party members after adding member in modal and saving', async () => {
+    render(
+      <GuestsView
+        events={events}
+        households={households}
+        selectedEventId='event-1'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Manage members' }))
+
+    fireEvent.click(screen.getByRole('button', { name: /add guest/i }))
+    fireEvent.change(screen.getByLabelText('First name (member 3)'), {
+      target: { value: 'Taylor' },
+    })
+    fireEvent.change(screen.getByLabelText('Last name (member 3)'), {
+      target: { value: 'Rivera' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save members' }))
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Taylor Rivera').length).toBeGreaterThan(0)
+    })
+  })
+
+  it('should keep modal open and preserve draft values when member save fails', async () => {
+    shouldMutationFail = true
+
+    render(
+      <GuestsView
+        events={events}
+        households={households}
+        selectedEventId='event-1'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Manage members' }))
+
+    fireEvent.click(screen.getByRole('button', { name: /add guest/i }))
+    fireEvent.change(screen.getByLabelText('First name (member 3)'), {
+      target: { value: 'Taylor' },
+    })
+    fireEvent.change(screen.getByLabelText('Last name (member 3)'), {
+      target: { value: 'Rivera' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save members' }))
+
+    await waitFor(() => {
+      expect(mockHouseholdUpdateMutate).toHaveBeenCalled()
+    })
+
+    expect(screen.getByRole('dialog', { name: 'Manage Household Members' })).toBeInTheDocument()
+    expect(screen.getByLabelText('First name (member 3)')).toHaveValue('Taylor')
+    expect(screen.getByLabelText('Last name (member 3)')).toHaveValue('Rivera')
+    await waitFor(() => {
+      expect(screen.getByText('Unable to save members. Please try again.')).toBeInTheDocument()
+    })
+  })
+
+  it('should block member save when required names are missing', () => {
+    render(
+      <GuestsView
+        events={events}
+        households={households}
+        selectedEventId='event-1'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Manage members' }))
+    fireEvent.click(screen.getByRole('button', { name: /add guest/i }))
+
+    expect(
+      screen.getByText('Each household member must include a first and last name.')
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save members' }))
+
+    expect(mockHouseholdUpdateMutate).not.toHaveBeenCalled()
+    expect(screen.getByRole('dialog', { name: 'Manage Household Members' })).toBeInTheDocument()
+  })
+
+  it('should show remove disabled for current primary until another member is primary', () => {
+    render(
+      <GuestsView
+        events={events}
+        households={households}
+        selectedEventId='event-1'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Manage members' }))
+
+    expect(screen.getByRole('button', { name: 'Remove Alex Rivera' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Set Jamie Rivera as primary' }))
+    expect(screen.getByRole('button', { name: 'Remove Alex Rivera' })).toBeEnabled()
   })
 
   it('should show dirty actions and save updated values in drawer', async () => {

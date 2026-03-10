@@ -1,11 +1,16 @@
 import Link from 'next/link'
-import { type Dispatch, type SetStateAction, useMemo } from 'react'
+import { type Dispatch, type SetStateAction, useMemo, useState } from 'react'
 import type { Event } from '~/app/utils/shared-types'
+import {
+  type HouseholdMemberDraft,
+  HouseholdMembersModal,
+} from '~/components/guest-list/household-members-modal'
 import {
   GuestDetailSection,
   GuestDetailSections,
 } from '~/components/guest-list/v2/drawer/guest-detail-sections'
 import { Badge } from '~/components/ui/badge'
+import { Button } from '~/components/ui/button'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 
 export type DrawerDraft = {
@@ -80,6 +85,7 @@ type GuestDetailPanelContentProps = {
   drawerDraft: DrawerDraft
   setDrawerDraft: Dispatch<SetStateAction<DrawerDraft>>
   rsvpManageHref: string
+  onSaveMembers: (nextMembers: HouseholdMemberDraft[]) => Promise<boolean>
 }
 
 export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentProps>) {
@@ -95,7 +101,18 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
     drawerDraft,
     setDrawerDraft,
     rsvpManageHref,
+    onSaveMembers,
   } = props
+  const [isMembersModalOpen, setIsMembersModalOpen] = useState(false)
+  const partyMembers = selectedHousehold.guests.map((guest) => ({
+    id: guest.id,
+    firstName: guest.firstName,
+    lastName: guest.lastName,
+    email: guest.email,
+    phone: guest.phone,
+    ageGroup: guest.ageGroup ?? 'ADULT',
+    isPrimaryContact: guest.isPrimaryContact,
+  }))
 
   const primaryContact = useMemo(
     () => selectedHousehold.guests.find((guest) => guest.isPrimaryContact),
@@ -137,14 +154,30 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
           selectedHousehold={selectedHousehold}
         />
 
-        <GuestDetailSection title='Party Members' contentClassName='space-y-2'>
+        <GuestDetailSection
+          title='Party Members'
+          contentClassName='space-y-2'
+          actionClassName='-mr-1'
+          action={
+            <Button
+              type='button'
+              variant='ghost'
+              size='sm'
+              onClick={() => setIsMembersModalOpen(true)}
+            >
+              Manage members
+            </Button>
+          }
+        >
           <ul className='space-y-2'>
-            {selectedHousehold.guests.map((guest) => {
-              const rsvp = getDisplayRsvpForGuest(selectedEventId, guest.invitations)
+            {partyMembers.map((guest, index) => {
+              const matchedGuest = selectedHousehold.guests.find((member) => member.id === guest.id)
+              const invitations = matchedGuest?.invitations ?? []
+              const rsvp = getDisplayRsvpForGuest(selectedEventId, invitations)
 
               return (
                 <li
-                  key={guest.id}
+                  key={guest.id ?? `${guest.firstName}-${guest.lastName}-${index}`}
                   className='flex items-center justify-between border-border/50 border-b py-2 last:border-b-0'
                 >
                   <div>
@@ -280,6 +313,13 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
           )}
         </GuestDetailSection>
       </GuestDetailSections>
+
+      <HouseholdMembersModal
+        open={isMembersModalOpen}
+        onOpenChange={setIsMembersModalOpen}
+        members={partyMembers}
+        onSave={onSaveMembers}
+      />
     </div>
   )
 }
