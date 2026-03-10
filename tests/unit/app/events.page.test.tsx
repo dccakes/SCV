@@ -50,7 +50,7 @@ describe('EventsPage', () => {
     mockGetRequiredWedding.mockResolvedValue(undefined)
     mockGetEventsWithStats.mockResolvedValue([{ id: 'evt-1' }])
 
-    const page = await EventsPage()
+    const page = await EventsPage({})
     render(page)
 
     expect(mockGetRequiredWedding).toHaveBeenCalledTimes(1)
@@ -65,7 +65,7 @@ describe('EventsPage', () => {
     mockGetRequiredWedding.mockResolvedValue(undefined)
     mockGetEventsWithStats.mockResolvedValue(undefined)
 
-    const page = await EventsPage()
+    const page = await EventsPage({})
     render(page)
 
     expect(mockEventsPageClient).toHaveBeenCalledWith({
@@ -77,7 +77,7 @@ describe('EventsPage', () => {
     mockGetRequiredWedding.mockResolvedValue(undefined)
     mockGetEventsWithStats.mockResolvedValue([])
 
-    const page = await EventsPage()
+    const page = await EventsPage({})
     const { container } = render(page)
 
     expect(mockDashboardTopbar).toHaveBeenCalledWith({

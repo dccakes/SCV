@@ -33,9 +33,10 @@ import { api } from '~/trpc/react'
 
 type EventsPageClientProps = Readonly<{
   initialEvents: EventWithStats[]
+  initialRsvpEventId?: string
 }>
 
-export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
+export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPageClientProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState<EventWithStats | undefined>(undefined)
   const [deletingEvent, setDeletingEvent] = useState<EventWithStats | undefined>(undefined)
@@ -168,8 +169,20 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
     )
   }
 
+  const rsvpFocusEvent =
+    initialRsvpEventId === undefined
+      ? undefined
+      : events.find((event) => event.id === initialRsvpEventId)
+
   return (
     <>
+      {initialRsvpEventId !== undefined ? (
+        <div className='mb-4 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm md:mb-6'>
+          {rsvpFocusEvent
+            ? `RSVP management context: ${rsvpFocusEvent.name}`
+            : 'RSVP management context from Guests drawer'}
+        </div>
+      ) : null}
       <div className='mb-4 flex items-center justify-between md:mb-6'>
         <p className='text-muted-foreground text-sm'>
           {events.length} {events.length === 1 ? 'event' : 'events'}

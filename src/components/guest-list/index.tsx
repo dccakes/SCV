@@ -83,6 +83,7 @@ export default function GuestList({ dashboardData }: { dashboardData: DashboardD
         <GuestsView
           events={dashboardData.events}
           households={filteredHouseholdsByEvent}
+          allHouseholds={dashboardData.households}
           selectedEventId={selectedEventId}
           setPrefillHousehold={setPrefillHousehold}
           setPrefillEvent={setPrefillEvent}
