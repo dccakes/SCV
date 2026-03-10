@@ -10,7 +10,6 @@ import {
   GuestDetailSections,
 } from '~/components/guest-list/v2/drawer/guest-detail-sections'
 import { Badge } from '~/components/ui/badge'
-import { Button } from '~/components/ui/button'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 
 export type DrawerDraft = {
@@ -159,14 +158,13 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
           contentClassName='space-y-2'
           actionClassName='-mr-1'
           action={
-            <Button
+            <button
               type='button'
-              variant='ghost'
-              size='sm'
               onClick={() => setIsMembersModalOpen(true)}
+              className='font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:underline'
             >
               Manage members
-            </Button>
+            </button>
           }
         >
           <ul className='space-y-2'>
