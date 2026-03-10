@@ -31,8 +31,9 @@ const STATUS_COLORS: Record<VendorStatus, string> = {
 export function StatusBadge({ status }: { status: VendorStatus }) {
   return (
     <span
-      className={`inline-block rounded-full px-2.5 py-0.5 font-medium text-xs ${STATUS_COLORS[status]}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-mono text-[0.56rem] uppercase tracking-wider ${STATUS_COLORS[status]}`}
     >
+      <span className='h-1 w-1 rounded-full bg-current' aria-hidden='true' />
       {STATUS_LABELS[status]}
     </span>
   )
@@ -47,12 +48,12 @@ type VendorStatusSelectProps = {
 export function VendorStatusSelect({ value, onChange, disabled }: VendorStatusSelectProps) {
   return (
     <Select value={value} onValueChange={(v) => onChange(v as VendorStatus)} disabled={disabled}>
-      <SelectTrigger className='h-8 w-44 text-xs'>
+      <SelectTrigger className='h-8 w-44 font-mono text-[0.62rem] uppercase tracking-wider'>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
         {Object.values(VendorStatus).map((status) => (
-          <SelectItem key={status} value={status} className='text-xs'>
+          <SelectItem key={status} value={status} className='font-mono text-[0.62rem] uppercase tracking-wider'>
             {STATUS_LABELS[status]}
           </SelectItem>
         ))}

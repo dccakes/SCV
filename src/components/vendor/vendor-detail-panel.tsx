@@ -23,6 +23,7 @@ import {
   DialogPortal,
   DialogTitle,
 } from '~/components/ui/dialog'
+import { cn } from '~/lib/utils'
 import { useUploadThing } from '~/lib/uploadthing'
 import type { VendorQuote, VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
@@ -36,6 +37,28 @@ function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+/** Hairline-rule section label matching OSWP drawer pattern */
+function SectionLabel({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
+  return (
+    <div className='mb-2.5 flex items-center gap-3'>
+      <h3 className='shrink-0 font-mono text-[0.58rem] text-muted-foreground uppercase tracking-widest'>
+        {children}
+      </h3>
+      <span className='h-px flex-1 bg-border' aria-hidden='true' />
+      {action ? <div className='shrink-0'>{action}</div> : null}
+    </div>
+  )
+}
+
+/** Detail grid label */
+function DetailLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <dt className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
+      {children}
+    </dt>
+  )
 }
 
 function QuoteFileUploader({
@@ -122,13 +145,16 @@ function QuoteFileUploader({
     <div className='mt-2 space-y-2'>
       <div
         {...getRootProps()}
-        className={`cursor-pointer rounded-md border-2 border-dashed p-3 text-center text-xs transition-colors ${
-          isDragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'
-        }`}
+        className={cn(
+          'cursor-pointer rounded-md border-2 border-dashed p-3 text-center transition-colors',
+          isDragActive
+            ? 'border-primary bg-primary/5'
+            : 'border-border hover:border-primary/40 hover:bg-muted/30'
+        )}
       >
         <input {...getInputProps()} />
-        <p className='text-muted-foreground'>
-          {isDragActive ? 'Drop files here...' : 'Drag & drop or click to attach files'}
+        <p className='font-mono text-[0.62rem] text-muted-foreground uppercase tracking-wider'>
+          {isDragActive ? 'Drop files here' : 'Drag & drop or click to attach'}
         </p>
       </div>
 
@@ -138,20 +164,20 @@ function QuoteFileUploader({
             {selectedFiles.map((file, i) => (
               <li
                 key={`${file.name}-${i}`}
-                className='flex items-center justify-between rounded bg-muted px-2 py-1 text-xs'
+                className='flex items-center justify-between rounded bg-muted px-2.5 py-1.5 font-sans text-[0.85rem]'
               >
                 <span className='truncate'>{file.name}</span>
                 <button
                   type='button'
                   onClick={() => removeFile(i)}
-                  className='ml-2 shrink-0 text-foreground/40 hover:text-destructive'
+                  className='ml-2 shrink-0 text-muted-foreground hover:text-destructive'
                 >
                   ✕
                 </button>
               </li>
             ))}
           </ul>
-          <Button size='sm' className='h-7 text-xs' onClick={handleUpload} disabled={busy}>
+          <Button size='sm' onClick={handleUpload} disabled={busy}>
             {busy ? 'Uploading...' : `Upload ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''}`}
           </Button>
         </>
@@ -209,7 +235,10 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
       <DialogPortal>
         <DialogOverlay className={SIDE_PANE_OVERLAY_CLASS} />
         <DialogPrimitive.Content
-          className={`fixed inset-0 z-50 flex h-screen w-screen max-w-none translate-x-0 translate-y-0 flex-col overflow-hidden p-0 outline-none ${SIDE_PANE_SURFACE_CLASS} md:inset-y-0 md:right-0 md:left-auto md:h-full md:translate-x-0 md:translate-y-0 md:p-6 ${SIDE_PANE_DIALOG_WIDTH_CLASS}`}
+          className={cn(
+            `fixed inset-0 z-50 flex h-screen w-screen max-w-none translate-x-0 translate-y-0 flex-col overflow-hidden p-0 pb-0 outline-none ${SIDE_PANE_SURFACE_CLASS}`,
+            `md:inset-y-0 md:right-0 md:left-auto md:h-full md:translate-x-0 md:translate-y-0 md:p-6 ${SIDE_PANE_DIALOG_WIDTH_CLASS}`
+          )}
         >
           <DialogClose
             aria-label='Close vendor details'
@@ -218,13 +247,22 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
             <X className='h-4 w-4' aria-hidden='true' />
           </DialogClose>
 
+          {/* Header */}
           <header className='border-border/80 border-b px-5 py-5 pr-14 md:px-6'>
-            <DialogTitle className='font-semibold text-xl text-foreground'>
+            <DialogTitle className='font-display text-2xl text-foreground italic leading-tight'>
               {vendorData.name}
             </DialogTitle>
             <DialogDescription className='sr-only'>Vendor details panel</DialogDescription>
+            <div className='mt-2'>
+              <VendorStatusSelect
+                value={vendorData.status}
+                onChange={(status) => updateStatus.mutate({ vendorId: vendorData.id, status })}
+                disabled={updateStatus.isPending}
+              />
+            </div>
           </header>
 
+          {/* Scrollable body */}
           <div className='flex min-h-0 flex-1 flex-col'>
             <div className='flex-1 overflow-y-auto overscroll-y-contain px-5 py-4 md:px-6'>
               {showEditForm ? (
@@ -239,117 +277,131 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                   onCancel={() => setShowEditForm(false)}
                 />
               ) : (
-                <div className='flex flex-col gap-5'>
-                  {/* Status */}
-                  <div className='flex items-center gap-3'>
-                    <span className='text-foreground/60 text-sm'>Status:</span>
-                    <VendorStatusSelect
-                      value={vendorData.status}
-                      onChange={(status) => updateStatus.mutate({ vendorId: vendorData.id, status })}
-                      disabled={updateStatus.isPending}
-                    />
-                  </div>
-
-                  {/* Details */}
-                  <div className='grid grid-cols-1 gap-x-8 gap-y-2 text-sm sm:grid-cols-2'>
-                    {vendorData.location && (
-                      <>
-                        <span className='text-foreground/60'>Location</span>
-                        <span>{vendorData.location}</span>
-                      </>
-                    )}
-                    {vendorData.website && (
-                      <>
-                        <span className='text-foreground/60'>Website</span>
-                        <a
-                          href={vendorData.website}
-                          target='_blank'
-                          rel='noreferrer'
-                          className='truncate text-primary hover:underline'
+                <div className='space-y-5'>
+                  {/* Details section */}
+                  <section>
+                    <SectionLabel
+                      action={
+                        <button
+                          type='button'
+                          onClick={() => setShowEditForm(true)}
+                          className='font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:underline'
                         >
-                          {vendorData.website}
-                        </a>
-                      </>
-                    )}
-                    {vendorData.instagram && (
-                      <>
-                        <span className='text-foreground/60'>Instagram</span>
-                        <span>{vendorData.instagram}</span>
-                      </>
-                    )}
-                  </div>
+                          Edit
+                        </button>
+                      }
+                    >
+                      Details
+                    </SectionLabel>
+                    <dl className='grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2'>
+                      {vendorData.location && (
+                        <div>
+                          <DetailLabel>Location</DetailLabel>
+                          <dd className='font-sans text-[0.92rem] text-foreground'>{vendorData.location}</dd>
+                        </div>
+                      )}
+                      {vendorData.website && (
+                        <div>
+                          <DetailLabel>Website</DetailLabel>
+                          <dd>
+                            <a
+                              href={vendorData.website}
+                              target='_blank'
+                              rel='noreferrer'
+                              className='truncate font-sans text-[0.92rem] text-primary hover:underline'
+                            >
+                              {vendorData.website}
+                            </a>
+                          </dd>
+                        </div>
+                      )}
+                      {vendorData.instagram && (
+                        <div>
+                          <DetailLabel>Instagram</DetailLabel>
+                          <dd className='font-sans text-[0.92rem] text-foreground'>{vendorData.instagram}</dd>
+                        </div>
+                      )}
+                    </dl>
+                  </section>
 
-                  {/* Contact */}
+                  {/* Contact section */}
                   {(vendorData.contactName || vendorData.contactEmail || vendorData.contactPhone) && (
-                    <div>
-                      <p className='mb-2 font-semibold text-muted-foreground text-xs uppercase tracking-wide'>
-                        Contact
-                      </p>
-                      <div className='grid grid-cols-1 gap-x-8 gap-y-1 text-sm sm:grid-cols-2'>
+                    <section>
+                      <SectionLabel>Contact</SectionLabel>
+                      <dl className='grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2'>
                         {vendorData.contactName && (
-                          <>
-                            <span className='text-foreground/60'>Name</span>
-                            <span>{vendorData.contactName}</span>
-                          </>
+                          <div>
+                            <DetailLabel>Name</DetailLabel>
+                            <dd className='font-sans text-[0.92rem] text-foreground'>{vendorData.contactName}</dd>
+                          </div>
                         )}
                         {vendorData.contactEmail && (
-                          <>
-                            <span className='text-foreground/60'>Email</span>
-                            <a
-                              href={`mailto:${vendorData.contactEmail}`}
-                              className='text-primary hover:underline'
-                            >
-                              {vendorData.contactEmail}
-                            </a>
-                          </>
+                          <div>
+                            <DetailLabel>Email</DetailLabel>
+                            <dd>
+                              <a
+                                href={`mailto:${vendorData.contactEmail}`}
+                                className='font-sans text-[0.92rem] text-primary hover:underline'
+                              >
+                                {vendorData.contactEmail}
+                              </a>
+                            </dd>
+                          </div>
                         )}
                         {vendorData.contactPhone && (
-                          <>
-                            <span className='text-foreground/60'>Phone</span>
-                            <span>{vendorData.contactPhone}</span>
-                          </>
+                          <div>
+                            <DetailLabel>Phone</DetailLabel>
+                            <dd className='font-sans text-[0.92rem] text-foreground'>{vendorData.contactPhone}</dd>
+                          </div>
                         )}
-                      </div>
-                    </div>
+                      </dl>
+                    </section>
                   )}
 
-                  {/* Quotes */}
-                  <div>
-                    <div className='mb-2 flex items-center justify-between'>
-                      <p className='font-semibold text-muted-foreground text-xs uppercase tracking-wide'>
-                        Quotes ({vendorData.quotes.length})
-                      </p>
-                      {!showQuoteForm && (
-                        <Button
-                          size='sm'
-                          variant='outline'
-                          className='h-7 text-xs'
-                          onClick={() => setShowQuoteForm(true)}
-                        >
-                          + Add Quote
-                        </Button>
-                      )}
-                    </div>
+                  {/* Quotes section */}
+                  <section>
+                    <SectionLabel
+                      action={
+                        !showQuoteForm ? (
+                          <button
+                            type='button'
+                            onClick={() => setShowQuoteForm(true)}
+                            className='font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:underline'
+                          >
+                            + Add Quote
+                          </button>
+                        ) : null
+                      }
+                    >
+                      Quotes ({vendorData.quotes.length})
+                    </SectionLabel>
 
                     {showQuoteForm && (
-                      <QuoteForm
-                        vendorId={vendorData.id}
-                        onSuccess={async () => {
-                          await refetch()
-                          setShowQuoteForm(false)
-                        }}
-                        onCancel={() => setShowQuoteForm(false)}
-                      />
+                      <div className='mb-3'>
+                        <QuoteForm
+                          vendorId={vendorData.id}
+                          onSuccess={async () => {
+                            await refetch()
+                            setShowQuoteForm(false)
+                          }}
+                          onCancel={() => setShowQuoteForm(false)}
+                        />
+                      </div>
                     )}
 
                     {vendorData.quotes.length === 0 && !showQuoteForm && (
-                      <p className='text-muted-foreground text-sm'>No quotes yet.</p>
+                      <p className='font-mono text-[0.72rem] text-muted-foreground uppercase tracking-wider'>
+                        No quotes yet
+                      </p>
                     )}
 
                     {vendorData.quotes.length > 0 && (
-                      <div className='flex flex-col gap-2'>
+                      <div className='space-y-2'>
                         {vendorData.quotes.map((quote: VendorQuote) => (
-                          <div key={quote.id} className='rounded-lg border px-4 py-3'>
+                          <div
+                            key={quote.id}
+                            className='rounded-lg border border-border/90 bg-card/60 px-4 py-3'
+                          >
                             {editingQuoteId === quote.id ? (
                               <QuoteForm
                                 vendorId={vendorData.id}
@@ -365,23 +417,29 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                               <>
                                 <div className='flex items-start justify-between'>
                                   <div>
-                                    <p className='font-semibold text-foreground'>{formatPrice(quote.price)}</p>
-                                    <p className='text-foreground/50 text-xs'>{formatDate(quote.quoteDate)}</p>
+                                    <p className='font-display text-xl text-foreground italic'>
+                                      {formatPrice(quote.price)}
+                                    </p>
+                                    <p className='font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
+                                      {formatDate(quote.quoteDate)}
+                                    </p>
                                     {quote.notes && (
-                                      <p className='mt-1 text-foreground/70 text-sm'>{quote.notes}</p>
+                                      <p className='mt-1.5 font-sans text-[0.88rem] text-foreground/75 leading-relaxed'>
+                                        {quote.notes}
+                                      </p>
                                     )}
                                   </div>
                                   <div className='ml-4 flex items-center gap-2'>
                                     <button
                                       type='button'
-                                      className='text-foreground/50 text-xs hover:text-primary'
+                                      className='font-mono text-[0.58rem] text-muted-foreground uppercase tracking-wider hover:text-primary'
                                       onClick={() => setEditingQuoteId(quote.id)}
                                     >
                                       Edit
                                     </button>
                                     <button
                                       type='button'
-                                      className='text-destructive/70 text-xs hover:text-destructive'
+                                      className='font-mono text-[0.58rem] text-destructive/70 uppercase tracking-wider hover:text-destructive'
                                       onClick={() => {
                                         if (window.confirm('Remove this quote and all its attached files?')) {
                                           deleteQuote.mutate({ quoteId: quote.id, vendorId: vendorData.id })
@@ -396,21 +454,21 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
 
                                 {/* Attached files */}
                                 {quote.files.length > 0 && (
-                                  <div className='mt-2 space-y-1'>
+                                  <div className='mt-2.5 space-y-1'>
                                     {quote.files.map((file) => (
                                       <div
                                         key={file.id}
-                                        className='flex items-center gap-2 rounded bg-muted px-2 py-1 text-xs'
+                                        className='flex items-center gap-2 rounded bg-muted px-2.5 py-1.5'
                                       >
                                         <a
                                           href={file.url}
                                           target='_blank'
                                           rel='noreferrer'
-                                          className='min-w-0 flex-1 truncate text-primary hover:underline'
+                                          className='min-w-0 flex-1 truncate font-sans text-[0.85rem] text-primary hover:underline'
                                         >
                                           {file.name}
                                         </a>
-                                        <span className='shrink-0 text-foreground/40'>
+                                        <span className='shrink-0 font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
                                           {formatFileSize(file.size)}
                                         </span>
                                         <button
@@ -425,7 +483,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                                             }
                                           }}
                                           disabled={deleteFile.isPending}
-                                          className='shrink-0 text-foreground/40 hover:text-destructive'
+                                          className='shrink-0 text-muted-foreground hover:text-destructive'
                                         >
                                           ✕
                                         </button>
@@ -447,7 +505,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                                 ) : (
                                   <button
                                     type='button'
-                                    className='mt-2 flex items-center gap-1 rounded-md border border-dashed border-border px-2 py-1.5 text-muted-foreground text-xs transition-colors hover:border-primary/40 hover:text-primary'
+                                    className='mt-2.5 rounded-md border border-dashed border-primary/30 px-2.5 py-1.5 font-mono text-[0.58rem] text-primary uppercase tracking-wider transition-colors hover:border-primary hover:bg-primary/5'
                                     onClick={() => setAttachingQuoteId(quote.id)}
                                   >
                                     + Attach files
@@ -459,20 +517,20 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                         ))}
                       </div>
                     )}
-                  </div>
-
-                  {/* Actions */}
-                  <div className='flex justify-between border-t pt-3'>
-                    <Button variant='outline' size='sm' onClick={() => setShowEditForm(true)}>
-                      Edit Details
-                    </Button>
-                    <Button variant='outline' size='sm' onClick={onClose}>
-                      Close
-                    </Button>
-                  </div>
+                  </section>
                 </div>
               )}
             </div>
+
+            {/* Footer */}
+            <footer className='flex gap-3 border-border/80 border-t px-5 py-4 md:px-6'>
+              <Button variant='outline' className='flex-1' onClick={() => setShowEditForm(true)}>
+                Edit Details
+              </Button>
+              <Button variant='outline' className='flex-1' onClick={onClose}>
+                Close
+              </Button>
+            </footer>
           </div>
         </DialogPrimitive.Content>
       </DialogPortal>

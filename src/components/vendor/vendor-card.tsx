@@ -2,7 +2,7 @@
 
 import { toast } from 'sonner'
 
-import { VendorStatusSelect } from '~/components/vendor/vendor-status-select'
+import { StatusBadge } from '~/components/vendor/vendor-status-select'
 import type { Vendor } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
 
@@ -60,21 +60,27 @@ export function VendorCard({
   }
 
   return (
-    <div className='flex flex-col gap-2 rounded-lg border border-border/90 bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between'>
-      <div className='flex flex-col gap-1'>
-        <button
-          type='button'
-          className='text-left font-semibold text-foreground text-sm hover:text-primary'
-          onClick={() => onViewDetails(vendor.id)}
-        >
+    <div
+      className='group flex cursor-pointer flex-col gap-2 rounded-lg border border-border/90 bg-card/60 px-4 py-3 transition-all hover:bg-card hover:shadow-sm sm:flex-row sm:items-center sm:justify-between'
+      onClick={() => onViewDetails(vendor.id)}
+      role='button'
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter') onViewDetails(vendor.id) }}
+    >
+      <div className='flex flex-col gap-0.5'>
+        <span className='font-display text-[1.05rem] text-foreground italic group-hover:text-primary'>
           {vendor.name}
-        </button>
+        </span>
         <div className='flex items-center gap-2'>
-          {vendor.location && <span className='text-foreground/50 text-xs'>{vendor.location}</span>}
+          {vendor.location && (
+            <span className='font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
+              {vendor.location}
+            </span>
+          )}
           {quoteCount > 0 && (
             <>
-              {vendor.location && <span className='text-foreground/30 text-xs'>·</span>}
-              <span className='text-foreground/50 text-xs'>
+              {vendor.location && <span className='text-border'>·</span>}
+              <span className='font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
                 {quoteCount} {quoteCount === 1 ? 'quote' : 'quotes'}
               </span>
             </>
@@ -82,18 +88,16 @@ export function VendorCard({
         </div>
       </div>
 
-      <div className='flex items-center gap-4'>
+      <div className='flex items-center gap-3' onClick={(e) => e.stopPropagation()}>
         {priceDisplay() && (
-          <span className='font-medium text-foreground/80 text-sm'>{priceDisplay()}</span>
+          <span className='font-mono text-[0.72rem] font-medium text-foreground/80'>
+            {priceDisplay()}
+          </span>
         )}
-        <VendorStatusSelect
-          value={vendor.status}
-          onChange={(status) => updateStatus.mutate({ vendorId: vendor.id, status })}
-          disabled={updateStatus.isPending}
-        />
+        <StatusBadge status={vendor.status} />
         <button
           type='button'
-          className='text-foreground/40 text-xs hover:text-destructive'
+          className='text-muted-foreground/50 transition-opacity hover:text-destructive'
           onClick={handleDelete}
           disabled={deleteVendor.isPending}
           aria-label={`Remove ${vendor.name}`}

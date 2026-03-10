@@ -6,8 +6,8 @@ import { toast } from 'sonner'
 
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
-import { Label } from '~/components/ui/label'
 import { Textarea } from '~/components/ui/textarea'
+import { cn } from '~/lib/utils'
 import { useUploadThing } from '~/lib/uploadthing'
 import type { VendorQuote } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
@@ -102,7 +102,6 @@ export function QuoteForm({ vendorId, onSuccess, onCancel, mode = 'create', quot
         toast.success('Quote updated')
         onSuccess()
       } else {
-        // 1. Create the quote
         const newQuote = await addQuote.mutateAsync({
           vendorId,
           price: parseFloat(price),
@@ -110,7 +109,6 @@ export function QuoteForm({ vendorId, onSuccess, onCancel, mode = 'create', quot
           notes: notes || undefined,
         })
 
-        // 2. Upload files if any
         if (selectedFiles.length > 0) {
           const uploadResults = await startUpload(selectedFiles)
           if (uploadResults && uploadResults.length > 0) {
@@ -141,15 +139,17 @@ export function QuoteForm({ vendorId, onSuccess, onCancel, mode = 'create', quot
   const busy = isSubmitting || isUploading
 
   return (
-    <form onSubmit={handleSubmit} className='flex flex-col gap-3 rounded-lg border border-border/90 p-4'>
-      <h4 className='font-semibold text-foreground text-sm'>{isEdit ? 'Edit Quote' : 'New Quote'}</h4>
+    <form onSubmit={handleSubmit} className='flex flex-col gap-3 rounded-lg border border-border/90 bg-card/60 p-4'>
+      <h4 className='font-mono text-[0.58rem] text-muted-foreground uppercase tracking-widest'>
+        {isEdit ? 'Edit Quote' : 'New Quote'}
+      </h4>
+
       <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
-        <div>
-          <Label htmlFor='price' className='text-xs'>
+        <label className='space-y-1'>
+          <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
             Price ($)
-          </Label>
+          </span>
           <Input
-            id='price'
             type='number'
             min='0.01'
             step='0.01'
@@ -157,72 +157,75 @@ export function QuoteForm({ vendorId, onSuccess, onCancel, mode = 'create', quot
             value={price}
             onChange={(e) => setPrice(e.target.value)}
             required
-            className='mt-1 h-8 text-sm'
+            className='h-9'
           />
-        </div>
-        <div>
-          <Label htmlFor='quoteDate' className='text-xs'>
+        </label>
+        <label className='space-y-1'>
+          <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
             Date
-          </Label>
+          </span>
           <Input
-            id='quoteDate'
             type='date'
             value={quoteDate}
             onChange={(e) => setQuoteDate(e.target.value)}
             required
-            className='mt-1 h-8 text-sm'
+            className='h-9'
           />
-        </div>
+        </label>
       </div>
-      <div>
-        <Label htmlFor='notes' className='text-xs'>
+
+      <label className='space-y-1'>
+        <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
           Notes
-        </Label>
+        </span>
         <Textarea
-          id='notes'
           placeholder='Package details, inclusions, conditions...'
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
-          className='mt-1 text-sm'
+          className='text-sm leading-relaxed'
         />
-      </div>
+      </label>
 
       {/* File upload dropzone — only for new quotes */}
       {!isEdit && (
-        <div>
-          <Label className='text-xs'>Attachments</Label>
+        <div className='space-y-1'>
+          <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
+            Attachments
+          </span>
           <div
             {...getRootProps()}
-            className={`mt-1 cursor-pointer rounded-md border-2 border-dashed p-3 text-center text-xs transition-colors ${
-              isDragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'
-            }`}
+            className={cn(
+              'cursor-pointer rounded-md border-2 border-dashed p-3 text-center transition-colors',
+              isDragActive
+                ? 'border-primary bg-primary/5'
+                : 'border-border hover:border-primary/40 hover:bg-muted/30'
+            )}
           >
             <input {...getInputProps()} />
             {isDragActive ? (
-              <p className='text-primary'>Drop files here...</p>
+              <p className='font-mono text-[0.62rem] text-primary uppercase tracking-wider'>
+                Drop files here
+              </p>
             ) : (
-              <p className='text-muted-foreground'>
+              <p className='font-mono text-[0.62rem] text-muted-foreground uppercase tracking-wider'>
                 Drag & drop files, or click to browse
-                <br />
-                <span className='text-[10px]'>PDF, images, Word, Excel, text — max 8MB each</span>
               </p>
             )}
           </div>
 
-          {/* Selected files list */}
           {selectedFiles.length > 0 && (
             <ul className='mt-2 space-y-1'>
               {selectedFiles.map((file, i) => (
                 <li
                   key={`${file.name}-${i}`}
-                  className='flex items-center justify-between rounded bg-muted px-2 py-1 text-xs'
+                  className='flex items-center justify-between rounded bg-muted px-2.5 py-1.5 font-sans text-[0.85rem]'
                 >
                   <span className='truncate'>{file.name}</span>
                   <button
                     type='button'
                     onClick={() => removeFile(i)}
-                    className='ml-2 shrink-0 text-foreground/40 hover:text-destructive'
+                    className='ml-2 shrink-0 text-muted-foreground hover:text-destructive'
                   >
                     ✕
                   </button>
@@ -237,12 +240,7 @@ export function QuoteForm({ vendorId, onSuccess, onCancel, mode = 'create', quot
         <Button type='button' variant='outline' size='sm' onClick={onCancel} disabled={busy}>
           Cancel
         </Button>
-        <Button
-          type='submit'
-          size='sm'
-          disabled={busy}
-          className='bg-primary text-primary-foreground hover:bg-primary/90'
-        >
+        <Button type='submit' size='sm' disabled={busy}>
           {busy
             ? (isUploading ? 'Uploading...' : 'Saving...')
             : isEdit ? 'Save Changes' : 'Add Quote'
