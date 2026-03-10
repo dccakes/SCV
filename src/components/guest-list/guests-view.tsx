@@ -1,12 +1,15 @@
+import { useRouter } from 'next/navigation'
 import {
   type Dispatch,
   type SetStateAction,
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import { BiPencil } from 'react-icons/bi'
+import { toast } from 'sonner'
 
 import { useToggleEventForm } from '~/components/contexts/event-form-context'
 import { useToggleGuestForm } from '~/components/contexts/guest-form-context'
@@ -19,35 +22,53 @@ import {
   type RsvpSummary,
 } from '~/components/guest-list/guest-detail-panel-content'
 import GuestSearchFilter from '~/components/guest-list/guest-search-filter'
+import type { HouseholdMemberDraft } from '~/components/guest-list/household-members-modal'
 import { GuestDetailDrawer } from '~/components/guest-list/v2/drawer/guest-detail-drawer'
 import { GuestCardsList } from '~/components/guest-list/v2/list/guest-cards-list'
 import { ListToolbar } from '~/components/guest-list/v2/list/list-toolbar'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '~/components/ui/alert-dialog'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
+import { api } from '~/trpc/react'
 
 type GuestsViewProps = {
   events: Event[]
   households: HouseholdWithGuests[]
+  allHouseholds?: HouseholdWithGuests[]
   selectedEventId: string
   setPrefillHousehold: Dispatch<SetStateAction<HouseholdFormData | undefined>>
   setPrefillEvent: Dispatch<SetStateAction<EventFormData | undefined>>
+  onImportClick: () => void
 }
 
 export default function GuestsView({
   events,
   households,
+  allHouseholds = households,
   selectedEventId,
   setPrefillHousehold,
   setPrefillEvent,
+  onImportClick,
 }: GuestsViewProps) {
+  const router = useRouter()
   const toggleGuestForm = useToggleGuestForm()
   const [filteredHouseholds, setFilteredHouseholds] = useState(households)
   const [nameSort, setNameSort] = useState<'none' | 'ascending' | 'descending'>('none')
   const [partySort, setPartySort] = useState<'none' | 'ascending' | 'descending'>('none')
-  const [selectedHousehold, setSelectedHousehold] = useState<HouseholdWithGuests | undefined>()
+  const [selectedHouseholdId, setSelectedHouseholdId] = useState<string | undefined>()
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
-  const [isDrawerEditMode, setIsDrawerEditMode] = useState(false)
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false)
+  const [editingSections, setEditingSections] = useState<Set<'contactAddress' | 'notes'>>(new Set())
   const [drawerDraft, setDrawerDraft] = useState<DrawerDraft>({
     email: '',
     phone: '',
@@ -59,6 +80,18 @@ export default function GuestsView({
     country: '',
     notes: '',
   })
+  const [drawerBaseline, setDrawerBaseline] = useState<DrawerDraft>({
+    email: '',
+    phone: '',
+    address1: '',
+    address2: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: '',
+    notes: '',
+  })
+  const initializedDrawerHouseholdIdRef = useRef<string | undefined>(undefined)
 
   const totalGuests =
     useMemo(
@@ -69,18 +102,6 @@ export default function GuestsView({
   useEffect(() => {
     setFilteredHouseholds(households)
   }, [households])
-
-  useEffect(() => {
-    if (!isDrawerOpen) return
-    const selectedHouseholdId = selectedHousehold?.id
-    if (!selectedHouseholdId) return
-    const hasSelectedHousehold = filteredHouseholds.some(
-      (household) => household.id === selectedHouseholdId
-    )
-    if (hasSelectedHousehold) return
-    setIsDrawerOpen(false)
-    setSelectedHousehold(undefined)
-  }, [filteredHouseholds, isDrawerOpen, selectedHousehold])
 
   const sortByName = useCallback(() => {
     setNameSort((previous) => {
@@ -117,86 +138,306 @@ export default function GuestsView({
     return filteredHouseholds
   }, [filteredHouseholds, nameSort, partySort])
 
-  const getHouseholdFormData = (household: HouseholdWithGuests): HouseholdFormData => {
-    return {
-      householdId: household.id,
-      address1: household.address1 ?? undefined,
-      address2: household.address2 ?? undefined,
-      city: household.city ?? undefined,
-      state: household.state ?? undefined,
-      country: household.country ?? undefined,
-      zipCode: household.zipCode ?? undefined,
-      notes: household.notes ?? undefined,
-      gifts:
-        selectedEventId === 'all'
-          ? household.gifts
-          : household.gifts.filter((gift) => gift.eventId === selectedEventId),
-      deletedGuests: [],
-      guestParty: household.guests.map((guest) => {
-        const invitations: FormInvites = {}
-        guest.invitations.forEach((invitation) => {
-          invitations[invitation.eventId] = invitation.rsvp ?? 'Not Invited'
-        })
+  const selectedHousehold = useMemo(
+    () => filteredHouseholds.find((household) => household.id === selectedHouseholdId),
+    [filteredHouseholds, selectedHouseholdId]
+  )
 
-        return {
-          guestId: guest.id,
-          firstName: guest.firstName,
-          lastName: guest.lastName,
-          email: guest.email,
-          phone: guest.phone,
-          isPrimaryContact: guest.isPrimaryContact,
-          ageGroup: guest.ageGroup ?? 'ADULT',
-          tagIds: guest.guestTags?.map((guestTag) => guestTag.tagId) ?? [],
-          invites: invitations,
-        }
-      }),
-    }
-  }
+  const selectedCanonicalHousehold = useMemo(
+    () => allHouseholds.find((household) => household.id === selectedHouseholdId),
+    [allHouseholds, selectedHouseholdId]
+  )
 
-  const handleEditHousehold = () => {
-    if (selectedHousehold === undefined) return
-
-    setPrefillHousehold(getHouseholdFormData(selectedHousehold))
+  useEffect(() => {
+    if (!isDrawerOpen) return
+    if (!selectedHouseholdId) return
+    if (selectedHousehold && selectedCanonicalHousehold) return
     setIsDrawerOpen(false)
-    toggleGuestForm()
-  }
-
-  const handleContinueWithDraft = () => {
-    if (!selectedHousehold) return
-
-    const prefill = getHouseholdFormData(selectedHousehold)
-    const primaryIndex = prefill.guestParty.findIndex((guest) => guest.isPrimaryContact)
-
-    if (primaryIndex >= 0) {
-      const primaryGuest = prefill.guestParty[primaryIndex]
-      if (!primaryGuest) return
-
-      prefill.guestParty[primaryIndex] = {
-        ...primaryGuest,
-        email: drawerDraft.email || null,
-        phone: drawerDraft.phone || null,
-      }
-    }
-
-    setPrefillHousehold({
-      ...prefill,
-      address1: drawerDraft.address1 || undefined,
-      address2: drawerDraft.address2 || undefined,
-      city: drawerDraft.city || undefined,
-      state: drawerDraft.state || undefined,
-      zipCode: drawerDraft.zipCode || undefined,
-      country: drawerDraft.country || undefined,
-      notes: drawerDraft.notes || undefined,
-    })
-
-    setIsDrawerOpen(false)
-    setIsDrawerEditMode(false)
-    toggleGuestForm()
-  }
+    setSelectedHouseholdId(undefined)
+    setEditingSections(new Set())
+  }, [isDrawerOpen, selectedCanonicalHousehold, selectedHousehold, selectedHouseholdId])
 
   const eventNameById = useMemo(() => {
     return new Map(events.map((event) => [event.id, event.name]))
   }, [events])
+
+  const createDrawerDraft = useCallback((household: HouseholdWithGuests): DrawerDraft => {
+    const primary = household.guests.find((guest) => guest.isPrimaryContact)
+    return {
+      email: primary?.email ?? '',
+      phone: primary?.phone ?? '',
+      address1: household.address1 ?? '',
+      address2: household.address2 ?? '',
+      city: household.city ?? '',
+      state: household.state ?? '',
+      zipCode: household.zipCode ?? '',
+      country: household.country ?? '',
+      notes: household.notes ?? '',
+    }
+  }, [])
+
+  const resetDrawerDraft = useCallback(
+    (household: HouseholdWithGuests) => {
+      const nextDraft = createDrawerDraft(household)
+      setDrawerDraft(nextDraft)
+      setDrawerBaseline(nextDraft)
+      setEditingSections(new Set())
+    },
+    [createDrawerDraft]
+  )
+
+  const isDrawerDirty = useMemo(() => {
+    const keys: Array<keyof DrawerDraft> = [
+      'email',
+      'phone',
+      'address1',
+      'address2',
+      'city',
+      'state',
+      'zipCode',
+      'country',
+      'notes',
+    ]
+    return keys.some((key) => drawerDraft[key] !== drawerBaseline[key])
+  }, [drawerBaseline, drawerDraft])
+
+  const updateHouseholdMutation = api.household.update.useMutation()
+
+  const saveDrawerChanges = useCallback(() => {
+    if (!selectedCanonicalHousehold) return
+
+    const activeHouseholdId = selectedCanonicalHousehold.id
+    const draftSnapshot: DrawerDraft = {
+      email: drawerDraft.email,
+      phone: drawerDraft.phone,
+      address1: drawerDraft.address1,
+      address2: drawerDraft.address2,
+      city: drawerDraft.city,
+      state: drawerDraft.state,
+      zipCode: drawerDraft.zipCode,
+      country: drawerDraft.country,
+      notes: drawerDraft.notes,
+    }
+
+    const guestParty = selectedCanonicalHousehold.guests.map((guest) => {
+      const invites: FormInvites = {}
+      guest.invitations.forEach((invitation) => {
+        invites[invitation.eventId] = invitation.rsvp ?? 'Not Invited'
+      })
+
+      return {
+        guestId: guest.id,
+        firstName: guest.firstName,
+        lastName: guest.lastName,
+        email: guest.isPrimaryContact ? draftSnapshot.email || null : guest.email,
+        phone: guest.isPrimaryContact ? draftSnapshot.phone || null : guest.phone,
+        isPrimaryContact: guest.isPrimaryContact,
+        ageGroup: guest.ageGroup ?? 'ADULT',
+        tagIds: guest.guestTags?.map((guestTag) => guestTag.tagId) ?? [],
+        invites,
+      }
+    })
+
+    updateHouseholdMutation.mutate(
+      {
+        householdId: activeHouseholdId,
+        address1: draftSnapshot.address1 || null,
+        address2: draftSnapshot.address2 || null,
+        city: draftSnapshot.city || null,
+        state: draftSnapshot.state || null,
+        zipCode: draftSnapshot.zipCode || null,
+        country: draftSnapshot.country || null,
+        notes: draftSnapshot.notes || null,
+        guestParty,
+        gifts: selectedCanonicalHousehold.gifts.map((gift) => ({
+          eventId: gift.eventId,
+          thankyou: gift.thankyou,
+          description: gift.description ?? null,
+        })),
+      },
+      {
+        onSuccess: () => {
+          setFilteredHouseholds((previous) =>
+            previous.map((household) => {
+              if (household.id !== activeHouseholdId) return household
+
+              return {
+                ...household,
+                address1: draftSnapshot.address1 || null,
+                address2: draftSnapshot.address2 || null,
+                city: draftSnapshot.city || null,
+                state: draftSnapshot.state || null,
+                zipCode: draftSnapshot.zipCode || null,
+                country: draftSnapshot.country || null,
+                notes: draftSnapshot.notes || null,
+                guests: household.guests.map((guest) => {
+                  if (!guest.isPrimaryContact) return guest
+
+                  return {
+                    ...guest,
+                    email: draftSnapshot.email || null,
+                    phone: draftSnapshot.phone || null,
+                  }
+                }),
+              }
+            })
+          )
+          if (selectedHouseholdId === activeHouseholdId) {
+            setDrawerBaseline(draftSnapshot)
+            setEditingSections(new Set())
+          }
+          toast.success('Guest details saved')
+          router.refresh()
+        },
+        onError: () => {
+          toast.error('Failed to save guest details')
+        },
+      }
+    )
+  }, [
+    drawerDraft,
+    router,
+    selectedCanonicalHousehold,
+    selectedHouseholdId,
+    updateHouseholdMutation,
+  ])
+
+  const saveMembersChanges = useCallback(
+    async (nextMembers: HouseholdMemberDraft[]) => {
+      if (!selectedCanonicalHousehold || !selectedHousehold) return false
+
+      const activeHouseholdId = selectedCanonicalHousehold.id
+      const canonicalGuestsById = new Map(
+        selectedCanonicalHousehold.guests.map((guest) => [guest.id, guest])
+      )
+      const editableGuestIds = new Set(selectedHousehold.guests.map((guest) => guest.id))
+
+      const guestParty = nextMembers.map((member) => {
+        const canonicalGuest =
+          member.id !== undefined ? canonicalGuestsById.get(member.id) : undefined
+        const invites: FormInvites = {}
+        canonicalGuest?.invitations.forEach((invitation) => {
+          invites[invitation.eventId] = invitation.rsvp ?? 'Not Invited'
+        })
+
+        return {
+          guestId: member.id,
+          firstName: member.firstName,
+          lastName: member.lastName,
+          email: member.email,
+          phone: member.phone,
+          isPrimaryContact: member.isPrimaryContact,
+          ageGroup: member.ageGroup,
+          tagIds: canonicalGuest?.guestTags?.map((guestTag) => guestTag.tagId) ?? [],
+          invites,
+        }
+      })
+
+      const nextMemberIds = new Set(
+        nextMembers
+          .map((member) => member.id)
+          .filter((memberId): memberId is number => memberId !== undefined)
+      )
+      const hiddenCanonicalGuestParty = selectedCanonicalHousehold.guests
+        .filter((guest) => !editableGuestIds.has(guest.id))
+        .map((guest) => {
+          const invites: FormInvites = {}
+          guest.invitations.forEach((invitation) => {
+            invites[invitation.eventId] = invitation.rsvp ?? 'Not Invited'
+          })
+
+          return {
+            guestId: guest.id,
+            firstName: guest.firstName,
+            lastName: guest.lastName,
+            email: guest.email,
+            phone: guest.phone,
+            isPrimaryContact: guest.isPrimaryContact,
+            ageGroup: guest.ageGroup ?? 'ADULT',
+            tagIds: guest.guestTags?.map((guestTag) => guestTag.tagId) ?? [],
+            invites,
+          }
+        })
+
+      const deletedGuests = selectedHousehold.guests
+        .filter((guest) => !nextMemberIds.has(guest.id))
+        .map((guest) => guest.id)
+
+      return await new Promise<boolean>((resolve) => {
+        updateHouseholdMutation.mutate(
+          {
+            householdId: activeHouseholdId,
+            address1: selectedCanonicalHousehold.address1,
+            address2: selectedCanonicalHousehold.address2,
+            city: selectedCanonicalHousehold.city,
+            state: selectedCanonicalHousehold.state,
+            zipCode: selectedCanonicalHousehold.zipCode,
+            country: selectedCanonicalHousehold.country,
+            notes: selectedCanonicalHousehold.notes,
+            guestParty: [...guestParty, ...hiddenCanonicalGuestParty],
+            deletedGuests: deletedGuests.length > 0 ? deletedGuests : undefined,
+            gifts: selectedCanonicalHousehold.gifts.map((gift) => ({
+              eventId: gift.eventId,
+              thankyou: gift.thankyou,
+              description: gift.description ?? null,
+            })),
+          },
+          {
+            onSuccess: () => {
+              setFilteredHouseholds((previous) =>
+                previous.map((household) => {
+                  if (household.id !== activeHouseholdId) return household
+
+                  const displayedGuestsById = new Map(
+                    household.guests.map((guest) => [guest.id, guest])
+                  )
+
+                  return {
+                    ...household,
+                    guests: nextMembers.map((member, index) => {
+                      const guestId = member.id ?? -(index + 1)
+                      const sourceGuest =
+                        (member.id !== undefined
+                          ? canonicalGuestsById.get(member.id)
+                          : undefined) ??
+                        (member.id !== undefined ? displayedGuestsById.get(member.id) : undefined)
+
+                      return {
+                        ...(sourceGuest ?? {
+                          id: guestId,
+                          householdId: household.id,
+                          weddingId: household.weddingId,
+                          createdAt: household.createdAt,
+                          updatedAt: household.updatedAt,
+                          guestTags: [],
+                          invitations: [],
+                        }),
+                        id: guestId,
+                        firstName: member.firstName,
+                        lastName: member.lastName,
+                        email: member.email,
+                        phone: member.phone,
+                        ageGroup: member.ageGroup,
+                        isPrimaryContact: member.isPrimaryContact,
+                      }
+                    }),
+                  }
+                })
+              )
+              toast.success('Household members saved')
+              router.refresh()
+              resolve(true)
+            },
+            onError: () => {
+              toast.error('Failed to save household members')
+              resolve(false)
+            },
+          }
+        )
+      })
+    },
+    [router, selectedCanonicalHousehold, selectedHousehold, updateHouseholdMutation]
+  )
 
   const selectedEvent = useMemo(
     () => events.find((event) => event.id === selectedEventId),
@@ -227,21 +468,16 @@ export default function GuestsView({
   }, [selectedHousehold])
 
   useEffect(() => {
-    if (!selectedHousehold) return
+    if (!isDrawerOpen || !selectedHousehold) return
+    if (initializedDrawerHouseholdIdRef.current === selectedHousehold.id) return
+    resetDrawerDraft(selectedHousehold)
+    initializedDrawerHouseholdIdRef.current = selectedHousehold.id
+  }, [isDrawerOpen, resetDrawerDraft, selectedHousehold])
 
-    const primary = selectedHousehold.guests.find((guest) => guest.isPrimaryContact)
-    setDrawerDraft({
-      email: primary?.email ?? '',
-      phone: primary?.phone ?? '',
-      address1: selectedHousehold.address1 ?? '',
-      address2: selectedHousehold.address2 ?? '',
-      city: selectedHousehold.city ?? '',
-      state: selectedHousehold.state ?? '',
-      zipCode: selectedHousehold.zipCode ?? '',
-      country: selectedHousehold.country ?? '',
-      notes: selectedHousehold.notes ?? '',
-    })
-  }, [selectedHousehold])
+  const handleDiscardChanges = useCallback(() => {
+    setDrawerDraft(drawerBaseline)
+    setEditingSections(new Set())
+  }, [drawerBaseline])
 
   const communicationLog = useMemo(() => {
     if (!selectedHousehold) return []
@@ -293,17 +529,40 @@ export default function GuestsView({
   }, [selectedEventId, selectedHousehold])
 
   const handleSelectHousehold = useCallback((household: HouseholdWithGuests) => {
-    setSelectedHousehold(household)
-    setIsDrawerEditMode(false)
+    setSelectedHouseholdId(household.id)
+    setEditingSections(new Set())
     setIsDrawerOpen(true)
   }, [])
 
-  const handleDrawerOpenChange = useCallback((open: boolean) => {
-    setIsDrawerOpen(open)
-    if (open) return
-    setSelectedHousehold(undefined)
-    setIsDrawerEditMode(false)
+  const toggleEditingSection = useCallback((section: 'contactAddress' | 'notes') => {
+    setEditingSections((previous) => {
+      const next = new Set(previous)
+      if (next.has(section)) next.delete(section)
+      else next.add(section)
+      return next
+    })
   }, [])
+
+  const rsvpManageHref = useMemo(() => {
+    if (selectedEventId === 'all') return '/events?tab=rsvps'
+    return `/events?eventId=${selectedEventId}&tab=rsvps`
+  }, [selectedEventId])
+
+  const handleDrawerOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open && isDrawerDirty) {
+        setShowDiscardDialog(true)
+        return
+      }
+
+      setIsDrawerOpen(open)
+      if (open) return
+      setSelectedHouseholdId(undefined)
+      initializedDrawerHouseholdIdRef.current = undefined
+      setEditingSections(new Set())
+    },
+    [isDrawerDirty]
+  )
 
   return (
     <section>
@@ -329,7 +588,9 @@ export default function GuestsView({
           selectedEventId={selectedEventId}
         />
         <div className='flex gap-3'>
-          <Button variant='outline'>Download List</Button>
+          <Button variant='outline' onClick={onImportClick}>
+            Import Guests
+          </Button>
           <Button
             onClick={() => {
               setPrefillHousehold(undefined)
@@ -348,7 +609,7 @@ export default function GuestsView({
         />
         <GuestCardsList
           households={sortedHouseholds}
-          selectedHouseholdId={selectedHousehold?.id}
+          selectedHouseholdId={selectedHouseholdId}
           onSelectHousehold={handleSelectHousehold}
         />
       </div>
@@ -376,37 +637,26 @@ export default function GuestsView({
           </div>
         }
         footer={
-          <div className='flex gap-2'>
-            {isDrawerEditMode ? (
-              <>
-                <Button
-                  type='button'
-                  variant='outline'
-                  className='flex-1'
-                  onClick={() => setIsDrawerEditMode(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type='button' className='flex-1' onClick={handleContinueWithDraft}>
-                  Continue in Form
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  type='button'
-                  variant='outline'
-                  className='flex-1'
-                  onClick={() => setIsDrawerEditMode(true)}
-                >
-                  Edit Details
-                </Button>
-                <Button type='button' className='flex-1' onClick={handleEditHousehold}>
-                  Open Full Editor
-                </Button>
-              </>
-            )}
-          </div>
+          isDrawerDirty ? (
+            <div className='flex gap-2'>
+              <Button
+                type='button'
+                variant='outline'
+                className='flex-1'
+                onClick={handleDiscardChanges}
+              >
+                Discard changes
+              </Button>
+              <Button
+                type='button'
+                className='flex-1'
+                onClick={saveDrawerChanges}
+                disabled={updateHouseholdMutation.isPending}
+              >
+                Save changes
+              </Button>
+            </div>
+          ) : null
         }
       >
         {selectedHousehold ? (
@@ -417,13 +667,39 @@ export default function GuestsView({
             selectedEventResponses={selectedEventResponses}
             communicationLog={communicationLog}
             allEventRsvpSummary={allEventRsvpSummary}
-            isDrawerEditMode={isDrawerEditMode}
-            setIsDrawerEditMode={setIsDrawerEditMode}
+            editingSections={editingSections}
+            toggleEditingSection={toggleEditingSection}
             drawerDraft={drawerDraft}
             setDrawerDraft={setDrawerDraft}
+            rsvpManageHref={rsvpManageHref}
+            onSaveMembers={saveMembersChanges}
           />
         ) : null}
       </GuestDetailDrawer>
+      <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved drawer changes. Keep editing to continue or discard and close.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep editing</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowDiscardDialog(false)
+                setIsDrawerOpen(false)
+                setSelectedHouseholdId(undefined)
+                initializedDrawerHouseholdIdRef.current = undefined
+                setEditingSections(new Set())
+              }}
+            >
+              Discard and close
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   )
 }

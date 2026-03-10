@@ -41,6 +41,10 @@ jest.mock('~/components/guest-list/invite-link-panel', () => ({
   InviteLinkPanel: () => <div data-testid='invite-link-panel' />,
 }))
 
+jest.mock('~/components/guest-list/csv-upload-dialog', () => ({
+  CsvUploadDialog: () => null,
+}))
+
 const dashboardDataNoGuests = {
   events: [],
   households: [],
