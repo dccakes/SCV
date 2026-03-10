@@ -126,4 +126,10 @@ describe('EventsPageClient', () => {
       })
     )
   })
+
+  it('shows RSVP context banner when arriving from guest drawer link', () => {
+    render(<EventsPageClient initialEvents={[baseEvent]} initialRsvpEventId='evt-1' />)
+
+    expect(screen.getByText('RSVP management context: Ceremony')).toBeInTheDocument()
+  })
 })

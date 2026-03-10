@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 
+import type { DashboardData } from '~/app/utils/shared-types'
 import GuestList from '~/components/guest-list/index'
 
 jest.mock('~/components/contexts/guest-form-context', () => ({
@@ -41,6 +42,10 @@ jest.mock('~/components/guest-list/invite-link-panel', () => ({
   InviteLinkPanel: () => <div data-testid='invite-link-panel' />,
 }))
 
+jest.mock('~/components/guest-list/csv-upload-dialog', () => ({
+  CsvUploadDialog: () => null,
+}))
+
 const dashboardDataNoGuests = {
   events: [],
   households: [],
@@ -52,7 +57,7 @@ const dashboardDataNoGuests = {
   },
   totalGuests: 0,
   totalEvents: 0,
-} as any
+} as unknown as DashboardData
 
 const dashboardDataWithGuests = {
   events: [],
@@ -81,7 +86,7 @@ const dashboardDataWithGuests = {
   },
   totalGuests: 1,
   totalEvents: 0,
-} as any
+} as unknown as DashboardData
 
 describe('GuestList index', () => {
   it('renders InviteLinkPanel when there are no guests', () => {

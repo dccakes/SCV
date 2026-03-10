@@ -362,6 +362,29 @@ export class HouseholdManagementService {
   }
 
   /**
+   * Bulk create households from CSV import
+   *
+   * Creates each household with guests sequentially.
+   * Returns the count of successfully created households.
+   */
+  async bulkCreateHouseholds(
+    weddingId: string,
+    households: Parameters<HouseholdManagementService['createHouseholdWithGuests']>[1][]
+  ): Promise<{ created: number; failed: number }> {
+    let created = 0
+    let failed = 0
+    for (const household of households) {
+      try {
+        await this.createHouseholdWithGuests(weddingId, household)
+        created++
+      } catch {
+        failed++
+      }
+    }
+    return { created, failed }
+  }
+
+  /**
    * Search households by guest name
    */
   async searchHouseholds(searchText: string): Promise<HouseholdSearchResult[]> {
