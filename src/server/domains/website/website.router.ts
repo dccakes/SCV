@@ -8,15 +8,17 @@
 import { TRPCError } from '@trpc/server'
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
+import { rsvpSubmissionService, submitPublicRsvpSchema } from '~/server/application/rsvp-submission'
 import { websiteService } from '~/server/domains/website'
 import {
   createWebsiteSchema,
   fetchWeddingDataSchema,
   getBySubUrlSchema,
-  submitRsvpSchema,
+  hasPasswordAccessSchema,
   updateCoverPhotoSchema,
   updateRsvpEnabledSchema,
   updateWebsiteSchema,
+  verifyWebsitePasswordSchema,
 } from '~/server/domains/website/website.validator'
 import { weddingService } from '~/server/domains/wedding'
 
@@ -105,6 +107,16 @@ export const websiteRouter = createTRPCRouter({
     return websiteService.getBySubUrl(input.subUrl)
   }),
 
+  hasPasswordAccess: publicProcedure.input(hasPasswordAccessSchema).query(async ({ input }) => {
+    return websiteService.hasPasswordAccess(input.subUrl, input.accessToken)
+  }),
+
+  verifyWebsitePassword: publicProcedure
+    .input(verifyWebsitePasswordSchema)
+    .mutation(async ({ input }) => {
+      return websiteService.verifyWebsitePassword(input.subUrl, input.password)
+    }),
+
   /**
    * Fetch complete wedding data for public website display
    */
@@ -118,7 +130,13 @@ export const websiteRouter = createTRPCRouter({
    * Note: This is a cross-domain operation that will be moved to an
    * RSVP Submission Application Service in Phase 4.
    */
-  submitRsvpForm: protectedProcedure.input(submitRsvpSchema).mutation(async ({ input }) => {
-    return websiteService.submitRsvpForm(input)
+  submitPublicRsvpForm: publicProcedure
+    .input(submitPublicRsvpSchema)
+    .mutation(async ({ input }) => {
+      return rsvpSubmissionService.submitPublicRsvp(input)
+    }),
+
+  submitRsvpForm: publicProcedure.input(submitPublicRsvpSchema).mutation(async ({ input }) => {
+    return rsvpSubmissionService.submitPublicRsvp(input)
   }),
 })

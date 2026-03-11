@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 
 import type { DashboardData } from '~/app/utils/shared-types'
 import GuestList from '~/components/guest-list/index'
@@ -30,12 +30,26 @@ jest.mock('~/components/guest-list/event-tabs', () => ({
 
 jest.mock('~/components/guest-list/guests-view', () => ({
   __esModule: true,
-  default: () => <div data-testid='guests-view' />,
+  default: ({ onImportClick }: { onImportClick: () => void }) => (
+    <>
+      <button type='button' onClick={onImportClick} data-testid='guests-import-button'>
+        import
+      </button>
+      <div data-testid='guests-view' />
+    </>
+  ),
 }))
 
 jest.mock('~/components/guest-list/no-guests-view', () => ({
   __esModule: true,
-  default: () => <div data-testid='no-guests-view' />,
+  default: ({ onImportClick }: { onImportClick: () => void }) => (
+    <>
+      <button type='button' onClick={onImportClick} data-testid='no-guests-import-button'>
+        import
+      </button>
+      <div data-testid='no-guests-view' />
+    </>
+  ),
 }))
 
 jest.mock('~/components/guest-list/invite-link-panel', () => ({
@@ -43,7 +57,7 @@ jest.mock('~/components/guest-list/invite-link-panel', () => ({
 }))
 
 jest.mock('~/components/guest-list/csv-upload-dialog', () => ({
-  CsvUploadDialog: () => null,
+  CsvUploadDialog: () => <div data-testid='csv-upload-dialog' />,
 }))
 
 const dashboardDataNoGuests = {
@@ -109,5 +123,15 @@ describe('GuestList index', () => {
     render(<GuestList dashboardData={dashboardDataNoGuests} />)
     expect(screen.getByTestId('no-guests-view')).toBeInTheDocument()
     expect(screen.queryByTestId('guests-view')).not.toBeInTheDocument()
+  })
+
+  it('renders CSV dialog only after import click', async () => {
+    render(<GuestList dashboardData={dashboardDataNoGuests} />)
+
+    expect(screen.queryByTestId('csv-upload-dialog')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByTestId('no-guests-import-button'))
+
+    expect(await screen.findByTestId('csv-upload-dialog')).toBeInTheDocument()
   })
 })

@@ -165,6 +165,8 @@ type Website = {
   generalQuestions?: Question[]
 }
 
+type PublicWebsite = Omit<Website, 'password'>
+
 type WeddingPageData = {
   groomFirstName: string | null
   groomLastName: string | null
@@ -260,6 +262,7 @@ export type {
   HouseholdSearch,
   Invitation,
   Option,
+  PublicWebsite,
   Question,
   RsvpFormResponse,
   RsvpPageData,

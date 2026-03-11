@@ -1,7 +1,6 @@
 'use client'
 
 import { ArrowUpDown } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { type Dispatch, type SetStateAction, useEffect, useState } from 'react'
 import { AiOutlineHome } from 'react-icons/ai'
 import { CiMail } from 'react-icons/ci'
@@ -165,58 +164,62 @@ const DefaultCard = ({ household, events, setPrefillHousehold }: DefaultCardProp
   }
 
   return (
-    <Card
-      className='cursor-pointer transition-all hover:shadow-lg'
-      onClick={() => handleEditHousehold()}
-    >
+    <Card className='transition-all hover:shadow-lg'>
       <CardHeader className='pb-3'>
-        <div className='flex items-start justify-between'>
-          <div className='flex-1'>
-            <div className='mb-2 flex items-center gap-2'>
-              <h3 className='font-semibold text-lg'>
-                {household.guests[0]?.firstName} {household.guests[0]?.lastName}
-                {household.guests.length > 1 && ` +${household.guests.length - 1}`}
-              </h3>
-              <span className='inline-flex items-center rounded-full bg-secondary px-2 py-1 font-medium text-xs'>
-                Party of {household.guests.length}
-              </span>
-            </div>
+        <button
+          type='button'
+          onClick={handleEditHousehold}
+          aria-label={`Select ${household.guests[0]?.firstName ?? ''} ${household.guests[0]?.lastName ?? ''} household`}
+          className='w-full rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+        >
+          <div className='flex items-start justify-between'>
+            <div className='flex-1'>
+              <div className='mb-2 flex items-center gap-2'>
+                <h3 className='font-semibold text-lg'>
+                  {household.guests[0]?.firstName} {household.guests[0]?.lastName}
+                  {household.guests.length > 1 && ` +${household.guests.length - 1}`}
+                </h3>
+                <span className='inline-flex items-center rounded-full bg-secondary px-2 py-1 font-medium text-xs'>
+                  Party of {household.guests.length}
+                </span>
+              </div>
 
-            <div className='mb-3 space-y-1 text-muted-foreground text-sm'>
-              {household.guests.map((guest) => (
-                <div key={guest.id} className='flex items-center gap-2'>
-                  <span>
-                    {guest.firstName} {guest.lastName}
-                  </span>
-                  {guest.isPrimaryContact && (
-                    <span className='inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 font-medium text-primary text-xs'>
-                      Primary
+              <div className='mb-3 space-y-1 text-muted-foreground text-sm'>
+                {household.guests.map((guest) => (
+                  <div key={guest.id} className='flex items-center gap-2'>
+                    <span>
+                      {guest.firstName} {guest.lastName}
                     </span>
-                  )}
-                </div>
-              ))}
-            </div>
+                    {guest.isPrimaryContact && (
+                      <span className='inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 font-medium text-primary text-xs'>
+                        Primary
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
 
-            <div className='flex items-center gap-3 text-muted-foreground text-sm'>
-              <div className='flex items-center gap-1'>
-                <AiOutlineHome className='h-4 w-4' />
-                <span className='text-xs'>{household.address1 ? 'Address' : 'No address'}</span>
-              </div>
-              <div className='flex items-center gap-1'>
-                <HiOutlinePhone className='h-4 w-4' />
-                <span className='text-xs'>
-                  {household.guests.some((g) => g.phone) ? 'Phone' : 'No phone'}
-                </span>
-              </div>
-              <div className='flex items-center gap-1'>
-                <CiMail className='h-4 w-4' />
-                <span className='text-xs'>
-                  {household.guests.some((g) => g.email) ? 'Email' : 'No email'}
-                </span>
+              <div className='flex items-center gap-3 text-muted-foreground text-sm'>
+                <div className='flex items-center gap-1'>
+                  <AiOutlineHome className='h-4 w-4' />
+                  <span className='text-xs'>{household.address1 ? 'Address' : 'No address'}</span>
+                </div>
+                <div className='flex items-center gap-1'>
+                  <HiOutlinePhone className='h-4 w-4' />
+                  <span className='text-xs'>
+                    {household.guests.some((g) => g.phone) ? 'Phone' : 'No phone'}
+                  </span>
+                </div>
+                <div className='flex items-center gap-1'>
+                  <CiMail className='h-4 w-4' />
+                  <span className='text-xs'>
+                    {household.guests.some((g) => g.email) ? 'Email' : 'No email'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </button>
       </CardHeader>
 
       <CardContent className='space-y-2'>
@@ -264,10 +267,12 @@ const SingleEventCard = ({
   selectedEvent,
   setPrefillHousehold,
 }: SingleEventCardProps) => {
-  const router = useRouter()
+  const utils = api.useUtils()
   const toggleGuestForm = useToggleGuestForm()
   const updateGift = api.gift.update.useMutation({
-    onSuccess: () => router.refresh(),
+    onSuccess: () => {
+      void utils.dashboard.getByUserId.invalidate()
+    },
     onError: () => {
       toast.error('Failed to update gift. Please try again.')
     },
@@ -311,58 +316,62 @@ const SingleEventCard = ({
   }
 
   return (
-    <Card
-      className='cursor-pointer transition-all hover:shadow-lg'
-      onClick={() => handleEditHousehold()}
-    >
+    <Card className='transition-all hover:shadow-lg'>
       <CardHeader className='pb-3'>
-        <div className='flex items-start justify-between'>
-          <div className='flex-1'>
-            <div className='mb-2 flex items-center gap-2'>
-              <h3 className='font-semibold text-lg'>
-                {household.guests[0]?.firstName} {household.guests[0]?.lastName}
-                {household.guests.length > 1 && ` +${household.guests.length - 1}`}
-              </h3>
-              <span className='inline-flex items-center rounded-full bg-secondary px-2 py-1 font-medium text-xs'>
-                Party of {household.guests.length}
-              </span>
-            </div>
+        <button
+          type='button'
+          onClick={handleEditHousehold}
+          aria-label={`Select ${household.guests[0]?.firstName ?? ''} ${household.guests[0]?.lastName ?? ''} household`}
+          className='w-full rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+        >
+          <div className='flex items-start justify-between'>
+            <div className='flex-1'>
+              <div className='mb-2 flex items-center gap-2'>
+                <h3 className='font-semibold text-lg'>
+                  {household.guests[0]?.firstName} {household.guests[0]?.lastName}
+                  {household.guests.length > 1 && ` +${household.guests.length - 1}`}
+                </h3>
+                <span className='inline-flex items-center rounded-full bg-secondary px-2 py-1 font-medium text-xs'>
+                  Party of {household.guests.length}
+                </span>
+              </div>
 
-            <div className='mb-3 space-y-1 text-muted-foreground text-sm'>
-              {household.guests.map((guest) => (
-                <div key={guest.id} className='flex items-center gap-2'>
-                  <span>
-                    {guest.firstName} {guest.lastName}
-                  </span>
-                  {guest.isPrimaryContact && (
-                    <span className='inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 font-medium text-primary text-xs'>
-                      Primary
+              <div className='mb-3 space-y-1 text-muted-foreground text-sm'>
+                {household.guests.map((guest) => (
+                  <div key={guest.id} className='flex items-center gap-2'>
+                    <span>
+                      {guest.firstName} {guest.lastName}
                     </span>
-                  )}
-                </div>
-              ))}
-            </div>
+                    {guest.isPrimaryContact && (
+                      <span className='inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 font-medium text-primary text-xs'>
+                        Primary
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
 
-            <div className='flex items-center gap-3 text-muted-foreground text-sm'>
-              <div className='flex items-center gap-1'>
-                <AiOutlineHome className='h-4 w-4' />
-                <span className='text-xs'>{household.address1 ? 'Address' : 'No address'}</span>
-              </div>
-              <div className='flex items-center gap-1'>
-                <HiOutlinePhone className='h-4 w-4' />
-                <span className='text-xs'>
-                  {household.guests.some((g) => g.phone) ? 'Phone' : 'No phone'}
-                </span>
-              </div>
-              <div className='flex items-center gap-1'>
-                <CiMail className='h-4 w-4' />
-                <span className='text-xs'>
-                  {household.guests.some((g) => g.email) ? 'Email' : 'No email'}
-                </span>
+              <div className='flex items-center gap-3 text-muted-foreground text-sm'>
+                <div className='flex items-center gap-1'>
+                  <AiOutlineHome className='h-4 w-4' />
+                  <span className='text-xs'>{household.address1 ? 'Address' : 'No address'}</span>
+                </div>
+                <div className='flex items-center gap-1'>
+                  <HiOutlinePhone className='h-4 w-4' />
+                  <span className='text-xs'>
+                    {household.guests.some((g) => g.phone) ? 'Phone' : 'No phone'}
+                  </span>
+                </div>
+                <div className='flex items-center gap-1'>
+                  <CiMail className='h-4 w-4' />
+                  <span className='text-xs'>
+                    {household.guests.some((g) => g.email) ? 'Email' : 'No email'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </button>
       </CardHeader>
 
       <CardContent className='space-y-3'>
@@ -445,10 +454,12 @@ type InvitationDropdownProps = {
 }
 
 const InvitationDropdown = ({ guest, event, rsvp }: InvitationDropdownProps) => {
-  const router = useRouter()
+  const utils = api.useUtils()
 
   const updateInvitation = api.invitation.update.useMutation({
-    onSuccess: () => router.refresh(),
+    onSuccess: () => {
+      void utils.dashboard.getByUserId.invalidate()
+    },
     onError: () => {
       toast.error('Failed to update invitation. Please try again.')
     },

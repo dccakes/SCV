@@ -35,8 +35,10 @@ export default function WeddingPageMobile({ weddingData, path }: WeddingPageProp
         <div className='relative h-80 w-full px-10'>
           <Image
             src={weddingData.website.coverPhotoUrl}
-            layout='fill'
-            objectFit='contain'
+            fill
+            sizes='100vw'
+            priority
+            className='object-contain'
             alt='Website Cover Photo'
           />
         </div>

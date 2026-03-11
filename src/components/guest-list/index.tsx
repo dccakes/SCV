@@ -1,5 +1,6 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useSearchParams } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import { sharedStyles } from '~/app/utils/shared-styles'
@@ -9,11 +10,18 @@ import { useGuestForm } from '~/components/contexts/guest-form-context'
 import EventForm from '~/components/forms/event-form'
 import GuestForm from '~/components/forms/guest-form'
 import type { HouseholdFormData } from '~/components/forms/guest-form.schema'
-import { CsvUploadDialog } from '~/components/guest-list/csv-upload-dialog'
 import EventsTabs from '~/components/guest-list/event-tabs'
 import GuestsView from '~/components/guest-list/guests-view'
 import { InviteLinkPanel } from '~/components/guest-list/invite-link-panel'
 import NoGuestsView from '~/components/guest-list/no-guests-view'
+
+const CsvUploadDialog = dynamic(
+  () =>
+    import('~/components/guest-list/csv-upload-dialog').then((mod) => ({
+      default: mod.CsvUploadDialog,
+    })),
+  { ssr: false }
+)
 
 export default function GuestList({ dashboardData }: { dashboardData: DashboardData }) {
   const isEventFormOpen = useEventForm()
@@ -69,13 +77,15 @@ export default function GuestList({ dashboardData }: { dashboardData: DashboardD
         <GuestForm events={dashboardData?.events} prefillFormData={prefillHousehold} />
       )}
       {isEventFormOpen && <EventForm prefillFormData={prefillEvent} />}
-      <CsvUploadDialog
-        open={csvDialogOpen}
-        onOpenChange={setCsvDialogOpen}
-        events={dashboardData.events}
-      />
+      {csvDialogOpen && (
+        <CsvUploadDialog
+          open={csvDialogOpen}
+          onOpenChange={setCsvDialogOpen}
+          events={dashboardData.events}
+        />
+      )}
       <EventsTabs events={dashboardData?.events} selectedEventId={selectedEventId} />
-      <div className={sharedStyles.desktopPaddingSidesGuestList}>
+      <div className={`${sharedStyles.desktopPaddingSidesGuestList} mb-4 flex justify-end`}>
         <InviteLinkPanel />
       </div>
       {totalGuests > 0 ? (

@@ -109,6 +109,7 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
     lastName: guest.lastName,
     email: guest.email,
     phone: guest.phone,
+    tagIds: guest.guestTags?.map((guestTag) => guestTag.tagId) ?? [],
     ageGroup: guest.ageGroup ?? 'ADULT',
     isPrimaryContact: guest.isPrimaryContact,
   }))

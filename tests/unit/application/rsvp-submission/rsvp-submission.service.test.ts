@@ -68,6 +68,18 @@ const createMockDb = () => {
   const mockTransactionClient = createMockTransactionClient()
 
   return {
+    wedding: {
+      findFirst: jest.fn(),
+    },
+    invitation: {
+      count: jest.fn(),
+    },
+    guest: {
+      count: jest.fn(),
+    },
+    household: {
+      count: jest.fn(),
+    },
     $transaction: jest.fn().mockImplementation(async (callback) => {
       return callback(mockTransactionClient)
     }),
@@ -316,6 +328,48 @@ describe('RsvpSubmissionService', () => {
       })
 
       expect(result).toEqual({ success: true })
+    })
+  })
+
+  describe('submitPublicRsvp', () => {
+    it('should accept a valid token and submit RSVP data', async () => {
+      mockDb.wedding.findFirst.mockResolvedValue({ id: 'wedding-123' })
+      mockDb.invitation.count.mockResolvedValue(1)
+      mockDb.guest.count.mockResolvedValue(1)
+      mockDb.household.count.mockResolvedValue(1)
+
+      const result = await service.submitPublicRsvp({
+        subUrl: 'ash-and-jamie',
+        token: 'a'.repeat(32),
+        rsvpResponses: [{ eventId: 'event-123', guestId: 1, rsvp: 'Attending' }],
+        answersToQuestions: [
+          {
+            questionId: 'question-123',
+            questionType: 'Text',
+            response: 'Can not wait!',
+            guestId: 1,
+            householdId: 'household-123',
+          },
+        ],
+      })
+
+      expect(result).toEqual({ success: true })
+    })
+
+    it('should reject invalid or expired token', async () => {
+      mockDb.wedding.findFirst.mockResolvedValue(null)
+
+      await expect(
+        service.submitPublicRsvp({
+          subUrl: 'ash-and-jamie',
+          token: 'a'.repeat(32),
+          rsvpResponses: [],
+          answersToQuestions: [],
+        })
+      ).rejects.toMatchObject({
+        code: 'FORBIDDEN',
+        message: 'Invalid or expired RSVP token',
+      })
     })
   })
 })

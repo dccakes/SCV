@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 
+import { TagsModal } from '~/components/forms/guest/tags-modal'
 import { Button } from '~/components/ui/button'
 import {
   Dialog,
@@ -18,6 +19,7 @@ export type HouseholdMemberDraft = {
   lastName: string
   email: string | null
   phone: string | null
+  tagIds: string[]
   ageGroup: 'ADULT' | 'TEEN' | 'CHILD' | 'INFANT'
   isPrimaryContact: boolean
 }
@@ -41,6 +43,7 @@ export function HouseholdMembersModal(props: Readonly<HouseholdMembersModalProps
   const [draftMembers, setDraftMembers] = useState<HouseholdMemberDraft[]>(members)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [tagModalMemberIndex, setTagModalMemberIndex] = useState<number | null>(null)
 
   useEffect(() => {
     if (!open) return
@@ -94,6 +97,7 @@ export function HouseholdMembersModal(props: Readonly<HouseholdMembersModalProps
         lastName: '',
         email: null,
         phone: null,
+        tagIds: [],
         ageGroup: 'ADULT',
         isPrimaryContact: false,
       },
@@ -132,6 +136,15 @@ export function HouseholdMembersModal(props: Readonly<HouseholdMembersModalProps
                       aria-label={`Set ${memberName} as primary`}
                     >
                       Set primary
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      onClick={() => setTagModalMemberIndex(index)}
+                      aria-label={`Tags for ${memberName}`}
+                    >
+                      Tags{member.tagIds.length > 0 ? ` (${member.tagIds.length})` : ''}
                     </Button>
                     <Button
                       type='button'
@@ -230,6 +243,34 @@ export function HouseholdMembersModal(props: Readonly<HouseholdMembersModalProps
             </Button>
           </div>
         </DialogFooter>
+        {tagModalMemberIndex !== null ? (
+          <TagsModal
+            open
+            onOpenChange={(open) => {
+              if (!open) setTagModalMemberIndex(null)
+            }}
+            selectedTagIds={draftMembers[tagModalMemberIndex]?.tagIds ?? []}
+            onTagsChange={(tagIds) => {
+              setDraftMembers((previous) =>
+                previous.map((member, index) =>
+                  index === tagModalMemberIndex ? { ...member, tagIds } : member
+                )
+              )
+              setTagModalMemberIndex(null)
+            }}
+            guestName={getMemberName(
+              draftMembers[tagModalMemberIndex] ?? {
+                firstName: '',
+                lastName: '',
+                email: null,
+                phone: null,
+                tagIds: [],
+                ageGroup: 'ADULT',
+                isPrimaryContact: false,
+              }
+            )}
+          />
+        ) : null}
       </DialogContent>
     </Dialog>
   )

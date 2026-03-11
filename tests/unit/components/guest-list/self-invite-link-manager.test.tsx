@@ -106,10 +106,11 @@ beforeEach(() => {
 
 // ── Loading / no-token / token-exists render branches ─────────────────────
 describe('render branches', () => {
-  it('renders nothing while loading', () => {
+  it('renders a loading state while token query is pending', () => {
     setupMocks({ isLoading: true })
-    const { container } = render(<SelfInviteLinkManager />)
-    expect(container).toBeEmptyDOMElement()
+    render(<SelfInviteLinkManager />)
+
+    expect(screen.getByRole('status')).toHaveTextContent('Loading invite link...')
   })
 
   it('shows "Generate Invite Link" button when data is undefined (no token fetched yet)', () => {

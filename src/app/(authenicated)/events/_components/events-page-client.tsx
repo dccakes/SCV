@@ -28,7 +28,7 @@ import {
 } from '~/components/ui/alert-dialog'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent } from '~/components/ui/card'
-import type { EventWithStats } from '~/server/domains/event/event.types'
+import type { Event, EventWithStats } from '~/server/domains/event/event.types'
 import { api } from '~/trpc/react'
 
 type EventsPageClientProps = Readonly<{
@@ -47,6 +47,7 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
     undefined,
     {
       initialData: initialEvents,
+      staleTime: 30_000,
     }
   )
 
@@ -67,9 +68,20 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
   })
 
   const updateEvent = api.event.update.useMutation({
-    onSuccess: async () => {
-      // Wait for data to refetch before closing dialog
-      await utils.event.getAllByUserIdWithStats.invalidate()
+    onSuccess: (updatedEvent: Event) => {
+      utils.event.getAllByUserIdWithStats.setData(undefined, (previousEvents) => {
+        if (!previousEvents) return previousEvents
+
+        return previousEvents.map((event) => {
+          if (event.id !== updatedEvent.id) return event
+
+          return {
+            ...event,
+            ...updatedEvent,
+          }
+        })
+      })
+
       toast.success('Event updated', {
         description: 'Your event has been updated successfully.',
       })
@@ -83,8 +95,13 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
   })
 
   const deleteEvent = api.event.delete.useMutation({
-    onSuccess: async () => {
-      await utils.event.getAllByUserIdWithStats.invalidate()
+    onSuccess: (deletedEventId: string) => {
+      utils.event.getAllByUserIdWithStats.setData(undefined, (previousEvents) => {
+        if (!previousEvents) return previousEvents
+
+        return previousEvents.filter((event) => event.id !== deletedEventId)
+      })
+
       toast.success('Event deleted', {
         description: 'Your event has been deleted successfully.',
       })

@@ -23,6 +23,7 @@ import { calculateDaysRemaining, formatDateNumber } from '~/app/utils/helpers'
 import type { WebsiteRepository } from '~/server/domains/website/website.repository'
 import type {
   CreateWebsiteInput,
+  PublicWebsite,
   UpdateWebsiteInput,
   Website,
   WeddingPageData,
@@ -32,11 +33,13 @@ import type {
   RsvpResponse,
   SubmitRsvpSchemaInput,
 } from '~/server/domains/website/website.validator'
+import { WebsitePasswordService } from '~/server/domains/website/website-password.service'
 
 export class WebsiteService {
   constructor(
     private websiteRepository: WebsiteRepository,
-    private db: PrismaClient
+    private db: PrismaClient,
+    private websitePasswordService: WebsitePasswordService = new WebsitePasswordService()
   ) {}
 
   /**
@@ -87,10 +90,13 @@ export class WebsiteService {
    */
   async updateWebsite(weddingId: string, data: UpdateWebsiteInput): Promise<Website> {
     const url = data.subUrl !== undefined ? `${data.basePath}/${data.subUrl}` : undefined
+    const password = data.password
+      ? this.websitePasswordService.hashPassword(data.password)
+      : undefined
 
     return this.websiteRepository.update(weddingId, {
       isPasswordEnabled: data.isPasswordEnabled,
-      password: data.password,
+      password,
       subUrl: data.subUrl,
       url,
     })
@@ -123,11 +129,51 @@ export class WebsiteService {
   /**
    * Get website by sub URL
    */
-  async getBySubUrl(subUrl: string | null | undefined): Promise<Website | null> {
+  async getBySubUrl(subUrl: string | null | undefined): Promise<PublicWebsite | null> {
     if (!subUrl) {
       return null
     }
-    return this.websiteRepository.findBySubUrl(subUrl)
+    const website = await this.websiteRepository.findBySubUrl(subUrl)
+    if (!website) {
+      return null
+    }
+
+    return this.toPublicWebsite(website)
+  }
+
+  async hasPasswordAccess(subUrl: string, accessToken: string | undefined): Promise<boolean> {
+    const website = await this.websiteRepository.findBySubUrl(subUrl)
+    if (!website) {
+      return false
+    }
+
+    if (!website.isPasswordEnabled) {
+      return true
+    }
+
+    return this.websitePasswordService.verifyAccessToken(accessToken, website.id, website.password)
+  }
+
+  async verifyWebsitePassword(subUrl: string, inputPassword: string): Promise<string | null> {
+    const website = await this.websiteRepository.findBySubUrl(subUrl)
+
+    if (!website || !website.isPasswordEnabled) {
+      return null
+    }
+
+    const isValidPassword = this.websitePasswordService.verifyPassword(
+      inputPassword,
+      website.password
+    )
+    if (!isValidPassword) {
+      return null
+    }
+
+    if (!website.password) {
+      return null
+    }
+
+    return this.websitePasswordService.createAccessToken(website.id, website.password)
   }
 
   /**
@@ -320,5 +366,10 @@ export class WebsiteService {
         })
       )
     })
+  }
+
+  private toPublicWebsite(website: Website): PublicWebsite {
+    const { password: _password, ...publicWebsite } = website
+    return publicWebsite
   }
 }

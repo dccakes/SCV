@@ -49,7 +49,7 @@ export function VendorCard({
     }).format(price)
 
   return (
-    <div className='flex items-center justify-between rounded-lg border bg-white px-4 py-3 shadow-sm'>
+    <div className='flex items-center justify-between rounded-lg border bg-card px-4 py-3 shadow-sm'>
       <div className='flex flex-col gap-1'>
         <button
           type='button'
@@ -58,12 +58,16 @@ export function VendorCard({
         >
           {vendor.name}
         </button>
-        {vendor.location && <span className='text-gray-400 text-xs'>{vendor.location}</span>}
+        {vendor.location && (
+          <span className='text-muted-foreground text-xs'>{vendor.location}</span>
+        )}
       </div>
 
       <div className='flex items-center gap-4'>
         {latestQuotePrice != null && (
-          <span className='font-medium text-gray-700 text-sm'>{formatPrice(latestQuotePrice)}</span>
+          <span className='font-medium text-foreground text-sm'>
+            {formatPrice(latestQuotePrice)}
+          </span>
         )}
         <VendorStatusSelect
           value={vendor.status}
@@ -72,7 +76,7 @@ export function VendorCard({
         />
         <button
           type='button'
-          className='text-gray-400 text-xs hover:text-red-500'
+          className='text-muted-foreground text-xs hover:text-destructive'
           onClick={handleDelete}
           disabled={deleteVendor.isPending}
         >

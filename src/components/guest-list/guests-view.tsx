@@ -1,4 +1,3 @@
-import { useRouter } from 'next/navigation'
 import {
   type Dispatch,
   type SetStateAction,
@@ -35,6 +34,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '~/components/ui/alert-dialog'
+import { AsyncState } from '~/components/ui/async-state'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
@@ -59,7 +59,7 @@ export default function GuestsView({
   setPrefillEvent,
   onImportClick,
 }: GuestsViewProps) {
-  const router = useRouter()
+  const utils = api.useUtils()
   const toggleGuestForm = useToggleGuestForm()
   const [filteredHouseholds, setFilteredHouseholds] = useState(households)
   const [nameSort, setNameSort] = useState<'none' | 'ascending' | 'descending'>('none')
@@ -296,20 +296,14 @@ export default function GuestsView({
             setEditingSections(new Set())
           }
           toast.success('Guest details saved')
-          router.refresh()
+          void utils.dashboard.getByUserId.invalidate()
         },
         onError: () => {
           toast.error('Failed to save guest details')
         },
       }
     )
-  }, [
-    drawerDraft,
-    router,
-    selectedCanonicalHousehold,
-    selectedHouseholdId,
-    updateHouseholdMutation,
-  ])
+  }, [drawerDraft, selectedCanonicalHousehold, selectedHouseholdId, updateHouseholdMutation, utils])
 
   const saveMembersChanges = useCallback(
     async (nextMembers: HouseholdMemberDraft[]) => {
@@ -337,7 +331,7 @@ export default function GuestsView({
           phone: member.phone,
           isPrimaryContact: member.isPrimaryContact,
           ageGroup: member.ageGroup,
-          tagIds: canonicalGuest?.guestTags?.map((guestTag) => guestTag.tagId) ?? [],
+          tagIds: member.tagIds,
           invites,
         }
       })
@@ -436,7 +430,7 @@ export default function GuestsView({
                 })
               )
               toast.success('Household members saved')
-              router.refresh()
+              void utils.dashboard.getByUserId.invalidate()
               resolve(true)
             },
             onError: () => {
@@ -447,7 +441,7 @@ export default function GuestsView({
         )
       })
     },
-    [router, selectedCanonicalHousehold, selectedHousehold, updateHouseholdMutation]
+    [selectedCanonicalHousehold, selectedHousehold, updateHouseholdMutation, utils]
   )
 
   const selectedEvent = useMemo(
@@ -619,11 +613,15 @@ export default function GuestsView({
           onSortByName={sortByName}
           onSortByPartySize={sortByParty}
         />
-        <GuestCardsList
-          households={sortedHouseholds}
-          selectedHouseholdId={selectedHouseholdId}
-          onSelectHousehold={handleSelectHousehold}
-        />
+        {sortedHouseholds.length === 0 ? (
+          <AsyncState isEmpty emptyText='No households yet' />
+        ) : (
+          <GuestCardsList
+            households={sortedHouseholds}
+            selectedHouseholdId={selectedHouseholdId}
+            onSelectHousehold={handleSelectHousehold}
+          />
+        )}
       </div>
 
       <GuestDetailDrawer

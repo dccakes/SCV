@@ -88,7 +88,14 @@ export default function EventForm({ prefillFormData }: EventFormProps) {
       >
         <div className='flex justify-between border-b p-5'>
           <h1 className='font-semibold text-xl'>{isEditMode ? 'Edit Event' : 'Add Event'}</h1>
-          <IoMdClose size={25} className='cursor-pointer' onClick={() => toggleEventForm()} />
+          <button
+            type='button'
+            aria-label='Close event form'
+            onClick={() => toggleEventForm()}
+            className='rounded-md text-foreground/70 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+          >
+            <IoMdClose size={25} />
+          </button>
         </div>
         <div className='p-5'>
           <h2 className='mb-3 font-semibold text-xl'>Event Information</h2>
