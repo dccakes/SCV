@@ -5,9 +5,13 @@
  * This is a thin layer that handles input validation and delegates to the service.
  */
 
-import { createTRPCRouter, publicProcedure } from '~/server/api/trpc'
+import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
 import { guestService } from '~/server/domains/guest'
-import { getByEventSchema, getByHouseholdSchema } from '~/server/domains/guest/guest.validator'
+import {
+  getByEventSchema,
+  getByHouseholdSchema,
+  guestIdSchema,
+} from '~/server/domains/guest/guest.validator'
 import { invitationService } from '~/server/domains/invitation'
 import { weddingService } from '~/server/domains/wedding'
 
@@ -39,5 +43,12 @@ export const guestRouter = createTRPCRouter({
     if (!ctx.auth.userId) return undefined
     const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
     return guestService.getAllByWeddingId(weddingId)
+  }),
+
+  /**
+   * Delete a single guest by ID
+   */
+  delete: protectedProcedure.input(guestIdSchema).mutation(async ({ input }) => {
+    return guestService.deleteGuest(input.guestId)
   }),
 })

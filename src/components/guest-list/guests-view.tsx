@@ -67,6 +67,7 @@ export default function GuestsView({
   const [selectedHouseholdId, setSelectedHouseholdId] = useState<string | undefined>()
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [showDiscardDialog, setShowDiscardDialog] = useState(false)
+  const [showDeleteHouseholdDialog, setShowDeleteHouseholdDialog] = useState(false)
   const [editingSections, setEditingSections] = useState<Set<'contactAddress' | 'notes'>>(new Set())
   const [drawerDraft, setDrawerDraft] = useState<DrawerDraft>({
     email: '',
@@ -210,6 +211,7 @@ export default function GuestsView({
   }, [drawerBaseline, drawerDraft])
 
   const updateHouseholdMutation = api.household.update.useMutation()
+  const deleteHouseholdMutation = api.household.delete.useMutation()
 
   const saveDrawerChanges = useCallback(() => {
     if (!selectedCanonicalHousehold) return
@@ -304,6 +306,31 @@ export default function GuestsView({
       }
     )
   }, [drawerDraft, selectedCanonicalHousehold, selectedHouseholdId, updateHouseholdMutation, utils])
+
+  const handleDeleteHousehold = useCallback(() => {
+    if (!selectedCanonicalHousehold) return
+    const householdId = selectedCanonicalHousehold.id
+
+    deleteHouseholdMutation.mutate(
+      { householdId },
+      {
+        onSuccess: () => {
+          setShowDeleteHouseholdDialog(false)
+          setIsDrawerOpen(false)
+          setSelectedHouseholdId(undefined)
+          initializedDrawerHouseholdIdRef.current = undefined
+          setFilteredHouseholds((previous) =>
+            previous.filter((household) => household.id !== householdId)
+          )
+          toast.success('Household deleted')
+          void utils.dashboard.getByUserId.invalidate()
+        },
+        onError: () => {
+          toast.error('Failed to delete household')
+        },
+      }
+    )
+  }, [deleteHouseholdMutation, selectedCanonicalHousehold, utils])
 
   const saveMembersChanges = useCallback(
     async (nextMembers: HouseholdMemberDraft[]) => {
@@ -647,26 +674,37 @@ export default function GuestsView({
           </div>
         }
         footer={
-          isDrawerDirty ? (
-            <div className='flex gap-2'>
-              <Button
-                type='button'
-                variant='outline'
-                className='flex-1'
-                onClick={handleDiscardChanges}
-              >
-                Discard changes
-              </Button>
-              <Button
-                type='button'
-                className='flex-1'
-                onClick={saveDrawerChanges}
-                disabled={updateHouseholdMutation.isPending}
-              >
-                Save changes
-              </Button>
-            </div>
-          ) : null
+          <div className='flex flex-col gap-2'>
+            {isDrawerDirty ? (
+              <div className='flex gap-2'>
+                <Button
+                  type='button'
+                  variant='outline'
+                  className='flex-1'
+                  onClick={handleDiscardChanges}
+                >
+                  Discard changes
+                </Button>
+                <Button
+                  type='button'
+                  className='flex-1'
+                  onClick={saveDrawerChanges}
+                  disabled={updateHouseholdMutation.isPending}
+                >
+                  Save changes
+                </Button>
+              </div>
+            ) : null}
+            <Button
+              type='button'
+              variant='outline'
+              className='w-full border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive'
+              onClick={() => setShowDeleteHouseholdDialog(true)}
+              disabled={deleteHouseholdMutation.isPending}
+            >
+              Delete household
+            </Button>
+          </div>
         }
       >
         {selectedHousehold ? (
@@ -706,6 +744,28 @@ export default function GuestsView({
               }}
             >
               Discard and close
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showDeleteHouseholdDialog} onOpenChange={setShowDeleteHouseholdDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete household?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this household and all associated guests, invitations, and
+              data. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+              onClick={handleDeleteHousehold}
+              disabled={deleteHouseholdMutation.isPending}
+            >
+              {deleteHouseholdMutation.isPending ? 'Deleting...' : 'Delete household'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
