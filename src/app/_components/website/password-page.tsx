@@ -1,25 +1,28 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 import { sharedStyles } from '~/app/utils/shared-styles'
-import type { Website } from '~/app/utils/shared-types'
 
 type PasswordPageProps = {
-  website: Website
-  setPasswordCookie: (value: string) => void
+  verifyWebsitePassword: (passwordInput: string) => Promise<boolean>
 }
 
-export default function PasswordPage({ website, setPasswordCookie }: PasswordPageProps) {
+export default function PasswordPage({ verifyWebsitePassword }: PasswordPageProps) {
   const [passwordInput, setPasswordInput] = useState('')
   const [showError, setShowError] = useState(false)
+  const router = useRouter()
 
-  const verifyPassword = () => {
-    if (website.password === passwordInput) {
-      setPasswordCookie(passwordInput)
-    } else {
+  const verifyPassword = async () => {
+    const isVerified = await verifyWebsitePassword(passwordInput)
+
+    if (!isVerified) {
       setShowError(true)
+      return
     }
+
+    router.refresh()
   }
 
   return (
@@ -40,7 +43,7 @@ export default function PasswordPage({ website, setPasswordCookie }: PasswordPag
           <button
             type='button'
             className={`${sharedStyles.primaryButton()}`}
-            onClick={() => verifyPassword()}
+            onClick={() => void verifyPassword()}
           >
             SUBMIT
           </button>

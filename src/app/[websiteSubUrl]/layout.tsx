@@ -10,6 +10,9 @@ export default function WeddingWebsiteLayout({ children }: { children: React.Rea
           alt='Pink Romantic Fresh Art Wedding Banner Background from pngtree.com'
           src={DefaultBanner}
           fill
+          priority
+          sizes='100vw'
+          className='object-cover'
         />
       </div>
       {children}

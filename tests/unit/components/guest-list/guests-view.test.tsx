@@ -5,6 +5,7 @@ import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboa
 const mockToggleGuestForm = jest.fn()
 const mockRefresh = jest.fn()
 const mockHouseholdUpdateMutate = jest.fn()
+const mockDashboardInvalidate = jest.fn()
 let shouldMutationFail = false
 let deferMutationResolution = false
 let pendingMutationSuccess: (() => void) | undefined
@@ -25,6 +26,13 @@ jest.mock('~/app/_components/contexts/event-form-context', () => ({
 
 jest.mock('~/trpc/react', () => ({
   api: {
+    useUtils: () => ({
+      dashboard: {
+        getByUserId: {
+          invalidate: (...args: unknown[]) => mockDashboardInvalidate(...args),
+        },
+      },
+    }),
     household: {
       update: {
         useMutation: () => ({
@@ -302,6 +310,7 @@ describe('GuestsView', () => {
     mockToggleGuestForm.mockReset()
     mockRefresh.mockReset()
     mockHouseholdUpdateMutate.mockReset()
+    mockDashboardInvalidate.mockReset()
     shouldMutationFail = false
     deferMutationResolution = false
     pendingMutationSuccess = undefined
@@ -365,7 +374,7 @@ describe('GuestsView', () => {
     })
 
     await waitFor(() => {
-      expect(mockRefresh).toHaveBeenCalled()
+      expect(mockDashboardInvalidate).toHaveBeenCalled()
     })
 
     expect(screen.getByText('brooke@example.com')).toBeInTheDocument()
@@ -393,6 +402,21 @@ describe('GuestsView', () => {
     expect(
       screen.getByRole('button', { name: /select alex rivera household/i })
     ).toBeInTheDocument()
+  })
+
+  it('should show an empty async status when no households match', () => {
+    render(
+      <GuestsView
+        events={events}
+        households={[]}
+        selectedEventId='all'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    expect(screen.getByRole('status')).toHaveTextContent('No households yet')
   })
 
   it('should open drawer with section-level edit controls and no full-editor update actions', () => {
@@ -613,7 +637,7 @@ describe('GuestsView', () => {
 
     await waitFor(() => {
       expect(mockHouseholdUpdateMutate).toHaveBeenCalled()
-      expect(mockRefresh).toHaveBeenCalled()
+      expect(mockDashboardInvalidate).toHaveBeenCalled()
     })
 
     expect(screen.queryByRole('textbox', { name: 'Email' })).not.toBeInTheDocument()

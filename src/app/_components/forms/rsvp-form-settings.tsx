@@ -16,6 +16,7 @@ import { useScrollToTop } from '~/app/_components/hooks'
 import { LoadingSpinner } from '~/app/_components/loaders'
 import { sharedStyles } from '~/app/utils/shared-styles'
 import type { DashboardData, EventWithResponses, Question } from '~/app/utils/shared-types'
+import { AsyncState } from '~/components/ui/async-state'
 import { Switch } from '~/components/ui/switch'
 import { api } from '~/trpc/react'
 
@@ -97,6 +98,21 @@ type EventRsvpSectionProps = {
   setShowQuestionForm: Dispatch<SetStateAction<boolean>>
 }
 
+const getMutationErrorMessage = (error: unknown, fallback: string): string => {
+  if (error instanceof Error) return error.message
+
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof error.message === 'string'
+  ) {
+    return error.message
+  }
+
+  return fallback
+}
+
 const EventRsvpSection = ({
   event,
   numGuests,
@@ -105,11 +121,14 @@ const EventRsvpSection = ({
   setShowQuestionForm,
 }: EventRsvpSectionProps) => {
   const router = useRouter()
+  const [feedbackError, setFeedbackError] = useState<string | null>(null)
   const updateEventRsvpSetting = api.event.updateCollectRsvp.useMutation({
-    onSuccess: () => router.refresh(),
+    onSuccess: () => {
+      setFeedbackError(null)
+      router.refresh()
+    },
     onError: (err) => {
-      if (err) window.alert(err)
-      else window.alert('Failed to update event! Please try again later.')
+      setFeedbackError(getMutationErrorMessage(err, 'Failed to update event. Please try again.'))
     },
   })
 
@@ -146,6 +165,7 @@ const EventRsvpSection = ({
           )}
         </div>
       </div>
+      <AsyncState error={feedbackError} className='pb-4' />
       {event.collectRsvp && (event.questions?.length ?? 0) > 0 ? (
         <>
           <p>
@@ -184,10 +204,13 @@ const EventRsvpSection = ({
           <button
             type='button'
             className='mt-5 flex w-fit cursor-pointer gap-2 decoration-pink-400 hover:underline'
-            onClick={() => onAddQuestion(event.id)}
+            onClick={() => {
+              setFeedbackError(null)
+              onAddQuestion(event.id)
+            }}
           >
             <AiOutlinePlusCircle size={25} color={sharedStyles.primaryColorHex} />
-            <span className={`text-${sharedStyles.primaryColor}`}>Add a Follow-Up Question</span>
+            <span className={sharedStyles.primaryText}>Add a Follow-Up Question</span>
           </button>
         </>
       ) : event.collectRsvp ? (

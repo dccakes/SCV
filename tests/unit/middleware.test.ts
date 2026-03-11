@@ -58,5 +58,6 @@ describe('middleware', () => {
 
     expect(response.headers.get('location')).toBeNull()
     expect(mockNext).toHaveBeenCalledTimes(1)
+    expect(mockNext).toHaveBeenCalledWith()
   })
 })

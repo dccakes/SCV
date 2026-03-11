@@ -1,18 +1,18 @@
 import type { Metadata } from 'next'
-import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
-
 import { RsvpFormProvider } from '~/app/_components/contexts/rsvp-form-context'
 import MainRsvpForm from '~/app/_components/website/forms/main'
-import { api } from '~/trpc/server'
+import { loadWeddingBySubUrl } from '~/app/[websiteSubUrl]/_lib/load-wedding-by-suburl'
 
-export async function generateMetadata(): Promise<Metadata> {
-  const headersList = await headers()
-  const path = headersList.get('x-url')
-  const websiteSubUrl = path?.replace('/', '').replace('/rsvp', '') ?? ''
-  const weddingData = await api.website.fetchWeddingData
-    .query({ subUrl: websiteSubUrl })
-    .catch(() => undefined)
+type RsvpPageProps = {
+  params: Promise<{
+    websiteSubUrl: string
+  }>
+}
+
+export async function generateMetadata({ params }: RsvpPageProps): Promise<Metadata> {
+  const { websiteSubUrl } = await params
+  const weddingData = await loadWeddingBySubUrl(websiteSubUrl)
 
   return {
     title: weddingData
@@ -21,14 +21,9 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default async function RsvpPage() {
-  const headersList = await headers()
-  const path = headersList.get('x-url')
-  const websiteSubUrl = path?.replace('/', '').replace('/rsvp', '') ?? ''
-
-  const weddingData = await api.website.fetchWeddingData
-    .query({ subUrl: websiteSubUrl })
-    .catch(() => undefined)
+export default async function RsvpPage({ params }: RsvpPageProps) {
+  const { websiteSubUrl } = await params
+  const weddingData = await loadWeddingBySubUrl(websiteSubUrl)
 
   if (!weddingData?.website.isRsvpEnabled) return notFound()
 

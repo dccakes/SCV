@@ -8,6 +8,9 @@ const mockCreateMutateAsync = jest.fn()
 const mockUpdateMutateAsync = jest.fn()
 const mockDeleteMutate = jest.fn()
 const mockInvalidate = jest.fn()
+const mockSetData = jest.fn()
+let mockUpdateOnSuccess: ((data?: EventWithStats) => Promise<void> | void) | undefined
+let mockDeleteOnSuccess: ((deletedEventId?: string) => Promise<void> | void) | undefined
 const mockModernEventForm = jest.fn(({ event }: { event?: { id: string } }) => (
   <div data-testid={event ? 'edit-event-form' : 'create-event-form'} />
 ))
@@ -22,6 +25,7 @@ jest.mock('~/trpc/react', () => ({
       event: {
         getAllByUserIdWithStats: {
           invalidate: (...args: unknown[]) => mockInvalidate(...args),
+          setData: (...args: unknown[]) => mockSetData(...args),
         },
       },
     }),
@@ -36,16 +40,26 @@ jest.mock('~/trpc/react', () => ({
         }),
       },
       update: {
-        useMutation: () => ({
-          mutateAsync: (...args: unknown[]) => mockUpdateMutateAsync(...args),
-          isPending: false,
-        }),
+        useMutation: (options?: {
+          onSuccess?: (data?: EventWithStats) => Promise<void> | void
+        }) => {
+          mockUpdateOnSuccess = options?.onSuccess
+          return {
+            mutateAsync: (...args: unknown[]) => mockUpdateMutateAsync(...args),
+            isPending: false,
+          }
+        },
       },
       delete: {
-        useMutation: () => ({
-          mutate: (...args: unknown[]) => mockDeleteMutate(...args),
-          isPending: false,
-        }),
+        useMutation: (options?: {
+          onSuccess?: (deletedEventId?: string) => Promise<void> | void
+        }) => {
+          mockDeleteOnSuccess = options?.onSuccess
+          return {
+            mutate: (...args: unknown[]) => mockDeleteMutate(...args),
+            isPending: false,
+          }
+        },
       },
     },
   },
@@ -79,7 +93,10 @@ describe('EventsPageClient', () => {
     mockUpdateMutateAsync.mockReset()
     mockDeleteMutate.mockReset()
     mockInvalidate.mockReset()
+    mockSetData.mockReset()
     mockModernEventForm.mockClear()
+    mockUpdateOnSuccess = undefined
+    mockDeleteOnSuccess = undefined
 
     mockUseQuery.mockReturnValue({
       data: [baseEvent],
@@ -92,7 +109,29 @@ describe('EventsPageClient', () => {
 
     expect(mockUseQuery).toHaveBeenCalledWith(undefined, {
       initialData: [baseEvent],
+      staleTime: 30_000,
     })
+  })
+
+  it('updates event cache directly after update mutation success', async () => {
+    render(<EventsPageClient initialEvents={[baseEvent]} />)
+
+    await mockUpdateOnSuccess?.({
+      ...baseEvent,
+      name: 'Updated Ceremony',
+    })
+
+    expect(mockSetData).toHaveBeenCalledWith(undefined, expect.any(Function))
+    expect(mockInvalidate).not.toHaveBeenCalled()
+  })
+
+  it('removes event from cache directly after delete mutation success', async () => {
+    render(<EventsPageClient initialEvents={[baseEvent]} />)
+
+    await mockDeleteOnSuccess?.('evt-1')
+
+    expect(mockSetData).toHaveBeenCalledWith(undefined, expect.any(Function))
+    expect(mockInvalidate).not.toHaveBeenCalled()
   })
 
   it('does not render event forms before a dialog is opened', () => {
