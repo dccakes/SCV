@@ -43,16 +43,22 @@ export default function GuestSearchFilter({
     selectedEventId === 'all' ? events : [events.find((event) => event.id === selectedEventId)]
 
   const filterHouseholds = (searchText: string, rsvpFilter: TSelectedRsvpFilter | null) => {
+    const normalizedSearch = searchText.toLowerCase()
     setFilteredHouseholds(() =>
       households.filter((household) =>
-        household.guests.some((guest) =>
-          rsvpFilter
-            ? (guest.firstName.includes(searchText) || guest.lastName.includes(searchText)) &&
-              guest.invitations?.some(
-                (inv) => inv.eventId === rsvpFilter?.eventId && inv.rsvp === rsvpFilter?.rsvpValue
-              )
-            : guest.firstName.includes(searchText) || guest.lastName.includes(searchText)
-        )
+        household.guests.some((guest) => {
+          const fullName = `${guest.firstName} ${guest.lastName}`.toLowerCase()
+          const matchesName =
+            guest.firstName.toLowerCase().includes(normalizedSearch) ||
+            guest.lastName.toLowerCase().includes(normalizedSearch) ||
+            fullName.includes(normalizedSearch)
+          return rsvpFilter
+            ? matchesName &&
+                guest.invitations?.some(
+                  (inv) => inv.eventId === rsvpFilter?.eventId && inv.rsvp === rsvpFilter?.rsvpValue
+                )
+            : matchesName
+        })
       )
     )
   }
