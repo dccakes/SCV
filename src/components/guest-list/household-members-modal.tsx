@@ -22,6 +22,7 @@ export type HouseholdMemberDraft = {
   tagIds: string[]
   ageGroup: 'ADULT' | 'TEEN' | 'CHILD' | 'INFANT'
   isPrimaryContact: boolean
+  isTagAlong: boolean
 }
 
 type HouseholdMembersModalProps = {
@@ -52,13 +53,17 @@ export function HouseholdMembersModal(props: Readonly<HouseholdMembersModalProps
   }, [members, open])
 
   const primaryCount = useMemo(
-    () => draftMembers.filter((member) => member.isPrimaryContact).length,
+    () => draftMembers.filter((member) => member.isPrimaryContact && !member.isTagAlong).length,
     [draftMembers]
   )
 
   const validationMessage = useMemo(() => {
     if (draftMembers.length === 0) {
       return 'A household must include at least one member.'
+    }
+
+    if (draftMembers.every((member) => member.isTagAlong)) {
+      return 'A household must include at least one non-tag-along member.'
     }
 
     if (
@@ -83,6 +88,22 @@ export function HouseholdMembersModal(props: Readonly<HouseholdMembersModalProps
     )
   }
 
+  const toggleTagAlong = (memberIndex: number) => {
+    setSaveError(null)
+    setDraftMembers((previous) =>
+      previous.map((member, index) => {
+        if (index !== memberIndex) return member
+        const nextIsTagAlong = !member.isTagAlong
+        return {
+          ...member,
+          isTagAlong: nextIsTagAlong,
+          // Tag-along members cannot be primary contacts
+          isPrimaryContact: nextIsTagAlong ? false : member.isPrimaryContact,
+        }
+      })
+    )
+  }
+
   const removeMember = (memberIndex: number) => {
     setSaveError(null)
     setDraftMembers((previous) => previous.filter((_, index) => index !== memberIndex))
@@ -100,6 +121,7 @@ export function HouseholdMembersModal(props: Readonly<HouseholdMembersModalProps
         tagIds: [],
         ageGroup: 'ADULT',
         isPrimaryContact: false,
+        isTagAlong: false,
       },
     ])
   }
@@ -129,10 +151,19 @@ export function HouseholdMembersModal(props: Readonly<HouseholdMembersModalProps
                   <div className='flex gap-2'>
                     <Button
                       type='button'
+                      variant={member.isTagAlong ? 'default' : 'outline'}
+                      size='sm'
+                      onClick={() => toggleTagAlong(index)}
+                      aria-label={`Toggle tag-along for ${memberName}`}
+                    >
+                      Tag-along
+                    </Button>
+                    <Button
+                      type='button'
                       variant='outline'
                       size='sm'
                       onClick={() => setPrimaryMember(index)}
-                      disabled={member.isPrimaryContact}
+                      disabled={member.isPrimaryContact || member.isTagAlong}
                       aria-label={`Set ${memberName} as primary`}
                     >
                       Set primary
@@ -267,6 +298,7 @@ export function HouseholdMembersModal(props: Readonly<HouseholdMembersModalProps
                 tagIds: [],
                 ageGroup: 'ADULT',
                 isPrimaryContact: false,
+                isTagAlong: false,
               }
             )}
           />
