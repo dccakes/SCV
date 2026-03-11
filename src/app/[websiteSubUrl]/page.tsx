@@ -4,19 +4,28 @@ import { notFound } from 'next/navigation'
 
 import PasswordPage from '~/components/website/password-page'
 import WeddingWebsite from '~/components/website/wedding'
+import { loadWeddingBySubUrl } from '~/app/[websiteSubUrl]/_lib/load-wedding-by-suburl'
 import { api } from '~/trpc/server'
-
-export async function generateMetadata(): Promise<Metadata> {
-  const user = await api.user.get.query()
-  return {
-    title: `${user?.groomFirstName} ${user?.groomLastName} and ${user?.brideFirstName} ${user?.brideLastName}'s Wedding Website`,
-  }
-}
 
 type RootRouteHandlerProps = {
   params: Promise<{
     websiteSubUrl: string
   }>
+}
+
+export async function generateMetadata({ params }: RootRouteHandlerProps): Promise<Metadata> {
+  const { websiteSubUrl } = await params
+  const weddingData = await loadWeddingBySubUrl(websiteSubUrl)
+
+  if (!weddingData) {
+    return {
+      title: 'Wedding Website',
+    }
+  }
+
+  return {
+    title: `${weddingData.groomFirstName} ${weddingData.groomLastName} and ${weddingData.brideFirstName} ${weddingData.brideLastName}'s Wedding Website`,
+  }
 }
 
 export default async function RootRouteHandler({ params }: RootRouteHandlerProps) {
@@ -26,23 +35,46 @@ export default async function RootRouteHandler({ params }: RootRouteHandlerProps
   })
 
   if (website === null) return notFound()
-  if (!website.isPasswordEnabled) return <WeddingWebsite />
+  if (!website.isPasswordEnabled) return <WeddingWebsite websiteSubUrl={websiteSubUrl} />
 
   const cookieStore = await cookies()
-  const hasPassword = cookieStore.get('wws_password')?.value === website.password
+  const accessCookieName = `wws_access_${websiteSubUrl}`
+  const accessToken = cookieStore.get(accessCookieName)?.value
+  const hasPasswordAccess = await api.website.hasPasswordAccess.query({
+    subUrl: websiteSubUrl,
+    accessToken,
+  })
 
-  const setPasswordCookie = async (value: string) => {
+  const verifyWebsitePassword = async (passwordInput: string) => {
     'use server'
+
+    const verificationToken = await api.website.verifyWebsitePassword.mutate({
+      subUrl: websiteSubUrl,
+      password: passwordInput,
+    })
+
+    if (!verificationToken) {
+      return false
+    }
+
     const cookieStore = await cookies()
-    cookieStore.set('wws_password', value)
+    cookieStore.set(accessCookieName, verificationToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: `/${websiteSubUrl}`,
+      maxAge: 60 * 60 * 6,
+    })
+
+    return true
   }
 
   return (
     <main>
-      {hasPassword ? (
-        <WeddingWebsite />
+      {hasPasswordAccess ? (
+        <WeddingWebsite websiteSubUrl={websiteSubUrl} />
       ) : (
-        <PasswordPage website={website} setPasswordCookie={setPasswordCookie} />
+        <PasswordPage verifyWebsitePassword={verifyWebsitePassword} />
       )}
     </main>
   )

@@ -70,12 +70,12 @@ export default function GuestSearchFilter({
   }
 
   return (
-    <div className='flex items-center gap-4'>
+    <div className='flex flex-wrap items-center gap-3'>
       <div className='relative flex items-center'>
         <Input
           id='search-guests-input'
-          className='w-64 pr-12'
-          placeholder='Find Guests'
+          className='w-64 pr-12 font-sans text-sm'
+          placeholder='Find guests'
           value={searchInput}
           onChange={(e) => filterHouseholdsBySearch(e.target.value)}
         />
@@ -89,7 +89,7 @@ export default function GuestSearchFilter({
           <Button
             variant='outline'
             onClick={() => setShowInvitationDropdown((prev) => !prev)}
-            className='w-48 justify-between'
+            className='w-48 justify-between font-sans text-sm normal-case tracking-normal'
           >
             {selectedRsvpFilter === null ? (
               <span>Filter By</span>
@@ -141,7 +141,7 @@ export default function GuestSearchFilter({
         <Button
           variant='ghost'
           size='sm'
-          className='text-primary'
+          className='font-sans text-sm normal-case tracking-normal text-primary'
           onClick={() => {
             setFilteredHouseholds(households)
             setSearchInput('')

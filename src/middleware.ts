@@ -7,10 +7,6 @@ const protectedRoutes = ['/dashboard', '/guest-list', '/events', '/vendors']
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname
 
-  // Store current request url in a custom header
-  const requestHeaders = new Headers(req.headers)
-  requestHeaders.set('x-url', pathname)
-
   // Check if route is protected
   const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route))
 
@@ -24,11 +20,7 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  return NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  })
+  return NextResponse.next()
 }
 
 export const config = {

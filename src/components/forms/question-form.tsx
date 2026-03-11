@@ -10,6 +10,7 @@ import QuestionOptionsForm from '~/components/forms/rsvp/question-option-form'
 import SidePaneWrapper from '~/components/forms/wrapper'
 import { sharedStyles } from '~/app/utils/shared-styles'
 import type { Question, TQuestionOption } from '~/app/utils/shared-types'
+import { AsyncState } from '~/components/ui/async-state'
 import { api } from '~/trpc/react'
 
 const defaultQuestionOptions: TQuestionOption[] = [
@@ -29,6 +30,21 @@ type QuestionFormProps = {
   setShowQuestionForm: Dispatch<SetStateAction<boolean>>
 }
 
+const getMutationErrorMessage = (error: unknown, fallback: string): string => {
+  if (error instanceof Error) return error.message
+
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof error.message === 'string'
+  ) {
+    return error.message
+  }
+
+  return fallback
+}
+
 export default function QuestionForm({
   isEditMode,
   question,
@@ -42,26 +58,27 @@ export default function QuestionForm({
   const [questionType, setQuestionType] = useState<string>(question.type ?? 'Text')
   const [questionInput, setQuestionInput] = useState<string>(question.text ?? '')
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false)
+  const [formError, setFormError] = useState<string | null>(null)
 
   const upsertQuestion = api.question.upsert.useMutation({
     onSuccess: () => {
+      setFormError(null)
       setShowQuestionForm(false)
       router.refresh()
     },
     onError: (err) => {
-      if (err) window.alert(err)
-      else window.alert('Failed to update question! Please try again later.')
+      setFormError(getMutationErrorMessage(err, 'Failed to update question. Please try again.'))
     },
   })
 
   const deleteQuestion = api.question.delete.useMutation({
     onSuccess: () => {
+      setFormError(null)
       setShowQuestionForm(false)
       router.refresh()
     },
     onError: (err) => {
-      if (err) window.alert(err)
-      else window.alert('Failed to delete question! Please try again later.')
+      setFormError(getMutationErrorMessage(err, 'Failed to delete question. Please try again.'))
     },
   })
 
@@ -70,6 +87,7 @@ export default function QuestionForm({
   }
 
   const handleOnSubmit = () => {
+    setFormError(null)
     // delete options in db when changing the question type to Option from Text
     let deleteOptions = deletedOptions
     if (question.type === 'Option' && questionType === 'Text') {
@@ -117,11 +135,14 @@ export default function QuestionForm({
       >
         <div className='flex justify-between border-b p-5'>
           <h1 className='font-semibold text-xl'>Add Question</h1>
-          <IoMdClose
-            size={25}
-            className='cursor-pointer'
+          <button
+            type='button'
+            aria-label='Close question form'
             onClick={() => setShowQuestionForm(false)}
-          />
+            className='rounded-md text-foreground/70 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+          >
+            <IoMdClose size={25} />
+          </button>
         </div>
         <div className='bg-pink-100 px-5 py-3'>
           <b>FYI: </b>
@@ -129,6 +150,7 @@ export default function QuestionForm({
             Guests can only skip short-answer questions. They must answer multiple-choice questions.
           </span>
         </div>
+        <AsyncState error={formError} className='mt-5 px-5' />
         <div className='mt-7 px-5'>
           <AnimatedInputLabel
             id='question-input'
@@ -227,7 +249,7 @@ const Buttons = ({
           className={`font-bold text-sm ${
             isProcessing
               ? 'cursor-not-allowed text-pink-200'
-              : `text-${sharedStyles.primaryColor} hover:underline`
+              : `${sharedStyles.primaryText} hover:underline`
           }`}
         >
           {isProcessing ? 'Processing...' : 'Delete Question'}

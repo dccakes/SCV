@@ -56,12 +56,26 @@ const mockWedding = {
 
 describe('WebsiteService', () => {
   let websiteService: WebsiteService
+  const mockHashPassword = jest.fn()
+  const mockVerifyPassword = jest.fn()
+  const mockCreateAccessToken = jest.fn()
+  const mockVerifyAccessToken = jest.fn()
 
   beforeEach(() => {
     resetWebsiteMocks()
     resetDbMocks()
+    mockHashPassword.mockReset()
+    mockVerifyPassword.mockReset()
+    mockCreateAccessToken.mockReset()
+    mockVerifyAccessToken.mockReset()
     const mockRepository = new WebsiteRepository({})
-    websiteService = new WebsiteService(mockRepository, db)
+    const mockPasswordService = {
+      hashPassword: mockHashPassword,
+      verifyPassword: mockVerifyPassword,
+      createAccessToken: mockCreateAccessToken,
+      verifyAccessToken: mockVerifyAccessToken,
+    }
+    websiteService = new WebsiteService(mockRepository, db, mockPasswordService as never)
   })
 
   describe('enableWebsite', () => {
@@ -175,6 +189,7 @@ describe('WebsiteService', () => {
     it('should update website password', async () => {
       const updatedWebsite = { ...mockWebsite, isPasswordEnabled: true, password: 'secret123' }
       mockUpdateFn.mockResolvedValue(updatedWebsite)
+      mockHashPassword.mockReturnValue('salt:hashed-password')
 
       await websiteService.updateWebsite('wedding-123', {
         isPasswordEnabled: true,
@@ -183,10 +198,11 @@ describe('WebsiteService', () => {
 
       expect(mockUpdateFn).toHaveBeenCalledWith('wedding-123', {
         isPasswordEnabled: true,
-        password: 'secret123',
+        password: 'salt:hashed-password',
         subUrl: undefined,
         url: undefined,
       })
+      expect(mockHashPassword).toHaveBeenCalledWith('secret123')
     })
   })
 
@@ -256,7 +272,18 @@ describe('WebsiteService', () => {
 
       const result = await websiteService.getBySubUrl('johndoeandjanesmith')
 
-      expect(result).toEqual(mockWebsite)
+      expect(result).toEqual({
+        id: mockWebsite.id,
+        createdAt: mockWebsite.createdAt,
+        updatedAt: mockWebsite.updatedAt,
+        weddingId: mockWebsite.weddingId,
+        url: mockWebsite.url,
+        subUrl: mockWebsite.subUrl,
+        isPasswordEnabled: mockWebsite.isPasswordEnabled,
+        isRsvpEnabled: mockWebsite.isRsvpEnabled,
+        coverPhotoUrl: mockWebsite.coverPhotoUrl,
+      })
+      expect(result).not.toHaveProperty('password')
       expect(mockFindBySubUrlFn).toHaveBeenCalledWith('johndoeandjanesmith')
     })
 
@@ -272,6 +299,39 @@ describe('WebsiteService', () => {
 
       expect(result).toBeNull()
       expect(mockFindBySubUrlFn).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('verifyWebsitePassword', () => {
+    it('should verify password server-side and return signed access token', async () => {
+      const protectedWebsite = {
+        ...mockWebsite,
+        isPasswordEnabled: true,
+        password: '$hashed-password',
+      }
+      mockFindBySubUrlFn.mockResolvedValue(protectedWebsite)
+      mockVerifyPassword.mockReturnValue(true)
+      mockCreateAccessToken.mockReturnValue('signed-token')
+
+      const result = await websiteService.verifyWebsitePassword('johndoeandjanesmith', 'secret123')
+
+      expect(result).toBe('signed-token')
+      expect(mockVerifyPassword).toHaveBeenCalledWith('secret123', '$hashed-password')
+    })
+
+    it('should reject invalid password and return null token', async () => {
+      const protectedWebsite = {
+        ...mockWebsite,
+        isPasswordEnabled: true,
+        password: '$hashed-password',
+      }
+      mockFindBySubUrlFn.mockResolvedValue(protectedWebsite)
+      mockVerifyPassword.mockReturnValue(false)
+
+      const result = await websiteService.verifyWebsitePassword('johndoeandjanesmith', 'wrong')
+
+      expect(result).toBeNull()
+      expect(mockCreateAccessToken).not.toHaveBeenCalled()
     })
   })
 

@@ -14,11 +14,27 @@ import QuestionShortAnswer from '~/components/website/forms/steps/question-short
 import SendRsvp from '~/components/website/forms/steps/send-rsvp'
 import RsvpConfirmation from '~/components/website/rsvp-confirmation'
 import type { Event, Question, RsvpPageData } from '~/app/utils/shared-types'
+import { AsyncState } from '~/components/ui/async-state'
 import { api } from '~/trpc/react'
 
 type MainRsvpFormProps = {
   weddingData: RsvpPageData
   basePath: string
+}
+
+const getMutationErrorMessage = (error: unknown, fallback: string): string => {
+  if (error instanceof Error) return error.message
+
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof error.message === 'string'
+  ) {
+    return error.message
+  }
+
+  return fallback
 }
 
 const NUM_STATIC_STEPS = 4 // find invitation step, confirm household step, final step, and confirmation
@@ -28,19 +44,20 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
   const numSteps = useRef(NUM_STATIC_STEPS)
   const updateRsvpForm = useUpdateRsvpForm()
   const [currentStep, setCurrentStep] = useState<number>(1)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   useConfirmReloadPage(currentStep > 1 && currentStep < numSteps.current)
   useEffect(() => {
     updateRsvpForm({ weddingData })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateRsvpForm, weddingData])
 
-  const submitRsvpForm = api.website.submitRsvpForm.useMutation({
+  const submitRsvpForm = api.website.submitPublicRsvpForm.useMutation({
     onSuccess: () => {
+      setSubmitError(null)
       setCurrentStep((prev) => prev + 1)
     },
     onError: (err) => {
-      if (err) window.alert(err)
-      else window.alert('Failed to submit rsvp! Please try again later.')
+      setSubmitError(getMutationErrorMessage(err, 'Failed to submit RSVP. Please try again.'))
     },
   })
   const progress = (currentStep / numSteps.current) * 100
@@ -105,12 +122,28 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
         basePath={basePath}
       />
       <form
-        className='m-auto w-[450px] py-5'
+        className='m-auto w-full max-w-[450px] px-4 py-5 md:px-0'
         onSubmit={(e) => {
           e.preventDefault()
-          submitRsvpForm.mutate(rsvpFormData)
+          setSubmitError(null)
+
+          const token = new URLSearchParams(window.location.search).get('token')
+          const subUrl = weddingData.website?.subUrl
+
+          if (!token || !subUrl) {
+            setSubmitError('Invalid or expired RSVP link. Please request a new invitation link.')
+            return
+          }
+
+          submitRsvpForm.mutate({
+            subUrl,
+            token,
+            rsvpResponses: rsvpFormData.rsvpResponses,
+            answersToQuestions: rsvpFormData.answersToQuestions,
+          })
         }}
       >
+        <AsyncState error={submitError} className='mb-4 text-center' />
         <MultistepRsvpForm currentStep={currentStep} setCurrentStep={setCurrentStep}>
           <FindYourInvitationForm />
           <ConfirmNameForm />
@@ -136,9 +169,10 @@ const ProgressBar = ({
 }) => {
   return (
     <div className='fixed top-0 z-10 w-full bg-white px-10 py-1 text-center'>
-      <IoMdClose
-        size={25}
-        className='absolute top-2 right-3 z-20 cursor-pointer'
+      <button
+        type='button'
+        aria-label='Close RSVP form'
+        className='absolute top-2 right-3 z-20 rounded-md text-foreground/70 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
         onClick={() => {
           if (
             currentStep <= 1 ||
@@ -147,7 +181,9 @@ const ProgressBar = ({
             window.location.href = basePath
           }
         }}
-      />
+      >
+        <IoMdClose size={25} />
+      </button>
       <h1 className='py-3 text-2xl'>RSVP</h1>
       <div className='relative mb-2.5 h-3 w-full rounded-full bg-gray-200'>
         <div

@@ -6,11 +6,13 @@
 
 import { WebsiteRepository } from '~/server/domains/website/website.repository'
 import { WebsiteService } from '~/server/domains/website/website.service'
+import { WebsitePasswordService } from '~/server/domains/website/website-password.service'
 import { db } from '~/server/infrastructure/database'
 
 // Create singleton instances
 const websiteRepository = new WebsiteRepository(db)
-export const websiteService = new WebsiteService(websiteRepository, db)
+const websitePasswordService = new WebsitePasswordService()
+export const websiteService = new WebsiteService(websiteRepository, db, websitePasswordService)
 
 // Export classes for testing/DI
 export { WebsiteRepository } from '~/server/domains/website/website.repository'
@@ -20,6 +22,7 @@ export { WebsiteService } from '~/server/domains/website/website.service'
 // Export types
 export type {
   CreateWebsiteInput,
+  PublicWebsite,
   UpdateCoverPhotoInput,
   UpdateRsvpEnabledInput,
   UpdateWebsiteInput,
@@ -35,6 +38,8 @@ export {
   createWebsiteSchema,
   fetchWeddingDataSchema,
   getBySubUrlSchema,
+  type HasPasswordAccessSchemaInput,
+  hasPasswordAccessSchema,
   type RsvpResponse,
   type SubmitRsvpSchemaInput,
   submitRsvpSchema,
@@ -44,4 +49,7 @@ export {
   updateCoverPhotoSchema,
   updateRsvpEnabledSchema,
   updateWebsiteSchema,
+  type VerifyWebsitePasswordSchemaInput,
+  verifyWebsitePasswordSchema,
 } from '~/server/domains/website/website.validator'
+export { WebsitePasswordService } from '~/server/domains/website/website-password.service'

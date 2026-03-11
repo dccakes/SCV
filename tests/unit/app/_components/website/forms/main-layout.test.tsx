@@ -1,0 +1,136 @@
+import { act, fireEvent, render, screen } from '@testing-library/react'
+
+import MainRsvpForm from '~/components/website/forms/main'
+import { sharedStyles } from '~/app/utils/shared-styles'
+
+const mockMutate = jest.fn()
+let capturedOnError: ((error: unknown) => void) | undefined
+
+jest.mock('~/components/contexts/rsvp-form-context', () => ({
+  useRsvpForm: () => ({
+    selectedHousehold: undefined,
+    rsvpResponses: [],
+  }),
+  useUpdateRsvpForm: () => jest.fn(),
+}))
+
+jest.mock('~/components/hooks', () => ({
+  useConfirmReloadPage: jest.fn(),
+}))
+
+jest.mock('~/components/website/forms/multi-step-form', () => {
+  return function MockMultistepRsvpForm({ children }: { children: React.ReactNode }) {
+    return <>{children}</>
+  }
+})
+
+jest.mock('~/components/website/forms/steps/find-your-invitation', () => {
+  return function MockFindYourInvitationForm() {
+    return <div>Find invitation</div>
+  }
+})
+
+jest.mock('~/components/website/forms/steps/confirm-name', () => {
+  return function MockConfirmNameForm() {
+    return <div>Confirm name</div>
+  }
+})
+
+jest.mock('~/components/website/forms/steps/event-rsvp', () => {
+  return function MockEventRsvpForm() {
+    return <div>Event RSVP</div>
+  }
+})
+
+jest.mock('~/components/website/forms/steps/question-multiple-choice', () => {
+  return function MockQuestionMultipleChoice() {
+    return <div>Question multiple choice</div>
+  }
+})
+
+jest.mock('~/components/website/forms/steps/question-short-answer', () => {
+  return function MockQuestionShortAnswer() {
+    return <div>Question short answer</div>
+  }
+})
+
+jest.mock('~/components/website/forms/steps/send-rsvp', () => {
+  return function MockSendRsvp() {
+    return <div>Send RSVP</div>
+  }
+})
+
+jest.mock('~/components/website/rsvp-confirmation', () => {
+  return function MockRsvpConfirmation() {
+    return <div>RSVP confirmation</div>
+  }
+})
+
+jest.mock('~/trpc/react', () => ({
+  api: {
+    website: {
+      submitPublicRsvpForm: {
+        useMutation: (options: { onError?: (error: unknown) => void }) => {
+          capturedOnError = options.onError
+
+          return {
+            mutate: mockMutate,
+            isPending: false,
+          }
+        },
+      },
+    },
+  },
+}))
+
+describe('Main RSVP layout', () => {
+  beforeEach(() => {
+    mockMutate.mockReset()
+    capturedOnError = undefined
+  })
+
+  it('uses a mobile-first responsive width contract for the main form', () => {
+    const { container } = render(
+      <MainRsvpForm
+        weddingData={{ events: [], website: { generalQuestions: [] } } as never}
+        basePath='/wedding'
+      />
+    )
+
+    const form = container.querySelector('form')
+    expect(form).not.toBeNull()
+    const classTokens = form?.className.split(' ') ?? []
+    expect(classTokens).toContain('w-full')
+    expect(classTokens).toContain('max-w-[450px]')
+    expect(classTokens).not.toContain('w-[450px]')
+  })
+
+  it('uses responsive side pane footer widths for mobile screens', () => {
+    expect(sharedStyles.sidebarFormWidth).toContain('w-full')
+    expect(sharedStyles.sidebarFormWidth).toContain('max-w-')
+    expect(sharedStyles.sidebarFormWidth).not.toContain('w-[525px]')
+  })
+
+  it('renders inline submit errors without using window alert', () => {
+    const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => undefined)
+
+    const { container } = render(
+      <MainRsvpForm
+        weddingData={{ events: [], website: { generalQuestions: [] } } as never}
+        basePath='/wedding'
+      />
+    )
+
+    const form = container.querySelector('form')
+    expect(form).not.toBeNull()
+    fireEvent.submit(form as HTMLFormElement)
+    act(() => {
+      capturedOnError?.({ message: 'RSVP service unavailable' })
+    })
+
+    expect(screen.getByRole('alert')).toHaveTextContent('RSVP service unavailable')
+    expect(alertSpy).not.toHaveBeenCalled()
+
+    alertSpy.mockRestore()
+  })
+})
