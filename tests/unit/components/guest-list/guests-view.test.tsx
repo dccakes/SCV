@@ -53,6 +53,11 @@ jest.mock('~/trpc/react', () => ({
         },
       },
     }),
+    guestTag: {
+      getAll: {
+        useQuery: () => ({ data: [] }),
+      },
+    },
     household: {
       update: {
         useMutation: () => ({
