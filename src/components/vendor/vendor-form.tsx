@@ -6,7 +6,6 @@ import { toast } from 'sonner'
 
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
-import { Label } from '~/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -105,8 +104,10 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
   return (
     <form onSubmit={handleSubmit} className='flex flex-col gap-4'>
       {!isEditing && (
-        <div>
-          <Label className='font-medium text-sm'>Category</Label>
+        <label className='space-y-1'>
+          <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
+            Category
+          </span>
           <Select value={category} onValueChange={(v) => setCategory(v as VendorCategory)}>
             <SelectTrigger className='mt-1'>
               <SelectValue />
@@ -119,107 +120,97 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </label>
       )}
 
-      <div>
-        <Label htmlFor='name' className='font-medium text-sm'>
-          Name <span className='text-red-500'>*</span>
-        </Label>
+      <label className='space-y-1'>
+        <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
+          Name <span className='text-primary'>*</span>
+        </span>
         <Input
-          id='name'
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder='Vendor or business name'
           required
-          className='mt-1'
         />
-      </div>
+      </label>
 
-      <div>
-        <Label htmlFor='location' className='font-medium text-sm'>
+      <label className='space-y-1'>
+        <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
           Location
-        </Label>
+        </span>
         <Input
-          id='location'
           value={location}
           onChange={(e) => setLocation(e.target.value)}
           placeholder='City, State'
-          className='mt-1'
         />
-      </div>
+      </label>
 
-      <div className='grid grid-cols-2 gap-3'>
-        <div>
-          <Label htmlFor='website' className='font-medium text-sm'>
+      <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+        <label className='space-y-1'>
+          <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
             Website
-          </Label>
+          </span>
           <Input
-            id='website'
             type='url'
             value={website}
             onChange={(e) => setWebsite(e.target.value)}
-            placeholder='https://…'
-            className='mt-1'
+            placeholder='https://...'
           />
-        </div>
-        <div>
-          <Label htmlFor='instagram' className='font-medium text-sm'>
+        </label>
+        <label className='space-y-1'>
+          <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
             Instagram
-          </Label>
+          </span>
           <Input
-            id='instagram'
             value={instagram}
             onChange={(e) => setInstagram(e.target.value)}
             placeholder='@handle'
-            className='mt-1'
           />
-        </div>
+        </label>
       </div>
 
-      <div className='border-t pt-3'>
-        <p className='mb-2 font-semibold text-gray-500 text-xs uppercase tracking-wide'>
-          Main Contact
-        </p>
+      {/* Contact section with hairline rule */}
+      <div className='pt-1'>
+        <div className='mb-3 flex items-center gap-3'>
+          <span className='shrink-0 font-mono text-[0.58rem] text-muted-foreground uppercase tracking-widest'>
+            Main Contact
+          </span>
+          <span className='h-px flex-1 bg-border' aria-hidden='true' />
+        </div>
         <div className='flex flex-col gap-3'>
-          <div>
-            <Label htmlFor='contactName' className='text-sm'>
+          <label className='space-y-1'>
+            <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
               Name
-            </Label>
+            </span>
             <Input
-              id='contactName'
               value={contactName}
               onChange={(e) => setContactName(e.target.value)}
               placeholder='Contact name'
-              className='mt-1'
             />
-          </div>
-          <div className='grid grid-cols-2 gap-3'>
-            <div>
-              <Label htmlFor='contactEmail' className='text-sm'>
+          </label>
+          <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+            <label className='space-y-1'>
+              <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
                 Email
-              </Label>
+              </span>
               <Input
-                id='contactEmail'
                 type='email'
                 value={contactEmail}
                 onChange={(e) => setContactEmail(e.target.value)}
                 placeholder='email@example.com'
-                className='mt-1'
               />
-            </div>
-            <div>
-              <Label htmlFor='contactPhone' className='text-sm'>
+            </label>
+            <label className='space-y-1'>
+              <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
                 Phone
-              </Label>
+              </span>
               <Input
-                id='contactPhone'
                 value={contactPhone}
                 onChange={(e) => setContactPhone(e.target.value)}
                 placeholder='+1 (555) 000-0000'
-                className='mt-1'
               />
-            </div>
+            </label>
           </div>
         </div>
       </div>
@@ -228,12 +219,8 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
         <Button type='button' variant='outline' onClick={onCancel} disabled={isPending}>
           Cancel
         </Button>
-        <Button
-          type='submit'
-          disabled={isPending}
-          className='bg-primary text-primary-foreground hover:bg-primary/90'
-        >
-          {isPending ? 'Saving…' : isEditing ? 'Save Changes' : 'Add Vendor'}
+        <Button type='submit' disabled={isPending}>
+          {isPending ? 'Saving...' : isEditing ? 'Save Changes' : 'Add Vendor'}
         </Button>
       </div>
     </form>

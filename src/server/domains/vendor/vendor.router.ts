@@ -10,10 +10,12 @@ import { vendorService } from '~/server/domains/vendor'
 import {
   createQuoteSchema,
   createVendorSchema,
+  deleteQuoteFileSchema,
   deleteQuoteSchema,
   deleteVendorSchema,
   getVendorSchema,
   getVendorsByCategorySchema,
+  saveQuoteFilesSchema,
   updateQuoteSchema,
   updateVendorSchema,
   updateVendorStatusSchema,
@@ -94,4 +96,24 @@ export const vendorRouter = createTRPCRouter({
     const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
     return vendorService.deleteQuote(input.quoteId, input.vendorId, weddingId)
   }),
+
+  /**
+   * Save uploaded file metadata for a quote
+   */
+  saveQuoteFiles: protectedProcedure
+    .input(saveQuoteFilesSchema)
+    .mutation(async ({ ctx, input }) => {
+      const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+      return vendorService.saveQuoteFiles(input.vendorId, weddingId, input)
+    }),
+
+  /**
+   * Delete a file from a quote
+   */
+  deleteQuoteFile: protectedProcedure
+    .input(deleteQuoteFileSchema)
+    .mutation(async ({ ctx, input }) => {
+      const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+      return vendorService.deleteQuoteFile(input.vendorId, weddingId, input)
+    }),
 })

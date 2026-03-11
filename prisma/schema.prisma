@@ -495,8 +495,26 @@ model VendorQuote {
   quoteDate DateTime @db.Date
   notes     String?
 
+  files     VendorQuoteFile[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([vendorId])
+}
+
+// Files attached to a vendor quote (stored via UploadThing)
+model VendorQuoteFile {
+  id        String      @id @default(uuid())
+  quoteId   String
+  quote     VendorQuote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  name      String      // Original file name
+  url       String      // UploadThing file URL
+  key       String      // UploadThing file key (for deletion)
+  size      Int         // File size in bytes
+
+  createdAt DateTime    @default(now())
+
+  @@index([quoteId])
 }

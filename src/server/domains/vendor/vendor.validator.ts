@@ -86,6 +86,27 @@ export const deleteQuoteSchema = z.object({
   vendorId: z.string().min(1, 'Vendor ID is required'),
 })
 
+// ─── Quote file schemas ──────────────────────────────────────────────────────
+
+const quoteFileSchema = z.object({
+  name: z.string().min(1, 'File name is required'),
+  url: z.string().url('Must be a valid URL'),
+  key: z.string().min(1, 'File key is required'),
+  size: z.number().int().positive('File size must be positive'),
+})
+
+export const saveQuoteFilesSchema = z.object({
+  quoteId: z.string().min(1, 'Quote ID is required'),
+  vendorId: z.string().min(1, 'Vendor ID is required'),
+  files: z.array(quoteFileSchema).min(1, 'At least one file is required').max(10),
+})
+
+export const deleteQuoteFileSchema = z.object({
+  fileId: z.string().min(1, 'File ID is required'),
+  quoteId: z.string().min(1, 'Quote ID is required'),
+  vendorId: z.string().min(1, 'Vendor ID is required'),
+})
+
 // ─── Inferred types ───────────────────────────────────────────────────────────
 
 export type CreateVendorInput = z.infer<typeof createVendorSchema>
@@ -96,3 +117,5 @@ export type GetVendorsByCategoryInput = z.infer<typeof getVendorsByCategorySchem
 export type CreateQuoteInput = z.infer<typeof createQuoteSchema>
 export type UpdateQuoteInput = z.infer<typeof updateQuoteSchema>
 export type DeleteQuoteInput = z.infer<typeof deleteQuoteSchema>
+export type SaveQuoteFilesInput = z.infer<typeof saveQuoteFilesSchema>
+export type DeleteQuoteFileInput = z.infer<typeof deleteQuoteFileSchema>

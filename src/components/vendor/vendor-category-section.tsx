@@ -2,10 +2,11 @@
 
 import type { VendorCategory } from '@prisma/client'
 import { useState } from 'react'
-import { Button } from '~/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
+
 import { VendorCard } from '~/components/vendor/vendor-card'
 import { VendorForm } from '~/components/vendor/vendor-form'
+import { Button } from '~/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 import type { VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
 
 const CATEGORY_LABELS: Record<VendorCategory, string> = {
@@ -35,26 +36,34 @@ export function VendorCategorySection({
 
   return (
     <section className='mb-8'>
-      <div className='mb-3 flex items-center justify-between border-b pb-2'>
-        <h2 className='font-semibold text-gray-800 text-lg'>{CATEGORY_LABELS[category]}</h2>
+      {/* Section label with hairline rule */}
+      <div className='mb-3 flex items-center gap-3'>
+        <h2 className='shrink-0 font-mono text-[0.62rem] text-muted-foreground uppercase tracking-widest'>
+          {CATEGORY_LABELS[category]}
+        </h2>
+        <span className='h-px flex-1 bg-border' aria-hidden='true' />
         <Button
           size='sm'
           variant='outline'
-          className='h-7 border-primary/30 text-primary text-xs hover:bg-primary/10'
+          className='shrink-0 rounded-sm border-dashed border-primary/30 font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:border-primary hover:bg-primary/5'
           onClick={() => setShowAddForm(true)}
         >
           + Add Vendor
         </Button>
       </div>
 
-      {vendors.length === 0 && <p className='py-2 text-gray-400 text-sm'>No vendors added yet.</p>}
+      {vendors.length === 0 && (
+        <p className='py-4 text-center font-mono text-[0.72rem] text-muted-foreground uppercase tracking-wider'>
+          No vendors added yet
+        </p>
+      )}
 
       <div className='flex flex-col gap-2'>
         {vendors.map((vendor) => (
           <VendorCard
             key={vendor.id}
             vendor={vendor}
-            latestQuotePrice={vendor.quotes[0]?.price ?? null}
+            quotePrices={vendor.quotes.map((q) => q.price)}
             onViewDetails={onViewDetails}
             onDeleted={onRefresh}
           />
@@ -64,7 +73,9 @@ export function VendorCategorySection({
       <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
         <DialogContent className='max-w-lg'>
           <DialogHeader>
-            <DialogTitle>Add {CATEGORY_LABELS[category]}</DialogTitle>
+            <DialogTitle className='font-display text-xl italic'>
+              Add {CATEGORY_LABELS[category]}
+            </DialogTitle>
           </DialogHeader>
           <VendorForm
             mode='create'

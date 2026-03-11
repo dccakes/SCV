@@ -5,8 +5,10 @@
 import {
   createQuoteSchema,
   createVendorSchema,
+  deleteQuoteFileSchema,
   deleteQuoteSchema,
   deleteVendorSchema,
+  saveQuoteFilesSchema,
   updateQuoteSchema,
   updateVendorSchema,
   updateVendorStatusSchema,
@@ -358,6 +360,132 @@ describe('deleteQuoteSchema', () => {
 
   it('should require vendorId', () => {
     const result = deleteQuoteSchema.safeParse({ quoteId: 'quote-123' })
+    expect(result.success).toBe(false)
+  })
+})
+
+describe('saveQuoteFilesSchema', () => {
+  const validInput = {
+    quoteId: 'quote-123',
+    vendorId: 'vendor-123',
+    files: [
+      { name: 'proposal.pdf', url: 'https://utfs.io/f/abc123', key: 'abc123', size: 102400 },
+    ],
+  }
+
+  it('should validate a valid input with one file', () => {
+    const result = saveQuoteFilesSchema.safeParse(validInput)
+    expect(result.success).toBe(true)
+  })
+
+  it('should validate with multiple files', () => {
+    const input = {
+      ...validInput,
+      files: [
+        { name: 'file1.pdf', url: 'https://utfs.io/f/a', key: 'a', size: 100 },
+        { name: 'file2.jpg', url: 'https://utfs.io/f/b', key: 'b', size: 200 },
+      ],
+    }
+    const result = saveQuoteFilesSchema.safeParse(input)
+    expect(result.success).toBe(true)
+  })
+
+  it('should reject empty files array', () => {
+    const result = saveQuoteFilesSchema.safeParse({ ...validInput, files: [] })
+    expect(result.success).toBe(false)
+  })
+
+  it('should reject more than 10 files', () => {
+    const files = Array.from({ length: 11 }, (_, i) => ({
+      name: `file${i}.pdf`,
+      url: `https://utfs.io/f/${i}`,
+      key: `key${i}`,
+      size: 100,
+    }))
+    const result = saveQuoteFilesSchema.safeParse({ ...validInput, files })
+    expect(result.success).toBe(false)
+  })
+
+  it('should require quoteId', () => {
+    const { quoteId: _, ...rest } = validInput
+    const result = saveQuoteFilesSchema.safeParse(rest)
+    expect(result.success).toBe(false)
+  })
+
+  it('should require vendorId', () => {
+    const { vendorId: _, ...rest } = validInput
+    const result = saveQuoteFilesSchema.safeParse(rest)
+    expect(result.success).toBe(false)
+  })
+
+  it('should reject file with invalid url', () => {
+    const input = {
+      ...validInput,
+      files: [{ name: 'file.pdf', url: 'not-a-url', key: 'abc', size: 100 }],
+    }
+    const result = saveQuoteFilesSchema.safeParse(input)
+    expect(result.success).toBe(false)
+  })
+
+  it('should reject file with empty name', () => {
+    const input = {
+      ...validInput,
+      files: [{ name: '', url: 'https://utfs.io/f/abc', key: 'abc', size: 100 }],
+    }
+    const result = saveQuoteFilesSchema.safeParse(input)
+    expect(result.success).toBe(false)
+  })
+
+  it('should reject file with zero size', () => {
+    const input = {
+      ...validInput,
+      files: [{ name: 'file.pdf', url: 'https://utfs.io/f/abc', key: 'abc', size: 0 }],
+    }
+    const result = saveQuoteFilesSchema.safeParse(input)
+    expect(result.success).toBe(false)
+  })
+})
+
+describe('deleteQuoteFileSchema', () => {
+  it('should validate valid input', () => {
+    const result = deleteQuoteFileSchema.safeParse({
+      fileId: 'file-123',
+      quoteId: 'quote-123',
+      vendorId: 'vendor-123',
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('should require fileId', () => {
+    const result = deleteQuoteFileSchema.safeParse({
+      quoteId: 'quote-123',
+      vendorId: 'vendor-123',
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('should require quoteId', () => {
+    const result = deleteQuoteFileSchema.safeParse({
+      fileId: 'file-123',
+      vendorId: 'vendor-123',
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('should require vendorId', () => {
+    const result = deleteQuoteFileSchema.safeParse({
+      fileId: 'file-123',
+      quoteId: 'quote-123',
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('should reject empty fileId', () => {
+    const result = deleteQuoteFileSchema.safeParse({
+      fileId: '',
+      quoteId: 'quote-123',
+      vendorId: 'vendor-123',
+    })
     expect(result.success).toBe(false)
   })
 })
