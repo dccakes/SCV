@@ -205,7 +205,10 @@ export function TagsModal({
             </Button>
           ) : (
             <form
-              onSubmit={handleSubmit(handleCreateTag)}
+              onSubmit={(e) => {
+                e.stopPropagation()
+                void handleSubmit(handleCreateTag)(e)
+              }}
               className='space-y-3 rounded-lg border bg-muted/50 p-4'
             >
               <div className='space-y-2'>
