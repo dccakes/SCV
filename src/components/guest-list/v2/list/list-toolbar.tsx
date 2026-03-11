@@ -23,11 +23,23 @@ export function ListToolbar({
       </div>
 
       <div className='flex flex-wrap gap-2'>
-        <Button type='button' variant='outline' size='sm' onClick={onSortByName}>
+        <Button
+          type='button'
+          variant='outline'
+          size='sm'
+          onClick={onSortByName}
+          className='font-sans text-sm normal-case tracking-normal'
+        >
           <ArrowUpDown className='mr-2 h-3 w-3' aria-hidden='true' />
           Sort by Name
         </Button>
-        <Button type='button' variant='outline' size='sm' onClick={onSortByPartySize}>
+        <Button
+          type='button'
+          variant='outline'
+          size='sm'
+          onClick={onSortByPartySize}
+          className='font-sans text-sm normal-case tracking-normal'
+        >
           <ArrowUpDown className='mr-2 h-3 w-3' aria-hidden='true' />
           Sort by Party Size
         </Button>

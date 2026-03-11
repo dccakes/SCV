@@ -322,7 +322,7 @@ export default function GuestsView({
           phone: member.phone,
           isPrimaryContact: member.isPrimaryContact,
           ageGroup: member.ageGroup,
-          tagIds: canonicalGuest?.guestTags?.map((guestTag) => guestTag.tagId) ?? [],
+          tagIds: member.tagIds,
           invites,
         }
       })
