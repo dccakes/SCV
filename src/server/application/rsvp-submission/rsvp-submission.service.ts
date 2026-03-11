@@ -17,15 +17,31 @@
 
 // biome-ignore lint/style/noRestrictedImports: architectural violation, tracked in ARCHITECTURAL_VIOLATIONS.md
 import type { Prisma, PrismaClient } from '@prisma/client'
+import { TRPCError } from '@trpc/server'
 
-import type { SubmitRsvpSchemaInput } from '~/server/application/rsvp-submission/rsvp-submission.validator'
+import type {
+  SubmitPublicRsvpSchemaInput,
+  SubmitRsvpSchemaInput,
+} from '~/server/application/rsvp-submission/rsvp-submission.validator'
 
 // Re-use types from validator for internal use
 type RsvpResponse = SubmitRsvpSchemaInput['rsvpResponses'][number]
 type AnswerToQuestion = SubmitRsvpSchemaInput['answersToQuestions'][number]
 
+const TOKEN_EXPIRY_DAYS = 90
+
 export class RsvpSubmissionService {
   constructor(private db: PrismaClient) {}
+
+  async submitPublicRsvp(data: SubmitPublicRsvpSchemaInput): Promise<{ success: boolean }> {
+    const weddingId = await this.getWeddingIdFromValidToken(data.subUrl, data.token)
+    await this.ensureSubmissionBelongsToWedding(weddingId, data)
+
+    return this.submitRsvp({
+      rsvpResponses: data.rsvpResponses,
+      answersToQuestions: data.answersToQuestions,
+    })
+  }
 
   /**
    * Submit RSVP form responses
@@ -173,5 +189,104 @@ export class RsvpSubmissionService {
         householdId: answer.householdId ?? '-1',
       },
     })
+  }
+
+  private async getWeddingIdFromValidToken(subUrl: string, token: string): Promise<string> {
+    const expiryDate = new Date()
+    expiryDate.setDate(expiryDate.getDate() - TOKEN_EXPIRY_DAYS)
+
+    const wedding = await this.db.wedding.findFirst({
+      where: {
+        selfFillToken: token,
+        website: { is: { subUrl } },
+        OR: [
+          { selfFillTokenGeneratedAt: { equals: null } },
+          { selfFillTokenGeneratedAt: { gte: expiryDate } },
+        ],
+      },
+      select: { id: true },
+    })
+
+    if (!wedding) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Invalid or expired RSVP token',
+      })
+    }
+
+    return wedding.id
+  }
+
+  private async ensureSubmissionBelongsToWedding(
+    weddingId: string,
+    data: SubmitPublicRsvpSchemaInput
+  ): Promise<void> {
+    if (data.rsvpResponses.length > 0) {
+      const invitationCount = await this.db.invitation.count({
+        where: {
+          weddingId,
+          OR: data.rsvpResponses.map((response) => ({
+            guestId: response.guestId,
+            eventId: response.eventId,
+          })),
+        },
+      })
+
+      if (invitationCount !== data.rsvpResponses.length) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Invalid RSVP submission scope for token',
+        })
+      }
+    }
+
+    const guestIds = new Set<number>()
+    const householdIds = new Set<string>()
+
+    for (const response of data.rsvpResponses) {
+      guestIds.add(response.guestId)
+    }
+
+    for (const answer of data.answersToQuestions) {
+      if (typeof answer.guestId === 'number') {
+        guestIds.add(answer.guestId)
+      }
+
+      if (typeof answer.householdId === 'string') {
+        householdIds.add(answer.householdId)
+      }
+    }
+
+    if (guestIds.size > 0) {
+      const guestCount = await this.db.guest.count({
+        where: {
+          weddingId,
+          id: { in: Array.from(guestIds) },
+        },
+      })
+
+      if (guestCount !== guestIds.size) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Invalid RSVP submission scope for token',
+        })
+      }
+    }
+
+    if (householdIds.size > 0) {
+      const householdCount = await this.db.household.count({
+        where: {
+          weddingId,
+          id: { in: Array.from(householdIds) },
+        },
+      })
+
+      if (householdCount !== householdIds.size) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Invalid RSVP submission scope for token',
+        })
+      }
+    }
   }
 }

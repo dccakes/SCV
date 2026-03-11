@@ -5,6 +5,7 @@ import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboa
 const mockToggleGuestForm = jest.fn()
 const mockRefresh = jest.fn()
 const mockHouseholdUpdateMutate = jest.fn()
+const mockDashboardInvalidate = jest.fn()
 let shouldMutationFail = false
 let deferMutationResolution = false
 let pendingMutationSuccess: (() => void) | undefined
@@ -23,8 +24,35 @@ jest.mock('~/app/_components/contexts/event-form-context', () => ({
   useToggleEventForm: () => jest.fn(),
 }))
 
+jest.mock('~/app/_components/forms/guest/tags-modal', () => ({
+  TagsModal: ({
+    open,
+    onTagsChange,
+    guestName,
+  }: {
+    open: boolean
+    onTagsChange: (tagIds: string[]) => void
+    guestName: string
+  }) => {
+    if (!open) return null
+
+    return (
+      <button type='button' onClick={() => onTagsChange(['vip'])}>
+        Apply tags for {guestName}
+      </button>
+    )
+  },
+}))
+
 jest.mock('~/trpc/react', () => ({
   api: {
+    useUtils: () => ({
+      dashboard: {
+        getByUserId: {
+          invalidate: (...args: unknown[]) => mockDashboardInvalidate(...args),
+        },
+      },
+    }),
     household: {
       update: {
         useMutation: () => ({
@@ -302,6 +330,7 @@ describe('GuestsView', () => {
     mockToggleGuestForm.mockReset()
     mockRefresh.mockReset()
     mockHouseholdUpdateMutate.mockReset()
+    mockDashboardInvalidate.mockReset()
     shouldMutationFail = false
     deferMutationResolution = false
     pendingMutationSuccess = undefined
@@ -365,7 +394,7 @@ describe('GuestsView', () => {
     })
 
     await waitFor(() => {
-      expect(mockRefresh).toHaveBeenCalled()
+      expect(mockDashboardInvalidate).toHaveBeenCalled()
     })
 
     expect(screen.getByText('brooke@example.com')).toBeInTheDocument()
@@ -387,7 +416,7 @@ describe('GuestsView', () => {
       />
     )
 
-    expect(screen.getByPlaceholderText('Find Guests')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Find guests')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Filter By' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Add Guest' })).toBeInTheDocument()
     expect(
@@ -395,7 +424,22 @@ describe('GuestsView', () => {
     ).toBeInTheDocument()
   })
 
-  it('should open drawer with section-level edit controls and no full-editor update actions', () => {
+  it('should show an empty async status when no households match', () => {
+    render(
+      <GuestsView
+        events={events}
+        households={[]}
+        selectedEventId='all'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    expect(screen.getByRole('status')).toHaveTextContent('No households yet')
+  })
+
+  it('should open drawer with section-level edit controls and no full-editor action', () => {
     render(
       <GuestsView
         events={events}
@@ -413,10 +457,39 @@ describe('GuestsView', () => {
     expect(screen.queryByRole('textbox', { name: 'Email' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Edit Contact & Address' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Edit Notes' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Open Full Editor' })).not.toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: 'Continue in Full Editor' })
     ).not.toBeInTheDocument()
+  })
+
+  it('should update member tags from household members modal', async () => {
+    render(
+      <GuestsView
+        events={events}
+        households={households}
+        selectedEventId='event-1'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Manage members' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Tags for Alex Rivera' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Apply tags for Alex Rivera' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save members' }))
+
+    await waitFor(() => {
+      expect(mockHouseholdUpdateMutate).toHaveBeenCalled()
+    })
+
+    const payload = mockHouseholdUpdateMutate.mock.calls.at(-1)?.[0] as {
+      guestParty: Array<{ guestId: number; tagIds: string[] }>
+    }
+    expect(payload.guestParty).toEqual(
+      expect.arrayContaining([expect.objectContaining({ guestId: 1, tagIds: ['vip'] })])
+    )
   })
 
   it('should open Manage Household Members modal from Party Members section', () => {
@@ -613,7 +686,7 @@ describe('GuestsView', () => {
 
     await waitFor(() => {
       expect(mockHouseholdUpdateMutate).toHaveBeenCalled()
-      expect(mockRefresh).toHaveBeenCalled()
+      expect(mockDashboardInvalidate).toHaveBeenCalled()
     })
 
     expect(screen.queryByRole('textbox', { name: 'Email' })).not.toBeInTheDocument()

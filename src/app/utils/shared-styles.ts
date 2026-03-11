@@ -3,13 +3,14 @@ const desktopPaddingSides = 'px-6 md:px-12'
 const desktopPaddingSidesGuestList = 'px-6 md:px-12'
 const verticalDivider = 'px-3 text-neutral-300'
 const primaryColor = 'primary'
+const primaryText = 'text-primary'
 const primaryColorHex = 'var(--primary)'
-const sidebarFormWidth = 'w-[525px]'
+const sidebarFormWidth = 'w-full max-w-[520px]'
 const ellipsisOverflow = 'overflow-hidden overflow-ellipsis whitespace-nowrap'
 const animatedInput =
-  'peer block w-full appearance-none rounded-lg border border-input bg-transparent px-2.5 pb-2.5 pt-4 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-0 dark:text-white'
+  'peer block w-full appearance-none rounded-[4px] border border-input bg-background px-2.5 pb-2.5 pt-4 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-0'
 const animatedLabel =
-  'absolute left-2 start-1 top-2 z-10 origin-[0] -translate-y-4 scale-75 transform bg-white px-2 text-sm text-muted-foreground duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:px-2 peer-focus:text-primary dark:bg-gray-900 rtl:peer-focus:left-auto rtl:peer-focus:translate-x-1/4'
+  'absolute left-2 start-1 top-2 z-10 origin-[0] -translate-y-4 scale-75 transform bg-background px-2 text-sm text-muted-foreground duration-300 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-2 peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:px-2 peer-focus:text-primary rtl:peer-focus:left-auto rtl:peer-focus:translate-x-1/4'
 const requiredAsterisk = 'before:ml-0.5 before:text-red-500 before:content-["*"]'
 
 type ButtonOptions = {
@@ -25,7 +26,7 @@ const primaryButton = (options?: ButtonOptions) => {
   const bg = isLoading ? 'bg-primary/40' : 'bg-primary'
   const cursor = isLoading ? 'cursor-not-allowed' : ''
 
-  return `rounded-full font-semibold text-primary-foreground ${px} ${py} ${hover} ${bg} ${cursor}`
+  return `inline-flex items-center justify-center rounded-[2px] font-mono text-[0.68rem] text-primary-foreground uppercase tracking-[0.08em] ${px} ${py} ${hover} ${bg} ${cursor}`
 }
 
 const secondaryButton = (options?: ButtonOptions) => {
@@ -36,7 +37,7 @@ const secondaryButton = (options?: ButtonOptions) => {
   const border = isLoading ? 'border-primary/40' : 'border-primary'
   const text = isLoading ? 'text-primary/40' : 'text-primary'
 
-  return `rounded-full border font-semibold ${px} ${py} ${hover} ${cursor} ${border} ${text}`
+  return `inline-flex items-center justify-center rounded-[2px] border font-mono text-[0.68rem] uppercase tracking-[0.08em] ${px} ${py} ${hover} ${cursor} ${border} ${text}`
 }
 
 const getRSVPcolor = (rsvp: string | null | undefined) => {
@@ -60,6 +61,7 @@ export const sharedStyles = {
   desktopPaddingSidesGuestList,
   verticalDivider,
   primaryColor,
+  primaryText,
   primaryColorHex,
   sidebarFormWidth,
   ellipsisOverflow,

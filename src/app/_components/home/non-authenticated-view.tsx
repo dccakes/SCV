@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
 import { SignInButton } from '~/app/_components/auth-buttons'
+import MobileNav from '~/app/_components/home/mobile-nav'
 
 const features = [
   {
@@ -98,6 +99,18 @@ const ettaExamples = [
   '"Are we over budget? What can we cut?"',
 ]
 
+const navLinks = [
+  { href: '#features', label: 'Features' },
+  { href: '#etta', label: 'Etta AI' },
+  { href: '#stack', label: 'Architecture' },
+  { href: '#pricing', label: 'Pricing' },
+  {
+    href: 'https://github.com/dccakes/SCV',
+    label: 'GitHub ↗',
+    external: true,
+  },
+]
+
 export default function NonAuthenticatedView() {
   return (
     <>
@@ -128,17 +141,7 @@ export default function NonAuthenticatedView() {
           </Link>
 
           <ul className='hidden items-center gap-7 md:flex'>
-            {[
-              { href: '#features', label: 'Features' },
-              { href: '#etta', label: 'Etta AI' },
-              { href: '#stack', label: 'Architecture' },
-              { href: '#pricing', label: 'Pricing' },
-              {
-                href: 'https://github.com/dccakes/SCV',
-                label: 'GitHub ↗',
-                external: true,
-              },
-            ].map(({ href, label, external }) => (
+            {navLinks.map(({ href, label, external }) => (
               <li key={label}>
                 <a
                   href={href}
@@ -152,7 +155,10 @@ export default function NonAuthenticatedView() {
             ))}
           </ul>
 
-          <SignInButton />
+          <div className='hidden md:block'>
+            <SignInButton />
+          </div>
+          <MobileNav links={navLinks} />
         </nav>
 
         {/* ── HERO ─────────────────────────────────────────────── */}

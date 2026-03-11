@@ -23,6 +23,8 @@ export type Website = {
   coverPhotoUrl: string | null
 }
 
+export type PublicWebsite = Omit<Website, 'password'>
+
 /**
  * Website with general questions included
  */

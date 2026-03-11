@@ -17,11 +17,18 @@ const config = {
     // Still type check during builds
     ignoreBuildErrors: false,
   },
+  experimental: {
+    optimizePackageImports: ['date-fns', 'lucide-react', 'react-icons'],
+  },
   images: {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: 'cdn.swamp.wed',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.amazonaws.com',
       },
     ],
   },

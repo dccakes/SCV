@@ -3,14 +3,14 @@
 import { Check, Copy, Link2, RefreshCw, X } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
-
+import { AsyncState } from '~/components/ui/async-state'
 import { Button } from '~/components/ui/button'
 import { api } from '~/trpc/react'
 
 export function SelfInviteLinkManager() {
   const [copied, setCopied] = useState(false)
 
-  const { data: tokenData, isLoading, refetch } = api.selfFill.getToken.useQuery()
+  const { data: tokenData, isLoading, error, refetch } = api.selfFill.getToken.useQuery()
 
   const generateToken = api.selfFill.generateToken.useMutation({
     onSuccess: () => {
@@ -49,7 +49,11 @@ export function SelfInviteLinkManager() {
   }
 
   if (isLoading) {
-    return null
+    return <AsyncState isLoading loadingText='Loading invite link...' />
+  }
+
+  if (error) {
+    return <AsyncState error='Unable to load invite link.' />
   }
 
   if (!tokenData?.token) {

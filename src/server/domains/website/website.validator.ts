@@ -81,11 +81,23 @@ export const fetchWeddingDataSchema = z.object({
   subUrl: z.string().min(1, 'Sub URL is required'),
 })
 
+export const hasPasswordAccessSchema = z.object({
+  subUrl: z.string().min(1, 'Sub URL is required'),
+  accessToken: z.string().optional(),
+})
+
+export const verifyWebsitePasswordSchema = z.object({
+  subUrl: z.string().min(1, 'Sub URL is required'),
+  password: z.string().min(1, 'Password is required'),
+})
+
 // Export inferred types
 export type CreateWebsiteSchemaInput = z.infer<typeof createWebsiteSchema>
 export type UpdateWebsiteSchemaInput = z.infer<typeof updateWebsiteSchema>
 export type UpdateRsvpEnabledSchemaInput = z.infer<typeof updateRsvpEnabledSchema>
 export type UpdateCoverPhotoSchemaInput = z.infer<typeof updateCoverPhotoSchema>
 export type SubmitRsvpSchemaInput = z.infer<typeof submitRsvpSchema>
+export type HasPasswordAccessSchemaInput = z.infer<typeof hasPasswordAccessSchema>
+export type VerifyWebsitePasswordSchemaInput = z.infer<typeof verifyWebsitePasswordSchema>
 export type RsvpResponse = SubmitRsvpSchemaInput['rsvpResponses'][number]
 export type AnswerToQuestion = SubmitRsvpSchemaInput['answersToQuestions'][number]

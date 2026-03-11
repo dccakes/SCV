@@ -27,6 +27,8 @@ export {
   answerToQuestionSchema,
   type RsvpResponseSchemaInput,
   rsvpResponseSchema,
+  type SubmitPublicRsvpSchemaInput,
   type SubmitRsvpSchemaInput,
+  submitPublicRsvpSchema,
   submitRsvpSchema,
 } from '~/server/application/rsvp-submission/rsvp-submission.validator'
