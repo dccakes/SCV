@@ -3,10 +3,9 @@
 import { type Dispatch, type SetStateAction, useState } from 'react'
 import { AiOutlineCalendar } from 'react-icons/ai'
 import { IoIosCheckmarkCircleOutline } from 'react-icons/io'
-
-import { useRsvpForm, useUpdateRsvpForm } from '~/components/contexts/rsvp-form-context'
 import { formatDateStandard } from '~/app/utils/helpers'
 import type { Event, Guest, RsvpFormResponse, StepFormProps } from '~/app/utils/shared-types'
+import { useRsvpForm, useUpdateRsvpForm } from '~/components/contexts/rsvp-form-context'
 
 interface EventRsvpFormProps extends StepFormProps {
   event: Event

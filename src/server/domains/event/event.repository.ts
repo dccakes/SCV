@@ -75,6 +75,9 @@ export class EventRepository {
 
   /**
    * Find all events for a wedding with RSVP statistics
+   *
+   * When an event has allowTagAlongs=false, tag-along guest invitations
+   * are excluded from RSVP counts (preserved data is hidden from stats).
    */
   async findByWeddingIdWithStats(weddingId: string): Promise<EventWithStats[]> {
     const events = await this.db.event.findMany({
@@ -84,6 +87,7 @@ export class EventRepository {
         invitations: {
           select: {
             rsvp: true,
+            guest: { select: { isTagAlong: true } },
           },
         },
       },
@@ -92,12 +96,17 @@ export class EventRepository {
     return events.map((event) => {
       const { invitations, ...eventData } = event
 
+      // Filter out tag-along invitations when event doesn't allow them
+      const countedInvitations = event.allowTagAlongs
+        ? invitations
+        : invitations.filter((inv) => !inv.guest.isTagAlong)
+
       // Count invitations by RSVP status
       const guestResponses = {
-        attending: invitations.filter((inv) => inv.rsvp === RSVP_STATUS.ATTENDING).length,
-        invited: invitations.filter((inv) => inv.rsvp === RSVP_STATUS.INVITED).length,
-        declined: invitations.filter((inv) => inv.rsvp === RSVP_STATUS.DECLINED).length,
-        notInvited: invitations.filter((inv) => inv.rsvp === RSVP_STATUS.NOT_INVITED).length,
+        attending: countedInvitations.filter((inv) => inv.rsvp === RSVP_STATUS.ATTENDING).length,
+        invited: countedInvitations.filter((inv) => inv.rsvp === RSVP_STATUS.INVITED).length,
+        declined: countedInvitations.filter((inv) => inv.rsvp === RSVP_STATUS.DECLINED).length,
+        notInvited: countedInvitations.filter((inv) => inv.rsvp === RSVP_STATUS.NOT_INVITED).length,
       }
 
       return {
@@ -120,6 +129,7 @@ export class EventRepository {
     attire?: string
     description?: string
     collectRsvp?: boolean
+    allowTagAlongs?: boolean
   }): Promise<Event> {
     return this.db.event.create({
       data: {
@@ -132,6 +142,7 @@ export class EventRepository {
         attire: data.attire,
         description: data.description,
         collectRsvp: data.collectRsvp ?? false,
+        allowTagAlongs: data.allowTagAlongs ?? false,
       },
     })
   }
@@ -149,6 +160,7 @@ export class EventRepository {
       venue?: string
       attire?: string
       description?: string
+      allowTagAlongs?: boolean
     }
   ): Promise<Event> {
     return this.db.event.update({
@@ -161,6 +173,7 @@ export class EventRepository {
         venue: data.venue,
         attire: data.attire,
         description: data.description,
+        allowTagAlongs: data.allowTagAlongs,
       },
     })
   }

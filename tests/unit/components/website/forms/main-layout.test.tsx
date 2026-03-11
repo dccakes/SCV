@@ -1,7 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
-
-import MainRsvpForm from '~/components/website/forms/main'
 import { sharedStyles } from '~/app/utils/shared-styles'
+import MainRsvpForm from '~/components/website/forms/main'
 
 const mockMutate = jest.fn()
 let capturedOnError: ((error: unknown) => void) | undefined

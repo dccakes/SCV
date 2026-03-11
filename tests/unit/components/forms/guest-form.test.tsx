@@ -10,13 +10,12 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { act, renderHook } from '@testing-library/react'
 import { useFieldArray, useForm } from 'react-hook-form'
-
+import { getDirtyValues } from '~/app/utils/form-helpers'
 import {
   getDefaultHouseholdFormData,
   type HouseholdFormData,
   HouseholdFormSchema,
 } from '~/components/forms/guest-form.schema'
-import { getDirtyValues } from '~/app/utils/form-helpers'
 
 // Mock events for form initialization
 const mockEvents = [

@@ -9,12 +9,11 @@ import {
 } from 'react'
 import { BiPencil } from 'react-icons/bi'
 import { toast } from 'sonner'
-
+import { formatDateStandard } from '~/app/utils/helpers'
+import type { Event, EventFormData, FormInvites } from '~/app/utils/shared-types'
 import { useToggleEventForm } from '~/components/contexts/event-form-context'
 import { useToggleGuestForm } from '~/components/contexts/guest-form-context'
 import type { HouseholdFormData } from '~/components/forms/guest-form.schema'
-import { formatDateStandard } from '~/app/utils/helpers'
-import type { Event, EventFormData, FormInvites } from '~/app/utils/shared-types'
 import {
   type DrawerDraft,
   GuestDetailPanelContent,
@@ -93,11 +92,20 @@ export default function GuestsView({
   })
   const initializedDrawerHouseholdIdRef = useRef<string | undefined>(undefined)
 
-  const totalGuests =
-    useMemo(
-      () => filteredHouseholds?.reduce((acc, household) => acc + household.guests.length, 0),
-      [filteredHouseholds]
-    ) ?? 0
+  const { totalGuests, totalTagAlongs } = useMemo(() => {
+    let guests = 0
+    let tagAlongs = 0
+    for (const household of filteredHouseholds ?? []) {
+      for (const guest of household.guests) {
+        if (guest.isTagAlong) {
+          tagAlongs += 1
+        } else {
+          guests += 1
+        }
+      }
+    }
+    return { totalGuests: guests, totalTagAlongs: tagAlongs }
+  }, [filteredHouseholds])
 
   useEffect(() => {
     setFilteredHouseholds(households)
@@ -233,6 +241,7 @@ export default function GuestsView({
         phone: guest.isPrimaryContact ? draftSnapshot.phone || null : guest.phone,
         isPrimaryContact: guest.isPrimaryContact,
         ageGroup: guest.ageGroup ?? 'ADULT',
+        isTagAlong: guest.isTagAlong ?? false,
         tagIds: guest.guestTags?.map((guestTag) => guestTag.tagId) ?? [],
         invites,
       }
@@ -348,6 +357,7 @@ export default function GuestsView({
             phone: guest.phone,
             isPrimaryContact: guest.isPrimaryContact,
             ageGroup: guest.ageGroup ?? 'ADULT',
+            isTagAlong: guest.isTagAlong ?? false,
             tagIds: guest.guestTags?.map((guestTag) => guestTag.tagId) ?? [],
             invites,
           }
@@ -401,6 +411,7 @@ export default function GuestsView({
                           id: guestId,
                           householdId: household.id,
                           weddingId: household.weddingId,
+                          isTagAlong: false,
                           createdAt: household.createdAt,
                           updatedAt: household.updatedAt,
                           guestTags: [],
@@ -564,6 +575,7 @@ export default function GuestsView({
         <DefaultTableHeader
           households={filteredHouseholds}
           totalGuests={totalGuests}
+          totalTagAlongs={totalTagAlongs}
           numEvents={events.length}
         />
       ) : (
@@ -706,9 +718,15 @@ type DefaultTableHeaderProps = {
   households: HouseholdWithGuests[]
   numEvents: number
   totalGuests: number
+  totalTagAlongs: number
 }
 
-const DefaultTableHeader = ({ households, numEvents, totalGuests }: DefaultTableHeaderProps) => {
+const DefaultTableHeader = ({
+  households,
+  numEvents,
+  totalGuests,
+  totalTagAlongs,
+}: DefaultTableHeaderProps) => {
   return (
     <div className='py-8'>
       <div className='flex flex-wrap items-center gap-4 md:gap-6'>
@@ -725,7 +743,15 @@ const DefaultTableHeader = ({ households, numEvents, totalGuests }: DefaultTable
           <span className='font-mono text-[0.58rem] text-foreground/55 uppercase tracking-widest'>
             Total Guests:{' '}
           </span>
-          <span className='font-semibold text-foreground text-sm md:text-base'>{totalGuests}</span>
+          <span className='font-semibold text-foreground text-sm md:text-base'>
+            {totalGuests}
+            {totalTagAlongs > 0 && (
+              <span className='font-normal text-foreground/55'>
+                {' '}
+                + {totalTagAlongs} tag-along{totalTagAlongs !== 1 ? 's' : ''}
+              </span>
+            )}
+          </span>
         </div>
         <div className='hidden h-4 w-px bg-border md:block' />
         <div>
@@ -798,6 +824,7 @@ const SelectedEventTableHeader = ({
       attire: event.attire ?? undefined,
       description: event.description ?? undefined,
       eventId: event.id,
+      allowTagAlongs: event.allowTagAlongs ?? false,
     })
     toggleEventForm()
   }

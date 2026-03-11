@@ -10,10 +10,9 @@ import {
   useWatch,
 } from 'react-hook-form'
 import { FiMinusCircle, FiTag } from 'react-icons/fi'
-
+import type { Event } from '~/app/utils/shared-types'
 import { TagsModal } from '~/components/forms/guest/tags-modal'
 import type { HouseholdFormData } from '~/components/forms/guest-form.schema'
-import type { Event } from '~/app/utils/shared-types'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
@@ -62,12 +61,18 @@ export const GuestNameForm = ({
   // Get field-level errors for this guest
   const guestErrors = errors.guestParty?.[guestIndex]
 
-  // Watch only the current guest's tagIds (needed for rendering)
+  // Watch only the current guest's tagIds and isTagAlong (needed for rendering)
   const selectedTagIds =
     useWatch({
       control,
       name: `guestParty.${guestIndex}.tagIds`,
     }) ?? []
+
+  const isTagAlong =
+    useWatch({
+      control,
+      name: `guestParty.${guestIndex}.isTagAlong`,
+    }) ?? false
 
   const handlePrimaryContactChange = (checked: boolean) => {
     if (checked) {
@@ -247,63 +252,111 @@ export const GuestNameForm = ({
 
         <div className='flex items-center justify-between rounded-lg border bg-muted/50 p-4'>
           <div className='space-y-0.5'>
-            <Label htmlFor={`guest${guestIndex}-isPrimaryContact`} className='text-base'>
-              Primary Contact
+            <Label htmlFor={`guest${guestIndex}-isTagAlong`} className='text-base'>
+              Tag-Along
             </Label>
-            <p className='text-muted-foreground text-sm'>This guest will receive correspondence</p>
+            <p className='text-muted-foreground text-sm'>
+              This person travels with the household but is not formally invited
+            </p>
           </div>
           <Controller
-            name={`guestParty.${guestIndex}.isPrimaryContact`}
+            name={`guestParty.${guestIndex}.isTagAlong`}
             control={control}
             render={({ field }) => (
               <Switch
-                id={`guest${guestIndex}-isPrimaryContact`}
+                id={`guest${guestIndex}-isTagAlong`}
                 checked={field.value ?? false}
                 onCheckedChange={(checked) => {
                   field.onChange(checked)
-                  handlePrimaryContactChange(checked)
+                  if (checked) {
+                    // Tag-alongs can't be primary contact
+                    setValue(`guestParty.${guestIndex}.isPrimaryContact`, false)
+                  }
                 }}
               />
             )}
           />
         </div>
 
-        <div className='space-y-4'>
-          <h4 className='font-medium text-muted-foreground text-sm'>Event Invitations</h4>
-          <div className='space-y-2'>
-            {events?.map((event: Event) => (
-              <Controller
-                key={event.id}
-                name={`guestParty.${guestIndex}.invites.${event.id}`}
-                control={control}
-                render={({ field }) => (
-                  <div className='flex items-center justify-between rounded-lg border bg-card p-3 transition-colors hover:bg-muted/50'>
-                    <div className='mr-3 min-w-0 flex-1'>
-                      <Label
-                        htmlFor={`guest${guestIndex}-event-${event.id}`}
-                        className='cursor-pointer font-medium'
-                      >
-                        {event.name}
-                      </Label>
-                      {event.date && (
-                        <p className='mt-0.5 text-muted-foreground text-xs'>
-                          {new Date(event.date).toLocaleDateString()}
-                        </p>
-                      )}
-                    </div>
-                    <Switch
-                      id={`guest${guestIndex}-event-${event.id}`}
-                      checked={['Invited', 'Attending', 'Declined'].includes(field.value ?? '')}
-                      onCheckedChange={(checked) => {
-                        field.onChange(checked ? 'Invited' : 'Not Invited')
-                      }}
-                    />
-                  </div>
-                )}
-              />
-            ))}
+        {!isTagAlong && (
+          <div className='flex items-center justify-between rounded-lg border bg-muted/50 p-4'>
+            <div className='space-y-0.5'>
+              <Label htmlFor={`guest${guestIndex}-isPrimaryContact`} className='text-base'>
+                Primary Contact
+              </Label>
+              <p className='text-muted-foreground text-sm'>
+                This guest will receive correspondence
+              </p>
+            </div>
+            <Controller
+              name={`guestParty.${guestIndex}.isPrimaryContact`}
+              control={control}
+              render={({ field }) => (
+                <Switch
+                  id={`guest${guestIndex}-isPrimaryContact`}
+                  checked={field.value ?? false}
+                  onCheckedChange={(checked) => {
+                    field.onChange(checked)
+                    handlePrimaryContactChange(checked)
+                  }}
+                />
+              )}
+            />
           </div>
-        </div>
+        )}
+
+        {(() => {
+          // Tag-alongs only see events that allow them; regular guests see all events
+          const visibleEvents = isTagAlong
+            ? events?.filter((event) => event.allowTagAlongs)
+            : events
+
+          if (!visibleEvents || visibleEvents.length === 0) return null
+
+          return (
+            <div className='space-y-4'>
+              <h4 className='font-medium text-muted-foreground text-sm'>
+                Event Invitations
+                {isTagAlong && (
+                  <span className='ml-1 font-normal text-xs'>(tag-along eligible events)</span>
+                )}
+              </h4>
+              <div className='space-y-2'>
+                {visibleEvents.map((event: Event) => (
+                  <Controller
+                    key={event.id}
+                    name={`guestParty.${guestIndex}.invites.${event.id}`}
+                    control={control}
+                    render={({ field }) => (
+                      <div className='flex items-center justify-between rounded-lg border bg-card p-3 transition-colors hover:bg-muted/50'>
+                        <div className='mr-3 min-w-0 flex-1'>
+                          <Label
+                            htmlFor={`guest${guestIndex}-event-${event.id}`}
+                            className='cursor-pointer font-medium'
+                          >
+                            {event.name}
+                          </Label>
+                          {event.date && (
+                            <p className='mt-0.5 text-muted-foreground text-xs'>
+                              {new Date(event.date).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                        <Switch
+                          id={`guest${guestIndex}-event-${event.id}`}
+                          checked={['Invited', 'Attending', 'Declined'].includes(field.value ?? '')}
+                          onCheckedChange={(checked) => {
+                            field.onChange(checked ? 'Invited' : 'Not Invited')
+                          }}
+                        />
+                      </div>
+                    )}
+                  />
+                ))}
+              </div>
+            </div>
+          )
+        })()}
       </div>
     </div>
   )

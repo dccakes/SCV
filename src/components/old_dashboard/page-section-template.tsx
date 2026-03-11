@@ -7,10 +7,9 @@ import { BsPencil, BsThreeDotsVertical } from 'react-icons/bs'
 import { FaCog } from 'react-icons/fa'
 import { IoIosArrowForward } from 'react-icons/io'
 import { LiaEyeSlash } from 'react-icons/lia'
-
+import { sharedStyles } from '~/app/utils/shared-styles'
 import { useToggleEditRsvpSettingsForm } from '~/components/contexts/edit-rsvp-settings-form-context'
 import { useOuterClick } from '~/components/hooks'
-import { sharedStyles } from '~/app/utils/shared-styles'
 
 type PageSectionsTemplateProps = {
   title: string

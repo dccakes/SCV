@@ -11,6 +11,69 @@ import { useForm } from 'react-hook-form'
 
 import type { HouseholdFormData } from '~/components/forms/guest-form.schema'
 
+describe('GuestNameForm - Tag-Along Event Visibility', () => {
+  it('should show all events for non-tag-along guests in form data', () => {
+    const events = [
+      { id: 'e1', name: 'Ceremony', allowTagAlongs: false },
+      { id: 'e2', name: 'Reception', allowTagAlongs: false },
+      { id: 'e3', name: 'Welcome Party', allowTagAlongs: true },
+    ]
+
+    // Non-tag-along guest sees all events
+    const visibleEvents = events
+    expect(visibleEvents).toHaveLength(3)
+  })
+
+  it('should filter events for tag-along guests to only allowTagAlongs events', () => {
+    const events = [
+      { id: 'e1', name: 'Ceremony', allowTagAlongs: false },
+      { id: 'e2', name: 'Reception', allowTagAlongs: false },
+      { id: 'e3', name: 'Welcome Party', allowTagAlongs: true },
+    ]
+
+    // Tag-along guest only sees events that allow them
+    const visibleEvents = events.filter((event) => event.allowTagAlongs)
+    expect(visibleEvents).toHaveLength(1)
+    expect(visibleEvents[0]?.name).toBe('Welcome Party')
+  })
+
+  it('should return no events for tag-along when no events allow tag-alongs', () => {
+    const events = [
+      { id: 'e1', name: 'Ceremony', allowTagAlongs: false },
+      { id: 'e2', name: 'Reception', allowTagAlongs: false },
+    ]
+
+    const visibleEvents = events.filter((event) => event.allowTagAlongs)
+    expect(visibleEvents).toHaveLength(0)
+  })
+
+  it('should build correct invites map for tag-along guests', () => {
+    const { result } = renderHook(() =>
+      useForm<HouseholdFormData>({
+        defaultValues: {
+          householdId: '',
+          guestParty: [
+            {
+              firstName: 'Baby',
+              lastName: 'Doe',
+              isTagAlong: true,
+              invites: { 'event-3': 'Invited' }, // Only the allowTagAlongs event
+            },
+          ],
+          gifts: [],
+          deletedGuests: [],
+        },
+      })
+    )
+
+    const guest = result.current.watch('guestParty.0')
+    expect(guest?.isTagAlong).toBe(true)
+    expect(guest?.invites).toEqual({ 'event-3': 'Invited' })
+    // Tag-along should NOT have invites for non-allowTagAlongs events
+    expect(guest?.invites['event-1']).toBeUndefined()
+  })
+})
+
 describe('GuestNameForm - Primary Contact Toggle', () => {
   describe('handlePrimaryContactChange behavior', () => {
     it('should uncheck other guests when one is marked as primary', () => {

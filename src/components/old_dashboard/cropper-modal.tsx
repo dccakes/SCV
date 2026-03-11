@@ -3,11 +3,10 @@ import 'cropperjs/dist/cropper.css'
 import { type Dispatch, type SetStateAction, useRef } from 'react'
 import Cropper, { type ReactCropperElement } from 'react-cropper'
 import { GrRotateLeft, GrRotateRight } from 'react-icons/gr'
-
-import { useDisablePageScroll } from '~/components/hooks'
-import { LoadingSpinner } from '~/components/loaders'
 import { sharedStyles } from '~/app/utils/shared-styles'
 import type { CoverPhoto } from '~/app/utils/shared-types'
+import { useDisablePageScroll } from '~/components/hooks'
+import { LoadingSpinner } from '~/components/loaders'
 
 export default function ImageCropperModal({
   coverPhoto,

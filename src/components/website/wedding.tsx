@@ -1,9 +1,9 @@
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 
+import { loadWeddingBySubUrl } from '~/app/[websiteSubUrl]/_lib/load-wedding-by-suburl'
 import WeddingPage from '~/components/website/wedding-page'
 import WeddingPageMobile from '~/components/website/wedding-page-mobile'
-import { loadWeddingBySubUrl } from '~/app/[websiteSubUrl]/_lib/load-wedding-by-suburl'
 
 type WeddingWebsiteProps = {
   websiteSubUrl: string

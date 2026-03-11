@@ -2,9 +2,10 @@
 
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { IoMdClose } from 'react-icons/io'
-
+import type { Event, Question, RsvpPageData } from '~/app/utils/shared-types'
 import { useRsvpForm, useUpdateRsvpForm } from '~/components/contexts/rsvp-form-context'
 import { useConfirmReloadPage } from '~/components/hooks'
+import { AsyncState } from '~/components/ui/async-state'
 import MultistepRsvpForm from '~/components/website/forms/multi-step-form'
 import ConfirmNameForm from '~/components/website/forms/steps/confirm-name'
 import EventRsvpForm from '~/components/website/forms/steps/event-rsvp'
@@ -13,8 +14,6 @@ import QuestionMultipleChoice from '~/components/website/forms/steps/question-mu
 import QuestionShortAnswer from '~/components/website/forms/steps/question-short-answer'
 import SendRsvp from '~/components/website/forms/steps/send-rsvp'
 import RsvpConfirmation from '~/components/website/rsvp-confirmation'
-import type { Event, Question, RsvpPageData } from '~/app/utils/shared-types'
-import { AsyncState } from '~/components/ui/async-state'
 import { api } from '~/trpc/react'
 
 type MainRsvpFormProps = {

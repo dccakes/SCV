@@ -5,9 +5,9 @@ import { CiLocationOn } from 'react-icons/ci'
 import { TfiNewWindow } from 'react-icons/tfi'
 import CoverPhotoImage from '@/components/old_dashboard/cover-photo-image'
 import CoverPhotoUploader from '@/components/old_dashboard/cover-photo-uploader'
-import { useToggleEventForm } from '~/components/contexts/event-form-context'
 import { convertDate, formatDateHTML5 } from '~/app/utils/helpers'
 import type { DashboardData, Event, EventFormData } from '~/app/utils/shared-types'
+import { useToggleEventForm } from '~/components/contexts/event-form-context'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 
 type HomeContentProps = {

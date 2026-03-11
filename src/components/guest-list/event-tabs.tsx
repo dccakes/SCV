@@ -1,7 +1,6 @@
 import Link from 'next/link'
-
-import { useToggleEventForm } from '~/components/contexts/event-form-context'
 import type { Event } from '~/app/utils/shared-types'
+import { useToggleEventForm } from '~/components/contexts/event-form-context'
 import { Button } from '~/components/ui/button'
 
 type EventsTabsProps = {

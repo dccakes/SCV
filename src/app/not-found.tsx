@@ -1,8 +1,7 @@
 import Link from 'next/link'
-
+import { sharedStyles } from '~/app/utils/shared-styles'
 import Footer from '~/components/footer'
 import Navbar from '~/components/navbar'
-import { sharedStyles } from '~/app/utils/shared-styles'
 
 export default function NotFoundPage() {
   return (

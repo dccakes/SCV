@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 
+import { loadWeddingBySubUrl } from '~/app/[websiteSubUrl]/_lib/load-wedding-by-suburl'
 import PasswordPage from '~/components/website/password-page'
 import WeddingWebsite from '~/components/website/wedding'
-import { loadWeddingBySubUrl } from '~/app/[websiteSubUrl]/_lib/load-wedding-by-suburl'
 import { api } from '~/trpc/server'
 
 type RootRouteHandlerProps = {

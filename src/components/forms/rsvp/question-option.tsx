@@ -1,8 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { FiMinusCircle } from 'react-icons/fi'
-
-import AnimatedInputLabel from '~/components/forms/animated-input-label'
 import type { TQuestionOption } from '~/app/utils/shared-types'
+import AnimatedInputLabel from '~/components/forms/animated-input-label'
 
 type QuestionOptionProps = {
   option: TQuestionOption

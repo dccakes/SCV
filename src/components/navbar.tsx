@@ -1,10 +1,9 @@
 import { headers } from 'next/headers'
 import Link from 'next/link'
-
+import { sharedStyles } from '~/app/utils/shared-styles'
 import { SignOutButton } from '~/components/auth-buttons'
 import NavLinks from '~/components/nav-links'
 import { ThemeToggle } from '~/components/theme-toggle'
-import { sharedStyles } from '~/app/utils/shared-styles'
 import { auth } from '~/lib/auth'
 
 export default async function Navbar() {

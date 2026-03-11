@@ -80,6 +80,7 @@ export class WeddingService {
         eventName: 'Ceremony',
         date: weddingDate ?? undefined,
         venue: weddingLocation ?? undefined,
+        allowTagAlongs: false,
       })
     }
 

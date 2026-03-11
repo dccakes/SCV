@@ -1,9 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-
-import { useRsvpForm, useUpdateRsvpForm } from '~/components/contexts/rsvp-form-context'
 import type { StepFormProps } from '~/app/utils/shared-types'
+import { useRsvpForm, useUpdateRsvpForm } from '~/components/contexts/rsvp-form-context'
 import { api } from '~/trpc/react'
 
 export default function FindYourInvitationForm({ goNext }: StepFormProps) {

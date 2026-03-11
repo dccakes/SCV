@@ -5,10 +5,9 @@ import {
   type UseFormRegister,
   useFieldArray,
 } from 'react-hook-form'
-
-import type { HouseholdFormData } from '~/components/forms/guest-form.schema'
 import { sharedStyles } from '~/app/utils/shared-styles'
 import type { Event } from '~/app/utils/shared-types'
+import type { HouseholdFormData } from '~/components/forms/guest-form.schema'
 
 type GiftSectionProps = {
   control: Control<HouseholdFormData>

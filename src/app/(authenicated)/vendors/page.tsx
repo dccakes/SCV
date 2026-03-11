@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 
-import VendorList from '~/components/vendor'
 import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
+import VendorList from '~/components/vendor'
 import { api } from '~/trpc/server'
 
 export const metadata: Metadata = {

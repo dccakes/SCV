@@ -21,6 +21,7 @@ export type Event = {
   description: string | null
   weddingId: string
   collectRsvp: boolean
+  allowTagAlongs: boolean
   createdAt: Date
   updatedAt: Date
 }

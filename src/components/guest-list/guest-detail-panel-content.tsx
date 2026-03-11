@@ -112,6 +112,7 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
     tagIds: guest.guestTags?.map((guestTag) => guestTag.tagId) ?? [],
     ageGroup: guest.ageGroup ?? 'ADULT',
     isPrimaryContact: guest.isPrimaryContact,
+    isTagAlong: guest.isTagAlong ?? false,
   }))
 
   const primaryContact = useMemo(

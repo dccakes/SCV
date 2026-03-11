@@ -7,7 +7,8 @@ import { useState } from 'react'
 import { type Resolver, type SubmitHandler, useFieldArray, useForm } from 'react-hook-form'
 import { IoMdClose } from 'react-icons/io'
 import { toast } from 'sonner'
-
+import { getDirtyValues } from '~/app/utils/form-helpers'
+import type { Event, FormInvites } from '~/app/utils/shared-types'
 import { useToggleGuestForm } from '~/components/contexts/guest-form-context'
 import AddFormButtons from '~/components/forms/guest/add-buttons'
 import ContactForm from '~/components/forms/guest/contact-form'
@@ -20,8 +21,6 @@ import {
   HouseholdFormSchema,
 } from '~/components/forms/guest-form.schema'
 import SidePaneWrapper from '~/components/forms/wrapper'
-import { getDirtyValues } from '~/app/utils/form-helpers'
-import type { Event, FormInvites } from '~/app/utils/shared-types'
 import { SelfInviteLinkManager } from '~/components/guest-list/self-invite-link-manager'
 import {
   Accordion,
@@ -174,6 +173,7 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
       phone: null,
       isPrimaryContact: false,
       ageGroup: 'ADULT' as const,
+      isTagAlong: false,
       tagIds: [],
       invites,
     })

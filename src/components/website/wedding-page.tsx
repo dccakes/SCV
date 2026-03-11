@@ -1,10 +1,9 @@
 import Image from 'next/image'
 import Link from 'next/link'
-
-import Navbar from '~/components/website/navbar'
 import { formatDateStandard } from '~/app/utils/helpers'
 import { sharedStyles } from '~/app/utils/shared-styles'
 import type { WeddingPageData } from '~/app/utils/shared-types'
+import Navbar from '~/components/website/navbar'
 
 type WeddingPageProps = {
   weddingData: WeddingPageData

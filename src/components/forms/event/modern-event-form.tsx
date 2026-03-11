@@ -11,7 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { format } from 'date-fns'
 import { Calendar as CalendarIcon, Clock } from 'lucide-react'
 import { useEffect } from 'react'
-import { type SubmitHandler, useForm } from 'react-hook-form'
+import { type Resolver, type SubmitHandler, useForm } from 'react-hook-form'
 
 import {
   type EventFormData,
@@ -31,6 +31,7 @@ import {
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
+import { Switch } from '~/components/ui/switch'
 import { Textarea } from '~/components/ui/textarea'
 import { cn } from '~/lib/utils'
 import type { Event } from '~/server/domains/event/event.types'
@@ -64,7 +65,7 @@ export function ModernEventForm({
 
   // Initialize form with defaults or event data
   const form = useForm<EventFormData>({
-    resolver: zodResolver(EventFormSchema),
+    resolver: zodResolver(EventFormSchema) as Resolver<EventFormData>,
     defaultValues: isEditMode
       ? {
           eventName: event.name,
@@ -74,6 +75,7 @@ export function ModernEventForm({
           venue: event.venue ?? '',
           attire: event.attire ?? '',
           description: event.description ?? '',
+          allowTagAlongs: event.allowTagAlongs ?? false,
         }
       : getEventFormDefaults(),
   })
@@ -102,6 +104,7 @@ export function ModernEventForm({
               venue: event.venue ?? '',
               attire: event.attire ?? '',
               description: event.description ?? '',
+              allowTagAlongs: event.allowTagAlongs ?? false,
             }
           : getEventFormDefaults()
       )
@@ -275,6 +278,26 @@ export function ModernEventForm({
             {errors.description && (
               <p className='text-destructive text-xs md:text-sm'>{errors.description.message}</p>
             )}
+          </div>
+
+          {/* Allow Tag-Alongs */}
+          <div className='flex items-center justify-between rounded-lg border bg-muted/50 p-4'>
+            <div className='space-y-0.5'>
+              <Label htmlFor='allowTagAlongs' className='text-sm md:text-base'>
+                Allow tag-alongs
+              </Label>
+              <p className='text-muted-foreground text-xs'>
+                Tag-alongs can be invited and RSVP for this event
+              </p>
+            </div>
+            <Switch
+              id='allowTagAlongs'
+              checked={watch('allowTagAlongs') ?? false}
+              onCheckedChange={(checked) => {
+                setValue('allowTagAlongs', checked, { shouldDirty: true })
+              }}
+              disabled={isSubmitting}
+            />
           </div>
 
           <DialogFooter className='gap-2 sm:gap-0'>

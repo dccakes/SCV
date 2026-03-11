@@ -2,9 +2,8 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-
-import PresentsImage from '~/components/images/Birthday-Present-PNG-Pic.png'
 import { sharedStyles } from '~/app/utils/shared-styles'
+import PresentsImage from '~/components/images/Birthday-Present-PNG-Pic.png'
 
 type RegistrySetupProps = {
   setShowRegistrySetup: (x: boolean) => void

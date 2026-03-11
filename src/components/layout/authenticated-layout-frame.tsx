@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
-
-import { getSidebarWeddingInfo } from '@/components/old_dashboard/sidebar-wedding-info'
 import AuthenticatedAppShell from '@/components/layout/authenticated-app-shell'
+import { getSidebarWeddingInfo } from '@/components/old_dashboard/sidebar-wedding-info'
 import { getDashboardOverview } from '~/server/application/dashboard/dashboard-request-data'
 
 type AuthenticatedLayoutFrameProps = {

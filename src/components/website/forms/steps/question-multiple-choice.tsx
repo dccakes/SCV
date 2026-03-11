@@ -2,9 +2,8 @@
 
 import { useState } from 'react'
 import { IoIosCheckmarkCircleOutline } from 'react-icons/io'
-
-import { useRsvpForm, useUpdateRsvpForm } from '~/components/contexts/rsvp-form-context'
 import type { Guest, Question, StepFormProps } from '~/app/utils/shared-types'
+import { useRsvpForm, useUpdateRsvpForm } from '~/components/contexts/rsvp-form-context'
 
 interface QuestionMultipleChoiceProps extends StepFormProps {
   guest?: Guest

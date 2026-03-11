@@ -1,23 +1,22 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-
+import DashboardTopbar from '@/components/dashboard/dashboard-topbar'
+import PlanningOverview from '@/components/dashboard/planning-overview'
+import { useAuthenticatedSidebar } from '@/components/layout/authenticated-app-shell'
 import DashboardHeader from '@/components/old_dashboard/header'
 import PageSectionsTemplate from '@/components/old_dashboard/page-section-template'
 import RegistrySetup from '@/components/old_dashboard/registry-setup'
 import HomeContent from '@/components/old_dashboard/section-content/home'
 import RsvpContent from '@/components/old_dashboard/section-content/rsvp'
 import SidebarPanel from '@/components/old_dashboard/sidebar-panel'
-import DashboardTopbar from '@/components/dashboard/dashboard-topbar'
-import PlanningOverview from '@/components/dashboard/planning-overview'
-import { useAuthenticatedSidebar } from '@/components/layout/authenticated-app-shell'
+import type { DashboardData, EventFormData } from '~/app/utils/shared-types'
 import { useEditRsvpSettingsForm } from '~/components/contexts/edit-rsvp-settings-form-context'
 import { useEventForm } from '~/components/contexts/event-form-context'
 import DashboardSettingsForm from '~/components/forms/dashboard-settings-form'
 import EventForm from '~/components/forms/event-form'
 import EditRsvpSettingsForm from '~/components/forms/rsvp/edit-rsvp-settings'
 import RsvpFormSettings from '~/components/forms/rsvp-form-settings'
-import type { DashboardData, EventFormData } from '~/app/utils/shared-types'
 
 export default function Dashboard({
   dashboardData,

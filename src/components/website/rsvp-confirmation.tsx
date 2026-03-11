@@ -4,9 +4,8 @@ import Link from 'next/link'
 import type { Dispatch, SetStateAction } from 'react'
 import { FaCircleCheck } from 'react-icons/fa6'
 import { RxCrossCircled } from 'react-icons/rx'
-
-import { useRsvpForm } from '~/components/contexts/rsvp-form-context'
 import type { Event, RsvpFormResponse } from '~/app/utils/shared-types'
+import { useRsvpForm } from '~/components/contexts/rsvp-form-context'
 
 type RsvpConfirmationProps = {
   basePath: string

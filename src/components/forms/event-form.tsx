@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { IoMdClose } from 'react-icons/io'
-
+import { sharedStyles } from '~/app/utils/shared-styles'
+import type { EventFormData } from '~/app/utils/shared-types'
 import { useToggleEventForm } from '~/components/contexts/event-form-context'
 import AnimatedInputLabel from '~/components/forms/animated-input-label'
 import DeleteConfirmation from '~/components/forms/delete-confirmation'
@@ -10,8 +11,6 @@ import DateInput from '~/components/forms/event/date-input'
 import TimeSelections from '~/components/forms/event/time-selections'
 import SidePaneWrapper from '~/components/forms/wrapper'
 import { useEventFormActions } from '~/components/hooks/forms/useEventFormActions'
-import { sharedStyles } from '~/app/utils/shared-styles'
-import type { EventFormData } from '~/app/utils/shared-types'
 
 type EventFormProps = {
   prefillFormData: EventFormData | undefined
@@ -26,6 +25,7 @@ const defaultFormData = {
   attire: undefined,
   description: undefined,
   eventId: '',
+  allowTagAlongs: false,
 }
 
 export default function EventForm({ prefillFormData }: EventFormProps) {
@@ -136,6 +136,29 @@ export default function EventForm({ prefillFormData }: EventFormProps) {
               handleOnChange={handleOnChange}
             />
           </div>
+          <label
+            htmlFor='allowTagAlongs'
+            className='mt-5 flex cursor-pointer items-start gap-3 rounded-lg border bg-muted/50 p-4'
+          >
+            <input
+              id='allowTagAlongs'
+              type='checkbox'
+              checked={eventFormData.allowTagAlongs ?? false}
+              onChange={(e) =>
+                setEventFormData((prev) => ({
+                  ...prev,
+                  allowTagAlongs: e.target.checked,
+                }))
+              }
+              className='mt-0.5 h-4 w-4 rounded border-gray-300'
+            />
+            <div>
+              <span className='font-medium text-sm'>Allow tag-alongs to be invited</span>
+              <p className='text-muted-foreground text-xs'>
+                Tag-alongs (babies, children, etc.) can be invited and RSVP for this event
+              </p>
+            </div>
+          </label>
         </div>
         <div
           className={`fixed bottom-0 flex ${sharedStyles.sidebarFormWidth} flex-col gap-3 border-t px-8 py-5`}

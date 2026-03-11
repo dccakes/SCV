@@ -1,9 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-
-import { useRsvpForm } from '~/components/contexts/rsvp-form-context'
 import type { StepFormProps } from '~/app/utils/shared-types'
+import { useRsvpForm } from '~/components/contexts/rsvp-form-context'
 
 interface SendRsvpProps extends StepFormProps {
   isFetching: boolean

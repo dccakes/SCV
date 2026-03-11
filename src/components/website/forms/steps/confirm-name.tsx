@@ -1,9 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-
-import { useRsvpForm, useUpdateRsvpForm } from '~/components/contexts/rsvp-form-context'
 import type { HouseholdSearch, StepFormProps } from '~/app/utils/shared-types'
+import { useRsvpForm, useUpdateRsvpForm } from '~/components/contexts/rsvp-form-context'
 
 type HouseholdSearchItem = HouseholdSearch[number]
 type GuestWithInvitations = HouseholdSearchItem['guests'][number]

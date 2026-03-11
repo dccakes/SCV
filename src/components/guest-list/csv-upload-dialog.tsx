@@ -54,7 +54,7 @@ function PreviewTable({ rows }: PreviewTableProps) {
             <tr
               key={row.rowNumber}
               className={
-                row.valid ? 'border-t border-border' : 'border-t border-border bg-destructive/5'
+                row.valid ? 'border-border border-t' : 'border-border border-t bg-destructive/5'
               }
             >
               <td className='px-3 py-2 text-muted-foreground'>{row.rowNumber}</td>

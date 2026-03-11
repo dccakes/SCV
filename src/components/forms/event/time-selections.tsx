@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { IoIosArrowDown, IoIosArrowUp } from 'react-icons/io'
-
-import { useOuterClick } from '~/components/hooks'
 import { generateTimes } from '~/app/utils/helpers'
+import { useOuterClick } from '~/components/hooks'
 
 type TimeSelectionsProps = {
   startTime: string | undefined

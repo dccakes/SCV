@@ -1,9 +1,8 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { AiOutlinePlusCircle } from 'react-icons/ai'
-
-import QuestionOption from '~/components/forms/rsvp/question-option'
 import { sharedStyles } from '~/app/utils/shared-styles'
 import type { TQuestionOption } from '~/app/utils/shared-types'
+import QuestionOption from '~/components/forms/rsvp/question-option'
 
 type QuestionOptionsFormProps = {
   questionOptions: TQuestionOption[]

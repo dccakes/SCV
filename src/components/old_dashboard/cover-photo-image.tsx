@@ -4,9 +4,8 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { BsPencil, BsTrash3 } from 'react-icons/bs'
-
-import { LoadingSpinner } from '~/components/loaders'
 import { sharedStyles } from '~/app/utils/shared-styles'
+import { LoadingSpinner } from '~/components/loaders'
 import { useToast } from '~/components/ui/use-toast'
 
 type CoverPhotoImageProps = {

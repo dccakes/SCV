@@ -1,5 +1,5 @@
-import SidePaneWrapper from '~/components/forms/wrapper'
 import { sharedStyles } from '~/app/utils/shared-styles'
+import SidePaneWrapper from '~/components/forms/wrapper'
 
 type DeleteConfirmationProps = {
   isProcessing: boolean

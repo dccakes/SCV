@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
+import { loadWeddingBySubUrl } from '~/app/[websiteSubUrl]/_lib/load-wedding-by-suburl'
 import { RsvpFormProvider } from '~/components/contexts/rsvp-form-context'
 import MainRsvpForm from '~/components/website/forms/main'
-import { loadWeddingBySubUrl } from '~/app/[websiteSubUrl]/_lib/load-wedding-by-suburl'
 
 type RsvpPageProps = {
   params: Promise<{
