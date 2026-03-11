@@ -48,13 +48,13 @@ jest.mock('next/headers', () => ({
     }),
 }))
 
-jest.mock('~/app/_components/website/password-page', () => ({
+jest.mock('~/components/website/password-page', () => ({
   __esModule: true,
   default: (props: { verifyWebsitePassword: (passwordInput: string) => Promise<boolean> }) =>
     mockPasswordPage(props),
 }))
 
-jest.mock('~/app/_components/website/wedding', () => ({
+jest.mock('~/components/website/wedding', () => ({
   __esModule: true,
   default: () => <div data-testid='wedding-website'>Wedding Website</div>,
 }))

@@ -2,9 +2,9 @@ import '~/styles/globals.css'
 
 import type { ReactNode } from 'react'
 import { AuthenticatedLayoutFrame } from '@/components/layout/authenticated-layout-frame'
-import { EditRsvpSettingsFormProvider } from '~/app/_components/contexts/edit-rsvp-settings-form-context'
-import { EventFormProvider } from '~/app/_components/contexts/event-form-context'
-import { GuestFormProvider } from '~/app/_components/contexts/guest-form-context'
+import { EditRsvpSettingsFormProvider } from '~/components/contexts/edit-rsvp-settings-form-context'
+import { EventFormProvider } from '~/components/contexts/event-form-context'
+import { GuestFormProvider } from '~/components/contexts/guest-form-context'
 
 export const dynamic = 'force-dynamic'
 

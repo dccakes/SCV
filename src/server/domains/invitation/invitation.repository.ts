@@ -36,6 +36,23 @@ export class InvitationRepository {
   }
 
   /**
+   * Find all invitations for a wedding with guest tag-along status
+   *
+   * Used by dashboard to filter tag-along invitations from RSVP counts
+   * without making additional per-event queries.
+   */
+  async findByWeddingIdWithGuestTagAlong(
+    weddingId: string
+  ): Promise<Array<Invitation & { guest: { isTagAlong: boolean } }>> {
+    return this.db.invitation.findMany({
+      where: { weddingId },
+      include: {
+        guest: { select: { isTagAlong: true } },
+      },
+    })
+  }
+
+  /**
    * Find all invitations for an event
    */
   async findByEventId(eventId: string): Promise<Invitation[]> {
@@ -148,25 +165,34 @@ export class InvitationRepository {
 
   /**
    * Get RSVP counts for an event
+   *
+   * When includeTagAlongs is false, invitations belonging to tag-along guests
+   * are excluded from counts. This is the single source of truth for filtered
+   * RSVP counting — callers should not replicate this logic.
    */
-  async getRsvpCountsByEventId(eventId: string): Promise<{
+  async getRsvpCountsByEventId(
+    eventId: string,
+    options?: { includeTagAlongs?: boolean }
+  ): Promise<{
     attending: number
     invited: number
     declined: number
     notInvited: number
   }> {
+    const guestFilter = options?.includeTagAlongs === false ? { guest: { isTagAlong: false } } : {}
+
     const [attending, invited, declined, notInvited] = await Promise.all([
       this.db.invitation.count({
-        where: { eventId, rsvp: 'Attending' },
+        where: { eventId, rsvp: 'Attending', ...guestFilter },
       }),
       this.db.invitation.count({
-        where: { eventId, rsvp: 'Invited' },
+        where: { eventId, rsvp: 'Invited', ...guestFilter },
       }),
       this.db.invitation.count({
-        where: { eventId, rsvp: 'Declined' },
+        where: { eventId, rsvp: 'Declined', ...guestFilter },
       }),
       this.db.invitation.count({
-        where: { eventId, rsvp: 'Not Invited' },
+        where: { eventId, rsvp: 'Not Invited', ...guestFilter },
       }),
     ])
 

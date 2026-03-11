@@ -1,0 +1,49 @@
+'use client'
+
+import Image from 'next/image'
+import Link from 'next/link'
+import { sharedStyles } from '~/app/utils/shared-styles'
+import PresentsImage from '~/components/images/Birthday-Present-PNG-Pic.png'
+
+type RegistrySetupProps = {
+  setShowRegistrySetup: (x: boolean) => void
+}
+
+export default function RegistrySetup({ setShowRegistrySetup }: RegistrySetupProps) {
+  return (
+    <section className='my-6 rounded-xl border bg-muted/30 px-6 py-8'>
+      <div className='flex items-start gap-6'>
+        <Image alt='registry gifts' src={PresentsImage} width='130' height='130' priority={true} />
+        <div className='flex flex-col'>
+          <h2 className='font-semibold text-2xl'>Let&apos;s set up your registry</h2>
+          <p className='my-5'>
+            Share your wish list with guests by linking an existing registry or starting a new one.
+          </p>
+          <div>
+            <Link href='/registry'>
+              <button
+                type='button'
+                className={`${sharedStyles.secondaryButton({
+                  px: 'px-7',
+                  py: 'py-1',
+                })}`}
+              >
+                Get Started
+              </button>
+            </Link>
+            <button
+              type='button'
+              className='ml-5 underline hover:no-underline'
+              onClick={() => {
+                localStorage.setItem('registrySectionStatus', 'hidden')
+                setShowRegistrySetup(false)
+              }}
+            >
+              Maybe Later
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}

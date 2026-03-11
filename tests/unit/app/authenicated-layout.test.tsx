@@ -24,12 +24,12 @@ jest.mock('sonner', () => ({
   Toaster: () => mockSonnerToaster(),
 }))
 
-jest.mock('~/app/_components/contexts/event-form-context', () => ({
+jest.mock('~/components/contexts/event-form-context', () => ({
   EventFormProvider: ({ children }: { children: React.ReactNode }) =>
     mockEventFormProvider({ children }),
 }))
 
-jest.mock('~/app/_components/contexts/guest-form-context', () => ({
+jest.mock('~/components/contexts/guest-form-context', () => ({
   GuestFormProvider: ({ children }: { children: React.ReactNode }) =>
     mockGuestFormProvider({ children }),
 }))

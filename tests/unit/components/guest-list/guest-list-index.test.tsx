@@ -1,23 +1,24 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
+import type { DashboardData } from '~/app/utils/shared-types'
 import GuestList from '~/components/guest-list/index'
 
-jest.mock('~/app/_components/contexts/guest-form-context', () => ({
+jest.mock('~/components/contexts/guest-form-context', () => ({
   useGuestForm: () => false,
   useToggleGuestForm: () => jest.fn(),
 }))
 
-jest.mock('~/app/_components/contexts/event-form-context', () => ({
+jest.mock('~/components/contexts/event-form-context', () => ({
   useEventForm: () => false,
   useToggleEventForm: () => jest.fn(),
 }))
 
-jest.mock('~/app/_components/forms/guest-form', () => ({
+jest.mock('~/components/forms/guest-form', () => ({
   __esModule: true,
   default: () => <div data-testid='guest-form' />,
 }))
 
-jest.mock('~/app/_components/forms/event-form', () => ({
+jest.mock('~/components/forms/event-form', () => ({
   __esModule: true,
   default: () => <div data-testid='event-form' />,
 }))
@@ -70,7 +71,7 @@ const dashboardDataNoGuests = {
   },
   totalGuests: 0,
   totalEvents: 0,
-} as any
+} as unknown as DashboardData
 
 const dashboardDataWithGuests = {
   events: [],
@@ -99,7 +100,7 @@ const dashboardDataWithGuests = {
   },
   totalGuests: 1,
   totalEvents: 0,
-} as any
+} as unknown as DashboardData
 
 describe('GuestList index', () => {
   it('renders InviteLinkPanel when there are no guests', () => {

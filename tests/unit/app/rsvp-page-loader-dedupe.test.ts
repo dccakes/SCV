@@ -19,11 +19,11 @@ jest.mock('~/trpc/server', () => ({
   },
 }))
 
-jest.mock('~/app/_components/contexts/rsvp-form-context', () => ({
+jest.mock('~/components/contexts/rsvp-form-context', () => ({
   RsvpFormProvider: ({ children }: { children: ReactNode }) => createElement('div', null, children),
 }))
 
-jest.mock('~/app/_components/website/forms/main', () => ({
+jest.mock('~/components/website/forms/main', () => ({
   __esModule: true,
   default: () => createElement('div', null, 'Form'),
 }))

@@ -313,7 +313,7 @@ describe('parseCsvFile', () => {
     const rows = await parseCsvFile(makeCsvFile(csv))
 
     expect(rows).toHaveLength(1)
-    const row = rows[0]!
+    const row = rows[0]
     expect(row.valid).toBe(true)
     expect(row.rowNumber).toBe(2) // first data row → rowNumber 2
     if (row.valid) {
@@ -333,7 +333,7 @@ describe('parseCsvFile', () => {
     const rows = await parseCsvFile(makeCsvFile(csv))
 
     expect(rows).toHaveLength(1)
-    const row = rows[0]!
+    const row = rows[0]
     expect(row.valid).toBe(false)
     if (!row.valid) {
       expect(row.errors.length).toBeGreaterThan(0)
@@ -352,12 +352,12 @@ describe('parseCsvFile', () => {
     const rows = await parseCsvFile(makeCsvFile(csv))
 
     expect(rows).toHaveLength(2)
-    expect(rows[0]!.rowNumber).toBe(2)
-    expect(rows[1]!.rowNumber).toBe(3)
+    expect(rows[0]?.rowNumber).toBe(2)
+    expect(rows[1]?.rowNumber).toBe(3)
   })
 
   it('should skip empty lines and return no rows for a header-only file', async () => {
-    const csv = HEADERS + '\n'
+    const csv = `${HEADERS}\n`
 
     const rows = await parseCsvFile(makeCsvFile(csv))
 
@@ -374,8 +374,8 @@ describe('parseCsvFile', () => {
     const rows = await parseCsvFile(makeCsvFile(csv))
 
     expect(rows).toHaveLength(2)
-    expect(rows[0]!.valid).toBe(true)
-    expect(rows[1]!.valid).toBe(false)
+    expect(rows[0]?.valid).toBe(true)
+    expect(rows[1]?.valid).toBe(false)
   })
 
   it('should coerce lowercase ageGroup values when parsing', async () => {
@@ -384,7 +384,7 @@ describe('parseCsvFile', () => {
     const rows = await parseCsvFile(makeCsvFile(csv))
 
     expect(rows).toHaveLength(1)
-    const row = rows[0]!
+    const row = rows[0]
     expect(row.valid).toBe(true)
     if (row.valid) {
       expect(row.data.ageGroup).toBe('TEEN')
@@ -396,7 +396,7 @@ describe('parseCsvFile', () => {
 
     const rows = await parseCsvFile(makeCsvFile(csv))
 
-    expect(rows[0]!.raw.firstName).toBe('John')
-    expect(rows[0]!.raw.lastName).toBe('Smith')
+    expect(rows[0]?.raw.firstName).toBe('John')
+    expect(rows[0]?.raw.lastName).toBe('Smith')
   })
 })

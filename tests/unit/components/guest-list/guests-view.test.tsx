@@ -16,15 +16,15 @@ jest.mock('next/navigation', () => ({
   }),
 }))
 
-jest.mock('~/app/_components/contexts/guest-form-context', () => ({
+jest.mock('~/components/contexts/guest-form-context', () => ({
   useToggleGuestForm: () => mockToggleGuestForm,
 }))
 
-jest.mock('~/app/_components/contexts/event-form-context', () => ({
+jest.mock('~/components/contexts/event-form-context', () => ({
   useToggleEventForm: () => jest.fn(),
 }))
 
-jest.mock('~/app/_components/forms/guest/tags-modal', () => ({
+jest.mock('~/components/forms/guest/tags-modal', () => ({
   TagsModal: ({
     open,
     onTagsChange,

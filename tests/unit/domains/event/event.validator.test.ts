@@ -23,7 +23,10 @@ describe('createEventSchema', () => {
 
     const result = createEventSchema.safeParse(validInput)
     expect(result.success).toBe(true)
-    expect(result.data).toEqual(validInput)
+    expect(result.data).toEqual({
+      ...validInput,
+      allowTagAlongs: false,
+    })
   })
 
   it('should require eventName', () => {
@@ -63,6 +66,37 @@ describe('createEventSchema', () => {
     const result = createEventSchema.safeParse(input)
     expect(result.success).toBe(true)
   })
+
+  it('should default allowTagAlongs to false when not provided', () => {
+    const input = {
+      eventName: 'Reception',
+    }
+
+    const result = createEventSchema.safeParse(input)
+    expect(result.success).toBe(true)
+    expect(result.data?.allowTagAlongs).toBe(false)
+  })
+
+  it('should accept allowTagAlongs as true', () => {
+    const input = {
+      eventName: 'Welcome Party',
+      allowTagAlongs: true,
+    }
+
+    const result = createEventSchema.safeParse(input)
+    expect(result.success).toBe(true)
+    expect(result.data?.allowTagAlongs).toBe(true)
+  })
+
+  it('should reject non-boolean allowTagAlongs', () => {
+    const input = {
+      eventName: 'Party',
+      allowTagAlongs: 'yes',
+    }
+
+    const result = createEventSchema.safeParse(input)
+    expect(result.success).toBe(false)
+  })
 })
 
 describe('updateEventSchema', () => {
@@ -80,7 +114,10 @@ describe('updateEventSchema', () => {
 
     const result = updateEventSchema.safeParse(validInput)
     expect(result.success).toBe(true)
-    expect(result.data).toEqual(validInput)
+    expect(result.data).toEqual({
+      ...validInput,
+      allowTagAlongs: false,
+    })
   })
 
   it('should require eventId', () => {

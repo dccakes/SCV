@@ -48,8 +48,9 @@ export const createHouseholdSchema = baseHouseholdFields
   })
   .refine(
     (data) => {
-      // Ensure exactly one guest is marked as primary contact
-      const primaryContacts = data.guestParty.filter((guest) => guest.isPrimaryContact)
+      // Ensure exactly one non-tag-along guest is marked as primary contact
+      const invitedGuests = data.guestParty.filter((guest) => !guest.isTagAlong)
+      const primaryContacts = invitedGuests.filter((guest) => guest.isPrimaryContact)
       return primaryContacts.length === 1
     },
     {
@@ -70,8 +71,9 @@ export const updateHouseholdSchema = baseHouseholdFields
   })
   .refine(
     (data) => {
-      // Ensure exactly one guest is marked as primary contact
-      const primaryContacts = data.guestParty.filter((guest) => guest.isPrimaryContact)
+      // Ensure exactly one non-tag-along guest is marked as primary contact
+      const invitedGuests = data.guestParty.filter((guest) => !guest.isTagAlong)
+      const primaryContacts = invitedGuests.filter((guest) => guest.isPrimaryContact)
       return primaryContacts.length === 1
     },
     {

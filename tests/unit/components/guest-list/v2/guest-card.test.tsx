@@ -78,6 +78,50 @@ const mockHousehold: HouseholdWithGuests = {
   gifts: [],
 }
 
+const mockHouseholdWithTagAlong: HouseholdWithGuests = {
+  ...mockHousehold,
+  guests: [
+    mockHousehold.guests[0]!, // Regular guest: Attending
+    {
+      ...mockHousehold.guests[1]!,
+      id: 3,
+      firstName: 'Baby',
+      lastName: 'Rivera',
+      isTagAlong: true,
+      invitations: [
+        {
+          id: 'inv-3',
+          weddingId: 'wedding-1',
+          guestId: 3,
+          eventId: 'event-1',
+          rsvp: 'Attending',
+          dietaryRestrictions: null,
+          submittedBy: null,
+          submittedAt: null,
+          invitedAt: new Date('2026-01-01T00:00:00.000Z'),
+          createdAt: new Date('2026-01-01T00:00:00.000Z'),
+          updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+        },
+      ],
+    },
+  ],
+}
+
+const mockHouseholdTagAlongNoInvitations: HouseholdWithGuests = {
+  ...mockHousehold,
+  guests: [
+    mockHousehold.guests[0]!, // Regular guest: Attending
+    {
+      ...mockHousehold.guests[1]!,
+      id: 4,
+      firstName: 'Toddler',
+      lastName: 'Rivera',
+      isTagAlong: true,
+      invitations: [], // No invitations (event doesn't allow tag-alongs)
+    },
+  ],
+}
+
 describe('GuestCard', () => {
   it('should render polished identity, location, and summary details', () => {
     render(<GuestCard household={mockHousehold} onSelectHousehold={jest.fn()} />)
@@ -107,5 +151,21 @@ describe('GuestCard', () => {
     fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
 
     expect(onSelectHousehold).toHaveBeenCalledWith(expect.objectContaining({ id: 'household-1' }))
+  })
+
+  it('should include tag-along invitations in RSVP summary', () => {
+    render(<GuestCard household={mockHouseholdWithTagAlong} onSelectHousehold={jest.fn()} />)
+
+    // Both regular guest and tag-along are "Attending"
+    expect(screen.getByText('2 attending')).toBeInTheDocument()
+  })
+
+  it('should not count tag-alongs without invitations in RSVP summary', () => {
+    render(
+      <GuestCard household={mockHouseholdTagAlongNoInvitations} onSelectHousehold={jest.fn()} />
+    )
+
+    // Only the regular guest has invitations
+    expect(screen.getByText('1 attending')).toBeInTheDocument()
   })
 })

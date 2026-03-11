@@ -34,12 +34,12 @@ jest.mock('~/trpc/server', () => ({
   },
 }))
 
-jest.mock('~/app/_components/website/wedding', () => ({
+jest.mock('~/components/website/wedding', () => ({
   __esModule: true,
   default: (props: { websiteSubUrl: string }) => mockWeddingWebsite(props),
 }))
 
-jest.mock('~/app/_components/website/password-page', () => ({
+jest.mock('~/components/website/password-page', () => ({
   __esModule: true,
   default: () => createElement('div', null, 'Password'),
 }))

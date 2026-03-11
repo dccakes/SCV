@@ -12,7 +12,6 @@ jest.mock('~/server/infrastructure/database/client')
 import {
   EventRepository,
   mockBelongsToWedding,
-  mockCreate,
   mockDelete,
   mockEvent,
   mockEventWithStats,
@@ -28,22 +27,30 @@ import { EventService } from '~/server/domains/event/event.service'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   db,
+  mockEventCreate,
+  mockEventFindUnique,
+  mockEventUpdate,
   mockGuestFindMany,
   mockInvitationCreate,
+  mockInvitationCreateMany,
+  mockInvitationDeleteMany,
   resetMocks as resetDbMocks,
 } from '~/server/infrastructure/database/client'
 
 // Create typed aliases for mocked functions
-const mockCreateFn = mockCreate as jest.Mock
 const mockFindByIdFn = mockFindById as jest.Mock
 const mockFindByWeddingIdFn = mockFindByWeddingId as jest.Mock
 const mockFindByWeddingIdWithStatsFn = mockFindByWeddingIdWithStats as jest.Mock
-const mockUpdateFn = mockUpdate as jest.Mock
 const mockUpdateCollectRsvpFn = mockUpdateCollectRsvp as jest.Mock
 const mockDeleteFn = mockDelete as jest.Mock
 const mockBelongsToWeddingFn = mockBelongsToWedding as jest.Mock
 const mockGuestFindManyFn = mockGuestFindMany as jest.Mock
 const mockInvitationCreateFn = mockInvitationCreate as jest.Mock
+const mockInvitationCreateManyFn = mockInvitationCreateMany as jest.Mock
+const mockInvitationDeleteManyFn = mockInvitationDeleteMany as jest.Mock
+const mockEventCreateFn = mockEventCreate as jest.Mock
+const mockEventFindUniqueFn = mockEventFindUnique as jest.Mock
+const mockEventUpdateFn = mockEventUpdate as jest.Mock
 
 describe('EventService', () => {
   let eventService: EventService
@@ -54,12 +61,13 @@ describe('EventService', () => {
     const mockRepository = new EventRepository({})
     // Set default mock returns
     mockGuestFindManyFn.mockResolvedValue([])
+    mockInvitationCreateManyFn.mockResolvedValue({ count: 0 })
     eventService = new EventService(mockRepository, db)
   })
 
   describe('createEvent', () => {
     it('should create an event successfully', async () => {
-      mockCreateFn.mockResolvedValue(mockEvent)
+      mockEventCreateFn.mockResolvedValue(mockEvent)
 
       const result = await eventService.createEvent('wedding-123', {
         eventName: 'Wedding Day',
@@ -72,45 +80,96 @@ describe('EventService', () => {
       })
 
       expect(result).toEqual(mockEvent)
-      expect(mockCreateFn).toHaveBeenCalledWith({
-        name: 'Wedding Day',
-        weddingId: 'wedding-123',
-        date: expect.any(Date),
-        startTime: '14:00',
-        endTime: '16:00',
-        venue: 'Beautiful Garden',
-        attire: 'Formal',
-        description: 'Our special day!',
+      expect(mockEventCreateFn).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          name: 'Wedding Day',
+          weddingId: 'wedding-123',
+          date: expect.any(Date),
+          startTime: '14:00',
+          endTime: '16:00',
+          venue: 'Beautiful Garden',
+          attire: 'Formal',
+          description: 'Our special day!',
+        }),
       })
     })
 
-    it('should create invitations for existing guests', async () => {
-      mockCreateFn.mockResolvedValue(mockEvent)
+    it('should create invitations for existing guests via createMany', async () => {
+      mockEventCreateFn.mockResolvedValue(mockEvent)
       mockGuestFindManyFn.mockResolvedValue(mockGuests)
+      mockInvitationCreateManyFn.mockResolvedValue({ count: 2 })
 
       await eventService.createEvent('wedding-123', {
         eventName: 'Wedding Day',
       })
 
-      expect(mockInvitationCreateFn).toHaveBeenCalledTimes(2)
+      expect(mockInvitationCreateManyFn).toHaveBeenCalledWith({
+        data: expect.arrayContaining([
+          expect.objectContaining({ guestId: 1, eventId: 'event-123', rsvp: 'Not Invited' }),
+          expect.objectContaining({ guestId: 2, eventId: 'event-123', rsvp: 'Not Invited' }),
+        ]),
+      })
+    })
+
+    it('should exclude tag-along guests from invitations by default', async () => {
+      mockEventCreateFn.mockResolvedValue(mockEvent)
+      mockGuestFindManyFn.mockResolvedValue([
+        {
+          id: 1,
+          firstName: 'Regular',
+          lastName: 'Guest',
+          weddingId: 'wedding-123',
+          isTagAlong: false,
+        },
+      ])
+      mockInvitationCreateManyFn.mockResolvedValue({ count: 1 })
+
+      await eventService.createEvent('wedding-123', {
+        eventName: 'Ceremony',
+      })
+
+      expect(mockGuestFindManyFn).toHaveBeenCalledWith({
+        where: { weddingId: 'wedding-123', isTagAlong: false },
+      })
+    })
+
+    it('should include tag-along guests in invitations when allowTagAlongs is true', async () => {
+      const allGuests = [
+        {
+          id: 1,
+          firstName: 'Regular',
+          lastName: 'Guest',
+          weddingId: 'wedding-123',
+          isTagAlong: false,
+        },
+        { id: 2, firstName: 'Tag', lastName: 'Along', weddingId: 'wedding-123', isTagAlong: true },
+      ]
+      mockEventCreateFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: true })
+      mockGuestFindManyFn.mockResolvedValue(allGuests)
+      mockInvitationCreateManyFn.mockResolvedValue({ count: 2 })
+
+      await eventService.createEvent('wedding-123', {
+        eventName: 'Welcome Party',
+        allowTagAlongs: true,
+      })
+
+      expect(mockGuestFindManyFn).toHaveBeenCalledWith({
+        where: { weddingId: 'wedding-123' },
+      })
     })
 
     it('should handle event with only name', async () => {
-      mockCreateFn.mockResolvedValue({ ...mockEvent, date: null })
+      mockEventCreateFn.mockResolvedValue({ ...mockEvent, date: null })
 
       await eventService.createEvent('wedding-123', {
         eventName: 'Simple Event',
       })
 
-      expect(mockCreateFn).toHaveBeenCalledWith({
-        name: 'Simple Event',
-        weddingId: 'wedding-123',
-        date: undefined,
-        startTime: undefined,
-        endTime: undefined,
-        venue: undefined,
-        attire: undefined,
-        description: undefined,
+      expect(mockEventCreateFn).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          name: 'Simple Event',
+          weddingId: 'wedding-123',
+        }),
       })
     })
   })
@@ -221,7 +280,8 @@ describe('EventService', () => {
     it('should update event when wedding owns it', async () => {
       const updatedEvent = { ...mockEvent, name: 'Updated Event' }
       mockBelongsToWeddingFn.mockResolvedValue(true)
-      mockUpdateFn.mockResolvedValue(updatedEvent)
+      mockEventFindUniqueFn.mockResolvedValue(mockEvent)
+      mockEventUpdateFn.mockResolvedValue(updatedEvent)
 
       const result = await eventService.updateEvent('wedding-123', {
         eventId: 'event-123',
@@ -229,6 +289,91 @@ describe('EventService', () => {
       })
 
       expect(result.name).toBe('Updated Event')
+    })
+
+    it('should create invitations only for tag-alongs without existing ones when toggled on', async () => {
+      const tagAlongGuests = [
+        { id: 10, firstName: 'Baby', lastName: 'Doe', weddingId: 'wedding-123', isTagAlong: true },
+        { id: 11, firstName: 'Child', lastName: 'Doe', weddingId: 'wedding-123', isTagAlong: true },
+      ]
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockEventFindUniqueFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: false })
+      mockGuestFindManyFn.mockResolvedValue(tagAlongGuests)
+      mockInvitationCreateManyFn.mockResolvedValue({ count: 2 })
+      mockEventUpdateFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: true })
+
+      await eventService.updateEvent('wedding-123', {
+        eventId: 'event-123',
+        eventName: 'Wedding Day',
+        allowTagAlongs: true,
+      })
+
+      expect(mockGuestFindManyFn).toHaveBeenCalledWith({
+        where: {
+          weddingId: 'wedding-123',
+          isTagAlong: true,
+          invitations: { none: { eventId: 'event-123' } },
+        },
+      })
+      expect(mockInvitationCreateManyFn).toHaveBeenCalledWith({
+        data: expect.arrayContaining([
+          expect.objectContaining({ guestId: 10, eventId: 'event-123', rsvp: 'Not Invited' }),
+          expect.objectContaining({ guestId: 11, eventId: 'event-123', rsvp: 'Not Invited' }),
+        ]),
+      })
+    })
+
+    it('should NOT delete tag-along invitations when toggled off (preserve RSVP data)', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockEventFindUniqueFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: true })
+      mockEventUpdateFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: false })
+
+      await eventService.updateEvent('wedding-123', {
+        eventId: 'event-123',
+        eventName: 'Wedding Day',
+        allowTagAlongs: false,
+      })
+
+      expect(mockGuestFindManyFn).not.toHaveBeenCalled()
+      expect(mockInvitationDeleteManyFn).not.toHaveBeenCalled()
+    })
+
+    it('should not create duplicate invitations when re-toggling on after off', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockEventFindUniqueFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: false })
+      mockGuestFindManyFn.mockResolvedValue([])
+      mockEventUpdateFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: true })
+
+      await eventService.updateEvent('wedding-123', {
+        eventId: 'event-123',
+        eventName: 'Wedding Day',
+        allowTagAlongs: true,
+      })
+
+      expect(mockGuestFindManyFn).toHaveBeenCalledWith({
+        where: {
+          weddingId: 'wedding-123',
+          isTagAlong: true,
+          invitations: { none: { eventId: 'event-123' } },
+        },
+      })
+      expect(mockInvitationCreateManyFn).not.toHaveBeenCalled()
+    })
+
+    it('should not modify invitations when allowTagAlongs stays the same', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockEventFindUniqueFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: false })
+      mockEventUpdateFn.mockResolvedValue(mockEvent)
+
+      await eventService.updateEvent('wedding-123', {
+        eventId: 'event-123',
+        eventName: 'Wedding Day',
+        allowTagAlongs: false,
+      })
+
+      expect(mockGuestFindManyFn).not.toHaveBeenCalled()
+      expect(mockInvitationCreateFn).not.toHaveBeenCalled()
+      expect(mockInvitationDeleteManyFn).not.toHaveBeenCalled()
     })
 
     it('should throw FORBIDDEN when wedding does not own event', async () => {

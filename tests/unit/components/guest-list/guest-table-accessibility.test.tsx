@@ -11,7 +11,7 @@ jest.mock('next/navigation', () => ({
   }),
 }))
 
-jest.mock('~/app/_components/contexts/guest-form-context', () => ({
+jest.mock('~/components/contexts/guest-form-context', () => ({
   useToggleGuestForm: () => mockToggleGuestForm,
 }))
 

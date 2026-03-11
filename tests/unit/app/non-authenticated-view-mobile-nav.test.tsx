@@ -1,8 +1,8 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 
-import NonAuthenticatedView from '~/app/_components/home/non-authenticated-view'
+import NonAuthenticatedView from '~/components/home/non-authenticated-view'
 
-jest.mock('~/app/_components/auth-buttons', () => ({
+jest.mock('~/components/auth-buttons', () => ({
   SignInButton: () => <a href='/auth/signin'>Sign In</a>,
 }))
 

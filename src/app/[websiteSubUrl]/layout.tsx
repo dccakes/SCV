@@ -1,6 +1,6 @@
 import Image from 'next/image'
 
-import DefaultBanner from '~/app/_components/images/default-banner.jpg'
+import DefaultBanner from '~/components/images/default-banner.jpg'
 
 export default function WeddingWebsiteLayout({ children }: { children: React.ReactNode }) {
   return (

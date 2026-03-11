@@ -35,41 +35,57 @@ export class EventService {
    * Business rules:
    * - Event date cannot be in the past (optional rule, currently not enforced)
    * - Auto-creates invitations for all existing guests with "Not Invited" status
+   *
+   * Wrapped in a transaction to ensure event + invitations are created atomically.
    */
   async createEvent(weddingId: string, data: CreateEventInput): Promise<Event> {
-    const { eventName: name, date, startTime, endTime, venue, attire, description } = data
-
-    // Create the event
-    const newEvent = await this.eventRepository.create({
-      name,
-      weddingId,
-      date: date ? new Date(date) : undefined,
+    const {
+      eventName: name,
+      date,
       startTime,
       endTime,
       venue,
       attire,
       description,
-    })
+      allowTagAlongs,
+    } = data
 
-    // Create invitations for all pre-existing guests
-    const guests = await this.db.guest.findMany({
-      where: { weddingId },
-    })
+    return this.db.$transaction(async (tx) => {
+      // Create the event
+      const newEvent = await tx.event.create({
+        data: {
+          name,
+          weddingId,
+          date: date ? new Date(date) : undefined,
+          startTime,
+          endTime,
+          venue,
+          attire,
+          description,
+          collectRsvp: false,
+          allowTagAlongs: allowTagAlongs ?? false,
+        },
+      })
 
-    await Promise.all(
-      guests.map(async (guest: PrismaGuest) => {
-        await this.db.invitation.create({
-          data: {
+      // Create invitations for pre-existing guests
+      // Tag-alongs only get invitations if this event allows them
+      const guests = await tx.guest.findMany({
+        where: { weddingId, ...(allowTagAlongs ? {} : { isTagAlong: false }) },
+      })
+
+      if (guests.length > 0) {
+        await tx.invitation.createMany({
+          data: guests.map((guest) => ({
             weddingId,
             guestId: guest.id,
             eventId: newEvent.id,
             rsvp: RSVP_STATUS.NOT_INVITED,
-          },
+          })),
         })
-      })
-    )
+      }
 
-    return newEvent
+      return newEvent as Event
+    })
   }
 
   /**
@@ -118,9 +134,15 @@ export class EventService {
 
   /**
    * Update an existing event
+   *
+   * When allowTagAlongs changes:
+   * - false → true: Create invitations for tag-alongs that don't already have one (idempotent)
+   * - true → false: Preserve existing invitations (flag controls visibility in counts/display)
+   *
+   * Wrapped in a transaction to ensure tag-along invitation creation + event update are atomic.
    */
   async updateEvent(weddingId: string, data: UpdateEventInput): Promise<Event> {
-    // Verify event belongs to wedding
+    // Verify event belongs to wedding (auth check outside transaction)
     const belongsToWedding = await this.eventRepository.belongsToWedding(data.eventId, weddingId)
     if (!belongsToWedding) {
       throw new TRPCError({
@@ -129,14 +151,52 @@ export class EventService {
       })
     }
 
-    return this.eventRepository.update(data.eventId, {
-      name: data.eventName,
-      date: data.date ? new Date(data.date) : undefined,
-      startTime: data.startTime,
-      endTime: data.endTime,
-      venue: data.venue,
-      attire: data.attire,
-      description: data.description,
+    return this.db.$transaction(async (tx) => {
+      // Check if allowTagAlongs is being toggled on
+      const currentEvent = await tx.event.findUnique({ where: { id: data.eventId } })
+      const wasAllowed = currentEvent?.allowTagAlongs ?? false
+      const nowAllowed = data.allowTagAlongs ?? false
+
+      if (!wasAllowed && nowAllowed) {
+        // Create invitations only for tag-alongs that don't already have one for this event
+        const tagAlongGuests = await tx.guest.findMany({
+          where: {
+            weddingId,
+            isTagAlong: true,
+            invitations: { none: { eventId: data.eventId } },
+          },
+        })
+
+        if (tagAlongGuests.length > 0) {
+          await tx.invitation.createMany({
+            data: tagAlongGuests.map((guest) => ({
+              weddingId,
+              guestId: guest.id,
+              eventId: data.eventId,
+              rsvp: RSVP_STATUS.NOT_INVITED,
+            })),
+          })
+        }
+      }
+      // When toggling off (wasAllowed && !nowAllowed): do nothing.
+      // Invitations are preserved — the allowTagAlongs flag controls
+      // whether they appear in counts and display.
+
+      const updated = await tx.event.update({
+        where: { id: data.eventId },
+        data: {
+          name: data.eventName,
+          date: data.date ? new Date(data.date) : undefined,
+          startTime: data.startTime,
+          endTime: data.endTime,
+          venue: data.venue,
+          attire: data.attire,
+          description: data.description,
+          allowTagAlongs: data.allowTagAlongs,
+        },
+      })
+
+      return updated as Event
     })
   }
 

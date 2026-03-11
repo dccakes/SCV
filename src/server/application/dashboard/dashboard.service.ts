@@ -97,8 +97,10 @@ export class DashboardService {
     // Build events with RSVP statistics
     const eventsWithStats = await this.buildEventsWithStats(events, invitations)
 
-    // Get total guest count
-    const totalGuests = await this.guestRepo.countByWeddingId(weddingId)
+    // Get total guest count (excluding tag-alongs)
+    const totalGuests = await this.guestRepo.countByWeddingId(weddingId, {
+      excludeTagAlongs: true,
+    })
 
     return {
       weddingData,
@@ -117,10 +119,12 @@ export class DashboardService {
   }
 
   /**
-   * Fetch all invitations for a wedding
+   * Fetch all invitations for a wedding with tag-along guest info
    */
-  private async fetchInvitations(weddingId: string): Promise<Invitation[]> {
-    return this.invitationRepo.findByWeddingId(weddingId)
+  private async fetchInvitations(
+    weddingId: string
+  ): Promise<Array<Invitation & { guest: { isTagAlong: boolean } }>> {
+    return this.invitationRepo.findByWeddingIdWithGuestTagAlong(weddingId)
   }
 
   /**
@@ -199,7 +203,7 @@ export class DashboardService {
    */
   private buildHouseholdsWithInvitations(
     households: HouseholdWithGuestsAndGifts[],
-    invitations: Invitation[]
+    invitations: Array<Invitation & { guest: { isTagAlong: boolean } }>
   ): HouseholdWithGuests[] {
     return households.map((household) => ({
       ...household,
@@ -215,12 +219,16 @@ export class DashboardService {
    */
   private async buildEventsWithStats(
     events: Awaited<ReturnType<typeof this.fetchEvents>>,
-    invitations: Invitation[]
+    invitations: Array<Invitation & { guest: { isTagAlong: boolean } }>
   ): Promise<EventWithStats[]> {
     return Promise.all(
       events.map(async (event) => {
-        // Calculate RSVP statistics
-        const guestResponses = this.calculateGuestResponses(event.id, invitations)
+        // Calculate RSVP statistics (filter tag-alongs when event doesn't allow them)
+        const guestResponses = this.calculateGuestResponses(
+          event.id,
+          invitations,
+          event.allowTagAlongs
+        )
 
         // Add recent answers to questions
         const questionsWithRecentAnswers: QuestionWithRecentAnswer[] = await Promise.all(
@@ -247,8 +255,15 @@ export class DashboardService {
 
   /**
    * Calculate RSVP response statistics for an event
+   *
+   * When allowTagAlongs is false, tag-along guest invitations are excluded
+   * from counts (preserved data is hidden from stats).
    */
-  private calculateGuestResponses(eventId: string, invitations: Invitation[]): GuestResponses {
+  private calculateGuestResponses(
+    eventId: string,
+    invitations: Array<Invitation & { guest: { isTagAlong: boolean } }>,
+    allowTagAlongs: boolean
+  ): GuestResponses {
     const responses: GuestResponses = {
       invited: 0,
       attending: 0,
@@ -257,21 +272,23 @@ export class DashboardService {
     }
 
     invitations.forEach((invitation) => {
-      if (invitation.eventId === eventId) {
-        switch (invitation.rsvp) {
-          case 'Invited':
-            responses.invited += 1
-            break
-          case 'Attending':
-            responses.attending += 1
-            break
-          case 'Declined':
-            responses.declined += 1
-            break
-          default:
-            responses.notInvited += 1
-            break
-        }
+      if (invitation.eventId !== eventId) return
+      // Skip tag-along invitations when event doesn't allow them
+      if (!allowTagAlongs && invitation.guest.isTagAlong) return
+
+      switch (invitation.rsvp) {
+        case 'Invited':
+          responses.invited += 1
+          break
+        case 'Attending':
+          responses.attending += 1
+          break
+        case 'Declined':
+          responses.declined += 1
+          break
+        default:
+          responses.notInvited += 1
+          break
       }
     })
 

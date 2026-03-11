@@ -6,12 +6,11 @@ import { AiOutlineHome } from 'react-icons/ai'
 import { CiMail } from 'react-icons/ci'
 import { HiOutlinePhone } from 'react-icons/hi2'
 import { toast } from 'sonner'
-
-import { useToggleGuestForm } from '~/app/_components/contexts/guest-form-context'
-import type { HouseholdFormData } from '~/app/_components/forms/guest-form.schema'
-import { LoadingSpinner } from '~/app/_components/loaders'
 import { sharedStyles } from '~/app/utils/shared-styles'
 import type { Event, FormInvites, Guest } from '~/app/utils/shared-types'
+import { useToggleGuestForm } from '~/components/contexts/guest-form-context'
+import type { HouseholdFormData } from '~/components/forms/guest-form.schema'
+import { LoadingSpinner } from '~/components/loaders'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader } from '~/components/ui/card'
 import {
@@ -155,6 +154,7 @@ const DefaultCard = ({ household, events, setPrefillHousehold }: DefaultCardProp
           phone: guest.phone,
           isPrimaryContact: guest.isPrimaryContact,
           ageGroup: guest.ageGroup ?? 'ADULT',
+          isTagAlong: guest.isTagAlong ?? false,
           tagIds: guest.guestTags?.map((gt) => gt.tagId) ?? [],
           invites: invitations,
         }
@@ -306,6 +306,7 @@ const SingleEventCard = ({
           phone: guest.phone,
           isPrimaryContact: guest.isPrimaryContact,
           ageGroup: guest.ageGroup ?? 'ADULT',
+          isTagAlong: guest.isTagAlong ?? false,
           tagIds: guest.guestTags?.map((gt) => gt.tagId) ?? [],
           invites: invitations,
         }
