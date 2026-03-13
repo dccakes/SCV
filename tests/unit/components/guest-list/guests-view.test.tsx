@@ -924,6 +924,96 @@ describe('GuestsView', () => {
     )
   })
 
+  it('should filter households by first name', () => {
+    render(
+      <GuestsView
+        events={events}
+        households={householdsWithSecondFamily}
+        selectedEventId='all'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.change(screen.getByPlaceholderText('Find guests'), { target: { value: 'Brooke' } })
+
+    expect(
+      screen.queryByRole('button', { name: /select alex rivera household/i })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /select brooke chen household/i })
+    ).toBeInTheDocument()
+  })
+
+  it('should filter households by last name', () => {
+    render(
+      <GuestsView
+        events={events}
+        households={householdsWithSecondFamily}
+        selectedEventId='all'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.change(screen.getByPlaceholderText('Find guests'), { target: { value: 'Chen' } })
+
+    expect(
+      screen.queryByRole('button', { name: /select alex rivera household/i })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /select brooke chen household/i })
+    ).toBeInTheDocument()
+  })
+
+  it('should filter households by full name', () => {
+    render(
+      <GuestsView
+        events={events}
+        households={householdsWithSecondFamily}
+        selectedEventId='all'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.change(screen.getByPlaceholderText('Find guests'), {
+      target: { value: 'Alex Rivera' },
+    })
+
+    expect(
+      screen.getByRole('button', { name: /select alex rivera household/i })
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /select brooke chen household/i })
+    ).not.toBeInTheDocument()
+  })
+
+  it('should filter guests case-insensitively', () => {
+    render(
+      <GuestsView
+        events={events}
+        households={householdsWithSecondFamily}
+        selectedEventId='all'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.change(screen.getByPlaceholderText('Find guests'), { target: { value: 'alex' } })
+
+    expect(
+      screen.getByRole('button', { name: /select alex rivera household/i })
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /select brooke chen household/i })
+    ).not.toBeInTheDocument()
+  })
+
   it('should sort households by name and reset to default order', () => {
     render(
       <GuestsView
