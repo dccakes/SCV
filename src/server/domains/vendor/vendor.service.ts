@@ -110,6 +110,7 @@ export class VendorService {
     return this.vendorRepository.createQuote({
       vendorId,
       price: data.price,
+      quoteType: data.quoteType,
       quoteDate: new Date(data.quoteDate),
       notes: data.notes,
     })
@@ -128,6 +129,7 @@ export class VendorService {
     await this.assertQuoteOwnership(quoteId, vendorId)
     return this.vendorRepository.updateQuote(quoteId, {
       price: data.price,
+      quoteType: data.quoteType,
       quoteDate: data.quoteDate ? new Date(data.quoteDate) : undefined,
       notes: data.notes,
     })

@@ -457,6 +457,11 @@ enum VendorStatus {
   SELECTED
 }
 
+enum QuoteType {
+  FLAT_FEE
+  PER_GUEST
+}
+
 // Add-on: Vendor tracking per wedding
 model Vendor {
   id           String         @id @default(uuid())
@@ -491,8 +496,9 @@ model VendorQuote {
   vendorId  String
   vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
-  price     Decimal  @db.Decimal(10, 2)
-  quoteDate DateTime @db.Date
+  price     Decimal   @db.Decimal(10, 2)
+  quoteType QuoteType @default(FLAT_FEE)
+  quoteDate DateTime  @db.Date
   notes     String?
 
   files     VendorQuoteFile[]

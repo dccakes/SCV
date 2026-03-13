@@ -43,6 +43,7 @@ export const mockQuote: VendorQuote = {
   id: 'quote-123',
   vendorId: 'vendor-123',
   price: 2500,
+  quoteType: 'FLAT_FEE',
   quoteDate: new Date('2026-02-01'),
   notes: 'Full day coverage',
   files: [mockQuoteFile],
