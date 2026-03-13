@@ -57,10 +57,10 @@ export function FileDropzone({
           d='M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5'
         />
       </svg>
-      <p className='text-sm text-muted-foreground'>
+      <p className='text-muted-foreground text-sm'>
         {isDragActive ? 'Drop your file here' : label}
       </p>
-      {sublabel && <p className='mt-1 text-xs text-muted-foreground/70'>{sublabel}</p>}
+      {sublabel && <p className='mt-1 text-muted-foreground/70 text-xs'>{sublabel}</p>}
     </div>
   )
 }

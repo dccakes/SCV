@@ -104,7 +104,8 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
   return (
     <form onSubmit={handleSubmit} className='flex flex-col gap-4'>
       {!isEditing && (
-        <div className='space-y-1'>
+        // biome-ignore lint/a11y/noLabelWithoutControl: Select renders a custom trigger, not a native select
+        <label className='space-y-1'>
           <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
             Category
           </span>
@@ -120,10 +121,10 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </label>
       )}
 
-      <label htmlFor='vendor-name' className='space-y-1'>
+      <label className='space-y-1' htmlFor='vendor-name'>
         <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
           Name <span className='text-primary'>*</span>
         </span>
@@ -136,7 +137,7 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
         />
       </label>
 
-      <label htmlFor='vendor-location' className='space-y-1'>
+      <label className='space-y-1' htmlFor='vendor-location'>
         <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
           Location
         </span>
@@ -149,7 +150,7 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
       </label>
 
       <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
-        <label htmlFor='vendor-website' className='space-y-1'>
+        <label className='space-y-1' htmlFor='vendor-website'>
           <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
             Website
           </span>
@@ -161,7 +162,7 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
             placeholder='https://...'
           />
         </label>
-        <label htmlFor='vendor-instagram' className='space-y-1'>
+        <label className='space-y-1' htmlFor='vendor-instagram'>
           <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
             Instagram
           </span>
@@ -183,7 +184,7 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
           <span className='h-px flex-1 bg-border' aria-hidden='true' />
         </div>
         <div className='flex flex-col gap-3'>
-          <label htmlFor='vendor-contact-name' className='space-y-1'>
+          <label className='space-y-1' htmlFor='vendor-contact-name'>
             <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
               Name
             </span>
@@ -195,7 +196,7 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
             />
           </label>
           <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
-            <label htmlFor='vendor-contact-email' className='space-y-1'>
+            <label className='space-y-1' htmlFor='vendor-contact-email'>
               <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
                 Email
               </span>
@@ -207,7 +208,7 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
                 placeholder='email@example.com'
               />
             </label>
-            <label htmlFor='vendor-contact-phone' className='space-y-1'>
+            <label className='space-y-1' htmlFor='vendor-contact-phone'>
               <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
                 Phone
               </span>

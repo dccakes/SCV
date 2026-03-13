@@ -88,6 +88,20 @@ jest.mock('~/trpc/react', () => ({
           isPending: false,
         }),
       },
+      delete: {
+        useMutation: () => ({
+          mutate: (
+            _payload: unknown,
+            options?: {
+              onSuccess?: () => void
+              onError?: () => void
+            }
+          ) => {
+            options?.onSuccess?.()
+          },
+          isPending: false,
+        }),
+      },
     },
   },
 }))

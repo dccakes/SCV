@@ -19,7 +19,6 @@ import {
   mockFindByWeddingId,
   mockFindByWeddingIdWithStats,
   mockGuests,
-  mockUpdate,
   mockUpdateCollectRsvp,
   resetMocks as resetEventMocks,
 } from '~/server/domains/event/event.repository'

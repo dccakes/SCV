@@ -158,7 +158,7 @@ export function QuoteForm({
       </h4>
 
       <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
-        <label htmlFor='quote-price' className='space-y-1'>
+        <label className='space-y-1' htmlFor='quote-price'>
           <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
             Price ($)
           </span>
@@ -174,7 +174,7 @@ export function QuoteForm({
             className='h-9'
           />
         </label>
-        <label htmlFor='quote-date' className='space-y-1'>
+        <label className='space-y-1' htmlFor='quote-date'>
           <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
             Date
           </span>
@@ -189,7 +189,7 @@ export function QuoteForm({
         </label>
       </div>
 
-      <label htmlFor='quote-notes' className='space-y-1'>
+      <label className='space-y-1' htmlFor='quote-notes'>
         <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
           Notes
         </span>
