@@ -12,7 +12,7 @@ import { z } from 'zod'
  */
 export const createGuestSchema = z.object({
   firstName: z.string().nonempty({ message: 'First name required' }),
-  lastName: z.string().nonempty({ message: 'Last name required' }),
+  lastName: z.string().optional().default(''),
   email: z.string().email('Valid email required').optional().nullable(),
   phone: z.string().optional().nullable(),
   householdId: z.string().min(1, 'Household ID is required'),
@@ -64,7 +64,7 @@ export const getByEventSchema = z.object({
 export const guestPartySchema = z.object({
   guestId: z.number().optional(),
   firstName: z.string().nonempty({ message: 'First name required' }),
-  lastName: z.string().nonempty({ message: 'Last name required' }),
+  lastName: z.string().optional().default(''),
   email: z.string().email('Valid email required').optional().nullable(),
   phone: z.string().optional().nullable(),
   isPrimaryContact: z.boolean().default(false),
