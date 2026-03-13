@@ -8,7 +8,7 @@ import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Textarea } from '~/components/ui/textarea'
 import { cn } from '~/lib/utils'
-import { useUploadThing } from '~/lib/uploadthing'
+import { uploadFiles } from '~/lib/blob'
 import type { VendorQuote } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
 
@@ -44,9 +44,7 @@ export function QuoteForm({ vendorId, onSuccess, onCancel, mode = 'create', quot
   const updateQuote = api.vendor.updateQuote.useMutation()
   const saveFiles = api.vendor.saveQuoteFiles.useMutation()
 
-  const { startUpload, isUploading } = useUploadThing('vendorQuoteFile', {
-    onUploadError: () => { toast.error('Failed to upload files') },
-  })
+  const [isUploading, setIsUploading] = useState(false)
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setSelectedFiles((prev) => {
@@ -110,18 +108,23 @@ export function QuoteForm({ vendorId, onSuccess, onCancel, mode = 'create', quot
         })
 
         if (selectedFiles.length > 0) {
-          const uploadResults = await startUpload(selectedFiles)
-          if (uploadResults && uploadResults.length > 0) {
-            await saveFiles.mutateAsync({
-              quoteId: newQuote.id,
-              vendorId,
-              files: uploadResults.map((r) => ({
-                name: r.name,
-                url: r.ufsUrl,
-                key: r.key,
-                size: r.size,
-              })),
-            })
+          setIsUploading(true)
+          try {
+            const uploadResults = await uploadFiles(selectedFiles)
+            if (uploadResults.length > 0) {
+              await saveFiles.mutateAsync({
+                quoteId: newQuote.id,
+                vendorId,
+                files: uploadResults.map((r) => ({
+                  name: r.name,
+                  url: r.url,
+                  key: r.pathname,
+                  size: r.size,
+                })),
+              })
+            }
+          } finally {
+            setIsUploading(false)
           }
         }
 

@@ -5,6 +5,7 @@
  * Handles vendor and quote CRUD with ownership verification.
  */
 
+import { del } from '@vercel/blob'
 import { TRPCError } from '@trpc/server'
 
 import type { VendorRepository } from '~/server/domains/vendor/vendor.repository'
@@ -160,7 +161,7 @@ export class VendorService {
 
   /**
    * Delete a single file from a quote with ownership verification.
-   * Returns the deleted file's key for removal from UploadThing storage.
+   * Removes the blob from Vercel Blob storage after deleting the DB record.
    */
   async deleteQuoteFile(
     vendorId: string,
@@ -170,7 +171,15 @@ export class VendorService {
     await this.assertVendorOwnership(vendorId, weddingId)
     await this.assertQuoteOwnership(data.quoteId, vendorId)
     await this.assertFileOwnership(data.fileId, data.quoteId)
-    return this.vendorRepository.deleteQuoteFile(data.fileId)
+    const deletedFile = await this.vendorRepository.deleteQuoteFile(data.fileId)
+
+    try {
+      await del(deletedFile.url)
+    } catch {
+      console.error(`Failed to delete blob: ${deletedFile.url}`)
+    }
+
+    return deletedFile
   }
 
   // ─── Private helpers ───────────────────────────────────────────────────────

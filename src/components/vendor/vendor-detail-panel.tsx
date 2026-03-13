@@ -24,7 +24,7 @@ import {
   DialogTitle,
 } from '~/components/ui/dialog'
 import { cn } from '~/lib/utils'
-import { useUploadThing } from '~/lib/uploadthing'
+import { uploadFiles } from '~/lib/blob'
 import type { VendorQuote, VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
 
@@ -75,9 +75,7 @@ function QuoteFileUploader({
 
   const saveFiles = api.vendor.saveQuoteFiles.useMutation()
 
-  const { startUpload, isUploading } = useUploadThing('vendorQuoteFile', {
-    onUploadError: () => { toast.error('Failed to upload files') },
-  })
+  const [isUploading, setIsUploading] = useState(false)
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setSelectedFiles((prev) => {
@@ -115,16 +113,17 @@ function QuoteFileUploader({
   const handleUpload = async () => {
     if (selectedFiles.length === 0) return
     setIsSubmitting(true)
+    setIsUploading(true)
     try {
-      const uploadResults = await startUpload(selectedFiles)
-      if (uploadResults && uploadResults.length > 0) {
+      const uploadResults = await uploadFiles(selectedFiles)
+      if (uploadResults.length > 0) {
         await saveFiles.mutateAsync({
           quoteId,
           vendorId,
           files: uploadResults.map((r) => ({
             name: r.name,
-            url: r.ufsUrl,
-            key: r.key,
+            url: r.url,
+            key: r.pathname,
             size: r.size,
           })),
         })
@@ -136,6 +135,7 @@ function QuoteFileUploader({
       toast.error('Failed to upload files')
     } finally {
       setIsSubmitting(false)
+      setIsUploading(false)
     }
   }
 
