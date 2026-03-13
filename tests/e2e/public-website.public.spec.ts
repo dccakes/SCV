@@ -34,18 +34,11 @@ test.describe("Public Wedding Website", () => {
   test("should return 404 for non-existent wedding website", async ({
     page,
   }) => {
-    const response = await page.goto("/non-existent-wedding-url");
+    await page.goto("/non-existent-wedding-url");
 
-    // Should be a 404 or show "not found" content
-    const status = response?.status();
+    // The app renders a custom "not found" page with "We can't find this page"
     const body = page.locator("body");
-
-    if (status === 404) {
-      expect(status).toBe(404);
-    } else {
-      // Next.js may render a not-found page with 200 status
-      await expect(body).toContainText(/not found|404|does not exist/i);
-    }
+    await expect(body).toContainText(/can't find this page/i);
   });
 });
 

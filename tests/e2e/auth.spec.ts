@@ -5,18 +5,20 @@ test.describe("Authentication Flow", () => {
     page,
   }) => {
     await page.goto("/auth/sign-in");
+    await page.waitForLoadState("networkidle");
 
-    await expect(page.getByLabel(/email/i)).toBeVisible();
-    await expect(page.getByLabel(/password/i)).toBeVisible();
-    await expect(page.getByRole("button", { name: /sign in/i })).toBeVisible();
+    await expect(page.getByLabel("Email")).toBeVisible();
+    await expect(page.getByLabel("Password")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Login" })).toBeVisible();
   });
 
   test("should reject invalid credentials", async ({ page }) => {
     await page.goto("/auth/sign-in");
+    await page.waitForLoadState("networkidle");
 
-    await page.getByLabel(/email/i).fill("invalid@example.com");
-    await page.getByLabel(/password/i).fill("wrongpassword");
-    await page.getByRole("button", { name: /sign in/i }).click();
+    await page.getByLabel("Email").fill("invalid@example.com");
+    await page.getByLabel("Password").fill("wrongpassword");
+    await page.getByRole("button", { name: "Login" }).click();
 
     // Should stay on sign-in page and not redirect to dashboard
     await page.waitForTimeout(2000);
@@ -27,10 +29,11 @@ test.describe("Authentication Flow", () => {
     page,
   }) => {
     await page.goto("/auth/sign-in");
+    await page.waitForLoadState("networkidle");
 
-    await page.getByLabel(/email/i).fill("shrek@swamp.wed");
-    await page.getByLabel(/password/i).fill("password123");
-    await page.getByRole("button", { name: /sign in/i }).click();
+    await page.getByLabel("Email").fill("shrek@swamp.wed");
+    await page.getByLabel("Password").fill("password123");
+    await page.getByRole("button", { name: "Login" }).click();
 
     await page.waitForURL("/dashboard", { timeout: 15_000 });
     await expect(page).toHaveURL("/dashboard");
@@ -61,9 +64,10 @@ test.describe("Authentication Flow", () => {
 
   test("should show sign-up page", async ({ page }) => {
     await page.goto("/auth/sign-up");
+    await page.waitForLoadState("networkidle");
 
-    await expect(page.getByLabel(/name/i).first()).toBeVisible();
-    await expect(page.getByLabel(/email/i)).toBeVisible();
-    await expect(page.getByLabel(/password/i).first()).toBeVisible();
+    await expect(page.getByLabel("Name")).toBeVisible();
+    await expect(page.getByLabel("Email")).toBeVisible();
+    await expect(page.getByLabel("Password")).toBeVisible();
   });
 });
