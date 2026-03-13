@@ -11,9 +11,6 @@ import {
   SIDE_PANE_OVERLAY_CLASS,
   SIDE_PANE_SURFACE_CLASS,
 } from '~/components/layout/side-pane-styles'
-import { QuoteForm } from '~/components/vendor/quote-form'
-import { VendorForm } from '~/components/vendor/vendor-form'
-import { VendorStatusSelect } from '~/components/vendor/vendor-status-select'
 import { Button } from '~/components/ui/button'
 import {
   Dialog,
@@ -23,8 +20,11 @@ import {
   DialogPortal,
   DialogTitle,
 } from '~/components/ui/dialog'
-import { cn } from '~/lib/utils'
+import { QuoteForm } from '~/components/vendor/quote-form'
+import { VendorForm } from '~/components/vendor/vendor-form'
+import { VendorStatusSelect } from '~/components/vendor/vendor-status-select'
 import { useUploadThing } from '~/lib/uploadthing'
+import { cn } from '~/lib/utils'
 import type { VendorQuote, VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
 
@@ -40,7 +40,13 @@ function formatFileSize(bytes: number): string {
 }
 
 /** Hairline-rule section label matching OSWP drawer pattern */
-function SectionLabel({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
+function SectionLabel({
+  children,
+  action,
+}: {
+  children: React.ReactNode
+  action?: React.ReactNode
+}) {
   return (
     <div className='mb-2.5 flex items-center gap-3'>
       <h3 className='shrink-0 font-mono text-[0.58rem] text-muted-foreground uppercase tracking-widest'>
@@ -76,7 +82,9 @@ function QuoteFileUploader({
   const saveFiles = api.vendor.saveQuoteFiles.useMutation()
 
   const { startUpload, isUploading } = useUploadThing('vendorQuoteFile', {
-    onUploadError: () => { toast.error('Failed to upload files') },
+    onUploadError: () => {
+      toast.error('Failed to upload files')
+    },
   })
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -178,7 +186,9 @@ function QuoteFileUploader({
             ))}
           </ul>
           <Button size='sm' onClick={handleUpload} disabled={busy}>
-            {busy ? 'Uploading...' : `Upload ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''}`}
+            {busy
+              ? 'Uploading...'
+              : `Upload ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''}`}
           </Button>
         </>
       )}
@@ -297,7 +307,9 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                       {vendorData.location && (
                         <div>
                           <DetailLabel>Location</DetailLabel>
-                          <dd className='font-sans text-[0.92rem] text-foreground'>{vendorData.location}</dd>
+                          <dd className='font-sans text-[0.92rem] text-foreground'>
+                            {vendorData.location}
+                          </dd>
                         </div>
                       )}
                       {vendorData.website && (
@@ -318,21 +330,27 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                       {vendorData.instagram && (
                         <div>
                           <DetailLabel>Instagram</DetailLabel>
-                          <dd className='font-sans text-[0.92rem] text-foreground'>{vendorData.instagram}</dd>
+                          <dd className='font-sans text-[0.92rem] text-foreground'>
+                            {vendorData.instagram}
+                          </dd>
                         </div>
                       )}
                     </dl>
                   </section>
 
                   {/* Contact section */}
-                  {(vendorData.contactName || vendorData.contactEmail || vendorData.contactPhone) && (
+                  {(vendorData.contactName ||
+                    vendorData.contactEmail ||
+                    vendorData.contactPhone) && (
                     <section>
                       <SectionLabel>Contact</SectionLabel>
                       <dl className='grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2'>
                         {vendorData.contactName && (
                           <div>
                             <DetailLabel>Name</DetailLabel>
-                            <dd className='font-sans text-[0.92rem] text-foreground'>{vendorData.contactName}</dd>
+                            <dd className='font-sans text-[0.92rem] text-foreground'>
+                              {vendorData.contactName}
+                            </dd>
                           </div>
                         )}
                         {vendorData.contactEmail && (
@@ -351,7 +369,9 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                         {vendorData.contactPhone && (
                           <div>
                             <DetailLabel>Phone</DetailLabel>
-                            <dd className='font-sans text-[0.92rem] text-foreground'>{vendorData.contactPhone}</dd>
+                            <dd className='font-sans text-[0.92rem] text-foreground'>
+                              {vendorData.contactPhone}
+                            </dd>
                           </div>
                         )}
                       </dl>
@@ -417,7 +437,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                               <>
                                 <div className='flex items-start justify-between'>
                                   <div>
-                                    <p className='font-display text-xl text-foreground italic'>
+                                    <p className='font-display text-foreground text-xl italic'>
                                       {formatPrice(quote.price)}
                                     </p>
                                     <p className='font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
@@ -441,8 +461,15 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                                       type='button'
                                       className='font-mono text-[0.58rem] text-destructive/70 uppercase tracking-wider hover:text-destructive'
                                       onClick={() => {
-                                        if (window.confirm('Remove this quote and all its attached files?')) {
-                                          deleteQuote.mutate({ quoteId: quote.id, vendorId: vendorData.id })
+                                        if (
+                                          window.confirm(
+                                            'Remove this quote and all its attached files?'
+                                          )
+                                        ) {
+                                          deleteQuote.mutate({
+                                            quoteId: quote.id,
+                                            vendorId: vendorData.id,
+                                          })
                                         }
                                       }}
                                       disabled={deleteQuote.isPending}
@@ -505,7 +532,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                                 ) : (
                                   <button
                                     type='button'
-                                    className='mt-2.5 rounded-md border border-dashed border-primary/30 px-2.5 py-1.5 font-mono text-[0.58rem] text-primary uppercase tracking-wider transition-colors hover:border-primary hover:bg-primary/5'
+                                    className='mt-2.5 rounded-md border border-primary/30 border-dashed px-2.5 py-1.5 font-mono text-[0.58rem] text-primary uppercase tracking-wider transition-colors hover:border-primary hover:bg-primary/5'
                                     onClick={() => setAttachingQuoteId(quote.id)}
                                   >
                                     + Attach files

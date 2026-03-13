@@ -104,6 +104,7 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
   return (
     <form onSubmit={handleSubmit} className='flex flex-col gap-4'>
       {!isEditing && (
+        // biome-ignore lint/a11y/noLabelWithoutControl: Select renders a custom trigger, not a native select
         <label className='space-y-1'>
           <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
             Category
@@ -123,11 +124,12 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
         </label>
       )}
 
-      <label className='space-y-1'>
+      <label className='space-y-1' htmlFor='vendor-name'>
         <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
           Name <span className='text-primary'>*</span>
         </span>
         <Input
+          id='vendor-name'
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder='Vendor or business name'
@@ -135,11 +137,12 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
         />
       </label>
 
-      <label className='space-y-1'>
+      <label className='space-y-1' htmlFor='vendor-location'>
         <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
           Location
         </span>
         <Input
+          id='vendor-location'
           value={location}
           onChange={(e) => setLocation(e.target.value)}
           placeholder='City, State'
@@ -147,22 +150,24 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
       </label>
 
       <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
-        <label className='space-y-1'>
+        <label className='space-y-1' htmlFor='vendor-website'>
           <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
             Website
           </span>
           <Input
+            id='vendor-website'
             type='url'
             value={website}
             onChange={(e) => setWebsite(e.target.value)}
             placeholder='https://...'
           />
         </label>
-        <label className='space-y-1'>
+        <label className='space-y-1' htmlFor='vendor-instagram'>
           <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
             Instagram
           </span>
           <Input
+            id='vendor-instagram'
             value={instagram}
             onChange={(e) => setInstagram(e.target.value)}
             placeholder='@handle'
@@ -179,33 +184,36 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
           <span className='h-px flex-1 bg-border' aria-hidden='true' />
         </div>
         <div className='flex flex-col gap-3'>
-          <label className='space-y-1'>
+          <label className='space-y-1' htmlFor='vendor-contact-name'>
             <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
               Name
             </span>
             <Input
+              id='vendor-contact-name'
               value={contactName}
               onChange={(e) => setContactName(e.target.value)}
               placeholder='Contact name'
             />
           </label>
           <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
-            <label className='space-y-1'>
+            <label className='space-y-1' htmlFor='vendor-contact-email'>
               <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
                 Email
               </span>
               <Input
+                id='vendor-contact-email'
                 type='email'
                 value={contactEmail}
                 onChange={(e) => setContactEmail(e.target.value)}
                 placeholder='email@example.com'
               />
             </label>
-            <label className='space-y-1'>
+            <label className='space-y-1' htmlFor='vendor-contact-phone'>
               <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
                 Phone
               </span>
               <Input
+                id='vendor-contact-phone'
                 value={contactPhone}
                 onChange={(e) => setContactPhone(e.target.value)}
                 placeholder='+1 (555) 000-0000'

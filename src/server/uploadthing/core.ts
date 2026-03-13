@@ -32,7 +32,13 @@ export const uploadRouter = {
       return { userId: session.user.id }
     })
     .onUploadComplete(({ metadata, file }) => {
-      return { uploadedBy: metadata.userId, url: file.ufsUrl, key: file.key, name: file.name, size: file.size }
+      return {
+        uploadedBy: metadata.userId,
+        url: file.ufsUrl,
+        key: file.key,
+        name: file.name,
+        size: file.size,
+      }
     }),
 } satisfies FileRouter
 

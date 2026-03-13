@@ -368,9 +368,7 @@ describe('saveQuoteFilesSchema', () => {
   const validInput = {
     quoteId: 'quote-123',
     vendorId: 'vendor-123',
-    files: [
-      { name: 'proposal.pdf', url: 'https://utfs.io/f/abc123', key: 'abc123', size: 102400 },
-    ],
+    files: [{ name: 'proposal.pdf', url: 'https://utfs.io/f/abc123', key: 'abc123', size: 102400 }],
   }
 
   it('should validate a valid input with one file', () => {
