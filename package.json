@@ -49,6 +49,7 @@
     "@trpc/next": "^11.7.2",
     "@trpc/react-query": "^11.7.2",
     "@trpc/server": "^11.7.2",
+    "@uploadthing/react": "^7.3.3",
     "better-auth": "^1.4.1",
     "chart.js": "^4.5.1",
     "class-variance-authority": "^0.7.1",
@@ -74,6 +75,7 @@
     "superjson": "^2.2.5",
     "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
+    "uploadthing": "^7.7.4",
     "zod": "^3.25.76"
   },
   "devDependencies": {

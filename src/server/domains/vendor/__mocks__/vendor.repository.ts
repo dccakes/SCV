@@ -6,7 +6,12 @@
 
 import { VendorCategory, VendorStatus } from '@prisma/client'
 
-import type { Vendor, VendorQuote, VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
+import type {
+  Vendor,
+  VendorQuote,
+  VendorQuoteFile,
+  VendorWithQuotes,
+} from '~/server/domains/vendor/vendor.types'
 
 export const mockVendor: Vendor = {
   id: 'vendor-123',
@@ -24,12 +29,23 @@ export const mockVendor: Vendor = {
   updatedAt: new Date('2026-01-01'),
 }
 
+export const mockQuoteFile: VendorQuoteFile = {
+  id: 'file-123',
+  quoteId: 'quote-123',
+  name: 'proposal.pdf',
+  url: 'https://utfs.io/f/abc123',
+  key: 'abc123',
+  size: 102400,
+  createdAt: new Date('2026-01-15'),
+}
+
 export const mockQuote: VendorQuote = {
   id: 'quote-123',
   vendorId: 'vendor-123',
   price: 2500,
   quoteDate: new Date('2026-02-01'),
   notes: 'Full day coverage',
+  files: [mockQuoteFile],
   createdAt: new Date('2026-01-15'),
   updatedAt: new Date('2026-01-15'),
 }
@@ -51,6 +67,9 @@ export const mockCreateQuote = jest.fn()
 export const mockUpdateQuote = jest.fn()
 export const mockDeleteQuote = jest.fn()
 export const mockQuoteBelongsToVendor = jest.fn()
+export const mockCreateQuoteFiles = jest.fn()
+export const mockDeleteQuoteFile = jest.fn()
+export const mockFileBelongsToQuote = jest.fn()
 
 export const VendorRepository = jest.fn().mockImplementation(() => ({
   findAllByWeddingId: mockFindAllByWeddingId,
@@ -65,6 +84,9 @@ export const VendorRepository = jest.fn().mockImplementation(() => ({
   updateQuote: mockUpdateQuote,
   deleteQuote: mockDeleteQuote,
   quoteBelongsToVendor: mockQuoteBelongsToVendor,
+  createQuoteFiles: mockCreateQuoteFiles,
+  deleteQuoteFile: mockDeleteQuoteFile,
+  fileBelongsToQuote: mockFileBelongsToQuote,
 }))
 
 export const resetMocks = (): void => {
@@ -80,5 +102,8 @@ export const resetMocks = (): void => {
   mockUpdateQuote.mockReset()
   mockDeleteQuote.mockReset()
   mockQuoteBelongsToVendor.mockReset()
+  mockCreateQuoteFiles.mockReset()
+  mockDeleteQuoteFile.mockReset()
+  mockFileBelongsToQuote.mockReset()
   VendorRepository.mockClear()
 }

@@ -64,8 +64,9 @@ export default function GuestSearchFilter({
     searchText: string,
     rsvpFilter: TSelectedRsvpFilter | null,
     tagFilter: string | null,
-    countryFilter: string | null,
+    countryFilter: string | null
   ) => {
+    const normalizedSearch = searchText.toLowerCase()
     setFilteredHouseholds(() =>
       households.filter((household) => {
         if (countryFilter && household.country !== countryFilter) return false
@@ -77,14 +78,19 @@ export default function GuestSearchFilter({
           return false
         }
 
-        return household.guests.some((guest) =>
-          rsvpFilter
-            ? (guest.firstName.includes(searchText) || guest.lastName.includes(searchText)) &&
-              guest.invitations?.some(
-                (inv) => inv.eventId === rsvpFilter?.eventId && inv.rsvp === rsvpFilter?.rsvpValue
-              )
-            : guest.firstName.includes(searchText) || guest.lastName.includes(searchText)
-        )
+        return household.guests.some((guest) => {
+          const fullName = `${guest.firstName} ${guest.lastName}`.toLowerCase()
+          const matchesName =
+            guest.firstName.toLowerCase().includes(normalizedSearch) ||
+            guest.lastName.toLowerCase().includes(normalizedSearch) ||
+            fullName.includes(normalizedSearch)
+          return rsvpFilter
+            ? matchesName &&
+                guest.invitations?.some(
+                  (inv) => inv.eventId === rsvpFilter?.eventId && inv.rsvp === rsvpFilter?.rsvpValue
+                )
+            : matchesName
+        })
       })
     )
   }
@@ -274,7 +280,7 @@ export default function GuestSearchFilter({
         <Button
           variant='ghost'
           size='sm'
-          className='font-sans text-sm normal-case tracking-normal text-primary'
+          className='font-sans text-primary text-sm normal-case tracking-normal'
           onClick={clearAllFilters}
         >
           Clear

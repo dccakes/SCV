@@ -25,12 +25,23 @@ export type Vendor = {
   updatedAt: Date
 }
 
+export type VendorQuoteFile = {
+  id: string
+  quoteId: string
+  name: string
+  url: string
+  key: string
+  size: number
+  createdAt: Date
+}
+
 export type VendorQuote = {
   id: string
   vendorId: string
   price: number
   quoteDate: Date
   notes: string | null
+  files: VendorQuoteFile[]
   createdAt: Date
   updatedAt: Date
 }

@@ -12,12 +12,15 @@ import type {
   Vendor,
   VendorCategory,
   VendorQuote,
+  VendorQuoteFile,
   VendorStatus,
   VendorWithQuotes,
 } from '~/server/domains/vendor/vendor.types'
 import type {
   CreateQuoteInput,
   CreateVendorInput,
+  DeleteQuoteFileInput,
+  SaveQuoteFilesInput,
   UpdateQuoteInput,
   UpdateVendorInput,
 } from '~/server/domains/vendor/vendor.validator'
@@ -140,6 +143,36 @@ export class VendorService {
     return deleted.id
   }
 
+  // ─── Quote file operations ─────────────────────────────────────────────────
+
+  /**
+   * Save uploaded file metadata for a quote with ownership verification
+   */
+  async saveQuoteFiles(
+    vendorId: string,
+    weddingId: string,
+    data: SaveQuoteFilesInput
+  ): Promise<VendorQuoteFile[]> {
+    await this.assertVendorOwnership(vendorId, weddingId)
+    await this.assertQuoteOwnership(data.quoteId, vendorId)
+    return this.vendorRepository.createQuoteFiles(data.quoteId, data.files)
+  }
+
+  /**
+   * Delete a single file from a quote with ownership verification.
+   * Returns the deleted file's key for removal from UploadThing storage.
+   */
+  async deleteQuoteFile(
+    vendorId: string,
+    weddingId: string,
+    data: DeleteQuoteFileInput
+  ): Promise<VendorQuoteFile> {
+    await this.assertVendorOwnership(vendorId, weddingId)
+    await this.assertQuoteOwnership(data.quoteId, vendorId)
+    await this.assertFileOwnership(data.fileId, data.quoteId)
+    return this.vendorRepository.deleteQuoteFile(data.fileId)
+  }
+
   // ─── Private helpers ───────────────────────────────────────────────────────
 
   private async assertVendorOwnership(vendorId: string, weddingId: string): Promise<void> {
@@ -158,6 +191,16 @@ export class VendorService {
       throw new TRPCError({
         code: 'FORBIDDEN',
         message: 'You do not have permission to modify this quote',
+      })
+    }
+  }
+
+  private async assertFileOwnership(fileId: string, quoteId: string): Promise<void> {
+    const belongs = await this.vendorRepository.fileBelongsToQuote(fileId, quoteId)
+    if (!belongs) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'You do not have permission to modify this file',
       })
     }
   }
