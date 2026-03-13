@@ -7,8 +7,8 @@ import { toast } from 'sonner'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Textarea } from '~/components/ui/textarea'
-import { cn } from '~/lib/utils'
 import { useUploadThing } from '~/lib/uploadthing'
+import { cn } from '~/lib/utils'
 import type { VendorQuote } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
 
@@ -30,10 +30,18 @@ type QuoteFormProps = {
   quote?: VendorQuote
 }
 
-export function QuoteForm({ vendorId, onSuccess, onCancel, mode = 'create', quote }: QuoteFormProps) {
+export function QuoteForm({
+  vendorId,
+  onSuccess,
+  onCancel,
+  mode = 'create',
+  quote,
+}: QuoteFormProps) {
   const isEdit = mode === 'edit' && quote
   const [price, setPrice] = useState(isEdit ? String(quote.price) : '')
-  const [quoteDate, setQuoteDate] = useState(isEdit ? toDateInputValue(quote.quoteDate) : getTodayString())
+  const [quoteDate, setQuoteDate] = useState(
+    isEdit ? toDateInputValue(quote.quoteDate) : getTodayString()
+  )
   const [notes, setNotes] = useState(isEdit ? (quote.notes ?? '') : '')
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -45,7 +53,9 @@ export function QuoteForm({ vendorId, onSuccess, onCancel, mode = 'create', quot
   const saveFiles = api.vendor.saveQuoteFiles.useMutation()
 
   const { startUpload, isUploading } = useUploadThing('vendorQuoteFile', {
-    onUploadError: () => { toast.error('Failed to upload files') },
+    onUploadError: () => {
+      toast.error('Failed to upload files')
+    },
   })
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -139,17 +149,21 @@ export function QuoteForm({ vendorId, onSuccess, onCancel, mode = 'create', quot
   const busy = isSubmitting || isUploading
 
   return (
-    <form onSubmit={handleSubmit} className='flex flex-col gap-3 rounded-lg border border-border/90 bg-card/60 p-4'>
+    <form
+      onSubmit={handleSubmit}
+      className='flex flex-col gap-3 rounded-lg border border-border/90 bg-card/60 p-4'
+    >
       <h4 className='font-mono text-[0.58rem] text-muted-foreground uppercase tracking-widest'>
         {isEdit ? 'Edit Quote' : 'New Quote'}
       </h4>
 
       <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
-        <label className='space-y-1'>
+        <label className='space-y-1' htmlFor='quote-price'>
           <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
             Price ($)
           </span>
           <Input
+            id='quote-price'
             type='number'
             min='0.01'
             step='0.01'
@@ -160,11 +174,12 @@ export function QuoteForm({ vendorId, onSuccess, onCancel, mode = 'create', quot
             className='h-9'
           />
         </label>
-        <label className='space-y-1'>
+        <label className='space-y-1' htmlFor='quote-date'>
           <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
             Date
           </span>
           <Input
+            id='quote-date'
             type='date'
             value={quoteDate}
             onChange={(e) => setQuoteDate(e.target.value)}
@@ -174,11 +189,12 @@ export function QuoteForm({ vendorId, onSuccess, onCancel, mode = 'create', quot
         </label>
       </div>
 
-      <label className='space-y-1'>
+      <label className='space-y-1' htmlFor='quote-notes'>
         <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
           Notes
         </span>
         <Textarea
+          id='quote-notes'
           placeholder='Package details, inclusions, conditions...'
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -242,9 +258,12 @@ export function QuoteForm({ vendorId, onSuccess, onCancel, mode = 'create', quot
         </Button>
         <Button type='submit' size='sm' disabled={busy}>
           {busy
-            ? (isUploading ? 'Uploading...' : 'Saving...')
-            : isEdit ? 'Save Changes' : 'Add Quote'
-          }
+            ? isUploading
+              ? 'Uploading...'
+              : 'Saving...'
+            : isEdit
+              ? 'Save Changes'
+              : 'Add Quote'}
         </Button>
       </div>
     </form>

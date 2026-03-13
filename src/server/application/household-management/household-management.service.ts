@@ -27,14 +27,13 @@ import type { GuestRepository } from '~/server/domains/guest/guest.repository'
 import type { HouseholdRepository } from '~/server/domains/household/household.repository'
 import type { HouseholdSearchResult } from '~/server/domains/household/household.types'
 import type { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
-import type { Invitation } from '~/server/domains/invitation/invitation.types'
 
 export class HouseholdManagementService {
   constructor(
     private householdRepo: HouseholdRepository,
-    private guestRepo: GuestRepository,
-    private invitationRepo: InvitationRepository,
-    private giftRepo: GiftRepository,
+    _guestRepo: GuestRepository,
+    _invitationRepo: InvitationRepository,
+    _giftRepo: GiftRepository,
     private db: PrismaClient // For guestTagAssignment operations until we create a repository
   ) {}
 

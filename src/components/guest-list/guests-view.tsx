@@ -67,6 +67,7 @@ export default function GuestsView({
   const [selectedHouseholdId, setSelectedHouseholdId] = useState<string | undefined>()
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [showDiscardDialog, setShowDiscardDialog] = useState(false)
+  const [showDeleteHouseholdDialog, setShowDeleteHouseholdDialog] = useState(false)
   const [editingSections, setEditingSections] = useState<Set<'contactAddress' | 'notes'>>(new Set())
   const [drawerDraft, setDrawerDraft] = useState<DrawerDraft>({
     email: '',
@@ -210,6 +211,7 @@ export default function GuestsView({
   }, [drawerBaseline, drawerDraft])
 
   const updateHouseholdMutation = api.household.update.useMutation()
+  const deleteHouseholdMutation = api.household.delete.useMutation()
 
   const saveDrawerChanges = useCallback(() => {
     if (!selectedCanonicalHousehold) return
@@ -484,6 +486,31 @@ export default function GuestsView({
     setEditingSections(new Set())
   }, [drawerBaseline])
 
+  const handleConfirmDeleteHousehold = useCallback(() => {
+    if (!selectedCanonicalHousehold) return
+    const householdId = selectedCanonicalHousehold.id
+    deleteHouseholdMutation.mutate(
+      { householdId },
+      {
+        onSuccess: () => {
+          setShowDeleteHouseholdDialog(false)
+          setIsDrawerOpen(false)
+          setSelectedHouseholdId(undefined)
+          initializedDrawerHouseholdIdRef.current = undefined
+          setEditingSections(new Set())
+          setFilteredHouseholds((previous) =>
+            previous.filter((household) => household.id !== householdId)
+          )
+          toast.success('Party deleted successfully')
+          void utils.dashboard.getByUserId.invalidate()
+        },
+        onError: () => {
+          toast.error('Failed to delete party')
+        },
+      }
+    )
+  }, [deleteHouseholdMutation, selectedCanonicalHousehold, utils])
+
   const communicationLog = useMemo(() => {
     if (!selectedHousehold) return []
 
@@ -683,6 +710,7 @@ export default function GuestsView({
             setDrawerDraft={setDrawerDraft}
             rsvpManageHref={rsvpManageHref}
             onSaveMembers={saveMembersChanges}
+            onRequestDelete={() => setShowDeleteHouseholdDialog(true)}
           />
         ) : null}
       </GuestDetailDrawer>
@@ -706,6 +734,33 @@ export default function GuestsView({
               }}
             >
               Discard and close
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showDeleteHouseholdDialog} onOpenChange={setShowDeleteHouseholdDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Party?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this party and all associated guests. This action cannot
+              be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteHouseholdMutation.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                handleConfirmDeleteHousehold()
+              }}
+              disabled={deleteHouseholdMutation.isPending}
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+            >
+              {deleteHouseholdMutation.isPending ? 'Deleting...' : 'Delete Party'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

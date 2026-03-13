@@ -146,7 +146,7 @@ export default function GuestSearchFilter({
         <Button
           variant='ghost'
           size='sm'
-          className='font-sans text-sm normal-case tracking-normal text-primary'
+          className='font-sans text-primary text-sm normal-case tracking-normal'
           onClick={() => {
             setFilteredHouseholds(households)
             setSearchInput('')

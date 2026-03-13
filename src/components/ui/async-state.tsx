@@ -21,7 +21,7 @@ export function AsyncState({
     return (
       <output
         aria-live='polite'
-        className={cn('font-sans text-muted-foreground block text-sm', className)}
+        className={cn('block font-sans text-muted-foreground text-sm', className)}
       >
         {loadingText}
       </output>
@@ -44,7 +44,7 @@ export function AsyncState({
     return (
       <output
         aria-live='polite'
-        className={cn('font-sans text-muted-foreground block text-sm', className)}
+        className={cn('block font-sans text-muted-foreground text-sm', className)}
       >
         {emptyText}
       </output>
