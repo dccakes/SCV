@@ -38,17 +38,24 @@ export default defineConfig({
     {
       name: "public",
       testMatch: /.*\.public\.spec\.ts/,
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: { cookies: [], origins: [] },
+      },
     },
   ],
 
   webServer: {
-    command: `npx next start -p ${PORT}`,
+    command: process.env.CI
+      ? `node .next/standalone/server.js`
+      : `npx next start -p ${PORT}`,
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
     env: {
       NODE_ENV: "test",
+      PORT: String(PORT),
+      HOSTNAME: "0.0.0.0",
     },
   },
 });

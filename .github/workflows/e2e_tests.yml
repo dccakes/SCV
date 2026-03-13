@@ -65,6 +65,11 @@ jobs:
         env:
           SKIP_ENV_VALIDATION: "1"
 
+      - name: Prepare standalone server
+        run: |
+          cp -r public .next/standalone/public
+          cp -r .next/static .next/standalone/.next/static
+
       - name: Run E2E tests
         run: npx playwright test
 

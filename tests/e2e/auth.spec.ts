@@ -42,8 +42,8 @@ test.describe("Authentication Flow", () => {
   test("should redirect unauthenticated users from protected routes", async ({
     browser,
   }) => {
-    // Use a fresh context with no stored auth
-    const context = await browser.newContext();
+    // Use a fresh context with explicitly empty storage state (no cookies/auth)
+    const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
     const page = await context.newPage();
 
     await page.goto("/dashboard");

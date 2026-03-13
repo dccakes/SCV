@@ -56,16 +56,14 @@ test.describe("Guest Self-Fill Registration", () => {
 });
 
 test.describe("Landing Page", () => {
-  test("should load the home page for unauthenticated users", async ({
-    page,
-  }) => {
+  test("should load the home page without errors", async ({ page }) => {
     await page.goto("/");
 
     await expect(page.locator("body")).not.toContainText(
       "Application error"
     );
-    // Landing page should have sign-in / get started links
+    // Page should render the OSWP branding
     const body = page.locator("body");
-    await expect(body).toContainText(/sign in|get started|wedding/i);
+    await expect(body).toContainText("OSWP");
   });
 });
