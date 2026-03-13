@@ -333,6 +333,7 @@ export default function GuestsView({
           phone: member.phone,
           isPrimaryContact: member.isPrimaryContact,
           ageGroup: member.ageGroup,
+          isTagAlong: member.isTagAlong,
           tagIds: member.tagIds,
           invites,
         }
@@ -426,6 +427,8 @@ export default function GuestsView({
                         phone: member.phone,
                         ageGroup: member.ageGroup,
                         isPrimaryContact: member.isPrimaryContact,
+                        isTagAlong: member.isTagAlong,
+                        guestTags: member.tagIds.map((tagId) => ({ tagId })),
                       }
                     }),
                   }
