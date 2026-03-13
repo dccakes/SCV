@@ -94,14 +94,15 @@ describe('createGuestSchema', () => {
     expect(result.success).toBe(false)
   })
 
-  it('should require lastName', () => {
-    const invalidInput = {
+  it('should allow optional lastName', () => {
+    const validInput = {
       firstName: 'John',
       householdId: 'household-123',
     }
 
-    const result = createGuestSchema.safeParse(invalidInput)
-    expect(result.success).toBe(false)
+    const result = createGuestSchema.safeParse(validInput)
+    expect(result.success).toBe(true)
+    expect(result.data?.lastName).toBe('')
   })
 
   it('should require non-empty firstName', () => {
