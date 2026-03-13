@@ -183,9 +183,7 @@ export const GuestNameForm = ({
           </div>
 
           <div className='space-y-2'>
-            <Label htmlFor={`guest${guestIndex}-lastName`}>
-              Last Name <span className='text-destructive'>*</span>
-            </Label>
+            <Label htmlFor={`guest${guestIndex}-lastName`}>Last Name</Label>
             <Input
               id={`guest${guestIndex}-lastName`}
               {...register(`guestParty.${guestIndex}.lastName`)}
