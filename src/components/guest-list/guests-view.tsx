@@ -60,6 +60,7 @@ export default function GuestsView({
   onImportClick,
 }: GuestsViewProps) {
   const utils = api.useUtils()
+  const { data: allTags = [] } = api.guestTag.getAll.useQuery()
   const toggleGuestForm = useToggleGuestForm()
   const [filteredHouseholds, setFilteredHouseholds] = useState(households)
   const [nameSort, setNameSort] = useState<'none' | 'ascending' | 'descending'>('none')
@@ -333,6 +334,7 @@ export default function GuestsView({
           phone: member.phone,
           isPrimaryContact: member.isPrimaryContact,
           ageGroup: member.ageGroup,
+          isTagAlong: member.isTagAlong,
           tagIds: member.tagIds,
           invites,
         }
@@ -426,6 +428,8 @@ export default function GuestsView({
                         phone: member.phone,
                         ageGroup: member.ageGroup,
                         isPrimaryContact: member.isPrimaryContact,
+                        isTagAlong: member.isTagAlong,
+                        guestTags: member.tagIds.map((tagId) => ({ tagId })),
                       }
                     }),
                   }
@@ -464,7 +468,7 @@ export default function GuestsView({
   const selectedHouseholdTags = useMemo(() => {
     if (!selectedHousehold) return []
 
-    return Array.from(
+    const uniqueTagIds = Array.from(
       new Set(
         selectedHousehold.guests
           .flatMap((guest) => guest.guestTags ?? [])
@@ -472,7 +476,11 @@ export default function GuestsView({
           .filter(Boolean)
       )
     ).slice(0, 4)
-  }, [selectedHousehold])
+
+    return uniqueTagIds
+      .map((tagId) => allTags.find((t) => t.id === tagId))
+      .filter((t): t is NonNullable<typeof t> => t !== undefined)
+  }, [selectedHousehold, allTags])
 
   useEffect(() => {
     if (!isDrawerOpen || !selectedHousehold) return
@@ -647,6 +655,7 @@ export default function GuestsView({
             households={sortedHouseholds}
             selectedHouseholdId={selectedHouseholdId}
             onSelectHousehold={handleSelectHousehold}
+            allTags={allTags}
           />
         )}
       </div>
@@ -664,11 +673,11 @@ export default function GuestsView({
           <div className='flex flex-wrap gap-1.5'>
             {selectedHouseholdTags.map((tag) => (
               <Badge
-                key={tag}
+                key={tag.id}
                 variant='outline'
                 className='border-foreground/15 bg-foreground/[0.04] text-[0.58rem] text-foreground/70 uppercase tracking-wider'
               >
-                {tag}
+                {tag.name}
               </Badge>
             ))}
           </div>

@@ -8,6 +8,7 @@ type GuestCardProps = {
   household: HouseholdWithGuests
   onSelectHousehold: (household: HouseholdWithGuests) => void
   isSelected?: boolean
+  allTags?: Array<{ id: string; name: string; color?: string | null }>
 }
 
 type RsvpSummary = {
@@ -35,8 +36,11 @@ const getLocationLabel = (household: HouseholdWithGuests): string => {
   return locationParts.join(', ')
 }
 
-const getHouseholdTags = (household: HouseholdWithGuests): string[] => {
-  return Array.from(
+const getHouseholdTags = (
+  household: HouseholdWithGuests,
+  allTags: Array<{ id: string; name: string; color?: string | null }>
+): Array<{ id: string; name: string }> => {
+  const uniqueTagIds = Array.from(
     new Set(
       household.guests
         .flatMap((guest) => guest.guestTags ?? [])
@@ -44,6 +48,10 @@ const getHouseholdTags = (household: HouseholdWithGuests): string[] => {
         .filter(Boolean)
     )
   ).slice(0, 2)
+
+  return uniqueTagIds
+    .map((tagId) => allTags.find((t) => t.id === tagId))
+    .filter((t): t is NonNullable<typeof t> => t !== undefined)
 }
 
 const getRsvpSummary = (household: HouseholdWithGuests): RsvpSummary => {
@@ -89,6 +97,7 @@ function GuestCardComponent({
   household,
   onSelectHousehold,
   isSelected = false,
+  allTags = [],
 }: Readonly<GuestCardProps>) {
   const primaryGuestName = getPrimaryGuestName(household)
   const invitedGuests = household.guests.filter((guest) => !guest.isTagAlong)
@@ -100,7 +109,7 @@ function GuestCardComponent({
   const rsvpSummary = getRsvpSummary(household)
   const initials = getInitials(primaryGuestName)
   const locationLabel = getLocationLabel(household)
-  const householdTags = getHouseholdTags(household)
+  const householdTags = getHouseholdTags(household, allTags)
   const partyPreview = household.guests.slice(0, 4)
   const handleSelect = useCallback(() => {
     onSelectHousehold(household)
@@ -171,11 +180,11 @@ function GuestCardComponent({
             )}
             {householdTags.map((tag) => (
               <Badge
-                key={tag}
+                key={tag.id}
                 variant='outline'
                 className='border-foreground/15 bg-foreground/[0.04] font-normal text-foreground/70'
               >
-                {tag}
+                {tag.name}
               </Badge>
             ))}
             {rsvpSummary.attending === 0 &&

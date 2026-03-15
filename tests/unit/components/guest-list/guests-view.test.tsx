@@ -44,6 +44,8 @@ jest.mock('~/components/forms/guest/tags-modal', () => ({
   },
 }))
 
+let mockTagsData: Array<{ id: string; name: string; color?: string | null }> = []
+
 jest.mock('~/trpc/react', () => ({
   api: {
     useUtils: () => ({
@@ -53,6 +55,11 @@ jest.mock('~/trpc/react', () => ({
         },
       },
     }),
+    guestTag: {
+      getAll: {
+        useQuery: () => ({ data: mockTagsData }),
+      },
+    },
     household: {
       update: {
         useMutation: () => ({
@@ -339,6 +346,16 @@ const householdsWithFilteredGuests: {
   ],
 }
 
+const TAG_FAMILY_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+
+const householdsWithCountries: HouseholdWithGuests[] = [
+  { ...households[0], country: 'US' },
+  {
+    ...householdsWithSecondFamily[1],
+    country: 'UK',
+  },
+]
+
 describe('GuestsView', () => {
   beforeEach(() => {
     mockToggleGuestForm.mockReset()
@@ -348,6 +365,7 @@ describe('GuestsView', () => {
     shouldMutationFail = false
     deferMutationResolution = false
     pendingMutationSuccess = undefined
+    mockTagsData = []
   })
 
   it('should save canonical household guest party when members modal is saved from a filtered list', async () => {
