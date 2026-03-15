@@ -85,6 +85,7 @@ type GuestDetailPanelContentProps = {
   setDrawerDraft: Dispatch<SetStateAction<DrawerDraft>>
   rsvpManageHref: string
   onSaveMembers: (nextMembers: HouseholdMemberDraft[]) => Promise<boolean>
+  onRequestDelete?: () => void
 }
 
 export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentProps>) {
@@ -101,6 +102,7 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
     setDrawerDraft,
     rsvpManageHref,
     onSaveMembers,
+    onRequestDelete,
   } = props
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false)
   const partyMembers = selectedHousehold.guests.map((guest) => ({
@@ -320,6 +322,18 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
         members={partyMembers}
         onSave={onSaveMembers}
       />
+
+      {onRequestDelete ? (
+        <div className='border-border/70 border-t pt-4'>
+          <button
+            type='button'
+            onClick={onRequestDelete}
+            className='font-mono text-[0.58rem] text-destructive uppercase tracking-wider hover:underline'
+          >
+            Delete party
+          </button>
+        </div>
+      ) : null}
     </div>
   )
 }

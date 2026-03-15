@@ -21,6 +21,8 @@
     "check:fix": "biome check --write .",
     "lint-staged": "lint-staged",
     "test:unit": "SKIP_ENV_VALIDATION=true jest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "postinstall": "prisma generate",
     "start": "next start",
     "prepare": "husky || true"
@@ -81,6 +83,7 @@
     "@biomejs/biome": "^2.4.4",
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/typography": "^0.5.16",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.1.0",

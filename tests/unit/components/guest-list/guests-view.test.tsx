@@ -44,6 +44,8 @@ jest.mock('~/components/forms/guest/tags-modal', () => ({
   },
 }))
 
+let mockTagsData: Array<{ id: string; name: string; color?: string | null }> = []
+
 jest.mock('~/trpc/react', () => ({
   api: {
     useUtils: () => ({
@@ -53,6 +55,11 @@ jest.mock('~/trpc/react', () => ({
         },
       },
     }),
+    guestTag: {
+      getAll: {
+        useQuery: () => ({ data: mockTagsData }),
+      },
+    },
     household: {
       update: {
         useMutation: () => ({
@@ -79,6 +86,20 @@ jest.mock('~/trpc/react', () => ({
             }
 
             resolveSuccess()
+          },
+          isPending: false,
+        }),
+      },
+      delete: {
+        useMutation: () => ({
+          mutate: (
+            _payload: unknown,
+            options?: {
+              onSuccess?: () => void
+              onError?: () => void
+            }
+          ) => {
+            options?.onSuccess?.()
           },
           isPending: false,
         }),
@@ -325,6 +346,16 @@ const householdsWithFilteredGuests: {
   ],
 }
 
+const TAG_FAMILY_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+
+const householdsWithCountries: HouseholdWithGuests[] = [
+  { ...households[0], country: 'US' },
+  {
+    ...householdsWithSecondFamily[1],
+    country: 'UK',
+  },
+]
+
 describe('GuestsView', () => {
   beforeEach(() => {
     mockToggleGuestForm.mockReset()
@@ -334,6 +365,7 @@ describe('GuestsView', () => {
     shouldMutationFail = false
     deferMutationResolution = false
     pendingMutationSuccess = undefined
+    mockTagsData = []
   })
 
   it('should save canonical household guest party when members modal is saved from a filtered list', async () => {
@@ -922,6 +954,96 @@ describe('GuestsView', () => {
         eventName: 'Wedding Day',
       })
     )
+  })
+
+  it('should filter households by first name', () => {
+    render(
+      <GuestsView
+        events={events}
+        households={householdsWithSecondFamily}
+        selectedEventId='all'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.change(screen.getByPlaceholderText('Find guests'), { target: { value: 'Brooke' } })
+
+    expect(
+      screen.queryByRole('button', { name: /select alex rivera household/i })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /select brooke chen household/i })
+    ).toBeInTheDocument()
+  })
+
+  it('should filter households by last name', () => {
+    render(
+      <GuestsView
+        events={events}
+        households={householdsWithSecondFamily}
+        selectedEventId='all'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.change(screen.getByPlaceholderText('Find guests'), { target: { value: 'Chen' } })
+
+    expect(
+      screen.queryByRole('button', { name: /select alex rivera household/i })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /select brooke chen household/i })
+    ).toBeInTheDocument()
+  })
+
+  it('should filter households by full name', () => {
+    render(
+      <GuestsView
+        events={events}
+        households={householdsWithSecondFamily}
+        selectedEventId='all'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.change(screen.getByPlaceholderText('Find guests'), {
+      target: { value: 'Alex Rivera' },
+    })
+
+    expect(
+      screen.getByRole('button', { name: /select alex rivera household/i })
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /select brooke chen household/i })
+    ).not.toBeInTheDocument()
+  })
+
+  it('should filter guests case-insensitively', () => {
+    render(
+      <GuestsView
+        events={events}
+        households={householdsWithSecondFamily}
+        selectedEventId='all'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.change(screen.getByPlaceholderText('Find guests'), { target: { value: 'alex' } })
+
+    expect(
+      screen.getByRole('button', { name: /select alex rivera household/i })
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /select brooke chen household/i })
+    ).not.toBeInTheDocument()
   })
 
   it('should sort households by name and reset to default order', () => {

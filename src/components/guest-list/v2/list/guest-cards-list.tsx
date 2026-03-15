@@ -9,6 +9,7 @@ type GuestCardsListProps = {
   onSelectHousehold: (household: HouseholdWithGuests) => void
   selectedHouseholdId?: string
   emptyMessage?: string
+  allTags?: Array<{ id: string; name: string; color?: string | null }>
 }
 
 function GuestCardsListComponent({
@@ -16,6 +17,7 @@ function GuestCardsListComponent({
   onSelectHousehold,
   selectedHouseholdId,
   emptyMessage = 'No households yet',
+  allTags = [],
 }: Readonly<GuestCardsListProps>) {
   if (households.length === 0) {
     return (
@@ -35,6 +37,7 @@ function GuestCardsListComponent({
           household={household}
           onSelectHousehold={onSelectHousehold}
           isSelected={selectedHouseholdId === household.id}
+          allTags={allTags}
         />
       ))}
     </div>

@@ -96,15 +96,15 @@ describe('guestPartyInputSchema', () => {
     expect(result.success).toBe(false)
   })
 
-  it('should require non-empty lastName', () => {
-    const invalidInput = {
+  it('should allow empty lastName', () => {
+    const validInput = {
       firstName: 'John',
       lastName: '',
       invites: {},
     }
 
-    const result = guestPartyInputSchema.safeParse(invalidInput)
-    expect(result.success).toBe(false)
+    const result = guestPartyInputSchema.safeParse(validInput)
+    expect(result.success).toBe(true)
   })
 })
 

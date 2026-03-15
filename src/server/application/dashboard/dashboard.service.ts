@@ -207,10 +207,17 @@ export class DashboardService {
   ): HouseholdWithGuests[] {
     return households.map((household) => ({
       ...household,
-      guests: household.guests.map((guest) => ({
-        ...guest,
-        invitations: invitations.filter((invitation) => guest.id === invitation.guestId),
-      })),
+      guests: household.guests.map((guest) => {
+        // Prisma returns guestTagAssignments[].guestTagId but the domain type
+        // exposes guestTags[].tagId — map between them here.
+        const raw = guest as typeof guest & { guestTagAssignments?: Array<{ guestTagId: string }> }
+        return {
+          ...guest,
+          invitations: invitations.filter((invitation) => guest.id === invitation.guestId),
+          guestTags:
+            raw.guestTagAssignments?.map(({ guestTagId }) => ({ tagId: guestTagId })) ?? [],
+        }
+      }),
     }))
   }
 

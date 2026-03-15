@@ -15,7 +15,7 @@
  */
 
 // biome-ignore lint/style/noRestrictedImports: architectural violation, tracked in ARCHITECTURAL_VIOLATIONS.md
-import type { PrismaClient, Guest as PrismaGuest } from '@prisma/client'
+import type { PrismaClient } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 
 import { RSVP_STATUS } from '~/lib/constants'

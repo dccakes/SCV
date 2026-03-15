@@ -13,18 +13,8 @@ type VendorCardProps = {
   onDeleted: () => void
 }
 
-export function VendorCard({
-  vendor,
-  quotePrices,
-  onViewDetails,
-  onDeleted,
-}: VendorCardProps) {
+export function VendorCard({ vendor, quotePrices, onViewDetails, onDeleted }: VendorCardProps) {
   const utils = api.useUtils()
-
-  const updateStatus = api.vendor.updateStatus.useMutation({
-    onSuccess: () => utils.vendor.getAll.invalidate(),
-    onError: () => toast.error('Failed to update status'),
-  })
 
   const deleteVendor = api.vendor.delete.useMutation({
     onSuccess: async () => {
@@ -35,7 +25,8 @@ export function VendorCard({
     onError: () => toast.error('Failed to delete vendor'),
   })
 
-  const handleDelete = () => {
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation()
     if (window.confirm(`Remove ${vendor.name}?`)) {
       deleteVendor.mutate({ vendorId: vendor.id })
     }
@@ -52,7 +43,7 @@ export function VendorCard({
 
   const priceDisplay = () => {
     if (quoteCount === 0) return null
-    if (quoteCount === 1) return formatPrice(quotePrices[0]!)
+    if (quoteCount === 1) return formatPrice(quotePrices[0] ?? 0)
     const min = Math.min(...quotePrices)
     const max = Math.max(...quotePrices)
     if (min === max) return formatPrice(min)
@@ -60,14 +51,14 @@ export function VendorCard({
   }
 
   return (
-    <div
-      className='group flex cursor-pointer flex-col gap-2 rounded-lg border border-border/90 bg-card/60 px-4 py-3 transition-all hover:bg-card hover:shadow-sm sm:flex-row sm:items-center sm:justify-between'
-      onClick={() => onViewDetails(vendor.id)}
-      role='button'
-      tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter') onViewDetails(vendor.id) }}
-    >
-      <div className='flex flex-col gap-0.5'>
+    <div className='group relative flex cursor-pointer flex-col gap-2 rounded-lg border border-border/90 bg-card/60 px-4 py-3 transition-all hover:bg-card hover:shadow-sm sm:flex-row sm:items-center sm:justify-between'>
+      <button
+        type='button'
+        className='absolute inset-0 rounded-lg'
+        onClick={() => onViewDetails(vendor.id)}
+        aria-label={`View ${vendor.name} details`}
+      />
+      <div className='pointer-events-none flex flex-col gap-0.5'>
         <span className='font-display text-[1.05rem] text-foreground italic group-hover:text-primary'>
           {vendor.name}
         </span>
@@ -88,9 +79,9 @@ export function VendorCard({
         </div>
       </div>
 
-      <div className='flex items-center gap-3' onClick={(e) => e.stopPropagation()}>
+      <div className='relative z-10 flex items-center gap-3'>
         {priceDisplay() && (
-          <span className='font-mono text-[0.72rem] font-medium text-foreground/80'>
+          <span className='font-medium font-mono text-[0.72rem] text-foreground/80'>
             {priceDisplay()}
           </span>
         )}

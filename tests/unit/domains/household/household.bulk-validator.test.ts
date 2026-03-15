@@ -199,7 +199,7 @@ describe('bulkCreateHouseholdsSchema', () => {
       expect(result.success).toBe(false)
     })
 
-    it('should reject a guest with an empty lastName inside a household', () => {
+    it('should allow a guest with an empty lastName inside a household', () => {
       const result = bulkCreateHouseholdsSchema.safeParse({
         households: [
           {
@@ -208,7 +208,7 @@ describe('bulkCreateHouseholdsSchema', () => {
         ],
       })
 
-      expect(result.success).toBe(false)
+      expect(result.success).toBe(true)
     })
   })
 

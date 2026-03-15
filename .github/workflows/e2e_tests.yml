@@ -1,0 +1,90 @@
+name: "🎭 E2E Tests"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: e2e-tests-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: Playwright E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: e2e_user
+          POSTGRES_PASSWORD: e2e_password
+          POSTGRES_DB: e2e_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U e2e_user -d e2e_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: "postgresql://e2e_user:e2e_password@localhost:5432/e2e_db"
+      BETTER_AUTH_SECRET: "e2e-test-secret-not-for-production"
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+      NODE_ENV: "test"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Prisma migrations
+        run: npx prisma migrate deploy
+
+      - name: Seed database
+        run: node prisma/seed.mjs
+
+      - name: Build Next.js app
+        run: npm run build
+        env:
+          SKIP_ENV_VALIDATION: "1"
+
+      - name: Prepare standalone server
+        run: |
+          cp -r public .next/standalone/public
+          cp -r .next/static .next/standalone/.next/static
+
+      - name: Run E2E tests
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 14

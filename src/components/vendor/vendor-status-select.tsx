@@ -53,7 +53,11 @@ export function VendorStatusSelect({ value, onChange, disabled }: VendorStatusSe
       </SelectTrigger>
       <SelectContent>
         {Object.values(VendorStatus).map((status) => (
-          <SelectItem key={status} value={status} className='font-mono text-[0.62rem] uppercase tracking-wider'>
+          <SelectItem
+            key={status}
+            value={status}
+            className='font-mono text-[0.62rem] uppercase tracking-wider'
+          >
             {STATUS_LABELS[status]}
           </SelectItem>
         ))}

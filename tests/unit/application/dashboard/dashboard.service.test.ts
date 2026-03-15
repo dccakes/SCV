@@ -573,5 +573,78 @@ describe('DashboardService', () => {
       expect(result?.events).toEqual([])
       expect(result?.totalEvents).toBe(0)
     })
+
+    it('should map guestTagAssignments to guestTags for each guest', async () => {
+      const tagId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+      mockHouseholdFindByWeddingIdWithGuestsAndGifts.mockResolvedValue([
+        {
+          ...mockHouseholds[0],
+          guests: [
+            {
+              ...mockHouseholds[0].guests[0],
+              guestTagAssignments: [{ guestTagId: tagId }],
+            },
+          ],
+        },
+      ])
+
+      const result = await service.getOverview('user-123')
+
+      expect(result?.households[0]?.guests[0]?.guestTags).toEqual([{ tagId }])
+    })
+
+    it('should return empty guestTags array when guest has no tag assignments', async () => {
+      // Default mock has guestTagAssignments: []
+      const result = await service.getOverview('user-123')
+
+      expect(result?.households[0]?.guests[0]?.guestTags).toEqual([])
+    })
+
+    it('should map multiple tag assignments to guestTags', async () => {
+      const tagId1 = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+      const tagId2 = 'b2c3d4e5-f6a7-8901-bcde-f12345678901'
+      mockHouseholdFindByWeddingIdWithGuestsAndGifts.mockResolvedValue([
+        {
+          ...mockHouseholds[0],
+          guests: [
+            {
+              ...mockHouseholds[0].guests[0],
+              guestTagAssignments: [{ guestTagId: tagId1 }, { guestTagId: tagId2 }],
+            },
+          ],
+        },
+      ])
+
+      const result = await service.getOverview('user-123')
+
+      expect(result?.households[0]?.guests[0]?.guestTags).toEqual([
+        { tagId: tagId1 },
+        { tagId: tagId2 },
+      ])
+    })
+
+    it('should map guestTagAssignments independently per guest', async () => {
+      const tagId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+      mockHouseholdFindByWeddingIdWithGuestsAndGifts.mockResolvedValue([
+        {
+          ...mockHouseholds[0],
+          guests: [
+            {
+              ...mockHouseholds[0].guests[0],
+              guestTagAssignments: [{ guestTagId: tagId }],
+            },
+            {
+              ...mockHouseholds[0].guests[1],
+              guestTagAssignments: [],
+            },
+          ],
+        },
+      ])
+
+      const result = await service.getOverview('user-123')
+
+      expect(result?.households[0]?.guests[0]?.guestTags).toEqual([{ tagId }])
+      expect(result?.households[0]?.guests[1]?.guestTags).toEqual([])
+    })
   })
 })

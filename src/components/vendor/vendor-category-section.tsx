@@ -2,11 +2,10 @@
 
 import type { VendorCategory } from '@prisma/client'
 import { useState } from 'react'
-
-import { VendorCard } from '~/components/vendor/vendor-card'
-import { VendorForm } from '~/components/vendor/vendor-form'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
+import { VendorCard } from '~/components/vendor/vendor-card'
+import { VendorForm } from '~/components/vendor/vendor-form'
 import type { VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
 
 const CATEGORY_LABELS: Record<VendorCategory, string> = {
@@ -45,7 +44,7 @@ export function VendorCategorySection({
         <Button
           size='sm'
           variant='outline'
-          className='shrink-0 rounded-sm border-dashed border-primary/30 font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:border-primary hover:bg-primary/5'
+          className='shrink-0 rounded-sm border-primary/30 border-dashed font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:border-primary hover:bg-primary/5'
           onClick={() => setShowAddForm(true)}
         >
           + Add Vendor

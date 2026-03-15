@@ -13,7 +13,7 @@ const createJestConfig = nextJest({
 const config: Config = {
   clearMocks: true,
   collectCoverage: false, // Disable by default, enable with --coverage flag
-  coverageDirectory: 'coverage',
+  coverageDirectory: '<rootDir>/../../coverage',
   coverageProvider: 'v8',
   coverageReporters: ['json', 'json-summary', 'lcov', 'text', 'html'],
   rootDir: './tests/unit',

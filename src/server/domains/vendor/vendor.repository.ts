@@ -7,8 +7,8 @@
 import {
   Prisma,
   type PrismaClient,
-  type VendorQuoteFile as PrismaVendorQuoteFile,
   type VendorQuote as PrismaVendorQuote,
+  type VendorQuoteFile as PrismaVendorQuoteFile,
   type VendorCategory,
   type VendorStatus,
 } from '@prisma/client'
