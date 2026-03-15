@@ -57,8 +57,10 @@ test.describe('Vendor Quote Type', () => {
     await page.getByRole('button', { name: 'Add Quote' }).click()
 
     // Wait for the quote to appear with "/ guest" label
-    await expect(page.getByText('/ guest')).toBeVisible()
-    await expect(page.getByText('$75')).toBeVisible()
+    await expect(page.getByText('/ guest').first()).toBeVisible()
+
+    // Verify the price appears in the quote detail (scoped to the quotes section)
+    await expect(page.getByText('$75.00')).toBeVisible()
   })
 
   test('should save a new quote with default "Flat Fee" type', async ({ page }) => {
@@ -83,8 +85,11 @@ test.describe('Vendor Quote Type', () => {
   test('should show quote type dropdown when editing an existing quote', async ({ page }) => {
     await page.getByRole('button', { name: /view dragonfire catering details/i }).click()
 
-    // Click "Edit" on the first quote
-    await page.getByText('Edit').first().click()
+    // Wait for quotes to load, then click "Edit" on a quote (not the vendor edit button).
+    // Quote edit buttons are inside quote cards (bordered divs inside the Quotes section).
+    const quotesSection = page.locator('section', { hasText: 'Quotes' })
+    const firstQuoteCard = quotesSection.locator('div.rounded-lg').first()
+    await firstQuoteCard.getByText('Edit', { exact: true }).click()
 
     // The edit form should show the Quote Type dropdown
     await expect(page.getByText('Quote Type')).toBeVisible()
@@ -96,8 +101,10 @@ test.describe('Vendor Quote Type', () => {
   test('should update quote type from flat fee to per guest', async ({ page }) => {
     await page.getByRole('button', { name: /view dragonfire catering details/i }).click()
 
-    // Click "Edit" on the first quote
-    await page.getByText('Edit').first().click()
+    // Click "Edit" on the first quote card (scoped to the Quotes section)
+    const quotesSection = page.locator('section', { hasText: 'Quotes' })
+    const firstQuoteCard = quotesSection.locator('div.rounded-lg').first()
+    await firstQuoteCard.getByText('Edit', { exact: true }).click()
 
     // Change quote type to "Per Guest"
     await page.getByRole('combobox').filter({ hasText: 'Flat Fee' }).click()
