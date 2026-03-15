@@ -8,6 +8,8 @@
 import { VendorCategory, VendorStatus } from '@prisma/client'
 import { z } from 'zod'
 
+import { BLOB_URL_PATTERN, MAX_FILES_PER_QUOTE, sanitizeFilename } from '~/lib/upload-config'
+
 const vendorCategoryValues = Object.values(VendorCategory) as [string, ...string[]]
 const vendorStatusValues = Object.values(VendorStatus) as [string, ...string[]]
 
@@ -89,8 +91,16 @@ export const deleteQuoteSchema = z.object({
 // ─── Quote file schemas ──────────────────────────────────────────────────────
 
 const quoteFileSchema = z.object({
-  name: z.string().min(1, 'File name is required'),
-  url: z.string().url('Must be a valid URL'),
+  name: z
+    .string()
+    .min(1, 'File name is required')
+    .max(255, 'File name must be 255 characters or less')
+    .transform(sanitizeFilename)
+    .refine((v) => v.length > 0, 'File name is invalid'),
+  url: z
+    .string()
+    .url('Must be a valid URL')
+    .refine((v) => BLOB_URL_PATTERN.test(v), 'URL must be a Vercel Blob storage URL'),
   key: z.string().min(1, 'File key is required'),
   size: z.number().int().positive('File size must be positive'),
 })
@@ -98,7 +108,7 @@ const quoteFileSchema = z.object({
 export const saveQuoteFilesSchema = z.object({
   quoteId: z.string().min(1, 'Quote ID is required'),
   vendorId: z.string().min(1, 'Vendor ID is required'),
-  files: z.array(quoteFileSchema).min(1, 'At least one file is required').max(10),
+  files: z.array(quoteFileSchema).min(1, 'At least one file is required').max(MAX_FILES_PER_QUOTE),
 })
 
 export const deleteQuoteFileSchema = z.object({

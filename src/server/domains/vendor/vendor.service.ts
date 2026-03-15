@@ -8,6 +8,8 @@
 import { del } from '@vercel/blob'
 import { TRPCError } from '@trpc/server'
 
+import { MAX_FILES_PER_QUOTE } from '~/lib/upload-config'
+
 import type { VendorRepository } from '~/server/domains/vendor/vendor.repository'
 import type {
   Vendor,
@@ -91,10 +93,16 @@ export class VendorService {
   }
 
   /**
-   * Delete a vendor (cascades to quotes) with ownership verification
+   * Delete a vendor (cascades to quotes) with ownership verification.
+   * Cleans up blob storage for all associated files before cascade-deleting.
    */
   async deleteVendor(vendorId: string, weddingId: string): Promise<string> {
     await this.assertVendorOwnership(vendorId, weddingId)
+
+    // Clean up blobs before cascade delete removes DB records
+    const fileUrls = await this.vendorRepository.findAllFileUrlsByVendorId(vendorId)
+    await this.deleteBlobsBestEffort(fileUrls)
+
     const deleted = await this.vendorRepository.delete(vendorId)
     return deleted.id
   }
@@ -135,11 +143,17 @@ export class VendorService {
   }
 
   /**
-   * Delete a quote with ownership verification
+   * Delete a quote with ownership verification.
+   * Cleans up blob storage for all associated files before deleting.
    */
   async deleteQuote(quoteId: string, vendorId: string, weddingId: string): Promise<string> {
     await this.assertVendorOwnership(vendorId, weddingId)
     await this.assertQuoteOwnership(quoteId, vendorId)
+
+    // Clean up blobs before cascade delete removes file DB records
+    const fileUrls = await this.vendorRepository.findAllFileUrlsByQuoteId(quoteId)
+    await this.deleteBlobsBestEffort(fileUrls)
+
     const deleted = await this.vendorRepository.deleteQuote(quoteId)
     return deleted.id
   }
@@ -156,6 +170,16 @@ export class VendorService {
   ): Promise<VendorQuoteFile[]> {
     await this.assertVendorOwnership(vendorId, weddingId)
     await this.assertQuoteOwnership(data.quoteId, vendorId)
+
+    // Enforce total file count per quote (existing + new)
+    const existingCount = await this.vendorRepository.countFilesByQuoteId(data.quoteId)
+    if (existingCount + data.files.length > MAX_FILES_PER_QUOTE) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: `A quote can have at most ${MAX_FILES_PER_QUOTE} files (currently ${existingCount})`,
+      })
+    }
+
     return this.vendorRepository.createQuoteFiles(data.quoteId, data.files)
   }
 
@@ -172,17 +196,24 @@ export class VendorService {
     await this.assertQuoteOwnership(data.quoteId, vendorId)
     await this.assertFileOwnership(data.fileId, data.quoteId)
     const deletedFile = await this.vendorRepository.deleteQuoteFile(data.fileId)
-
-    try {
-      await del(deletedFile.url)
-    } catch {
-      console.error(`Failed to delete blob: ${deletedFile.url}`)
-    }
-
+    await this.deleteBlobsBestEffort([deletedFile.url])
     return deletedFile
   }
 
   // ─── Private helpers ───────────────────────────────────────────────────────
+
+  /**
+   * Best-effort deletion of blob files. Failures are logged but do not
+   * prevent the caller from completing (e.g. DB record deletion).
+   */
+  private async deleteBlobsBestEffort(urls: string[]): Promise<void> {
+    if (urls.length === 0) return
+    try {
+      await del(urls)
+    } catch {
+      console.error(`Failed to delete blobs: ${urls.join(', ')}`)
+    }
+  }
 
   private async assertVendorOwnership(vendorId: string, weddingId: string): Promise<void> {
     const belongs = await this.vendorRepository.belongsToWedding(vendorId, weddingId)

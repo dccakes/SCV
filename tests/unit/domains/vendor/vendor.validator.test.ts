@@ -369,7 +369,7 @@ describe('saveQuoteFilesSchema', () => {
     quoteId: 'quote-123',
     vendorId: 'vendor-123',
     files: [
-      { name: 'proposal.pdf', url: 'https://utfs.io/f/abc123', key: 'abc123', size: 102400 },
+      { name: 'proposal.pdf', url: 'https://abc123.public.blob.vercel-storage.com/proposal.pdf', key: 'abc123', size: 102400 },
     ],
   }
 
@@ -382,8 +382,8 @@ describe('saveQuoteFilesSchema', () => {
     const input = {
       ...validInput,
       files: [
-        { name: 'file1.pdf', url: 'https://utfs.io/f/a', key: 'a', size: 100 },
-        { name: 'file2.jpg', url: 'https://utfs.io/f/b', key: 'b', size: 200 },
+        { name: 'file1.pdf', url: 'https://abc123.public.blob.vercel-storage.com/file1.pdf', key: 'a', size: 100 },
+        { name: 'file2.jpg', url: 'https://abc123.public.blob.vercel-storage.com/file2.jpg', key: 'b', size: 200 },
       ],
     }
     const result = saveQuoteFilesSchema.safeParse(input)
@@ -398,7 +398,7 @@ describe('saveQuoteFilesSchema', () => {
   it('should reject more than 10 files', () => {
     const files = Array.from({ length: 11 }, (_, i) => ({
       name: `file${i}.pdf`,
-      url: `https://utfs.io/f/${i}`,
+      url: `https://abc123.public.blob.vercel-storage.com/file${i}.pdf`,
       key: `key${i}`,
       size: 100,
     }))
@@ -427,19 +427,45 @@ describe('saveQuoteFilesSchema', () => {
     expect(result.success).toBe(false)
   })
 
-  it('should reject file with empty name', () => {
+  it('should reject file with non-Vercel-Blob url', () => {
     const input = {
       ...validInput,
-      files: [{ name: '', url: 'https://utfs.io/f/abc', key: 'abc', size: 100 }],
+      files: [{ name: 'file.pdf', url: 'https://evil.com/malware.pdf', key: 'abc', size: 100 }],
     }
     const result = saveQuoteFilesSchema.safeParse(input)
     expect(result.success).toBe(false)
   })
 
+  it('should reject file with empty name', () => {
+    const input = {
+      ...validInput,
+      files: [{ name: '', url: 'https://abc123.public.blob.vercel-storage.com/f.pdf', key: 'abc', size: 100 }],
+    }
+    const result = saveQuoteFilesSchema.safeParse(input)
+    expect(result.success).toBe(false)
+  })
+
+  it('should sanitize path traversal in filename', () => {
+    const input = {
+      ...validInput,
+      files: [{
+        name: '../../../etc/passwd',
+        url: 'https://abc123.public.blob.vercel-storage.com/f.pdf',
+        key: 'abc',
+        size: 100,
+      }],
+    }
+    const result = saveQuoteFilesSchema.safeParse(input)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.files[0]!.name).toBe('etcpasswd')
+    }
+  })
+
   it('should reject file with zero size', () => {
     const input = {
       ...validInput,
-      files: [{ name: 'file.pdf', url: 'https://utfs.io/f/abc', key: 'abc', size: 0 }],
+      files: [{ name: 'file.pdf', url: 'https://abc123.public.blob.vercel-storage.com/f.pdf', key: 'abc', size: 0 }],
     }
     const result = saveQuoteFilesSchema.safeParse(input)
     expect(result.success).toBe(false)

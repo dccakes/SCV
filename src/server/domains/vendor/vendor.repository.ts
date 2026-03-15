@@ -108,6 +108,30 @@ export class VendorRepository {
   }
 
   /**
+   * Find all file URLs belonging to a vendor (across all quotes).
+   * Used for blob cleanup before cascade-deleting a vendor.
+   */
+  async findAllFileUrlsByVendorId(vendorId: string): Promise<string[]> {
+    const files = await this.db.vendorQuoteFile.findMany({
+      where: { quote: { vendorId } },
+      select: { url: true },
+    })
+    return files.map((f) => f.url)
+  }
+
+  /**
+   * Find all file URLs for a specific quote.
+   * Used for blob cleanup before deleting a quote.
+   */
+  async findAllFileUrlsByQuoteId(quoteId: string): Promise<string[]> {
+    const files = await this.db.vendorQuoteFile.findMany({
+      where: { quoteId },
+      select: { url: true },
+    })
+    return files.map((f) => f.url)
+  }
+
+  /**
    * Delete a vendor (cascades to quotes via DB)
    */
   async delete(id: string): Promise<Vendor> {
@@ -185,18 +209,27 @@ export class VendorRepository {
   // ─── Quote file operations ────────────────────────────────────────────────
 
   /**
+   * Count existing files for a quote
+   */
+  async countFilesByQuoteId(quoteId: string): Promise<number> {
+    return this.db.vendorQuoteFile.count({ where: { quoteId } })
+  }
+
+  /**
    * Create file records for a quote (batch)
    */
   async createQuoteFiles(
     quoteId: string,
     files: { name: string; url: string; key: string; size: number }[]
   ): Promise<VendorQuoteFile[]> {
-    await this.db.vendorQuoteFile.createMany({
-      data: files.map((f) => ({ ...f, quoteId })),
-    })
-    return this.db.vendorQuoteFile.findMany({
-      where: { quoteId },
-      orderBy: { createdAt: 'desc' },
+    return this.db.$transaction(async (tx) => {
+      await tx.vendorQuoteFile.createMany({
+        data: files.map((f) => ({ ...f, quoteId })),
+      })
+      return tx.vendorQuoteFile.findMany({
+        where: { quoteId },
+        orderBy: { createdAt: 'desc' },
+      })
     })
   }
 

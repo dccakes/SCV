@@ -2,21 +2,7 @@ import { handleUpload, type HandleUploadBody } from '@vercel/blob/client'
 import { NextResponse } from 'next/server'
 
 import { auth } from '~/lib/auth'
-
-const ALLOWED_TYPES = new Set([
-  'application/pdf',
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/gif',
-  'text/plain',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-])
-
-const MAX_FILE_SIZE = 8 * 1024 * 1024 // 8 MB
+import { ALLOWED_CONTENT_TYPES, MAX_FILE_SIZE } from '~/lib/upload-config'
 
 export async function POST(request: Request): Promise<NextResponse> {
   const body = (await request.json()) as HandleUploadBody
@@ -35,7 +21,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         }
 
         return {
-          allowedContentTypes: [...ALLOWED_TYPES],
+          allowedContentTypes: [...ALLOWED_CONTENT_TYPES],
           maximumSizeInBytes: MAX_FILE_SIZE,
           tokenPayload: JSON.stringify({ userId: session.user.id }),
         }
@@ -47,9 +33,11 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     return NextResponse.json(jsonResponse)
   } catch (error) {
+    const message = (error as Error).message
+    const isAuthError = message === 'Unauthorized'
     return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 400 },
+      { error: isAuthError ? 'Unauthorized' : 'Upload failed' },
+      { status: isAuthError ? 401 : 400 },
     )
   }
 }
