@@ -86,11 +86,14 @@ test.describe('Vendor Quote Type', () => {
     await page.getByRole('button', { name: /view dragonfire catering details/i }).click()
 
     // Dragonfire Catering seed quote: "Standard buffet" at $4,200
-    // Scope to the quote card containing this note text, then click its Edit button
-    const quoteCard = page
-      .locator('div', { hasText: 'Standard buffet' })
-      .filter({ hasText: 'Edit' })
-    await quoteCard.getByText('Edit', { exact: true }).click()
+    // Find the quote card containing "Standard buffet" and click its Edit button.
+    // The notes <p> is nested: card > flex-div > left-div > <p>Standard buffet</p>
+    // Walk up from the notes text to the flex container that holds the Edit button.
+    const editBtn = page
+      .getByText('Standard buffet')
+      .locator('xpath=ancestor::div[contains(@class,"flex items-start")]')
+      .getByRole('button', { name: 'Edit' })
+    await editBtn.click()
 
     // The edit form should show the Quote Type dropdown
     await expect(page.getByText('Quote Type')).toBeVisible()
@@ -102,11 +105,12 @@ test.describe('Vendor Quote Type', () => {
   test('should update quote type from flat fee to per guest', async ({ page }) => {
     await page.getByRole('button', { name: /view dragonfire catering details/i }).click()
 
-    // Scope to the "Standard buffet" quote card and click Edit
-    const quoteCard = page
-      .locator('div', { hasText: 'Standard buffet' })
-      .filter({ hasText: 'Edit' })
-    await quoteCard.getByText('Edit', { exact: true }).click()
+    // Find the "Standard buffet" quote's Edit button via xpath ancestor
+    const editBtn = page
+      .getByText('Standard buffet')
+      .locator('xpath=ancestor::div[contains(@class,"flex items-start")]')
+      .getByRole('button', { name: 'Edit' })
+    await editBtn.click()
 
     // Change quote type to "Per Guest"
     await page.getByRole('combobox').filter({ hasText: 'Flat Fee' }).click()
