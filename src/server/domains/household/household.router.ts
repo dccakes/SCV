@@ -12,6 +12,7 @@ import { TRPCError } from '@trpc/server'
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { householdManagementService } from '~/server/application/household-management'
+import type { AuthzContext } from '~/server/authz/authorization.types'
 import { eventService } from '~/server/domains/event'
 import {
   bulkCreateHouseholdsSchema,
@@ -22,13 +23,29 @@ import {
 } from '~/server/domains/household/household.validator'
 import { weddingService } from '~/server/domains/wedding'
 
+const toAuthzContext = (ctx: {
+  auth: {
+    userId: string
+    sessionActiveOrganizationId: string | null
+  }
+  headers: Headers
+}): AuthzContext => ({
+  userId: ctx.auth.userId,
+  headers: ctx.headers,
+  sessionActiveOrganizationId: ctx.auth.sessionActiveOrganizationId,
+})
+
 export const householdRouter = createTRPCRouter({
   /**
    * Create a new household with guests
    */
   create: protectedProcedure.input(createHouseholdSchema).mutation(async ({ ctx, input }) => {
     const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
-    return householdManagementService.createHouseholdWithGuests(weddingId, input)
+    return householdManagementService.createHouseholdWithGuests(
+      toAuthzContext(ctx),
+      weddingId,
+      input
+    )
   }),
 
   /**
@@ -36,7 +53,11 @@ export const householdRouter = createTRPCRouter({
    */
   update: protectedProcedure.input(updateHouseholdSchema).mutation(async ({ ctx, input }) => {
     const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
-    return householdManagementService.updateHouseholdWithGuests(weddingId, input)
+    return householdManagementService.updateHouseholdWithGuests(
+      toAuthzContext(ctx),
+      weddingId,
+      input
+    )
   }),
 
   /**
@@ -63,20 +84,34 @@ export const householdRouter = createTRPCRouter({
         }
       }
 
-      return householdManagementService.bulkCreateHouseholds(weddingId, input.households)
+      return householdManagementService.bulkCreateHouseholds(
+        toAuthzContext(ctx),
+        weddingId,
+        input.households
+      )
     }),
 
   /**
    * Delete a household
    */
-  delete: protectedProcedure.input(deleteHouseholdSchema).mutation(async ({ input }) => {
-    return householdManagementService.deleteHousehold(input.householdId)
+  delete: protectedProcedure.input(deleteHouseholdSchema).mutation(async ({ ctx, input }) => {
+    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+    return householdManagementService.deleteHousehold(
+      toAuthzContext(ctx),
+      input.householdId,
+      weddingId
+    )
   }),
 
   /**
    * Search households by guest name
    */
-  findBySearch: protectedProcedure.input(searchHouseholdSchema).query(async ({ input }) => {
-    return householdManagementService.searchHouseholds(input.searchText)
+  findBySearch: protectedProcedure.input(searchHouseholdSchema).query(async ({ ctx, input }) => {
+    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+    return householdManagementService.searchHouseholds(
+      toAuthzContext(ctx),
+      weddingId,
+      input.searchText
+    )
   }),
 })

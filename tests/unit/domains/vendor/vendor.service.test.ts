@@ -5,8 +5,13 @@
 import { VendorCategory, VendorStatus } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 
+jest.mock('~/server/authz/permission-checker', () => ({
+  requirePermission: jest.fn(),
+}))
+
 jest.mock('~/server/domains/vendor/vendor.repository')
 
+import { requirePermission } from '~/server/authz/permission-checker'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   mockBelongsToWedding,
@@ -48,12 +53,20 @@ const mockQuoteBelongsToVendorFn = mockQuoteBelongsToVendor as jest.Mock
 const mockCreateQuoteFilesFn = mockCreateQuoteFiles as jest.Mock
 const mockDeleteQuoteFileFn = mockDeleteQuoteFile as jest.Mock
 const mockFileBelongsToQuoteFn = mockFileBelongsToQuote as jest.Mock
+const mockRequirePermission = requirePermission as jest.Mock
 
 describe('VendorService', () => {
   let vendorService: VendorService
+  const actorContext = {
+    headers: new Headers(),
+    userId: 'actor-1',
+    sessionActiveOrganizationId: null,
+  }
 
   beforeEach(() => {
     resetMocks()
+    mockRequirePermission.mockReset()
+    mockRequirePermission.mockResolvedValue({ organizationId: 'org-1', role: 'admin' })
     const mockRepository = new VendorRepository({})
     vendorService = new VendorService(mockRepository)
   })
@@ -96,7 +109,7 @@ describe('VendorService', () => {
     it('should return vendors via userId JOIN without separate weddingId lookup', async () => {
       mockFindAllByUserIdFn.mockResolvedValue([mockVendorWithQuotes])
 
-      const result = await vendorService.getVendorsByUserId('user-123')
+      const result = await vendorService.getVendorsByUserId(actorContext, 'user-123')
 
       expect(result).toEqual([mockVendorWithQuotes])
       expect(mockFindAllByUserIdFn).toHaveBeenCalledWith('user-123', undefined)
@@ -105,7 +118,7 @@ describe('VendorService', () => {
     it('should pass category filter through', async () => {
       mockFindAllByUserIdFn.mockResolvedValue([mockVendorWithQuotes])
 
-      await vendorService.getVendorsByUserId('user-123', VendorCategory.VENUE)
+      await vendorService.getVendorsByUserId(actorContext, 'user-123', VendorCategory.VENUE)
 
       expect(mockFindAllByUserIdFn).toHaveBeenCalledWith('user-123', VendorCategory.VENUE)
     })
@@ -113,7 +126,7 @@ describe('VendorService', () => {
     it('should return empty array when user has no vendors', async () => {
       mockFindAllByUserIdFn.mockResolvedValue([])
 
-      const result = await vendorService.getVendorsByUserId('user-123')
+      const result = await vendorService.getVendorsByUserId(actorContext, 'user-123')
 
       expect(result).toEqual([])
     })
@@ -125,7 +138,11 @@ describe('VendorService', () => {
     it('should return vendor with quotes when it belongs to the wedding', async () => {
       mockFindByIdWithQuotesFn.mockResolvedValue(mockVendorWithQuotes)
 
-      const result = await vendorService.getVendorWithQuotes('vendor-123', 'wedding-123')
+      const result = await vendorService.getVendorWithQuotes(
+        actorContext,
+        'vendor-123',
+        'wedding-123'
+      )
 
       expect(result).toEqual(mockVendorWithQuotes)
     })
@@ -133,11 +150,11 @@ describe('VendorService', () => {
     it('should throw NOT_FOUND when vendor does not exist', async () => {
       mockFindByIdWithQuotesFn.mockResolvedValue(null)
 
-      await expect(vendorService.getVendorWithQuotes('vendor-123', 'wedding-123')).rejects.toThrow(
-        TRPCError
-      )
       await expect(
-        vendorService.getVendorWithQuotes('vendor-123', 'wedding-123')
+        vendorService.getVendorWithQuotes(actorContext, 'vendor-123', 'wedding-123')
+      ).rejects.toThrow(TRPCError)
+      await expect(
+        vendorService.getVendorWithQuotes(actorContext, 'vendor-123', 'wedding-123')
       ).rejects.toMatchObject({ code: 'NOT_FOUND' })
     })
 
@@ -145,7 +162,7 @@ describe('VendorService', () => {
       mockFindByIdWithQuotesFn.mockResolvedValue(mockVendorWithQuotes)
 
       await expect(
-        vendorService.getVendorWithQuotes('vendor-123', 'other-wedding')
+        vendorService.getVendorWithQuotes(actorContext, 'vendor-123', 'other-wedding')
       ).rejects.toMatchObject({ code: 'FORBIDDEN' })
     })
   })
@@ -156,7 +173,7 @@ describe('VendorService', () => {
     it('should create a vendor successfully', async () => {
       mockCreateFn.mockResolvedValue(mockVendor)
 
-      const result = await vendorService.createVendor('wedding-123', {
+      const result = await vendorService.createVendor(actorContext, 'wedding-123', {
         category: VendorCategory.PHOTOGRAPHER,
         name: 'Alice Photos',
       })
@@ -176,7 +193,7 @@ describe('VendorService', () => {
       mockBelongsToWeddingFn.mockResolvedValue(true)
       mockUpdateFn.mockResolvedValue(updated)
 
-      const result = await vendorService.updateVendor('vendor-123', 'wedding-123', {
+      const result = await vendorService.updateVendor(actorContext, 'vendor-123', 'wedding-123', {
         vendorId: 'vendor-123',
         name: 'Bob Photos',
       })
@@ -188,7 +205,7 @@ describe('VendorService', () => {
       mockBelongsToWeddingFn.mockResolvedValue(false)
 
       await expect(
-        vendorService.updateVendor('vendor-123', 'other-wedding', {
+        vendorService.updateVendor(actorContext, 'vendor-123', 'other-wedding', {
           vendorId: 'vendor-123',
           name: 'Test',
         })
@@ -205,6 +222,7 @@ describe('VendorService', () => {
       mockUpdateStatusFn.mockResolvedValue(updated)
 
       const result = await vendorService.updateStatus(
+        actorContext,
         'vendor-123',
         'wedding-123',
         VendorStatus.SELECTED
@@ -217,7 +235,12 @@ describe('VendorService', () => {
       mockBelongsToWeddingFn.mockResolvedValue(false)
 
       await expect(
-        vendorService.updateStatus('vendor-123', 'other-wedding', VendorStatus.SELECTED)
+        vendorService.updateStatus(
+          actorContext,
+          'vendor-123',
+          'other-wedding',
+          VendorStatus.SELECTED
+        )
       ).rejects.toMatchObject({ code: 'FORBIDDEN' })
     })
   })
@@ -229,7 +252,7 @@ describe('VendorService', () => {
       mockBelongsToWeddingFn.mockResolvedValue(true)
       mockDeleteFn.mockResolvedValue(mockVendor)
 
-      const result = await vendorService.deleteVendor('vendor-123', 'wedding-123')
+      const result = await vendorService.deleteVendor(actorContext, 'vendor-123', 'wedding-123')
 
       expect(result).toBe('vendor-123')
       expect(mockDeleteFn).toHaveBeenCalledWith('vendor-123')
@@ -238,11 +261,11 @@ describe('VendorService', () => {
     it('should throw FORBIDDEN when vendor does not belong to the wedding', async () => {
       mockBelongsToWeddingFn.mockResolvedValue(false)
 
-      await expect(vendorService.deleteVendor('vendor-123', 'other-wedding')).rejects.toMatchObject(
-        {
-          code: 'FORBIDDEN',
-        }
-      )
+      await expect(
+        vendorService.deleteVendor(actorContext, 'vendor-123', 'other-wedding')
+      ).rejects.toMatchObject({
+        code: 'FORBIDDEN',
+      })
     })
   })
 
@@ -253,7 +276,7 @@ describe('VendorService', () => {
       mockBelongsToWeddingFn.mockResolvedValue(true)
       mockCreateQuoteFn.mockResolvedValue(mockQuote)
 
-      const result = await vendorService.addQuote('vendor-123', 'wedding-123', {
+      const result = await vendorService.addQuote(actorContext, 'vendor-123', 'wedding-123', {
         vendorId: 'vendor-123',
         price: 2500,
         quoteDate: '2026-02-01',
@@ -270,7 +293,7 @@ describe('VendorService', () => {
       mockBelongsToWeddingFn.mockResolvedValue(false)
 
       await expect(
-        vendorService.addQuote('vendor-123', 'other-wedding', {
+        vendorService.addQuote(actorContext, 'vendor-123', 'other-wedding', {
           vendorId: 'vendor-123',
           price: 500,
           quoteDate: '2026-03-01',
@@ -288,11 +311,17 @@ describe('VendorService', () => {
       mockQuoteBelongsToVendorFn.mockResolvedValue(true)
       mockUpdateQuoteFn.mockResolvedValue(updated)
 
-      const result = await vendorService.updateQuote('quote-123', 'vendor-123', 'wedding-123', {
-        quoteId: 'quote-123',
-        vendorId: 'vendor-123',
-        notes: 'Updated notes',
-      })
+      const result = await vendorService.updateQuote(
+        actorContext,
+        'quote-123',
+        'vendor-123',
+        'wedding-123',
+        {
+          quoteId: 'quote-123',
+          vendorId: 'vendor-123',
+          notes: 'Updated notes',
+        }
+      )
 
       expect(result.notes).toBe('Updated notes')
     })
@@ -301,7 +330,7 @@ describe('VendorService', () => {
       mockBelongsToWeddingFn.mockResolvedValue(false)
 
       await expect(
-        vendorService.updateQuote('quote-123', 'vendor-123', 'other-wedding', {
+        vendorService.updateQuote(actorContext, 'quote-123', 'vendor-123', 'other-wedding', {
           quoteId: 'quote-123',
           vendorId: 'vendor-123',
         })
@@ -313,7 +342,7 @@ describe('VendorService', () => {
       mockQuoteBelongsToVendorFn.mockResolvedValue(false)
 
       await expect(
-        vendorService.updateQuote('quote-123', 'vendor-123', 'wedding-123', {
+        vendorService.updateQuote(actorContext, 'quote-123', 'vendor-123', 'wedding-123', {
           quoteId: 'quote-123',
           vendorId: 'vendor-123',
         })
@@ -329,7 +358,12 @@ describe('VendorService', () => {
       mockQuoteBelongsToVendorFn.mockResolvedValue(true)
       mockDeleteQuoteFn.mockResolvedValue(mockQuote)
 
-      const result = await vendorService.deleteQuote('quote-123', 'vendor-123', 'wedding-123')
+      const result = await vendorService.deleteQuote(
+        actorContext,
+        'quote-123',
+        'vendor-123',
+        'wedding-123'
+      )
 
       expect(result).toBe('quote-123')
     })
@@ -338,7 +372,7 @@ describe('VendorService', () => {
       mockBelongsToWeddingFn.mockResolvedValue(false)
 
       await expect(
-        vendorService.deleteQuote('quote-123', 'vendor-123', 'other-wedding')
+        vendorService.deleteQuote(actorContext, 'quote-123', 'vendor-123', 'other-wedding')
       ).rejects.toMatchObject({ code: 'FORBIDDEN' })
     })
 
@@ -347,7 +381,7 @@ describe('VendorService', () => {
       mockQuoteBelongsToVendorFn.mockResolvedValue(false)
 
       await expect(
-        vendorService.deleteQuote('quote-123', 'vendor-123', 'wedding-123')
+        vendorService.deleteQuote(actorContext, 'quote-123', 'vendor-123', 'wedding-123')
       ).rejects.toMatchObject({ code: 'FORBIDDEN' })
     })
   })
@@ -359,9 +393,9 @@ describe('VendorService', () => {
       mockBelongsToWeddingFn.mockResolvedValue(true)
       mockDeleteFn.mockRejectedValue(new Error('DB connection error'))
 
-      await expect(vendorService.deleteVendor('vendor-123', 'wedding-123')).rejects.toThrow(
-        'DB connection error'
-      )
+      await expect(
+        vendorService.deleteVendor(actorContext, 'vendor-123', 'wedding-123')
+      ).rejects.toThrow('DB connection error')
     })
 
     it('addQuote should propagate repository errors', async () => {
@@ -369,7 +403,7 @@ describe('VendorService', () => {
       mockCreateQuoteFn.mockRejectedValue(new Error('DB constraint violation'))
 
       await expect(
-        vendorService.addQuote('vendor-123', 'wedding-123', {
+        vendorService.addQuote(actorContext, 'vendor-123', 'wedding-123', {
           vendorId: 'vendor-123',
           price: 500,
           quoteDate: '2026-03-01',
@@ -383,7 +417,7 @@ describe('VendorService', () => {
       mockDeleteQuoteFn.mockRejectedValue(new Error('Record not found'))
 
       await expect(
-        vendorService.deleteQuote('quote-123', 'vendor-123', 'wedding-123')
+        vendorService.deleteQuote(actorContext, 'quote-123', 'vendor-123', 'wedding-123')
       ).rejects.toThrow('Record not found')
     })
   })
@@ -404,7 +438,12 @@ describe('VendorService', () => {
       mockQuoteBelongsToVendorFn.mockResolvedValue(true)
       mockCreateQuoteFilesFn.mockResolvedValue([mockQuoteFile])
 
-      const result = await vendorService.saveQuoteFiles('vendor-123', 'wedding-123', fileInput)
+      const result = await vendorService.saveQuoteFiles(
+        actorContext,
+        'vendor-123',
+        'wedding-123',
+        fileInput
+      )
 
       expect(result).toEqual([mockQuoteFile])
       expect(mockCreateQuoteFilesFn).toHaveBeenCalledWith('quote-123', fileInput.files)
@@ -414,7 +453,7 @@ describe('VendorService', () => {
       mockBelongsToWeddingFn.mockResolvedValue(false)
 
       await expect(
-        vendorService.saveQuoteFiles('vendor-123', 'other-wedding', fileInput)
+        vendorService.saveQuoteFiles(actorContext, 'vendor-123', 'other-wedding', fileInput)
       ).rejects.toMatchObject({ code: 'FORBIDDEN' })
     })
 
@@ -423,7 +462,7 @@ describe('VendorService', () => {
       mockQuoteBelongsToVendorFn.mockResolvedValue(false)
 
       await expect(
-        vendorService.saveQuoteFiles('vendor-123', 'wedding-123', fileInput)
+        vendorService.saveQuoteFiles(actorContext, 'vendor-123', 'wedding-123', fileInput)
       ).rejects.toMatchObject({ code: 'FORBIDDEN' })
     })
   })
@@ -443,7 +482,12 @@ describe('VendorService', () => {
       mockFileBelongsToQuoteFn.mockResolvedValue(true)
       mockDeleteQuoteFileFn.mockResolvedValue(mockQuoteFile)
 
-      const result = await vendorService.deleteQuoteFile('vendor-123', 'wedding-123', deleteInput)
+      const result = await vendorService.deleteQuoteFile(
+        actorContext,
+        'vendor-123',
+        'wedding-123',
+        deleteInput
+      )
 
       expect(result).toEqual(mockQuoteFile)
       expect(mockDeleteQuoteFileFn).toHaveBeenCalledWith('file-123')
@@ -453,7 +497,7 @@ describe('VendorService', () => {
       mockBelongsToWeddingFn.mockResolvedValue(false)
 
       await expect(
-        vendorService.deleteQuoteFile('vendor-123', 'other-wedding', deleteInput)
+        vendorService.deleteQuoteFile(actorContext, 'vendor-123', 'other-wedding', deleteInput)
       ).rejects.toMatchObject({ code: 'FORBIDDEN' })
     })
 
@@ -462,7 +506,7 @@ describe('VendorService', () => {
       mockQuoteBelongsToVendorFn.mockResolvedValue(false)
 
       await expect(
-        vendorService.deleteQuoteFile('vendor-123', 'wedding-123', deleteInput)
+        vendorService.deleteQuoteFile(actorContext, 'vendor-123', 'wedding-123', deleteInput)
       ).rejects.toMatchObject({ code: 'FORBIDDEN' })
     })
 
@@ -472,7 +516,7 @@ describe('VendorService', () => {
       mockFileBelongsToQuoteFn.mockResolvedValue(false)
 
       await expect(
-        vendorService.deleteQuoteFile('vendor-123', 'wedding-123', deleteInput)
+        vendorService.deleteQuoteFile(actorContext, 'vendor-123', 'wedding-123', deleteInput)
       ).rejects.toMatchObject({ code: 'FORBIDDEN' })
     })
   })

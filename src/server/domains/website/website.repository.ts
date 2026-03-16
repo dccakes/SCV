@@ -168,4 +168,13 @@ export class WebsiteRepository {
     })
     return website !== null
   }
+
+  async belongsToWedding(id: string, weddingId: string): Promise<boolean> {
+    const website = await this.db.website.findFirst({
+      where: { id, weddingId },
+      select: { id: true },
+    })
+
+    return website !== null
+  }
 }

@@ -9,6 +9,7 @@ import { TRPCError } from '@trpc/server'
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
 import { rsvpSubmissionService, submitPublicRsvpSchema } from '~/server/application/rsvp-submission'
+import type { AuthzContext } from '~/server/authz/authorization.types'
 import { websiteService } from '~/server/domains/website'
 import {
   createWebsiteSchema,
@@ -21,6 +22,18 @@ import {
   verifyWebsitePasswordSchema,
 } from '~/server/domains/website/website.validator'
 import { weddingService } from '~/server/domains/wedding'
+
+const toAuthzContext = (ctx: {
+  auth: {
+    userId: string
+    sessionActiveOrganizationId: string | null
+  }
+  headers: Headers
+}): AuthzContext => ({
+  userId: ctx.auth.userId,
+  headers: ctx.headers,
+  sessionActiveOrganizationId: ctx.auth.sessionActiveOrganizationId,
+})
 
 export const websiteRouter = createTRPCRouter({
   /**
@@ -37,7 +50,7 @@ export const websiteRouter = createTRPCRouter({
       })
     }
 
-    return websiteService.enableWebsite(wedding.id, input)
+    return websiteService.enableWebsite(toAuthzContext(ctx), wedding.id, input)
   }),
 
   /**
@@ -53,7 +66,7 @@ export const websiteRouter = createTRPCRouter({
       })
     }
 
-    return websiteService.updateWebsite(wedding.id, input)
+    return websiteService.updateWebsite(toAuthzContext(ctx), wedding.id, input)
   }),
 
   /**
@@ -61,8 +74,21 @@ export const websiteRouter = createTRPCRouter({
    */
   updateIsRsvpEnabled: protectedProcedure
     .input(updateRsvpEnabledSchema)
-    .mutation(async ({ input }) => {
-      return websiteService.updateRsvpEnabled(input.websiteId, input.isRsvpEnabled)
+    .mutation(async ({ ctx, input }) => {
+      const wedding = await weddingService.getByUserId(ctx.auth.userId)
+      if (!wedding) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Wedding not found',
+        })
+      }
+
+      return websiteService.updateRsvpEnabled(
+        toAuthzContext(ctx),
+        wedding.id,
+        input.websiteId,
+        input.isRsvpEnabled
+      )
     }),
 
   /**
@@ -80,7 +106,7 @@ export const websiteRouter = createTRPCRouter({
         })
       }
 
-      return websiteService.updateCoverPhoto(wedding.id, input.coverPhotoUrl)
+      return websiteService.updateCoverPhoto(toAuthzContext(ctx), wedding.id, input.coverPhotoUrl)
     }),
 
   /**

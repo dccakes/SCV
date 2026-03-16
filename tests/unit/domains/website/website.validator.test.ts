@@ -84,9 +84,9 @@ describe('updateWebsiteSchema', () => {
     expect(result.success).toBe(false)
   })
 
-  it('should allow empty update', () => {
+  it('should reject empty update', () => {
     const result = updateWebsiteSchema.safeParse({})
-    expect(result.success).toBe(true)
+    expect(result.success).toBe(false)
   })
 })
 

@@ -56,6 +56,7 @@ export const mockUpdateRsvpEnabled = jest.fn()
 export const mockUpdateCoverPhoto = jest.fn()
 export const mockExistsForWedding = jest.fn()
 export const mockIsSubUrlTaken = jest.fn()
+export const mockBelongsToWedding = jest.fn()
 
 export const WebsiteRepository = jest.fn().mockImplementation(() => ({
   findById: mockFindById,
@@ -69,6 +70,7 @@ export const WebsiteRepository = jest.fn().mockImplementation(() => ({
   updateCoverPhoto: mockUpdateCoverPhoto,
   existsForWedding: mockExistsForWedding,
   isSubUrlTaken: mockIsSubUrlTaken,
+  belongsToWedding: mockBelongsToWedding,
 }))
 
 // Helper to reset all mocks
@@ -84,5 +86,6 @@ export const resetMocks = (): void => {
   mockUpdateCoverPhoto.mockReset()
   mockExistsForWedding.mockReset()
   mockIsSubUrlTaken.mockReset()
+  mockBelongsToWedding.mockReset()
   WebsiteRepository.mockClear()
 }

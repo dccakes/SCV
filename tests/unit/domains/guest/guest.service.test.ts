@@ -3,8 +3,13 @@
  */
 
 // Must mock before importing the service
+jest.mock('~/server/authz/permission-checker', () => ({
+  requirePermission: jest.fn(),
+}))
+
 jest.mock('~/server/domains/guest/guest.repository')
 
+import { requirePermission } from '~/server/authz/permission-checker'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   GuestRepository,
@@ -33,12 +38,20 @@ const mockUpsertFn = mockUpsert as jest.Mock
 const mockUpdateFn = mockUpdate as jest.Mock
 const mockDeleteFn = mockDelete as jest.Mock
 const mockDeleteManyFn = mockDeleteMany as jest.Mock
+const mockRequirePermission = requirePermission as jest.Mock
 
 describe('GuestService', () => {
   let guestService: GuestService
+  const actorContext = {
+    headers: new Headers(),
+    userId: 'actor-1',
+    sessionActiveOrganizationId: null,
+  }
 
   beforeEach(() => {
     resetMocks()
+    mockRequirePermission.mockReset()
+    mockRequirePermission.mockResolvedValue({ organizationId: 'org-1', role: 'admin' })
     const mockRepository = new GuestRepository({})
     guestService = new GuestService(mockRepository)
   })
@@ -103,10 +116,26 @@ describe('GuestService', () => {
   })
 
   describe('createGuest', () => {
+    it('should reject create when actor lacks guest create permission', async () => {
+      mockRequirePermission.mockRejectedValue(new Error('forbidden'))
+
+      await expect(
+        guestService.createGuest(
+          actorContext as never,
+          'wedding-123' as never,
+          {
+            firstName: 'John',
+            lastName: 'Doe',
+            householdId: 'household-123',
+          } as never
+        )
+      ).rejects.toThrow('forbidden')
+    })
+
     it('should create a guest successfully', async () => {
       mockCreateFn.mockResolvedValue(mockGuest)
 
-      const result = await guestService.createGuest('wedding-123', {
+      const result = await guestService.createGuest(actorContext, 'wedding-123', {
         firstName: 'John',
         lastName: 'Doe',
         email: 'john@example.com',
@@ -132,7 +161,7 @@ describe('GuestService', () => {
     it('should create a guest with invitations', async () => {
       mockCreateFn.mockResolvedValue(mockGuest)
 
-      const result = await guestService.createGuestWithInvitations('wedding-123', {
+      const result = await guestService.createGuestWithInvitations(actorContext, 'wedding-123', {
         firstName: 'John',
         lastName: 'Doe',
         email: 'john@example.com',
@@ -166,7 +195,7 @@ describe('GuestService', () => {
     it('should upsert an existing guest', async () => {
       mockUpsertFn.mockResolvedValue(mockGuest)
 
-      const result = await guestService.upsertGuest('wedding-123', {
+      const result = await guestService.upsertGuest(actorContext, 'wedding-123', {
         guestId: 1,
         firstName: 'John',
         lastName: 'Doe',
@@ -179,7 +208,7 @@ describe('GuestService', () => {
     it('should create a new guest when guestId is undefined', async () => {
       mockUpsertFn.mockResolvedValue(mockGuest)
 
-      await guestService.upsertGuest('wedding-123', {
+      await guestService.upsertGuest(actorContext, 'wedding-123', {
         firstName: 'New',
         lastName: 'Guest',
         householdId: 'household-123',
@@ -201,7 +230,7 @@ describe('GuestService', () => {
       const updatedGuest = { ...mockGuest, firstName: 'Jane' }
       mockUpdateFn.mockResolvedValue(updatedGuest)
 
-      const result = await guestService.updateGuest(1, { firstName: 'Jane' })
+      const result = await guestService.updateGuest(actorContext, 1, { firstName: 'Jane' })
 
       expect(result.firstName).toBe('Jane')
       expect(mockUpdateFn).toHaveBeenCalledWith(1, { firstName: 'Jane' })
@@ -212,7 +241,7 @@ describe('GuestService', () => {
     it('should delete a guest', async () => {
       mockDeleteFn.mockResolvedValue(mockGuest)
 
-      const result = await guestService.deleteGuest(1)
+      const result = await guestService.deleteGuest(actorContext, 1)
 
       expect(result).toEqual(mockGuest)
       expect(mockDeleteFn).toHaveBeenCalledWith(1)
@@ -223,7 +252,7 @@ describe('GuestService', () => {
     it('should delete multiple guests', async () => {
       mockDeleteManyFn.mockResolvedValue({ count: 3 })
 
-      const result = await guestService.deleteGuests([1, 2, 3])
+      const result = await guestService.deleteGuests(actorContext, [1, 2, 3])
 
       expect(result).toEqual({ count: 3 })
       expect(mockDeleteManyFn).toHaveBeenCalledWith([1, 2, 3])
