@@ -8,14 +8,10 @@
 import { QuoteType, VendorCategory, VendorStatus } from '@prisma/client'
 import { z } from 'zod'
 
-const vendorCategoryValues = Object.values(VendorCategory) as [string, ...string[]]
-const vendorStatusValues = Object.values(VendorStatus) as [string, ...string[]]
-const quoteTypeValues = Object.values(QuoteType) as [QuoteType, ...QuoteType[]]
-
 // ─── Vendor schemas ───────────────────────────────────────────────────────────
 
 export const createVendorSchema = z.object({
-  category: z.enum(vendorCategoryValues as [VendorCategory, ...VendorCategory[]]),
+  category: z.enum(VendorCategory),
   name: z
     .string()
     .min(1, 'Vendor name is required')
@@ -41,7 +37,7 @@ export const updateVendorSchema = z.object({
 
 export const updateVendorStatusSchema = z.object({
   vendorId: z.string().min(1, 'Vendor ID is required'),
-  status: z.enum(vendorStatusValues as [VendorStatus, ...VendorStatus[]]),
+  status: z.enum(VendorStatus),
 })
 
 export const deleteVendorSchema = z.object({
@@ -53,7 +49,7 @@ export const getVendorSchema = z.object({
 })
 
 export const getVendorsByCategorySchema = z.object({
-  category: z.enum(vendorCategoryValues as [VendorCategory, ...VendorCategory[]]).optional(),
+  category: z.enum(VendorCategory).optional(),
 })
 
 // ─── Quote schemas ────────────────────────────────────────────────────────────
@@ -66,7 +62,7 @@ export const createQuoteSchema = z.object({
     .number()
     .positive('Price must be greater than zero')
     .max(10_000_000, 'Price must be less than $10,000,000'),
-  quoteType: z.enum(quoteTypeValues).default('FLAT_FEE'),
+  quoteType: z.enum(QuoteType).default('FLAT_FEE'),
   quoteDate: quoteDateSchema,
   notes: z.string().max(5000, 'Notes must be 5000 characters or less').optional(),
 })
@@ -79,7 +75,7 @@ export const updateQuoteSchema = z.object({
     .positive('Price must be greater than zero')
     .max(10_000_000, 'Price must be less than $10,000,000')
     .optional(),
-  quoteType: z.enum(quoteTypeValues).optional(),
+  quoteType: z.enum(QuoteType).optional(),
   quoteDate: quoteDateSchema.optional(),
   notes: z.string().max(5000, 'Notes must be 5000 characters or less').optional(),
 })

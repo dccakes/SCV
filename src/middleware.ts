@@ -1,3 +1,4 @@
+import { getSessionCookie } from 'better-auth/cookies'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
@@ -11,8 +12,8 @@ export async function middleware(req: NextRequest) {
   const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route))
 
   if (isProtectedRoute) {
-    // Check for session token in cookies (Better Auth default cookie name)
-    const sessionToken = req.cookies.get('better-auth.session_token')
+    // Check for session token using Better Auth's utility (handles cookie prefixes)
+    const sessionToken = getSessionCookie(req)
 
     // Redirect to home if not authenticated
     if (!sessionToken) {

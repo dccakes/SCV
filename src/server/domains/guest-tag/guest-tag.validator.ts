@@ -37,4 +37,4 @@ export const updateGuestTagSchema = z.object({
 /**
  * Validation schema for guest tag ID
  */
-export const guestTagIdSchema = z.string().uuid()
+export const guestTagIdSchema = z.guid()

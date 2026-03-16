@@ -17,8 +17,8 @@ export const guestPartyInputSchema = z.object({
   phone: z.string().nullish(),
   isPrimaryContact: z.boolean().optional(),
   ageGroup: z.enum(['INFANT', 'CHILD', 'TEEN', 'ADULT']).default('ADULT'),
-  tagIds: z.array(z.string().uuid()).max(10, 'Maximum 10 tags allowed').default([]),
-  invites: z.record(z.string()), // eventId -> rsvp status
+  tagIds: z.array(z.guid()).max(10, 'Maximum 10 tags allowed').default([]),
+  invites: z.record(z.string(), z.string()), // eventId -> rsvp status
 })
 
 export type GuestPartyInputSchemaInput = z.infer<typeof guestPartyInputSchema>
