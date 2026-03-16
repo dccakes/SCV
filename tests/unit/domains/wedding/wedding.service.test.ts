@@ -15,6 +15,9 @@ jest.mock('server/domains/wedding/wedding.repository')
 jest.mock('server/domains/event/event.service')
 jest.mock('server/domains/user/user.service')
 jest.mock('server/domains/guest-tag/guest-tag.service')
+jest.mock('~/server/authz/permission-checker', () => ({
+  requirePermission: jest.fn(),
+}))
 
 // @ts-expect-error - Importing mock functions from mocked module
 import {
@@ -33,29 +36,43 @@ import { mockUpdateProfile, resetMocks as resetUserMocks } from 'server/domains/
 import {
   mockCreate,
   mockExistsForUser,
+  mockFindById,
   mockFindByUserId,
+  mockUpdate,
   mockWedding,
   resetMocks as resetWeddingMocks,
   WeddingRepository,
 } from 'server/domains/wedding/wedding.repository'
 import { WeddingService } from 'server/domains/wedding/wedding.service'
+import { requirePermission } from '~/server/authz/permission-checker'
 
 // Create typed aliases for mock functions
 const mockCreateFn = mockCreate as jest.Mock
 const mockExistsForUserFn = mockExistsForUser as jest.Mock
+const mockFindByIdFn = mockFindById as jest.Mock
 const mockFindByUserIdFn = mockFindByUserId as jest.Mock
+const mockUpdateFn = mockUpdate as jest.Mock
 const mockCreateEventFn = mockCreateEventSystem as jest.Mock
 const mockUpdateProfileFn = mockUpdateProfile as jest.Mock
 const mockSeedInitialTagsFn = mockSeedInitialTags as jest.Mock
+const mockRequirePermission = requirePermission as jest.Mock
 
 describe('WeddingService', () => {
   let weddingService: WeddingService
+  const actorContext = {
+    headers: new Headers(),
+    userId: 'actor-1',
+    sessionActiveOrganizationId: null,
+  }
 
   beforeEach(() => {
+    delete process.env.BETTER_AUTH_ORG_ENFORCEMENT
     resetWeddingMocks()
     resetEventMocks()
     resetUserMocks()
     resetTagMocks()
+    mockRequirePermission.mockReset()
+    mockRequirePermission.mockResolvedValue({ organizationId: 'org-123', role: 'owner' })
     const mockRepository = new WeddingRepository({})
     const mockEventSvc = new EventService({})
     const mockGuestTagService = new GuestTagService({})
@@ -200,6 +217,80 @@ describe('WeddingService', () => {
       const result = await weddingService.getByUserId('user-123')
 
       expect(result).toBeNull()
+    })
+  })
+
+  describe('updateWedding', () => {
+    it('should update wedding when organization enforcement is disabled', async () => {
+      mockFindByIdFn.mockResolvedValue({ ...mockWedding, organizationId: null })
+      mockUpdateFn.mockResolvedValue({ ...mockWedding, groomFirstName: 'Updated' })
+
+      const result = await weddingService.updateWedding({
+        ctx: actorContext,
+        weddingId: 'wedding-123',
+        organizationId: null,
+        data: { groomFirstName: 'Updated' },
+      })
+
+      expect(result.groomFirstName).toBe('Updated')
+      expect(mockUpdateFn).toHaveBeenCalledWith('wedding-123', { groomFirstName: 'Updated' })
+      expect(mockRequirePermission).toHaveBeenCalledWith(
+        actorContext,
+        { wedding: ['update'] },
+        undefined
+      )
+    })
+
+    it('should reject updates when wedding is not linked to organization', async () => {
+      process.env.BETTER_AUTH_ORG_ENFORCEMENT = 'true'
+      mockFindByIdFn.mockResolvedValue({
+        ...mockWedding,
+        organizationId: null,
+      })
+
+      await expect(
+        weddingService.updateWedding({
+          ctx: actorContext,
+          weddingId: 'wedding-123',
+          organizationId: null,
+          data: { groomFirstName: 'Updated' },
+        })
+      ).rejects.toMatchObject({ code: 'PRECONDITION_FAILED' })
+
+      expect(mockUpdateFn).not.toHaveBeenCalled()
+
+      delete process.env.BETTER_AUTH_ORG_ENFORCEMENT
+    })
+
+    it('should throw NOT_FOUND when wedding does not exist', async () => {
+      mockFindByIdFn.mockResolvedValue(null)
+
+      await expect(
+        weddingService.updateWedding({
+          ctx: actorContext,
+          weddingId: 'missing',
+          organizationId: 'org-123',
+          data: { groomFirstName: 'Updated' },
+        })
+      ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+
+      expect(mockUpdateFn).not.toHaveBeenCalled()
+    })
+
+    it('should reject update when permission check fails', async () => {
+      mockFindByIdFn.mockResolvedValue({ ...mockWedding, organizationId: 'org-123' })
+      mockRequirePermission.mockRejectedValue(new TRPCError({ code: 'FORBIDDEN' }))
+
+      await expect(
+        weddingService.updateWedding({
+          ctx: actorContext,
+          weddingId: 'wedding-123',
+          organizationId: 'org-123',
+          data: { groomFirstName: 'Updated' },
+        })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+
+      expect(mockUpdateFn).not.toHaveBeenCalled()
     })
   })
 

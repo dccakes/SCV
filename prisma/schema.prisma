@@ -12,6 +12,7 @@ generator client {
 // Core: Wedding is the root entity
 model Wedding {
   id             String          @id @default(uuid())
+  organizationId String?         @unique
   groomFirstName String
   groomLastName  String
   brideFirstName String

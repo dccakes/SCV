@@ -10,6 +10,7 @@ export const authzStatement = {
   vendor: ['read', 'create', 'update', 'delete'],
   vendor_quote: ['read', 'create', 'update', 'delete'],
   website: ['read', 'update', 'publish', 'password_update'],
+  wedding: ['read', 'update'],
 } as const
 
 export const ac = createAccessControl(authzStatement)
@@ -24,6 +25,7 @@ const owner = ac.newRole({
   vendor: ['read', 'create', 'update', 'delete'],
   vendor_quote: ['read', 'create', 'update', 'delete'],
   website: ['read', 'update', 'publish', 'password_update'],
+  wedding: ['read', 'update'],
 })
 
 const admin = ac.newRole({
@@ -36,6 +38,7 @@ const admin = ac.newRole({
   vendor: ['read', 'create', 'update', 'delete'],
   vendor_quote: ['read', 'create', 'update', 'delete'],
   website: ['read', 'update', 'publish', 'password_update'],
+  wedding: ['read', 'update'],
 })
 
 const editor = ac.newRole({
@@ -47,6 +50,7 @@ const editor = ac.newRole({
   vendor: ['read', 'create', 'update', 'delete'],
   vendor_quote: ['read', 'create', 'update', 'delete'],
   website: ['read', 'update', 'publish'],
+  wedding: ['read', 'update'],
 })
 
 const viewer = ac.newRole({
@@ -58,6 +62,7 @@ const viewer = ac.newRole({
   vendor: ['read'],
   vendor_quote: ['read'],
   website: ['read'],
+  wedding: ['read'],
 })
 
 export const organizationRoles = {

@@ -122,6 +122,33 @@ describe('upsertQuestionSchema', () => {
     expect(result.success).toBe(true)
   })
 
+  it('should reject deletedOptions above limit', () => {
+    const invalidInput = {
+      eventId: 'event-123',
+      text: 'Updated question',
+      type: 'Option',
+      isRequired: true,
+      options: [{ text: 'Option A' }, { text: 'Option B' }],
+      deletedOptions: Array.from({ length: 101 }, (_, i) => `option-${i}`),
+    }
+
+    const result = upsertQuestionSchema.safeParse(invalidInput)
+    expect(result.success).toBe(false)
+  })
+
+  it('should reject options above limit', () => {
+    const invalidInput = {
+      eventId: 'event-123',
+      text: 'Too many options',
+      type: 'Option',
+      isRequired: true,
+      options: Array.from({ length: 101 }, (_, i) => ({ text: `Option ${i + 1}` })),
+    }
+
+    const result = upsertQuestionSchema.safeParse(invalidInput)
+    expect(result.success).toBe(false)
+  })
+
   it('should allow null for eventId and websiteId', () => {
     const validInput = {
       eventId: null,

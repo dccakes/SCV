@@ -7,6 +7,8 @@
 
 import { TRPCError } from '@trpc/server'
 
+import type { AuthzContext } from '~/server/authz/authorization.types'
+import { requirePermission } from '~/server/authz/permission-checker'
 import type { EventService } from '~/server/domains/event/event.service'
 import type { GuestTagService } from '~/server/domains/guest-tag/guest-tag.service'
 import type { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
@@ -32,6 +34,10 @@ export class WeddingService {
     private eventService: EventService,
     private guestTagService: GuestTagService
   ) {}
+
+  private isOrgEnforcementEnabled(): boolean {
+    return process.env.BETTER_AUTH_ORG_ENFORCEMENT === 'true'
+  }
 
   /**
    * Create a new wedding
@@ -90,7 +96,37 @@ export class WeddingService {
   /**
    * Update wedding settings
    */
-  async updateWedding(weddingId: string, data: UpdateWeddingInput): Promise<Wedding> {
+  async updateWedding(input: {
+    ctx: AuthzContext
+    weddingId: string
+    organizationId: string | null
+    data: UpdateWeddingInput
+  }): Promise<Wedding> {
+    const { ctx, weddingId, organizationId, data } = input
+    const wedding = await this.weddingRepository.findById(weddingId)
+
+    if (!wedding) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Wedding not found',
+      })
+    }
+
+    if (this.isOrgEnforcementEnabled() && !wedding.organizationId) {
+      throw new TRPCError({
+        code: 'PRECONDITION_FAILED',
+        message: 'Wedding must be linked to an organization before updates are allowed',
+      })
+    }
+
+    await requirePermission(
+      ctx,
+      {
+        wedding: ['update'],
+      },
+      organizationId ? { organizationId } : undefined
+    )
+
     return this.weddingRepository.update(weddingId, data)
   }
 

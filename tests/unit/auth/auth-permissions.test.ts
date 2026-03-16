@@ -103,6 +103,7 @@ describe('auth permission matrix', () => {
       'export',
       'reopen_submission',
     ])
+    expect(authzStatement.wedding).toEqual(['read', 'update'])
   })
 
   it('allows editor guest-event assignment, but denies invitation delivery actions', () => {
@@ -116,6 +117,8 @@ describe('auth permission matrix', () => {
   it('keeps viewer read-only and admin/owner invitation delivery-capable', () => {
     expect(can('viewer', { guest: ['create'] })).toBe(false)
     expect(can('viewer', { event: ['read'] })).toBe(true)
+    expect(can('viewer', { wedding: ['update'] })).toBe(false)
+    expect(can('editor', { wedding: ['update'] })).toBe(true)
     expect(can('admin', { invitation: ['send', 'resend', 'cancel'] })).toBe(true)
     expect(can('owner', { invitation: ['send', 'resend', 'cancel'] })).toBe(true)
   })

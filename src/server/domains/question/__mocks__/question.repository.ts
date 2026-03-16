@@ -72,22 +72,28 @@ export const mockFindById = jest.fn()
 export const mockFindByIdWithOptions = jest.fn()
 export const mockFindByEventId = jest.fn()
 export const mockFindByWebsiteId = jest.fn()
-export const mockDeleteOptions = jest.fn()
+export const mockDeleteOptionsForQuestion = jest.fn()
 export const mockUpsert = jest.fn()
 export const mockDelete = jest.fn()
 export const mockExists = jest.fn()
 export const mockFindMostRecentAnswerByQuestionId = jest.fn()
+export const mockBelongsToWedding = jest.fn()
+export const mockEventBelongsToWedding = jest.fn()
+export const mockWebsiteBelongsToWedding = jest.fn()
 
 export const QuestionRepository = jest.fn().mockImplementation(() => ({
   findById: mockFindById,
   findByIdWithOptions: mockFindByIdWithOptions,
   findByEventId: mockFindByEventId,
   findByWebsiteId: mockFindByWebsiteId,
-  deleteOptions: mockDeleteOptions,
+  deleteOptionsForQuestion: mockDeleteOptionsForQuestion,
   upsert: mockUpsert,
   delete: mockDelete,
   exists: mockExists,
   findMostRecentAnswerByQuestionId: mockFindMostRecentAnswerByQuestionId,
+  belongsToWedding: mockBelongsToWedding,
+  eventBelongsToWedding: mockEventBelongsToWedding,
+  websiteBelongsToWedding: mockWebsiteBelongsToWedding,
 }))
 
 // Helper to reset all mocks
@@ -96,10 +102,13 @@ export const resetMocks = (): void => {
   mockFindByIdWithOptions.mockReset()
   mockFindByEventId.mockReset()
   mockFindByWebsiteId.mockReset()
-  mockDeleteOptions.mockReset()
+  mockDeleteOptionsForQuestion.mockReset()
   mockUpsert.mockReset()
   mockDelete.mockReset()
   mockExists.mockReset()
   mockFindMostRecentAnswerByQuestionId.mockReset()
+  mockBelongsToWedding.mockReset()
+  mockEventBelongsToWedding.mockReset()
+  mockWebsiteBelongsToWedding.mockReset()
   QuestionRepository.mockClear()
 }

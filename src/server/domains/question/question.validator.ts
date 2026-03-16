@@ -32,8 +32,12 @@ export const upsertQuestionSchema = z.object({
     .min(2, {
       message: 'You need to have at least two options for this question!',
     })
+    .max(100, { message: 'Maximum 100 options per question' })
     .optional(),
-  deletedOptions: z.array(z.string()).optional(),
+  deletedOptions: z
+    .array(z.string())
+    .max(100, 'Maximum 100 deleted options per request')
+    .optional(),
 })
 
 /**
