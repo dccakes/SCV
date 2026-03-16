@@ -8,13 +8,10 @@
 import { VendorCategory, VendorStatus } from '@prisma/client'
 import { z } from 'zod'
 
-const vendorCategoryValues = Object.values(VendorCategory) as [string, ...string[]]
-const vendorStatusValues = Object.values(VendorStatus) as [string, ...string[]]
-
 // ─── Vendor schemas ───────────────────────────────────────────────────────────
 
 export const createVendorSchema = z.object({
-  category: z.enum(vendorCategoryValues as [VendorCategory, ...VendorCategory[]]),
+  category: z.enum(VendorCategory),
   name: z
     .string()
     .min(1, 'Vendor name is required')
@@ -40,7 +37,7 @@ export const updateVendorSchema = z.object({
 
 export const updateVendorStatusSchema = z.object({
   vendorId: z.string().min(1, 'Vendor ID is required'),
-  status: z.enum(vendorStatusValues as [VendorStatus, ...VendorStatus[]]),
+  status: z.enum(VendorStatus),
 })
 
 export const deleteVendorSchema = z.object({
@@ -52,7 +49,7 @@ export const getVendorSchema = z.object({
 })
 
 export const getVendorsByCategorySchema = z.object({
-  category: z.enum(vendorCategoryValues as [VendorCategory, ...VendorCategory[]]).optional(),
+  category: z.enum(VendorCategory).optional(),
 })
 
 // ─── Quote schemas ────────────────────────────────────────────────────────────

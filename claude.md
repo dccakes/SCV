@@ -909,12 +909,12 @@ export const EventFormSchema = z.object({
 
 export type EventFormData = z.infer<typeof EventFormSchema>
 
-// Extract defaults utility
-export const getSchemaDefaults = <T extends z.ZodTypeAny>(schema: T): z.infer<T> => {
+// Extract defaults utility (zod v4 compatible)
+export const getSchemaDefaults = <T extends z.ZodType>(schema: T): z.infer<T> => {
   return Object.fromEntries(
-    Object.entries(schema.shape).map(([key, value]) => [
+    Object.entries((schema as z.ZodObject<any>).shape).map(([key, value]) => [
       key,
-      value instanceof z.ZodDefault ? value._def.defaultValue() : undefined,
+      (value as any)?._zod?.def?.defaultValue ?? undefined,
     ])
   )
 }
