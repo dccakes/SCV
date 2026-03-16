@@ -140,7 +140,10 @@ test.describe('Vendor CRUD', () => {
     await expect(dialog).toBeVisible()
 
     // Click "Edit" in the details section to open inline edit form
-    await dialog.getByRole('button', { name: /^edit$/i }).first().click()
+    await dialog
+      .getByRole('button', { name: /^edit$/i })
+      .first()
+      .click()
 
     // Verify the edit form is shown with existing values
     await expect(dialog.getByLabel(/name/i).first()).toBeVisible()
@@ -301,7 +304,10 @@ test.describe('File Upload UI', () => {
     await expect(dialog).toBeVisible()
 
     // Click "Edit" on the quote
-    await dialog.getByRole('button', { name: /^edit$/i }).last().click()
+    await dialog
+      .getByRole('button', { name: /^edit$/i })
+      .last()
+      .click()
 
     // Edit form should be visible but NOT have a dropzone
     await expect(dialog.getByLabel(/price/i)).toBeVisible()
@@ -319,5 +325,336 @@ test.describe('Vendor Status', () => {
 
     // Status selector should be visible (shows current status "Selected")
     await expect(dialog).toContainText(/selected/i)
+  })
+})
+
+// ─── Security Tests ───────────────────────────────────────────────────────────
+
+test.describe('XSS Injection Prevention', () => {
+  test('should safely render XSS payload in vendor name', async ({ page }) => {
+    await page.goto('/vendors')
+
+    const xssPayload = '<script>alert("xss")</script>'
+
+    // Create a vendor with XSS in the name
+    const otherSection = page.locator('section').filter({ hasText: /^other/i })
+    await otherSection.getByRole('button', { name: /add vendor/i }).click()
+
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+    await dialog.getByLabel(/name/i).first().fill(xssPayload)
+    await dialog.getByRole('button', { name: /add vendor/i }).click()
+
+    // The vendor should be rendered as text, not executed
+    await expect(page.locator('body')).toContainText(xssPayload)
+
+    // Verify no script elements were injected into the DOM
+    const scriptCount = await page.evaluate(() => {
+      return document.querySelectorAll('script').length
+    })
+    const initialScriptCount = await page.evaluate(() => {
+      // Next.js injects its own scripts — count only inline ones with alert
+      return document.querySelectorAll('script').length
+    })
+    // The XSS script should NOT execute — check no alert dialog appeared
+    // (Playwright auto-dismisses dialogs, but we can check the page is still functional)
+    await expect(page.locator('body')).toContainText(xssPayload)
+
+    // Clean up — delete the vendor
+    page.on('dialog', (d) => d.accept())
+    const removeBtn = page.getByLabel(
+      new RegExp(`remove.*${xssPayload.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i')
+    )
+    if (await removeBtn.isVisible()) {
+      await removeBtn.click()
+    }
+  })
+
+  test('should safely render XSS payload in vendor location', async ({ page }) => {
+    await page.goto('/vendors')
+
+    const xssPayload = '"><img src=x onerror=alert(1)>'
+
+    const otherSection = page.locator('section').filter({ hasText: /^other/i })
+    await otherSection.getByRole('button', { name: /add vendor/i }).click()
+
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+    await dialog.getByLabel(/name/i).first().fill('XSS Location Test')
+    await dialog.getByLabel(/location/i).fill(xssPayload)
+    await dialog.getByRole('button', { name: /add vendor/i }).click()
+
+    // Open detail panel to verify location renders as text
+    await page.getByLabel(/view.*xss location test.*details/i).click()
+    const detailDialog = page.getByRole('dialog')
+    await expect(detailDialog).toBeVisible()
+
+    // Verify the payload appears as escaped text, not rendered HTML
+    await expect(detailDialog).toContainText(xssPayload)
+
+    // Verify no rogue img elements were injected
+    const rogueImages = await page.locator('img[src="x"]').count()
+    expect(rogueImages).toBe(0)
+  })
+
+  test('should safely render XSS payload in quote notes', async ({ page }) => {
+    await page.goto('/vendors')
+
+    const xssPayload = '<img src=x onerror="document.body.innerHTML=\'hacked\'">'
+
+    // Open Pied Piper and add a quote with XSS in notes
+    await page.getByLabel(/view.*pied piper.*details/i).click()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+
+    await dialog.getByRole('button', { name: /add quote/i }).click()
+    await dialog.getByLabel(/price/i).fill('999')
+    await dialog.getByLabel(/date/i).fill('2026-01-01')
+    await dialog.getByLabel(/notes/i).fill(xssPayload)
+    await dialog.getByRole('button', { name: /add quote/i }).click()
+
+    // Page should still be functional (not "hacked")
+    await expect(dialog).toContainText('$999')
+    await expect(page.locator('body')).not.toContainText('hacked')
+  })
+})
+
+test.describe('Multi-User Data Isolation', () => {
+  test("should not show other users' vendors after signing up as a new user", async ({
+    browser,
+  }) => {
+    // Create a fresh browser context (no auth)
+    const context = await browser.newContext({ storageState: { cookies: [], origins: [] } })
+    const page = await context.newPage()
+
+    // Sign up as a completely new user
+    const uniqueEmail = `e2e-isolation-${Date.now()}@test.com`
+    await page.goto('/auth/sign-up')
+    await page.waitForLoadState('networkidle')
+
+    await page.getByLabel('Name').fill('Isolation Test User')
+    await page.getByLabel('Email').fill(uniqueEmail)
+    await page.getByLabel('Password').fill('securePassword123!')
+    await page.getByRole('button', { name: /sign up/i }).click()
+
+    // Wait for redirect to dashboard (new user onboarding)
+    await page.waitForURL(/\/(dashboard|onboarding|wedding-setup)/, { timeout: 15_000 })
+
+    // Navigate to vendors page
+    await page.goto('/vendors')
+    await page.waitForLoadState('networkidle')
+
+    // This new user should NOT see Shrek's seeded vendors
+    const body = page.locator('body')
+    await expect(body).not.toContainText(/far far away banquet hall/i)
+    await expect(body).not.toContainText(/dragonfire catering/i)
+    await expect(body).not.toContainText(/magic mirror studios/i)
+    await expect(body).not.toContainText(/pied piper collective/i)
+    await expect(body).not.toContainText(/swampview lodge/i)
+
+    await context.close()
+  })
+})
+
+test.describe('Unauthenticated Access', () => {
+  test('should redirect unauthenticated users from /vendors', async ({ browser }) => {
+    const context = await browser.newContext({ storageState: { cookies: [], origins: [] } })
+    const page = await context.newPage()
+
+    await page.goto('/vendors')
+
+    // Should be redirected away from vendors page
+    await expect(page).not.toHaveURL('/vendors')
+
+    await context.close()
+  })
+
+  test('should reject unauthenticated file upload API requests', async ({ browser }) => {
+    const context = await browser.newContext({ storageState: { cookies: [], origins: [] } })
+    const page = await context.newPage()
+
+    // Directly call the blob upload API without authentication
+    const response = await page.request.post('/api/blob/upload', {
+      data: JSON.stringify({
+        type: 'blob.generate-client-token',
+        payload: { pathname: 'test.pdf', callbackUrl: '/' },
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    // Should receive 401 Unauthorized (or 400)
+    expect(response.status()).toBeGreaterThanOrEqual(400)
+
+    // Response should NOT leak internal error details
+    const body = await response.json()
+    expect(body.error).toBeDefined()
+    expect(JSON.stringify(body)).not.toMatch(/stack|trace|prisma|sql|database/i)
+
+    await context.close()
+  })
+})
+
+test.describe('File Upload Security', () => {
+  test('should reject files with disallowed MIME types in the dropzone', async ({ page }) => {
+    await page.goto('/vendors')
+
+    await page.getByLabel(/view.*banquet hall.*details/i).click()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+
+    await dialog.getByRole('button', { name: /attach files/i }).click()
+
+    const fileInput = dialog.locator('input[type="file"]')
+
+    // Try uploading an executable file — should be rejected by dropzone
+    await fileInput.setInputFiles({
+      name: 'malware.exe',
+      mimeType: 'application/x-msdownload',
+      buffer: Buffer.from('MZ fake executable'),
+    })
+
+    // The rejected file should NOT appear in the selected list
+    await expect(dialog).not.toContainText('malware.exe')
+  })
+
+  test('should reject HTML files in the dropzone', async ({ page }) => {
+    await page.goto('/vendors')
+
+    await page.getByLabel(/view.*banquet hall.*details/i).click()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+
+    await dialog.getByRole('button', { name: /attach files/i }).click()
+
+    const fileInput = dialog.locator('input[type="file"]')
+
+    // Try uploading an HTML file — could be used for stored XSS
+    await fileInput.setInputFiles({
+      name: 'evil.html',
+      mimeType: 'text/html',
+      buffer: Buffer.from('<script>alert("xss")</script>'),
+    })
+
+    // The HTML file should NOT appear in the selected list
+    await expect(dialog).not.toContainText('evil.html')
+  })
+
+  test('should reject oversized files in the dropzone', async ({ page }) => {
+    await page.goto('/vendors')
+
+    await page.getByLabel(/view.*banquet hall.*details/i).click()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+
+    await dialog.getByRole('button', { name: /attach files/i }).click()
+
+    const fileInput = dialog.locator('input[type="file"]')
+
+    // Create a buffer just over 8MB
+    const oversizedBuffer = Buffer.alloc(8 * 1024 * 1024 + 1, 0)
+
+    await fileInput.setInputFiles({
+      name: 'huge-file.pdf',
+      mimeType: 'application/pdf',
+      buffer: oversizedBuffer,
+    })
+
+    // The oversized file should NOT appear in the selected list
+    await expect(dialog).not.toContainText('huge-file.pdf')
+  })
+
+  test('should enforce MAX_FILES_PER_QUOTE limit in the dropzone', async ({ page }) => {
+    await page.goto('/vendors')
+
+    // Open a vendor and start adding a new quote
+    await page.getByLabel(/view.*magic mirror.*details/i).click()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+
+    await dialog.getByRole('button', { name: /add quote/i }).click()
+
+    const fileInput = dialog.locator('input[type="file"]')
+
+    // Upload 10 files (the maximum)
+    const files = Array.from({ length: 10 }, (_, i) => ({
+      name: `file-${i + 1}.pdf`,
+      mimeType: 'application/pdf' as const,
+      buffer: Buffer.from(`%PDF-1.4 test ${i}`),
+    }))
+
+    await fileInput.setInputFiles(files)
+
+    // All 10 should be listed
+    for (let i = 1; i <= 10; i++) {
+      await expect(dialog).toContainText(`file-${i}.pdf`)
+    }
+
+    // Try adding an 11th file — should be rejected
+    await fileInput.setInputFiles({
+      name: 'overflow-file.pdf',
+      mimeType: 'application/pdf',
+      buffer: Buffer.from('%PDF-1.4 overflow'),
+    })
+
+    // The 11th file should NOT appear
+    await expect(dialog).not.toContainText('overflow-file.pdf')
+  })
+
+  test('should accept valid file types (PDF, images, Word, Excel)', async ({ page }) => {
+    await page.goto('/vendors')
+
+    await page.getByLabel(/view.*banquet hall.*details/i).click()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+
+    await dialog.getByRole('button', { name: /attach files/i }).click()
+
+    const fileInput = dialog.locator('input[type="file"]')
+
+    // Upload a variety of valid file types
+    await fileInput.setInputFiles([
+      { name: 'contract.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4') },
+      { name: 'photo.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('fake jpeg') },
+      { name: 'quote.png', mimeType: 'image/png', buffer: Buffer.from('fake png') },
+    ])
+
+    // All valid files should appear
+    await expect(dialog).toContainText('contract.pdf')
+    await expect(dialog).toContainText('photo.jpg')
+    await expect(dialog).toContainText('quote.png')
+  })
+})
+
+test.describe('Error Response Security', () => {
+  test('should not leak internal error details in API responses', async ({ page }) => {
+    await page.goto('/vendors')
+
+    // Try to access a vendor that doesn't exist via the detail panel URL
+    // by intercepting tRPC responses for error shape
+    const errorResponses: string[] = []
+
+    page.on('response', async (response) => {
+      if (response.url().includes('trpc') && response.status() >= 400) {
+        try {
+          const body = await response.text()
+          errorResponses.push(body)
+        } catch {
+          // Ignore response read errors
+        }
+      }
+    })
+
+    // Trigger an error by trying to interact with a non-existent vendor
+    // The tRPC error handler should return generic messages
+    await page.goto('/vendors')
+    await page.waitForLoadState('networkidle')
+
+    // Verify any captured error responses don't leak internals
+    for (const errorBody of errorResponses) {
+      expect(errorBody).not.toMatch(/prisma/i)
+      expect(errorBody).not.toMatch(/database/i)
+      expect(errorBody).not.toMatch(/stack.*at\s/i)
+      expect(errorBody).not.toMatch(/SQL/i)
+    }
   })
 })

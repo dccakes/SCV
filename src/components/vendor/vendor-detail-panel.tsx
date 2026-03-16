@@ -23,7 +23,6 @@ import {
 import { QuoteForm } from '~/components/vendor/quote-form'
 import { VendorForm } from '~/components/vendor/vendor-form'
 import { VendorStatusSelect } from '~/components/vendor/vendor-status-select'
-import { cn } from '~/lib/utils'
 import { uploadFiles } from '~/lib/blob'
 import {
   ACCEPTED_TYPES_LABEL,
@@ -31,6 +30,7 @@ import {
   MAX_FILE_SIZE,
   MAX_FILES_PER_QUOTE,
 } from '~/lib/upload-config'
+import { cn } from '~/lib/utils'
 import type { VendorQuote, VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
 
@@ -451,9 +451,14 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                               <>
                                 <div className='flex items-start justify-between'>
                                   <div>
-                                    <p className='font-display text-foreground text-xl italic'>
-                                      {formatPrice(quote.price)}
-                                    </p>
+                                    <div className='flex items-baseline gap-2'>
+                                      <p className='font-display text-foreground text-xl italic'>
+                                        {formatPrice(quote.price)}
+                                      </p>
+                                      <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-wider'>
+                                        {quote.quoteType === 'PER_GUEST' ? '/ guest' : 'flat fee'}
+                                      </span>
+                                    </div>
                                     <p className='font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
                                       {formatDate(quote.quoteDate)}
                                     </p>

@@ -228,7 +228,7 @@ describe('createQuoteSchema', () => {
     }
     const result = createQuoteSchema.safeParse(input)
     expect(result.success).toBe(true)
-    expect(result.data).toEqual(input)
+    expect(result.data).toEqual({ ...input, quoteType: 'FLAT_FEE' })
   })
 
   it('should validate without optional notes', () => {
@@ -369,7 +369,12 @@ describe('saveQuoteFilesSchema', () => {
     quoteId: 'quote-123',
     vendorId: 'vendor-123',
     files: [
-      { name: 'proposal.pdf', url: 'https://abc123.public.blob.vercel-storage.com/proposal.pdf', key: 'abc123', size: 102400 },
+      {
+        name: 'proposal.pdf',
+        url: 'https://abc123.public.blob.vercel-storage.com/proposal.pdf',
+        key: 'abc123',
+        size: 102400,
+      },
     ],
   }
 
@@ -382,8 +387,18 @@ describe('saveQuoteFilesSchema', () => {
     const input = {
       ...validInput,
       files: [
-        { name: 'file1.pdf', url: 'https://abc123.public.blob.vercel-storage.com/file1.pdf', key: 'a', size: 100 },
-        { name: 'file2.jpg', url: 'https://abc123.public.blob.vercel-storage.com/file2.jpg', key: 'b', size: 200 },
+        {
+          name: 'file1.pdf',
+          url: 'https://abc123.public.blob.vercel-storage.com/file1.pdf',
+          key: 'a',
+          size: 100,
+        },
+        {
+          name: 'file2.jpg',
+          url: 'https://abc123.public.blob.vercel-storage.com/file2.jpg',
+          key: 'b',
+          size: 200,
+        },
       ],
     }
     const result = saveQuoteFilesSchema.safeParse(input)
@@ -439,7 +454,14 @@ describe('saveQuoteFilesSchema', () => {
   it('should reject file with empty name', () => {
     const input = {
       ...validInput,
-      files: [{ name: '', url: 'https://abc123.public.blob.vercel-storage.com/f.pdf', key: 'abc', size: 100 }],
+      files: [
+        {
+          name: '',
+          url: 'https://abc123.public.blob.vercel-storage.com/f.pdf',
+          key: 'abc',
+          size: 100,
+        },
+      ],
     }
     const result = saveQuoteFilesSchema.safeParse(input)
     expect(result.success).toBe(false)
@@ -448,12 +470,14 @@ describe('saveQuoteFilesSchema', () => {
   it('should sanitize path traversal in filename', () => {
     const input = {
       ...validInput,
-      files: [{
-        name: '../../../etc/passwd',
-        url: 'https://abc123.public.blob.vercel-storage.com/f.pdf',
-        key: 'abc',
-        size: 100,
-      }],
+      files: [
+        {
+          name: '../../../etc/passwd',
+          url: 'https://abc123.public.blob.vercel-storage.com/f.pdf',
+          key: 'abc',
+          size: 100,
+        },
+      ],
     }
     const result = saveQuoteFilesSchema.safeParse(input)
     expect(result.success).toBe(true)
@@ -465,7 +489,14 @@ describe('saveQuoteFilesSchema', () => {
   it('should reject file with zero size', () => {
     const input = {
       ...validInput,
-      files: [{ name: 'file.pdf', url: 'https://abc123.public.blob.vercel-storage.com/f.pdf', key: 'abc', size: 0 }],
+      files: [
+        {
+          name: 'file.pdf',
+          url: 'https://abc123.public.blob.vercel-storage.com/f.pdf',
+          key: 'abc',
+          size: 0,
+        },
+      ],
     }
     const result = saveQuoteFilesSchema.safeParse(input)
     expect(result.success).toBe(false)

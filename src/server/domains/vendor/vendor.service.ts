@@ -5,8 +5,8 @@
  * Handles vendor and quote CRUD with ownership verification.
  */
 
-import { del } from '@vercel/blob'
 import { TRPCError } from '@trpc/server'
+import { del } from '@vercel/blob'
 
 import { MAX_FILES_PER_QUOTE } from '~/lib/upload-config'
 
@@ -119,6 +119,7 @@ export class VendorService {
     return this.vendorRepository.createQuote({
       vendorId,
       price: data.price,
+      quoteType: data.quoteType,
       quoteDate: new Date(data.quoteDate),
       notes: data.notes,
     })
@@ -137,6 +138,7 @@ export class VendorService {
     await this.assertQuoteOwnership(quoteId, vendorId)
     return this.vendorRepository.updateQuote(quoteId, {
       price: data.price,
+      quoteType: data.quoteType,
       quoteDate: data.quoteDate ? new Date(data.quoteDate) : undefined,
       notes: data.notes,
     })

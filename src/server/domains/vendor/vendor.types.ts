@@ -5,9 +5,9 @@
  * Entity types reflect the database shape; input types are derived from Zod schemas.
  */
 
-import { VendorCategory, VendorStatus } from '@prisma/client'
+import { QuoteType, VendorCategory, VendorStatus } from '@prisma/client'
 
-export { VendorCategory, VendorStatus }
+export { QuoteType, VendorCategory, VendorStatus }
 
 export type Vendor = {
   id: string
@@ -39,6 +39,7 @@ export type VendorQuote = {
   id: string
   vendorId: string
   price: number
+  quoteType: QuoteType
   quoteDate: Date
   notes: string | null
   files: VendorQuoteFile[]
