@@ -4,6 +4,7 @@ import { createElement } from 'react'
 import RootRouteHandler, { generateMetadata } from '~/app/[websiteSubUrl]/page'
 
 const mockFetchWeddingData = jest.fn()
+const mockCookiesGet = jest.fn()
 const mockGetUser = jest.fn()
 const mockGetBySubUrl = jest.fn()
 const mockWeddingWebsite = jest.fn(({ websiteSubUrl }: { websiteSubUrl: string }) =>
@@ -44,9 +45,17 @@ jest.mock('~/components/website/password-page', () => ({
   default: () => createElement('div', null, 'Password'),
 }))
 
+jest.mock('next/headers', () => ({
+  cookies: jest.fn(async () => ({
+    get: mockCookiesGet,
+  })),
+}))
+
 describe('website suburl metadata + page wiring', () => {
   beforeEach(() => {
     mockFetchWeddingData.mockReset()
+    mockCookiesGet.mockReset()
+    mockCookiesGet.mockReturnValue(undefined)
     mockGetUser.mockReset()
     mockGetBySubUrl.mockReset()
     mockWeddingWebsite.mockClear()
@@ -69,7 +78,10 @@ describe('website suburl metadata + page wiring', () => {
     })
 
     expect(metadata.title).toBe("John Doe and Jane Smith's Wedding Website")
-    expect(mockFetchWeddingData).toHaveBeenCalledWith({ subUrl: 'john-and-jane' })
+    expect(mockFetchWeddingData).toHaveBeenCalledWith({
+      subUrl: 'john-and-jane',
+      accessToken: undefined,
+    })
     expect(mockGetUser).not.toHaveBeenCalled()
   })
 

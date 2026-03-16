@@ -5,6 +5,10 @@
  * Handles gift tracking, updates, and thank you status.
  */
 
+import { TRPCError } from '@trpc/server'
+
+import type { AuthzContext } from '~/server/authz/authorization.types'
+import { requirePermission } from '~/server/authz/permission-checker'
 import type { GiftRepository } from '~/server/domains/gift/gift.repository'
 import type { Gift, UpdateGiftInput, UpsertGiftInput } from '~/server/domains/gift/gift.types'
 
@@ -17,7 +21,21 @@ export class GiftService {
    * Business rules:
    * - Gift must exist (compound key: householdId + eventId)
    */
-  async updateGift(data: UpdateGiftInput): Promise<Gift> {
+  async updateGift(ctx: AuthzContext, weddingId: string, data: UpdateGiftInput): Promise<Gift> {
+    await requirePermission(ctx, { guest: ['update'] })
+
+    const inScope = await this.giftRepository.belongsToWedding(
+      data.householdId,
+      data.eventId,
+      weddingId
+    )
+    if (!inScope) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'You do not have permission to update this gift',
+      })
+    }
+
     return this.giftRepository.update(data.householdId, data.eventId, {
       description: data.description,
       thankyou: data.thankyou,

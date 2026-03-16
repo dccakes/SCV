@@ -5,14 +5,11 @@
  * This is a thin layer that handles input validation and delegates to the service.
  */
 
-import { TRPCError } from '@trpc/server'
-
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { weddingService } from '~/server/domains/wedding'
 import {
   createWeddingSchema,
-  getByUserIdSchema,
   updateWeddingSchema,
 } from '~/server/domains/wedding/wedding.validator'
 
@@ -44,10 +41,10 @@ export const weddingRouter = createTRPCRouter({
    * Update wedding settings
    */
   update: protectedProcedure.input(updateWeddingSchema).mutation(async ({ ctx, input }) => {
-    const wedding = await weddingService.getByUserId(ctx.auth.userId)
-    if (!wedding) {
-      throw new TRPCError({ code: 'NOT_FOUND', message: 'Wedding not found' })
-    }
+    const wedding = await weddingService.getScopedWeddingByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
 
     return weddingService.updateWedding({
       ctx: toAuthzContext(ctx),
@@ -60,8 +57,8 @@ export const weddingRouter = createTRPCRouter({
   /**
    * Get wedding for current user
    */
-  getByUserId: protectedProcedure.input(getByUserIdSchema).query(async ({ ctx, input }) => {
-    return weddingService.getByUserId(input?.userId ?? ctx.auth.userId)
+  getByUserId: protectedProcedure.query(async ({ ctx }) => {
+    return weddingService.getByUserId(ctx.auth.userId)
   }),
 
   /**

@@ -36,7 +36,10 @@ export const rsvpSubmissionRouter = createTRPCRouter({
    * - The household/guest IDs provide sufficient authorization
    */
   submit: protectedProcedure.input(submitRsvpSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
     return rsvpSubmissionService.submitManagedRsvp(toAuthzContext(ctx), weddingId, input)
   }),
 })

@@ -34,7 +34,10 @@ export const eventRouter = createTRPCRouter({
    * Auto-creates invitations for all existing guests
    */
   create: protectedProcedure.input(createEventSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
     return eventService.createEvent(toAuthzContext(ctx), weddingId, input)
   }),
 
@@ -43,7 +46,10 @@ export const eventRouter = createTRPCRouter({
    */
   getAllByUserId: publicProcedure.query(async ({ ctx }) => {
     if (!ctx.auth.userId) return undefined
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
     return eventService.getWeddingEvents(weddingId)
   }),
 
@@ -52,7 +58,10 @@ export const eventRouter = createTRPCRouter({
    */
   getAllByUserIdWithStats: publicProcedure.query(async ({ ctx }) => {
     if (!ctx.auth.userId) return undefined
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
     return eventService.getWeddingEventsWithStats(weddingId)
   }),
 
@@ -60,7 +69,10 @@ export const eventRouter = createTRPCRouter({
    * Update an existing event
    */
   update: protectedProcedure.input(updateEventSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
     return eventService.updateEvent(toAuthzContext(ctx), weddingId, input)
   }),
 
@@ -77,7 +89,10 @@ export const eventRouter = createTRPCRouter({
    * Delete an event
    */
   delete: protectedProcedure.input(deleteEventSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
     return eventService.deleteEvent(toAuthzContext(ctx), input.eventId, weddingId)
   }),
 })

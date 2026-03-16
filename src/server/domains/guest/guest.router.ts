@@ -20,7 +20,10 @@ export const guestRouter = createTRPCRouter({
    * Note: This returns invitations, not guests - maintained for backward compatibility
    */
   getAllByEventId: protectedProcedure.input(getByEventSchema).query(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
     const event = await eventService.getById(input.eventId)
 
     if (!event || event.weddingId !== weddingId) {
@@ -39,7 +42,10 @@ export const guestRouter = createTRPCRouter({
   getAllByHouseholdId: protectedProcedure
     .input(getByHouseholdSchema)
     .query(async ({ ctx, input }) => {
-      const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+      const weddingId = await weddingService.getWeddingIdByUserId(
+        ctx.auth.userId,
+        ctx.auth.sessionActiveOrganizationId
+      )
       const guests = await guestService.getAllByHouseholdId(input.householdId)
 
       const inScope = guests.every((guest) => guest.weddingId === weddingId)
@@ -61,7 +67,10 @@ export const guestRouter = createTRPCRouter({
    * Get all guests for the current user's wedding
    */
   getAllByUserId: protectedProcedure.query(async ({ ctx }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
     return guestService.getAllByWeddingId(weddingId)
   }),
 })

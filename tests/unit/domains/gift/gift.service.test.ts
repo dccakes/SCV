@@ -3,11 +3,18 @@
  */
 
 // Must mock before importing the service
+jest.mock('~/server/authz/permission-checker', () => ({
+  requirePermission: jest.fn(),
+}))
+
 jest.mock('~/server/domains/gift/gift.repository')
+
+import { requirePermission } from '~/server/authz/permission-checker'
 
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   GiftRepository,
+  mockBelongsToWedding,
   mockCreateMany,
   mockFindByEventId,
   mockFindByHouseholdId,
@@ -26,12 +33,22 @@ const mockFindByIdFn = mockFindById as jest.Mock
 const mockFindByHouseholdIdFn = mockFindByHouseholdId as jest.Mock
 const mockFindByEventIdFn = mockFindByEventId as jest.Mock
 const mockCreateManyFn = mockCreateMany as jest.Mock
+const mockBelongsToWeddingFn = mockBelongsToWedding as jest.Mock
+const mockRequirePermission = requirePermission as jest.Mock
 
 describe('GiftService', () => {
   let giftService: GiftService
+  const actorContext = {
+    headers: new Headers(),
+    userId: 'actor-1',
+    sessionActiveOrganizationId: 'org-1',
+  }
 
   beforeEach(() => {
     resetMocks()
+    mockRequirePermission.mockReset()
+    mockRequirePermission.mockResolvedValue(undefined)
+    mockBelongsToWeddingFn.mockResolvedValue(true)
     const mockRepository = new GiftRepository({})
     giftService = new GiftService(mockRepository)
   })
@@ -41,7 +58,7 @@ describe('GiftService', () => {
       const updatedGift = { ...mockGift, thankyou: true, description: 'Updated description' }
       mockUpdateFn.mockResolvedValue(updatedGift)
 
-      const result = await giftService.updateGift({
+      const result = await giftService.updateGift(actorContext, 'wedding-123', {
         householdId: 'household-123',
         eventId: 'event-123',
         description: 'Updated description',
@@ -49,6 +66,11 @@ describe('GiftService', () => {
       })
 
       expect(result).toEqual(updatedGift)
+      expect(mockBelongsToWeddingFn).toHaveBeenCalledWith(
+        'household-123',
+        'event-123',
+        'wedding-123'
+      )
       expect(mockUpdateFn).toHaveBeenCalledWith('household-123', 'event-123', {
         description: 'Updated description',
         thankyou: true,

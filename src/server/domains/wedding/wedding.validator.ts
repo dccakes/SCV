@@ -32,15 +32,6 @@ export const updateWeddingSchema = z.object({
   enabledAddOns: z.array(z.string()).optional(),
 })
 
-/**
- * Schema for fetching wedding by userId
- */
-export const getByUserIdSchema = z
-  .object({
-    userId: z.string().optional(),
-  })
-  .optional()
-
 // Export inferred types
 export type CreateWeddingSchemaInput = z.infer<typeof createWeddingSchema>
 export type UpdateWeddingSchemaInput = z.infer<typeof updateWeddingSchema>

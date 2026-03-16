@@ -167,4 +167,26 @@ export class GiftRepository {
     })
     return gift !== null
   }
+
+  async belongsToWedding(
+    householdId: string,
+    eventId: string,
+    weddingId: string
+  ): Promise<boolean> {
+    const gift = await this.db.gift.findFirst({
+      where: {
+        householdId,
+        eventId,
+        household: {
+          weddingId,
+        },
+        event: {
+          weddingId,
+        },
+      },
+      select: { householdId: true },
+    })
+
+    return gift !== null
+  }
 }

@@ -79,4 +79,13 @@ export class GuestTagRepository {
 
     return tag !== null
   }
+
+  async belongsToWedding(id: string, weddingId: string): Promise<boolean> {
+    const tag = await this.db.guestTag.findFirst({
+      where: { id, weddingId },
+      select: { id: true },
+    })
+
+    return tag !== null
+  }
 }

@@ -5,8 +5,6 @@
  * This is a thin layer that handles input validation and delegates to the service.
  */
 
-import { TRPCError } from '@trpc/server'
-
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
 import { rsvpSubmissionService, submitPublicRsvpSchema } from '~/server/application/rsvp-submission'
 import type { AuthzContext } from '~/server/authz/authorization.types'
@@ -23,16 +21,19 @@ import {
 } from '~/server/domains/website/website.validator'
 import { weddingService } from '~/server/domains/wedding'
 
-const toAuthzContext = (ctx: {
-  auth: {
-    userId: string
-    sessionActiveOrganizationId: string | null
-  }
-  headers: Headers
-}): AuthzContext => ({
+const toOrganizationScopedAuthzContext = (
+  ctx: {
+    auth: {
+      userId: string
+      sessionActiveOrganizationId: string | null
+    }
+    headers: Headers
+  },
+  organizationId: string
+): AuthzContext => ({
   userId: ctx.auth.userId,
   headers: ctx.headers,
-  sessionActiveOrganizationId: ctx.auth.sessionActiveOrganizationId,
+  sessionActiveOrganizationId: organizationId,
 })
 
 export const websiteRouter = createTRPCRouter({
@@ -41,32 +42,32 @@ export const websiteRouter = createTRPCRouter({
    * Note: Wedding must already exist before enabling website add-on
    */
   create: protectedProcedure.input(createWebsiteSchema).mutation(async ({ ctx, input }) => {
-    // Get the user's wedding
-    const wedding = await weddingService.getByUserId(ctx.auth.userId)
-    if (!wedding) {
-      throw new TRPCError({
-        code: 'PRECONDITION_FAILED',
-        message: 'Wedding must be created before enabling website add-on',
-      })
-    }
+    const wedding = await weddingService.getScopedWeddingByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
 
-    return websiteService.enableWebsite(toAuthzContext(ctx), wedding.id, input)
+    return websiteService.enableWebsite(
+      toOrganizationScopedAuthzContext(ctx, wedding.organizationId),
+      wedding.id,
+      input
+    )
   }),
 
   /**
    * Update website settings
    */
   update: protectedProcedure.input(updateWebsiteSchema).mutation(async ({ ctx, input }) => {
-    // Get the user's wedding
-    const wedding = await weddingService.getByUserId(ctx.auth.userId)
-    if (!wedding) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'Wedding not found',
-      })
-    }
+    const wedding = await weddingService.getScopedWeddingByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
 
-    return websiteService.updateWebsite(toAuthzContext(ctx), wedding.id, input)
+    return websiteService.updateWebsite(
+      toOrganizationScopedAuthzContext(ctx, wedding.organizationId),
+      wedding.id,
+      input
+    )
   }),
 
   /**
@@ -75,16 +76,13 @@ export const websiteRouter = createTRPCRouter({
   updateIsRsvpEnabled: protectedProcedure
     .input(updateRsvpEnabledSchema)
     .mutation(async ({ ctx, input }) => {
-      const wedding = await weddingService.getByUserId(ctx.auth.userId)
-      if (!wedding) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Wedding not found',
-        })
-      }
+      const wedding = await weddingService.getScopedWeddingByUserId(
+        ctx.auth.userId,
+        ctx.auth.sessionActiveOrganizationId
+      )
 
       return websiteService.updateRsvpEnabled(
-        toAuthzContext(ctx),
+        toOrganizationScopedAuthzContext(ctx, wedding.organizationId),
         wedding.id,
         input.websiteId,
         input.isRsvpEnabled
@@ -97,32 +95,26 @@ export const websiteRouter = createTRPCRouter({
   updateCoverPhoto: protectedProcedure
     .input(updateCoverPhotoSchema)
     .mutation(async ({ ctx, input }) => {
-      // Get the user's wedding
-      const wedding = await weddingService.getByUserId(ctx.auth.userId)
-      if (!wedding) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Wedding not found',
-        })
-      }
+      const wedding = await weddingService.getScopedWeddingByUserId(
+        ctx.auth.userId,
+        ctx.auth.sessionActiveOrganizationId
+      )
 
-      return websiteService.updateCoverPhoto(toAuthzContext(ctx), wedding.id, input.coverPhotoUrl)
+      return websiteService.updateCoverPhoto(
+        toOrganizationScopedAuthzContext(ctx, wedding.organizationId),
+        wedding.id,
+        input.coverPhotoUrl
+      )
     }),
 
   /**
    * Get website for current user's wedding
    */
-  getByUserId: publicProcedure.query(async ({ ctx }) => {
-    if (!ctx.auth?.userId) {
-      return null
-    }
-
-    // Get the user's wedding first
-    const wedding = await weddingService.getByUserId(ctx.auth.userId)
-    if (!wedding) {
-      return null
-    }
-
+  getByUserId: protectedProcedure.query(async ({ ctx }) => {
+    const wedding = await weddingService.getScopedWeddingByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
     return websiteService.getByWeddingId(wedding.id)
   }),
 
@@ -147,7 +139,7 @@ export const websiteRouter = createTRPCRouter({
    * Fetch complete wedding data for public website display
    */
   fetchWeddingData: publicProcedure.input(fetchWeddingDataSchema).query(async ({ input }) => {
-    return websiteService.fetchWeddingData(input.subUrl)
+    return websiteService.fetchWeddingData(input.subUrl, input.accessToken)
   }),
 
   /**

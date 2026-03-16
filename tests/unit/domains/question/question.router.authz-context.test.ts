@@ -1,3 +1,5 @@
+import { TRPCError } from '@trpc/server'
+
 jest.mock('lib/auth', () => ({
   auth: { api: { getSession: jest.fn().mockResolvedValue(null) } },
 }))
@@ -13,7 +15,7 @@ jest.mock('~/server/domains/question', () => ({
 
 jest.mock('~/server/domains/wedding', () => ({
   weddingService: {
-    getByUserId: jest.fn(),
+    getScopedWeddingByUserId: jest.fn(),
   },
 }))
 
@@ -23,7 +25,7 @@ import { weddingService } from '~/server/domains/wedding'
 
 const mockUpsertQuestion = questionService.upsertQuestion as jest.Mock
 const mockDeleteQuestion = questionService.deleteQuestion as jest.Mock
-const mockGetByUserId = weddingService.getByUserId as jest.Mock
+const mockGetScopedWeddingByUserId = weddingService.getScopedWeddingByUserId as jest.Mock
 
 describe('questionRouter authz context plumbing', () => {
   const headers = new Headers([['x-test', '1']])
@@ -40,7 +42,7 @@ describe('questionRouter authz context plumbing', () => {
 
   beforeEach(() => {
     jest.resetAllMocks()
-    mockGetByUserId.mockResolvedValue({ id: 'wedding-123', organizationId: 'org-123' })
+    mockGetScopedWeddingByUserId.mockResolvedValue({ id: 'wedding-123', organizationId: 'org-123' })
   })
 
   it('passes authz context and wedding linkage to upsert service call', async () => {
@@ -90,7 +92,9 @@ describe('questionRouter authz context plumbing', () => {
   })
 
   it('throws NOT_FOUND when wedding is missing for upsert', async () => {
-    mockGetByUserId.mockResolvedValue(null)
+    mockGetScopedWeddingByUserId.mockRejectedValue(
+      new TRPCError({ code: 'NOT_FOUND', message: 'No wedding found' })
+    )
 
     await expect(
       caller.upsert({
@@ -105,7 +109,9 @@ describe('questionRouter authz context plumbing', () => {
   })
 
   it('throws NOT_FOUND when wedding is missing for delete', async () => {
-    mockGetByUserId.mockResolvedValue(null)
+    mockGetScopedWeddingByUserId.mockRejectedValue(
+      new TRPCError({ code: 'NOT_FOUND', message: 'No wedding found' })
+    )
 
     await expect(caller.delete({ questionId: 'question-1' })).rejects.toMatchObject({
       code: 'NOT_FOUND',

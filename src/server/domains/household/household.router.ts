@@ -40,7 +40,10 @@ export const householdRouter = createTRPCRouter({
    * Create a new household with guests
    */
   create: protectedProcedure.input(createHouseholdSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
     return householdManagementService.createHouseholdWithGuests(
       toAuthzContext(ctx),
       weddingId,
@@ -52,7 +55,10 @@ export const householdRouter = createTRPCRouter({
    * Update a household with guests
    */
   update: protectedProcedure.input(updateHouseholdSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
     return householdManagementService.updateHouseholdWithGuests(
       toAuthzContext(ctx),
       weddingId,
@@ -66,7 +72,10 @@ export const householdRouter = createTRPCRouter({
   bulkCreate: protectedProcedure
     .input(bulkCreateHouseholdsSchema)
     .mutation(async ({ ctx, input }) => {
-      const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+      const weddingId = await weddingService.getWeddingIdByUserId(
+        ctx.auth.userId,
+        ctx.auth.sessionActiveOrganizationId
+      )
 
       // Validate that all invites event IDs belong to this wedding
       const validEvents = await eventService.getWeddingEvents(weddingId)
@@ -95,7 +104,10 @@ export const householdRouter = createTRPCRouter({
    * Delete a household
    */
   delete: protectedProcedure.input(deleteHouseholdSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
     return householdManagementService.deleteHousehold(
       toAuthzContext(ctx),
       input.householdId,
@@ -107,7 +119,10 @@ export const householdRouter = createTRPCRouter({
    * Search households by guest name
    */
   findBySearch: protectedProcedure.input(searchHouseholdSchema).query(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
     return householdManagementService.searchHouseholds(
       toAuthzContext(ctx),
       weddingId,

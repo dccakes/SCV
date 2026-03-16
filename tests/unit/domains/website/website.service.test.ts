@@ -402,16 +402,21 @@ describe('WebsiteService', () => {
       mockWeddingFindUniqueFn.mockResolvedValue(mockWedding)
       mockEventFindManyFn.mockResolvedValue(mockEvents)
 
-      const result = await websiteService.fetchWeddingData('johndoeandjanesmith')
+      const result = await websiteService.fetchWeddingData('johndoeandjanesmith', undefined)
 
       expect(result).toMatchObject({
         groomFirstName: 'John',
         groomLastName: 'Doe',
         brideFirstName: 'Jane',
         brideLastName: 'Smith',
-        website: mockWebsiteWithQuestions,
+        website: expect.objectContaining({
+          id: 'website-123',
+          subUrl: 'johndoeandjanesmith',
+          isPasswordEnabled: false,
+        }),
         events: mockEvents,
       })
+      expect(result.website).not.toHaveProperty('password')
       expect(result.date).toBeDefined()
       expect(result.daysRemaining).toBeGreaterThanOrEqual(0)
     })
@@ -419,17 +424,21 @@ describe('WebsiteService', () => {
     it('should throw error when website does not exist', async () => {
       mockFindBySubUrlWithQuestionsFn.mockResolvedValue(null)
 
-      await expect(websiteService.fetchWeddingData('nonexistent')).rejects.toThrow(TRPCClientError)
+      await expect(websiteService.fetchWeddingData('nonexistent', undefined)).rejects.toThrow(
+        TRPCClientError
+      )
     })
 
     it('should throw error when wedding does not exist', async () => {
       mockFindBySubUrlWithQuestionsFn.mockResolvedValue(mockWebsiteWithQuestions)
       mockWeddingFindUniqueFn.mockResolvedValue(null)
 
-      await expect(websiteService.fetchWeddingData('johndoeandjanesmith')).rejects.toThrow(
-        TRPCError
-      )
-      await expect(websiteService.fetchWeddingData('johndoeandjanesmith')).rejects.toMatchObject({
+      await expect(
+        websiteService.fetchWeddingData('johndoeandjanesmith', undefined)
+      ).rejects.toThrow(TRPCError)
+      await expect(
+        websiteService.fetchWeddingData('johndoeandjanesmith', undefined)
+      ).rejects.toMatchObject({
         code: 'INTERNAL_SERVER_ERROR',
       })
     })

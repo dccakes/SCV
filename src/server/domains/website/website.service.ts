@@ -26,8 +26,10 @@ import type { WebsiteRepository } from '~/server/domains/website/website.reposit
 import type {
   CreateWebsiteInput,
   PublicWebsite,
+  PublicWebsiteWithQuestions,
   UpdateWebsiteInput,
   Website,
+  WebsiteWithQuestions,
   WeddingPageData,
 } from '~/server/domains/website/website.types'
 import type {
@@ -230,12 +232,30 @@ export class WebsiteService {
   /**
    * Fetch complete wedding data for public website display
    */
-  async fetchWeddingData(subUrl: string): Promise<WeddingPageData> {
+  async fetchWeddingData(
+    subUrl: string,
+    accessToken: string | undefined
+  ): Promise<WeddingPageData> {
     // Get website with general questions
     const website = await this.websiteRepository.findBySubUrlWithQuestions(subUrl)
 
     if (!website) {
       throw new TRPCClientError('This website does not exist.')
+    }
+
+    if (website.isPasswordEnabled) {
+      const hasAccess = this.websitePasswordService.verifyAccessToken(
+        accessToken,
+        website.id,
+        website.password
+      )
+
+      if (!hasAccess) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Password access required for this wedding website',
+        })
+      }
     }
 
     // Get the wedding entity (couple names live here now)
@@ -285,7 +305,7 @@ export class WebsiteService {
         }),
         numberFormat: formatDateNumber(weddingDate),
       },
-      website,
+      website: this.toPublicWebsiteWithQuestions(website),
       daysRemaining: calculateDaysRemaining(weddingDate) ?? -1,
       events: events.map((event) => ({
         id: event.id,
@@ -420,6 +440,11 @@ export class WebsiteService {
   }
 
   private toPublicWebsite(website: Website): PublicWebsite {
+    const { password: _password, ...publicWebsite } = website
+    return publicWebsite
+  }
+
+  private toPublicWebsiteWithQuestions(website: WebsiteWithQuestions): PublicWebsiteWithQuestions {
     const { password: _password, ...publicWebsite } = website
     return publicWebsite
   }

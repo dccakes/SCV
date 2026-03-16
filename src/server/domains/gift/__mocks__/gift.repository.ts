@@ -24,6 +24,7 @@ export const mockUpdate = jest.fn()
 export const mockUpsert = jest.fn()
 export const mockDelete = jest.fn()
 export const mockExists = jest.fn()
+export const mockBelongsToWedding = jest.fn()
 
 export const GiftRepository = jest.fn().mockImplementation(() => ({
   findById: mockFindById,
@@ -35,6 +36,7 @@ export const GiftRepository = jest.fn().mockImplementation(() => ({
   upsert: mockUpsert,
   delete: mockDelete,
   exists: mockExists,
+  belongsToWedding: mockBelongsToWedding,
 }))
 
 // Helper to reset all mocks
@@ -48,5 +50,6 @@ export const resetMocks = (): void => {
   mockUpsert.mockReset()
   mockDelete.mockReset()
   mockExists.mockReset()
+  mockBelongsToWedding.mockReset()
   GiftRepository.mockClear()
 }

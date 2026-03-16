@@ -90,6 +90,7 @@ export const getBySubUrlSchema = z.object({
  */
 export const fetchWeddingDataSchema = z.object({
   subUrl: z.string().min(1, 'Sub URL is required'),
+  accessToken: z.string().optional(),
 })
 
 export const hasPasswordAccessSchema = z.object({

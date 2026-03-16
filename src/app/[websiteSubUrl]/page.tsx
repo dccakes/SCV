@@ -15,7 +15,10 @@ type RootRouteHandlerProps = {
 
 export async function generateMetadata({ params }: RootRouteHandlerProps): Promise<Metadata> {
   const { websiteSubUrl } = await params
-  const weddingData = await loadWeddingBySubUrl(websiteSubUrl)
+  const cookieStore = await cookies()
+  const accessCookieName = `wws_access_${websiteSubUrl}`
+  const accessToken = cookieStore.get(accessCookieName)?.value
+  const weddingData = await loadWeddingBySubUrl(websiteSubUrl, accessToken)
 
   if (!weddingData) {
     return {

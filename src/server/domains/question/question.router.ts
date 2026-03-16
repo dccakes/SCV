@@ -5,7 +5,6 @@
  * This is a thin layer that handles input validation and delegates to the service.
  */
 
-import { TRPCError } from '@trpc/server'
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 
 import type { AuthzContext } from '~/server/authz/authorization.types'
@@ -33,13 +32,10 @@ export const questionRouter = createTRPCRouter({
    * Upsert a question (create or update)
    */
   upsert: protectedProcedure.input(upsertQuestionSchema).mutation(async ({ ctx, input }) => {
-    const wedding = await weddingService.getByUserId(ctx.auth.userId)
-    if (!wedding) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'Wedding not found',
-      })
-    }
+    const wedding = await weddingService.getScopedWeddingByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
 
     return questionService.upsertQuestion({
       ctx: toAuthzContext(ctx),
@@ -53,13 +49,10 @@ export const questionRouter = createTRPCRouter({
    * Delete a question
    */
   delete: protectedProcedure.input(deleteQuestionSchema).mutation(async ({ ctx, input }) => {
-    const wedding = await weddingService.getByUserId(ctx.auth.userId)
-    if (!wedding) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'Wedding not found',
-      })
-    }
+    const wedding = await weddingService.getScopedWeddingByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
 
     return questionService.deleteQuestion({
       ctx: toAuthzContext(ctx),

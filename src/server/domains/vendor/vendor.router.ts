@@ -48,7 +48,10 @@ export const vendorRouter = createTRPCRouter({
    * Get a single vendor with all its quotes
    */
   getById: protectedProcedure.input(getVendorSchema).query(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
     return vendorService.getVendorWithQuotes(toAuthzContext(ctx), input.vendorId, weddingId)
   }),
 
@@ -56,7 +59,10 @@ export const vendorRouter = createTRPCRouter({
    * Create a new vendor
    */
   create: protectedProcedure.input(createVendorSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
     return vendorService.createVendor(toAuthzContext(ctx), weddingId, input)
   }),
 
@@ -64,7 +70,10 @@ export const vendorRouter = createTRPCRouter({
    * Update vendor details (name, location, contact, social links)
    */
   update: protectedProcedure.input(updateVendorSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
     return vendorService.updateVendor(toAuthzContext(ctx), input.vendorId, weddingId, input)
   }),
 
@@ -74,7 +83,10 @@ export const vendorRouter = createTRPCRouter({
   updateStatus: protectedProcedure
     .input(updateVendorStatusSchema)
     .mutation(async ({ ctx, input }) => {
-      const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+      const weddingId = await weddingService.getWeddingIdByUserId(
+        ctx.auth.userId,
+        ctx.auth.sessionActiveOrganizationId
+      )
       return vendorService.updateStatus(
         toAuthzContext(ctx),
         input.vendorId,
@@ -87,7 +99,10 @@ export const vendorRouter = createTRPCRouter({
    * Delete a vendor (and all its quotes)
    */
   delete: protectedProcedure.input(deleteVendorSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
     return vendorService.deleteVendor(toAuthzContext(ctx), input.vendorId, weddingId)
   }),
 
@@ -95,7 +110,10 @@ export const vendorRouter = createTRPCRouter({
    * Add a quote to a vendor
    */
   addQuote: protectedProcedure.input(createQuoteSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
     return vendorService.addQuote(toAuthzContext(ctx), input.vendorId, weddingId, input)
   }),
 
@@ -103,7 +121,10 @@ export const vendorRouter = createTRPCRouter({
    * Update an existing quote
    */
   updateQuote: protectedProcedure.input(updateQuoteSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
     return vendorService.updateQuote(
       toAuthzContext(ctx),
       input.quoteId,
@@ -117,7 +138,10 @@ export const vendorRouter = createTRPCRouter({
    * Delete a quote
    */
   deleteQuote: protectedProcedure.input(deleteQuoteSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.sessionActiveOrganizationId
+    )
     return vendorService.deleteQuote(toAuthzContext(ctx), input.quoteId, input.vendorId, weddingId)
   }),
 
@@ -127,7 +151,10 @@ export const vendorRouter = createTRPCRouter({
   saveQuoteFiles: protectedProcedure
     .input(saveQuoteFilesSchema)
     .mutation(async ({ ctx, input }) => {
-      const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+      const weddingId = await weddingService.getWeddingIdByUserId(
+        ctx.auth.userId,
+        ctx.auth.sessionActiveOrganizationId
+      )
       return vendorService.saveQuoteFiles(toAuthzContext(ctx), input.vendorId, weddingId, input)
     }),
 
@@ -137,7 +164,10 @@ export const vendorRouter = createTRPCRouter({
   deleteQuoteFile: protectedProcedure
     .input(deleteQuoteFileSchema)
     .mutation(async ({ ctx, input }) => {
-      const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+      const weddingId = await weddingService.getWeddingIdByUserId(
+        ctx.auth.userId,
+        ctx.auth.sessionActiveOrganizationId
+      )
       return vendorService.deleteQuoteFile(toAuthzContext(ctx), input.vendorId, weddingId, input)
     }),
 })
