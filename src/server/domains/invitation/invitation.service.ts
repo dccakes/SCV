@@ -5,13 +5,18 @@
  * Handles invitation creation, RSVP updates, and retrieval.
  */
 
-import type { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
+import { TRPCError } from '@trpc/server'
+
+import type { AuthzContext } from 'server/authz/authorization.types'
+import { assertInvitationInUserScope } from 'server/authz/organization-scope'
+import { requirePermission } from 'server/authz/permission-checker'
+import type { InvitationRepository } from 'server/domains/invitation/invitation.repository'
 import type {
   CreateInvitationInput,
   Invitation,
   RsvpStats,
   UpdateInvitationInput,
-} from '~/server/domains/invitation/invitation.types'
+} from 'server/domains/invitation/invitation.types'
 
 export class InvitationService {
   constructor(private invitationRepository: InvitationRepository) {}
@@ -19,7 +24,29 @@ export class InvitationService {
   /**
    * Create a new invitation
    */
-  async createInvitation(weddingId: string, data: CreateInvitationInput): Promise<Invitation> {
+  async createInvitation(
+    ctx: AuthzContext,
+    weddingId: string,
+    data: CreateInvitationInput
+  ): Promise<Invitation> {
+    await this.requireInvitationPermission(ctx, 'create')
+
+    const guestInWedding = await this.invitationRepository.guestBelongsToWedding(
+      data.guestId,
+      weddingId
+    )
+    const eventInWedding = await this.invitationRepository.eventBelongsToWedding(
+      data.eventId,
+      weddingId
+    )
+
+    if (!guestInWedding || !eventInWedding) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Invitation target is outside the requested wedding scope',
+      })
+    }
+
     return this.invitationRepository.create({
       guestId: data.guestId,
       eventId: data.eventId,
@@ -31,7 +58,17 @@ export class InvitationService {
   /**
    * Update an invitation RSVP
    */
-  async updateInvitation(data: UpdateInvitationInput): Promise<Invitation> {
+  async updateInvitation(ctx: AuthzContext, data: UpdateInvitationInput): Promise<Invitation> {
+    await this.requireRsvpPermission(ctx, 'edit_response')
+    await assertInvitationInUserScope({
+      invitation: {
+        eventId: data.eventId,
+        guestId: data.guestId,
+      },
+      invitationRepository: this.invitationRepository,
+      userId: ctx.userId,
+    })
+
     return this.invitationRepository.update(data.guestId, data.eventId, {
       rsvp: data.rsvp,
     })
@@ -105,5 +142,17 @@ export class InvitationService {
       }))
     )
     return this.invitationRepository.createMany(invitations)
+  }
+
+  private async requireInvitationPermission(ctx: AuthzContext, action: 'create'): Promise<void> {
+    await requirePermission(ctx, {
+      invitation: [action],
+    })
+  }
+
+  private async requireRsvpPermission(ctx: AuthzContext, action: 'edit_response'): Promise<void> {
+    await requirePermission(ctx, {
+      rsvp: [action],
+    })
   }
 }

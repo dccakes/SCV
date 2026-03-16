@@ -1,9 +1,21 @@
 import { betterAuth } from 'better-auth'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { nextCookies } from 'better-auth/next-js'
+import { organization } from 'better-auth/plugins'
 
 import { env } from '~/env'
+import { ac, organizationRoles } from '~/lib/auth-permissions'
 import { db } from '~/server/db'
+
+export const authOrganizationRoles = organizationRoles
+
+export const authPlugins = [
+  organization({
+    ac,
+    roles: authOrganizationRoles,
+  }),
+  nextCookies(),
+] as const
 
 export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
@@ -34,7 +46,7 @@ export const auth = betterAuth({
   experimental: {
     joins: true, // Enable joins for 2-3x performance improvement
   },
-  plugins: [nextCookies()],
+  plugins: authPlugins,
 })
 
 export type Session = typeof auth.$Infer.Session

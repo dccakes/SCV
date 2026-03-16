@@ -48,6 +48,7 @@ export const mockUpdateCollectRsvp = jest.fn()
 export const mockDelete = jest.fn()
 export const mockExists = jest.fn()
 export const mockBelongsToWedding = jest.fn()
+export const mockBelongsToUser = jest.fn()
 
 export const EventRepository = jest.fn().mockImplementation(() => ({
   findById: mockFindById,
@@ -61,6 +62,7 @@ export const EventRepository = jest.fn().mockImplementation(() => ({
   delete: mockDelete,
   exists: mockExists,
   belongsToWedding: mockBelongsToWedding,
+  belongsToUser: mockBelongsToUser,
 }))
 
 // Helper to reset all mocks
@@ -76,5 +78,6 @@ export const resetMocks = (): void => {
   mockDelete.mockReset()
   mockExists.mockReset()
   mockBelongsToWedding.mockReset()
+  mockBelongsToUser.mockReset()
   EventRepository.mockClear()
 }

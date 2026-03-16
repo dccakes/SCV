@@ -18,10 +18,13 @@
 import type { PrismaClient } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 
-import { RSVP_STATUS } from '~/lib/constants'
-import type { EventRepository } from '~/server/domains/event/event.repository'
-import type { Event, EventWithStats } from '~/server/domains/event/event.types'
-import type { CreateEventInput, UpdateEventInput } from '~/server/domains/event/event.validator'
+import { RSVP_STATUS } from 'lib/constants/rsvp'
+import type { ActiveOrganization, AuthzContext } from 'server/authz/authorization.types'
+import { assertEventInUserScope, assertEventInWeddingScope } from 'server/authz/organization-scope'
+import { requirePermission } from 'server/authz/permission-checker'
+import type { EventRepository } from 'server/domains/event/event.repository'
+import type { Event, EventWithStats } from 'server/domains/event/event.types'
+import type { CreateEventInput, UpdateEventInput } from 'server/domains/event/event.validator'
 
 export class EventService {
   constructor(
@@ -38,7 +41,9 @@ export class EventService {
    *
    * Wrapped in a transaction to ensure event + invitations are created atomically.
    */
-  async createEvent(weddingId: string, data: CreateEventInput): Promise<Event> {
+  async createEvent(ctx: AuthzContext, weddingId: string, data: CreateEventInput): Promise<Event> {
+    await this.requireEventPermission(ctx, 'create')
+
     const {
       eventName: name,
       date,
@@ -69,6 +74,53 @@ export class EventService {
 
       // Create invitations for pre-existing guests
       // Tag-alongs only get invitations if this event allows them
+      const guests = await tx.guest.findMany({
+        where: { weddingId, ...(allowTagAlongs ? {} : { isTagAlong: false }) },
+      })
+
+      if (guests.length > 0) {
+        await tx.invitation.createMany({
+          data: guests.map((guest) => ({
+            weddingId,
+            guestId: guest.id,
+            eventId: newEvent.id,
+            rsvp: RSVP_STATUS.NOT_INVITED,
+          })),
+        })
+      }
+
+      return newEvent as Event
+    })
+  }
+
+  async createEventSystem(weddingId: string, data: CreateEventInput): Promise<Event> {
+    const {
+      eventName: name,
+      date,
+      startTime,
+      endTime,
+      venue,
+      attire,
+      description,
+      allowTagAlongs,
+    } = data
+
+    return this.db.$transaction(async (tx) => {
+      const newEvent = await tx.event.create({
+        data: {
+          name,
+          weddingId,
+          date: date ? new Date(date) : undefined,
+          startTime,
+          endTime,
+          venue,
+          attire,
+          description,
+          collectRsvp: false,
+          allowTagAlongs: allowTagAlongs ?? false,
+        },
+      })
+
       const guests = await tx.guest.findMany({
         where: { weddingId, ...(allowTagAlongs ? {} : { isTagAlong: false }) },
       })
@@ -141,7 +193,14 @@ export class EventService {
    *
    * Wrapped in a transaction to ensure tag-along invitation creation + event update are atomic.
    */
-  async updateEvent(weddingId: string, data: UpdateEventInput): Promise<Event> {
+  async updateEvent(ctx: AuthzContext, weddingId: string, data: UpdateEventInput): Promise<Event> {
+    await this.requireEventPermission(ctx, 'update')
+    await assertEventInWeddingScope({
+      eventId: data.eventId,
+      eventRepository: this.eventRepository,
+      weddingId,
+    })
+
     // Verify event belongs to wedding (auth check outside transaction)
     const belongsToWedding = await this.eventRepository.belongsToWedding(data.eventId, weddingId)
     if (!belongsToWedding) {
@@ -203,7 +262,18 @@ export class EventService {
   /**
    * Update collect RSVP status for an event
    */
-  async updateCollectRsvp(eventId: string, collectRsvp: boolean): Promise<Event> {
+  async updateCollectRsvp(
+    ctx: AuthzContext,
+    eventId: string,
+    collectRsvp: boolean
+  ): Promise<Event> {
+    await this.requireEventPermission(ctx, 'rsvp_policy_update')
+    await assertEventInUserScope({
+      eventId,
+      eventRepository: this.eventRepository,
+      userId: ctx.userId,
+    })
+
     return this.eventRepository.updateCollectRsvp(eventId, collectRsvp)
   }
 
@@ -212,7 +282,14 @@ export class EventService {
    *
    * Note: Cascades to invitations, gifts, and questions via database relations
    */
-  async deleteEvent(eventId: string, weddingId: string): Promise<string> {
+  async deleteEvent(ctx: AuthzContext, eventId: string, weddingId: string): Promise<string> {
+    await this.requireEventPermission(ctx, 'delete')
+    await assertEventInWeddingScope({
+      eventId,
+      eventRepository: this.eventRepository,
+      weddingId,
+    })
+
     // Verify event belongs to wedding
     const belongsToWedding = await this.eventRepository.belongsToWedding(eventId, weddingId)
     if (!belongsToWedding) {
@@ -224,5 +301,14 @@ export class EventService {
 
     const deletedEvent = await this.eventRepository.delete(eventId)
     return deletedEvent.id
+  }
+
+  private async requireEventPermission(
+    ctx: AuthzContext,
+    action: 'create' | 'update' | 'delete' | 'rsvp_policy_update'
+  ): Promise<ActiveOrganization> {
+    return requirePermission(ctx, {
+      event: [action],
+    })
   }
 }

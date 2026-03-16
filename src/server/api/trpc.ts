@@ -8,11 +8,43 @@
  */
 
 import { initTRPC, TRPCError } from '@trpc/server'
+import { auth } from 'lib/auth'
+import { db } from 'server/db'
 import superjson from 'superjson'
 import { ZodError } from 'zod'
 
-import { auth } from '~/lib/auth'
-import { db } from '~/server/db'
+const getSessionActiveOrganizationId = (session: unknown): string | null => {
+  if (!session || typeof session !== 'object') {
+    return null
+  }
+
+  const sessionRecord =
+    'session' in session && typeof session.session === 'object' && session.session !== null
+      ? (session.session as Record<string, unknown>)
+      : null
+
+  if (!sessionRecord) {
+    return null
+  }
+
+  const activeOrganizationId = sessionRecord.activeOrganizationId
+  if (typeof activeOrganizationId === 'string' && activeOrganizationId.length > 0) {
+    return activeOrganizationId
+  }
+
+  const activeOrganization =
+    typeof sessionRecord.activeOrganization === 'object' &&
+    sessionRecord.activeOrganization !== null
+      ? (sessionRecord.activeOrganization as Record<string, unknown>)
+      : null
+
+  const nestedOrganizationId = activeOrganization?.id
+  if (typeof nestedOrganizationId === 'string' && nestedOrganizationId.length > 0) {
+    return nestedOrganizationId
+  }
+
+  return null
+}
 
 /**
  * 1. CONTEXT
@@ -36,6 +68,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
     auth: {
       userId: session?.user?.id ?? null,
       session: session,
+      sessionActiveOrganizationId: getSessionActiveOrganizationId(session),
     },
     ...opts,
   }

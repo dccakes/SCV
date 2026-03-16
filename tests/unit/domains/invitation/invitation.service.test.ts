@@ -2,24 +2,33 @@
  * Tests for Invitation Domain Service
  */
 
-// Must mock before importing the service
-jest.mock('~/server/domains/invitation/invitation.repository')
+import { TRPCError } from '@trpc/server'
 
+// Must mock before importing the service
+jest.mock('server/authz/permission-checker', () => ({
+  requirePermission: jest.fn(),
+}))
+jest.mock('server/domains/invitation/invitation.repository')
+
+import { requirePermission } from 'server/authz/permission-checker'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   InvitationRepository,
+  mockBelongsToUser,
   mockCreate,
   mockCreateMany,
+  mockEventBelongsToWedding,
   mockFindByEventId,
   mockFindByGuestId,
   mockFindByWeddingId,
   mockGetRsvpCountsByEventId,
+  mockGuestBelongsToWedding,
   mockInvitation,
   mockRsvpStats,
   mockUpdate,
   resetMocks,
-} from '~/server/domains/invitation/invitation.repository'
-import { InvitationService } from '~/server/domains/invitation/invitation.service'
+} from 'server/domains/invitation/invitation.repository'
+import { InvitationService } from 'server/domains/invitation/invitation.service'
 
 // Create typed aliases for mocked functions
 const mockCreateFn = mockCreate as jest.Mock
@@ -29,12 +38,27 @@ const mockFindByWeddingIdFn = mockFindByWeddingId as jest.Mock
 const mockFindByEventIdFn = mockFindByEventId as jest.Mock
 const mockFindByGuestIdFn = mockFindByGuestId as jest.Mock
 const mockGetRsvpCountsByEventIdFn = mockGetRsvpCountsByEventId as jest.Mock
+const mockBelongsToUserFn = mockBelongsToUser as jest.Mock
+const mockGuestBelongsToWeddingFn = mockGuestBelongsToWedding as jest.Mock
+const mockEventBelongsToWeddingFn = mockEventBelongsToWedding as jest.Mock
+const mockRequirePermission = requirePermission as jest.Mock
+
+const actorContext = {
+  headers: new Headers(),
+  userId: 'user-123',
+  sessionActiveOrganizationId: 'org-123',
+}
 
 describe('InvitationService', () => {
   let invitationService: InvitationService
 
   beforeEach(() => {
     resetMocks()
+    mockRequirePermission.mockReset()
+    mockRequirePermission.mockResolvedValue({ organizationId: 'org-123', role: 'owner' })
+    mockBelongsToUserFn.mockResolvedValue(true)
+    mockGuestBelongsToWeddingFn.mockResolvedValue(true)
+    mockEventBelongsToWeddingFn.mockResolvedValue(true)
     const mockRepository = new InvitationRepository({})
     invitationService = new InvitationService(mockRepository)
   })
@@ -43,19 +67,64 @@ describe('InvitationService', () => {
     it('should create an invitation successfully', async () => {
       mockCreateFn.mockResolvedValue(mockInvitation)
 
-      const result = await invitationService.createInvitation('wedding-123', {
+      const result = await invitationService.createInvitation(actorContext, 'wedding-123', {
         guestId: 1,
         eventId: 'event-123',
         rsvp: 'Invited',
       })
 
       expect(result).toEqual(mockInvitation)
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, {
+        invitation: ['create'],
+      })
       expect(mockCreateFn).toHaveBeenCalledWith({
         guestId: 1,
         eventId: 'event-123',
         rsvp: 'Invited',
         weddingId: 'wedding-123',
       })
+    })
+
+    it('should reject create when actor lacks invitation create permission', async () => {
+      mockRequirePermission.mockRejectedValue(new TRPCError({ code: 'FORBIDDEN' }))
+
+      await expect(
+        invitationService.createInvitation(actorContext, 'wedding-123', {
+          guestId: 1,
+          eventId: 'event-123',
+          rsvp: 'Invited',
+        })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+
+      expect(mockCreateFn).not.toHaveBeenCalled()
+    })
+
+    it('should reject create when guest does not belong to wedding', async () => {
+      mockGuestBelongsToWeddingFn.mockResolvedValue(false)
+
+      await expect(
+        invitationService.createInvitation(actorContext, 'wedding-123', {
+          guestId: 1,
+          eventId: 'event-123',
+          rsvp: 'Invited',
+        })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+
+      expect(mockCreateFn).not.toHaveBeenCalled()
+    })
+
+    it('should reject create when event does not belong to wedding', async () => {
+      mockEventBelongsToWeddingFn.mockResolvedValue(false)
+
+      await expect(
+        invitationService.createInvitation(actorContext, 'wedding-123', {
+          guestId: 1,
+          eventId: 'event-123',
+          rsvp: 'Invited',
+        })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+
+      expect(mockCreateFn).not.toHaveBeenCalled()
     })
   })
 
@@ -64,14 +133,45 @@ describe('InvitationService', () => {
       const updatedInvitation = { ...mockInvitation, rsvp: 'Attending' }
       mockUpdateFn.mockResolvedValue(updatedInvitation)
 
-      const result = await invitationService.updateInvitation({
+      const result = await invitationService.updateInvitation(actorContext, {
         guestId: 1,
         eventId: 'event-123',
         rsvp: 'Attending',
       })
 
       expect(result.rsvp).toBe('Attending')
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, {
+        rsvp: ['edit_response'],
+      })
       expect(mockUpdateFn).toHaveBeenCalledWith(1, 'event-123', { rsvp: 'Attending' })
+    })
+
+    it('should reject update when actor lacks RSVP edit permission', async () => {
+      mockRequirePermission.mockRejectedValue(new TRPCError({ code: 'FORBIDDEN' }))
+
+      await expect(
+        invitationService.updateInvitation(actorContext, {
+          guestId: 1,
+          eventId: 'event-123',
+          rsvp: 'Attending',
+        })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+
+      expect(mockUpdateFn).not.toHaveBeenCalled()
+    })
+
+    it('should reject update when invitation is outside actor scope', async () => {
+      mockBelongsToUserFn.mockResolvedValue(false)
+
+      await expect(
+        invitationService.updateInvitation(actorContext, {
+          guestId: 1,
+          eventId: 'event-123',
+          rsvp: 'Attending',
+        })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+
+      expect(mockUpdateFn).not.toHaveBeenCalled()
     })
   })
 

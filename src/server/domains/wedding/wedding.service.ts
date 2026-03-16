@@ -76,7 +76,7 @@ export class WeddingService {
 
     // Create default "Wedding Day" event if date/location provided
     if (data.hasWeddingDetails && (weddingDate || weddingLocation)) {
-      await this.eventService.createEvent(wedding.id, {
+      await this.eventService.createEventSystem(wedding.id, {
         eventName: 'Ceremony',
         date: weddingDate ?? undefined,
         venue: weddingLocation ?? undefined,
