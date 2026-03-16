@@ -437,9 +437,14 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                               <>
                                 <div className='flex items-start justify-between'>
                                   <div>
-                                    <p className='font-display text-foreground text-xl italic'>
-                                      {formatPrice(quote.price)}
-                                    </p>
+                                    <div className='flex items-baseline gap-2'>
+                                      <p className='font-display text-foreground text-xl italic'>
+                                        {formatPrice(quote.price)}
+                                      </p>
+                                      <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-wider'>
+                                        {quote.quoteType === 'PER_GUEST' ? '/ guest' : 'flat fee'}
+                                      </span>
+                                    </div>
                                     <p className='font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
                                       {formatDate(quote.quoteDate)}
                                     </p>

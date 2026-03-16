@@ -6,10 +6,18 @@ import { toast } from 'sonner'
 
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/ui/select'
 import { Textarea } from '~/components/ui/textarea'
 import { useUploadThing } from '~/lib/uploadthing'
 import { cn } from '~/lib/utils'
 import type { VendorQuote } from '~/server/domains/vendor/vendor.types'
+import { QuoteType } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
 
 function getTodayString() {
@@ -39,6 +47,9 @@ export function QuoteForm({
 }: QuoteFormProps) {
   const isEdit = mode === 'edit' && quote
   const [price, setPrice] = useState(isEdit ? String(quote.price) : '')
+  const [quoteType, setQuoteType] = useState<QuoteType>(
+    isEdit ? quote.quoteType : QuoteType.FLAT_FEE
+  )
   const [quoteDate, setQuoteDate] = useState(
     isEdit ? toDateInputValue(quote.quoteDate) : getTodayString()
   )
@@ -105,6 +116,7 @@ export function QuoteForm({
           quoteId: quote.id,
           vendorId,
           price: parseFloat(price),
+          quoteType,
           quoteDate,
           notes: notes || undefined,
         })
@@ -115,6 +127,7 @@ export function QuoteForm({
         const newQuote = await addQuote.mutateAsync({
           vendorId,
           price: parseFloat(price),
+          quoteType,
           quoteDate,
           notes: notes || undefined,
         })
@@ -157,7 +170,7 @@ export function QuoteForm({
         {isEdit ? 'Edit Quote' : 'New Quote'}
       </h4>
 
-      <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+      <div className='grid grid-cols-1 gap-3 sm:grid-cols-3'>
         <label className='space-y-1' htmlFor='quote-price'>
           <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
             Price ($)
@@ -174,6 +187,20 @@ export function QuoteForm({
             className='h-9'
           />
         </label>
+        <div className='space-y-1'>
+          <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
+            Quote Type
+          </span>
+          <Select value={quoteType} onValueChange={(v) => setQuoteType(v as QuoteType)}>
+            <SelectTrigger className='h-9'>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={QuoteType.FLAT_FEE}>Flat Fee</SelectItem>
+              <SelectItem value={QuoteType.PER_GUEST}>Per Guest</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <label className='space-y-1' htmlFor='quote-date'>
           <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
             Date

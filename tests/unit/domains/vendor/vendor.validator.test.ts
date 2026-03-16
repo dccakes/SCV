@@ -228,7 +228,7 @@ describe('createQuoteSchema', () => {
     }
     const result = createQuoteSchema.safeParse(input)
     expect(result.success).toBe(true)
-    expect(result.data).toEqual(input)
+    expect(result.data).toEqual({ ...input, quoteType: 'FLAT_FEE' })
   })
 
   it('should validate without optional notes', () => {
