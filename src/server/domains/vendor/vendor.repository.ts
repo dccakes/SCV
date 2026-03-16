@@ -9,6 +9,7 @@ import {
   type PrismaClient,
   type VendorQuote as PrismaVendorQuote,
   type VendorQuoteFile as PrismaVendorQuoteFile,
+  type QuoteType,
   type VendorCategory,
   type VendorStatus,
 } from '@prisma/client'
@@ -131,6 +132,7 @@ export class VendorRepository {
   async createQuote(data: {
     vendorId: string
     price: number
+    quoteType: QuoteType
     quoteDate: Date
     notes?: string
   }): Promise<VendorQuote> {
@@ -148,6 +150,7 @@ export class VendorRepository {
     id: string,
     data: {
       price?: number
+      quoteType?: QuoteType
       quoteDate?: Date
       notes?: string
     }

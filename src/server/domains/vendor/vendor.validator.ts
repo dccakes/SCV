@@ -5,11 +5,12 @@
  * These are the single source of truth for input types.
  */
 
-import { VendorCategory, VendorStatus } from '@prisma/client'
+import { QuoteType, VendorCategory, VendorStatus } from '@prisma/client'
 import { z } from 'zod'
 
 const vendorCategoryValues = Object.values(VendorCategory) as [string, ...string[]]
 const vendorStatusValues = Object.values(VendorStatus) as [string, ...string[]]
+const quoteTypeValues = Object.values(QuoteType) as [QuoteType, ...QuoteType[]]
 
 // ─── Vendor schemas ───────────────────────────────────────────────────────────
 
@@ -65,6 +66,7 @@ export const createQuoteSchema = z.object({
     .number()
     .positive('Price must be greater than zero')
     .max(10_000_000, 'Price must be less than $10,000,000'),
+  quoteType: z.enum(quoteTypeValues).default('FLAT_FEE'),
   quoteDate: quoteDateSchema,
   notes: z.string().max(5000, 'Notes must be 5000 characters or less').optional(),
 })
@@ -77,6 +79,7 @@ export const updateQuoteSchema = z.object({
     .positive('Price must be greater than zero')
     .max(10_000_000, 'Price must be less than $10,000,000')
     .optional(),
+  quoteType: z.enum(quoteTypeValues).optional(),
   quoteDate: quoteDateSchema.optional(),
   notes: z.string().max(5000, 'Notes must be 5000 characters or less').optional(),
 })
