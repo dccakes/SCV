@@ -1,6 +1,6 @@
 import { TRPCError } from '@trpc/server'
 
-import type { ActiveOrganization } from 'server/authz/authorization.types'
+import type { ActiveOrganization } from '~/server/authz/authorization.types'
 
 export type OrganizationScopeEntityName = 'event' | 'guest' | 'invitation'
 

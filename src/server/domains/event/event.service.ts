@@ -18,13 +18,16 @@
 import type { PrismaClient } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 
-import { RSVP_STATUS } from 'lib/constants/rsvp'
-import type { ActiveOrganization, AuthzContext } from 'server/authz/authorization.types'
-import { assertEventInUserScope, assertEventInWeddingScope } from 'server/authz/organization-scope'
-import { requirePermission } from 'server/authz/permission-checker'
-import type { EventRepository } from 'server/domains/event/event.repository'
-import type { Event, EventWithStats } from 'server/domains/event/event.types'
-import type { CreateEventInput, UpdateEventInput } from 'server/domains/event/event.validator'
+import { RSVP_STATUS } from '~/lib/constants/rsvp'
+import type { ActiveOrganization, AuthzContext } from '~/server/authz/authorization.types'
+import {
+  assertEventInUserScope,
+  assertEventInWeddingScope,
+} from '~/server/authz/organization-scope'
+import { requirePermission } from '~/server/authz/permission-checker'
+import type { EventRepository } from '~/server/domains/event/event.repository'
+import type { Event, EventWithStats } from '~/server/domains/event/event.types'
+import type { CreateEventInput, UpdateEventInput } from '~/server/domains/event/event.validator'
 
 export class EventService {
   constructor(

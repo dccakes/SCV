@@ -7,16 +7,16 @@
 
 import { TRPCError } from '@trpc/server'
 
-import type { AuthzContext } from 'server/authz/authorization.types'
-import { assertInvitationInUserScope } from 'server/authz/organization-scope'
-import { requirePermission } from 'server/authz/permission-checker'
-import type { InvitationRepository } from 'server/domains/invitation/invitation.repository'
+import type { AuthzContext } from '~/server/authz/authorization.types'
+import { assertInvitationInUserScope } from '~/server/authz/organization-scope'
+import { requirePermission } from '~/server/authz/permission-checker'
+import type { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
 import type {
   CreateInvitationInput,
   Invitation,
   RsvpStats,
   UpdateInvitationInput,
-} from 'server/domains/invitation/invitation.types'
+} from '~/server/domains/invitation/invitation.types'
 
 export class InvitationService {
   constructor(private invitationRepository: InvitationRepository) {}

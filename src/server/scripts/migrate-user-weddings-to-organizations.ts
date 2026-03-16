@@ -233,7 +233,7 @@ const run = async (): Promise<void> => {
   }
 
   process.stdout.write(
-    [
+    `${[
       'UserWedding -> Organization migration summary',
       `- dryRun: ${String(args.dryRun)}`,
       `- weddings: ${weddings.length}`,
@@ -243,7 +243,7 @@ const run = async (): Promise<void> => {
       `- memberUpserts: ${memberUpserts}`,
       `- pendingOrganization: ${pendingOrganization}`,
       `- skippedMissingTables: ${skippedMissingTables}`,
-    ].join('\n') + '\n'
+    ].join('\n')}\n`
   )
 }
 

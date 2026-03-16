@@ -8,10 +8,10 @@
  */
 
 import { initTRPC, TRPCError } from '@trpc/server'
-import { auth } from 'lib/auth'
-import { db } from 'server/db'
 import superjson from 'superjson'
 import { ZodError } from 'zod'
+import { auth } from '~/lib/auth'
+import { db } from '~/server/db'
 
 const getSessionActiveOrganizationId = (session: unknown): string | null => {
   if (!session || typeof session !== 'object') {

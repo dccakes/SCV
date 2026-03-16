@@ -5,16 +5,16 @@
  * This is a thin layer that handles input validation and delegates to the service.
  */
 
-import { createTRPCRouter, protectedProcedure, publicProcedure } from 'server/api/trpc'
-import type { AuthzContext } from 'server/authz/authorization.types'
-import { eventService } from 'server/domains/event'
+import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
+import type { AuthzContext } from '~/server/authz/authorization.types'
+import { eventService } from '~/server/domains/event'
 import {
   createEventSchema,
   deleteEventSchema,
   updateCollectRsvpSchema,
   updateEventSchema,
-} from 'server/domains/event/event.validator'
-import { weddingService } from 'server/domains/wedding'
+} from '~/server/domains/event/event.validator'
+import { weddingService } from '~/server/domains/wedding'
 
 const toAuthzContext = (ctx: {
   auth: {

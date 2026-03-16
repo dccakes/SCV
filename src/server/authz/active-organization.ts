@@ -1,13 +1,13 @@
 import { TRPCError } from '@trpc/server'
 
-import { auth } from 'lib/auth'
+import { auth } from '~/lib/auth'
 
 import type {
   ActiveOrganization,
   AuthzContext,
   OrganizationMembership,
   ResolveActiveOrganizationOptions,
-} from 'server/authz/authorization.types'
+} from '~/server/authz/authorization.types'
 
 const preconditionFailed = (message: string): never => {
   throw new TRPCError({ code: 'PRECONDITION_FAILED', message })

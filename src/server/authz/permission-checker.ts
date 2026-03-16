@@ -1,14 +1,14 @@
 import { TRPCError } from '@trpc/server'
 
-import { auth } from 'lib/auth'
+import { auth } from '~/lib/auth'
 
-import { resolveActiveOrganization } from 'server/authz/active-organization'
+import { resolveActiveOrganization } from '~/server/authz/active-organization'
 import type {
   ActiveOrganization,
   AuthzContext,
   PermissionInput,
   ResolveActiveOrganizationOptions,
-} from 'server/authz/authorization.types'
+} from '~/server/authz/authorization.types'
 
 const permissionDenied = (): never => {
   throw new TRPCError({ code: 'FORBIDDEN' })

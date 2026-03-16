@@ -1,6 +1,6 @@
-import type { AuthzContext } from 'server/authz/authorization.types'
-import { requirePermission } from 'server/authz/permission-checker'
 import type { OrganizationRole } from '~/lib/auth-permissions'
+import type { AuthzContext } from '~/server/authz/authorization.types'
+import { requirePermission } from '~/server/authz/permission-checker'
 
 export type OrganizationMemberAction = 'invite' | 'role_update' | 'remove'
 
