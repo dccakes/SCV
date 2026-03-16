@@ -18,11 +18,12 @@
 // biome-ignore lint/style/noRestrictedImports: architectural violation, tracked in ARCHITECTURAL_VIOLATIONS.md
 import type { Prisma, PrismaClient } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
-
 import type {
   SubmitPublicRsvpSchemaInput,
   SubmitRsvpSchemaInput,
 } from '~/server/application/rsvp-submission/rsvp-submission.validator'
+import type { AuthzContext } from '~/server/authz/authorization.types'
+import { requirePermission } from '~/server/authz/permission-checker'
 
 // Re-use types from validator for internal use
 type RsvpResponse = SubmitRsvpSchemaInput['rsvpResponses'][number]
@@ -32,6 +33,20 @@ const TOKEN_EXPIRY_DAYS = 90
 
 export class RsvpSubmissionService {
   constructor(private db: PrismaClient) {}
+
+  async submitManagedRsvp(
+    ctx: AuthzContext,
+    weddingId: string,
+    data: SubmitRsvpSchemaInput
+  ): Promise<{ success: boolean }> {
+    await requirePermission(
+      ctx,
+      { rsvp: ['edit_response'] },
+      { organizationId: ctx.sessionActiveOrganizationId ?? undefined }
+    )
+    await this.ensureSubmissionBelongsToWedding(weddingId, data)
+    return this.submitRsvp(data)
+  }
 
   async submitPublicRsvp(data: SubmitPublicRsvpSchemaInput): Promise<{ success: boolean }> {
     const weddingId = await this.getWeddingIdFromValidToken(data.subUrl, data.token)
@@ -219,7 +234,7 @@ export class RsvpSubmissionService {
 
   private async ensureSubmissionBelongsToWedding(
     weddingId: string,
-    data: SubmitPublicRsvpSchemaInput
+    data: Pick<SubmitRsvpSchemaInput, 'rsvpResponses' | 'answersToQuestions'>
   ): Promise<void> {
     if (data.rsvpResponses.length > 0) {
       const invitationCount = await this.db.invitation.count({
