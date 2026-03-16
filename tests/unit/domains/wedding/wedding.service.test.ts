@@ -66,7 +66,6 @@ describe('WeddingService', () => {
   }
 
   beforeEach(() => {
-    delete process.env.BETTER_AUTH_ORG_ENFORCEMENT
     resetWeddingMocks()
     resetEventMocks()
     resetUserMocks()
@@ -221,32 +220,8 @@ describe('WeddingService', () => {
   })
 
   describe('updateWedding', () => {
-    it('should update wedding when organization enforcement is disabled', async () => {
-      mockFindByIdFn.mockResolvedValue({ ...mockWedding, organizationId: null })
-      mockUpdateFn.mockResolvedValue({ ...mockWedding, groomFirstName: 'Updated' })
-
-      const result = await weddingService.updateWedding({
-        ctx: actorContext,
-        weddingId: 'wedding-123',
-        organizationId: null,
-        data: { groomFirstName: 'Updated' },
-      })
-
-      expect(result.groomFirstName).toBe('Updated')
-      expect(mockUpdateFn).toHaveBeenCalledWith('wedding-123', { groomFirstName: 'Updated' })
-      expect(mockRequirePermission).toHaveBeenCalledWith(
-        actorContext,
-        { wedding: ['update'] },
-        undefined
-      )
-    })
-
     it('should reject updates when wedding is not linked to organization', async () => {
-      process.env.BETTER_AUTH_ORG_ENFORCEMENT = 'true'
-      mockFindByIdFn.mockResolvedValue({
-        ...mockWedding,
-        organizationId: null,
-      })
+      mockFindByIdFn.mockResolvedValue({ ...mockWedding, organizationId: null })
 
       await expect(
         weddingService.updateWedding({
@@ -258,8 +233,6 @@ describe('WeddingService', () => {
       ).rejects.toMatchObject({ code: 'PRECONDITION_FAILED' })
 
       expect(mockUpdateFn).not.toHaveBeenCalled()
-
-      delete process.env.BETTER_AUTH_ORG_ENFORCEMENT
     })
 
     it('should throw NOT_FOUND when wedding does not exist', async () => {

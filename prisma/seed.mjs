@@ -88,6 +88,7 @@ async function seed() {
         groomLastName: fixture.wedding.groomLastName,
         brideFirstName: fixture.wedding.brideFirstName,
         brideLastName: fixture.wedding.brideLastName,
+        organizationId: fixture.wedding.organizationId ?? fixture.organization?.id ?? null,
         enabledAddOns: fixture.wedding.enabledAddOns,
         selfFillToken: fixture.wedding.selfFillToken,
         selfFillTokenGeneratedAt: new Date(fixture.wedding.selfFillTokenGeneratedAt),

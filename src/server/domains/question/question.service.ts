@@ -23,10 +23,6 @@ import type {
 export class QuestionService {
   constructor(private questionRepository: QuestionRepository) {}
 
-  private isOrgEnforcementEnabled(): boolean {
-    return process.env.BETTER_AUTH_ORG_ENFORCEMENT === 'true'
-  }
-
   /**
    * Validate that a question belongs to Event OR Website (not both, not neither)
    */
@@ -65,7 +61,7 @@ export class QuestionService {
   }): Promise<Question> {
     const { ctx, weddingId, organizationId, data } = input
 
-    if (this.isOrgEnforcementEnabled() && !organizationId) {
+    if (!organizationId) {
       throw new TRPCError({
         code: 'PRECONDITION_FAILED',
         message: 'Wedding must be linked to an organization before question updates are allowed',
@@ -163,7 +159,7 @@ export class QuestionService {
   }): Promise<Question> {
     const { ctx, weddingId, organizationId, data } = input
 
-    if (this.isOrgEnforcementEnabled() && !organizationId) {
+    if (!organizationId) {
       throw new TRPCError({
         code: 'PRECONDITION_FAILED',
         message: 'Wedding must be linked to an organization before question updates are allowed',

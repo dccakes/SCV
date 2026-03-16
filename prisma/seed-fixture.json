@@ -19,6 +19,7 @@
   ],
   "wedding": {
     "id": "wedding-seed-shrek-fiona",
+    "organizationId": "org-seed-shrek-fiona",
     "groomFirstName": "Shrek",
     "groomLastName": "Ogre",
     "brideFirstName": "Fiona",
@@ -26,6 +27,11 @@
     "enabledAddOns": ["website", "tasks", "gifts", "vendors"],
     "selfFillToken": "swamp-join-portal",
     "selfFillTokenGeneratedAt": "2026-03-01T10:00:00.000Z"
+  },
+  "organization": {
+    "id": "org-seed-shrek-fiona",
+    "slug": "wedding-seed-shrek-fiona",
+    "name": "Shrek & Fiona"
   },
   "website": {
     "id": "website-seed-shrek-fiona",

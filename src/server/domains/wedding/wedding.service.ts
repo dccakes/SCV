@@ -35,10 +35,6 @@ export class WeddingService {
     private guestTagService: GuestTagService
   ) {}
 
-  private isOrgEnforcementEnabled(): boolean {
-    return process.env.BETTER_AUTH_ORG_ENFORCEMENT === 'true'
-  }
-
   /**
    * Create a new wedding
    *
@@ -112,7 +108,7 @@ export class WeddingService {
       })
     }
 
-    if (this.isOrgEnforcementEnabled() && !wedding.organizationId) {
+    if (!wedding.organizationId) {
       throw new TRPCError({
         code: 'PRECONDITION_FAILED',
         message: 'Wedding must be linked to an organization before updates are allowed',

@@ -54,7 +54,6 @@ describe('QuestionService', () => {
   }
 
   beforeEach(() => {
-    delete process.env.BETTER_AUTH_ORG_ENFORCEMENT
     resetMocks()
     mockRequirePermission.mockReset()
     mockRequirePermission.mockResolvedValue({ organizationId: 'org-1', role: 'admin' })
@@ -251,9 +250,7 @@ describe('QuestionService', () => {
       expect(mockUpsertFn).not.toHaveBeenCalled()
     })
 
-    it('should reject updates without organization link when org enforcement is enabled', async () => {
-      process.env.BETTER_AUTH_ORG_ENFORCEMENT = 'true'
-
+    it('should reject updates without organization link', async () => {
       await expect(
         questionService.upsertQuestion({
           ctx: actorContext,
@@ -267,8 +264,6 @@ describe('QuestionService', () => {
           },
         })
       ).rejects.toMatchObject({ code: 'PRECONDITION_FAILED' })
-
-      delete process.env.BETTER_AUTH_ORG_ENFORCEMENT
     })
 
     it('should reject upsert when event is outside wedding scope', async () => {
@@ -422,9 +417,7 @@ describe('QuestionService', () => {
       expect(mockDeleteFn).not.toHaveBeenCalled()
     })
 
-    it('should reject delete without organization link when org enforcement is enabled', async () => {
-      process.env.BETTER_AUTH_ORG_ENFORCEMENT = 'true'
-
+    it('should reject delete without organization link', async () => {
       await expect(
         questionService.deleteQuestion({
           ctx: actorContext,
@@ -433,8 +426,6 @@ describe('QuestionService', () => {
           data: { questionId: 'question-123' },
         })
       ).rejects.toMatchObject({ code: 'PRECONDITION_FAILED' })
-
-      delete process.env.BETTER_AUTH_ORG_ENFORCEMENT
     })
   })
 
