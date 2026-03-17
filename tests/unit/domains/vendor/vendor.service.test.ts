@@ -266,7 +266,9 @@ describe('VendorService', () => {
 
     it('should still delete vendor when blob cleanup fails', async () => {
       mockBelongsToWeddingFn.mockResolvedValue(true)
-      mockFindAllFileUrlsByVendorIdFn.mockResolvedValue(['https://x.public.blob.vercel-storage.com/f.pdf'])
+      mockFindAllFileUrlsByVendorIdFn.mockResolvedValue([
+        'https://x.public.blob.vercel-storage.com/f.pdf',
+      ])
       mockDel.mockRejectedValue(new Error('Blob service error'))
       mockDeleteFn.mockResolvedValue(mockVendor)
 
@@ -306,6 +308,38 @@ describe('VendorService', () => {
       )
     })
 
+    it('should forward quoteType FLAT_FEE to repository', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockCreateQuoteFn.mockResolvedValue(mockQuote)
+
+      await vendorService.addQuote('vendor-123', 'wedding-123', {
+        vendorId: 'vendor-123',
+        price: 2500,
+        quoteType: 'FLAT_FEE',
+        quoteDate: '2026-02-01',
+      })
+
+      expect(mockCreateQuoteFn).toHaveBeenCalledWith(
+        expect.objectContaining({ quoteType: 'FLAT_FEE' })
+      )
+    })
+
+    it('should forward quoteType PER_GUEST to repository', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockCreateQuoteFn.mockResolvedValue({ ...mockQuote, quoteType: 'PER_GUEST' })
+
+      await vendorService.addQuote('vendor-123', 'wedding-123', {
+        vendorId: 'vendor-123',
+        price: 75,
+        quoteType: 'PER_GUEST',
+        quoteDate: '2026-02-01',
+      })
+
+      expect(mockCreateQuoteFn).toHaveBeenCalledWith(
+        expect.objectContaining({ quoteType: 'PER_GUEST' })
+      )
+    })
+
     it('should throw FORBIDDEN when vendor does not belong to the wedding', async () => {
       mockBelongsToWeddingFn.mockResolvedValue(false)
 
@@ -335,6 +369,23 @@ describe('VendorService', () => {
       })
 
       expect(result.notes).toBe('Updated notes')
+    })
+
+    it('should forward quoteType update to repository', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockQuoteBelongsToVendorFn.mockResolvedValue(true)
+      mockUpdateQuoteFn.mockResolvedValue({ ...mockQuote, quoteType: 'PER_GUEST' })
+
+      await vendorService.updateQuote('quote-123', 'vendor-123', 'wedding-123', {
+        quoteId: 'quote-123',
+        vendorId: 'vendor-123',
+        quoteType: 'PER_GUEST',
+      })
+
+      expect(mockUpdateQuoteFn).toHaveBeenCalledWith(
+        'quote-123',
+        expect.objectContaining({ quoteType: 'PER_GUEST' })
+      )
     })
 
     it('should throw FORBIDDEN when vendor does not belong to wedding', async () => {
@@ -390,7 +441,9 @@ describe('VendorService', () => {
     it('should still delete quote when blob cleanup fails', async () => {
       mockBelongsToWeddingFn.mockResolvedValue(true)
       mockQuoteBelongsToVendorFn.mockResolvedValue(true)
-      mockFindAllFileUrlsByQuoteIdFn.mockResolvedValue(['https://x.public.blob.vercel-storage.com/f.pdf'])
+      mockFindAllFileUrlsByQuoteIdFn.mockResolvedValue([
+        'https://x.public.blob.vercel-storage.com/f.pdf',
+      ])
       mockDel.mockRejectedValue(new Error('Blob error'))
       mockDeleteQuoteFn.mockResolvedValue(mockQuote)
 

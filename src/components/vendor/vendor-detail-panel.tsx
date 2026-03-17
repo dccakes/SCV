@@ -248,8 +248,8 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
 
   if (!vendor || !vendorData) return null
 
-  const formatPrice = (price: unknown) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(price))
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price)
 
   const formatDate = (date: Date | string) =>
     new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })

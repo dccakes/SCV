@@ -307,6 +307,27 @@ describe('createQuoteSchema', () => {
     })
     expect(result.success).toBe(false)
   })
+
+  it('should accept PER_GUEST quoteType', () => {
+    const result = createQuoteSchema.safeParse({
+      vendorId: 'vendor-123',
+      price: 75,
+      quoteType: 'PER_GUEST',
+      quoteDate: '2026-03-01',
+    })
+    expect(result.success).toBe(true)
+    expect(result.data?.quoteType).toBe('PER_GUEST')
+  })
+
+  it('should reject invalid quoteType', () => {
+    const result = createQuoteSchema.safeParse({
+      vendorId: 'vendor-123',
+      price: 75,
+      quoteType: 'HOURLY',
+      quoteDate: '2026-03-01',
+    })
+    expect(result.success).toBe(false)
+  })
 })
 
 describe('updateQuoteSchema', () => {
@@ -325,6 +346,24 @@ describe('updateQuoteSchema', () => {
       price: 2000,
     })
     expect(result.success).toBe(true)
+  })
+
+  it('should accept optional quoteType PER_GUEST', () => {
+    const result = updateQuoteSchema.safeParse({
+      quoteId: 'quote-123',
+      vendorId: 'vendor-123',
+      quoteType: 'PER_GUEST',
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('should reject invalid quoteType on update', () => {
+    const result = updateQuoteSchema.safeParse({
+      quoteId: 'quote-123',
+      vendorId: 'vendor-123',
+      quoteType: 'INVALID',
+    })
+    expect(result.success).toBe(false)
   })
 
   it('should require quoteId', () => {

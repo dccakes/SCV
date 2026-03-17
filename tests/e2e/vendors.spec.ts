@@ -124,7 +124,7 @@ test.describe('Vendor CRUD', () => {
     await expect(page.locator('body')).toContainText('Vendor To Delete')
 
     // Now delete it using the remove button
-    page.on('dialog', (d) => d.accept())
+    page.once('dialog', (d) => d.accept())
     await page.getByLabel(/remove vendor to delete/i).click()
 
     // Vendor should be gone
@@ -186,7 +186,7 @@ test.describe('Quote Management', () => {
     await expect(dialog).toContainText(/\$5,100/)
 
     // Click "Remove" on one of the quotes
-    page.on('dialog', (d) => d.accept())
+    page.once('dialog', (d) => d.accept())
     const removeButtons = dialog.getByRole('button', { name: /^remove$/i })
     await removeButtons.first().click()
 
@@ -348,20 +348,16 @@ test.describe('XSS Injection Prevention', () => {
     // The vendor should be rendered as text, not executed
     await expect(page.locator('body')).toContainText(xssPayload)
 
-    // Verify no script elements were injected into the DOM
-    const scriptCount = await page.evaluate(() => {
-      return document.querySelectorAll('script').length
+    // Verify no injected script tags contain the XSS payload
+    const injectedScripts = await page.evaluate(() => {
+      return Array.from(document.querySelectorAll('script')).filter((s) =>
+        s.textContent?.includes('alert')
+      ).length
     })
-    const initialScriptCount = await page.evaluate(() => {
-      // Next.js injects its own scripts — count only inline ones with alert
-      return document.querySelectorAll('script').length
-    })
-    // The XSS script should NOT execute — check no alert dialog appeared
-    // (Playwright auto-dismisses dialogs, but we can check the page is still functional)
-    await expect(page.locator('body')).toContainText(xssPayload)
+    expect(injectedScripts).toBe(0)
 
     // Clean up — delete the vendor
-    page.on('dialog', (d) => d.accept())
+    page.once('dialog', (d) => d.accept())
     const removeBtn = page.getByLabel(
       new RegExp(`remove.*${xssPayload.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i')
     )
@@ -430,7 +426,7 @@ test.describe('Multi-User Data Isolation', () => {
     // Sign up as a completely new user
     const uniqueEmail = `e2e-isolation-${Date.now()}@test.com`
     await page.goto('/auth/sign-up')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     await page.getByLabel('Name').fill('Isolation Test User')
     await page.getByLabel('Email').fill(uniqueEmail)
@@ -442,7 +438,7 @@ test.describe('Multi-User Data Isolation', () => {
 
     // Navigate to vendors page
     await page.goto('/vendors')
-    await page.waitForLoadState('networkidle')
+    await page.waitForSelector('section')
 
     // This new user should NOT see Shrek's seeded vendors
     const body = page.locator('body')
@@ -626,35 +622,21 @@ test.describe('File Upload Security', () => {
 })
 
 test.describe('Error Response Security', () => {
-  test('should not leak internal error details in API responses', async ({ page }) => {
+  test('should not leak internal error details in tRPC error responses', async ({ page }) => {
     await page.goto('/vendors')
 
-    // Try to access a vendor that doesn't exist via the detail panel URL
-    // by intercepting tRPC responses for error shape
-    const errorResponses: string[] = []
-
-    page.on('response', async (response) => {
-      if (response.url().includes('trpc') && response.status() >= 400) {
-        try {
-          const body = await response.text()
-          errorResponses.push(body)
-        } catch {
-          // Ignore response read errors
-        }
-      }
+    // Directly call a tRPC endpoint with an invalid vendor ID to trigger a NOT_FOUND error
+    const response = await page.request.post('/api/trpc/vendor.getById', {
+      data: JSON.stringify({ json: { vendorId: 'non-existent-id-12345' } }),
+      headers: { 'Content-Type': 'application/json' },
     })
 
-    // Trigger an error by trying to interact with a non-existent vendor
-    // The tRPC error handler should return generic messages
-    await page.goto('/vendors')
-    await page.waitForLoadState('networkidle')
+    const body = await response.text()
 
-    // Verify any captured error responses don't leak internals
-    for (const errorBody of errorResponses) {
-      expect(errorBody).not.toMatch(/prisma/i)
-      expect(errorBody).not.toMatch(/database/i)
-      expect(errorBody).not.toMatch(/stack.*at\s/i)
-      expect(errorBody).not.toMatch(/SQL/i)
-    }
+    // The error response should NOT leak internal implementation details
+    expect(body).not.toMatch(/prisma/i)
+    expect(body).not.toMatch(/database/i)
+    expect(body).not.toMatch(/stack.*at\s/i)
+    expect(body).not.toMatch(/SQL/i)
   })
 })
