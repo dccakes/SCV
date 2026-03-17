@@ -32,12 +32,20 @@ import {
 } from '~/lib/upload-config'
 import { cn } from '~/lib/utils'
 import type { VendorQuote, VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
+import { QuoteType } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
 
 type VendorDetailPanelProps = {
   vendor: VendorWithQuotes | null
   onClose: () => void
 }
+
+const priceFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+})
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
@@ -248,11 +256,8 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
 
   if (!vendor || !vendorData) return null
 
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price)
-
-  const formatDate = (date: Date | string) =>
-    new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+  const formatPrice = (price: number) => priceFormatter.format(price)
+  const formatDate = (date: Date | string) => dateFormatter.format(new Date(date))
 
   return (
     <Dialog open={!!vendor} onOpenChange={(open) => !open && onClose()}>
@@ -456,7 +461,9 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                                         {formatPrice(quote.price)}
                                       </p>
                                       <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-wider'>
-                                        {quote.quoteType === 'PER_GUEST' ? '/ guest' : 'flat fee'}
+                                        {quote.quoteType === QuoteType.PER_GUEST
+                                          ? '/ guest'
+                                          : 'flat fee'}
                                       </span>
                                     </div>
                                     <p className='font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>

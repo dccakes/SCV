@@ -546,8 +546,8 @@ test.describe('File Upload Security', () => {
 
     const fileInput = dialog.locator('input[type="file"]')
 
-    // Create a buffer just over 8MB
-    const oversizedBuffer = Buffer.alloc(8 * 1024 * 1024 + 1, 0)
+    // Create a buffer just over 8MB (allocUnsafe — contents irrelevant, only size matters)
+    const oversizedBuffer = Buffer.allocUnsafe(8 * 1024 * 1024 + 1)
 
     await fileInput.setInputFiles({
       name: 'huge-file.pdf',
