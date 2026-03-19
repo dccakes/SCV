@@ -232,8 +232,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
 
   const updateStatus = api.vendor.updateStatus.useMutation({
     onSuccess: async () => {
-      await refetch()
-      await utils.vendor.getAll.invalidate()
+      await Promise.all([refetch(), utils.vendor.getAll.invalidate()])
     },
     onError: () => toast.error('Failed to update status'),
   })
@@ -299,8 +298,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                   mode='edit'
                   vendor={vendorData}
                   onSuccess={async () => {
-                    await refetch()
-                    await utils.vendor.getAll.invalidate()
+                    await Promise.all([refetch(), utils.vendor.getAll.invalidate()])
                     setShowEditForm(false)
                   }}
                   onCancel={() => setShowEditForm(false)}
