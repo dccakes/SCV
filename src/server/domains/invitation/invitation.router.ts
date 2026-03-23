@@ -6,25 +6,13 @@
  */
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
-import type { AuthzContext } from '~/server/authz/authorization.types'
+import { toAuthzContext } from '~/server/authz/authorization.types'
 import { invitationService } from '~/server/domains/invitation'
 import {
   createInvitationSchema,
   updateInvitationSchema,
 } from '~/server/domains/invitation/invitation.validator'
 import { weddingService } from '~/server/domains/wedding'
-
-const toAuthzContext = (ctx: {
-  auth: {
-    userId: string
-    sessionActiveOrganizationId?: string | null
-  }
-  headers: Headers
-}): AuthzContext => ({
-  userId: ctx.auth.userId,
-  headers: ctx.headers,
-  sessionActiveOrganizationId: ctx.auth.sessionActiveOrganizationId,
-})
 
 export const invitationRouter = createTRPCRouter({
   /**

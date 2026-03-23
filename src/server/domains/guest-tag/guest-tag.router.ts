@@ -8,7 +8,7 @@
 import { z } from 'zod'
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
-import type { AuthzContext } from '~/server/authz/authorization.types'
+import { toAuthzContext } from '~/server/authz/authorization.types'
 import { GuestTagRepository } from '~/server/domains/guest-tag/guest-tag.repository'
 import { GuestTagService } from '~/server/domains/guest-tag/guest-tag.service'
 import {
@@ -21,18 +21,6 @@ import { db } from '~/server/infrastructure/database/client'
 
 const guestTagRepository = new GuestTagRepository(db)
 const guestTagService = new GuestTagService(guestTagRepository)
-
-const toAuthzContext = (ctx: {
-  auth: {
-    userId: string
-    sessionActiveOrganizationId: string | null
-  }
-  headers: Headers
-}): AuthzContext => ({
-  userId: ctx.auth.userId,
-  headers: ctx.headers,
-  sessionActiveOrganizationId: ctx.auth.sessionActiveOrganizationId,
-})
 
 export const guestTagRouter = createTRPCRouter({
   /**

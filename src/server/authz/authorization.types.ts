@@ -6,6 +6,18 @@ export type AuthzContext = {
   sessionActiveOrganizationId?: string | null
 }
 
+export const toAuthzContext = (ctx: {
+  auth: {
+    userId: string
+    sessionActiveOrganizationId?: string | null
+  }
+  headers: Headers
+}): AuthzContext => ({
+  userId: ctx.auth.userId,
+  headers: ctx.headers,
+  sessionActiveOrganizationId: ctx.auth.sessionActiveOrganizationId,
+})
+
 export type ResolveActiveOrganizationOptions = {
   organizationId?: string | null
 }

@@ -12,7 +12,7 @@ import { TRPCError } from '@trpc/server'
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { householdManagementService } from '~/server/application/household-management'
-import type { AuthzContext } from '~/server/authz/authorization.types'
+import { toAuthzContext } from '~/server/authz/authorization.types'
 import { eventService } from '~/server/domains/event'
 import {
   bulkCreateHouseholdsSchema,
@@ -22,18 +22,6 @@ import {
   updateHouseholdSchema,
 } from '~/server/domains/household/household.validator'
 import { weddingService } from '~/server/domains/wedding'
-
-const toAuthzContext = (ctx: {
-  auth: {
-    userId: string
-    sessionActiveOrganizationId: string | null
-  }
-  headers: Headers
-}): AuthzContext => ({
-  userId: ctx.auth.userId,
-  headers: ctx.headers,
-  sessionActiveOrganizationId: ctx.auth.sessionActiveOrganizationId,
-})
 
 export const householdRouter = createTRPCRouter({
   /**

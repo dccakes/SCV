@@ -7,7 +7,7 @@
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
 import { rsvpSubmissionService, submitPublicRsvpSchema } from '~/server/application/rsvp-submission'
-import type { AuthzContext } from '~/server/authz/authorization.types'
+import { type AuthzContext, toAuthzContext } from '~/server/authz/authorization.types'
 import { websiteService } from '~/server/domains/website'
 import {
   createWebsiteSchema,
@@ -21,18 +21,12 @@ import {
 } from '~/server/domains/website/website.validator'
 import { weddingService } from '~/server/domains/wedding'
 
+// Overrides sessionActiveOrganizationId with the wedding's org to ensure correct scope
 const toOrganizationScopedAuthzContext = (
-  ctx: {
-    auth: {
-      userId: string
-      sessionActiveOrganizationId: string | null
-    }
-    headers: Headers
-  },
+  ctx: Parameters<typeof toAuthzContext>[0],
   organizationId: string
 ): AuthzContext => ({
-  userId: ctx.auth.userId,
-  headers: ctx.headers,
+  ...toAuthzContext(ctx),
   sessionActiveOrganizationId: organizationId,
 })
 
@@ -153,8 +147,4 @@ export const websiteRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
       return rsvpSubmissionService.submitPublicRsvp(input)
     }),
-
-  submitRsvpForm: publicProcedure.input(submitPublicRsvpSchema).mutation(async ({ input }) => {
-    return rsvpSubmissionService.submitPublicRsvp(input)
-  }),
 })
