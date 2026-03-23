@@ -31,14 +31,10 @@ export class InvitationService {
   ): Promise<Invitation> {
     await this.requireInvitationPermission(ctx, 'create')
 
-    const guestInWedding = await this.invitationRepository.guestBelongsToWedding(
-      data.guestId,
-      weddingId
-    )
-    const eventInWedding = await this.invitationRepository.eventBelongsToWedding(
-      data.eventId,
-      weddingId
-    )
+    const [guestInWedding, eventInWedding] = await Promise.all([
+      this.invitationRepository.guestBelongsToWedding(data.guestId, weddingId),
+      this.invitationRepository.eventBelongsToWedding(data.eventId, weddingId),
+    ])
 
     if (!guestInWedding || !eventInWedding) {
       throw new TRPCError({
