@@ -9,7 +9,7 @@ export type AuthzContext = {
 export const toAuthzContext = (ctx: {
   auth: {
     userId: string
-    sessionActiveOrganizationId?: string | null
+    sessionActiveOrganizationId: string | null
   }
   headers: Headers
 }): AuthzContext => ({

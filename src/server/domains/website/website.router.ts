@@ -42,7 +42,7 @@ export const websiteRouter = createTRPCRouter({
     )
 
     return websiteService.enableWebsite(
-      toOrganizationScopedAuthzContext(ctx, wedding.organizationId),
+      toOrganizationScopedAuthzContext(ctx, wedding.organizationId!),
       wedding.id,
       input
     )
@@ -58,7 +58,7 @@ export const websiteRouter = createTRPCRouter({
     )
 
     return websiteService.updateWebsite(
-      toOrganizationScopedAuthzContext(ctx, wedding.organizationId),
+      toOrganizationScopedAuthzContext(ctx, wedding.organizationId!),
       wedding.id,
       input
     )
@@ -76,7 +76,7 @@ export const websiteRouter = createTRPCRouter({
       )
 
       return websiteService.updateRsvpEnabled(
-        toOrganizationScopedAuthzContext(ctx, wedding.organizationId),
+        toOrganizationScopedAuthzContext(ctx, wedding.organizationId!),
         wedding.id,
         input.websiteId,
         input.isRsvpEnabled
@@ -95,7 +95,7 @@ export const websiteRouter = createTRPCRouter({
       )
 
       return websiteService.updateCoverPhoto(
-        toOrganizationScopedAuthzContext(ctx, wedding.organizationId),
+        toOrganizationScopedAuthzContext(ctx, wedding.organizationId!),
         wedding.id,
         input.coverPhotoUrl
       )
