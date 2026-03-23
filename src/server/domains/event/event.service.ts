@@ -20,10 +20,7 @@ import { TRPCError } from '@trpc/server'
 
 import { RSVP_STATUS } from '~/lib/constants/rsvp'
 import type { ActiveOrganization, AuthzContext } from '~/server/authz/authorization.types'
-import {
-  assertEventInUserScope,
-  assertEventInWeddingScope,
-} from '~/server/authz/organization-scope'
+import { assertEventInWeddingScope } from '~/server/authz/organization-scope'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { EventRepository } from '~/server/domains/event/event.repository'
 import type { Event, EventWithStats } from '~/server/domains/event/event.types'
@@ -204,15 +201,6 @@ export class EventService {
       weddingId,
     })
 
-    // Verify event belongs to wedding (auth check outside transaction)
-    const belongsToWedding = await this.eventRepository.belongsToWedding(data.eventId, weddingId)
-    if (!belongsToWedding) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to update this event',
-      })
-    }
-
     return this.db.$transaction(async (tx) => {
       // Check if allowTagAlongs is being toggled on
       const currentEvent = await tx.event.findUnique({ where: { id: data.eventId } })
@@ -268,13 +256,14 @@ export class EventService {
   async updateCollectRsvp(
     ctx: AuthzContext,
     eventId: string,
+    weddingId: string,
     collectRsvp: boolean
   ): Promise<Event> {
     await this.requireEventPermission(ctx, 'rsvp_policy_update')
-    await assertEventInUserScope({
+    await assertEventInWeddingScope({
       eventId,
       eventRepository: this.eventRepository,
-      userId: ctx.userId,
+      weddingId,
     })
 
     return this.eventRepository.updateCollectRsvp(eventId, collectRsvp)
@@ -292,15 +281,6 @@ export class EventService {
       eventRepository: this.eventRepository,
       weddingId,
     })
-
-    // Verify event belongs to wedding
-    const belongsToWedding = await this.eventRepository.belongsToWedding(eventId, weddingId)
-    if (!belongsToWedding) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to delete this event',
-      })
-    }
 
     const deletedEvent = await this.eventRepository.delete(eventId)
     return deletedEvent.id

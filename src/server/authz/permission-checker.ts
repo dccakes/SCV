@@ -31,7 +31,13 @@ const getPermissionCheckResult = (value: unknown): boolean => {
     }
   }
 
-  return false
+  // Unknown response shape — fail loudly so a Better Auth version mismatch is
+  // immediately visible rather than silently denying all permissions.
+  throw new TRPCError({
+    code: 'PRECONDITION_FAILED',
+    message:
+      'Unexpected response shape from permission check — possible Better Auth version mismatch',
+  })
 }
 
 export const requirePermission = async (

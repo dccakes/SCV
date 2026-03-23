@@ -163,6 +163,22 @@ export class InvitationRepository {
     return invitation !== null
   }
 
+  async findOrganizationIdByInvitationId(invitation: {
+    guestId: number
+    eventId: string
+  }): Promise<string | null> {
+    const result = await this.db.invitation.findFirst({
+      where: {
+        guestId: invitation.guestId,
+        eventId: invitation.eventId,
+      },
+      select: {
+        wedding: { select: { organizationId: true } },
+      },
+    })
+    return result?.wedding?.organizationId ?? null
+  }
+
   async belongsToWedding(guestId: number, eventId: string, weddingId: string): Promise<boolean> {
     const invitation = await this.db.invitation.findFirst({
       where: {

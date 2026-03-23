@@ -7,8 +7,8 @@
 
 import { TRPCError } from '@trpc/server'
 
-import type { AuthzContext } from '~/server/authz/authorization.types'
-import { assertInvitationInUserScope } from '~/server/authz/organization-scope'
+import type { ActiveOrganization, AuthzContext } from '~/server/authz/authorization.types'
+import { assertInvitationInActiveOrganization } from '~/server/authz/organization-scope'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
 import type {
@@ -59,14 +59,14 @@ export class InvitationService {
    * Update an invitation RSVP
    */
   async updateInvitation(ctx: AuthzContext, data: UpdateInvitationInput): Promise<Invitation> {
-    await this.requireRsvpPermission(ctx, 'edit_response')
-    await assertInvitationInUserScope({
+    const activeOrg = await this.requireRsvpPermission(ctx, 'edit_response')
+    await assertInvitationInActiveOrganization({
+      activeOrganization: activeOrg,
       invitation: {
         eventId: data.eventId,
         guestId: data.guestId,
       },
       invitationRepository: this.invitationRepository,
-      userId: ctx.userId,
     })
 
     return this.invitationRepository.update(data.guestId, data.eventId, {
@@ -150,8 +150,11 @@ export class InvitationService {
     })
   }
 
-  private async requireRsvpPermission(ctx: AuthzContext, action: 'edit_response'): Promise<void> {
-    await requirePermission(ctx, {
+  private async requireRsvpPermission(
+    ctx: AuthzContext,
+    action: 'edit_response'
+  ): Promise<ActiveOrganization> {
+    return requirePermission(ctx, {
       rsvp: [action],
     })
   }

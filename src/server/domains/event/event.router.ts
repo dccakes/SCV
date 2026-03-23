@@ -70,7 +70,16 @@ export const eventRouter = createTRPCRouter({
   updateCollectRsvp: protectedProcedure
     .input(updateCollectRsvpSchema)
     .mutation(async ({ ctx, input }) => {
-      return eventService.updateCollectRsvp(toAuthzContext(ctx), input.eventId, input.collectRsvp)
+      const weddingId = await weddingService.getWeddingIdByUserId(
+        ctx.auth.userId,
+        ctx.auth.sessionActiveOrganizationId
+      )
+      return eventService.updateCollectRsvp(
+        toAuthzContext(ctx),
+        input.eventId,
+        weddingId,
+        input.collectRsvp
+      )
     }),
 
   /**

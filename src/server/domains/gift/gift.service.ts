@@ -44,6 +44,9 @@ export class GiftService {
 
   /**
    * Upsert a gift (create if not exists, update if exists)
+   *
+   * Internal system method — called only from already-authorized application services
+   * (e.g. HouseholdManagementService). Do NOT call from routers directly.
    */
   async upsertGift(data: UpsertGiftInput): Promise<Gift> {
     return this.giftRepository.upsert({
@@ -77,6 +80,9 @@ export class GiftService {
 
   /**
    * Mark a thank you as sent
+   *
+   * Internal system method — called only from already-authorized application services.
+   * Do NOT call from routers directly.
    */
   async markThankYouSent(householdId: string, eventId: string): Promise<Gift> {
     return this.giftRepository.update(householdId, eventId, {
@@ -86,6 +92,9 @@ export class GiftService {
 
   /**
    * Create gifts for a household across multiple events
+   *
+   * Internal system method — called only from already-authorized application services.
+   * Do NOT call from routers directly.
    */
   async createForHouseholdAndEvents(
     householdId: string,

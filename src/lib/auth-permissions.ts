@@ -15,6 +15,9 @@ export const authzStatement = {
 
 export const ac = createAccessControl(authzStatement)
 
+// owner and admin intentionally have identical permissions for now.
+// owner-exclusive actions (e.g. wedding:delete, organization:transfer) will be
+// added to owner only when those features are implemented.
 const owner = ac.newRole({
   organization_member: ['read', 'invite', 'role_update', 'remove'],
   invitation: ['read', 'create', 'send', 'resend', 'cancel'],

@@ -443,9 +443,15 @@ describe('EventService', () => {
   describe('updateCollectRsvp', () => {
     it('should update collectRsvp status', async () => {
       const updatedEvent = { ...mockEvent, collectRsvp: false }
+      mockBelongsToWeddingFn.mockResolvedValue(true)
       mockUpdateCollectRsvpFn.mockResolvedValue(updatedEvent)
 
-      const result = await eventService.updateCollectRsvp(actorContext, 'event-123', false)
+      const result = await eventService.updateCollectRsvp(
+        actorContext,
+        'event-123',
+        'wedding-123',
+        false
+      )
 
       expect(result.collectRsvp).toBe(false)
       expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, {
@@ -458,17 +464,17 @@ describe('EventService', () => {
       mockRequirePermission.mockRejectedValue(new TRPCError({ code: 'FORBIDDEN' }))
 
       await expect(
-        eventService.updateCollectRsvp(actorContext, 'event-123', false)
+        eventService.updateCollectRsvp(actorContext, 'event-123', 'wedding-123', false)
       ).rejects.toMatchObject({ code: 'FORBIDDEN' })
 
       expect(mockUpdateCollectRsvpFn).not.toHaveBeenCalled()
     })
 
-    it('should reject update collect RSVP when event is outside actor scope', async () => {
-      mockBelongsToUserFn.mockResolvedValue(false)
+    it('should reject update collect RSVP when event is outside wedding scope', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(false)
 
       await expect(
-        eventService.updateCollectRsvp(actorContext, 'event-123', false)
+        eventService.updateCollectRsvp(actorContext, 'event-123', 'wedding-123', false)
       ).rejects.toMatchObject({ code: 'FORBIDDEN' })
 
       expect(mockUpdateCollectRsvpFn).not.toHaveBeenCalled()

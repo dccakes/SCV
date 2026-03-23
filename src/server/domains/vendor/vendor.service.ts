@@ -32,6 +32,9 @@ export class VendorService {
 
   /**
    * Get all vendors for a wedding, optionally filtered by category
+   *
+   * Internal system method — no AuthzContext, no permission check.
+   * Use getVendorsByUserId for user-facing calls. Do NOT call from routers directly.
    */
   async getVendors(weddingId: string, category?: VendorCategory): Promise<VendorWithQuotes[]> {
     return this.vendorRepository.findAllByWeddingId(weddingId, category)
