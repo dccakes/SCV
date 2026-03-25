@@ -20,6 +20,7 @@ import {
   DialogPortal,
   DialogTitle,
 } from '~/components/ui/dialog'
+import { PdfViewerDrawer } from '~/components/vendor/pdf-viewer-drawer'
 import { QuoteForm } from '~/components/vendor/quote-form'
 import { VendorForm } from '~/components/vendor/vendor-form'
 import { VendorStatusSelect } from '~/components/vendor/vendor-status-select'
@@ -223,6 +224,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
   const [showEditForm, setShowEditForm] = useState(false)
   const [editingQuoteId, setEditingQuoteId] = useState<string | null>(null)
   const [attachingQuoteId, setAttachingQuoteId] = useState<string | null>(null)
+  const [viewingPdf, setViewingPdf] = useState<{ name: string; url: string } | null>(null)
   const utils = api.useUtils()
 
   const { data: vendorData, refetch } = api.vendor.getById.useQuery(
@@ -259,6 +261,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
   const formatDate = (date: Date | string) => dateFormatter.format(new Date(date))
 
   return (
+    <>
     <Dialog open={!!vendor} onOpenChange={(open) => !open && onClose()}>
       <DialogPortal>
         <DialogOverlay className={SIDE_PANE_OVERLAY_CLASS} />
@@ -506,41 +509,56 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                                 {/* Attached files */}
                                 {quote.files.length > 0 && (
                                   <div className='mt-2.5 space-y-1'>
-                                    {quote.files.map((file) => (
-                                      <div
-                                        key={file.id}
-                                        className='flex items-center gap-2 rounded bg-muted px-2.5 py-1.5'
-                                      >
-                                        <a
-                                          href={file.url}
-                                          target='_blank'
-                                          rel='noreferrer'
-                                          className='min-w-0 flex-1 truncate font-sans text-[0.85rem] text-primary hover:underline'
+                                    {quote.files.map((file) => {
+                                      const isPdf = file.name.toLowerCase().endsWith('.pdf')
+                                      return (
+                                        <div
+                                          key={file.id}
+                                          className='flex items-center gap-2 rounded bg-muted px-2.5 py-1.5'
                                         >
-                                          {file.name}
-                                        </a>
-                                        <span className='shrink-0 font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
-                                          {formatFileSize(file.size)}
-                                        </span>
-                                        <button
-                                          type='button'
-                                          aria-label={`Remove ${file.name}`}
-                                          onClick={() => {
-                                            if (window.confirm(`Remove "${file.name}"?`)) {
-                                              deleteFile.mutate({
-                                                fileId: file.id,
-                                                quoteId: quote.id,
-                                                vendorId: vendorData.id,
-                                              })
-                                            }
-                                          }}
-                                          disabled={deleteFile.isPending}
-                                          className='shrink-0 text-muted-foreground hover:text-destructive'
-                                        >
-                                          ✕
-                                        </button>
-                                      </div>
-                                    ))}
+                                          {isPdf ? (
+                                            <button
+                                              type='button'
+                                              onClick={() =>
+                                                setViewingPdf({ name: file.name, url: file.url })
+                                              }
+                                              className='min-w-0 flex-1 truncate text-left font-sans text-[0.85rem] text-primary hover:underline'
+                                            >
+                                              {file.name}
+                                            </button>
+                                          ) : (
+                                            <a
+                                              href={file.url}
+                                              target='_blank'
+                                              rel='noreferrer'
+                                              className='min-w-0 flex-1 truncate font-sans text-[0.85rem] text-primary hover:underline'
+                                            >
+                                              {file.name}
+                                            </a>
+                                          )}
+                                          <span className='shrink-0 font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
+                                            {formatFileSize(file.size)}
+                                          </span>
+                                          <button
+                                            type='button'
+                                            aria-label={`Remove ${file.name}`}
+                                            onClick={() => {
+                                              if (window.confirm(`Remove "${file.name}"?`)) {
+                                                deleteFile.mutate({
+                                                  fileId: file.id,
+                                                  quoteId: quote.id,
+                                                  vendorId: vendorData.id,
+                                                })
+                                              }
+                                            }}
+                                            disabled={deleteFile.isPending}
+                                            className='shrink-0 text-muted-foreground hover:text-destructive'
+                                          >
+                                            ✕
+                                          </button>
+                                        </div>
+                                      )
+                                    })}
                                   </div>
                                 )}
 
@@ -587,5 +605,8 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
         </DialogPrimitive.Content>
       </DialogPortal>
     </Dialog>
+
+    <PdfViewerDrawer file={viewingPdf} onClose={() => setViewingPdf(null)} />
+    </>
   )
 }
