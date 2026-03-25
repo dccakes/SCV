@@ -14,7 +14,13 @@ import {
   SelectValue,
 } from '~/components/ui/select'
 import { Textarea } from '~/components/ui/textarea'
-import { useUploadThing } from '~/lib/uploadthing'
+import { uploadFiles } from '~/lib/blob'
+import {
+  ACCEPTED_TYPES_LABEL,
+  DROPZONE_ACCEPT,
+  MAX_FILE_SIZE,
+  MAX_FILES_PER_QUOTE,
+} from '~/lib/upload-config'
 import { cn } from '~/lib/utils'
 import type { VendorQuote } from '~/server/domains/vendor/vendor.types'
 import { QuoteType } from '~/server/domains/vendor/vendor.types'
@@ -63,17 +69,13 @@ export function QuoteForm({
   const updateQuote = api.vendor.updateQuote.useMutation()
   const saveFiles = api.vendor.saveQuoteFiles.useMutation()
 
-  const { startUpload, isUploading } = useUploadThing('vendorQuoteFile', {
-    onUploadError: () => {
-      toast.error('Failed to upload files')
-    },
-  })
+  const [isUploading, setIsUploading] = useState(false)
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setSelectedFiles((prev) => {
       const combined = [...prev, ...acceptedFiles]
-      if (combined.length > 10) {
-        toast.error('Maximum 10 files per quote')
+      if (combined.length > MAX_FILES_PER_QUOTE) {
+        toast.error(`Maximum ${MAX_FILES_PER_QUOTE} files per quote`)
         return prev
       }
       return combined
@@ -82,19 +84,17 @@ export function QuoteForm({
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    maxSize: 8 * 1024 * 1024,
-    accept: {
-      'application/pdf': ['.pdf'],
-      'image/*': ['.jpg', '.jpeg', '.png', '.webp', '.gif'],
-      'text/plain': ['.txt'],
-      'application/msword': ['.doc'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-      'application/vnd.ms-excel': ['.xls'],
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-    },
+    maxSize: MAX_FILE_SIZE,
+    accept: DROPZONE_ACCEPT,
     onDropRejected: (rejections) => {
-      const msg = rejections[0]?.errors[0]?.message ?? 'File not accepted'
-      toast.error(msg)
+      const errors = rejections[0]?.errors
+      if (errors?.some((e) => e.code === 'file-too-large')) {
+        toast.error('File exceeds 8 MB limit')
+      } else if (errors?.some((e) => e.code === 'file-invalid-type')) {
+        toast.error(`Unsupported file type. Accepted: ${ACCEPTED_TYPES_LABEL}`)
+      } else {
+        toast.error(errors?.[0]?.message ?? 'File not accepted')
+      }
     },
   })
 
@@ -133,18 +133,23 @@ export function QuoteForm({
         })
 
         if (selectedFiles.length > 0) {
-          const uploadResults = await startUpload(selectedFiles)
-          if (uploadResults && uploadResults.length > 0) {
-            await saveFiles.mutateAsync({
-              quoteId: newQuote.id,
-              vendorId,
-              files: uploadResults.map((r) => ({
-                name: r.name,
-                url: r.ufsUrl,
-                key: r.key,
-                size: r.size,
-              })),
-            })
+          setIsUploading(true)
+          try {
+            const uploadResults = await uploadFiles(selectedFiles)
+            if (uploadResults.length > 0) {
+              await saveFiles.mutateAsync({
+                quoteId: newQuote.id,
+                vendorId,
+                files: uploadResults.map((r) => ({
+                  name: r.name,
+                  url: r.url,
+                  key: r.pathname,
+                  size: r.size,
+                })),
+              })
+            }
+          } finally {
+            setIsUploading(false)
           }
         }
 
@@ -251,9 +256,14 @@ export function QuoteForm({
                 Drop files here
               </p>
             ) : (
-              <p className='font-mono text-[0.62rem] text-muted-foreground uppercase tracking-wider'>
-                Drag & drop files, or click to browse
-              </p>
+              <div className='space-y-0.5'>
+                <p className='font-mono text-[0.62rem] text-muted-foreground uppercase tracking-wider'>
+                  Drag & drop files, or click to browse
+                </p>
+                <p className='font-mono text-[0.5rem] text-muted-foreground/70 tracking-wider'>
+                  {ACCEPTED_TYPES_LABEL} — max 8 MB each
+                </p>
+              </div>
             )}
           </div>
 
@@ -267,6 +277,7 @@ export function QuoteForm({
                   <span className='truncate'>{file.name}</span>
                   <button
                     type='button'
+                    aria-label={`Remove ${file.name}`}
                     onClick={() => removeFile(i)}
                     className='ml-2 shrink-0 text-muted-foreground hover:text-destructive'
                   >

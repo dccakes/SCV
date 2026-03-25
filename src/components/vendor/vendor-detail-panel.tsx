@@ -23,15 +23,29 @@ import {
 import { QuoteForm } from '~/components/vendor/quote-form'
 import { VendorForm } from '~/components/vendor/vendor-form'
 import { VendorStatusSelect } from '~/components/vendor/vendor-status-select'
-import { useUploadThing } from '~/lib/uploadthing'
+import { uploadFiles } from '~/lib/blob'
+import {
+  ACCEPTED_TYPES_LABEL,
+  DROPZONE_ACCEPT,
+  MAX_FILE_SIZE,
+  MAX_FILES_PER_QUOTE,
+} from '~/lib/upload-config'
 import { cn } from '~/lib/utils'
 import type { VendorQuote, VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
+import { QuoteType } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
 
 type VendorDetailPanelProps = {
   vendor: VendorWithQuotes | null
   onClose: () => void
 }
+
+const priceFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+})
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
@@ -81,17 +95,13 @@ function QuoteFileUploader({
 
   const saveFiles = api.vendor.saveQuoteFiles.useMutation()
 
-  const { startUpload, isUploading } = useUploadThing('vendorQuoteFile', {
-    onUploadError: () => {
-      toast.error('Failed to upload files')
-    },
-  })
+  const [isUploading, setIsUploading] = useState(false)
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setSelectedFiles((prev) => {
       const combined = [...prev, ...acceptedFiles]
-      if (combined.length > 10) {
-        toast.error('Maximum 10 files per upload')
+      if (combined.length > MAX_FILES_PER_QUOTE) {
+        toast.error(`Maximum ${MAX_FILES_PER_QUOTE} files per upload`)
         return prev
       }
       return combined
@@ -100,19 +110,17 @@ function QuoteFileUploader({
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    maxSize: 8 * 1024 * 1024,
-    accept: {
-      'application/pdf': ['.pdf'],
-      'image/*': ['.jpg', '.jpeg', '.png', '.webp', '.gif'],
-      'text/plain': ['.txt'],
-      'application/msword': ['.doc'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-      'application/vnd.ms-excel': ['.xls'],
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-    },
+    maxSize: MAX_FILE_SIZE,
+    accept: DROPZONE_ACCEPT,
     onDropRejected: (rejections) => {
-      const msg = rejections[0]?.errors[0]?.message ?? 'File not accepted'
-      toast.error(msg)
+      const errors = rejections[0]?.errors
+      if (errors?.some((e) => e.code === 'file-too-large')) {
+        toast.error('File exceeds 8 MB limit')
+      } else if (errors?.some((e) => e.code === 'file-invalid-type')) {
+        toast.error(`Unsupported file type. Accepted: ${ACCEPTED_TYPES_LABEL}`)
+      } else {
+        toast.error(errors?.[0]?.message ?? 'File not accepted')
+      }
     },
   })
 
@@ -123,16 +131,17 @@ function QuoteFileUploader({
   const handleUpload = async () => {
     if (selectedFiles.length === 0) return
     setIsSubmitting(true)
+    setIsUploading(true)
     try {
-      const uploadResults = await startUpload(selectedFiles)
-      if (uploadResults && uploadResults.length > 0) {
+      const uploadResults = await uploadFiles(selectedFiles)
+      if (uploadResults.length > 0) {
         await saveFiles.mutateAsync({
           quoteId,
           vendorId,
           files: uploadResults.map((r) => ({
             name: r.name,
-            url: r.ufsUrl,
-            key: r.key,
+            url: r.url,
+            key: r.pathname,
             size: r.size,
           })),
         })
@@ -144,6 +153,7 @@ function QuoteFileUploader({
       toast.error('Failed to upload files')
     } finally {
       setIsSubmitting(false)
+      setIsUploading(false)
     }
   }
 
@@ -161,9 +171,20 @@ function QuoteFileUploader({
         )}
       >
         <input {...getInputProps()} />
-        <p className='font-mono text-[0.62rem] text-muted-foreground uppercase tracking-wider'>
-          {isDragActive ? 'Drop files here' : 'Drag & drop or click to attach'}
-        </p>
+        {isDragActive ? (
+          <p className='font-mono text-[0.62rem] text-primary uppercase tracking-wider'>
+            Drop files here
+          </p>
+        ) : (
+          <div className='space-y-0.5'>
+            <p className='font-mono text-[0.62rem] text-muted-foreground uppercase tracking-wider'>
+              Drag & drop or click to attach
+            </p>
+            <p className='font-mono text-[0.5rem] text-muted-foreground/70 tracking-wider'>
+              {ACCEPTED_TYPES_LABEL} — max 8 MB each
+            </p>
+          </div>
+        )}
       </div>
 
       {selectedFiles.length > 0 && (
@@ -177,6 +198,7 @@ function QuoteFileUploader({
                 <span className='truncate'>{file.name}</span>
                 <button
                   type='button'
+                  aria-label={`Remove ${file.name}`}
                   onClick={() => removeFile(i)}
                   className='ml-2 shrink-0 text-muted-foreground hover:text-destructive'
                 >
@@ -210,8 +232,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
 
   const updateStatus = api.vendor.updateStatus.useMutation({
     onSuccess: async () => {
-      await refetch()
-      await utils.vendor.getAll.invalidate()
+      await Promise.all([refetch(), utils.vendor.getAll.invalidate()])
     },
     onError: () => toast.error('Failed to update status'),
   })
@@ -234,11 +255,8 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
 
   if (!vendor || !vendorData) return null
 
-  const formatPrice = (price: unknown) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(price))
-
-  const formatDate = (date: Date | string) =>
-    new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+  const formatPrice = (price: number) => priceFormatter.format(price)
+  const formatDate = (date: Date | string) => dateFormatter.format(new Date(date))
 
   return (
     <Dialog open={!!vendor} onOpenChange={(open) => !open && onClose()}>
@@ -280,8 +298,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                   mode='edit'
                   vendor={vendorData}
                   onSuccess={async () => {
-                    await refetch()
-                    await utils.vendor.getAll.invalidate()
+                    await Promise.all([refetch(), utils.vendor.getAll.invalidate()])
                     setShowEditForm(false)
                   }}
                   onCancel={() => setShowEditForm(false)}
@@ -442,7 +459,9 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                                         {formatPrice(quote.price)}
                                       </p>
                                       <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-wider'>
-                                        {quote.quoteType === 'PER_GUEST' ? '/ guest' : 'flat fee'}
+                                        {quote.quoteType === QuoteType.PER_GUEST
+                                          ? '/ guest'
+                                          : 'flat fee'}
                                       </span>
                                     </div>
                                     <p className='font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
@@ -505,6 +524,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                                         </span>
                                         <button
                                           type='button'
+                                          aria-label={`Remove ${file.name}`}
                                           onClick={() => {
                                             if (window.confirm(`Remove "${file.name}"?`)) {
                                               deleteFile.mutate({

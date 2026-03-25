@@ -33,8 +33,8 @@ export const mockQuoteFile: VendorQuoteFile = {
   id: 'file-123',
   quoteId: 'quote-123',
   name: 'proposal.pdf',
-  url: 'https://utfs.io/f/abc123',
-  key: 'abc123',
+  url: 'https://abc123.public.blob.vercel-storage.com/proposal.pdf',
+  key: 'proposal.pdf',
   size: 102400,
   createdAt: new Date('2026-01-15'),
 }
@@ -71,6 +71,9 @@ export const mockQuoteBelongsToVendor = jest.fn()
 export const mockCreateQuoteFiles = jest.fn()
 export const mockDeleteQuoteFile = jest.fn()
 export const mockFileBelongsToQuote = jest.fn()
+export const mockFindAllFileUrlsByVendorId = jest.fn()
+export const mockFindAllFileUrlsByQuoteId = jest.fn()
+export const mockCountFilesByQuoteId = jest.fn()
 
 export const VendorRepository = jest.fn().mockImplementation(() => ({
   findAllByWeddingId: mockFindAllByWeddingId,
@@ -88,6 +91,9 @@ export const VendorRepository = jest.fn().mockImplementation(() => ({
   createQuoteFiles: mockCreateQuoteFiles,
   deleteQuoteFile: mockDeleteQuoteFile,
   fileBelongsToQuote: mockFileBelongsToQuote,
+  findAllFileUrlsByVendorId: mockFindAllFileUrlsByVendorId,
+  findAllFileUrlsByQuoteId: mockFindAllFileUrlsByQuoteId,
+  countFilesByQuoteId: mockCountFilesByQuoteId,
 }))
 
 export const resetMocks = (): void => {
@@ -106,5 +112,8 @@ export const resetMocks = (): void => {
   mockCreateQuoteFiles.mockReset()
   mockDeleteQuoteFile.mockReset()
   mockFileBelongsToQuote.mockReset()
+  mockFindAllFileUrlsByVendorId.mockReset()
+  mockFindAllFileUrlsByQuoteId.mockReset()
+  mockCountFilesByQuoteId.mockReset()
   VendorRepository.mockClear()
 }
