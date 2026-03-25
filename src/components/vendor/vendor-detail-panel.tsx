@@ -20,7 +20,7 @@ import {
   DialogPortal,
   DialogTitle,
 } from '~/components/ui/dialog'
-import { PdfViewerDrawer } from '~/components/vendor/pdf-viewer-drawer'
+import { FileViewerDrawer, getViewableFileType } from '~/components/vendor/file-viewer-drawer'
 import { QuoteForm } from '~/components/vendor/quote-form'
 import { VendorForm } from '~/components/vendor/vendor-form'
 import { VendorStatusSelect } from '~/components/vendor/vendor-status-select'
@@ -510,13 +510,13 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                                 {quote.files.length > 0 && (
                                   <div className='mt-2.5 space-y-1'>
                                     {quote.files.map((file) => {
-                                      const isPdf = file.name.toLowerCase().endsWith('.pdf')
+                                      const viewableType = getViewableFileType(file.name)
                                       return (
                                         <div
                                           key={file.id}
                                           className='flex items-center gap-2 rounded bg-muted px-2.5 py-1.5'
                                         >
-                                          {isPdf ? (
+                                          {viewableType ? (
                                             <button
                                               type='button'
                                               onClick={() =>
@@ -606,7 +606,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
       </DialogPortal>
     </Dialog>
 
-    <PdfViewerDrawer file={viewingPdf} onClose={() => setViewingPdf(null)} />
+    <FileViewerDrawer file={viewingPdf} onClose={() => setViewingPdf(null)} />
     </>
   )
 }
