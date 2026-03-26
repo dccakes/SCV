@@ -53,6 +53,6 @@ export function sanitizeFilename(name: string): string {
   return name
     .replace(/\.\./g, '') // strip path traversal
     .replace(/[/\\]/g, '') // strip path separators
-    .replace(/[\x00-\x1f]/g, '') // strip control characters
+    .replace(/\p{Cc}/gu, '') // strip control characters
     .trim()
 }

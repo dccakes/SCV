@@ -521,7 +521,7 @@ describe('saveQuoteFilesSchema', () => {
     const result = saveQuoteFilesSchema.safeParse(input)
     expect(result.success).toBe(true)
     if (result.success) {
-      expect(result.data.files[0]!.name).toBe('etcpasswd')
+      expect(result.data.files[0]?.name).toBe('etcpasswd')
     }
   })
 

@@ -1,9 +1,15 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 
-import {
-  FileViewerDrawer,
-  getViewableFileType,
-} from '~/components/vendor/file-viewer-drawer'
+import { FileViewerDrawer, getViewableFileType } from '~/components/vendor/file-viewer-drawer'
+
+// next/image rewrites src in test env — mock it to render a plain <img>
+jest.mock('next/image', () => ({
+  __esModule: true,
+  default: ({ src, alt, ...rest }: { src: string; alt: string; [key: string]: unknown }) => (
+    // biome-ignore lint/performance/noImgElement: test mock for next/image
+    <img src={src} alt={alt} {...rest} />
+  ),
+}))
 
 // ---------------------------------------------------------------------------
 // getViewableFileType unit tests
@@ -22,12 +28,14 @@ describe('getViewableFileType', () => {
     expect(getViewableFileType(name)).toBe(expected)
   })
 
-  it.each([['contract.docx'], ['budget.xlsx'], ['notes.txt'], ['archive.zip']])(
-    'returns null for unsupported format %s',
-    (name) => {
-      expect(getViewableFileType(name)).toBeNull()
-    }
-  )
+  it.each([
+    ['contract.docx'],
+    ['budget.xlsx'],
+    ['notes.txt'],
+    ['archive.zip'],
+  ])('returns null for unsupported format %s', (name) => {
+    expect(getViewableFileType(name)).toBeNull()
+  })
 })
 
 // ---------------------------------------------------------------------------
@@ -47,7 +55,8 @@ describe('FileViewerDrawer', () => {
         onClose={jest.fn()}
       />
     )
-    expect(screen.getByText('venue-quote.pdf')).toBeInTheDocument()
+    // The filename appears in both the sr-only DialogTitle and the visible h2
+    expect(screen.getAllByText('venue-quote.pdf').length).toBeGreaterThan(0)
   })
 
   it('shows "Document" label for a PDF', () => {

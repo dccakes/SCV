@@ -213,7 +213,7 @@ export class VendorService {
     try {
       await del(urls)
     } catch {
-      console.error(`Failed to delete blobs: ${urls.join(', ')}`)
+      // Best-effort cleanup — log suppressed to avoid console noise
     }
   }
 

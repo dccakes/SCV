@@ -78,12 +78,16 @@ const mockHousehold: HouseholdWithGuests = {
   gifts: [],
 }
 
+type MockGuest = (typeof mockHousehold.guests)[number]
+const mockGuest0 = mockHousehold.guests[0] as MockGuest
+const mockGuest1 = mockHousehold.guests[1] as MockGuest
+
 const mockHouseholdWithTagAlong: HouseholdWithGuests = {
   ...mockHousehold,
   guests: [
-    mockHousehold.guests[0]!, // Regular guest: Attending
+    mockGuest0, // Regular guest: Attending
     {
-      ...mockHousehold.guests[1]!,
+      ...mockGuest1,
       id: 3,
       firstName: 'Baby',
       lastName: 'Rivera',
@@ -110,9 +114,9 @@ const mockHouseholdWithTagAlong: HouseholdWithGuests = {
 const mockHouseholdTagAlongNoInvitations: HouseholdWithGuests = {
   ...mockHousehold,
   guests: [
-    mockHousehold.guests[0]!, // Regular guest: Attending
+    mockGuest0, // Regular guest: Attending
     {
-      ...mockHousehold.guests[1]!,
+      ...mockGuest1,
       id: 4,
       firstName: 'Toddler',
       lastName: 'Rivera',
