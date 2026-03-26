@@ -87,7 +87,7 @@ test.describe('Vendor Detail Panel', () => {
     await expect(dialog).toBeVisible()
 
     // Close by clicking the Close button in the footer
-    await dialog.getByRole('button', { name: /close/i }).click()
+    await dialog.getByRole('button', { name: 'Close', exact: true }).click()
     await expect(dialog).not.toBeVisible()
   })
 })
@@ -409,9 +409,10 @@ test.describe('XSS Injection Prevention', () => {
     await dialog.getByLabel(/notes/i).fill(xssPayload)
     await dialog.getByRole('button', { name: /add quote/i }).click()
 
-    // Page should still be functional (not "hacked")
+    // React escapes the payload as plain text — verify XSS didn't execute by
+    // confirming the page structure is still intact (onerror would have wiped it)
     await expect(dialog).toContainText('$999')
-    await expect(page.locator('body')).not.toContainText('hacked')
+    await expect(page.locator('nav')).toBeVisible()
   })
 })
 
@@ -426,7 +427,7 @@ test.describe('Multi-User Data Isolation', () => {
     // Sign up as a completely new user
     const uniqueEmail = `e2e-isolation-${Date.now()}@test.com`
     await page.goto('/auth/sign-up')
-    await page.waitForLoadState('domcontentloaded')
+    await page.waitForLoadState('networkidle')
 
     await page.getByLabel('Name').fill('Isolation Test User')
     await page.getByLabel('Email').fill(uniqueEmail)
