@@ -30,7 +30,9 @@ describe('upload-config', () => {
 
   describe('BLOB_URL_PATTERN', () => {
     it('should match valid Vercel Blob URLs', () => {
-      expect(BLOB_URL_PATTERN.test('https://abc123.public.blob.vercel-storage.com/file.pdf')).toBe(true)
+      expect(BLOB_URL_PATTERN.test('https://abc123.public.blob.vercel-storage.com/file.pdf')).toBe(
+        true
+      )
     })
 
     it('should reject non-Vercel URLs', () => {
