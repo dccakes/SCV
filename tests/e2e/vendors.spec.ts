@@ -432,7 +432,7 @@ test.describe('Multi-User Data Isolation', () => {
     await page.getByLabel('Name').fill('Isolation Test User')
     await page.getByLabel('Email').fill(uniqueEmail)
     await page.getByLabel('Password').fill('securePassword123!')
-    await page.getByRole('button', { name: /sign up/i }).click()
+    await page.getByRole('button', { name: /create an account/i }).click()
 
     // Wait for redirect to dashboard (new user onboarding)
     await page.waitForURL(/\/(dashboard|onboarding|wedding-setup)/, { timeout: 15_000 })
