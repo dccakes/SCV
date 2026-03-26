@@ -2,6 +2,7 @@
 
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
+import Image from 'next/image'
 
 import {
   SIDE_PANE_OVERLAY_CLASS,
@@ -60,20 +61,23 @@ export function FileViewerDrawer({ file, onClose }: FileViewerDrawerProps) {
             <p className='font-mono text-[0.58rem] text-muted-foreground uppercase tracking-widest'>
               {fileType === 'image' ? 'Image' : 'Document'}
             </p>
-            <h2 className='mt-0.5 truncate font-display text-xl text-foreground italic'>
+            <h2 className='mt-0.5 truncate font-display text-foreground text-xl italic'>
               {file?.name}
             </h2>
           </header>
 
           {/* File content */}
-          <div className='flex min-h-0 flex-1 items-center justify-center overflow-auto bg-muted/30'>
+          <div className='flex min-h-0 flex-1 overflow-auto bg-muted/30'>
             {file && fileType === 'image' && (
-              <img
-                key={file.url}
-                src={file.url}
-                alt={file.name}
-                className='max-h-full max-w-full object-contain p-4'
-              />
+              <div className='relative flex-1 self-stretch p-4'>
+                <Image
+                  key={file.url}
+                  src={file.url}
+                  alt={file.name}
+                  fill
+                  className='object-contain'
+                />
+              </div>
             )}
             {file && fileType === 'pdf' && (
               <iframe
