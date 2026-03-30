@@ -7,56 +7,81 @@ jest.mock('lib/auth', () => ({
 }))
 
 jest.mock('server/db', () => ({
-  db: { id: 'mock-db' },
+  db: {
+    id: 'mock-db',
+    $queryRaw: jest.fn(),
+  },
 }))
 
 import { auth } from 'lib/auth'
 import { createTRPCContext } from 'server/api/trpc'
+import { db } from 'server/db'
 
 const mockGetSession = auth.api.getSession as jest.Mock
+const mockQueryRaw = db.$queryRaw as unknown as jest.Mock
 
-describe('createTRPCContext auth organization extraction', () => {
+describe('createTRPCContext active organization resolution', () => {
   beforeEach(() => {
     mockGetSession.mockReset()
+    mockQueryRaw.mockReset()
   })
 
-  it('uses session.activeOrganizationId when present', async () => {
+  it('populates activeOrganization when session has activeOrganizationId and member exists', async () => {
     mockGetSession.mockResolvedValue({
       user: { id: 'user-1' },
-      session: {
-        activeOrganizationId: 'org-direct',
-        activeOrganization: { id: 'org-nested' },
-      },
+      session: { activeOrganizationId: 'org-1' },
     })
+    mockQueryRaw.mockResolvedValue([{ role: 'admin' }])
 
-    const headers = new Headers()
-    const context = await createTRPCContext({ headers })
+    const context = await createTRPCContext({ headers: new Headers() })
 
-    expect(context.auth.userId).toBe('user-1')
-    expect(context.auth.sessionActiveOrganizationId).toBe('org-direct')
+    expect(context.auth.activeOrganization).toEqual({
+      organizationId: 'org-1',
+      role: 'admin',
+    })
   })
 
-  it('falls back to session.activeOrganization.id when direct id is missing', async () => {
+  it('sets activeOrganization to null when no activeOrganizationId in session', async () => {
     mockGetSession.mockResolvedValue({
       user: { id: 'user-1' },
-      session: {
-        activeOrganization: { id: 'org-nested' },
-      },
+      session: {},
     })
 
     const context = await createTRPCContext({ headers: new Headers() })
 
-    expect(context.auth.sessionActiveOrganizationId).toBe('org-nested')
+    expect(context.auth.activeOrganization).toBeNull()
+    expect(mockQueryRaw).not.toHaveBeenCalled()
   })
 
-  it('returns null active organization when session shape is malformed', async () => {
+  it('sets activeOrganization to null when member record is not found', async () => {
     mockGetSession.mockResolvedValue({
       user: { id: 'user-1' },
-      session: 'invalid-shape',
+      session: { activeOrganizationId: 'org-1' },
+    })
+    mockQueryRaw.mockResolvedValue([])
+
+    const context = await createTRPCContext({ headers: new Headers() })
+
+    expect(context.auth.activeOrganization).toBeNull()
+  })
+
+  it('sets activeOrganization to null when session is null (unauthenticated)', async () => {
+    mockGetSession.mockResolvedValue(null)
+
+    const context = await createTRPCContext({ headers: new Headers() })
+
+    expect(context.auth.activeOrganization).toBeNull()
+    expect(mockQueryRaw).not.toHaveBeenCalled()
+  })
+
+  it('preserves userId in auth context', async () => {
+    mockGetSession.mockResolvedValue({
+      user: { id: 'user-42' },
+      session: {},
     })
 
     const context = await createTRPCContext({ headers: new Headers() })
 
-    expect(context.auth.sessionActiveOrganizationId).toBeNull()
+    expect(context.auth.userId).toBe('user-42')
   })
 })

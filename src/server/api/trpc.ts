@@ -13,6 +13,11 @@ import { ZodError } from 'zod'
 import { auth } from '~/lib/auth'
 import { db } from '~/server/db'
 
+type ActiveOrganization = {
+  organizationId: string
+  role: string | null
+}
+
 const getSessionActiveOrganizationId = (session: unknown): string | null => {
   if (!session || typeof session !== 'object') {
     return null
@@ -46,6 +51,24 @@ const getSessionActiveOrganizationId = (session: unknown): string | null => {
   return null
 }
 
+const fetchActiveMember = async (
+  userId: string,
+  organizationId: string
+): Promise<ActiveOrganization | null> => {
+  const rows = await db.$queryRaw<Array<{ role: string }>>`
+    SELECT "role"
+    FROM "member"
+    WHERE "userId" = ${userId}
+      AND "organizationId" = ${organizationId}
+    LIMIT 1
+  `
+
+  const row = rows[0]
+  if (!row) return null
+
+  return { organizationId, role: row.role }
+}
+
 /**
  * 1. CONTEXT
  *
@@ -63,12 +86,20 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
     headers: opts.headers,
   })
 
+  const userId = session?.user?.id ?? null
+  const sessionActiveOrganizationId = getSessionActiveOrganizationId(session)
+
+  const activeOrganization: ActiveOrganization | null =
+    userId && sessionActiveOrganizationId
+      ? await fetchActiveMember(userId, sessionActiveOrganizationId)
+      : null
+
   return {
     db,
     auth: {
-      userId: session?.user?.id ?? null,
+      userId,
       session: session,
-      sessionActiveOrganizationId: getSessionActiveOrganizationId(session),
+      activeOrganization,
     },
     ...opts,
   }
@@ -131,7 +162,6 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   }
   return next({
     ctx: {
-      // infers the `session` as non-nullable
       auth: { ...ctx.auth, userId: ctx.auth.userId },
     },
   })
