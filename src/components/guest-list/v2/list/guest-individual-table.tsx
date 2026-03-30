@@ -1,8 +1,10 @@
 'use client'
 
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useMemo } from 'react'
 import { Badge } from '~/components/ui/badge'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
+
+type TagMap = Map<string, { id: string; name: string; color?: string | null }>
 
 type GuestIndividualTableProps = {
   households: HouseholdWithGuests[]
@@ -12,36 +14,28 @@ type GuestIndividualTableProps = {
   allTags?: Array<{ id: string; name: string; color?: string | null }>
 }
 
-function GuestIndividualTableComponent({
+const thClass = 'px-4 py-3 text-left font-mono text-[0.58rem] text-foreground/55 uppercase tracking-widest'
+
+export const GuestIndividualTable = memo(function GuestIndividualTable({
   households,
   householdNumberMap,
   onSelectHousehold,
   selectedHouseholdId,
   allTags = [],
 }: Readonly<GuestIndividualTableProps>) {
+  const tagMap: TagMap = useMemo(() => new Map(allTags.map((t) => [t.id, t])), [allTags])
+
   return (
     <div className='overflow-x-auto rounded-md border border-border'>
       <table className='w-full text-sm'>
         <thead>
           <tr className='border-border border-b bg-muted/40'>
-            <th className='px-4 py-3 text-left font-mono text-[0.58rem] text-foreground/55 uppercase tracking-widest'>
-              First Name
-            </th>
-            <th className='px-4 py-3 text-left font-mono text-[0.58rem] text-foreground/55 uppercase tracking-widest'>
-              Last Name
-            </th>
-            <th className='px-4 py-3 text-left font-mono text-[0.58rem] text-foreground/55 uppercase tracking-widest'>
-              Email
-            </th>
-            <th className='px-4 py-3 text-left font-mono text-[0.58rem] text-foreground/55 uppercase tracking-widest'>
-              Phone
-            </th>
-            <th className='px-4 py-3 text-left font-mono text-[0.58rem] text-foreground/55 uppercase tracking-widest'>
-              Tags
-            </th>
-            <th className='px-4 py-3 text-left font-mono text-[0.58rem] text-foreground/55 uppercase tracking-widest'>
-              Household
-            </th>
+            <th className={thClass}>First Name</th>
+            <th className={thClass}>Last Name</th>
+            <th className={thClass}>Email</th>
+            <th className={thClass}>Phone</th>
+            <th className={thClass}>Tags</th>
+            <th className={thClass}>Household</th>
           </tr>
         </thead>
         <tbody>
@@ -54,7 +48,7 @@ function GuestIndividualTableComponent({
                 householdNumber={householdNumberMap.get(household.id) ?? 0}
                 isSelected={selectedHouseholdId === household.id}
                 onSelectHousehold={onSelectHousehold}
-                allTags={allTags}
+                tagMap={tagMap}
               />
             ))
           )}
@@ -62,7 +56,7 @@ function GuestIndividualTableComponent({
       </table>
     </div>
   )
-}
+})
 
 type GuestTableRowProps = {
   guest: HouseholdWithGuests['guests'][number]
@@ -70,7 +64,7 @@ type GuestTableRowProps = {
   householdNumber: number
   isSelected: boolean
   onSelectHousehold: (household: HouseholdWithGuests) => void
-  allTags: Array<{ id: string; name: string; color?: string | null }>
+  tagMap: TagMap
 }
 
 const GuestTableRow = memo(function GuestTableRow({
@@ -79,10 +73,10 @@ const GuestTableRow = memo(function GuestTableRow({
   householdNumber,
   isSelected,
   onSelectHousehold,
-  allTags,
+  tagMap,
 }: Readonly<GuestTableRowProps>) {
   const guestTags = (guest.guestTags ?? [])
-    .map((gt) => allTags.find((t) => t.id === gt.tagId))
+    .map((gt) => tagMap.get(gt.tagId))
     .filter((t): t is NonNullable<typeof t> => t !== undefined)
 
   const handleClick = useCallback(() => {
@@ -98,8 +92,12 @@ const GuestTableRow = memo(function GuestTableRow({
     >
       <td className='px-4 py-3 font-medium text-foreground'>{guest.firstName}</td>
       <td className='px-4 py-3 text-foreground/80'>{guest.lastName}</td>
-      <td className='px-4 py-3 text-foreground/70'>{guest.email ?? <span className='text-foreground/35'>—</span>}</td>
-      <td className='px-4 py-3 text-foreground/70'>{guest.phone ?? <span className='text-foreground/35'>—</span>}</td>
+      <td className='px-4 py-3 text-foreground/70'>
+        {guest.email ?? <span className='text-foreground/35'>—</span>}
+      </td>
+      <td className='px-4 py-3 text-foreground/70'>
+        {guest.phone ?? <span className='text-foreground/35'>—</span>}
+      </td>
       <td className='px-4 py-3'>
         {guestTags.length > 0 ? (
           <div className='flex flex-wrap gap-1'>
@@ -123,5 +121,3 @@ const GuestTableRow = memo(function GuestTableRow({
     </tr>
   )
 })
-
-export const GuestIndividualTable = memo(GuestIndividualTableComponent)

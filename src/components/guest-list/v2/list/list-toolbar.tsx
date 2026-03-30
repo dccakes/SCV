@@ -50,34 +50,43 @@ export function ListToolbar({
           Sort by Party Size
         </Button>
         {onViewModeChange && (
-          <div className='flex rounded-md border border-border overflow-hidden'>
-            <button
-              type='button'
-              aria-label='Card view'
-              onClick={() => onViewModeChange('cards')}
-              className={`flex items-center px-2.5 py-1.5 transition-colors ${
-                viewMode === 'cards'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-background text-foreground/60 hover:bg-muted/50'
-              }`}
-            >
-              <LayoutGrid className='h-3.5 w-3.5' aria-hidden='true' />
-            </button>
-            <button
-              type='button'
-              aria-label='Table view'
-              onClick={() => onViewModeChange('table')}
-              className={`flex items-center border-border border-l px-2.5 py-1.5 transition-colors ${
-                viewMode === 'table'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-background text-foreground/60 hover:bg-muted/50'
-              }`}
-            >
-              <Table2 className='h-3.5 w-3.5' aria-hidden='true' />
-            </button>
-          </div>
+          <ViewModeToggle viewMode={viewMode} onViewModeChange={onViewModeChange} />
         )}
       </div>
+    </div>
+  )
+}
+
+const toggleBtnClass = (isActive: boolean, hasBorderLeft = false) =>
+  `flex items-center px-2.5 py-1.5 transition-colors${hasBorderLeft ? ' border-border border-l' : ''} ${
+    isActive ? 'bg-primary text-primary-foreground' : 'bg-background text-foreground/60 hover:bg-muted/50'
+  }`
+
+function ViewModeToggle({
+  viewMode,
+  onViewModeChange,
+}: {
+  viewMode: ViewMode
+  onViewModeChange: (mode: ViewMode) => void
+}) {
+  return (
+    <div className='flex overflow-hidden rounded-md border border-border'>
+      <button
+        type='button'
+        aria-label='Card view'
+        onClick={() => onViewModeChange('cards')}
+        className={toggleBtnClass(viewMode === 'cards')}
+      >
+        <LayoutGrid className='h-3.5 w-3.5' aria-hidden='true' />
+      </button>
+      <button
+        type='button'
+        aria-label='Table view'
+        onClick={() => onViewModeChange('table')}
+        className={toggleBtnClass(viewMode === 'table', true)}
+      >
+        <Table2 className='h-3.5 w-3.5' aria-hidden='true' />
+      </button>
     </div>
   )
 }
