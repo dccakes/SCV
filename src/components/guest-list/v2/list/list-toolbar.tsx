@@ -59,7 +59,9 @@ export function ListToolbar({
 
 const toggleBtnClass = (isActive: boolean, hasBorderLeft = false) =>
   `flex items-center px-2.5 py-1.5 transition-colors${hasBorderLeft ? ' border-border border-l' : ''} ${
-    isActive ? 'bg-primary text-primary-foreground' : 'bg-background text-foreground/60 hover:bg-muted/50'
+    isActive
+      ? 'bg-primary text-primary-foreground'
+      : 'bg-background text-foreground/60 hover:bg-muted/50'
   }`
 
 function ViewModeToggle({

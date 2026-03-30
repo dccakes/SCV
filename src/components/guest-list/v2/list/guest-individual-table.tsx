@@ -14,7 +14,8 @@ type GuestIndividualTableProps = {
   allTags?: Array<{ id: string; name: string; color?: string | null }>
 }
 
-const thClass = 'px-4 py-3 text-left font-mono text-[0.58rem] text-foreground/55 uppercase tracking-widest'
+const thClass =
+  'px-4 py-3 text-left font-mono text-[0.58rem] text-foreground/55 uppercase tracking-widest'
 
 export const GuestIndividualTable = memo(function GuestIndividualTable({
   households,
@@ -86,7 +87,7 @@ const GuestTableRow = memo(function GuestTableRow({
   return (
     <tr
       onClick={handleClick}
-      className={`cursor-pointer border-border border-b last:border-0 transition-colors hover:bg-muted/30 ${
+      className={`cursor-pointer border-border border-b transition-colors last:border-0 hover:bg-muted/30 ${
         isSelected ? 'bg-primary/5' : ''
       }`}
     >
