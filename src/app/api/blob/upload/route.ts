@@ -1,4 +1,4 @@
-import { handleUpload, type HandleUploadBody } from '@vercel/blob/client'
+import { type HandleUploadBody, handleUpload } from '@vercel/blob/client'
 import { NextResponse } from 'next/server'
 
 import { auth } from '~/lib/auth'
@@ -37,7 +37,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     const isAuthError = message === 'Unauthorized'
     return NextResponse.json(
       { error: isAuthError ? 'Unauthorized' : 'Upload failed' },
-      { status: isAuthError ? 401 : 400 },
+      { status: isAuthError ? 401 : 400 }
     )
   }
 }
