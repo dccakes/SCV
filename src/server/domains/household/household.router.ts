@@ -12,7 +12,6 @@ import { TRPCError } from '@trpc/server'
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { householdManagementService } from '~/server/application/household-management'
-import { toAuthzContext } from '~/server/authz/authorization.types'
 import { eventService } from '~/server/domains/event'
 import {
   bulkCreateHouseholdsSchema,
@@ -33,7 +32,7 @@ export const householdRouter = createTRPCRouter({
       ctx.auth.activeOrganization?.organizationId ?? null
     )
     return householdManagementService.createHouseholdWithGuests(
-      toAuthzContext(ctx),
+      ctx.authz,
       weddingId,
       input
     )
@@ -48,7 +47,7 @@ export const householdRouter = createTRPCRouter({
       ctx.auth.activeOrganization?.organizationId ?? null
     )
     return householdManagementService.updateHouseholdWithGuests(
-      toAuthzContext(ctx),
+      ctx.authz,
       weddingId,
       input
     )
@@ -82,7 +81,7 @@ export const householdRouter = createTRPCRouter({
       }
 
       return householdManagementService.bulkCreateHouseholds(
-        toAuthzContext(ctx),
+        ctx.authz,
         weddingId,
         input.households
       )
@@ -97,7 +96,7 @@ export const householdRouter = createTRPCRouter({
       ctx.auth.activeOrganization?.organizationId ?? null
     )
     return householdManagementService.deleteHousehold(
-      toAuthzContext(ctx),
+      ctx.authz,
       input.householdId,
       weddingId
     )
@@ -112,7 +111,7 @@ export const householdRouter = createTRPCRouter({
       ctx.auth.activeOrganization?.organizationId ?? null
     )
     return householdManagementService.searchHouseholds(
-      toAuthzContext(ctx),
+      ctx.authz,
       weddingId,
       input.searchText
     )

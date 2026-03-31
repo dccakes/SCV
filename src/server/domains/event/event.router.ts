@@ -6,7 +6,6 @@
  */
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
-import { toAuthzContext } from '~/server/authz/authorization.types'
 import { eventService } from '~/server/domains/event'
 import {
   createEventSchema,
@@ -26,7 +25,7 @@ export const eventRouter = createTRPCRouter({
       ctx.auth.userId,
       ctx.auth.activeOrganization?.organizationId ?? null
     )
-    return eventService.createEvent(toAuthzContext(ctx), weddingId, input)
+    return eventService.createEvent(ctx.authz, weddingId, input)
   }),
 
   /**
@@ -61,7 +60,7 @@ export const eventRouter = createTRPCRouter({
       ctx.auth.userId,
       ctx.auth.activeOrganization?.organizationId ?? null
     )
-    return eventService.updateEvent(toAuthzContext(ctx), weddingId, input)
+    return eventService.updateEvent(ctx.authz, weddingId, input)
   }),
 
   /**
@@ -74,7 +73,7 @@ export const eventRouter = createTRPCRouter({
         ctx.auth.userId,
         ctx.auth.activeOrganization?.organizationId ?? null
       )
-      return eventService.updateCollectRsvp(toAuthzContext(ctx), weddingId, input.eventId, input.collectRsvp)
+      return eventService.updateCollectRsvp(ctx.authz, weddingId, input.eventId, input.collectRsvp)
     }),
 
   /**
@@ -85,6 +84,6 @@ export const eventRouter = createTRPCRouter({
       ctx.auth.userId,
       ctx.auth.activeOrganization?.organizationId ?? null
     )
-    return eventService.deleteEvent(toAuthzContext(ctx), weddingId, input.eventId)
+    return eventService.deleteEvent(ctx.authz, weddingId, input.eventId)
   }),
 })

@@ -7,7 +7,6 @@
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 
-import { toAuthzContext } from '~/server/authz/authorization.types'
 import { questionService } from '~/server/domains/question'
 import {
   deleteQuestionSchema,
@@ -26,7 +25,7 @@ export const questionRouter = createTRPCRouter({
     )
 
     return questionService.upsertQuestion({
-      ctx: toAuthzContext(ctx),
+      ctx: ctx.authz,
       weddingId: wedding.id,
       organizationId: wedding.organizationId,
       data: input,
@@ -43,7 +42,7 @@ export const questionRouter = createTRPCRouter({
     )
 
     return questionService.deleteQuestion({
-      ctx: toAuthzContext(ctx),
+      ctx: ctx.authz,
       weddingId: wedding.id,
       organizationId: wedding.organizationId,
       data: input,

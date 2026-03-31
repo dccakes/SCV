@@ -6,7 +6,6 @@
  */
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
-import { toAuthzContext } from '~/server/authz/authorization.types'
 import { weddingService } from '~/server/domains/wedding'
 import {
   createWeddingSchema,
@@ -35,7 +34,7 @@ export const weddingRouter = createTRPCRouter({
     )
 
     return weddingService.updateWedding({
-      ctx: toAuthzContext(ctx),
+      ctx: ctx.authz,
       weddingId: wedding.id,
       data: input,
     })

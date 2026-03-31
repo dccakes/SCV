@@ -6,7 +6,6 @@
  */
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
-import { toAuthzContext } from '~/server/authz/authorization.types'
 import { vendorService } from '~/server/domains/vendor'
 import {
   createQuoteSchema,
@@ -29,7 +28,7 @@ export const vendorRouter = createTRPCRouter({
    * Uses a single JOIN query to avoid a separate weddingId lookup.
    */
   getAll: protectedProcedure.input(getVendorsByCategorySchema).query(async ({ ctx, input }) => {
-    return vendorService.getVendorsByUserId(toAuthzContext(ctx), ctx.auth.userId, input.category)
+    return vendorService.getVendorsByUserId(ctx.authz, ctx.auth.userId, input.category)
   }),
 
   /**
@@ -40,7 +39,7 @@ export const vendorRouter = createTRPCRouter({
       ctx.auth.userId,
       ctx.auth.activeOrganization?.organizationId ?? null
     )
-    return vendorService.getVendorWithQuotes(toAuthzContext(ctx), input.vendorId, weddingId)
+    return vendorService.getVendorWithQuotes(ctx.authz, input.vendorId, weddingId)
   }),
 
   /**
@@ -51,7 +50,7 @@ export const vendorRouter = createTRPCRouter({
       ctx.auth.userId,
       ctx.auth.activeOrganization?.organizationId ?? null
     )
-    return vendorService.createVendor(toAuthzContext(ctx), weddingId, input)
+    return vendorService.createVendor(ctx.authz, weddingId, input)
   }),
 
   /**
@@ -62,7 +61,7 @@ export const vendorRouter = createTRPCRouter({
       ctx.auth.userId,
       ctx.auth.activeOrganization?.organizationId ?? null
     )
-    return vendorService.updateVendor(toAuthzContext(ctx), input.vendorId, weddingId, input)
+    return vendorService.updateVendor(ctx.authz, input.vendorId, weddingId, input)
   }),
 
   /**
@@ -76,7 +75,7 @@ export const vendorRouter = createTRPCRouter({
         ctx.auth.activeOrganization?.organizationId ?? null
       )
       return vendorService.updateStatus(
-        toAuthzContext(ctx),
+        ctx.authz,
         input.vendorId,
         weddingId,
         input.status
@@ -91,7 +90,7 @@ export const vendorRouter = createTRPCRouter({
       ctx.auth.userId,
       ctx.auth.activeOrganization?.organizationId ?? null
     )
-    return vendorService.deleteVendor(toAuthzContext(ctx), input.vendorId, weddingId)
+    return vendorService.deleteVendor(ctx.authz, input.vendorId, weddingId)
   }),
 
   /**
@@ -102,7 +101,7 @@ export const vendorRouter = createTRPCRouter({
       ctx.auth.userId,
       ctx.auth.activeOrganization?.organizationId ?? null
     )
-    return vendorService.addQuote(toAuthzContext(ctx), input.vendorId, weddingId, input)
+    return vendorService.addQuote(ctx.authz, input.vendorId, weddingId, input)
   }),
 
   /**
@@ -114,7 +113,7 @@ export const vendorRouter = createTRPCRouter({
       ctx.auth.activeOrganization?.organizationId ?? null
     )
     return vendorService.updateQuote(
-      toAuthzContext(ctx),
+      ctx.authz,
       input.quoteId,
       input.vendorId,
       weddingId,
@@ -130,7 +129,7 @@ export const vendorRouter = createTRPCRouter({
       ctx.auth.userId,
       ctx.auth.activeOrganization?.organizationId ?? null
     )
-    return vendorService.deleteQuote(toAuthzContext(ctx), input.quoteId, input.vendorId, weddingId)
+    return vendorService.deleteQuote(ctx.authz, input.quoteId, input.vendorId, weddingId)
   }),
 
   /**
@@ -143,7 +142,7 @@ export const vendorRouter = createTRPCRouter({
         ctx.auth.userId,
         ctx.auth.activeOrganization?.organizationId ?? null
       )
-      return vendorService.saveQuoteFiles(toAuthzContext(ctx), input.vendorId, weddingId, input)
+      return vendorService.saveQuoteFiles(ctx.authz, input.vendorId, weddingId, input)
     }),
 
   /**
@@ -156,6 +155,6 @@ export const vendorRouter = createTRPCRouter({
         ctx.auth.userId,
         ctx.auth.activeOrganization?.organizationId ?? null
       )
-      return vendorService.deleteQuoteFile(toAuthzContext(ctx), input.vendorId, weddingId, input)
+      return vendorService.deleteQuoteFile(ctx.authz, input.vendorId, weddingId, input)
     }),
 })

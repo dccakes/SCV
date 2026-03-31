@@ -9,13 +9,3 @@ export type AuthzContext = {
   userId: string
   activeOrganization: ActiveOrganization | null
 }
-
-export const toAuthzContext = (ctx: {
-  auth: {
-    userId: string
-    activeOrganization: ActiveOrganization | null
-  }
-}): AuthzContext => ({
-  userId: ctx.auth.userId,
-  activeOrganization: ctx.auth.activeOrganization,
-})

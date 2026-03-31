@@ -6,7 +6,6 @@
  */
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
-import { toAuthzContext } from '~/server/authz/authorization.types'
 import { giftService } from '~/server/domains/gift'
 import { updateGiftSchema } from '~/server/domains/gift/gift.validator'
 import { weddingService } from '~/server/domains/wedding'
@@ -20,6 +19,6 @@ export const giftRouter = createTRPCRouter({
       ctx.auth.userId,
       ctx.auth.activeOrganization?.organizationId ?? null
     )
-    return giftService.updateGift(toAuthzContext(ctx), weddingId, input)
+    return giftService.updateGift(ctx.authz, weddingId, input)
   }),
 })

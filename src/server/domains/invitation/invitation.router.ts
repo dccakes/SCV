@@ -6,7 +6,6 @@
  */
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
-import { toAuthzContext } from '~/server/authz/authorization.types'
 import { invitationService } from '~/server/domains/invitation'
 import {
   createInvitationSchema,
@@ -23,7 +22,7 @@ export const invitationRouter = createTRPCRouter({
       ctx.auth.userId,
       ctx.auth.activeOrganization?.organizationId ?? null
     )
-    return invitationService.createInvitation(toAuthzContext(ctx), weddingId, input)
+    return invitationService.createInvitation(ctx.authz, weddingId, input)
   }),
 
   /**
@@ -34,7 +33,7 @@ export const invitationRouter = createTRPCRouter({
       ctx.auth.userId,
       ctx.auth.activeOrganization?.organizationId ?? null
     )
-    return invitationService.updateInvitation(toAuthzContext(ctx), weddingId, input)
+    return invitationService.updateInvitation(ctx.authz, weddingId, input)
   }),
 
   /**

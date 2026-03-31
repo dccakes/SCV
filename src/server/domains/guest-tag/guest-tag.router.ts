@@ -8,7 +8,6 @@
 import { z } from 'zod'
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
-import { toAuthzContext } from '~/server/authz/authorization.types'
 import { guestTagService } from '~/server/domains/guest-tag'
 import {
   createGuestTagSchema,
@@ -26,7 +25,7 @@ export const guestTagRouter = createTRPCRouter({
       ctx.auth.userId,
       ctx.auth.activeOrganization?.organizationId ?? null
     )
-    return guestTagService.create(toAuthzContext(ctx), {
+    return guestTagService.create(ctx.authz, {
       ...input,
       weddingId,
     })
@@ -40,7 +39,7 @@ export const guestTagRouter = createTRPCRouter({
       ctx.auth.userId,
       ctx.auth.activeOrganization?.organizationId ?? null
     )
-    return guestTagService.getByWeddingId(toAuthzContext(ctx), weddingId)
+    return guestTagService.getByWeddingId(ctx.authz, weddingId)
   }),
 
   /**
@@ -51,7 +50,7 @@ export const guestTagRouter = createTRPCRouter({
       ctx.auth.userId,
       ctx.auth.activeOrganization?.organizationId ?? null
     )
-    return guestTagService.getByIdWithCount(toAuthzContext(ctx), input, weddingId)
+    return guestTagService.getByIdWithCount(ctx.authz, input, weddingId)
   }),
 
   /**
@@ -69,7 +68,7 @@ export const guestTagRouter = createTRPCRouter({
         ctx.auth.userId,
         ctx.auth.activeOrganization?.organizationId ?? null
       )
-      return guestTagService.update(toAuthzContext(ctx), input.id, weddingId, input.data)
+      return guestTagService.update(ctx.authz, input.id, weddingId, input.data)
     }),
 
   /**
@@ -80,6 +79,6 @@ export const guestTagRouter = createTRPCRouter({
       ctx.auth.userId,
       ctx.auth.activeOrganization?.organizationId ?? null
     )
-    return guestTagService.delete(toAuthzContext(ctx), input, weddingId)
+    return guestTagService.delete(ctx.authz, input, weddingId)
   }),
 })

@@ -38,6 +38,10 @@ describe('invitationRouter authz context plumbing', () => {
       activeOrganization,
       userId: 'user-123',
     },
+    authz: {
+      userId: 'user-123',
+      activeOrganization,
+    },
     db: {} as never,
     headers: new Headers(),
   })

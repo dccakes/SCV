@@ -8,7 +8,6 @@
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { RsvpSubmissionService } from '~/server/application/rsvp-submission/rsvp-submission.service'
 import { submitRsvpSchema } from '~/server/application/rsvp-submission/rsvp-submission.validator'
-import { toAuthzContext } from '~/server/authz/authorization.types'
 import { weddingService } from '~/server/domains/wedding'
 import { db } from '~/server/infrastructure/database'
 
@@ -24,6 +23,6 @@ export const rsvpSubmissionRouter = createTRPCRouter({
       ctx.auth.userId,
       ctx.auth.activeOrganization?.organizationId ?? null
     )
-    return rsvpSubmissionService.submitManagedRsvp(toAuthzContext(ctx), weddingId, input)
+    return rsvpSubmissionService.submitManagedRsvp(ctx.authz, weddingId, input)
   }),
 })

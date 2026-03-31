@@ -7,7 +7,6 @@
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
 import { rsvpSubmissionService, submitPublicRsvpSchema } from '~/server/application/rsvp-submission'
-import { type AuthzContext, toAuthzContext } from '~/server/authz/authorization.types'
 import { websiteService } from '~/server/domains/website'
 import {
   createWebsiteSchema,
@@ -21,15 +20,6 @@ import {
 } from '~/server/domains/website/website.validator'
 import { weddingService } from '~/server/domains/wedding'
 
-// Overrides sessionActiveOrganizationId with the wedding's org to ensure correct scope
-const toOrganizationScopedAuthzContext = (
-  ctx: Parameters<typeof toAuthzContext>[0],
-  organizationId: string
-): AuthzContext => ({
-  ...toAuthzContext(ctx),
-  sessionActiveOrganizationId: organizationId,
-})
-
 export const websiteRouter = createTRPCRouter({
   /**
    * Enable website add-on for wedding
@@ -42,7 +32,7 @@ export const websiteRouter = createTRPCRouter({
     )
 
     return websiteService.enableWebsite(
-      toOrganizationScopedAuthzContext(ctx, wedding.organizationId!),
+      ctx.authz,
       wedding.id,
       input
     )
@@ -58,7 +48,7 @@ export const websiteRouter = createTRPCRouter({
     )
 
     return websiteService.updateWebsite(
-      toOrganizationScopedAuthzContext(ctx, wedding.organizationId!),
+      ctx.authz,
       wedding.id,
       input
     )
@@ -76,7 +66,7 @@ export const websiteRouter = createTRPCRouter({
       )
 
       return websiteService.updateRsvpEnabled(
-        toOrganizationScopedAuthzContext(ctx, wedding.organizationId!),
+        ctx.authz,
         wedding.id,
         input.websiteId,
         input.isRsvpEnabled
@@ -95,7 +85,7 @@ export const websiteRouter = createTRPCRouter({
       )
 
       return websiteService.updateCoverPhoto(
-        toOrganizationScopedAuthzContext(ctx, wedding.organizationId!),
+        ctx.authz,
         wedding.id,
         input.coverPhotoUrl
       )
