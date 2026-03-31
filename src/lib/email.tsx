@@ -4,6 +4,7 @@ import { render } from '@react-email/render'
 import { Resend } from 'resend'
 
 import { OtpEmail } from '~/emails/otp-email'
+import { ResetPasswordEmail } from '~/emails/reset-password-email'
 import { env } from '~/env'
 
 const resend = new Resend(env.RESEND_API_KEY)
@@ -33,6 +34,25 @@ export async function sendOtpEmail({
     from: env.EMAIL_FROM,
     to,
     subject: subjects[type],
+    html,
+  })
+}
+
+export async function sendResetPasswordEmail({
+  to,
+  url,
+  userName,
+}: {
+  to: string
+  url: string
+  userName?: string
+}) {
+  const html = await render(<ResetPasswordEmail url={url} userName={userName} />)
+
+  await resend.emails.send({
+    from: env.EMAIL_FROM,
+    to,
+    subject: 'Reset your password',
     html,
   })
 }

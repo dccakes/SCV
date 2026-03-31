@@ -21,7 +21,8 @@ jest.mock('~/env', () => ({
 }))
 
 import { OtpEmail } from '~/emails/otp-email'
-import { sendOtpEmail } from '~/lib/email'
+import { ResetPasswordEmail } from '~/emails/reset-password-email'
+import { sendOtpEmail, sendResetPasswordEmail } from '~/lib/email'
 
 describe('sendOtpEmail', () => {
   const TO = 'recipient@example.com'
@@ -64,5 +65,39 @@ describe('sendOtpEmail', () => {
     const element = mockRender.mock.calls[0][0]
     expect(element.type).toBe(OtpEmail)
     expect(element.props).toMatchObject({ otp: OTP, type: 'email-verification' })
+  })
+})
+
+describe('sendResetPasswordEmail', () => {
+  const TO = 'user@example.com'
+  const URL = 'https://example.com/reset?token=abc'
+
+  it('sends with correct subject, to, and from', async () => {
+    await sendResetPasswordEmail({ to: TO, url: URL })
+
+    expect(mockEmailsSend).toHaveBeenCalledWith(
+      expect.objectContaining({ subject: 'Reset your password', to: TO, from: 'test@example.com' })
+    )
+  })
+
+  it('renders ResetPasswordEmail with the url', async () => {
+    await sendResetPasswordEmail({ to: TO, url: URL })
+
+    const element = mockRender.mock.calls[0][0]
+    expect(element.type).toBe(ResetPasswordEmail)
+    expect(element.props).toMatchObject({ url: URL })
+  })
+
+  it('passes userName to the template when provided', async () => {
+    await sendResetPasswordEmail({ to: TO, url: URL, userName: 'Shrek' })
+
+    const element = mockRender.mock.calls[0][0]
+    expect(element.props).toMatchObject({ userName: 'Shrek' })
+  })
+
+  it('passes undefined userName when omitted', async () => {
+    await sendResetPasswordEmail({ to: TO, url: URL })
+
+    expect(mockRender.mock.calls[0][0].props.userName).toBeUndefined()
   })
 })
