@@ -113,8 +113,8 @@ test.describe
         .getByRole('button', { name: 'Edit' })
       await editBtn.click()
 
-      // Change quote type to "Per Guest"
-      await page.getByRole('combobox').filter({ hasText: 'Flat Fee' }).click()
+      // Change quote type to "Per Guest" (click combobox regardless of current value for retry safety)
+      await page.getByRole('combobox').click()
       await page.getByRole('option', { name: 'Per Guest' }).click()
 
       // Save changes
