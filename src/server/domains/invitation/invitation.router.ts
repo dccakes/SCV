@@ -21,7 +21,7 @@ export const invitationRouter = createTRPCRouter({
   create: protectedProcedure.input(createInvitationSchema).mutation(async ({ ctx, input }) => {
     const weddingId = await weddingService.getWeddingIdByUserId(
       ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
+      ctx.auth.activeOrganization?.organizationId ?? null
     )
     return invitationService.createInvitation(toAuthzContext(ctx), weddingId, input)
   }),
@@ -40,7 +40,7 @@ export const invitationRouter = createTRPCRouter({
     if (!ctx.auth.userId) return undefined
     const weddingId = await weddingService.getWeddingIdByUserId(
       ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
+      ctx.auth.activeOrganization?.organizationId ?? null
     )
     return invitationService.getAllByWeddingId(weddingId)
   }),

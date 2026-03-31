@@ -18,7 +18,7 @@ export const giftRouter = createTRPCRouter({
   update: protectedProcedure.input(updateGiftSchema).mutation(async ({ ctx, input }) => {
     const weddingId = await weddingService.getWeddingIdByUserId(
       ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
+      ctx.auth.activeOrganization?.organizationId ?? null
     )
     return giftService.updateGift(toAuthzContext(ctx), weddingId, input)
   }),

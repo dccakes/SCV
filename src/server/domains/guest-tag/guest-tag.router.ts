@@ -29,7 +29,7 @@ export const guestTagRouter = createTRPCRouter({
   create: protectedProcedure.input(createGuestTagSchema).mutation(async ({ ctx, input }) => {
     const weddingId = await weddingService.getWeddingIdByUserId(
       ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
+      ctx.auth.activeOrganization?.organizationId ?? null
     )
     return guestTagService.create(toAuthzContext(ctx), {
       ...input,
@@ -43,7 +43,7 @@ export const guestTagRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async ({ ctx }) => {
     const weddingId = await weddingService.getWeddingIdByUserId(
       ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
+      ctx.auth.activeOrganization?.organizationId ?? null
     )
     return guestTagService.getByWeddingId(toAuthzContext(ctx), weddingId)
   }),
@@ -54,7 +54,7 @@ export const guestTagRouter = createTRPCRouter({
   getById: protectedProcedure.input(guestTagIdSchema).query(async ({ ctx, input }) => {
     const weddingId = await weddingService.getWeddingIdByUserId(
       ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
+      ctx.auth.activeOrganization?.organizationId ?? null
     )
     return guestTagService.getByIdWithCount(toAuthzContext(ctx), input, weddingId)
   }),
@@ -72,7 +72,7 @@ export const guestTagRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const weddingId = await weddingService.getWeddingIdByUserId(
         ctx.auth.userId,
-        ctx.auth.sessionActiveOrganizationId
+        ctx.auth.activeOrganization?.organizationId ?? null
       )
       return guestTagService.update(toAuthzContext(ctx), input.id, weddingId, input.data)
     }),
@@ -83,7 +83,7 @@ export const guestTagRouter = createTRPCRouter({
   delete: protectedProcedure.input(guestTagIdSchema).mutation(async ({ ctx, input }) => {
     const weddingId = await weddingService.getWeddingIdByUserId(
       ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
+      ctx.auth.activeOrganization?.organizationId ?? null
     )
     return guestTagService.delete(toAuthzContext(ctx), input, weddingId)
   }),

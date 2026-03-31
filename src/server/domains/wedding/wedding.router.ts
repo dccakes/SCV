@@ -31,7 +31,7 @@ export const weddingRouter = createTRPCRouter({
   update: protectedProcedure.input(updateWeddingSchema).mutation(async ({ ctx, input }) => {
     const wedding = await weddingService.getScopedWeddingByUserId(
       ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
+      ctx.auth.activeOrganization?.organizationId ?? null
     )
 
     return weddingService.updateWedding({

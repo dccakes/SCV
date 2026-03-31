@@ -38,7 +38,7 @@ export const websiteRouter = createTRPCRouter({
   create: protectedProcedure.input(createWebsiteSchema).mutation(async ({ ctx, input }) => {
     const wedding = await weddingService.getScopedWeddingByUserId(
       ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
+      ctx.auth.activeOrganization?.organizationId ?? null
     )
 
     return websiteService.enableWebsite(
@@ -54,7 +54,7 @@ export const websiteRouter = createTRPCRouter({
   update: protectedProcedure.input(updateWebsiteSchema).mutation(async ({ ctx, input }) => {
     const wedding = await weddingService.getScopedWeddingByUserId(
       ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
+      ctx.auth.activeOrganization?.organizationId ?? null
     )
 
     return websiteService.updateWebsite(
@@ -72,7 +72,7 @@ export const websiteRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const wedding = await weddingService.getScopedWeddingByUserId(
         ctx.auth.userId,
-        ctx.auth.sessionActiveOrganizationId
+        ctx.auth.activeOrganization?.organizationId ?? null
       )
 
       return websiteService.updateRsvpEnabled(
@@ -91,7 +91,7 @@ export const websiteRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const wedding = await weddingService.getScopedWeddingByUserId(
         ctx.auth.userId,
-        ctx.auth.sessionActiveOrganizationId
+        ctx.auth.activeOrganization?.organizationId ?? null
       )
 
       return websiteService.updateCoverPhoto(
@@ -107,7 +107,7 @@ export const websiteRouter = createTRPCRouter({
   getByUserId: protectedProcedure.query(async ({ ctx }) => {
     const wedding = await weddingService.getScopedWeddingByUserId(
       ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
+      ctx.auth.activeOrganization?.organizationId ?? null
     )
     return websiteService.getByWeddingId(wedding.id)
   }),

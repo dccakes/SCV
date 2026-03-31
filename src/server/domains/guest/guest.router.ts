@@ -22,7 +22,7 @@ export const guestRouter = createTRPCRouter({
   getAllByEventId: protectedProcedure.input(getByEventSchema).query(async ({ ctx, input }) => {
     const weddingId = await weddingService.getWeddingIdByUserId(
       ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
+      ctx.auth.activeOrganization?.organizationId ?? null
     )
     const event = await eventService.getById(input.eventId)
 
@@ -44,7 +44,7 @@ export const guestRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const weddingId = await weddingService.getWeddingIdByUserId(
         ctx.auth.userId,
-        ctx.auth.sessionActiveOrganizationId
+        ctx.auth.activeOrganization?.organizationId ?? null
       )
       const guests = await guestService.getAllByHouseholdId(input.householdId)
 
@@ -69,7 +69,7 @@ export const guestRouter = createTRPCRouter({
   getAllByUserId: protectedProcedure.query(async ({ ctx }) => {
     const weddingId = await weddingService.getWeddingIdByUserId(
       ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
+      ctx.auth.activeOrganization?.organizationId ?? null
     )
     return guestService.getAllByWeddingId(weddingId)
   }),

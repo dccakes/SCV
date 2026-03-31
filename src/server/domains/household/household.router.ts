@@ -30,7 +30,7 @@ export const householdRouter = createTRPCRouter({
   create: protectedProcedure.input(createHouseholdSchema).mutation(async ({ ctx, input }) => {
     const weddingId = await weddingService.getWeddingIdByUserId(
       ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
+      ctx.auth.activeOrganization?.organizationId ?? null
     )
     return householdManagementService.createHouseholdWithGuests(
       toAuthzContext(ctx),
@@ -45,7 +45,7 @@ export const householdRouter = createTRPCRouter({
   update: protectedProcedure.input(updateHouseholdSchema).mutation(async ({ ctx, input }) => {
     const weddingId = await weddingService.getWeddingIdByUserId(
       ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
+      ctx.auth.activeOrganization?.organizationId ?? null
     )
     return householdManagementService.updateHouseholdWithGuests(
       toAuthzContext(ctx),
@@ -62,7 +62,7 @@ export const householdRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const weddingId = await weddingService.getWeddingIdByUserId(
         ctx.auth.userId,
-        ctx.auth.sessionActiveOrganizationId
+        ctx.auth.activeOrganization?.organizationId ?? null
       )
 
       // Validate that all invites event IDs belong to this wedding
@@ -94,7 +94,7 @@ export const householdRouter = createTRPCRouter({
   delete: protectedProcedure.input(deleteHouseholdSchema).mutation(async ({ ctx, input }) => {
     const weddingId = await weddingService.getWeddingIdByUserId(
       ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
+      ctx.auth.activeOrganization?.organizationId ?? null
     )
     return householdManagementService.deleteHousehold(
       toAuthzContext(ctx),
@@ -109,7 +109,7 @@ export const householdRouter = createTRPCRouter({
   findBySearch: protectedProcedure.input(searchHouseholdSchema).query(async ({ ctx, input }) => {
     const weddingId = await weddingService.getWeddingIdByUserId(
       ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
+      ctx.auth.activeOrganization?.organizationId ?? null
     )
     return householdManagementService.searchHouseholds(
       toAuthzContext(ctx),

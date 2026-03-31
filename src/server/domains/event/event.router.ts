@@ -24,7 +24,7 @@ export const eventRouter = createTRPCRouter({
   create: protectedProcedure.input(createEventSchema).mutation(async ({ ctx, input }) => {
     const weddingId = await weddingService.getWeddingIdByUserId(
       ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
+      ctx.auth.activeOrganization?.organizationId ?? null
     )
     return eventService.createEvent(toAuthzContext(ctx), weddingId, input)
   }),
@@ -36,7 +36,7 @@ export const eventRouter = createTRPCRouter({
     if (!ctx.auth.userId) return undefined
     const weddingId = await weddingService.getWeddingIdByUserId(
       ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
+      ctx.auth.activeOrganization?.organizationId ?? null
     )
     return eventService.getWeddingEvents(weddingId)
   }),
@@ -48,7 +48,7 @@ export const eventRouter = createTRPCRouter({
     if (!ctx.auth.userId) return undefined
     const weddingId = await weddingService.getWeddingIdByUserId(
       ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
+      ctx.auth.activeOrganization?.organizationId ?? null
     )
     return eventService.getWeddingEventsWithStats(weddingId)
   }),
@@ -59,7 +59,7 @@ export const eventRouter = createTRPCRouter({
   update: protectedProcedure.input(updateEventSchema).mutation(async ({ ctx, input }) => {
     const weddingId = await weddingService.getWeddingIdByUserId(
       ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
+      ctx.auth.activeOrganization?.organizationId ?? null
     )
     return eventService.updateEvent(toAuthzContext(ctx), weddingId, input)
   }),

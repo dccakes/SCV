@@ -22,7 +22,7 @@ export const questionRouter = createTRPCRouter({
   upsert: protectedProcedure.input(upsertQuestionSchema).mutation(async ({ ctx, input }) => {
     const wedding = await weddingService.getScopedWeddingByUserId(
       ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
+      ctx.auth.activeOrganization?.organizationId ?? null
     )
 
     return questionService.upsertQuestion({
@@ -39,7 +39,7 @@ export const questionRouter = createTRPCRouter({
   delete: protectedProcedure.input(deleteQuestionSchema).mutation(async ({ ctx, input }) => {
     const wedding = await weddingService.getScopedWeddingByUserId(
       ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
+      ctx.auth.activeOrganization?.organizationId ?? null
     )
 
     return questionService.deleteQuestion({
