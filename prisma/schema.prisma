@@ -120,6 +120,7 @@ model User {
   sessions       Session[]
   accounts       Account[]
   userWeddings   UserWedding[]
+  connections    Connection[]
 }
 
 model Session {
@@ -165,6 +166,24 @@ model Verification {
   updatedAt  DateTime @updatedAt
   
   @@unique([identifier, value])
+}
+
+// Integration connections (Gmail, WhatsApp, etc.) — separate from Better Auth accounts
+model Connection {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider     String   // "gmail", "whatsapp", etc.
+  email        String   // Connected account email/identifier
+  accessToken  String   // OAuth access token
+  refreshToken String   // OAuth refresh token
+  scope        String   // Granted OAuth scopes
+  expiresAt    DateTime // Access token expiry
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, provider])
+  @@index([userId])
 }
 
 // Core: Household groups guests together (families, couples, singles)

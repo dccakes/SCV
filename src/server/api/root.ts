@@ -14,6 +14,7 @@ import { invitationRouter } from '~/server/domains/invitation/invitation.router'
 import { questionRouter } from '~/server/domains/question/question.router'
 import { createSelfFillRouter } from '~/server/domains/self-fill'
 import { userRouter } from '~/server/domains/user/user.router'
+import { gmailRouter } from '~/server/domains/gmail/gmail.router'
 import { vendorRouter } from '~/server/domains/vendor/vendor.router'
 import { websiteRouter } from '~/server/domains/website/website.router'
 import { weddingRouter } from '~/server/domains/wedding/wedding.router'
@@ -55,6 +56,9 @@ export const appRouter = createTRPCRouter({
 
   // Phase 5 add-on domains
   vendor: vendorRouter,
+
+  // Phase 6 integrations
+  gmail: gmailRouter,
 })
 
 // export type definition of API
