@@ -11,8 +11,10 @@ export async function middleware(req: NextRequest) {
   const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route))
 
   if (isProtectedRoute) {
-    // Check for session token in cookies (Better Auth default cookie name)
-    const sessionToken = req.cookies.get('better-auth.session_token')
+    // Better Auth uses __Secure- prefix on HTTPS (production/Vercel), plain prefix on HTTP (local dev)
+    const sessionToken =
+      req.cookies.get('__Secure-better-auth.session_token') ??
+      req.cookies.get('better-auth.session_token')
 
     // Redirect to home if not authenticated
     if (!sessionToken) {

@@ -88,7 +88,7 @@ const autoActivateFirstOrganization = async (
 
   if (sessionToken) {
     await db.$executeRaw`
-      UPDATE "session"
+      UPDATE "Session"
       SET "activeOrganizationId" = ${row.organizationId}
       WHERE "token" = ${sessionToken}
         AND ("activeOrganizationId" IS NULL OR "activeOrganizationId" != ${row.organizationId})
@@ -120,7 +120,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
 
   const sessionToken =
     session && typeof session === 'object' && 'session' in session
-      ? ((session.session as Record<string, unknown>)?.token as string | null) ?? null
+      ? (((session.session as Record<string, unknown>)?.token as string | null) ?? null)
       : null
 
   const activeOrganization: ActiveOrganization | null = userId
