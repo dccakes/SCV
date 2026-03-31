@@ -1,12 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { FiPlus, FiTag, FiX } from 'react-icons/fi'
-import { toast } from 'sonner'
 
-import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
-import { Checkbox } from '~/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -15,9 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '~/components/ui/dialog'
-import { Input } from '~/components/ui/input'
-import { Label } from '~/components/ui/label'
-import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import {
   Select,
   SelectContent,
@@ -25,7 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
-import { api } from '~/trpc/react'
+
+import { TagInput } from '~/components/guest-list/tag-input'
 
 export type HouseholdMemberDraft = {
   id?: number
@@ -46,24 +40,6 @@ type HouseholdMembersModalProps = {
   onSave: (nextMembers: HouseholdMemberDraft[]) => Promise<boolean>
 }
 
-const AGE_GROUP_LABELS: Record<HouseholdMemberDraft['ageGroup'], string> = {
-  INFANT: 'Infant (0-2)',
-  CHILD: 'Child (3-12)',
-  TEEN: 'Teen (13-17)',
-  ADULT: 'Adult (18+)',
-}
-
-const DEFAULT_COLORS = [
-  '#3b82f6',
-  '#10b981',
-  '#8b5cf6',
-  '#f59e0b',
-  '#ef4444',
-  '#ec4899',
-  '#06b6d4',
-  '#84cc16',
-]
-
 const getMemberName = (member: HouseholdMemberDraft) => {
   const first = member.firstName.trim()
   const last = member.lastName.trim()
@@ -76,24 +52,6 @@ export function HouseholdMembersModal(props: Readonly<HouseholdMembersModalProps
   const [draftMembers, setDraftMembers] = useState<HouseholdMemberDraft[]>(members)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-
-  const { data: tags = [], refetch: refetchTags } = api.guestTag.getAll.useQuery()
-
-  const [isCreatingTag, setIsCreatingTag] = useState(false)
-  const [newTagName, setNewTagName] = useState('')
-  const [newTagColor, setNewTagColor] = useState(DEFAULT_COLORS[0]!)
-
-  const createTagMutation = api.guestTag.create.useMutation({
-    onSuccess: async () => {
-      toast.success('Tag created!')
-      await refetchTags()
-      setNewTagName('')
-      setIsCreatingTag(false)
-    },
-    onError: (error) => {
-      toast.error(error.message ?? 'Failed to create tag')
-    },
-  })
 
   useEffect(() => {
     if (!open) return
@@ -212,7 +170,6 @@ export function HouseholdMembersModal(props: Readonly<HouseholdMembersModalProps
           {draftMembers.map((member, index) => {
             const memberName = getMemberName(member)
             const removeDisabled = member.isPrimaryContact && primaryCount < 2
-            const memberTags = tags.filter((tag) => member.tagIds.includes(tag.id))
 
             return (
               <div
@@ -322,164 +279,17 @@ export function HouseholdMembersModal(props: Readonly<HouseholdMembersModalProps
                     </Select>
                   </div>
 
-                  <div className='space-y-1'>
+                  <div className='space-y-1 sm:col-span-2'>
                     <span className='font-mono text-[0.55rem] text-foreground/55 uppercase tracking-wider'>
-                      Tags ({member.tagIds.length}/10)
+                      Tags
                     </span>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          type='button'
-                          variant='outline'
-                          className='h-9 w-full justify-start gap-2 text-sm'
-                          aria-label={`Edit tags for ${memberName}`}
-                        >
-                          <FiTag className='h-3.5 w-3.5 shrink-0' />
-                          {memberTags.length > 0 ? (
-                            <span className='truncate'>
-                              {memberTags.map((t) => t.name).join(', ')}
-                            </span>
-                          ) : (
-                            <span className='text-muted-foreground'>Select tags</span>
-                          )}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className='w-64 p-3' align='start'>
-                        <div className='space-y-3'>
-                          {tags.length === 0 && !isCreatingTag && (
-                            <p className='py-2 text-center text-muted-foreground text-sm'>
-                              No tags yet.
-                            </p>
-                          )}
-                          {tags.length > 0 && (
-                            <div className='max-h-[180px] space-y-1.5 overflow-y-auto'>
-                              {tags.map((tag) => {
-                                const isChecked = member.tagIds.includes(tag.id)
-                                const isMaxReached = member.tagIds.length >= 10 && !isChecked
-                                return (
-                                  <div key={tag.id} className='flex items-center space-x-2'>
-                                    <Checkbox
-                                      id={`tag-${member.id ?? index}-${tag.id}`}
-                                      checked={isChecked}
-                                      disabled={isMaxReached}
-                                      onCheckedChange={() => toggleTag(index, tag.id)}
-                                    />
-                                    <label
-                                      htmlFor={`tag-${member.id ?? index}-${tag.id}`}
-                                      className='flex cursor-pointer items-center gap-1.5 text-sm leading-none'
-                                    >
-                                      {tag.color && (
-                                        <span
-                                          className='h-2.5 w-2.5 rounded-full'
-                                          style={{ backgroundColor: tag.color }}
-                                        />
-                                      )}
-                                      {tag.name}
-                                    </label>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          )}
-                          {!isCreatingTag ? (
-                            <Button
-                              type='button'
-                              variant='outline'
-                              size='sm'
-                              onClick={() => setIsCreatingTag(true)}
-                              className='w-full'
-                            >
-                              <FiPlus className='mr-1.5 h-3.5 w-3.5' />
-                              New tag
-                            </Button>
-                          ) : (
-                            <div className='space-y-2 border-t pt-2'>
-                              <Input
-                                value={newTagName}
-                                onChange={(e) => setNewTagName(e.target.value)}
-                                placeholder='Tag name'
-                                maxLength={20}
-                                autoFocus
-                              />
-                              <div className='flex gap-1.5'>
-                                {DEFAULT_COLORS.map((color) => (
-                                  <button
-                                    key={color}
-                                    type='button'
-                                    onClick={() => setNewTagColor(color)}
-                                    className={`h-6 w-6 rounded-full border-2 ${
-                                      newTagColor === color
-                                        ? 'scale-110 border-primary'
-                                        : 'border-transparent'
-                                    }`}
-                                    style={{ backgroundColor: color }}
-                                  />
-                                ))}
-                              </div>
-                              <div className='flex gap-2'>
-                                <Button
-                                  type='button'
-                                  size='sm'
-                                  className='flex-1'
-                                  disabled={
-                                    newTagName.trim().length === 0 || createTagMutation.isPending
-                                  }
-                                  onClick={() =>
-                                    createTagMutation.mutate({
-                                      name: newTagName.trim(),
-                                      color: newTagColor,
-                                    })
-                                  }
-                                >
-                                  {createTagMutation.isPending ? 'Creating...' : 'Create'}
-                                </Button>
-                                <Button
-                                  type='button'
-                                  variant='outline'
-                                  size='sm'
-                                  onClick={() => {
-                                    setIsCreatingTag(false)
-                                    setNewTagName('')
-                                  }}
-                                >
-                                  Cancel
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
+                    <TagInput
+                      selectedTagIds={member.tagIds}
+                      onToggle={(tagId) => toggleTag(index, tagId)}
+                      ariaLabel={`Tags for ${memberName}`}
+                    />
                   </div>
                 </div>
-
-                {memberTags.length > 0 && (
-                  <div className='mt-2 flex flex-wrap gap-1.5'>
-                    {memberTags.map((tag) => (
-                      <Badge
-                        key={tag.id}
-                        variant='secondary'
-                        className='flex items-center gap-1 px-2 py-0.5 text-xs'
-                      >
-                        {tag.color && (
-                          <span
-                            className='h-2 w-2 rounded-full'
-                            style={{ backgroundColor: tag.color }}
-                          />
-                        )}
-                        {tag.name}
-                        <button
-                          type='button'
-                          onClick={() => toggleTag(index, tag.id)}
-                          className='ml-0.5 hover:text-destructive'
-                          aria-label={`Remove tag ${tag.name} from ${memberName}`}
-                        >
-                          <FiX className='h-3 w-3' />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
               </div>
             )
           })}
