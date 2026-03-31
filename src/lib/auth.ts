@@ -45,6 +45,8 @@ export const auth = betterAuth({
       },
       otpLength: 6,
       expiresIn: 600, // 10 minutes
+      // Replace link-based email verification with OTP system-wide
+      overrideDefaultEmailVerification: true,
     }),
   ],
 })
