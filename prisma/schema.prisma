@@ -37,6 +37,15 @@ model Wedding {
   // Add-on relationships
   website        Website?
   vendors        Vendor[]
+
+  // Etta AI agent
+  ettaActor        EttaActor?
+  ettaSuggestions  EttaSuggestion[]
+  ettaMemories     EttaMemory[]
+  auditLogs        AuditLog[]
+  guestQuestions   GuestQuestion[]
+  faqs             Faq[]
+  notifications    Notification[]
 }
 
 // Join table: Allows multiple users per wedding (co-management)
@@ -240,6 +249,7 @@ model Guest {
   invitations      Invitation[]     @relation(name: "Guest_Invitations")
   optionResponses  OptionResponse[] @relation(name: "Guest_OptionResponses")
   answers          Answer[]         @relation(name: "Guest_Answers")
+  guestQuestions   GuestQuestion[]
 
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
@@ -523,4 +533,122 @@ model VendorQuoteFile {
   createdAt DateTime    @default(now())
 
   @@index([quoteId])
+}
+
+// ─── Etta AI Agent ───────────────────────────────────────────────────────────
+
+// System actor provisioned per wedding for the Etta AI agent
+model EttaActor {
+  id             String           @id @default(uuid())
+  weddingId      String           @unique @map("wedding_id")
+  wedding        Wedding          @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  actorType      String           @default("etta") @map("actor_type")
+  permissions    String[]         @default([])
+  provisionedAt  DateTime         @default(now()) @map("provisioned_at")
+  lastActiveAt   DateTime?        @map("last_active_at")
+  revokedAt      DateTime?        @map("revoked_at")
+
+  suggestions    EttaSuggestion[]
+
+  @@map("etta_actors")
+}
+
+// T1/T2 pending actions proposed by Etta, shown in dashboard for couple approval
+model EttaSuggestion {
+  id             String    @id @default(uuid())
+  weddingId      String    @map("wedding_id")
+  wedding        Wedding   @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  actorId        String    @map("actor_id")
+  actor          EttaActor @relation(fields: [actorId], references: [id])
+  actionType     String    @map("action_type")
+  tier           String    // 'T1' | 'T2'
+  payload        Json
+  summary        String
+  status         String    @default("pending") // pending | approved | dismissed | executed
+  chatMessageId  String?   @map("chat_message_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  resolvedAt     DateTime? @map("resolved_at")
+  resolvedBy     String?   @map("resolved_by")
+
+  @@map("etta_suggestions")
+  @@index([weddingId, status])
+  @@index([createdAt(sort: Desc)])
+}
+
+// Semantic memory store for long-term couple preferences and decisions
+// The embedding column (vector(1536)) is managed via raw SQL / pgvector, not Prisma
+model EttaMemory {
+  id         String   @id @default(uuid())
+  weddingId  String   @map("wedding_id")
+  wedding    Wedding  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  content    String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("etta_memory")
+  @@index([weddingId])
+}
+
+// Unified audit trail for every action by couple, Etta, or guest
+model AuditLog {
+  id              String   @id @default(uuid())
+  weddingId       String   @map("wedding_id")
+  wedding         Wedding  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  actorId         String   @map("actor_id")
+  actorType       String   @map("actor_type") // 'etta' | 'couple' | 'guest'
+  action          String
+  resourceType    String   @map("resource_type")
+  resourceId      String?  @map("resource_id")
+  tier            String?  // 'T0' | 'T1' | 'T2'
+  payloadSnapshot Json?    @map("payload_snapshot")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@map("audit_log")
+  @@index([weddingId, createdAt(sort: Desc)])
+  @@index([actorId])
+}
+
+// Guest questions flagged by Etta Concierge for couple to answer
+model GuestQuestion {
+  id         String    @id @default(uuid())
+  weddingId  String    @map("wedding_id")
+  wedding    Wedding   @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  guestId    Int       @map("guest_id")
+  guest      Guest     @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  question   String
+  context    String?
+  answered   Boolean   @default(false)
+  answer     String?
+  createdAt  DateTime  @default(now()) @map("created_at")
+  answeredAt DateTime? @map("answered_at")
+
+  @@map("guest_questions")
+  @@index([weddingId, answered])
+}
+
+// Couple-authored FAQ entries surfaced to Etta Concierge for guest queries
+model Faq {
+  id         String   @id @default(uuid())
+  weddingId  String   @map("wedding_id")
+  wedding    Wedding  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  question   String
+  answer     String
+  published  Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("faqs")
+  @@index([weddingId, published])
+}
+
+// In-app notifications for the couple
+model Notification {
+  id         String   @id @default(uuid())
+  weddingId  String   @map("wedding_id")
+  wedding    Wedding  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  type       String   // 'guest_rsvp' | 'guest_question' | 'suggestion'
+  payload    Json
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("notifications")
+  @@index([weddingId, read])
 }

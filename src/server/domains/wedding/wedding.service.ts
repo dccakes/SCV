@@ -7,6 +7,7 @@
 
 import { TRPCError } from '@trpc/server'
 
+import { provisionEtta } from '~/lib/etta/provision'
 import type { EventService } from '~/server/domains/event/event.service'
 import type { GuestTagService } from '~/server/domains/guest-tag/guest-tag.service'
 import type { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
@@ -83,6 +84,9 @@ export class WeddingService {
         allowTagAlongs: false,
       })
     }
+
+    // Provision Etta AI agent actor (silent, ~50ms)
+    await provisionEtta(wedding.id)
 
     return wedding
   }

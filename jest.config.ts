@@ -31,7 +31,7 @@ const config: Config = {
 export default async () => {
   const cfg = await (createJestConfig(config) as () => Promise<Config>)()
 
-  const esmPackages = ['geist', 'copy-anything', 'is-what', '@react-email']
+  const esmPackages = ['geist', 'copy-anything', 'is-what', '@react-email', 'jose']
   const pkg = esmPackages.join('|')
 
   cfg.transformIgnorePatterns = [
