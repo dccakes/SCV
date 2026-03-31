@@ -4,7 +4,7 @@ import { nextCookies } from 'better-auth/next-js'
 import { emailOTP } from 'better-auth/plugins'
 
 import { env } from '~/env'
-import { sendOtpEmail, sendResetPasswordEmail, sendVerificationEmail } from '~/lib/email'
+import { sendOtpEmail } from '~/lib/email'
 import { db } from '~/server/db'
 
 export const auth = betterAuth({
@@ -22,32 +22,6 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    sendResetPassword: async ({
-      user,
-      url,
-    }: {
-      user: { email: string; name?: string | null }
-      url: string
-    }) => {
-      await sendResetPasswordEmail({
-        to: user.email,
-        url,
-        userName: user.name ?? undefined,
-      })
-    },
-    sendVerificationEmail: async ({
-      user,
-      url,
-    }: {
-      user: { email: string; name?: string | null }
-      url: string
-    }) => {
-      await sendVerificationEmail({
-        to: user.email,
-        url,
-        userName: user.name ?? undefined,
-      })
-    },
   },
   socialProviders: {
     // Add social providers as needed
