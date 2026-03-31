@@ -66,6 +66,38 @@ const fetchActiveMember = async (
 }
 
 /**
+ * If the session has no active organization, find the user's first member row and
+ * write it back to the session so subsequent requests don't need to repeat this.
+ * Covers: existing users migrated via backfill, and new users who create an org
+ * programmatically (not via the Better Auth API route which sets it automatically).
+ */
+const autoActivateFirstOrganization = async (
+  userId: string,
+  sessionToken: string | null
+): Promise<ActiveOrganization | null> => {
+  const rows = await db.$queryRaw<Array<{ organizationId: string; role: string }>>`
+    SELECT "organizationId", "role"
+    FROM "member"
+    WHERE "userId" = ${userId}
+    ORDER BY "createdAt" ASC
+    LIMIT 1
+  `
+
+  const row = rows[0]
+  if (!row) return null
+
+  if (sessionToken) {
+    await db.$executeRaw`
+      UPDATE "session"
+      SET "activeOrganizationId" = ${row.organizationId}
+      WHERE "token" = ${sessionToken}
+    `
+  }
+
+  return { organizationId: row.organizationId, role: row.role }
+}
+
+/**
  * 1. CONTEXT
  *
  * This section defines the "contexts" that are available in the backend API.
@@ -85,10 +117,16 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
   const userId = session?.user?.id ?? null
   const sessionActiveOrganizationId = getSessionActiveOrganizationId(session)
 
-  const activeOrganization: ActiveOrganization | null =
-    userId && sessionActiveOrganizationId
-      ? await fetchActiveMember(userId, sessionActiveOrganizationId)
+  const sessionToken =
+    session && typeof session === 'object' && 'session' in session
+      ? ((session.session as Record<string, unknown>)?.token as string | null) ?? null
       : null
+
+  const activeOrganization: ActiveOrganization | null = userId
+    ? sessionActiveOrganizationId
+      ? await fetchActiveMember(userId, sessionActiveOrganizationId)
+      : await autoActivateFirstOrganization(userId, sessionToken)
+    : null
 
   return {
     db,
