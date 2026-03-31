@@ -299,72 +299,113 @@ test.describe('Guest List Drawer - Tags Management', () => {
     await page.goto('/guest-list')
   })
 
-  test('should open tags modal from the members modal', async ({ page }) => {
+  test('should show inline tag input for each member in the modal', async ({ page }) => {
     await page.getByRole('button', { name: /select donkey.*household/i }).click()
     await page.getByRole('button', { name: /manage members/i }).click()
 
-    // Donkey has 2 tags (family, bridal-party), so button should show "Tags (2)"
-    await page.getByRole('button', { name: /tags for donkey the donkey/i }).click()
-
-    // Tags modal should open
-    await expect(page.getByRole('heading', { name: /tags for donkey the donkey/i })).toBeVisible()
-    await expect(page.getByText(/select tags for this guest or create new ones/i)).toBeVisible()
+    // Each member should have an inline tag input
+    await expect(page.getByLabel('Tags for Donkey The Donkey')).toBeVisible()
+    await expect(page.getByLabel('Tags for Dragon The Dragon')).toBeVisible()
   })
 
-  test('should show available tags from seed data', async ({ page }) => {
+  test('should show existing tags as badges in the tag input', async ({ page }) => {
     await page.getByRole('button', { name: /select donkey.*household/i }).click()
     await page.getByRole('button', { name: /manage members/i }).click()
-    await page.getByRole('button', { name: /tags for donkey the donkey/i }).click()
 
-    // Seed has 6 tags: Family, Friends, Bridal Party, VIP, Out of Town, Kids
-    await expect(page.getByText('Available Tags')).toBeVisible()
-    await expect(page.getByLabel('Family', { exact: true })).toBeVisible()
-    await expect(page.getByLabel('Friends', { exact: true })).toBeVisible()
-    await expect(page.getByLabel('Bridal Party', { exact: true })).toBeVisible()
-    await expect(page.getByLabel('VIP', { exact: true })).toBeVisible()
-    await expect(page.getByLabel('Out of Town', { exact: true })).toBeVisible()
-    await expect(page.getByLabel('Kids', { exact: true })).toBeVisible()
+    // Donkey has tags (Family, Bridal Party from seed data) shown as badges
+    const donkeyTagInput = page.getByLabel('Tags for Donkey The Donkey').locator('..')
+    await expect(donkeyTagInput.getByText('Family')).toBeVisible()
+    await expect(donkeyTagInput.getByText('Bridal Party')).toBeVisible()
   })
 
-  test('should open tags modal for a guest member', async ({ page }) => {
+  test('should filter tags when typing in the tag input', async ({ page }) => {
     await page.getByRole('button', { name: /select donkey.*household/i }).click()
     await page.getByRole('button', { name: /manage members/i }).click()
 
-    // Click the tags button for Donkey
-    const tagsButton = page.getByRole('button', { name: /tags for donkey the donkey/i })
-    await expect(tagsButton).toBeVisible()
-    await tagsButton.click()
+    // Type in Dragon's tag input to filter
+    const dragonTagInput = page.getByLabel('Tags for Dragon The Dragon')
+    await dragonTagInput.fill('fam')
 
-    // Tags modal should open and show available tags
-    await expect(page.getByText('Available Tags')).toBeVisible()
+    // Dropdown should show filtered results containing "Family"
+    await expect(page.getByRole('button', { name: /Family/i }).last()).toBeVisible()
   })
 
-  test('should show the create new tag form', async ({ page }) => {
+  test('should show create option when typing a non-existing tag name', async ({ page }) => {
     await page.getByRole('button', { name: /select donkey.*household/i }).click()
     await page.getByRole('button', { name: /manage members/i }).click()
-    await page.getByRole('button', { name: /tags for donkey the donkey/i }).click()
 
-    // Click "Create New Tag" button
-    await page.getByRole('button', { name: /create new tag/i }).click()
+    const dragonTagInput = page.getByLabel('Tags for Dragon The Dragon')
+    await dragonTagInput.fill('Neighbors')
 
-    // Should show the form with name input and color picker
-    await expect(page.getByLabel('Tag Name')).toBeVisible()
-    // Color label doesn't have htmlFor, so use getByText
-    await expect(page.getByText('Color', { exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Create Tag' })).toBeVisible()
+    // Should show a "Create" option in the dropdown
+    await expect(page.getByText('Create')).toBeVisible()
+    await expect(page.getByText('Neighbors')).toBeVisible()
   })
 
-  test('should cancel tag modal without changes', async ({ page }) => {
+  test('should remove a tag by clicking the remove button on its badge', async ({ page }) => {
     await page.getByRole('button', { name: /select donkey.*household/i }).click()
     await page.getByRole('button', { name: /manage members/i }).click()
-    await page.getByRole('button', { name: /tags for donkey the donkey/i }).click()
 
-    // Cancel
-    await page.getByRole('button', { name: 'Cancel' }).first().click()
+    // Remove the "Family" tag from Donkey
+    await page.getByLabel('Remove Family').first().click()
 
-    // Tags modal should close but members modal should remain
-    await expect(page.getByRole('heading', { name: /tags for donkey/i })).not.toBeVisible()
+    // The Family badge should no longer be in Donkey's tag input
+    const donkeyTagInput = page.getByLabel('Tags for Donkey The Donkey').locator('..')
+    await expect(donkeyTagInput.getByText('Family')).not.toBeVisible()
+  })
+
+  test('should allow editing tags for multiple members without leaving the modal', async ({
+    page,
+  }) => {
+    await page.getByRole('button', { name: /select donkey.*household/i }).click()
+    await page.getByRole('button', { name: /manage members/i }).click()
+
+    // Add a tag to Dragon by clicking in the dropdown
+    const dragonTagInput = page.getByLabel('Tags for Dragon The Dragon')
+    await dragonTagInput.click()
+
+    // Click VIP in the dropdown
+    await page.getByRole('button', { name: /VIP/i }).last().click()
+
+    // Should still be in the members modal (not a separate tag modal)
     await expect(page.getByRole('heading', { name: /manage household members/i })).toBeVisible()
+  })
+})
+
+test.describe('Guest List Drawer - Age Group Editing', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/guest-list')
+  })
+
+  test('should show age group selector for each member', async ({ page }) => {
+    await page.getByRole('button', { name: /select donkey.*household/i }).click()
+    await page.getByRole('button', { name: /manage members/i }).click()
+
+    // Each member should have an age group selector
+    await expect(page.getByLabel('Age group for Donkey The Donkey')).toBeVisible()
+    await expect(page.getByLabel('Age group for Dragon The Dragon')).toBeVisible()
+  })
+
+  test('should display current age group value', async ({ page }) => {
+    // Three Bears household has Baby Bear as CHILD
+    await page.getByRole('button', { name: /select papa.*household/i }).click()
+    await page.getByRole('button', { name: /manage members/i }).click()
+
+    // Baby Bear should show "Child (3-12 years)" in the select
+    const babyBearAgeGroup = page.getByLabel('Age group for Baby Bear')
+    await expect(babyBearAgeGroup).toContainText(/Child/)
+  })
+
+  test('should allow changing age group', async ({ page }) => {
+    await page.getByRole('button', { name: /select papa.*household/i }).click()
+    await page.getByRole('button', { name: /manage members/i }).click()
+
+    // Change Baby Bear from Child to Teen
+    await page.getByLabel('Age group for Baby Bear').click()
+    await page.getByRole('option', { name: /Teen/ }).click()
+
+    // Should now show Teen
+    await expect(page.getByLabel('Age group for Baby Bear')).toContainText(/Teen/)
   })
 })
 

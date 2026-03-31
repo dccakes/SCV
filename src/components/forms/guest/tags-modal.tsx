@@ -20,6 +20,7 @@ import {
 } from '~/components/ui/dialog'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
+import { TAG_COLORS } from '~/lib/constants'
 import { api } from '~/trpc/react'
 
 type TagsModalProps = {
@@ -37,16 +38,7 @@ const createTagSchema = z.object({
 
 type CreateTagFormData = z.infer<typeof createTagSchema>
 
-const DEFAULT_COLORS = [
-  '#3b82f6', // blue
-  '#10b981', // green
-  '#8b5cf6', // purple
-  '#f59e0b', // amber
-  '#ef4444', // red
-  '#ec4899', // pink
-  '#06b6d4', // cyan
-  '#84cc16', // lime
-]
+const DEFAULT_COLORS = TAG_COLORS
 
 export function TagsModal({
   open,

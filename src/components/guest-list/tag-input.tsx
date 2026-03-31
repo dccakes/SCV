@@ -1,46 +1,44 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { FiX } from 'react-icons/fi'
 import { toast } from 'sonner'
 
+import { useOuterClick } from '~/components/hooks'
 import { Badge } from '~/components/ui/badge'
+import { MAX_TAGS_PER_GUEST, pickRandomTagColor } from '~/lib/constants'
 import { api } from '~/trpc/react'
 
-const RANDOM_COLORS = [
-  '#3b82f6',
-  '#10b981',
-  '#8b5cf6',
-  '#f59e0b',
-  '#ef4444',
-  '#ec4899',
-  '#06b6d4',
-  '#84cc16',
-]
+type Tag = { id: string; name: string; color: string | null }
 
-const pickRandomColor = () =>
-  RANDOM_COLORS[Math.floor(Math.random() * RANDOM_COLORS.length)] ?? RANDOM_COLORS[0]
+type TagOption = { type: 'tag'; tag: Tag }
+type CreateOption = { type: 'create'; name: string }
+type Option = TagOption | CreateOption
 
 type TagInputProps = {
   selectedTagIds: string[]
+  tags: Tag[]
   onToggle: (tagId: string) => void
-  maxTags?: number
+  onTagCreated: (tagId: string) => void
   ariaLabel?: string
 }
 
-export function TagInput({ selectedTagIds, onToggle, maxTags = 10, ariaLabel }: TagInputProps) {
+export function TagInput({
+  selectedTagIds,
+  tags,
+  onToggle,
+  onTagCreated,
+  ariaLabel,
+}: TagInputProps) {
   const [query, setQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(0)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
 
-  const { data: tags = [], refetch: refetchTags } = api.guestTag.getAll.useQuery()
+  const containerRef = useOuterClick<HTMLDivElement>(useCallback(() => setIsOpen(false), []))
 
   const createTagMutation = api.guestTag.create.useMutation({
-    onSuccess: async (created) => {
-      await refetchTags()
-      onToggle(created.id)
+    onSuccess: (created) => {
+      onTagCreated(created.id)
       setQuery('')
     },
     onError: (error) => {
@@ -48,51 +46,40 @@ export function TagInput({ selectedTagIds, onToggle, maxTags = 10, ariaLabel }: 
     },
   })
 
-  const selectedTags = tags.filter((tag) => selectedTagIds.includes(tag.id))
+  const selectedTags = useMemo(
+    () => tags.filter((tag) => selectedTagIds.includes(tag.id)),
+    [tags, selectedTagIds]
+  )
 
   const trimmedQuery = query.trim().toLowerCase()
-  const filtered = trimmedQuery
-    ? tags.filter((tag) => tag.name.toLowerCase().includes(trimmedQuery))
-    : tags
+  const isMaxReached = selectedTagIds.length >= MAX_TAGS_PER_GUEST
 
-  const exactMatch = tags.some((tag) => tag.name.toLowerCase() === trimmedQuery)
-  const canCreate = trimmedQuery.length > 0 && trimmedQuery.length <= 20 && !exactMatch
-  const isMaxReached = selectedTagIds.length >= maxTags
+  const options = useMemo(() => {
+    const filtered = trimmedQuery
+      ? tags.filter((tag) => tag.name.toLowerCase().includes(trimmedQuery))
+      : tags
 
-  // Build the list of options: filtered tags + optional "create" row
-  const options: Array<{ type: 'tag'; id: string } | { type: 'create'; name: string }> = [
-    ...filtered.map((tag) => ({ type: 'tag' as const, id: tag.id })),
-    ...(canCreate && !isMaxReached ? [{ type: 'create' as const, name: query.trim() }] : []),
-  ]
+    const exactMatch = tags.some((tag) => tag.name.toLowerCase() === trimmedQuery)
+    const canCreate = trimmedQuery.length > 0 && trimmedQuery.length <= 20 && !exactMatch
 
-  // Reset highlight when query changes
-  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally reacts to trimmedQuery changes
-  useEffect(() => {
-    setHighlightedIndex(0)
-  }, [trimmedQuery])
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false)
-      }
+    const result: Option[] = filtered.map((tag) => ({ type: 'tag' as const, tag }))
+    if (canCreate && !isMaxReached) {
+      result.push({ type: 'create' as const, name: query.trim() })
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+    return result
+  }, [tags, trimmedQuery, isMaxReached, query])
 
   const selectOption = (index: number) => {
     const option = options[index]
     if (!option) return
 
     if (option.type === 'tag') {
-      const isSelected = selectedTagIds.includes(option.id)
+      const isSelected = selectedTagIds.includes(option.tag.id)
       if (!isSelected && isMaxReached) return
-      onToggle(option.id)
+      onToggle(option.tag.id)
       setQuery('')
     } else {
-      createTagMutation.mutate({ name: option.name, color: pickRandomColor() })
+      createTagMutation.mutate({ name: option.name, color: pickRandomTagColor() })
     }
   }
 
@@ -127,7 +114,6 @@ export function TagInput({ selectedTagIds, onToggle, maxTags = 10, ariaLabel }: 
       }
       case 'Escape':
         setIsOpen(false)
-        inputRef.current?.blur()
         break
     }
   }
@@ -138,7 +124,7 @@ export function TagInput({ selectedTagIds, onToggle, maxTags = 10, ariaLabel }: 
       {/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled by the embedded input */}
       <div
         className='flex min-h-[36px] flex-wrap items-center gap-1 rounded-md border border-border/70 bg-background px-2 py-1 focus-within:ring-1 focus-within:ring-ring'
-        onClick={() => inputRef.current?.focus()}
+        onClick={() => containerRef.current?.querySelector('input')?.focus()}
       >
         {selectedTags.map((tag) => (
           <Badge
@@ -147,10 +133,7 @@ export function TagInput({ selectedTagIds, onToggle, maxTags = 10, ariaLabel }: 
             className='flex shrink-0 items-center gap-1 px-1.5 py-0 text-xs'
           >
             {tag.color && (
-              <span
-                className='h-2 w-2 rounded-full'
-                style={{ backgroundColor: tag.color }}
-              />
+              <span className='h-2 w-2 rounded-full' style={{ backgroundColor: tag.color }} />
             )}
             {tag.name}
             <button
@@ -167,11 +150,11 @@ export function TagInput({ selectedTagIds, onToggle, maxTags = 10, ariaLabel }: 
           </Badge>
         ))}
         <input
-          ref={inputRef}
           type='text'
           value={query}
           onChange={(e) => {
             setQuery(e.target.value)
+            setHighlightedIndex(0)
             setIsOpen(true)
           }}
           onFocus={() => setIsOpen(true)}
@@ -187,8 +170,7 @@ export function TagInput({ selectedTagIds, onToggle, maxTags = 10, ariaLabel }: 
         <div className='absolute z-50 mt-1 max-h-[180px] w-full overflow-y-auto rounded-md border bg-popover shadow-md'>
           {options.map((option, i) => {
             if (option.type === 'tag') {
-              const tag = tags.find((t) => t.id === option.id)
-              if (!tag) return null
+              const { tag } = option
               const isSelected = selectedTagIds.includes(tag.id)
               const disabled = !isSelected && isMaxReached
 
@@ -229,9 +211,9 @@ export function TagInput({ selectedTagIds, onToggle, maxTags = 10, ariaLabel }: 
                 type='button'
                 onMouseEnter={() => setHighlightedIndex(i)}
                 onClick={() => selectOption(i)}
-                className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm ${
+                className={`flex w-full items-center gap-2 border-border/50 border-t px-3 py-1.5 text-left text-sm ${
                   i === highlightedIndex ? 'bg-accent text-accent-foreground' : ''
-                } cursor-pointer border-border/50 border-t`}
+                } cursor-pointer`}
               >
                 <span className='text-muted-foreground'>Create</span>
                 <Badge variant='secondary' className='px-1.5 py-0 text-xs'>
