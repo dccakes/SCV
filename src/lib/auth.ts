@@ -1,8 +1,10 @@
 import { betterAuth } from 'better-auth'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { nextCookies } from 'better-auth/next-js'
+import { emailOTP } from 'better-auth/plugins'
 
 import { env } from '~/env'
+import { sendOtpEmail, sendResetPasswordEmail, sendVerificationEmail } from '~/lib/email'
 import { db } from '~/server/db'
 
 export const auth = betterAuth({
@@ -20,6 +22,32 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    sendResetPassword: async ({
+      user,
+      url,
+    }: {
+      user: { email: string; name?: string | null }
+      url: string
+    }) => {
+      await sendResetPasswordEmail({
+        to: user.email,
+        url,
+        userName: user.name ?? undefined,
+      })
+    },
+    sendVerificationEmail: async ({
+      user,
+      url,
+    }: {
+      user: { email: string; name?: string | null }
+      url: string
+    }) => {
+      await sendVerificationEmail({
+        to: user.email,
+        url,
+        userName: user.name ?? undefined,
+      })
+    },
   },
   socialProviders: {
     // Add social providers as needed
@@ -35,7 +63,16 @@ export const auth = betterAuth({
   experimental: {
     joins: true, // Enable joins for 2-3x performance improvement
   },
-  plugins: [nextCookies()],
+  plugins: [
+    nextCookies(),
+    emailOTP({
+      async sendVerificationOTP({ email, otp, type }) {
+        await sendOtpEmail({ to: email, otp, type })
+      },
+      otpLength: 6,
+      expiresIn: 600, // 10 minutes
+    }),
+  ],
 })
 
 export type Session = typeof auth.$Infer.Session
