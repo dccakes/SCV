@@ -7,7 +7,14 @@ import { OtpEmail } from '~/emails/otp-email'
 import { ResetPasswordEmail } from '~/emails/reset-password-email'
 import { env } from '~/env'
 
-const resend = new Resend(env.RESEND_API_KEY)
+let _resend: Resend | null = null
+function getResend(): Resend {
+  if (!_resend) {
+    if (!env.RESEND_API_KEY) throw new Error('RESEND_API_KEY is not configured')
+    _resend = new Resend(env.RESEND_API_KEY)
+  }
+  return _resend
+}
 
 export async function sendOtpEmail({
   to,
@@ -30,7 +37,7 @@ export async function sendOtpEmail({
 
   const html = await render(<OtpEmail otp={otp} type={templateType} />)
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: env.EMAIL_FROM,
     to,
     subject: subjects[type],
@@ -49,7 +56,7 @@ export async function sendResetPasswordEmail({
 }) {
   const html = await render(<ResetPasswordEmail url={url} userName={userName} />)
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: env.EMAIL_FROM,
     to,
     subject: 'Reset your password',

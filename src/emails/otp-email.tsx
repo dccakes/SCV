@@ -1,4 +1,13 @@
-import { Body, Container, Head, Heading, Html, Preview, Section, Text } from '@react-email/components'
+import {
+  Body,
+  Container,
+  Head,
+  Heading,
+  Html,
+  Preview,
+  Section,
+  Text,
+} from '@react-email/components'
 
 interface OtpEmailProps {
   otp: string
@@ -27,7 +36,12 @@ export function OtpEmail({ otp, type }: OtpEmailProps) {
             Use the code below to continue. It expires in 10 minutes.
           </Text>
           <Section
-            style={{ background: '#f3f4f6', borderRadius: '8px', padding: '24px', textAlign: 'center' }}
+            style={{
+              background: '#f3f4f6',
+              borderRadius: '8px',
+              padding: '24px',
+              textAlign: 'center',
+            }}
           >
             <Text
               style={{
