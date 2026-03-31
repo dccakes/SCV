@@ -15,6 +15,7 @@ import { requirePermission } from 'server/authz/permission-checker'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   EventRepository,
+  mockBelongsToWedding,
   mockDelete,
   mockEvent,
   mockEventWithStats,
@@ -40,6 +41,7 @@ import {
 } from 'server/infrastructure/database/client'
 
 // Create typed aliases for mocked functions
+const mockBelongsToWeddingFn = mockBelongsToWedding as jest.Mock
 const mockFindByIdFn = mockFindById as jest.Mock
 const mockFindByWeddingIdFn = mockFindByWeddingId as jest.Mock
 const mockFindByWeddingIdWithStatsFn = mockFindByWeddingIdWithStats as jest.Mock
@@ -421,8 +423,9 @@ describe('EventService', () => {
     it('should update collectRsvp status', async () => {
       const updatedEvent = { ...mockEvent, collectRsvp: false }
       mockUpdateCollectRsvpFn.mockResolvedValue(updatedEvent)
+      mockBelongsToWeddingFn.mockResolvedValue(true)
 
-      const result = await eventService.updateCollectRsvp(actorContext, 'event-123', false)
+      const result = await eventService.updateCollectRsvp(actorContext, 'wedding-123', 'event-123', false)
 
       expect(result.collectRsvp).toBe(false)
       expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, {
@@ -431,13 +434,23 @@ describe('EventService', () => {
       expect(mockUpdateCollectRsvpFn).toHaveBeenCalledWith('event-123', false)
     })
 
+    it('should reject when event does not belong to wedding', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(false)
+
+      await expect(
+        eventService.updateCollectRsvp(actorContext, 'wedding-123', 'event-123', false)
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+
+      expect(mockUpdateCollectRsvpFn).not.toHaveBeenCalled()
+    })
+
     it('should reject update collect RSVP when actor lacks permission', async () => {
       mockRequirePermission.mockImplementation(() => {
         throw new TRPCError({ code: 'FORBIDDEN' })
       })
 
       await expect(
-        eventService.updateCollectRsvp(actorContext, 'event-123', false)
+        eventService.updateCollectRsvp(actorContext, 'wedding-123', 'event-123', false)
       ).rejects.toMatchObject({ code: 'FORBIDDEN' })
 
       expect(mockUpdateCollectRsvpFn).not.toHaveBeenCalled()
@@ -447,8 +460,9 @@ describe('EventService', () => {
   describe('deleteEvent', () => {
     it('should delete event when wedding owns it', async () => {
       mockDeleteFn.mockResolvedValue(mockEvent)
+      mockBelongsToWeddingFn.mockResolvedValue(true)
 
-      const result = await eventService.deleteEvent(actorContext, 'event-123')
+      const result = await eventService.deleteEvent(actorContext, 'wedding-123', 'event-123')
 
       expect(result).toBe('event-123')
       expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, {
@@ -457,12 +471,24 @@ describe('EventService', () => {
       expect(mockDeleteFn).toHaveBeenCalledWith('event-123')
     })
 
+    it('should reject when event does not belong to wedding', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(false)
+
+      await expect(
+        eventService.deleteEvent(actorContext, 'wedding-123', 'event-123')
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+
+      expect(mockDeleteFn).not.toHaveBeenCalled()
+    })
+
     it('should reject delete when actor lacks event delete permission', async () => {
       mockRequirePermission.mockImplementation(() => {
         throw new TRPCError({ code: 'FORBIDDEN' })
       })
 
-      await expect(eventService.deleteEvent(actorContext, 'event-123')).rejects.toMatchObject({
+      await expect(
+        eventService.deleteEvent(actorContext, 'wedding-123', 'event-123')
+      ).rejects.toMatchObject({
         code: 'FORBIDDEN',
       })
     })

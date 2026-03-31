@@ -156,9 +156,12 @@ export class EventService {
     this.requireEventPermission(ctx, 'update')
 
     return this.db.$transaction(async (tx) => {
-      // Check if allowTagAlongs is being toggled on
+      // Check if allowTagAlongs is being toggled on; also verifies event belongs to this wedding
       const currentEvent = await tx.event.findUnique({ where: { id: data.eventId } })
-      const wasAllowed = currentEvent?.allowTagAlongs ?? false
+      if (!currentEvent || currentEvent.weddingId !== weddingId) {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      }
+      const wasAllowed = currentEvent.allowTagAlongs
       const nowAllowed = data.allowTagAlongs ?? false
 
       if (!wasAllowed && nowAllowed) {
@@ -209,10 +212,12 @@ export class EventService {
    */
   async updateCollectRsvp(
     ctx: AuthzContext,
+    weddingId: string,
     eventId: string,
     collectRsvp: boolean
   ): Promise<Event> {
     this.requireEventPermission(ctx, 'rsvp_policy_update')
+    await this.assertEventInWedding(eventId, weddingId)
 
     return this.eventRepository.updateCollectRsvp(eventId, collectRsvp)
   }
@@ -222,11 +227,19 @@ export class EventService {
    *
    * Note: Cascades to invitations, gifts, and questions via database relations
    */
-  async deleteEvent(ctx: AuthzContext, eventId: string): Promise<string> {
+  async deleteEvent(ctx: AuthzContext, weddingId: string, eventId: string): Promise<string> {
     this.requireEventPermission(ctx, 'delete')
+    await this.assertEventInWedding(eventId, weddingId)
 
     const deletedEvent = await this.eventRepository.delete(eventId)
     return deletedEvent.id
+  }
+
+  private async assertEventInWedding(eventId: string, weddingId: string): Promise<void> {
+    const belongs = await this.eventRepository.belongsToWedding(eventId, weddingId)
+    if (!belongs) {
+      throw new TRPCError({ code: 'FORBIDDEN' })
+    }
   }
 
   private requireEventPermission(

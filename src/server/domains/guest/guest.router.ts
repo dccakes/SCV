@@ -5,10 +5,7 @@
  * This is a thin layer that handles input validation and delegates to the service.
  */
 
-import { TRPCError } from '@trpc/server'
-
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
-import { eventService } from '~/server/domains/event'
 import { guestService } from '~/server/domains/guest'
 import { getByEventSchema, getByHouseholdSchema } from '~/server/domains/guest/guest.validator'
 import { invitationService } from '~/server/domains/invitation'
@@ -24,16 +21,7 @@ export const guestRouter = createTRPCRouter({
       ctx.auth.userId,
       ctx.auth.activeOrganization?.organizationId ?? null
     )
-    const event = await eventService.getById(input.eventId)
-
-    if (!event || event.weddingId !== weddingId) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to access this event invitations',
-      })
-    }
-
-    return invitationService.getByEventId(input.eventId)
+    return invitationService.getByEventIdInWedding(input.eventId, weddingId)
   }),
 
   /**

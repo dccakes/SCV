@@ -53,8 +53,21 @@ export class InvitationService {
   /**
    * Update an invitation RSVP
    */
-  async updateInvitation(ctx: AuthzContext, data: UpdateInvitationInput): Promise<Invitation> {
+  async updateInvitation(
+    ctx: AuthzContext,
+    weddingId: string,
+    data: UpdateInvitationInput
+  ): Promise<Invitation> {
     this.requireRsvpPermission(ctx, 'edit_response')
+
+    const belongs = await this.invitationRepository.belongsToWedding(
+      data.guestId,
+      data.eventId,
+      weddingId
+    )
+    if (!belongs) {
+      throw new TRPCError({ code: 'FORBIDDEN' })
+    }
 
     return this.invitationRepository.update(data.guestId, data.eventId, {
       rsvp: data.rsvp,
@@ -69,6 +82,17 @@ export class InvitationService {
       return undefined
     }
     return this.invitationRepository.findByWeddingId(weddingId)
+  }
+
+  /**
+   * Get all invitations for an event, scoped to a wedding (throws FORBIDDEN if out of scope)
+   */
+  async getByEventIdInWedding(eventId: string, weddingId: string): Promise<Invitation[]> {
+    const inScope = await this.invitationRepository.eventBelongsToWedding(eventId, weddingId)
+    if (!inScope) {
+      throw new TRPCError({ code: 'FORBIDDEN' })
+    }
+    return this.invitationRepository.findByEventId(eventId)
   }
 
   /**

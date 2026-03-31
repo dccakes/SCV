@@ -30,7 +30,11 @@ export const invitationRouter = createTRPCRouter({
    * Update an invitation RSVP
    */
   update: protectedProcedure.input(updateInvitationSchema).mutation(async ({ ctx, input }) => {
-    return invitationService.updateInvitation(toAuthzContext(ctx), input)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.activeOrganization?.organizationId ?? null
+    )
+    return invitationService.updateInvitation(toAuthzContext(ctx), weddingId, input)
   }),
 
   /**

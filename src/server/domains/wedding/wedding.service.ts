@@ -98,26 +98,7 @@ export class WeddingService {
     data: UpdateWeddingInput
   }): Promise<Wedding> {
     const { ctx, weddingId, data } = input
-    const wedding = await this.weddingRepository.findById(weddingId)
-
-    if (!wedding) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'Wedding not found',
-      })
-    }
-
-    if (!wedding.organizationId) {
-      throw new TRPCError({
-        code: 'PRECONDITION_FAILED',
-        message: 'Wedding must be linked to an organization before updates are allowed',
-      })
-    }
-
-    requirePermission(ctx, {
-      wedding: ['update'],
-    })
-
+    requirePermission(ctx, { wedding: ['update'] })
     return this.weddingRepository.update(weddingId, data)
   }
 

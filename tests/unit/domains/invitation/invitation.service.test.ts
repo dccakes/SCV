@@ -15,6 +15,7 @@ import { requirePermission } from 'server/authz/permission-checker'
 import {
   InvitationRepository,
   mockBelongsToUser,
+  mockBelongsToWedding,
   mockCreate,
   mockCreateMany,
   mockEventBelongsToWedding,
@@ -39,6 +40,7 @@ const mockFindByEventIdFn = mockFindByEventId as jest.Mock
 const mockFindByGuestIdFn = mockFindByGuestId as jest.Mock
 const mockGetRsvpCountsByEventIdFn = mockGetRsvpCountsByEventId as jest.Mock
 const mockBelongsToUserFn = mockBelongsToUser as jest.Mock
+const mockBelongsToWeddingFn = mockBelongsToWedding as jest.Mock
 const mockGuestBelongsToWeddingFn = mockGuestBelongsToWedding as jest.Mock
 const mockEventBelongsToWeddingFn = mockEventBelongsToWedding as jest.Mock
 const mockRequirePermission = requirePermission as jest.Mock
@@ -136,8 +138,9 @@ describe('InvitationService', () => {
     it('should update an invitation RSVP', async () => {
       const updatedInvitation = { ...mockInvitation, rsvp: 'Attending' }
       mockUpdateFn.mockResolvedValue(updatedInvitation)
+      mockBelongsToWeddingFn.mockResolvedValue(true)
 
-      const result = await invitationService.updateInvitation(actorContext, {
+      const result = await invitationService.updateInvitation(actorContext, 'wedding-123', {
         guestId: 1,
         eventId: 'event-123',
         rsvp: 'Attending',
@@ -150,13 +153,27 @@ describe('InvitationService', () => {
       expect(mockUpdateFn).toHaveBeenCalledWith(1, 'event-123', { rsvp: 'Attending' })
     })
 
+    it('should reject update when invitation does not belong to wedding', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(false)
+
+      await expect(
+        invitationService.updateInvitation(actorContext, 'wedding-123', {
+          guestId: 1,
+          eventId: 'event-123',
+          rsvp: 'Attending',
+        })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+
+      expect(mockUpdateFn).not.toHaveBeenCalled()
+    })
+
     it('should reject update when actor lacks RSVP edit permission', async () => {
       mockRequirePermission.mockImplementation(() => {
         throw new TRPCError({ code: 'FORBIDDEN' })
       })
 
       await expect(
-        invitationService.updateInvitation(actorContext, {
+        invitationService.updateInvitation(actorContext, 'wedding-123', {
           guestId: 1,
           eventId: 'event-123',
           rsvp: 'Attending',

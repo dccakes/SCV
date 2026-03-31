@@ -219,38 +219,21 @@ describe('WeddingService', () => {
   })
 
   describe('updateWedding', () => {
-    it('should reject updates when wedding is not linked to organization', async () => {
-      mockFindByIdFn.mockResolvedValue({ ...mockWedding, organizationId: null })
+    it('should update wedding when permission check passes', async () => {
+      const updatedWedding = { ...mockWedding, groomFirstName: 'Updated' }
+      mockUpdateFn.mockResolvedValue(updatedWedding)
 
-      await expect(
-        weddingService.updateWedding({
-          ctx: actorContext,
-          weddingId: 'wedding-123',
-          organizationId: null,
-          data: { groomFirstName: 'Updated' },
-        })
-      ).rejects.toMatchObject({ code: 'PRECONDITION_FAILED' })
+      const result = await weddingService.updateWedding({
+        ctx: actorContext,
+        weddingId: 'wedding-123',
+        data: { groomFirstName: 'Updated' },
+      })
 
-      expect(mockUpdateFn).not.toHaveBeenCalled()
-    })
-
-    it('should throw NOT_FOUND when wedding does not exist', async () => {
-      mockFindByIdFn.mockResolvedValue(null)
-
-      await expect(
-        weddingService.updateWedding({
-          ctx: actorContext,
-          weddingId: 'missing',
-          organizationId: 'org-123',
-          data: { groomFirstName: 'Updated' },
-        })
-      ).rejects.toMatchObject({ code: 'NOT_FOUND' })
-
-      expect(mockUpdateFn).not.toHaveBeenCalled()
+      expect(result.groomFirstName).toBe('Updated')
+      expect(mockUpdateFn).toHaveBeenCalledWith('wedding-123', { groomFirstName: 'Updated' })
     })
 
     it('should reject update when permission check fails', async () => {
-      mockFindByIdFn.mockResolvedValue({ ...mockWedding, organizationId: 'org-123' })
       mockRequirePermission.mockImplementation(() => {
         throw new TRPCError({ code: 'FORBIDDEN' })
       })
@@ -259,7 +242,6 @@ describe('WeddingService', () => {
         weddingService.updateWedding({
           ctx: actorContext,
           weddingId: 'wedding-123',
-          organizationId: 'org-123',
           data: { groomFirstName: 'Updated' },
         })
       ).rejects.toMatchObject({ code: 'FORBIDDEN' })

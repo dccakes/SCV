@@ -9,18 +9,13 @@ import { z } from 'zod'
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { toAuthzContext } from '~/server/authz/authorization.types'
-import { GuestTagRepository } from '~/server/domains/guest-tag/guest-tag.repository'
-import { GuestTagService } from '~/server/domains/guest-tag/guest-tag.service'
+import { guestTagService } from '~/server/domains/guest-tag'
 import {
   createGuestTagSchema,
   guestTagIdSchema,
   updateGuestTagSchema,
 } from '~/server/domains/guest-tag/guest-tag.validator'
 import { weddingService } from '~/server/domains/wedding'
-import { db } from '~/server/infrastructure/database/client'
-
-const guestTagRepository = new GuestTagRepository(db)
-const guestTagService = new GuestTagService(guestTagRepository)
 
 export const guestTagRouter = createTRPCRouter({
   /**

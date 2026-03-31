@@ -1,5 +1,7 @@
+import { TRPCError } from '@trpc/server'
+
 import type { OrganizationRole } from '~/lib/auth-permissions'
-import type { AuthzContext } from '~/server/authz/authorization.types'
+import type { ActiveOrganization, AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 
 export type OrganizationMemberAction = 'invite' | 'role_update' | 'remove'
@@ -31,24 +33,33 @@ export class MemberManagementService {
   constructor(private readonly memberRepository: MemberManagementRepository) {}
 
   async inviteMember(ctx: AuthzContext, input: InviteMemberCommand): Promise<unknown> {
-    this.assertHasOrganizationMemberPermission(ctx, 'invite')
+    const activeOrg = this.assertHasOrganizationMemberPermission(ctx, 'invite')
+    this.assertOrganizationScope(activeOrg.organizationId, input.organizationId)
     return this.memberRepository.inviteMember(input)
   }
 
   async updateMemberRole(ctx: AuthzContext, input: UpdateMemberRoleCommand): Promise<unknown> {
-    this.assertHasOrganizationMemberPermission(ctx, 'role_update')
+    const activeOrg = this.assertHasOrganizationMemberPermission(ctx, 'role_update')
+    this.assertOrganizationScope(activeOrg.organizationId, input.organizationId)
     return this.memberRepository.updateMemberRole(input)
   }
 
   async removeMember(ctx: AuthzContext, input: RemoveMemberCommand): Promise<void> {
-    this.assertHasOrganizationMemberPermission(ctx, 'remove')
+    const activeOrg = this.assertHasOrganizationMemberPermission(ctx, 'remove')
+    this.assertOrganizationScope(activeOrg.organizationId, input.organizationId)
     await this.memberRepository.removeMember(input)
+  }
+
+  private assertOrganizationScope(activeOrgId: string, inputOrgId: string): void {
+    if (activeOrgId !== inputOrgId) {
+      throw new TRPCError({ code: 'FORBIDDEN' })
+    }
   }
 
   private assertHasOrganizationMemberPermission(
     ctx: AuthzContext,
     action: OrganizationMemberAction
-  ): void {
-    requirePermission(ctx, { organization_member: [action] })
+  ): ActiveOrganization {
+    return requirePermission(ctx, { organization_member: [action] })
   }
 }

@@ -87,6 +87,7 @@ describe('eventRouter authz context plumbing', () => {
         activeOrganization,
         userId: 'user-123',
       },
+      'wedding-123',
       'event-1'
     )
   })

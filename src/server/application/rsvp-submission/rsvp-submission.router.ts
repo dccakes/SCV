@@ -16,12 +16,8 @@ const rsvpSubmissionService = new RsvpSubmissionService(db)
 
 export const rsvpSubmissionRouter = createTRPCRouter({
   /**
-   * Submit RSVP form responses
-   *
-   * This is a public procedure because:
-   * - Guests access this from the public wedding website
-   * - Authentication is not required for RSVP submission
-   * - The household/guest IDs provide sufficient authorization
+   * Submit RSVP form responses on behalf of a guest (authenticated coordinator flow).
+   * Guest-facing public RSVP is handled by website.router submitPublicRsvpForm.
    */
   submit: protectedProcedure.input(submitRsvpSchema).mutation(async ({ ctx, input }) => {
     const weddingId = await weddingService.getWeddingIdByUserId(
