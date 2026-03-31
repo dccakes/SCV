@@ -1,7 +1,7 @@
 'use client'
 
 import { useChat } from '@ai-sdk/react'
-import { DefaultChatTransport } from 'ai'
+import { DefaultChatTransport, type UIMessage } from 'ai'
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 
 const PLANNER_SUGGESTIONS = [
