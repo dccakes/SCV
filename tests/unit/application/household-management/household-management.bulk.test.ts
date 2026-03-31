@@ -131,9 +131,8 @@ describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
   let service: HouseholdManagementService
   let mockTx: MockTx
   const actorContext = {
-    headers: new Headers(),
     userId: 'actor-1',
-    sessionActiveOrganizationId: null,
+    activeOrganization: null,
   }
 
   beforeEach(() => {
