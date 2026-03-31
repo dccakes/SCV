@@ -16,9 +16,12 @@ jest.mock('~/trpc/react', () => ({
   },
 }))
 
-jest.mock('~/components/hooks', () => ({
-  useOuterClick: () => ({ current: document.createElement('div') }),
-}))
+jest.mock('~/components/hooks', () => {
+  const React = require('react')
+  return {
+    useOuterClick: () => React.createRef(),
+  }
+})
 
 jest.mock('sonner', () => ({
   toast: {
