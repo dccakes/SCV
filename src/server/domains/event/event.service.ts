@@ -20,7 +20,6 @@ import { TRPCError } from '@trpc/server'
 
 import { RSVP_STATUS } from '~/lib/constants/rsvp'
 import type { ActiveOrganization, AuthzContext } from '~/server/authz/authorization.types'
-import { assertEventInWeddingScope } from '~/server/authz/organization-scope'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { EventRepository } from '~/server/domains/event/event.repository'
 import type { Event, EventWithStats } from '~/server/domains/event/event.types'
@@ -195,11 +194,6 @@ export class EventService {
    */
   async updateEvent(ctx: AuthzContext, weddingId: string, data: UpdateEventInput): Promise<Event> {
     this.requireEventPermission(ctx, 'update')
-    await assertEventInWeddingScope({
-      eventId: data.eventId,
-      eventRepository: this.eventRepository,
-      weddingId,
-    })
 
     return this.db.$transaction(async (tx) => {
       // Check if allowTagAlongs is being toggled on
@@ -256,15 +250,9 @@ export class EventService {
   async updateCollectRsvp(
     ctx: AuthzContext,
     eventId: string,
-    weddingId: string,
     collectRsvp: boolean
   ): Promise<Event> {
     this.requireEventPermission(ctx, 'rsvp_policy_update')
-    await assertEventInWeddingScope({
-      eventId,
-      eventRepository: this.eventRepository,
-      weddingId,
-    })
 
     return this.eventRepository.updateCollectRsvp(eventId, collectRsvp)
   }
@@ -274,13 +262,8 @@ export class EventService {
    *
    * Note: Cascades to invitations, gifts, and questions via database relations
    */
-  async deleteEvent(ctx: AuthzContext, eventId: string, weddingId: string): Promise<string> {
+  async deleteEvent(ctx: AuthzContext, eventId: string): Promise<string> {
     this.requireEventPermission(ctx, 'delete')
-    await assertEventInWeddingScope({
-      eventId,
-      eventRepository: this.eventRepository,
-      weddingId,
-    })
 
     const deletedEvent = await this.eventRepository.delete(eventId)
     return deletedEvent.id

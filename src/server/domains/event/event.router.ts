@@ -69,27 +69,14 @@ export const eventRouter = createTRPCRouter({
    */
   updateCollectRsvp: protectedProcedure
     .input(updateCollectRsvpSchema)
-    .mutation(async ({ ctx, input }) => {
-      const weddingId = await weddingService.getWeddingIdByUserId(
-        ctx.auth.userId,
-        ctx.auth.sessionActiveOrganizationId
-      )
-      return eventService.updateCollectRsvp(
-        toAuthzContext(ctx),
-        input.eventId,
-        weddingId,
-        input.collectRsvp
-      )
+    .mutation(({ ctx, input }) => {
+      return eventService.updateCollectRsvp(toAuthzContext(ctx), input.eventId, input.collectRsvp)
     }),
 
   /**
    * Delete an event
    */
-  delete: protectedProcedure.input(deleteEventSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(
-      ctx.auth.userId,
-      ctx.auth.sessionActiveOrganizationId
-    )
-    return eventService.deleteEvent(toAuthzContext(ctx), input.eventId, weddingId)
+  delete: protectedProcedure.input(deleteEventSchema).mutation(({ ctx, input }) => {
+    return eventService.deleteEvent(toAuthzContext(ctx), input.eventId)
   }),
 })

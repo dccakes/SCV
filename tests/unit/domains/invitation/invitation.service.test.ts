@@ -21,7 +21,6 @@ import {
   mockFindByEventId,
   mockFindByGuestId,
   mockFindByWeddingId,
-  mockFindOrganizationIdByInvitationId,
   mockGetRsvpCountsByEventId,
   mockGuestBelongsToWedding,
   mockInvitation,
@@ -40,7 +39,6 @@ const mockFindByEventIdFn = mockFindByEventId as jest.Mock
 const mockFindByGuestIdFn = mockFindByGuestId as jest.Mock
 const mockGetRsvpCountsByEventIdFn = mockGetRsvpCountsByEventId as jest.Mock
 const mockBelongsToUserFn = mockBelongsToUser as jest.Mock
-const mockFindOrganizationIdByInvitationIdFn = mockFindOrganizationIdByInvitationId as jest.Mock
 const mockGuestBelongsToWeddingFn = mockGuestBelongsToWedding as jest.Mock
 const mockEventBelongsToWeddingFn = mockEventBelongsToWedding as jest.Mock
 const mockRequirePermission = requirePermission as jest.Mock
@@ -61,7 +59,6 @@ describe('InvitationService', () => {
     mockRequirePermission.mockReset()
     mockRequirePermission.mockReturnValue({ organizationId: 'org-123', role: 'owner' })
     mockBelongsToUserFn.mockResolvedValue(true)
-    mockFindOrganizationIdByInvitationIdFn.mockResolvedValue('org-123')
     mockGuestBelongsToWeddingFn.mockResolvedValue(true)
     mockEventBelongsToWeddingFn.mockResolvedValue(true)
     const mockRepository = new InvitationRepository({})
@@ -157,20 +154,6 @@ describe('InvitationService', () => {
       mockRequirePermission.mockImplementation(() => {
         throw new TRPCError({ code: 'FORBIDDEN' })
       })
-
-      await expect(
-        invitationService.updateInvitation(actorContext, {
-          guestId: 1,
-          eventId: 'event-123',
-          rsvp: 'Attending',
-        })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
-
-      expect(mockUpdateFn).not.toHaveBeenCalled()
-    })
-
-    it('should reject update when invitation is outside active organization scope', async () => {
-      mockFindOrganizationIdByInvitationIdFn.mockResolvedValue('other-org-456')
 
       await expect(
         invitationService.updateInvitation(actorContext, {

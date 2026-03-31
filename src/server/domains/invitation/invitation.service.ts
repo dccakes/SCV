@@ -8,7 +8,6 @@
 import { TRPCError } from '@trpc/server'
 
 import type { ActiveOrganization, AuthzContext } from '~/server/authz/authorization.types'
-import { assertInvitationInActiveOrganization } from '~/server/authz/organization-scope'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
 import type {
@@ -55,15 +54,7 @@ export class InvitationService {
    * Update an invitation RSVP
    */
   async updateInvitation(ctx: AuthzContext, data: UpdateInvitationInput): Promise<Invitation> {
-    const activeOrg = this.requireRsvpPermission(ctx, 'edit_response')
-    await assertInvitationInActiveOrganization({
-      activeOrganization: activeOrg,
-      invitation: {
-        eventId: data.eventId,
-        guestId: data.guestId,
-      },
-      invitationRepository: this.invitationRepository,
-    })
+    this.requireRsvpPermission(ctx, 'edit_response')
 
     return this.invitationRepository.update(data.guestId, data.eventId, {
       rsvp: data.rsvp,
@@ -146,10 +137,7 @@ export class InvitationService {
     })
   }
 
-  private requireRsvpPermission(
-    ctx: AuthzContext,
-    action: 'edit_response'
-  ): ActiveOrganization {
+  private requireRsvpPermission(ctx: AuthzContext, action: 'edit_response'): ActiveOrganization {
     return requirePermission(ctx, {
       rsvp: [action],
     })

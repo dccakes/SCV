@@ -28,16 +28,6 @@ export interface InvitationOrganizationScopeRepository {
   findOrganizationIdByInvitationId(invitation: InvitationIdentifier): Promise<string | null>
 }
 
-export interface EventWeddingScopeRepository {
-  belongsToWedding(eventId: string, weddingId: string): Promise<boolean>
-  belongsToUser(eventId: string, userId: string): Promise<boolean>
-}
-
-export interface InvitationWeddingScopeRepository {
-  belongsToWedding(guestId: number, eventId: string, weddingId: string): Promise<boolean>
-  belongsToUser(guestId: number, eventId: string, userId: string): Promise<boolean>
-}
-
 type AssertEventInActiveOrganizationInput = {
   activeOrganization: ActiveOrganization
   eventId: string
@@ -64,20 +54,6 @@ const permissionDenied = (entityName: OrganizationScopeEntityName, entityId: str
   throw new TRPCError({
     code: 'FORBIDDEN',
     message: `${entityName} ${entityId} is outside the active organization scope`,
-  })
-}
-
-const weddingPermissionDenied = (entityName: string, entityId: string): never => {
-  throw new TRPCError({
-    code: 'FORBIDDEN',
-    message: `${entityName} ${entityId} is outside the requested wedding scope`,
-  })
-}
-
-const userPermissionDenied = (entityName: string, entityId: string): never => {
-  throw new TRPCError({
-    code: 'FORBIDDEN',
-    message: `${entityName} ${entityId} is outside the actor access scope`,
   })
 }
 
@@ -132,58 +108,4 @@ export const assertInvitationInActiveOrganization = async (
     entityId: `${input.invitation.guestId}:${input.invitation.eventId}`,
     entityOrganizationId: organizationId,
   })
-}
-
-export const assertEventInWeddingScope = async (input: {
-  eventId: string
-  weddingId: string
-  eventRepository: EventWeddingScopeRepository
-}): Promise<void> => {
-  const inScope = await input.eventRepository.belongsToWedding(input.eventId, input.weddingId)
-  if (!inScope) {
-    weddingPermissionDenied('event', input.eventId)
-  }
-}
-
-export const assertEventInUserScope = async (input: {
-  eventId: string
-  userId: string
-  eventRepository: EventWeddingScopeRepository
-}): Promise<void> => {
-  const inScope = await input.eventRepository.belongsToUser(input.eventId, input.userId)
-  if (!inScope) {
-    userPermissionDenied('event', input.eventId)
-  }
-}
-
-export const assertInvitationInWeddingScope = async (input: {
-  invitation: InvitationIdentifier
-  weddingId: string
-  invitationRepository: InvitationWeddingScopeRepository
-}): Promise<void> => {
-  const inScope = await input.invitationRepository.belongsToWedding(
-    input.invitation.guestId,
-    input.invitation.eventId,
-    input.weddingId
-  )
-
-  if (!inScope) {
-    weddingPermissionDenied('invitation', `${input.invitation.guestId}:${input.invitation.eventId}`)
-  }
-}
-
-export const assertInvitationInUserScope = async (input: {
-  invitation: InvitationIdentifier
-  userId: string
-  invitationRepository: InvitationWeddingScopeRepository
-}): Promise<void> => {
-  const inScope = await input.invitationRepository.belongsToUser(
-    input.invitation.guestId,
-    input.invitation.eventId,
-    input.userId
-  )
-
-  if (!inScope) {
-    userPermissionDenied('invitation', `${input.invitation.guestId}:${input.invitation.eventId}`)
-  }
 }
