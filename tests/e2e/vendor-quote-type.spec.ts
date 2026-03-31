@@ -114,7 +114,12 @@ test.describe
       await editBtn.click()
 
       // Change quote type to "Per Guest"
-      await page.getByRole('combobox').filter({ hasText: 'Flat Fee' }).click()
+      // Filter matches both "Flat Fee" and "Per Guest" so retries work even if the mutation
+      // already committed — but excludes the vendor status combobox ("In Negotiation")
+      await page
+        .getByRole('combobox')
+        .filter({ hasText: /flat fee|per guest/i })
+        .click()
       await page.getByRole('option', { name: 'Per Guest' }).click()
 
       // Save changes

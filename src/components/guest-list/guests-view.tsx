@@ -23,7 +23,8 @@ import GuestSearchFilter from '~/components/guest-list/guest-search-filter'
 import type { HouseholdMemberDraft } from '~/components/guest-list/household-members-modal'
 import { GuestDetailDrawer } from '~/components/guest-list/v2/drawer/guest-detail-drawer'
 import { GuestCardsList } from '~/components/guest-list/v2/list/guest-cards-list'
-import { ListToolbar } from '~/components/guest-list/v2/list/list-toolbar'
+import { GuestIndividualTable } from '~/components/guest-list/v2/list/guest-individual-table'
+import { ListToolbar, type ViewMode } from '~/components/guest-list/v2/list/list-toolbar'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -67,6 +68,7 @@ export default function GuestsView({
   const [partySort, setPartySort] = useState<'none' | 'ascending' | 'descending'>('none')
   const [selectedHouseholdId, setSelectedHouseholdId] = useState<string | undefined>()
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [viewMode, setViewMode] = useState<ViewMode>('cards')
   const [showDiscardDialog, setShowDiscardDialog] = useState(false)
   const [showDeleteHouseholdDialog, setShowDeleteHouseholdDialog] = useState(false)
   const [editingSections, setEditingSections] = useState<Set<'contactAddress' | 'notes'>>(new Set())
@@ -147,6 +149,14 @@ export default function GuestsView({
 
     return filteredHouseholds
   }, [filteredHouseholds, nameSort, partySort])
+
+  const householdNumberMap = useMemo(() => {
+    const map = new Map<string, number>()
+    allHouseholds.forEach((household, index) => {
+      map.set(household.id, index + 1)
+    })
+    return map
+  }, [allHouseholds])
 
   const selectedHousehold = useMemo(
     () => filteredHouseholds.find((household) => household.id === selectedHouseholdId),
@@ -647,9 +657,19 @@ export default function GuestsView({
           totalHouseholds={sortedHouseholds.length}
           onSortByName={sortByName}
           onSortByPartySize={sortByParty}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
         />
         {sortedHouseholds.length === 0 ? (
           <AsyncState isEmpty emptyText='No households yet' />
+        ) : viewMode === 'table' ? (
+          <GuestIndividualTable
+            households={sortedHouseholds}
+            householdNumberMap={householdNumberMap}
+            selectedHouseholdId={selectedHouseholdId}
+            onSelectHousehold={handleSelectHousehold}
+            allTags={allTags}
+          />
         ) : (
           <GuestCardsList
             households={sortedHouseholds}
