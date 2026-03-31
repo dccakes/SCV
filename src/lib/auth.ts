@@ -15,7 +15,7 @@ export const authPlugins = [
     roles: authOrganizationRoles,
   }),
   nextCookies(),
-] as const
+]
 
 export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
