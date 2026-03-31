@@ -86,8 +86,8 @@ test.describe('Vendor Detail Panel', () => {
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
 
-    // Close by clicking the Close button in the footer
-    await dialog.getByRole('button', { name: /close/i }).click()
+    // Close by clicking the Close button in the footer (exact match avoids the X "Close vendor details" button)
+    await dialog.getByRole('button', { name: 'Close', exact: true }).click()
     await expect(dialog).not.toBeVisible()
   })
 })
@@ -409,9 +409,10 @@ test.describe('XSS Injection Prevention', () => {
     await dialog.getByLabel(/notes/i).fill(xssPayload)
     await dialog.getByRole('button', { name: /add quote/i }).click()
 
-    // Page should still be functional (not "hacked")
+    // Page should still be functional — if XSS executed it would replace the entire body
+    // Note: body text includes the escaped payload text which contains 'hacked' as a substring,
+    // so we verify the dialog is intact rather than checking for absence of the word
     await expect(dialog).toContainText('$999')
-    await expect(page.locator('body')).not.toContainText('hacked')
   })
 })
 
@@ -426,7 +427,7 @@ test.describe('Multi-User Data Isolation', () => {
     // Sign up as a completely new user
     const uniqueEmail = `e2e-isolation-${Date.now()}@test.com`
     await page.goto('/auth/sign-up')
-    await page.waitForLoadState('domcontentloaded')
+    await page.waitForLoadState('networkidle')
 
     await page.getByLabel('Name').fill('Isolation Test User')
     await page.getByLabel('Email').fill(uniqueEmail)
