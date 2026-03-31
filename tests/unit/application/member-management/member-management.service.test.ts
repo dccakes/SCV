@@ -19,9 +19,8 @@ describe('MemberManagementService', () => {
   let service: MemberManagementService
 
   const actorContext = {
-    headers: new Headers(),
     userId: 'actor-1',
-    sessionActiveOrganizationId: null,
+    activeOrganization: null,
   }
 
   beforeEach(() => {

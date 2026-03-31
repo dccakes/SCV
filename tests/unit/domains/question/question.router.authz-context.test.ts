@@ -28,16 +28,19 @@ const mockDeleteQuestion = questionService.deleteQuestion as jest.Mock
 const mockGetScopedWeddingByUserId = weddingService.getScopedWeddingByUserId as jest.Mock
 
 describe('questionRouter authz context plumbing', () => {
-  const headers = new Headers([['x-test', '1']])
+  const activeOrganization = {
+    organizationId: 'org-123',
+    role: 'owner',
+  }
 
   const caller = questionRouter.createCaller({
     auth: {
       session: { user: { id: 'user-123' } },
-      sessionActiveOrganizationId: 'org-123',
+      activeOrganization,
       userId: 'user-123',
     },
     db: {} as never,
-    headers,
+    headers: new Headers(),
   })
 
   beforeEach(() => {
@@ -57,8 +60,7 @@ describe('questionRouter authz context plumbing', () => {
 
     expect(mockUpsertQuestion).toHaveBeenCalledWith({
       ctx: {
-        headers,
-        sessionActiveOrganizationId: 'org-123',
+        activeOrganization,
         userId: 'user-123',
       },
       weddingId: 'wedding-123',
@@ -79,8 +81,7 @@ describe('questionRouter authz context plumbing', () => {
 
     expect(mockDeleteQuestion).toHaveBeenCalledWith({
       ctx: {
-        headers,
-        sessionActiveOrganizationId: 'org-123',
+        activeOrganization,
         userId: 'user-123',
       },
       weddingId: 'wedding-123',

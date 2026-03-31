@@ -65,9 +65,8 @@ const mockWedding = {
 describe('WebsiteService', () => {
   let websiteService: WebsiteService
   const actorContext = {
-    headers: new Headers(),
     userId: 'actor-1',
-    sessionActiveOrganizationId: null,
+    activeOrganization: null,
   }
   const mockHashPassword = jest.fn()
   const mockVerifyPassword = jest.fn()

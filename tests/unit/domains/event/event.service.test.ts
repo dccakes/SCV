@@ -59,9 +59,11 @@ const mockEventUpdateFn = mockEventUpdate as jest.Mock
 const mockRequirePermission = requirePermission as jest.Mock
 
 const actorContext = {
-  headers: new Headers(),
   userId: 'user-123',
-  sessionActiveOrganizationId: 'org-123',
+  activeOrganization: {
+    organizationId: 'org-123',
+    role: 'owner',
+  },
 }
 
 describe('EventService', () => {
@@ -192,7 +194,9 @@ describe('EventService', () => {
     })
 
     it('should reject create when actor lacks event create permission', async () => {
-      mockRequirePermission.mockImplementation(() => { throw new TRPCError({ code: 'FORBIDDEN' }) })
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      })
 
       await expect(
         eventService.createEvent(actorContext, 'wedding-123', {
@@ -427,7 +431,9 @@ describe('EventService', () => {
     })
 
     it('should reject update when actor lacks event update permission', async () => {
-      mockRequirePermission.mockImplementation(() => { throw new TRPCError({ code: 'FORBIDDEN' }) })
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      })
 
       await expect(
         eventService.updateEvent(actorContext, 'wedding-123', {
@@ -461,7 +467,9 @@ describe('EventService', () => {
     })
 
     it('should reject update collect RSVP when actor lacks permission', async () => {
-      mockRequirePermission.mockImplementation(() => { throw new TRPCError({ code: 'FORBIDDEN' }) })
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      })
 
       await expect(
         eventService.updateCollectRsvp(actorContext, 'event-123', 'wedding-123', false)
@@ -507,7 +515,9 @@ describe('EventService', () => {
     })
 
     it('should reject delete when actor lacks event delete permission', async () => {
-      mockRequirePermission.mockImplementation(() => { throw new TRPCError({ code: 'FORBIDDEN' }) })
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      })
 
       await expect(
         eventService.deleteEvent(actorContext, 'event-123', 'wedding-123')

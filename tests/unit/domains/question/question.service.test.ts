@@ -48,9 +48,8 @@ const mockRequirePermission = requirePermission as jest.Mock
 describe('QuestionService', () => {
   let questionService: QuestionService
   const actorContext = {
-    headers: new Headers(),
     userId: 'actor-1',
-    sessionActiveOrganizationId: null,
+    activeOrganization: null,
   }
 
   beforeEach(() => {
@@ -109,7 +108,9 @@ describe('QuestionService', () => {
     })
 
     it('should reject upsert when permission check fails', async () => {
-      mockRequirePermission.mockImplementation(() => { throw new TRPCError({ code: 'FORBIDDEN' }) })
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      })
 
       await expect(
         questionService.upsertQuestion({
@@ -391,7 +392,9 @@ describe('QuestionService', () => {
 
     it('should reject delete when permission check fails', async () => {
       mockFindByIdFn.mockResolvedValue(mockQuestion)
-      mockRequirePermission.mockImplementation(() => { throw new TRPCError({ code: 'FORBIDDEN' }) })
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      })
 
       await expect(
         questionService.deleteQuestion({

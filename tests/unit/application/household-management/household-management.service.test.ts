@@ -118,9 +118,8 @@ describe('HouseholdManagementService', () => {
   let service: HouseholdManagementService
   let mockDb: ReturnType<typeof createMockDb>
   const actorContext = {
-    headers: new Headers(),
     userId: 'actor-1',
-    sessionActiveOrganizationId: null,
+    activeOrganization: null,
   }
 
   beforeEach(() => {
@@ -151,7 +150,9 @@ describe('HouseholdManagementService', () => {
 
   describe('createHouseholdWithGuests', () => {
     it('should reject create when actor lacks guest create permission', async () => {
-      mockRequirePermission.mockImplementation(() => { throw new TRPCError({ code: 'FORBIDDEN' }) })
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      })
 
       await expect(
         service.createHouseholdWithGuests(actorContext, 'wedding-123', {

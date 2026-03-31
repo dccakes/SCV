@@ -98,9 +98,11 @@ describe('RsvpSubmissionService', () => {
   let mockDb: ReturnType<typeof createMockDb>
   const mockRequirePermission = requirePermission as jest.Mock
   const actorContext = {
-    headers: new Headers(),
     userId: 'actor-1',
-    sessionActiveOrganizationId: 'org-1',
+    activeOrganization: {
+      organizationId: 'org-1',
+      role: 'owner',
+    },
   }
 
   beforeEach(() => {
@@ -133,7 +135,9 @@ describe('RsvpSubmissionService', () => {
     })
 
     it('rejects when rsvp permission is missing', async () => {
-      mockRequirePermission.mockImplementation(() => { throw new Error('forbidden') })
+      mockRequirePermission.mockImplementation(() => {
+        throw new Error('forbidden')
+      })
 
       await expect(
         service.submitManagedRsvp(actorContext, 'wedding-123', {

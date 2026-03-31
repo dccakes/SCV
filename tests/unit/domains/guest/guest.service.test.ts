@@ -43,9 +43,8 @@ const mockRequirePermission = requirePermission as jest.Mock
 describe('GuestService', () => {
   let guestService: GuestService
   const actorContext = {
-    headers: new Headers(),
     userId: 'actor-1',
-    sessionActiveOrganizationId: null,
+    activeOrganization: null,
   }
 
   beforeEach(() => {
@@ -117,7 +116,9 @@ describe('GuestService', () => {
 
   describe('createGuest', () => {
     it('should reject create when actor lacks guest create permission', async () => {
-      mockRequirePermission.mockImplementation(() => { throw new Error('forbidden') })
+      mockRequirePermission.mockImplementation(() => {
+        throw new Error('forbidden')
+      })
 
       await expect(
         guestService.createGuest(

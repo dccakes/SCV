@@ -46,9 +46,11 @@ const mockEventBelongsToWeddingFn = mockEventBelongsToWedding as jest.Mock
 const mockRequirePermission = requirePermission as jest.Mock
 
 const actorContext = {
-  headers: new Headers(),
   userId: 'user-123',
-  sessionActiveOrganizationId: 'org-123',
+  activeOrganization: {
+    organizationId: 'org-123',
+    role: 'owner',
+  },
 }
 
 describe('InvitationService', () => {
@@ -89,7 +91,9 @@ describe('InvitationService', () => {
     })
 
     it('should reject create when actor lacks invitation create permission', async () => {
-      mockRequirePermission.mockImplementation(() => { throw new TRPCError({ code: 'FORBIDDEN' }) })
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      })
 
       await expect(
         invitationService.createInvitation(actorContext, 'wedding-123', {
@@ -150,7 +154,9 @@ describe('InvitationService', () => {
     })
 
     it('should reject update when actor lacks RSVP edit permission', async () => {
-      mockRequirePermission.mockImplementation(() => { throw new TRPCError({ code: 'FORBIDDEN' }) })
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      })
 
       await expect(
         invitationService.updateInvitation(actorContext, {

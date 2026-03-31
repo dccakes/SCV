@@ -60,9 +60,8 @@ const mockRequirePermission = requirePermission as jest.Mock
 describe('WeddingService', () => {
   let weddingService: WeddingService
   const actorContext = {
-    headers: new Headers(),
     userId: 'actor-1',
-    sessionActiveOrganizationId: null,
+    activeOrganization: null,
   }
 
   beforeEach(() => {
@@ -252,7 +251,9 @@ describe('WeddingService', () => {
 
     it('should reject update when permission check fails', async () => {
       mockFindByIdFn.mockResolvedValue({ ...mockWedding, organizationId: 'org-123' })
-      mockRequirePermission.mockImplementation(() => { throw new TRPCError({ code: 'FORBIDDEN' }) })
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      })
 
       await expect(
         weddingService.updateWedding({

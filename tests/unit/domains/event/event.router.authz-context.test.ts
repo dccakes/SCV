@@ -31,16 +31,19 @@ const mockDeleteEvent = eventService.deleteEvent as jest.Mock
 const mockGetWeddingIdByUserId = weddingService.getWeddingIdByUserId as jest.Mock
 
 describe('eventRouter authz context plumbing', () => {
-  const headers = new Headers([['x-test', '1']])
+  const activeOrganization = {
+    organizationId: 'org-123',
+    role: 'owner',
+  }
 
   const caller = eventRouter.createCaller({
     auth: {
       session: { user: { id: 'user-123' } },
-      sessionActiveOrganizationId: 'org-123',
+      activeOrganization,
       userId: 'user-123',
     },
     db: {} as never,
-    headers,
+    headers: new Headers(),
   })
 
   beforeEach(() => {
@@ -55,8 +58,7 @@ describe('eventRouter authz context plumbing', () => {
 
     expect(mockCreateEvent).toHaveBeenCalledWith(
       {
-        headers,
-        sessionActiveOrganizationId: 'org-123',
+        activeOrganization,
         userId: 'user-123',
       },
       'wedding-123',
@@ -73,8 +75,7 @@ describe('eventRouter authz context plumbing', () => {
 
     expect(mockUpdateEvent).toHaveBeenCalledWith(
       {
-        headers,
-        sessionActiveOrganizationId: 'org-123',
+        activeOrganization,
         userId: 'user-123',
       },
       'wedding-123',
@@ -83,8 +84,7 @@ describe('eventRouter authz context plumbing', () => {
 
     expect(mockDeleteEvent).toHaveBeenCalledWith(
       {
-        headers,
-        sessionActiveOrganizationId: 'org-123',
+        activeOrganization,
         userId: 'user-123',
       },
       'event-1',

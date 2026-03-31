@@ -39,9 +39,11 @@ const mockRequirePermission = requirePermission as jest.Mock
 describe('GiftService', () => {
   let giftService: GiftService
   const actorContext = {
-    headers: new Headers(),
     userId: 'actor-1',
-    sessionActiveOrganizationId: 'org-1',
+    activeOrganization: {
+      organizationId: 'org-1',
+      role: 'owner',
+    },
   }
 
   beforeEach(() => {

@@ -27,16 +27,19 @@ const mockUpdateInvitation = invitationService.updateInvitation as jest.Mock
 const mockGetWeddingIdByUserId = weddingService.getWeddingIdByUserId as jest.Mock
 
 describe('invitationRouter authz context plumbing', () => {
-  const headers = new Headers([['x-test', '1']])
+  const activeOrganization = {
+    organizationId: 'org-123',
+    role: 'owner',
+  }
 
   const caller = invitationRouter.createCaller({
     auth: {
       session: { user: { id: 'user-123' } },
-      sessionActiveOrganizationId: 'org-123',
+      activeOrganization,
       userId: 'user-123',
     },
     db: {} as never,
-    headers,
+    headers: new Headers(),
   })
 
   beforeEach(() => {
@@ -55,8 +58,7 @@ describe('invitationRouter authz context plumbing', () => {
 
     expect(mockCreateInvitation).toHaveBeenCalledWith(
       {
-        headers,
-        sessionActiveOrganizationId: 'org-123',
+        activeOrganization,
         userId: 'user-123',
       },
       'wedding-123',
@@ -79,8 +81,7 @@ describe('invitationRouter authz context plumbing', () => {
 
     expect(mockUpdateInvitation).toHaveBeenCalledWith(
       {
-        headers,
-        sessionActiveOrganizationId: 'org-123',
+        activeOrganization,
         userId: 'user-123',
       },
       {
