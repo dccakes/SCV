@@ -53,6 +53,7 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
   const coupleName = bride && groom ? `${bride} & ${groom}` : bride || groom || 'Your Wedding'
   const days = weddingData?.daysRemaining ?? 0
   const dateLabel = weddingData?.date?.standardFormat ?? ''
+  const location = weddingData?.location ?? ''
 
   const [now, setNow] = useState(() => new Date())
   useEffect(() => {
@@ -78,9 +79,9 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
           <p className='font-serif text-2xl text-sidebar-cream italic leading-tight'>
             {coupleName}
           </p>
-          {dateLabel && (
+          {(dateLabel || location) && (
             <p className='mt-0.5 font-mono text-[0.62rem] text-sidebar-cream/40 tracking-wider'>
-              {dateLabel}
+              {[dateLabel, location].filter(Boolean).join(' · ')}
             </p>
           )}
           <div className='mt-3 h-[2px] w-full max-w-[200px] overflow-hidden rounded-full bg-white/[0.08]'>

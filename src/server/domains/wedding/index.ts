@@ -31,6 +31,8 @@ export {
   type CreateWeddingSchemaInput,
   createWeddingSchema,
   getByUserIdSchema,
+  type UpdateWeddingDetailsInput,
+  updateWeddingDetailsSchema,
   type UpdateWeddingSchemaInput,
   updateWeddingSchema,
 } from '~/server/domains/wedding/wedding.validator'
