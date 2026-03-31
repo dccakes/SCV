@@ -11,12 +11,8 @@ import { initTRPC, TRPCError } from '@trpc/server'
 import superjson from 'superjson'
 import { ZodError } from 'zod'
 import { auth } from '~/lib/auth'
+import type { ActiveOrganization } from '~/server/authz/authorization.types'
 import { db } from '~/server/db'
-
-type ActiveOrganization = {
-  organizationId: string
-  role: string | null
-}
 
 const getSessionActiveOrganizationId = (session: unknown): string | null => {
   if (!session || typeof session !== 'object') {
@@ -162,6 +158,7 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   }
   return next({
     ctx: {
+      // infers the `session` as non-nullable
       auth: { ...ctx.auth, userId: ctx.auth.userId },
     },
   })

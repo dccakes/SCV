@@ -37,7 +37,6 @@ export const weddingRouter = createTRPCRouter({
     return weddingService.updateWedding({
       ctx: toAuthzContext(ctx),
       weddingId: wedding.id,
-      organizationId: wedding.organizationId,
       data: input,
     })
   }),

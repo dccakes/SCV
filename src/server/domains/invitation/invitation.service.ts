@@ -7,7 +7,7 @@
 
 import { TRPCError } from '@trpc/server'
 
-import type { ActiveOrganization, AuthzContext } from '~/server/authz/authorization.types'
+import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
 import type {
@@ -137,8 +137,8 @@ export class InvitationService {
     })
   }
 
-  private requireRsvpPermission(ctx: AuthzContext, action: 'edit_response'): ActiveOrganization {
-    return requirePermission(ctx, {
+  private requireRsvpPermission(ctx: AuthzContext, action: 'edit_response'): void {
+    requirePermission(ctx, {
       rsvp: [action],
     })
   }

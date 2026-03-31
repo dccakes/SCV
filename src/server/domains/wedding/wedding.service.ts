@@ -95,7 +95,6 @@ export class WeddingService {
   async updateWedding(input: {
     ctx: AuthzContext
     weddingId: string
-    organizationId: string | null
     data: UpdateWeddingInput
   }): Promise<Wedding> {
     const { ctx, weddingId, data } = input

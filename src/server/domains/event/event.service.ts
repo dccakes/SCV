@@ -19,7 +19,7 @@ import type { PrismaClient } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 
 import { RSVP_STATUS } from '~/lib/constants/rsvp'
-import type { ActiveOrganization, AuthzContext } from '~/server/authz/authorization.types'
+import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { EventRepository } from '~/server/domains/event/event.repository'
 import type { Event, EventWithStats } from '~/server/domains/event/event.types'
@@ -42,7 +42,14 @@ export class EventService {
    */
   async createEvent(ctx: AuthzContext, weddingId: string, data: CreateEventInput): Promise<Event> {
     this.requireEventPermission(ctx, 'create')
+    return this.createEventCore(weddingId, data)
+  }
 
+  async createEventSystem(weddingId: string, data: CreateEventInput): Promise<Event> {
+    return this.createEventCore(weddingId, data)
+  }
+
+  private createEventCore(weddingId: string, data: CreateEventInput): Promise<Event> {
     const {
       eventName: name,
       date,
@@ -73,53 +80,6 @@ export class EventService {
 
       // Create invitations for pre-existing guests
       // Tag-alongs only get invitations if this event allows them
-      const guests = await tx.guest.findMany({
-        where: { weddingId, ...(allowTagAlongs ? {} : { isTagAlong: false }) },
-      })
-
-      if (guests.length > 0) {
-        await tx.invitation.createMany({
-          data: guests.map((guest) => ({
-            weddingId,
-            guestId: guest.id,
-            eventId: newEvent.id,
-            rsvp: RSVP_STATUS.NOT_INVITED,
-          })),
-        })
-      }
-
-      return newEvent as Event
-    })
-  }
-
-  async createEventSystem(weddingId: string, data: CreateEventInput): Promise<Event> {
-    const {
-      eventName: name,
-      date,
-      startTime,
-      endTime,
-      venue,
-      attire,
-      description,
-      allowTagAlongs,
-    } = data
-
-    return this.db.$transaction(async (tx) => {
-      const newEvent = await tx.event.create({
-        data: {
-          name,
-          weddingId,
-          date: date ? new Date(date) : undefined,
-          startTime,
-          endTime,
-          venue,
-          attire,
-          description,
-          collectRsvp: false,
-          allowTagAlongs: allowTagAlongs ?? false,
-        },
-      })
-
       const guests = await tx.guest.findMany({
         where: { weddingId, ...(allowTagAlongs ? {} : { isTagAlong: false }) },
       })
@@ -272,8 +232,8 @@ export class EventService {
   private requireEventPermission(
     ctx: AuthzContext,
     action: 'create' | 'update' | 'delete' | 'rsvp_policy_update'
-  ): ActiveOrganization {
-    return requirePermission(ctx, {
+  ): void {
+    requirePermission(ctx, {
       event: [action],
     })
   }
