@@ -57,7 +57,7 @@ export class WebsiteService {
     weddingId: string,
     data: CreateWebsiteInput
   ): Promise<Website> {
-    await this.requireWebsitePermission(ctx, 'publish')
+    this.requireWebsitePermission(ctx, 'publish')
 
     const { basePath } = data
 
@@ -115,11 +115,11 @@ export class WebsiteService {
     }
 
     if (updateRequiresContentPermission) {
-      await this.requireWebsitePermission(ctx, 'update')
+      this.requireWebsitePermission(ctx, 'update')
     }
 
     if (updateRequiresPasswordPermission) {
-      await this.requireWebsitePermission(ctx, 'password_update')
+      this.requireWebsitePermission(ctx, 'password_update')
     }
 
     const url = data.subUrl !== undefined ? `${data.basePath}/${data.subUrl}` : undefined
@@ -144,7 +144,7 @@ export class WebsiteService {
     websiteId: string,
     isRsvpEnabled: boolean
   ): Promise<Website> {
-    await this.requireWebsitePermission(ctx, 'publish')
+    this.requireWebsitePermission(ctx, 'publish')
 
     const belongsToWedding = await this.websiteRepository.belongsToWedding(websiteId, weddingId)
     if (!belongsToWedding) {
@@ -165,7 +165,7 @@ export class WebsiteService {
     weddingId: string,
     coverPhotoUrl: string | null
   ): Promise<Website> {
-    await this.requireWebsitePermission(ctx, 'update')
+    this.requireWebsitePermission(ctx, 'update')
     return this.websiteRepository.updateCoverPhoto(weddingId, coverPhotoUrl)
   }
 
@@ -449,11 +449,11 @@ export class WebsiteService {
     return publicWebsite
   }
 
-  private async requireWebsitePermission(
+  private requireWebsitePermission(
     ctx: AuthzContext,
     action: 'read' | 'update' | 'publish' | 'password_update'
-  ): Promise<void> {
-    await requirePermission(ctx, {
+  ): void {
+    requirePermission(ctx, {
       website: [action],
     })
   }

@@ -59,7 +59,7 @@ export class GuestService {
       isPrimaryContact?: boolean
     }
   ): Promise<Guest> {
-    await this.requireGuestPermission(ctx, 'create')
+    this.requireGuestPermission(ctx, 'create')
     return this.guestRepository.create({
       firstName: data.firstName,
       lastName: data.lastName,
@@ -90,7 +90,7 @@ export class GuestService {
       }>
     }
   ): Promise<Guest> {
-    await this.requireGuestPermission(ctx, 'create')
+    this.requireGuestPermission(ctx, 'create')
     return this.guestRepository.create({
       firstName: data.firstName,
       lastName: data.lastName,
@@ -126,7 +126,7 @@ export class GuestService {
       rsvp: string
     }>
   ): Promise<Guest> {
-    await this.requireGuestPermission(ctx, data.guestId ? 'update' : 'create')
+    this.requireGuestPermission(ctx, data.guestId ? 'update' : 'create')
     return this.guestRepository.upsert(
       data.guestId,
       {
@@ -158,7 +158,7 @@ export class GuestService {
       phone?: string | null
     }
   ): Promise<Guest> {
-    await this.requireGuestPermission(ctx, 'update')
+    this.requireGuestPermission(ctx, 'update')
     return this.guestRepository.update(guestId, data)
   }
 
@@ -166,7 +166,7 @@ export class GuestService {
    * Delete a guest
    */
   async deleteGuest(ctx: AuthzContext, guestId: number): Promise<Guest> {
-    await this.requireGuestPermission(ctx, 'delete')
+    this.requireGuestPermission(ctx, 'delete')
     return this.guestRepository.delete(guestId)
   }
 
@@ -174,15 +174,15 @@ export class GuestService {
    * Delete multiple guests
    */
   async deleteGuests(ctx: AuthzContext, guestIds: number[]): Promise<{ count: number }> {
-    await this.requireGuestPermission(ctx, 'delete')
+    this.requireGuestPermission(ctx, 'delete')
     return this.guestRepository.deleteMany(guestIds)
   }
 
-  private async requireGuestPermission(
+  private requireGuestPermission(
     ctx: AuthzContext,
     action: 'create' | 'update' | 'delete' | 'import'
-  ): Promise<void> {
-    await requirePermission(ctx, {
+  ): void {
+    requirePermission(ctx, {
       guest: [action],
     })
   }

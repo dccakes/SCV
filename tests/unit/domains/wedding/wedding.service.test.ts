@@ -71,7 +71,7 @@ describe('WeddingService', () => {
     resetUserMocks()
     resetTagMocks()
     mockRequirePermission.mockReset()
-    mockRequirePermission.mockResolvedValue({ organizationId: 'org-123', role: 'owner' })
+    mockRequirePermission.mockReturnValue({ organizationId: 'org-123', role: 'owner' })
     const mockRepository = new WeddingRepository({})
     const mockEventSvc = new EventService({})
     const mockGuestTagService = new GuestTagService({})
@@ -252,7 +252,7 @@ describe('WeddingService', () => {
 
     it('should reject update when permission check fails', async () => {
       mockFindByIdFn.mockResolvedValue({ ...mockWedding, organizationId: 'org-123' })
-      mockRequirePermission.mockRejectedValue(new TRPCError({ code: 'FORBIDDEN' }))
+      mockRequirePermission.mockImplementation(() => { throw new TRPCError({ code: 'FORBIDDEN' }) })
 
       await expect(
         weddingService.updateWedding({

@@ -56,7 +56,7 @@ describe('QuestionService', () => {
   beforeEach(() => {
     resetMocks()
     mockRequirePermission.mockReset()
-    mockRequirePermission.mockResolvedValue({ organizationId: 'org-1', role: 'admin' })
+    mockRequirePermission.mockReturnValue({ organizationId: 'org-1', role: 'admin' })
     mockBelongsToWeddingFn.mockResolvedValue(true)
     mockEventBelongsToWeddingFn.mockResolvedValue(true)
     mockWebsiteBelongsToWeddingFn.mockResolvedValue(true)
@@ -86,11 +86,7 @@ describe('QuestionService', () => {
 
       expect(result).toEqual(mockQuestion)
       expect(mockUpsertFn).toHaveBeenCalled()
-      expect(mockRequirePermission).toHaveBeenCalledWith(
-        actorContext,
-        { event: ['update'] },
-        { organizationId: 'org-1' }
-      )
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { event: ['update'] })
     })
 
     it('should create a website question successfully', async () => {
@@ -109,15 +105,11 @@ describe('QuestionService', () => {
       })
 
       expect(result).toEqual(mockWebsiteQuestion)
-      expect(mockRequirePermission).toHaveBeenCalledWith(
-        actorContext,
-        { website: ['update'] },
-        { organizationId: 'org-1' }
-      )
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { website: ['update'] })
     })
 
     it('should reject upsert when permission check fails', async () => {
-      mockRequirePermission.mockRejectedValue(new TRPCError({ code: 'FORBIDDEN' }))
+      mockRequirePermission.mockImplementation(() => { throw new TRPCError({ code: 'FORBIDDEN' }) })
 
       await expect(
         questionService.upsertQuestion({
@@ -365,11 +357,7 @@ describe('QuestionService', () => {
 
       expect(result).toEqual(mockQuestion)
       expect(mockDeleteFn).toHaveBeenCalledWith('question-123')
-      expect(mockRequirePermission).toHaveBeenCalledWith(
-        actorContext,
-        { event: ['update'] },
-        { organizationId: 'org-1' }
-      )
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { event: ['update'] })
     })
 
     it('should reject delete when question is outside wedding scope', async () => {
@@ -403,7 +391,7 @@ describe('QuestionService', () => {
 
     it('should reject delete when permission check fails', async () => {
       mockFindByIdFn.mockResolvedValue(mockQuestion)
-      mockRequirePermission.mockRejectedValue(new TRPCError({ code: 'FORBIDDEN' }))
+      mockRequirePermission.mockImplementation(() => { throw new TRPCError({ code: 'FORBIDDEN' }) })
 
       await expect(
         questionService.deleteQuestion({

@@ -130,7 +130,7 @@ describe('HouseholdManagementService', () => {
     resetGiftMocks()
     mockDb = createMockDb()
     mockRequirePermission.mockReset()
-    mockRequirePermission.mockResolvedValue({ organizationId: 'org-1', role: 'admin' })
+    mockRequirePermission.mockReturnValue({ organizationId: 'org-1', role: 'admin' })
     mockBelongsToWeddingFn.mockResolvedValue(true)
     mockGuestBelongsToWeddingFn.mockResolvedValue(true)
     mockEventBelongsToWeddingFn.mockResolvedValue(true)
@@ -151,7 +151,7 @@ describe('HouseholdManagementService', () => {
 
   describe('createHouseholdWithGuests', () => {
     it('should reject create when actor lacks guest create permission', async () => {
-      mockRequirePermission.mockRejectedValue(new TRPCError({ code: 'FORBIDDEN' }))
+      mockRequirePermission.mockImplementation(() => { throw new TRPCError({ code: 'FORBIDDEN' }) })
 
       await expect(
         service.createHouseholdWithGuests(actorContext, 'wedding-123', {

@@ -22,7 +22,7 @@ export class GiftService {
    * - Gift must exist (compound key: householdId + eventId)
    */
   async updateGift(ctx: AuthzContext, weddingId: string, data: UpdateGiftInput): Promise<Gift> {
-    await requirePermission(ctx, { guest: ['update'] })
+    requirePermission(ctx, { guest: ['update'] })
 
     const inScope = await this.giftRepository.belongsToWedding(
       data.householdId,

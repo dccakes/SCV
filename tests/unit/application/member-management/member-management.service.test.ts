@@ -31,7 +31,7 @@ describe('MemberManagementService', () => {
 
   describe('inviteMember', () => {
     it('should invite member when actor can invite organization members', async () => {
-      mockRequirePermission.mockResolvedValue({ organizationId: 'org-1', role: 'admin' })
+      mockRequirePermission.mockReturnValue({ organizationId: 'org-1', role: 'admin' })
       const invitedMember = { id: 'member-1', email: 'new@example.com', role: 'editor' }
       mockMemberRepository.inviteMember.mockResolvedValue(invitedMember)
 
@@ -42,21 +42,15 @@ describe('MemberManagementService', () => {
       })
 
       expect(result).toEqual(invitedMember)
-      expect(mockRequirePermission).toHaveBeenCalledWith(
-        actorContext,
-        {
-          organization_member: ['invite'],
-        },
-        {
-          organizationId: 'org-1',
-        }
-      )
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, {
+        organization_member: ['invite'],
+      })
     })
 
     it('should reject invite when actor cannot invite organization members', async () => {
-      mockRequirePermission.mockRejectedValue(
-        new TRPCError({ code: 'FORBIDDEN', message: 'forbidden' })
-      )
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'forbidden' })
+      })
 
       await expect(
         service.inviteMember(actorContext, {
@@ -74,7 +68,7 @@ describe('MemberManagementService', () => {
 
   describe('updateMemberRole', () => {
     it('should update member role when actor can update roles', async () => {
-      mockRequirePermission.mockResolvedValue({ organizationId: 'org-1', role: 'admin' })
+      mockRequirePermission.mockReturnValue({ organizationId: 'org-1', role: 'admin' })
       const updatedMember = { id: 'member-1', role: 'owner' }
       mockMemberRepository.updateMemberRole.mockResolvedValue(updatedMember)
 
@@ -85,21 +79,15 @@ describe('MemberManagementService', () => {
       })
 
       expect(result).toEqual(updatedMember)
-      expect(mockRequirePermission).toHaveBeenCalledWith(
-        actorContext,
-        {
-          organization_member: ['role_update'],
-        },
-        {
-          organizationId: 'org-1',
-        }
-      )
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, {
+        organization_member: ['role_update'],
+      })
     })
 
     it('should reject role update when actor cannot update organization member roles', async () => {
-      mockRequirePermission.mockRejectedValue(
-        new TRPCError({ code: 'FORBIDDEN', message: 'forbidden' })
-      )
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'forbidden' })
+      })
 
       await expect(
         service.updateMemberRole(actorContext, {
@@ -117,7 +105,7 @@ describe('MemberManagementService', () => {
 
   describe('removeMember', () => {
     it('should remove member when actor can remove organization members', async () => {
-      mockRequirePermission.mockResolvedValue({ organizationId: 'org-1', role: 'admin' })
+      mockRequirePermission.mockReturnValue({ organizationId: 'org-1', role: 'admin' })
       mockMemberRepository.removeMember.mockResolvedValue(undefined)
 
       await service.removeMember(actorContext, {
@@ -125,15 +113,9 @@ describe('MemberManagementService', () => {
         memberId: 'member-1',
       })
 
-      expect(mockRequirePermission).toHaveBeenCalledWith(
-        actorContext,
-        {
-          organization_member: ['remove'],
-        },
-        {
-          organizationId: 'org-1',
-        }
-      )
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, {
+        organization_member: ['remove'],
+      })
       expect(mockMemberRepository.removeMember).toHaveBeenCalledWith({
         organizationId: 'org-1',
         memberId: 'member-1',
@@ -141,9 +123,9 @@ describe('MemberManagementService', () => {
     })
 
     it('should reject remove when actor cannot remove organization members', async () => {
-      mockRequirePermission.mockRejectedValue(
-        new TRPCError({ code: 'FORBIDDEN', message: 'forbidden' })
-      )
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'forbidden' })
+      })
 
       await expect(
         service.removeMember(actorContext, {

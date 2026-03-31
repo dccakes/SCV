@@ -71,7 +71,7 @@ describe('EventService', () => {
     resetEventMocks()
     resetDbMocks()
     mockRequirePermission.mockReset()
-    mockRequirePermission.mockResolvedValue({ organizationId: 'org-123', role: 'owner' })
+    mockRequirePermission.mockReturnValue({ organizationId: 'org-123', role: 'owner' })
     const mockRepository = new EventRepository({})
     // Set default mock returns
     mockBelongsToUserFn.mockResolvedValue(true)
@@ -192,7 +192,7 @@ describe('EventService', () => {
     })
 
     it('should reject create when actor lacks event create permission', async () => {
-      mockRequirePermission.mockRejectedValue(new TRPCError({ code: 'FORBIDDEN' }))
+      mockRequirePermission.mockImplementation(() => { throw new TRPCError({ code: 'FORBIDDEN' }) })
 
       await expect(
         eventService.createEvent(actorContext, 'wedding-123', {
@@ -427,7 +427,7 @@ describe('EventService', () => {
     })
 
     it('should reject update when actor lacks event update permission', async () => {
-      mockRequirePermission.mockRejectedValue(new TRPCError({ code: 'FORBIDDEN' }))
+      mockRequirePermission.mockImplementation(() => { throw new TRPCError({ code: 'FORBIDDEN' }) })
 
       await expect(
         eventService.updateEvent(actorContext, 'wedding-123', {
@@ -461,7 +461,7 @@ describe('EventService', () => {
     })
 
     it('should reject update collect RSVP when actor lacks permission', async () => {
-      mockRequirePermission.mockRejectedValue(new TRPCError({ code: 'FORBIDDEN' }))
+      mockRequirePermission.mockImplementation(() => { throw new TRPCError({ code: 'FORBIDDEN' }) })
 
       await expect(
         eventService.updateCollectRsvp(actorContext, 'event-123', 'wedding-123', false)
@@ -507,7 +507,7 @@ describe('EventService', () => {
     })
 
     it('should reject delete when actor lacks event delete permission', async () => {
-      mockRequirePermission.mockRejectedValue(new TRPCError({ code: 'FORBIDDEN' }))
+      mockRequirePermission.mockImplementation(() => { throw new TRPCError({ code: 'FORBIDDEN' }) })
 
       await expect(
         eventService.deleteEvent(actorContext, 'event-123', 'wedding-123')

@@ -18,7 +18,7 @@ export class GuestTagService {
    * @throws TRPCError if tag with same name already exists
    */
   async create(ctx: AuthzContext, data: CreateGuestTagInput): Promise<GuestTag> {
-    await requirePermission(ctx, { guest: ['update'] })
+    requirePermission(ctx, { guest: ['update'] })
 
     const trimmedName = data.name.trim()
 
@@ -41,7 +41,7 @@ export class GuestTagService {
    * Get all guest tags for a wedding
    */
   async getByWeddingId(ctx: AuthzContext, weddingId: string): Promise<GuestTag[]> {
-    await requirePermission(ctx, { guest: ['read'] })
+    requirePermission(ctx, { guest: ['read'] })
     return this.repo.findByWeddingId(weddingId)
   }
 
@@ -53,7 +53,7 @@ export class GuestTagService {
     id: string,
     weddingId: string
   ): Promise<GuestTagWithGuestCount | null> {
-    await requirePermission(ctx, { guest: ['read'] })
+    requirePermission(ctx, { guest: ['read'] })
     await this.assertTagInWeddingScope(id, weddingId)
     return this.repo.findById(id)
   }
@@ -68,7 +68,7 @@ export class GuestTagService {
     weddingId: string,
     data: UpdateGuestTagInput
   ): Promise<GuestTag> {
-    await requirePermission(ctx, { guest: ['update'] })
+    requirePermission(ctx, { guest: ['update'] })
     await this.assertTagInWeddingScope(id, weddingId)
 
     // If updating name, check for duplicates
@@ -89,7 +89,7 @@ export class GuestTagService {
    * Delete a guest tag
    */
   async delete(ctx: AuthzContext, id: string, weddingId: string): Promise<GuestTag> {
-    await requirePermission(ctx, { guest: ['delete'] })
+    requirePermission(ctx, { guest: ['delete'] })
     await this.assertTagInWeddingScope(id, weddingId)
     return this.repo.delete(id)
   }

@@ -39,11 +39,7 @@ export class RsvpSubmissionService {
     weddingId: string,
     data: SubmitRsvpSchemaInput
   ): Promise<{ success: boolean }> {
-    await requirePermission(
-      ctx,
-      { rsvp: ['edit_response'] },
-      { organizationId: ctx.sessionActiveOrganizationId ?? undefined }
-    )
+    requirePermission(ctx, { rsvp: ['edit_response'] })
     await this.ensureSubmissionBelongsToWedding(weddingId, data)
     return this.submitRsvp(data)
   }

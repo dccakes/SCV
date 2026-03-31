@@ -142,7 +142,7 @@ describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
     resetInvitationMocks()
     resetGiftMocks()
     mockRequirePermission.mockReset()
-    mockRequirePermission.mockResolvedValue({ organizationId: 'org-1', role: 'admin' })
+    mockRequirePermission.mockReturnValue({ organizationId: 'org-1', role: 'admin' })
     mockGuestBelongsToWeddingFn.mockResolvedValue(true)
     mockEventBelongsToWeddingFn.mockResolvedValue(true)
     mockTx = createMockTx()

@@ -107,7 +107,7 @@ describe('RsvpSubmissionService', () => {
     mockDb = createMockDb()
     service = new RsvpSubmissionService(mockDb as never)
     mockRequirePermission.mockReset()
-    mockRequirePermission.mockResolvedValue({ organizationId: 'org-1', role: 'admin' })
+    mockRequirePermission.mockReturnValue({ organizationId: 'org-1', role: 'admin' })
   })
 
   describe('submitManagedRsvp', () => {
@@ -129,15 +129,11 @@ describe('RsvpSubmissionService', () => {
         ],
       })
 
-      expect(mockRequirePermission).toHaveBeenCalledWith(
-        actorContext,
-        { rsvp: ['edit_response'] },
-        { organizationId: 'org-1' }
-      )
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { rsvp: ['edit_response'] })
     })
 
     it('rejects when rsvp permission is missing', async () => {
-      mockRequirePermission.mockRejectedValue(new Error('forbidden'))
+      mockRequirePermission.mockImplementation(() => { throw new Error('forbidden') })
 
       await expect(
         service.submitManagedRsvp(actorContext, 'wedding-123', {

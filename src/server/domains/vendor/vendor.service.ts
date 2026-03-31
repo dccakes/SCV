@@ -48,7 +48,7 @@ export class VendorService {
     userId: string,
     category?: VendorCategory
   ): Promise<VendorWithQuotes[]> {
-    await this.requireVendorPermission(ctx, 'read')
+    this.requireVendorPermission(ctx, 'read')
     return this.vendorRepository.findAllByUserId(userId, category)
   }
 
@@ -60,7 +60,7 @@ export class VendorService {
     vendorId: string,
     weddingId: string
   ): Promise<VendorWithQuotes> {
-    await this.requireVendorPermission(ctx, 'read')
+    this.requireVendorPermission(ctx, 'read')
 
     const vendor = await this.vendorRepository.findByIdWithQuotes(vendorId)
 
@@ -86,7 +86,7 @@ export class VendorService {
     weddingId: string,
     data: CreateVendorInput
   ): Promise<Vendor> {
-    await this.requireVendorPermission(ctx, 'create')
+    this.requireVendorPermission(ctx, 'create')
     return this.vendorRepository.create({ ...data, weddingId })
   }
 
@@ -99,7 +99,7 @@ export class VendorService {
     weddingId: string,
     data: UpdateVendorInput
   ): Promise<Vendor> {
-    await this.requireVendorPermission(ctx, 'update')
+    this.requireVendorPermission(ctx, 'update')
     await this.assertVendorOwnership(vendorId, weddingId)
     return this.vendorRepository.update(vendorId, data)
   }
@@ -113,7 +113,7 @@ export class VendorService {
     weddingId: string,
     status: VendorStatus
   ): Promise<Vendor> {
-    await this.requireVendorPermission(ctx, 'update')
+    this.requireVendorPermission(ctx, 'update')
     await this.assertVendorOwnership(vendorId, weddingId)
     return this.vendorRepository.updateStatus(vendorId, status)
   }
@@ -122,7 +122,7 @@ export class VendorService {
    * Delete a vendor (cascades to quotes) with ownership verification
    */
   async deleteVendor(ctx: AuthzContext, vendorId: string, weddingId: string): Promise<string> {
-    await this.requireVendorPermission(ctx, 'delete')
+    this.requireVendorPermission(ctx, 'delete')
     await this.assertVendorOwnership(vendorId, weddingId)
     const deleted = await this.vendorRepository.delete(vendorId)
     return deleted.id
@@ -137,7 +137,7 @@ export class VendorService {
     weddingId: string,
     data: CreateQuoteInput
   ): Promise<VendorQuote> {
-    await this.requireVendorQuotePermission(ctx, 'create')
+    this.requireVendorQuotePermission(ctx, 'create')
     await this.assertVendorOwnership(vendorId, weddingId)
     return this.vendorRepository.createQuote({
       vendorId,
@@ -157,7 +157,7 @@ export class VendorService {
     weddingId: string,
     data: UpdateQuoteInput
   ): Promise<VendorQuote> {
-    await this.requireVendorQuotePermission(ctx, 'update')
+    this.requireVendorQuotePermission(ctx, 'update')
     await this.assertVendorOwnership(vendorId, weddingId)
     await this.assertQuoteOwnership(quoteId, vendorId)
     return this.vendorRepository.updateQuote(quoteId, {
@@ -176,7 +176,7 @@ export class VendorService {
     vendorId: string,
     weddingId: string
   ): Promise<string> {
-    await this.requireVendorQuotePermission(ctx, 'delete')
+    this.requireVendorQuotePermission(ctx, 'delete')
     await this.assertVendorOwnership(vendorId, weddingId)
     await this.assertQuoteOwnership(quoteId, vendorId)
     const deleted = await this.vendorRepository.deleteQuote(quoteId)
@@ -194,7 +194,7 @@ export class VendorService {
     weddingId: string,
     data: SaveQuoteFilesInput
   ): Promise<VendorQuoteFile[]> {
-    await this.requireVendorQuotePermission(ctx, 'update')
+    this.requireVendorQuotePermission(ctx, 'update')
     await this.assertVendorOwnership(vendorId, weddingId)
     await this.assertQuoteOwnership(data.quoteId, vendorId)
     return this.vendorRepository.createQuoteFiles(data.quoteId, data.files)
@@ -210,7 +210,7 @@ export class VendorService {
     weddingId: string,
     data: DeleteQuoteFileInput
   ): Promise<VendorQuoteFile> {
-    await this.requireVendorQuotePermission(ctx, 'update')
+    this.requireVendorQuotePermission(ctx, 'update')
     await this.assertVendorOwnership(vendorId, weddingId)
     await this.assertQuoteOwnership(data.quoteId, vendorId)
     await this.assertFileOwnership(data.fileId, data.quoteId)
@@ -249,20 +249,20 @@ export class VendorService {
     }
   }
 
-  private async requireVendorPermission(
+  private requireVendorPermission(
     ctx: AuthzContext,
     action: 'read' | 'create' | 'update' | 'delete'
-  ): Promise<void> {
-    await requirePermission(ctx, {
+  ): void {
+    requirePermission(ctx, {
       vendor: [action],
     })
   }
 
-  private async requireVendorQuotePermission(
+  private requireVendorQuotePermission(
     ctx: AuthzContext,
     action: 'read' | 'create' | 'update' | 'delete'
-  ): Promise<void> {
-    await requirePermission(ctx, {
+  ): void {
+    requirePermission(ctx, {
       vendor_quote: [action],
     })
   }

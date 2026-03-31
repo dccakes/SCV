@@ -44,7 +44,7 @@ describe('GuestTagService', () => {
   beforeEach(() => {
     resetMocks()
     mockRequirePermission.mockReset()
-    mockRequirePermission.mockResolvedValue(undefined)
+    mockRequirePermission.mockReturnValue(undefined)
     mockBelongsToWeddingFn.mockResolvedValue(true)
     const mockRepository = new GuestTagRepository()
     guestTagService = new GuestTagService(mockRepository)

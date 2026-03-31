@@ -42,7 +42,7 @@ export class EventService {
    * Wrapped in a transaction to ensure event + invitations are created atomically.
    */
   async createEvent(ctx: AuthzContext, weddingId: string, data: CreateEventInput): Promise<Event> {
-    await this.requireEventPermission(ctx, 'create')
+    this.requireEventPermission(ctx, 'create')
 
     const {
       eventName: name,
@@ -194,7 +194,7 @@ export class EventService {
    * Wrapped in a transaction to ensure tag-along invitation creation + event update are atomic.
    */
   async updateEvent(ctx: AuthzContext, weddingId: string, data: UpdateEventInput): Promise<Event> {
-    await this.requireEventPermission(ctx, 'update')
+    this.requireEventPermission(ctx, 'update')
     await assertEventInWeddingScope({
       eventId: data.eventId,
       eventRepository: this.eventRepository,
@@ -259,7 +259,7 @@ export class EventService {
     weddingId: string,
     collectRsvp: boolean
   ): Promise<Event> {
-    await this.requireEventPermission(ctx, 'rsvp_policy_update')
+    this.requireEventPermission(ctx, 'rsvp_policy_update')
     await assertEventInWeddingScope({
       eventId,
       eventRepository: this.eventRepository,
@@ -275,7 +275,7 @@ export class EventService {
    * Note: Cascades to invitations, gifts, and questions via database relations
    */
   async deleteEvent(ctx: AuthzContext, eventId: string, weddingId: string): Promise<string> {
-    await this.requireEventPermission(ctx, 'delete')
+    this.requireEventPermission(ctx, 'delete')
     await assertEventInWeddingScope({
       eventId,
       eventRepository: this.eventRepository,
@@ -286,10 +286,10 @@ export class EventService {
     return deletedEvent.id
   }
 
-  private async requireEventPermission(
+  private requireEventPermission(
     ctx: AuthzContext,
     action: 'create' | 'update' | 'delete' | 'rsvp_policy_update'
-  ): Promise<ActiveOrganization> {
+  ): ActiveOrganization {
     return requirePermission(ctx, {
       event: [action],
     })

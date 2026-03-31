@@ -55,7 +55,7 @@ export class HouseholdManagementService {
     weddingId: string,
     data: CreateHouseholdWithGuestsInput
   ): Promise<CreateHouseholdResult> {
-    await requirePermission(ctx, { guest: ['create'] })
+    requirePermission(ctx, { guest: ['create'] })
     await this.assertEventIdsInWeddingScope(
       data.guestParty.flatMap((guest) => Object.keys(guest.invites)),
       weddingId
@@ -189,7 +189,7 @@ export class HouseholdManagementService {
     weddingId: string,
     data: UpdateHouseholdWithGuestsInput
   ): Promise<UpdateHouseholdResult> {
-    await requirePermission(ctx, { guest: ['update'] })
+    requirePermission(ctx, { guest: ['update'] })
     await this.assertHouseholdInWeddingScope(data.householdId, weddingId)
     await this.assertGuestIdsInWeddingScope(
       data.guestParty.flatMap((guest) => (guest.guestId ? [guest.guestId] : [])),
@@ -384,7 +384,7 @@ export class HouseholdManagementService {
     householdId: string,
     weddingId: string
   ): Promise<string> {
-    await requirePermission(ctx, { guest: ['delete'] })
+    requirePermission(ctx, { guest: ['delete'] })
     await this.assertHouseholdInWeddingScope(householdId, weddingId)
 
     const deletedHousehold = await this.householdRepo.delete(householdId)
@@ -402,7 +402,7 @@ export class HouseholdManagementService {
     weddingId: string,
     households: Parameters<HouseholdManagementService['createHouseholdWithGuests']>[2][]
   ): Promise<{ created: number; failed: number }> {
-    await requirePermission(ctx, { guest: ['import'] })
+    requirePermission(ctx, { guest: ['import'] })
 
     let created = 0
     let failed = 0
@@ -428,7 +428,7 @@ export class HouseholdManagementService {
     weddingId: string,
     searchText: string
   ): Promise<HouseholdSearchResult[]> {
-    await requirePermission(ctx, { guest: ['read'] })
+    requirePermission(ctx, { guest: ['read'] })
     return this.householdRepo.search(searchText, weddingId)
   }
 

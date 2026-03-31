@@ -31,33 +31,24 @@ export class MemberManagementService {
   constructor(private readonly memberRepository: MemberManagementRepository) {}
 
   async inviteMember(ctx: AuthzContext, input: InviteMemberCommand): Promise<unknown> {
-    await this.assertHasOrganizationMemberPermission(ctx, input.organizationId, 'invite')
+    this.assertHasOrganizationMemberPermission(ctx, 'invite')
     return this.memberRepository.inviteMember(input)
   }
 
   async updateMemberRole(ctx: AuthzContext, input: UpdateMemberRoleCommand): Promise<unknown> {
-    await this.assertHasOrganizationMemberPermission(ctx, input.organizationId, 'role_update')
+    this.assertHasOrganizationMemberPermission(ctx, 'role_update')
     return this.memberRepository.updateMemberRole(input)
   }
 
   async removeMember(ctx: AuthzContext, input: RemoveMemberCommand): Promise<void> {
-    await this.assertHasOrganizationMemberPermission(ctx, input.organizationId, 'remove')
+    this.assertHasOrganizationMemberPermission(ctx, 'remove')
     await this.memberRepository.removeMember(input)
   }
 
-  private async assertHasOrganizationMemberPermission(
+  private assertHasOrganizationMemberPermission(
     ctx: AuthzContext,
-    organizationId: string,
     action: OrganizationMemberAction
-  ): Promise<void> {
-    await requirePermission(
-      ctx,
-      {
-        organization_member: [action],
-      },
-      {
-        organizationId,
-      }
-    )
+  ): void {
+    requirePermission(ctx, { organization_member: [action] })
   }
 }

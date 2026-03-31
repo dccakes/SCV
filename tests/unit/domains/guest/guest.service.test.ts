@@ -51,7 +51,7 @@ describe('GuestService', () => {
   beforeEach(() => {
     resetMocks()
     mockRequirePermission.mockReset()
-    mockRequirePermission.mockResolvedValue({ organizationId: 'org-1', role: 'admin' })
+    mockRequirePermission.mockReturnValue({ organizationId: 'org-1', role: 'admin' })
     const mockRepository = new GuestRepository({})
     guestService = new GuestService(mockRepository)
   })
@@ -117,7 +117,7 @@ describe('GuestService', () => {
 
   describe('createGuest', () => {
     it('should reject create when actor lacks guest create permission', async () => {
-      mockRequirePermission.mockRejectedValue(new Error('forbidden'))
+      mockRequirePermission.mockImplementation(() => { throw new Error('forbidden') })
 
       await expect(
         guestService.createGuest(

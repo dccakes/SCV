@@ -112,7 +112,7 @@ export class QuestionService {
       permissionScope = data.eventId ? 'event' : 'website'
     }
 
-    await this.requireQuestionPermission(ctx, organizationId, permissionScope)
+    this.requireQuestionPermission(ctx, permissionScope)
 
     if (permissionScope === 'event' && data.eventId) {
       await this.assertEventInWeddingScope(data.eventId, weddingId)
@@ -167,11 +167,7 @@ export class QuestionService {
     }
 
     const question = await this.getScopedQuestionOrDeny(data.questionId, weddingId)
-    await this.requireQuestionPermission(
-      ctx,
-      organizationId,
-      question.eventId ? 'event' : 'website'
-    )
+    this.requireQuestionPermission(ctx, question.eventId ? 'event' : 'website')
     return this.questionRepository.delete(data.questionId)
   }
 
@@ -203,25 +199,13 @@ export class QuestionService {
     return this.questionRepository.findByWebsiteId(websiteId)
   }
 
-  private async requireQuestionPermission(
-    ctx: AuthzContext,
-    organizationId: string | null,
-    scope: 'event' | 'website'
-  ): Promise<void> {
+  private requireQuestionPermission(ctx: AuthzContext, scope: 'event' | 'website'): void {
     if (scope === 'event') {
-      await requirePermission(
-        ctx,
-        { event: ['update'] },
-        organizationId ? { organizationId } : undefined
-      )
+      requirePermission(ctx, { event: ['update'] })
       return
     }
 
-    await requirePermission(
-      ctx,
-      { website: ['update'] },
-      organizationId ? { organizationId } : undefined
-    )
+    requirePermission(ctx, { website: ['update'] })
   }
 
   private async getScopedQuestionOrDeny(questionId: string, weddingId: string): Promise<Question> {

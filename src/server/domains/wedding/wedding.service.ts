@@ -98,7 +98,7 @@ export class WeddingService {
     organizationId: string | null
     data: UpdateWeddingInput
   }): Promise<Wedding> {
-    const { ctx, weddingId, organizationId, data } = input
+    const { ctx, weddingId, data } = input
     const wedding = await this.weddingRepository.findById(weddingId)
 
     if (!wedding) {
@@ -115,13 +115,9 @@ export class WeddingService {
       })
     }
 
-    await requirePermission(
-      ctx,
-      {
-        wedding: ['update'],
-      },
-      organizationId ? { organizationId } : undefined
-    )
+    requirePermission(ctx, {
+      wedding: ['update'],
+    })
 
     return this.weddingRepository.update(weddingId, data)
   }

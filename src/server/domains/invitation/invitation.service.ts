@@ -29,7 +29,7 @@ export class InvitationService {
     weddingId: string,
     data: CreateInvitationInput
   ): Promise<Invitation> {
-    await this.requireInvitationPermission(ctx, 'create')
+    this.requireInvitationPermission(ctx, 'create')
 
     const [guestInWedding, eventInWedding] = await Promise.all([
       this.invitationRepository.guestBelongsToWedding(data.guestId, weddingId),
@@ -55,7 +55,7 @@ export class InvitationService {
    * Update an invitation RSVP
    */
   async updateInvitation(ctx: AuthzContext, data: UpdateInvitationInput): Promise<Invitation> {
-    const activeOrg = await this.requireRsvpPermission(ctx, 'edit_response')
+    const activeOrg = this.requireRsvpPermission(ctx, 'edit_response')
     await assertInvitationInActiveOrganization({
       activeOrganization: activeOrg,
       invitation: {
@@ -140,16 +140,16 @@ export class InvitationService {
     return this.invitationRepository.createMany(invitations)
   }
 
-  private async requireInvitationPermission(ctx: AuthzContext, action: 'create'): Promise<void> {
-    await requirePermission(ctx, {
+  private requireInvitationPermission(ctx: AuthzContext, action: 'create'): void {
+    requirePermission(ctx, {
       invitation: [action],
     })
   }
 
-  private async requireRsvpPermission(
+  private requireRsvpPermission(
     ctx: AuthzContext,
     action: 'edit_response'
-  ): Promise<ActiveOrganization> {
+  ): ActiveOrganization {
     return requirePermission(ctx, {
       rsvp: [action],
     })

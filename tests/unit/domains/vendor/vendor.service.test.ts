@@ -66,7 +66,7 @@ describe('VendorService', () => {
   beforeEach(() => {
     resetMocks()
     mockRequirePermission.mockReset()
-    mockRequirePermission.mockResolvedValue({ organizationId: 'org-1', role: 'admin' })
+    mockRequirePermission.mockReturnValue({ organizationId: 'org-1', role: 'admin' })
     const mockRepository = new VendorRepository({})
     vendorService = new VendorService(mockRepository)
   })

@@ -82,7 +82,7 @@ describe('WebsiteService', () => {
     mockCreateAccessToken.mockReset()
     mockVerifyAccessToken.mockReset()
     mockRequirePermission.mockReset()
-    mockRequirePermission.mockResolvedValue({ organizationId: 'org-1', role: 'admin' })
+    mockRequirePermission.mockReturnValue({ organizationId: 'org-1', role: 'admin' })
     mockBelongsToWeddingFn.mockResolvedValue(true)
     const mockRepository = new WebsiteRepository({})
     const mockPasswordService = {

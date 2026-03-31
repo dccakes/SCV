@@ -57,7 +57,7 @@ describe('InvitationService', () => {
   beforeEach(() => {
     resetMocks()
     mockRequirePermission.mockReset()
-    mockRequirePermission.mockResolvedValue({ organizationId: 'org-123', role: 'owner' })
+    mockRequirePermission.mockReturnValue({ organizationId: 'org-123', role: 'owner' })
     mockBelongsToUserFn.mockResolvedValue(true)
     mockFindOrganizationIdByInvitationIdFn.mockResolvedValue('org-123')
     mockGuestBelongsToWeddingFn.mockResolvedValue(true)
@@ -89,7 +89,7 @@ describe('InvitationService', () => {
     })
 
     it('should reject create when actor lacks invitation create permission', async () => {
-      mockRequirePermission.mockRejectedValue(new TRPCError({ code: 'FORBIDDEN' }))
+      mockRequirePermission.mockImplementation(() => { throw new TRPCError({ code: 'FORBIDDEN' }) })
 
       await expect(
         invitationService.createInvitation(actorContext, 'wedding-123', {
@@ -150,7 +150,7 @@ describe('InvitationService', () => {
     })
 
     it('should reject update when actor lacks RSVP edit permission', async () => {
-      mockRequirePermission.mockRejectedValue(new TRPCError({ code: 'FORBIDDEN' }))
+      mockRequirePermission.mockImplementation(() => { throw new TRPCError({ code: 'FORBIDDEN' }) })
 
       await expect(
         invitationService.updateInvitation(actorContext, {
