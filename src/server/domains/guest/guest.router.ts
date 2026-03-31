@@ -5,6 +5,7 @@
  * This is a thin layer that handles input validation and delegates to the service.
  */
 
+import { TRPCError } from '@trpc/server'
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { guestService } from '~/server/domains/guest'
 import { getByEventSchema, getByHouseholdSchema } from '~/server/domains/guest/guest.validator'

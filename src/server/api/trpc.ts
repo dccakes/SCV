@@ -91,6 +91,7 @@ const autoActivateFirstOrganization = async (
       UPDATE "session"
       SET "activeOrganizationId" = ${row.organizationId}
       WHERE "token" = ${sessionToken}
+        AND ("activeOrganizationId" IS NULL OR "activeOrganizationId" != ${row.organizationId})
     `
   }
 
