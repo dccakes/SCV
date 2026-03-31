@@ -18,10 +18,10 @@ interface EttaChatProps {
   guestToken?: string
 }
 
-function getTextContent(parts: Array<{ type: string; text?: string }>): string {
+function getTextContent(parts: UIMessage['parts']): string {
   return parts
-    .filter((p) => p.type === 'text')
-    .map((p) => p.text ?? '')
+    .filter((p): p is Extract<UIMessage['parts'][number], { type: 'text' }> => p.type === 'text')
+    .map((p) => p.text)
     .join('')
 }
 
