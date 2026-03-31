@@ -436,8 +436,8 @@ test.describe('Multi-User Data Isolation', () => {
     await page.getByLabel('Password').fill('securePassword123!')
     await signUpBtn.click()
 
-    // Wait for redirect to dashboard (new user onboarding)
-    await page.waitForURL(/\/(dashboard|onboarding|wedding-setup)/, { timeout: 15_000 })
+    // Wait until redirected away from /auth/* (may land on /, /dashboard, /onboarding, etc.)
+    await page.waitForURL((url) => !url.pathname.startsWith('/auth/'), { timeout: 15_000 })
 
     // Navigate to vendors page
     await page.goto('/vendors')
