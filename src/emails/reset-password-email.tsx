@@ -9,6 +9,8 @@ import {
   Text,
 } from '@react-email/components'
 
+import { emailStyles } from '~/emails/email-styles'
+
 interface ResetPasswordEmailProps {
   url: string
   userName?: string
@@ -19,10 +21,10 @@ export function ResetPasswordEmail({ url, userName }: ResetPasswordEmailProps) {
     <Html>
       <Head />
       <Preview>Reset your password</Preview>
-      <Body style={{ backgroundColor: '#f9fafb', fontFamily: 'sans-serif' }}>
-        <Container style={{ maxWidth: '480px', margin: '0 auto', padding: '40px 20px' }}>
-          <Heading style={{ fontSize: '24px', color: '#111827' }}>Reset your password</Heading>
-          <Text style={{ color: '#6b7280', fontSize: '16px' }}>
+      <Body style={emailStyles.body}>
+        <Container style={emailStyles.container}>
+          <Heading style={emailStyles.heading}>Reset your password</Heading>
+          <Text style={emailStyles.bodyText}>
             {userName ? `Hi ${userName}, c` : 'C'}lick the button below to reset your password. The
             link expires in 1 hour.
           </Text>
@@ -39,7 +41,7 @@ export function ResetPasswordEmail({ url, userName }: ResetPasswordEmailProps) {
           >
             Reset Password
           </Button>
-          <Text style={{ color: '#9ca3af', fontSize: '14px', marginTop: '24px' }}>
+          <Text style={emailStyles.footerText}>
             If you didn&apos;t request this, you can safely ignore this email.
           </Text>
         </Container>

@@ -9,6 +9,8 @@ import {
   Text,
 } from '@react-email/components'
 
+import { emailStyles } from '~/emails/email-styles'
+
 interface OtpEmailProps {
   otp: string
   type: 'sign-in' | 'email-verification' | 'forget-password'
@@ -29,10 +31,10 @@ export function OtpEmail({ otp, type }: OtpEmailProps) {
       <Preview>
         {subject}: {otp}
       </Preview>
-      <Body style={{ backgroundColor: '#f9fafb', fontFamily: 'sans-serif' }}>
-        <Container style={{ maxWidth: '480px', margin: '0 auto', padding: '40px 20px' }}>
-          <Heading style={{ fontSize: '24px', color: '#111827' }}>{subject}</Heading>
-          <Text style={{ color: '#6b7280', fontSize: '16px' }}>
+      <Body style={emailStyles.body}>
+        <Container style={emailStyles.container}>
+          <Heading style={emailStyles.heading}>{subject}</Heading>
+          <Text style={emailStyles.bodyText}>
             Use the code below to continue. It expires in 10 minutes.
           </Text>
           <Section
@@ -55,7 +57,7 @@ export function OtpEmail({ otp, type }: OtpEmailProps) {
               {otp}
             </Text>
           </Section>
-          <Text style={{ color: '#9ca3af', fontSize: '14px', marginTop: '24px' }}>
+          <Text style={emailStyles.footerText}>
             If you didn&apos;t request this, you can safely ignore this email.
           </Text>
         </Container>
