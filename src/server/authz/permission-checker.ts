@@ -25,7 +25,10 @@ export const requirePermission = (
     throw new TRPCError({ code: 'FORBIDDEN' })
   }
 
-  const result = organizationRoles[roleKey].authorize(permissions)
+  // Cast required: better-auth generates role-specific authorize overloads that are
+  // incompatible when accessed via a dynamic key. The cast to unknown is intentional.
+  type AuthorizeCallable = { authorize: (permissions: PermissionInput) => { success: boolean } }
+  const result = (organizationRoles[roleKey] as unknown as AuthorizeCallable).authorize(permissions)
 
   if (!result.success) {
     throw new TRPCError({ code: 'FORBIDDEN' })
