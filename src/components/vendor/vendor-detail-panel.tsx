@@ -20,6 +20,7 @@ import {
   DialogPortal,
   DialogTitle,
 } from '~/components/ui/dialog'
+import { FileViewerDrawer, getViewableFileType } from '~/components/vendor/file-viewer-drawer'
 import { QuoteForm } from '~/components/vendor/quote-form'
 import { VendorForm } from '~/components/vendor/vendor-form'
 import { VendorStatusSelect } from '~/components/vendor/vendor-status-select'
@@ -223,6 +224,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
   const [showEditForm, setShowEditForm] = useState(false)
   const [editingQuoteId, setEditingQuoteId] = useState<string | null>(null)
   const [attachingQuoteId, setAttachingQuoteId] = useState<string | null>(null)
+  const [viewingPdf, setViewingPdf] = useState<{ name: string; url: string } | null>(null)
   const utils = api.useUtils()
 
   const { data: vendorData, refetch } = api.vendor.getById.useQuery(
@@ -259,333 +261,352 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
   const formatDate = (date: Date | string) => dateFormatter.format(new Date(date))
 
   return (
-    <Dialog open={!!vendor} onOpenChange={(open) => !open && onClose()}>
-      <DialogPortal>
-        <DialogOverlay className={SIDE_PANE_OVERLAY_CLASS} />
-        <DialogPrimitive.Content
-          className={cn(
-            `fixed inset-0 z-50 flex h-screen w-screen max-w-none translate-x-0 translate-y-0 flex-col overflow-hidden p-0 pb-0 outline-none ${SIDE_PANE_SURFACE_CLASS}`,
-            `md:inset-y-0 md:right-0 md:left-auto md:h-full md:translate-x-0 md:translate-y-0 md:p-6 ${SIDE_PANE_DIALOG_WIDTH_CLASS}`
-          )}
-        >
-          <DialogClose
-            aria-label='Close vendor details'
-            className='absolute top-4 right-4 z-10 rounded-full border border-border/80 bg-card p-1.5 opacity-80 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+    <>
+      <Dialog open={!!vendor} onOpenChange={(open) => !open && onClose()}>
+        <DialogPortal>
+          <DialogOverlay className={SIDE_PANE_OVERLAY_CLASS} />
+          <DialogPrimitive.Content
+            className={cn(
+              `fixed inset-0 z-50 flex h-screen w-screen max-w-none translate-x-0 translate-y-0 flex-col overflow-hidden p-0 pb-0 outline-none ${SIDE_PANE_SURFACE_CLASS}`,
+              `md:inset-y-0 md:right-0 md:left-auto md:h-full md:translate-x-0 md:translate-y-0 md:p-6 ${SIDE_PANE_DIALOG_WIDTH_CLASS}`
+            )}
           >
-            <X className='h-4 w-4' aria-hidden='true' />
-          </DialogClose>
+            <DialogClose
+              aria-label='Close vendor details'
+              className='absolute top-4 right-4 z-10 rounded-full border border-border/80 bg-card p-1.5 opacity-80 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+            >
+              <X className='h-4 w-4' aria-hidden='true' />
+            </DialogClose>
 
-          {/* Header */}
-          <header className='border-border/80 border-b px-5 py-5 pr-14 md:px-6'>
-            <DialogTitle className='font-display text-2xl text-foreground italic leading-tight'>
-              {vendorData.name}
-            </DialogTitle>
-            <DialogDescription className='sr-only'>Vendor details panel</DialogDescription>
-            <div className='mt-2'>
-              <VendorStatusSelect
-                value={vendorData.status}
-                onChange={(status) => updateStatus.mutate({ vendorId: vendorData.id, status })}
-                disabled={updateStatus.isPending}
-              />
-            </div>
-          </header>
-
-          {/* Scrollable body */}
-          <div className='flex min-h-0 flex-1 flex-col'>
-            <div className='flex-1 overflow-y-auto overscroll-y-contain px-5 py-4 md:px-6'>
-              {showEditForm ? (
-                <VendorForm
-                  mode='edit'
-                  vendor={vendorData}
-                  onSuccess={async () => {
-                    await Promise.all([refetch(), utils.vendor.getAll.invalidate()])
-                    setShowEditForm(false)
-                  }}
-                  onCancel={() => setShowEditForm(false)}
+            {/* Header */}
+            <header className='border-border/80 border-b px-5 py-5 pr-14 md:px-6'>
+              <DialogTitle className='font-display text-2xl text-foreground italic leading-tight'>
+                {vendorData.name}
+              </DialogTitle>
+              <DialogDescription className='sr-only'>Vendor details panel</DialogDescription>
+              <div className='mt-2'>
+                <VendorStatusSelect
+                  value={vendorData.status}
+                  onChange={(status) => updateStatus.mutate({ vendorId: vendorData.id, status })}
+                  disabled={updateStatus.isPending}
                 />
-              ) : (
-                <div className='space-y-5'>
-                  {/* Details section */}
-                  <section>
-                    <SectionLabel
-                      action={
-                        <button
-                          type='button'
-                          onClick={() => setShowEditForm(true)}
-                          className='font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:underline'
-                        >
-                          Edit
-                        </button>
-                      }
-                    >
-                      Details
-                    </SectionLabel>
-                    <dl className='grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2'>
-                      {vendorData.location && (
-                        <div>
-                          <DetailLabel>Location</DetailLabel>
-                          <dd className='font-sans text-[0.92rem] text-foreground'>
-                            {vendorData.location}
-                          </dd>
-                        </div>
-                      )}
-                      {vendorData.website && (
-                        <div>
-                          <DetailLabel>Website</DetailLabel>
-                          <dd>
-                            <a
-                              href={vendorData.website}
-                              target='_blank'
-                              rel='noreferrer'
-                              className='truncate font-sans text-[0.92rem] text-primary hover:underline'
-                            >
-                              {vendorData.website}
-                            </a>
-                          </dd>
-                        </div>
-                      )}
-                      {vendorData.instagram && (
-                        <div>
-                          <DetailLabel>Instagram</DetailLabel>
-                          <dd className='font-sans text-[0.92rem] text-foreground'>
-                            {vendorData.instagram}
-                          </dd>
-                        </div>
-                      )}
-                    </dl>
-                  </section>
+              </div>
+            </header>
 
-                  {/* Contact section */}
-                  {(vendorData.contactName ||
-                    vendorData.contactEmail ||
-                    vendorData.contactPhone) && (
+            {/* Scrollable body */}
+            <div className='flex min-h-0 flex-1 flex-col'>
+              <div className='flex-1 overflow-y-auto overscroll-y-contain px-5 py-4 md:px-6'>
+                {showEditForm ? (
+                  <VendorForm
+                    mode='edit'
+                    vendor={vendorData}
+                    onSuccess={async () => {
+                      await Promise.all([refetch(), utils.vendor.getAll.invalidate()])
+                      setShowEditForm(false)
+                    }}
+                    onCancel={() => setShowEditForm(false)}
+                  />
+                ) : (
+                  <div className='space-y-5'>
+                    {/* Details section */}
                     <section>
-                      <SectionLabel>Contact</SectionLabel>
+                      <SectionLabel
+                        action={
+                          <button
+                            type='button'
+                            onClick={() => setShowEditForm(true)}
+                            className='font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:underline'
+                          >
+                            Edit
+                          </button>
+                        }
+                      >
+                        Details
+                      </SectionLabel>
                       <dl className='grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2'>
-                        {vendorData.contactName && (
+                        {vendorData.location && (
                           <div>
-                            <DetailLabel>Name</DetailLabel>
+                            <DetailLabel>Location</DetailLabel>
                             <dd className='font-sans text-[0.92rem] text-foreground'>
-                              {vendorData.contactName}
+                              {vendorData.location}
                             </dd>
                           </div>
                         )}
-                        {vendorData.contactEmail && (
+                        {vendorData.website && (
                           <div>
-                            <DetailLabel>Email</DetailLabel>
+                            <DetailLabel>Website</DetailLabel>
                             <dd>
                               <a
-                                href={`mailto:${vendorData.contactEmail}`}
-                                className='font-sans text-[0.92rem] text-primary hover:underline'
+                                href={vendorData.website}
+                                target='_blank'
+                                rel='noreferrer'
+                                className='truncate font-sans text-[0.92rem] text-primary hover:underline'
                               >
-                                {vendorData.contactEmail}
+                                {vendorData.website}
                               </a>
                             </dd>
                           </div>
                         )}
-                        {vendorData.contactPhone && (
+                        {vendorData.instagram && (
                           <div>
-                            <DetailLabel>Phone</DetailLabel>
+                            <DetailLabel>Instagram</DetailLabel>
                             <dd className='font-sans text-[0.92rem] text-foreground'>
-                              {vendorData.contactPhone}
+                              {vendorData.instagram}
                             </dd>
                           </div>
                         )}
                       </dl>
                     </section>
-                  )}
 
-                  {/* Quotes section */}
-                  <section>
-                    <SectionLabel
-                      action={
-                        !showQuoteForm ? (
-                          <button
-                            type='button'
-                            onClick={() => setShowQuoteForm(true)}
-                            className='font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:underline'
-                          >
-                            + Add Quote
-                          </button>
-                        ) : null
-                      }
-                    >
-                      Quotes ({vendorData.quotes.length})
-                    </SectionLabel>
-
-                    {showQuoteForm && (
-                      <div className='mb-3'>
-                        <QuoteForm
-                          vendorId={vendorData.id}
-                          onSuccess={async () => {
-                            await refetch()
-                            setShowQuoteForm(false)
-                          }}
-                          onCancel={() => setShowQuoteForm(false)}
-                        />
-                      </div>
+                    {/* Contact section */}
+                    {(vendorData.contactName ||
+                      vendorData.contactEmail ||
+                      vendorData.contactPhone) && (
+                      <section>
+                        <SectionLabel>Contact</SectionLabel>
+                        <dl className='grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2'>
+                          {vendorData.contactName && (
+                            <div>
+                              <DetailLabel>Name</DetailLabel>
+                              <dd className='font-sans text-[0.92rem] text-foreground'>
+                                {vendorData.contactName}
+                              </dd>
+                            </div>
+                          )}
+                          {vendorData.contactEmail && (
+                            <div>
+                              <DetailLabel>Email</DetailLabel>
+                              <dd>
+                                <a
+                                  href={`mailto:${vendorData.contactEmail}`}
+                                  className='font-sans text-[0.92rem] text-primary hover:underline'
+                                >
+                                  {vendorData.contactEmail}
+                                </a>
+                              </dd>
+                            </div>
+                          )}
+                          {vendorData.contactPhone && (
+                            <div>
+                              <DetailLabel>Phone</DetailLabel>
+                              <dd className='font-sans text-[0.92rem] text-foreground'>
+                                {vendorData.contactPhone}
+                              </dd>
+                            </div>
+                          )}
+                        </dl>
+                      </section>
                     )}
 
-                    {vendorData.quotes.length === 0 && !showQuoteForm && (
-                      <p className='font-mono text-[0.72rem] text-muted-foreground uppercase tracking-wider'>
-                        No quotes yet
-                      </p>
-                    )}
+                    {/* Quotes section */}
+                    <section>
+                      <SectionLabel
+                        action={
+                          !showQuoteForm ? (
+                            <button
+                              type='button'
+                              onClick={() => setShowQuoteForm(true)}
+                              className='font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:underline'
+                            >
+                              + Add Quote
+                            </button>
+                          ) : null
+                        }
+                      >
+                        Quotes ({vendorData.quotes.length})
+                      </SectionLabel>
 
-                    {vendorData.quotes.length > 0 && (
-                      <div className='space-y-2'>
-                        {vendorData.quotes.map((quote: VendorQuote) => (
-                          <div
-                            key={quote.id}
-                            className='rounded-lg border border-border/90 bg-card/60 px-4 py-3'
-                          >
-                            {editingQuoteId === quote.id ? (
-                              <QuoteForm
-                                vendorId={vendorData.id}
-                                mode='edit'
-                                quote={quote}
-                                onSuccess={async () => {
-                                  await refetch()
-                                  setEditingQuoteId(null)
-                                }}
-                                onCancel={() => setEditingQuoteId(null)}
-                              />
-                            ) : (
-                              <>
-                                <div className='flex items-start justify-between'>
-                                  <div>
-                                    <div className='flex items-baseline gap-2'>
-                                      <p className='font-display text-foreground text-xl italic'>
-                                        {formatPrice(quote.price)}
-                                      </p>
-                                      <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-wider'>
-                                        {quote.quoteType === QuoteType.PER_GUEST
-                                          ? '/ guest'
-                                          : 'flat fee'}
-                                      </span>
-                                    </div>
-                                    <p className='font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
-                                      {formatDate(quote.quoteDate)}
-                                    </p>
-                                    {quote.notes && (
-                                      <p className='mt-1.5 font-sans text-[0.88rem] text-foreground/75 leading-relaxed'>
-                                        {quote.notes}
-                                      </p>
-                                    )}
-                                  </div>
-                                  <div className='ml-4 flex items-center gap-2'>
-                                    <button
-                                      type='button'
-                                      className='font-mono text-[0.58rem] text-muted-foreground uppercase tracking-wider hover:text-primary'
-                                      onClick={() => setEditingQuoteId(quote.id)}
-                                    >
-                                      Edit
-                                    </button>
-                                    <button
-                                      type='button'
-                                      className='font-mono text-[0.58rem] text-destructive/70 uppercase tracking-wider hover:text-destructive'
-                                      onClick={() => {
-                                        if (
-                                          window.confirm(
-                                            'Remove this quote and all its attached files?'
-                                          )
-                                        ) {
-                                          deleteQuote.mutate({
-                                            quoteId: quote.id,
-                                            vendorId: vendorData.id,
-                                          })
-                                        }
-                                      }}
-                                      disabled={deleteQuote.isPending}
-                                    >
-                                      Remove
-                                    </button>
-                                  </div>
-                                </div>
+                      {showQuoteForm && (
+                        <div className='mb-3'>
+                          <QuoteForm
+                            vendorId={vendorData.id}
+                            onSuccess={async () => {
+                              await refetch()
+                              setShowQuoteForm(false)
+                            }}
+                            onCancel={() => setShowQuoteForm(false)}
+                          />
+                        </div>
+                      )}
 
-                                {/* Attached files */}
-                                {quote.files.length > 0 && (
-                                  <div className='mt-2.5 space-y-1'>
-                                    {quote.files.map((file) => (
-                                      <div
-                                        key={file.id}
-                                        className='flex items-center gap-2 rounded bg-muted px-2.5 py-1.5'
-                                      >
-                                        <a
-                                          href={file.url}
-                                          target='_blank'
-                                          rel='noreferrer'
-                                          className='min-w-0 flex-1 truncate font-sans text-[0.85rem] text-primary hover:underline'
-                                        >
-                                          {file.name}
-                                        </a>
-                                        <span className='shrink-0 font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
-                                          {formatFileSize(file.size)}
+                      {vendorData.quotes.length === 0 && !showQuoteForm && (
+                        <p className='font-mono text-[0.72rem] text-muted-foreground uppercase tracking-wider'>
+                          No quotes yet
+                        </p>
+                      )}
+
+                      {vendorData.quotes.length > 0 && (
+                        <div className='space-y-2'>
+                          {vendorData.quotes.map((quote: VendorQuote) => (
+                            <div
+                              key={quote.id}
+                              className='rounded-lg border border-border/90 bg-card/60 px-4 py-3'
+                            >
+                              {editingQuoteId === quote.id ? (
+                                <QuoteForm
+                                  vendorId={vendorData.id}
+                                  mode='edit'
+                                  quote={quote}
+                                  onSuccess={async () => {
+                                    await refetch()
+                                    setEditingQuoteId(null)
+                                  }}
+                                  onCancel={() => setEditingQuoteId(null)}
+                                />
+                              ) : (
+                                <>
+                                  <div className='flex items-start justify-between'>
+                                    <div>
+                                      <div className='flex items-baseline gap-2'>
+                                        <p className='font-display text-foreground text-xl italic'>
+                                          {formatPrice(quote.price)}
+                                        </p>
+                                        <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-wider'>
+                                          {quote.quoteType === QuoteType.PER_GUEST
+                                            ? '/ guest'
+                                            : 'flat fee'}
                                         </span>
-                                        <button
-                                          type='button'
-                                          aria-label={`Remove ${file.name}`}
-                                          onClick={() => {
-                                            if (window.confirm(`Remove "${file.name}"?`)) {
-                                              deleteFile.mutate({
-                                                fileId: file.id,
-                                                quoteId: quote.id,
-                                                vendorId: vendorData.id,
-                                              })
-                                            }
-                                          }}
-                                          disabled={deleteFile.isPending}
-                                          className='shrink-0 text-muted-foreground hover:text-destructive'
-                                        >
-                                          ✕
-                                        </button>
                                       </div>
-                                    ))}
+                                      <p className='font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
+                                        {formatDate(quote.quoteDate)}
+                                      </p>
+                                      {quote.notes && (
+                                        <p className='mt-1.5 font-sans text-[0.88rem] text-foreground/75 leading-relaxed'>
+                                          {quote.notes}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <div className='ml-4 flex items-center gap-2'>
+                                      <button
+                                        type='button'
+                                        className='font-mono text-[0.58rem] text-muted-foreground uppercase tracking-wider hover:text-primary'
+                                        onClick={() => setEditingQuoteId(quote.id)}
+                                      >
+                                        Edit
+                                      </button>
+                                      <button
+                                        type='button'
+                                        className='font-mono text-[0.58rem] text-destructive/70 uppercase tracking-wider hover:text-destructive'
+                                        onClick={() => {
+                                          if (
+                                            window.confirm(
+                                              'Remove this quote and all its attached files?'
+                                            )
+                                          ) {
+                                            deleteQuote.mutate({
+                                              quoteId: quote.id,
+                                              vendorId: vendorData.id,
+                                            })
+                                          }
+                                        }}
+                                        disabled={deleteQuote.isPending}
+                                      >
+                                        Remove
+                                      </button>
+                                    </div>
                                   </div>
-                                )}
 
-                                {/* Attach more files */}
-                                {attachingQuoteId === quote.id ? (
-                                  <QuoteFileUploader
-                                    quoteId={quote.id}
-                                    vendorId={vendorData.id}
-                                    onUploaded={async () => {
-                                      await refetch()
-                                      setAttachingQuoteId(null)
-                                    }}
-                                  />
-                                ) : (
-                                  <button
-                                    type='button'
-                                    className='mt-2.5 rounded-md border border-primary/30 border-dashed px-2.5 py-1.5 font-mono text-[0.58rem] text-primary uppercase tracking-wider transition-colors hover:border-primary hover:bg-primary/5'
-                                    onClick={() => setAttachingQuoteId(quote.id)}
-                                  >
-                                    + Attach files
-                                  </button>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </section>
-                </div>
-              )}
+                                  {/* Attached files */}
+                                  {quote.files.length > 0 && (
+                                    <div className='mt-2.5 space-y-1'>
+                                      {quote.files.map((file) => {
+                                        const viewableType = getViewableFileType(file.name)
+                                        return (
+                                          <div
+                                            key={file.id}
+                                            className='flex items-center gap-2 rounded bg-muted px-2.5 py-1.5'
+                                          >
+                                            {viewableType ? (
+                                              <button
+                                                type='button'
+                                                onClick={() =>
+                                                  setViewingPdf({ name: file.name, url: file.url })
+                                                }
+                                                className='min-w-0 flex-1 truncate text-left font-sans text-[0.85rem] text-primary hover:underline'
+                                              >
+                                                {file.name}
+                                              </button>
+                                            ) : (
+                                              <a
+                                                href={file.url}
+                                                target='_blank'
+                                                rel='noreferrer'
+                                                className='min-w-0 flex-1 truncate font-sans text-[0.85rem] text-primary hover:underline'
+                                              >
+                                                {file.name}
+                                              </a>
+                                            )}
+                                            <span className='shrink-0 font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
+                                              {formatFileSize(file.size)}
+                                            </span>
+                                            <button
+                                              type='button'
+                                              aria-label={`Remove ${file.name}`}
+                                              onClick={() => {
+                                                if (window.confirm(`Remove "${file.name}"?`)) {
+                                                  deleteFile.mutate({
+                                                    fileId: file.id,
+                                                    quoteId: quote.id,
+                                                    vendorId: vendorData.id,
+                                                  })
+                                                }
+                                              }}
+                                              disabled={deleteFile.isPending}
+                                              className='shrink-0 text-muted-foreground hover:text-destructive'
+                                            >
+                                              ✕
+                                            </button>
+                                          </div>
+                                        )
+                                      })}
+                                    </div>
+                                  )}
+
+                                  {/* Attach more files */}
+                                  {attachingQuoteId === quote.id ? (
+                                    <QuoteFileUploader
+                                      quoteId={quote.id}
+                                      vendorId={vendorData.id}
+                                      onUploaded={async () => {
+                                        await refetch()
+                                        setAttachingQuoteId(null)
+                                      }}
+                                    />
+                                  ) : (
+                                    <button
+                                      type='button'
+                                      className='mt-2.5 rounded-md border border-primary/30 border-dashed px-2.5 py-1.5 font-mono text-[0.58rem] text-primary uppercase tracking-wider transition-colors hover:border-primary hover:bg-primary/5'
+                                      onClick={() => setAttachingQuoteId(quote.id)}
+                                    >
+                                      + Attach files
+                                    </button>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </section>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <footer className='flex gap-3 border-border/80 border-t px-5 py-4 md:px-6'>
+                <Button variant='outline' className='flex-1' onClick={() => setShowEditForm(true)}>
+                  Edit Details
+                </Button>
+                <Button variant='outline' className='flex-1' onClick={onClose}>
+                  Close
+                </Button>
+              </footer>
             </div>
+          </DialogPrimitive.Content>
+        </DialogPortal>
+      </Dialog>
 
-            {/* Footer */}
-            <footer className='flex gap-3 border-border/80 border-t px-5 py-4 md:px-6'>
-              <Button variant='outline' className='flex-1' onClick={() => setShowEditForm(true)}>
-                Edit Details
-              </Button>
-              <Button variant='outline' className='flex-1' onClick={onClose}>
-                Close
-              </Button>
-            </footer>
-          </div>
-        </DialogPrimitive.Content>
-      </DialogPortal>
-    </Dialog>
+      <FileViewerDrawer file={viewingPdf} onClose={() => setViewingPdf(null)} />
+    </>
   )
 }

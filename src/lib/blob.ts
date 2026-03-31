@@ -35,14 +35,11 @@ export async function uploadFiles(files: File[]): Promise<BlobUploadResult[]> {
   const fulfilled: BlobUploadResult[] = []
   const failed: string[] = []
 
-  for (let i = 0; i < results.length; i++) {
-    // biome-ignore lint/style/noNonNullAssertion: index is bounded by results.length
-    const result = results[i]!
+  for (const [i, result] of results.entries()) {
     if (result.status === 'fulfilled') {
       fulfilled.push(result.value)
     } else {
-      // biome-ignore lint/style/noNonNullAssertion: files and results share the same length
-      failed.push(files[i]!.name)
+      failed.push(files[i]?.name ?? 'unknown')
     }
   }
 
