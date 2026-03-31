@@ -21,6 +21,7 @@ export function Providers({ children }: { children: ReactNode }) {
           router.refresh()
         }}
         Link={Link}
+        emailOTP
       >
         {children}
       </AuthUIProvider>
