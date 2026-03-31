@@ -521,6 +521,7 @@ describe('saveQuoteFilesSchema', () => {
     const result = saveQuoteFilesSchema.safeParse(input)
     expect(result.success).toBe(true)
     if (result.success) {
+      // biome-ignore lint/style/noNonNullAssertion: result.success guard guarantees files[0] exists
       expect(result.data.files[0]!.name).toBe('etcpasswd')
     }
   })

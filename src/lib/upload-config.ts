@@ -50,9 +50,12 @@ export const BLOB_URL_PATTERN = /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-sto
  * replacing characters that are unsafe for storage keys.
  */
 export function sanitizeFilename(name: string): string {
-  return name
-    .replace(/\.\./g, '') // strip path traversal
-    .replace(/[/\\]/g, '') // strip path separators
-    .replace(/[\x00-\x1f]/g, '') // strip control characters
-    .trim()
+  return (
+    name
+      .replace(/\.\./g, '') // strip path traversal
+      .replace(/[/\\]/g, '') // strip path separators
+      // biome-ignore lint/suspicious/noControlCharactersInRegex: intentionally strips ASCII control characters
+      .replace(/[\u0000-\u001f]/g, '') // strip control characters
+      .trim()
+  )
 }

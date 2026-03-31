@@ -81,8 +81,10 @@ const mockHousehold: HouseholdWithGuests = {
 const mockHouseholdWithTagAlong: HouseholdWithGuests = {
   ...mockHousehold,
   guests: [
+    // biome-ignore lint/style/noNonNullAssertion: mock data has known indices
     mockHousehold.guests[0]!, // Regular guest: Attending
     {
+      // biome-ignore lint/style/noNonNullAssertion: mock data has known indices
       ...mockHousehold.guests[1]!,
       id: 3,
       firstName: 'Baby',
@@ -110,8 +112,10 @@ const mockHouseholdWithTagAlong: HouseholdWithGuests = {
 const mockHouseholdTagAlongNoInvitations: HouseholdWithGuests = {
   ...mockHousehold,
   guests: [
+    // biome-ignore lint/style/noNonNullAssertion: mock data has known indices
     mockHousehold.guests[0]!, // Regular guest: Attending
     {
+      // biome-ignore lint/style/noNonNullAssertion: mock data has known indices
       ...mockHousehold.guests[1]!,
       id: 4,
       firstName: 'Toddler',
