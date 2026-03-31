@@ -427,12 +427,14 @@ test.describe('Multi-User Data Isolation', () => {
     // Sign up as a completely new user
     const uniqueEmail = `e2e-isolation-${Date.now()}@test.com`
     await page.goto('/auth/sign-up')
-    await page.waitForLoadState('networkidle')
+    // Wait for the sign-up form to be ready (better-auth-ui renders the button as "Create an account")
+    const signUpBtn = page.getByRole('button', { name: 'Create an account' })
+    await signUpBtn.waitFor()
 
     await page.getByLabel('Name').fill('Isolation Test User')
     await page.getByLabel('Email').fill(uniqueEmail)
     await page.getByLabel('Password').fill('securePassword123!')
-    await page.getByRole('button', { name: /sign up/i }).click()
+    await signUpBtn.click()
 
     // Wait for redirect to dashboard (new user onboarding)
     await page.waitForURL(/\/(dashboard|onboarding|wedding-setup)/, { timeout: 15_000 })
