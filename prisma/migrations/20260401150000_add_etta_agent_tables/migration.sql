@@ -40,14 +40,14 @@ CREATE INDEX "etta_suggestions_wedding_id_status_idx" ON "etta_suggestions"("wed
 CREATE INDEX "etta_suggestions_created_at_idx" ON "etta_suggestions"("created_at" DESC);
 
 -- ── etta_memory ──────────────────────────────────────────────────────────────
--- pgvector extension for semantic search (safe to run multiple times)
-CREATE EXTENSION IF NOT EXISTS vector;
-
+-- Note: the embedding column (pgvector) is added separately via
+-- 20260401150001_add_etta_memory_pgvector — it requires the pgvector
+-- extension which must be enabled in your database provider first.
+-- Memory works without embeddings (keyword fallback).
 CREATE TABLE "etta_memory" (
   "id" UUID NOT NULL DEFAULT gen_random_uuid(),
   "wedding_id" UUID NOT NULL,
   "content" TEXT NOT NULL,
-  "embedding" vector(1536),
   "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
   CONSTRAINT "etta_memory_pkey" PRIMARY KEY ("id"),
@@ -55,7 +55,6 @@ CREATE TABLE "etta_memory" (
 );
 
 CREATE INDEX "etta_memory_wedding_id_idx" ON "etta_memory"("wedding_id");
-CREATE INDEX "etta_memory_embedding_idx" ON "etta_memory" USING hnsw ("embedding" vector_cosine_ops);
 
 -- ── audit_log ────────────────────────────────────────────────────────────────
 CREATE TABLE "audit_log" (
