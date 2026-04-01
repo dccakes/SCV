@@ -41,6 +41,7 @@ export const env = createEnv({
     ANTHROPIC_API_KEY: z.string().min(1).optional(),
     OPENAI_API_KEY: z.string().min(1).optional(), // For embeddings (text-embedding-3-small)
     JWT_SECRET: z.string().min(1).optional(), // For guest concierge tokens
+    ETTA_MODEL: z.string().min(1).optional(), // e.g. "anthropic:claude-haiku-4-5-20251001" or "openai:gpt-4o"
   },
 
   /**
@@ -88,6 +89,7 @@ export const env = createEnv({
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     JWT_SECRET: process.env.JWT_SECRET,
+    ETTA_MODEL: process.env.ETTA_MODEL,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

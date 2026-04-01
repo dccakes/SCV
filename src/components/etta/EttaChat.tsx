@@ -18,12 +18,97 @@ interface EttaChatProps {
   guestToken?: string
 }
 
-function getTextContent(parts: UIMessage['parts']): string {
-  return parts
-    .filter((p): p is Extract<UIMessage['parts'][number], { type: 'text' }> => p.type === 'text')
-    .map((p) => p.text)
-    .join('')
+type Part = UIMessage['parts'][number]
+
+function isTextPart(p: Part): p is Extract<Part, { type: 'text' }> {
+  return p.type === 'text'
 }
+
+function isReasoningPart(p: Part): p is Extract<Part, { type: 'reasoning' }> {
+  return p.type === 'reasoning'
+}
+
+function isToolPart(p: Part): boolean {
+  return p.type.startsWith('tool-') || p.type === 'dynamic-tool'
+}
+
+function getToolName(p: Part): string {
+  if (p.type === 'dynamic-tool' && 'toolName' in p) {
+    return (p as { toolName: string }).toolName
+  }
+  return p.type.replace('tool-', '').replaceAll('_', ' ')
+}
+
+// ── Collapsible thinking block ───────────────────────────────────────────────
+
+function ThinkingBlock({ text, state }: { text: string; state?: 'streaming' | 'done' }) {
+  const [expanded, setExpanded] = useState(false)
+  const isStreaming = state === 'streaming'
+
+  if (!text) return null
+
+  return (
+    <div className='rounded border border-white/8 bg-white/[0.03]'>
+      <button
+        type='button'
+        onClick={() => setExpanded((v) => !v)}
+        className='flex w-full items-center gap-2 px-2.5 py-1.5 text-left font-mono text-[0.6rem] text-sidebar-cream/40 uppercase tracking-widest transition-colors hover:text-sidebar-cream/60'
+      >
+        {isStreaming ? (
+          <span className='h-1.5 w-1.5 rounded-full bg-amber-400 motion-safe:animate-pulse' />
+        ) : (
+          <span className='text-[0.5rem]'>{expanded ? '▾' : '▸'}</span>
+        )}
+        {isStreaming ? 'thinking…' : 'thought process'}
+      </button>
+      {(expanded || isStreaming) && (
+        <div className='border-white/8 border-t px-2.5 py-2 font-mono text-[0.68rem] text-sidebar-cream/30 leading-relaxed'>
+          {text}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Tool invocation indicator ────────────────────────────────────────────────
+
+function ToolCallIndicator({ name }: { name: string }) {
+  return (
+    <div className='flex items-center gap-1.5 font-mono text-[0.6rem] text-accent/60 uppercase tracking-widest'>
+      <span className='text-[0.5rem]'>⚡</span>
+      {name}
+    </div>
+  )
+}
+
+// ── Message parts renderer ───────────────────────────────────────────────────
+
+function MessageParts({ parts }: { parts: Part[] }) {
+  const elements: React.ReactNode[] = []
+
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i]!
+    const key = `${part.type}-${i}`
+
+    if (isReasoningPart(part)) {
+      elements.push(<ThinkingBlock key={key} text={part.text} state={part.state} />)
+    } else if (isTextPart(part)) {
+      if (part.text) {
+        elements.push(
+          <div key={key} className='whitespace-pre-wrap'>
+            {part.text}
+          </div>
+        )
+      }
+    } else if (isToolPart(part)) {
+      elements.push(<ToolCallIndicator key={key} name={getToolName(part)} />)
+    }
+  }
+
+  return <>{elements}</>
+}
+
+// ── Main chat component ──────────────────────────────────────────────────────
 
 export function EttaChat({ persona, guestToken }: EttaChatProps) {
   const transport = useMemo(
@@ -44,7 +129,6 @@ export function EttaChat({ persona, guestToken }: EttaChatProps) {
   const suggestions = persona === 'planner' ? PLANNER_SUGGESTIONS : CONCIERGE_SUGGESTIONS
   const subtitle = persona === 'planner' ? 'OSWP AI Planner' : 'Wedding Concierge'
 
-  // Auto-scroll to bottom when new messages arrive or loading state changes.
   const messageCount = messages.length
   // biome-ignore lint/correctness/useExhaustiveDependencies: messageCount and isLoading are intentional triggers for auto-scroll
   useEffect(() => {
@@ -101,16 +185,23 @@ export function EttaChat({ persona, guestToken }: EttaChatProps) {
             <div
               className={`max-w-[88%] rounded px-3 py-2 font-serif text-[0.82rem] leading-relaxed ${
                 msg.role === 'assistant'
-                  ? 'rounded-tl-none bg-white/[0.05] text-sidebar-cream/82'
+                  ? 'flex flex-col gap-2 rounded-tl-none bg-white/[0.05] text-sidebar-cream/82'
                   : 'rounded-tr-none border border-primary/25 bg-primary/18 text-sidebar-cream/88 italic'
               }`}
             >
-              {getTextContent(msg.parts)}
+              {msg.role === 'assistant' ? (
+                <MessageParts parts={msg.parts} />
+              ) : (
+                msg.parts
+                  .filter(isTextPart)
+                  .map((p) => p.text)
+                  .join('')
+              )}
             </div>
           </div>
         ))}
 
-        {isLoading && (
+        {isLoading && messages.at(-1)?.role !== 'assistant' && (
           <div className='flex items-start'>
             <div className='rounded rounded-tl-none bg-white/[0.05] px-3 py-2 font-serif text-[0.82rem] text-sidebar-cream/50 italic'>
               <span className='inline-flex gap-1'>
@@ -123,7 +214,7 @@ export function EttaChat({ persona, guestToken }: EttaChatProps) {
         )}
       </div>
 
-      {/* Suggestion chips — only show when no messages from user yet */}
+      {/* Suggestion chips */}
       {messages.filter((m) => m.role === 'user').length === 0 && (
         <div className='flex flex-col gap-1.5 px-3 pb-2'>
           {suggestions.map((s) => (
