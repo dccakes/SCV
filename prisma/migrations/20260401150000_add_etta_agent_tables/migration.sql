@@ -1,10 +1,13 @@
 -- Etta AI Agent tables
 -- Creates all tables required for the dual-persona agent system.
+--
+-- Note: wedding_id columns use TEXT (not UUID) to match Prisma's default
+-- String type for the Wedding model's id column.
 
 -- ── etta_actors ──────────────────────────────────────────────────────────────
 CREATE TABLE "etta_actors" (
-  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-  "wedding_id" UUID NOT NULL,
+  "id" TEXT NOT NULL DEFAULT gen_random_uuid()::text,
+  "wedding_id" TEXT NOT NULL,
   "actor_type" TEXT NOT NULL DEFAULT 'etta',
   "permissions" TEXT[] DEFAULT ARRAY[]::TEXT[],
   "provisioned_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -18,9 +21,9 @@ CREATE TABLE "etta_actors" (
 
 -- ── etta_suggestions ─────────────────────────────────────────────────────────
 CREATE TABLE "etta_suggestions" (
-  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-  "wedding_id" UUID NOT NULL,
-  "actor_id" UUID NOT NULL,
+  "id" TEXT NOT NULL DEFAULT gen_random_uuid()::text,
+  "wedding_id" TEXT NOT NULL,
+  "actor_id" TEXT NOT NULL,
   "action_type" TEXT NOT NULL,
   "tier" TEXT NOT NULL,
   "payload" JSONB NOT NULL,
@@ -45,8 +48,8 @@ CREATE INDEX "etta_suggestions_created_at_idx" ON "etta_suggestions"("created_at
 -- extension which must be enabled in your database provider first.
 -- Memory works without embeddings (keyword fallback).
 CREATE TABLE "etta_memory" (
-  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-  "wedding_id" UUID NOT NULL,
+  "id" TEXT NOT NULL DEFAULT gen_random_uuid()::text,
+  "wedding_id" TEXT NOT NULL,
   "content" TEXT NOT NULL,
   "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
@@ -58,8 +61,8 @@ CREATE INDEX "etta_memory_wedding_id_idx" ON "etta_memory"("wedding_id");
 
 -- ── audit_log ────────────────────────────────────────────────────────────────
 CREATE TABLE "audit_log" (
-  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-  "wedding_id" UUID NOT NULL,
+  "id" TEXT NOT NULL DEFAULT gen_random_uuid()::text,
+  "wedding_id" TEXT NOT NULL,
   "actor_id" TEXT NOT NULL,
   "actor_type" TEXT NOT NULL,
   "action" TEXT NOT NULL,
@@ -78,8 +81,8 @@ CREATE INDEX "audit_log_actor_id_idx" ON "audit_log"("actor_id");
 
 -- ── guest_questions ──────────────────────────────────────────────────────────
 CREATE TABLE "guest_questions" (
-  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-  "wedding_id" UUID NOT NULL,
+  "id" TEXT NOT NULL DEFAULT gen_random_uuid()::text,
+  "wedding_id" TEXT NOT NULL,
   "guest_id" INTEGER NOT NULL,
   "question" TEXT NOT NULL,
   "context" TEXT,
@@ -97,8 +100,8 @@ CREATE INDEX "guest_questions_wedding_id_answered_idx" ON "guest_questions"("wed
 
 -- ── faqs ─────────────────────────────────────────────────────────────────────
 CREATE TABLE "faqs" (
-  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-  "wedding_id" UUID NOT NULL,
+  "id" TEXT NOT NULL DEFAULT gen_random_uuid()::text,
+  "wedding_id" TEXT NOT NULL,
   "question" TEXT NOT NULL,
   "answer" TEXT NOT NULL,
   "published" BOOLEAN NOT NULL DEFAULT true,
@@ -112,8 +115,8 @@ CREATE INDEX "faqs_wedding_id_published_idx" ON "faqs"("wedding_id", "published"
 
 -- ── notifications ────────────────────────────────────────────────────────────
 CREATE TABLE "notifications" (
-  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-  "wedding_id" UUID NOT NULL,
+  "id" TEXT NOT NULL DEFAULT gen_random_uuid()::text,
+  "wedding_id" TEXT NOT NULL,
   "type" TEXT NOT NULL,
   "payload" JSONB NOT NULL,
   "read" BOOLEAN NOT NULL DEFAULT false,
