@@ -16,6 +16,28 @@ import { resolveEttaContext } from '~/lib/etta/utils/resolve-context'
 
 const DEFAULT_MODEL = 'anthropic/claude-haiku-4.5'
 
+const ADAPTIVE_MODELS = ['anthropic/claude-opus-4.6', 'anthropic/claude-sonnet-4.6']
+
+function getAnthropicThinkingOptions(modelId: string) {
+  if (!modelId.startsWith('anthropic/')) return undefined
+
+  // Claude 4.6 models use adaptive thinking
+  if (ADAPTIVE_MODELS.some((m) => modelId.startsWith(m))) {
+    return {
+      anthropic: {
+        thinking: { type: 'adaptive' as const },
+      },
+    }
+  }
+
+  // Claude 4.5 and earlier use manual thinking with budget
+  return {
+    anthropic: {
+      thinking: { type: 'enabled' as const, budgetTokens: 5000 },
+    },
+  }
+}
+
 export async function runEttaAgent(req: EttaRequest) {
   const { actor, weddingId, guestId, messages } = req
 
@@ -27,11 +49,10 @@ export async function runEttaAgent(req: EttaRequest) {
   const modelId = process.env.ETTA_MODEL || DEFAULT_MODEL
   const model = gateway(modelId)
 
-  // Enable extended thinking for Anthropic models
-  const isAnthropic = modelId.startsWith('anthropic/')
-  const providerOptions = isAnthropic
-    ? { anthropic: { thinking: { type: 'enabled' as const, budgetTokens: 5000 } } }
-    : undefined
+  // Enable thinking for Anthropic models
+  // Claude 4.6: adaptive thinking (model decides when/how much to think)
+  // Claude 4.5 and earlier: manual thinking with fixed token budget
+  const providerOptions = getAnthropicThinkingOptions(modelId)
 
   const result = streamText({
     model,
