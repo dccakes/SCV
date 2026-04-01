@@ -1,6 +1,6 @@
 import { api } from '~/trpc/server'
 
-type WeddingData = Awaited<ReturnType<typeof api.website.fetchWeddingData.query>>
+type WeddingData = Awaited<ReturnType<typeof api.website.fetchWeddingData>>
 
 const weddingBySubUrlCache = new Map<string, Promise<WeddingData | undefined>>()
 
@@ -12,8 +12,8 @@ export const loadWeddingBySubUrl = async (websiteSubUrl: string, accessToken?: s
   const cachedWedding = weddingBySubUrlCache.get(cacheKey)
   if (cachedWedding) return cachedWedding
 
-  const fetchPromise = api.website.fetchWeddingData
-    .query({ subUrl: websiteSubUrl, accessToken })
+  const fetchPromise = api.website
+    .fetchWeddingData({ subUrl: websiteSubUrl, accessToken })
     .catch(() => undefined)
 
   weddingBySubUrlCache.set(cacheKey, fetchPromise)

@@ -14,23 +14,13 @@ const mockWeddingWebsite = jest.fn(({ websiteSubUrl }: { websiteSubUrl: string }
 jest.mock('~/trpc/server', () => ({
   api: {
     user: {
-      get: {
-        query: () => mockGetUser(),
-      },
+      get: () => mockGetUser(),
     },
     website: {
-      fetchWeddingData: {
-        query: (input: { subUrl: string }) => mockFetchWeddingData(input),
-      },
-      getBySubUrl: {
-        query: (input: { subUrl: string }) => mockGetBySubUrl(input),
-      },
-      hasPasswordAccess: {
-        query: jest.fn(),
-      },
-      verifyWebsitePassword: {
-        mutate: jest.fn(),
-      },
+      fetchWeddingData: (input: { subUrl: string }) => mockFetchWeddingData(input),
+      getBySubUrl: (input: { subUrl: string }) => mockGetBySubUrl(input),
+      hasPasswordAccess: jest.fn(),
+      verifyWebsitePassword: jest.fn(),
     },
   },
 }))

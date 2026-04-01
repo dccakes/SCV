@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: RootRouteHandlerProps): Promi
 
 export default async function RootRouteHandler({ params }: RootRouteHandlerProps) {
   const { websiteSubUrl } = await params
-  const website = await api.website.getBySubUrl.query({
+  const website = await api.website.getBySubUrl({
     subUrl: websiteSubUrl,
   })
 
@@ -43,7 +43,7 @@ export default async function RootRouteHandler({ params }: RootRouteHandlerProps
   const cookieStore = await cookies()
   const accessCookieName = `wws_access_${websiteSubUrl}`
   const accessToken = cookieStore.get(accessCookieName)?.value
-  const hasPasswordAccess = await api.website.hasPasswordAccess.query({
+  const hasPasswordAccess = await api.website.hasPasswordAccess({
     subUrl: websiteSubUrl,
     accessToken,
   })
@@ -51,7 +51,7 @@ export default async function RootRouteHandler({ params }: RootRouteHandlerProps
   const verifyWebsitePassword = async (passwordInput: string) => {
     'use server'
 
-    const verificationToken = await api.website.verifyWebsitePassword.mutate({
+    const verificationToken = await api.website.verifyWebsitePassword({
       subUrl: websiteSubUrl,
       password: passwordInput,
     })

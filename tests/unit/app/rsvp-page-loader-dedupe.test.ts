@@ -13,9 +13,7 @@ jest.mock('next/navigation', () => ({
 jest.mock('~/trpc/server', () => ({
   api: {
     website: {
-      fetchWeddingData: {
-        query: (input: { subUrl: string }) => mockFetchWeddingData(input),
-      },
+      fetchWeddingData: (input: { subUrl: string }) => mockFetchWeddingData(input),
     },
   },
 }))

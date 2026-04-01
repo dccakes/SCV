@@ -14,7 +14,7 @@ export async function getRequiredDashboardOverview() {
 }
 
 export async function getRequiredWedding() {
-  const wedding = await api.wedding.getByUserId.query()
+  const wedding = await api.wedding.getByUserId()
 
   if (!wedding) {
     redirect('/')

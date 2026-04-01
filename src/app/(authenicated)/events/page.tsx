@@ -28,7 +28,7 @@ export default async function EventsPage(props: {
 }) {
   const searchParams = (await props.searchParams) ?? {}
   await getRequiredWedding()
-  const initialEvents = (await api.event.getAllByUserIdWithStats.query()) ?? []
+  const initialEvents = (await api.event.getAllByUserIdWithStats()) ?? []
 
   return (
     <>
