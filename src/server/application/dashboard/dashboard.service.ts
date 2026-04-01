@@ -91,7 +91,12 @@ export class DashboardService {
     const weddingLocation = primaryEvent?.venue
 
     // Build wedding data
-    const weddingData = await this.buildWeddingData(website, currentUser, weddingDate, weddingLocation)
+    const weddingData = await this.buildWeddingData(
+      website,
+      currentUser,
+      weddingDate,
+      weddingLocation
+    )
 
     // Build households with guest invitations
     const householdsWithInvitations = this.buildHouseholdsWithInvitations(households, invitations)

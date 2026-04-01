@@ -11,7 +11,9 @@ type AuthenticatedLayoutFrameProps = {
 export async function AuthenticatedLayoutFrame(props: Readonly<AuthenticatedLayoutFrameProps>) {
   const { children, showEttaPanel = false } = props
   const dashboardData = await getDashboardOverview()
-  const { coupleName, weddingDate, weddingLocation } = getSidebarWeddingInfo(dashboardData?.weddingData)
+  const { coupleName, weddingDate, weddingLocation } = getSidebarWeddingInfo(
+    dashboardData?.weddingData
+  )
 
   return (
     <AuthenticatedAppShell

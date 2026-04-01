@@ -1,16 +1,18 @@
 import { getSidebarWeddingInfo } from '~/components/old_dashboard/sidebar-wedding-info'
 
 describe('getSidebarWeddingInfo', () => {
-  it('returns formatted couple name and date when both first names are present', () => {
+  it('returns formatted couple name, date, and location when all present', () => {
     const info = getSidebarWeddingInfo({
       brideFirstName: 'Holly',
       groomFirstName: 'Diego',
       date: { standardFormat: '17 May 2027' },
+      location: 'Oaxaca, Mexico',
     })
 
     expect(info).toEqual({
       coupleName: 'Holly & Diego',
       weddingDate: '17 May 2027',
+      weddingLocation: 'Oaxaca, Mexico',
     })
   })
 
@@ -24,6 +26,7 @@ describe('getSidebarWeddingInfo', () => {
     expect(info).toEqual({
       coupleName: undefined,
       weddingDate: '17 May 2027',
+      weddingLocation: undefined,
     })
   })
 
@@ -33,6 +36,37 @@ describe('getSidebarWeddingInfo', () => {
     expect(info).toEqual({
       coupleName: undefined,
       weddingDate: undefined,
+      weddingLocation: undefined,
+    })
+  })
+
+  it('returns undefined location when location is null', () => {
+    const info = getSidebarWeddingInfo({
+      brideFirstName: 'Holly',
+      groomFirstName: 'Diego',
+      date: { standardFormat: '17 May 2027' },
+      location: null,
+    })
+
+    expect(info).toEqual({
+      coupleName: 'Holly & Diego',
+      weddingDate: '17 May 2027',
+      weddingLocation: undefined,
+    })
+  })
+
+  it('trims whitespace from location', () => {
+    const info = getSidebarWeddingInfo({
+      brideFirstName: 'Holly',
+      groomFirstName: 'Diego',
+      date: { standardFormat: '17 May 2027' },
+      location: '  Beach Resort  ',
+    })
+
+    expect(info).toEqual({
+      coupleName: 'Holly & Diego',
+      weddingDate: '17 May 2027',
+      weddingLocation: 'Beach Resort',
     })
   })
 })

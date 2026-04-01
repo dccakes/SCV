@@ -13,7 +13,7 @@ export default async function SettingsPage() {
       <div className='min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-6 lg:py-6'>
         <div className='mx-auto max-w-2xl'>
           <div className='mb-6'>
-            <h2 className='font-serif text-xl text-foreground'>Wedding Details</h2>
+            <h2 className='font-serif text-foreground text-xl'>Wedding Details</h2>
             <p className='mt-1 font-mono text-[0.62rem] text-foreground/55 tracking-wider'>
               Update your names, wedding date, and location
             </p>
@@ -30,7 +30,9 @@ export default async function SettingsPage() {
               }}
             />
           ) : (
-            <p className='text-foreground/60'>No wedding found. Please complete onboarding first.</p>
+            <p className='text-foreground/60'>
+              No wedding found. Please complete onboarding first.
+            </p>
           )}
         </div>
       </div>
