@@ -38,6 +38,7 @@ export const env = createEnv({
     RESEND_API_KEY: z.string().min(1).optional(),
     EMAIL_FROM: z.string().min(1).default('noreply@oswp.app'),
     // Etta AI Agent
+    AI_GATEWAY_API_KEY: z.string().min(1).optional(), // Vercel AI Gateway API key
     ANTHROPIC_API_KEY: z.string().min(1).optional(),
     OPENAI_API_KEY: z.string().min(1).optional(), // For embeddings (text-embedding-3-small)
     JWT_SECRET: z.string().min(1).optional(), // For guest concierge tokens
@@ -86,6 +87,7 @@ export const env = createEnv({
     BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_FROM: process.env.EMAIL_FROM,
+    AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY,
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     JWT_SECRET: process.env.JWT_SECRET,
