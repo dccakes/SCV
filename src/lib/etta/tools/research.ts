@@ -1,7 +1,7 @@
-import { anthropic } from '@ai-sdk/anthropic'
+import { gateway } from '@ai-sdk/gateway'
 
 export function getResearchTools() {
   return {
-    web_search: anthropic.tools.webSearch_20250305({}),
+    web_search: gateway.tools.parallelSearch(),
   }
 }

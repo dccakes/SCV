@@ -41,7 +41,7 @@ export const env = createEnv({
     ANTHROPIC_API_KEY: z.string().min(1).optional(),
     OPENAI_API_KEY: z.string().min(1).optional(), // For embeddings (text-embedding-3-small)
     JWT_SECRET: z.string().min(1).optional(), // For guest concierge tokens
-    ETTA_MODEL: z.string().min(1).optional(), // e.g. "anthropic:claude-haiku-4-5-20251001" or "openai:gpt-4o"
+    ETTA_MODEL: z.string().min(1).optional(), // e.g. "anthropic/claude-haiku-4.5" or "openai/gpt-4o"
   },
 
   /**
