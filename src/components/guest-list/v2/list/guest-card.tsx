@@ -199,11 +199,11 @@ function GuestCardComponent({
               Party
             </span>
             <div className='flex items-center'>
-              {partyPreview.map((guest, index) => {
+              {partyPreview.map((guest) => {
                 const partyInitials = getInitials(`${guest.firstName} ${guest.lastName}`)
                 return (
                   <span
-                    key={`${guest.id}-${index}`}
+                    key={guest.id}
                     className={`-ml-1.5 flex h-5 w-5 items-center justify-center rounded-full font-mono text-[0.45rem] uppercase first:ml-0 ${
                       guest.isTagAlong
                         ? 'border border-foreground/30 border-dashed bg-muted/40 text-foreground/45'
