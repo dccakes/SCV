@@ -13,16 +13,17 @@ const createJestConfig = nextJest({
 const config: Config = {
   clearMocks: true,
   collectCoverage: false, // Disable by default, enable with --coverage flag
-  coverageDirectory: '<rootDir>/../../coverage',
+  collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.d.ts', '!src/**/__mocks__/**'],
+  coverageDirectory: 'coverage',
   coverageProvider: 'v8',
   coverageReporters: ['json', 'json-summary', 'lcov', 'text', 'html'],
-  rootDir: './tests/unit',
+  roots: ['<rootDir>/tests/unit'],
   testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['./setup.ts'],
-  moduleDirectories: ['node_modules', '<rootDir>/../../src'],
+  setupFilesAfterEnv: ['<rootDir>/tests/unit/setup.ts'],
+  moduleDirectories: ['node_modules', '<rootDir>/src'],
   moduleNameMapper: {
-    '^~/(.*)$': '<rootDir>/../../src/$1',
-    '^@/(.*)$': '<rootDir>/../../src/$1',
+    '^~/(.*)$': '<rootDir>/src/$1',
+    '^@/(.*)$': '<rootDir>/src/$1',
   },
 }
 
@@ -31,7 +32,7 @@ const config: Config = {
 export default async () => {
   const cfg = await (createJestConfig(config) as () => Promise<Config>)()
 
-  const esmPackages = ['geist', 'copy-anything', 'is-what', 'superjson']
+  const esmPackages = ['geist', 'copy-anything', 'is-what', 'superjson', '@react-email']
   const pkg = esmPackages.join('|')
 
   cfg.transformIgnorePatterns = [

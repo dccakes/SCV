@@ -508,6 +508,11 @@ enum VendorStatus {
   SELECTED
 }
 
+enum QuoteType {
+  FLAT_FEE
+  PER_GUEST
+}
+
 // Add-on: Vendor tracking per wedding
 model Vendor {
   id           String         @id @default(uuid())
@@ -542,8 +547,9 @@ model VendorQuote {
   vendorId  String
   vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
-  price     Decimal  @db.Decimal(10, 2)
-  quoteDate DateTime @db.Date
+  price     Decimal   @db.Decimal(10, 2)
+  quoteType QuoteType @default(FLAT_FEE)
+  quoteDate DateTime  @db.Date
   notes     String?
 
   files     VendorQuoteFile[]
@@ -554,15 +560,15 @@ model VendorQuote {
   @@index([vendorId])
 }
 
-// Files attached to a vendor quote (stored via UploadThing)
+// Files attached to a vendor quote (stored via Vercel Blob)
 model VendorQuoteFile {
   id        String      @id @default(uuid())
   quoteId   String
   quote     VendorQuote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 
   name      String      // Original file name
-  url       String      // UploadThing file URL
-  key       String      // UploadThing file key (for deletion)
+  url       String      // Vercel Blob file URL (also used for deletion)
+  key       String      // Vercel Blob pathname
   size      Int         // File size in bytes
 
   createdAt DateTime    @default(now())

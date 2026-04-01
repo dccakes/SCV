@@ -1,3 +1,4 @@
+import { getSessionCookie } from 'better-auth/cookies'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
@@ -11,10 +12,8 @@ export async function middleware(req: NextRequest) {
   const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route))
 
   if (isProtectedRoute) {
-    // Better Auth uses __Secure- prefix on HTTPS (production/Vercel), plain prefix on HTTP (local dev)
-    const sessionToken =
-      req.cookies.get('__Secure-better-auth.session_token') ??
-      req.cookies.get('better-auth.session_token')
+    // Check for session token using Better Auth's utility (handles cookie prefixes)
+    const sessionToken = getSessionCookie(req)
 
     // Redirect to home if not authenticated
     if (!sessionToken) {

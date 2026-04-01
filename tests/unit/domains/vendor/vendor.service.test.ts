@@ -10,11 +10,17 @@ jest.mock('~/server/authz/permission-checker', () => ({
 }))
 
 jest.mock('~/server/domains/vendor/vendor.repository')
+jest.mock('@vercel/blob', () => ({
+  del: jest.fn().mockResolvedValue(undefined),
+}))
+
+import { del } from '@vercel/blob'
 
 import { requirePermission } from '~/server/authz/permission-checker'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   mockBelongsToWedding,
+  mockCountFilesByQuoteId,
   mockCreate,
   mockCreateQuote,
   mockCreateQuoteFiles,
@@ -24,6 +30,8 @@ import {
   mockFileBelongsToQuote,
   mockFindAllByUserId,
   mockFindAllByWeddingId,
+  mockFindAllFileUrlsByQuoteId,
+  mockFindAllFileUrlsByVendorId,
   mockFindByIdWithQuotes,
   mockQuote,
   mockQuoteBelongsToVendor,
@@ -54,6 +62,10 @@ const mockCreateQuoteFilesFn = mockCreateQuoteFiles as jest.Mock
 const mockDeleteQuoteFileFn = mockDeleteQuoteFile as jest.Mock
 const mockFileBelongsToQuoteFn = mockFileBelongsToQuote as jest.Mock
 const mockRequirePermission = requirePermission as jest.Mock
+const mockFindAllFileUrlsByVendorIdFn = mockFindAllFileUrlsByVendorId as jest.Mock
+const mockFindAllFileUrlsByQuoteIdFn = mockFindAllFileUrlsByQuoteId as jest.Mock
+const mockCountFilesByQuoteIdFn = mockCountFilesByQuoteId as jest.Mock
+const mockDel = del as jest.Mock
 
 describe('VendorService', () => {
   let vendorService: VendorService
@@ -66,6 +78,7 @@ describe('VendorService', () => {
     resetMocks()
     mockRequirePermission.mockReset()
     mockRequirePermission.mockReturnValue({ organizationId: 'org-1', role: 'admin' })
+    mockDel.mockReset()
     const mockRepository = new VendorRepository({})
     vendorService = new VendorService(mockRepository)
   })
@@ -249,12 +262,41 @@ describe('VendorService', () => {
   describe('deleteVendor', () => {
     it('should delete vendor when it belongs to the wedding', async () => {
       mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockFindAllFileUrlsByVendorIdFn.mockResolvedValue([])
       mockDeleteFn.mockResolvedValue(mockVendor)
 
       const result = await vendorService.deleteVendor(actorContext, 'vendor-123', 'wedding-123')
 
       expect(result).toBe('vendor-123')
       expect(mockDeleteFn).toHaveBeenCalledWith('vendor-123')
+    })
+
+    it('should clean up blob files before cascade delete', async () => {
+      const urls = [
+        'https://abc.public.blob.vercel-storage.com/file1.pdf',
+        'https://abc.public.blob.vercel-storage.com/file2.pdf',
+      ]
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockFindAllFileUrlsByVendorIdFn.mockResolvedValue(urls)
+      mockDeleteFn.mockResolvedValue(mockVendor)
+
+      await vendorService.deleteVendor('vendor-123', 'wedding-123')
+
+      expect(mockDel).toHaveBeenCalledWith(urls)
+      expect(mockDeleteFn).toHaveBeenCalledWith('vendor-123')
+    })
+
+    it('should still delete vendor when blob cleanup fails', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockFindAllFileUrlsByVendorIdFn.mockResolvedValue([
+        'https://x.public.blob.vercel-storage.com/f.pdf',
+      ])
+      mockDel.mockRejectedValue(new Error('Blob service error'))
+      mockDeleteFn.mockResolvedValue(mockVendor)
+
+      const result = await vendorService.deleteVendor('vendor-123', 'wedding-123')
+
+      expect(result).toBe('vendor-123')
     })
 
     it('should throw FORBIDDEN when vendor does not belong to the wedding', async () => {
@@ -285,6 +327,38 @@ describe('VendorService', () => {
       expect(result).toEqual(mockQuote)
       expect(mockCreateQuoteFn).toHaveBeenCalledWith(
         expect.objectContaining({ vendorId: 'vendor-123' })
+      )
+    })
+
+    it('should forward quoteType FLAT_FEE to repository', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockCreateQuoteFn.mockResolvedValue(mockQuote)
+
+      await vendorService.addQuote('vendor-123', 'wedding-123', {
+        vendorId: 'vendor-123',
+        price: 2500,
+        quoteType: 'FLAT_FEE',
+        quoteDate: '2026-02-01',
+      })
+
+      expect(mockCreateQuoteFn).toHaveBeenCalledWith(
+        expect.objectContaining({ quoteType: 'FLAT_FEE' })
+      )
+    })
+
+    it('should forward quoteType PER_GUEST to repository', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockCreateQuoteFn.mockResolvedValue({ ...mockQuote, quoteType: 'PER_GUEST' })
+
+      await vendorService.addQuote('vendor-123', 'wedding-123', {
+        vendorId: 'vendor-123',
+        price: 75,
+        quoteType: 'PER_GUEST',
+        quoteDate: '2026-02-01',
+      })
+
+      expect(mockCreateQuoteFn).toHaveBeenCalledWith(
+        expect.objectContaining({ quoteType: 'PER_GUEST' })
       )
     })
 
@@ -325,6 +399,23 @@ describe('VendorService', () => {
       expect(result.notes).toBe('Updated notes')
     })
 
+    it('should forward quoteType update to repository', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockQuoteBelongsToVendorFn.mockResolvedValue(true)
+      mockUpdateQuoteFn.mockResolvedValue({ ...mockQuote, quoteType: 'PER_GUEST' })
+
+      await vendorService.updateQuote('quote-123', 'vendor-123', 'wedding-123', {
+        quoteId: 'quote-123',
+        vendorId: 'vendor-123',
+        quoteType: 'PER_GUEST',
+      })
+
+      expect(mockUpdateQuoteFn).toHaveBeenCalledWith(
+        'quote-123',
+        expect.objectContaining({ quoteType: 'PER_GUEST' })
+      )
+    })
+
     it('should throw FORBIDDEN when vendor does not belong to wedding', async () => {
       mockBelongsToWeddingFn.mockResolvedValue(false)
 
@@ -355,6 +446,33 @@ describe('VendorService', () => {
     it('should delete quote when authorized', async () => {
       mockBelongsToWeddingFn.mockResolvedValue(true)
       mockQuoteBelongsToVendorFn.mockResolvedValue(true)
+      mockFindAllFileUrlsByQuoteIdFn.mockResolvedValue([])
+      mockDeleteQuoteFn.mockResolvedValue(mockQuote)
+
+      const result = await vendorService.deleteQuote('quote-123', 'vendor-123', 'wedding-123')
+
+      expect(result).toBe('quote-123')
+    })
+
+    it('should clean up blob files before deleting quote', async () => {
+      const urls = ['https://abc.public.blob.vercel-storage.com/proposal.pdf']
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockQuoteBelongsToVendorFn.mockResolvedValue(true)
+      mockFindAllFileUrlsByQuoteIdFn.mockResolvedValue(urls)
+      mockDeleteQuoteFn.mockResolvedValue(mockQuote)
+
+      await vendorService.deleteQuote('quote-123', 'vendor-123', 'wedding-123')
+
+      expect(mockDel).toHaveBeenCalledWith(urls)
+    })
+
+    it('should still delete quote when blob cleanup fails', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockQuoteBelongsToVendorFn.mockResolvedValue(true)
+      mockFindAllFileUrlsByQuoteIdFn.mockResolvedValue([
+        'https://x.public.blob.vercel-storage.com/f.pdf',
+      ])
+      mockDel.mockRejectedValue(new Error('Blob error'))
       mockDeleteQuoteFn.mockResolvedValue(mockQuote)
 
       const result = await vendorService.deleteQuote(
@@ -390,6 +508,7 @@ describe('VendorService', () => {
   describe('DB error propagation', () => {
     it('deleteVendor should propagate repository errors', async () => {
       mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockFindAllFileUrlsByVendorIdFn.mockResolvedValue([])
       mockDeleteFn.mockRejectedValue(new Error('DB connection error'))
 
       await expect(
@@ -413,6 +532,7 @@ describe('VendorService', () => {
     it('deleteQuote should propagate repository errors', async () => {
       mockBelongsToWeddingFn.mockResolvedValue(true)
       mockQuoteBelongsToVendorFn.mockResolvedValue(true)
+      mockFindAllFileUrlsByQuoteIdFn.mockResolvedValue([])
       mockDeleteQuoteFn.mockRejectedValue(new Error('Record not found'))
 
       await expect(
@@ -428,13 +548,19 @@ describe('VendorService', () => {
       quoteId: 'quote-123',
       vendorId: 'vendor-123',
       files: [
-        { name: 'proposal.pdf', url: 'https://utfs.io/f/abc123', key: 'abc123', size: 102400 },
+        {
+          name: 'proposal.pdf',
+          url: 'https://abc123.public.blob.vercel-storage.com/proposal.pdf',
+          key: 'proposal.pdf',
+          size: 102400,
+        },
       ],
     }
 
     it('should save files when vendor and quote ownership is valid', async () => {
       mockBelongsToWeddingFn.mockResolvedValue(true)
       mockQuoteBelongsToVendorFn.mockResolvedValue(true)
+      mockCountFilesByQuoteIdFn.mockResolvedValue(0)
       mockCreateQuoteFilesFn.mockResolvedValue([mockQuoteFile])
 
       const result = await vendorService.saveQuoteFiles(
@@ -446,6 +572,22 @@ describe('VendorService', () => {
 
       expect(result).toEqual([mockQuoteFile])
       expect(mockCreateQuoteFilesFn).toHaveBeenCalledWith('quote-123', fileInput.files)
+    })
+
+    it('should throw BAD_REQUEST when total file count exceeds limit', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockQuoteBelongsToVendorFn.mockResolvedValue(true)
+      mockCountFilesByQuoteIdFn.mockResolvedValue(9) // 9 existing + 1 new = 10, ok
+      mockCreateQuoteFilesFn.mockResolvedValue([mockQuoteFile])
+
+      // This should succeed (9 + 1 = 10, at the limit)
+      await vendorService.saveQuoteFiles('vendor-123', 'wedding-123', fileInput)
+
+      // Now test exceeding: 10 existing + 1 new = 11
+      mockCountFilesByQuoteIdFn.mockResolvedValue(10)
+      await expect(
+        vendorService.saveQuoteFiles('vendor-123', 'wedding-123', fileInput)
+      ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
     })
 
     it('should throw FORBIDDEN when vendor does not belong to wedding', async () => {
@@ -475,7 +617,7 @@ describe('VendorService', () => {
       vendorId: 'vendor-123',
     }
 
-    it('should delete file when all ownership checks pass', async () => {
+    it('should delete file and call del() with correct URL', async () => {
       mockBelongsToWeddingFn.mockResolvedValue(true)
       mockQuoteBelongsToVendorFn.mockResolvedValue(true)
       mockFileBelongsToQuoteFn.mockResolvedValue(true)
@@ -490,6 +632,19 @@ describe('VendorService', () => {
 
       expect(result).toEqual(mockQuoteFile)
       expect(mockDeleteQuoteFileFn).toHaveBeenCalledWith('file-123')
+      expect(mockDel).toHaveBeenCalledWith([mockQuoteFile.url])
+    })
+
+    it('should still return deleted file when blob del() fails', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockQuoteBelongsToVendorFn.mockResolvedValue(true)
+      mockFileBelongsToQuoteFn.mockResolvedValue(true)
+      mockDeleteQuoteFileFn.mockResolvedValue(mockQuoteFile)
+      mockDel.mockRejectedValue(new Error('Blob error'))
+
+      const result = await vendorService.deleteQuoteFile('vendor-123', 'wedding-123', deleteInput)
+
+      expect(result).toEqual(mockQuoteFile)
     })
 
     it('should throw FORBIDDEN when vendor does not belong to wedding', async () => {

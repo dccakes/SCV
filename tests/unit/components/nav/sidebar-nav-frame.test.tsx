@@ -15,18 +15,32 @@ describe('SidebarNavFrame', () => {
     localStorage.clear()
   })
 
-  it('shows fallback wedding details when no wedding props are provided', () => {
+  it('hides wedding chip when no wedding props are provided', () => {
     render(<SidebarNavFrame isOpen={false} setIsOpen={jest.fn()} />)
 
+    expect(screen.queryByText('Holly & Diego')).not.toBeInTheDocument()
+    expect(screen.queryByText('Oaxaca, Mexico')).not.toBeInTheDocument()
+  })
+
+  it('shows wedding details when props are provided', () => {
+    render(
+      <SidebarNavFrame
+        isOpen={false}
+        setIsOpen={jest.fn()}
+        coupleName='Holly & Diego'
+        weddingDate='17 May 2027'
+        weddingLocation='Oaxaca, Mexico'
+      />
+    )
+
     expect(screen.getByText('Holly & Diego')).toBeInTheDocument()
-    expect(screen.getByText('17 May 2027')).toBeInTheDocument()
     expect(screen.getByText('Oaxaca, Mexico')).toBeInTheDocument()
   })
 
   it('restores collapsed state from localStorage', () => {
     localStorage.setItem('sidebar-collapsed', 'true')
 
-    render(<SidebarNavFrame isOpen={false} setIsOpen={jest.fn()} />)
+    render(<SidebarNavFrame isOpen={false} setIsOpen={jest.fn()} coupleName='Holly & Diego' />)
 
     expect(screen.queryByText('Holly & Diego')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /expand sidebar/i })).toBeInTheDocument()

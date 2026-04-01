@@ -11,15 +11,15 @@ import { z } from 'zod'
  * Schema for creating a guest
  */
 export const createGuestSchema = z.object({
-  firstName: z.string().nonempty({ message: 'First name required' }),
+  firstName: z.string().min(1, { message: 'First name required' }),
   lastName: z.string().optional().default(''),
   email: z.string().email('Valid email required').optional().nullable(),
   phone: z.string().optional().nullable(),
   householdId: z.string().min(1, 'Household ID is required'),
   isPrimaryContact: z.boolean().optional().default(false),
-  ageGroup: z.nativeEnum(GuestAgeGroup).default(GuestAgeGroup.ADULT),
+  ageGroup: z.enum(GuestAgeGroup).default(GuestAgeGroup.ADULT),
   isTagAlong: z.boolean().default(false),
-  tagIds: z.array(z.string().uuid()).max(10, 'Maximum 10 tags allowed').optional().default([]),
+  tagIds: z.array(z.guid()).max(10, 'Maximum 10 tags allowed').optional().default([]),
 })
 
 /**
@@ -31,9 +31,9 @@ export const updateGuestSchema = z.object({
   lastName: z.string().optional(),
   email: z.string().email('Valid email required').optional().nullable(),
   phone: z.string().optional().nullable(),
-  ageGroup: z.nativeEnum(GuestAgeGroup).optional(),
+  ageGroup: z.enum(GuestAgeGroup).optional(),
   isTagAlong: z.boolean().optional(),
-  tagIds: z.array(z.string().uuid()).max(10, 'Maximum 10 tags allowed').optional(),
+  tagIds: z.array(z.guid()).max(10, 'Maximum 10 tags allowed').optional(),
 })
 
 /**
@@ -63,14 +63,14 @@ export const getByEventSchema = z.object({
  */
 export const guestPartySchema = z.object({
   guestId: z.number().optional(),
-  firstName: z.string().nonempty({ message: 'First name required' }),
+  firstName: z.string().min(1, { message: 'First name required' }),
   lastName: z.string().optional().default(''),
   email: z.string().email('Valid email required').optional().nullable(),
   phone: z.string().optional().nullable(),
   isPrimaryContact: z.boolean().default(false),
-  ageGroup: z.nativeEnum(GuestAgeGroup).default(GuestAgeGroup.ADULT),
+  ageGroup: z.enum(GuestAgeGroup).default(GuestAgeGroup.ADULT),
   isTagAlong: z.boolean().default(false),
-  tagIds: z.array(z.string().uuid()).max(10, 'Maximum 10 tags allowed').default([]),
+  tagIds: z.array(z.guid()).max(10, 'Maximum 10 tags allowed').default([]),
   invites: z.record(z.string(), z.string()),
 })
 

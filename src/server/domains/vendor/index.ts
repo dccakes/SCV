@@ -15,7 +15,6 @@ export const vendorService = new VendorService(vendorRepository)
 // Export classes for testing/DI
 export { VendorRepository } from '~/server/domains/vendor/vendor.repository'
 export { VendorService } from '~/server/domains/vendor/vendor.service'
-// Export types
 export type {
   Vendor,
   VendorCategory,
@@ -24,6 +23,8 @@ export type {
   VendorStatus,
   VendorWithQuotes,
 } from '~/server/domains/vendor/vendor.types'
+// Export types
+export { QuoteType } from '~/server/domains/vendor/vendor.types'
 // Export validators
 export {
   type CreateQuoteInput,
