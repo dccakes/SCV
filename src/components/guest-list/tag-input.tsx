@@ -39,6 +39,7 @@ export function TagInput({
   const createTagMutation = api.guestTag.create.useMutation({
     onSuccess: (created) => {
       onTagCreated(created.id)
+      onToggle(created.id)
       setQuery('')
     },
     onError: (error) => {

@@ -157,9 +157,8 @@ export function HouseholdMembersModal(props: Readonly<HouseholdMembersModalProps
     )
   }
 
-  const handleTagCreated = async (tagId: string, memberIndex: number) => {
+  const handleTagCreated = async () => {
     await refetchTags()
-    toggleTag(memberIndex, tagId)
   }
 
   return (
@@ -241,7 +240,7 @@ type MemberRowProps = {
   onToggleTagAlong: (index: number) => void
   onRemove: (index: number) => void
   onToggleTag: (memberIndex: number, tagId: string) => void
-  onTagCreated: (tagId: string, memberIndex: number) => void
+  onTagCreated: () => void
 }
 
 const MemberRow = memo(function MemberRow(props: Readonly<MemberRowProps>) {
@@ -356,7 +355,7 @@ const MemberRow = memo(function MemberRow(props: Readonly<MemberRowProps>) {
             selectedTagIds={member.tagIds}
             tags={tags}
             onToggle={(tagId) => onToggleTag(index, tagId)}
-            onTagCreated={(tagId) => onTagCreated(tagId, index)}
+            onTagCreated={() => onTagCreated()}
             ariaLabel={`Tags for ${memberName}`}
           />
         </div>
