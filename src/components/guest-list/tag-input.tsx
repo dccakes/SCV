@@ -80,8 +80,7 @@ export function TagInput({
         onToggle(created.id)
         setQuery('')
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Failed to create tag'
+        const message = error instanceof Error ? error.message : 'Failed to create tag'
         toast.error(message)
       }
     }
