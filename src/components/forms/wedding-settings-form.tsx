@@ -1,19 +1,16 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CalendarIcon } from 'lucide-react'
+import { CalendarIcon, MapPin } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import type { z } from 'zod'
 
 import { LoadingSpinner } from '~/components/loaders'
 import { Button } from '~/components/ui/button'
-import { Calendar } from '~/components/ui/calendar'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
-import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
-import { cn } from '~/lib/utils'
 import { updateWeddingDetailsSchema } from '~/server/domains/wedding/wedding.validator'
 import { api } from '~/trpc/react'
 
@@ -27,6 +24,7 @@ type WeddingSettingsFormProps = {
     brideLastName: string
     weddingDate?: string
     weddingLocation?: string
+    primaryEventId?: string
   }
 }
 
@@ -49,37 +47,43 @@ export default function WeddingSettingsForm({ initialData }: WeddingSettingsForm
       groomLastName: initialData.groomLastName,
       brideFirstName: initialData.brideFirstName,
       brideLastName: initialData.brideLastName,
-      weddingLocation: initialData.weddingLocation ?? '',
     },
   })
-
-  const [weddingDate, setWeddingDate] = useState<Date | undefined>(
-    initialData.weddingDate ? new Date(initialData.weddingDate) : undefined
-  )
 
   const { register, handleSubmit, formState } = form
   const { errors, isSubmitting } = formState
 
+  const parsedCeremonyDate = initialData.weddingDate ? new Date(initialData.weddingDate) : null
+  const ceremonyDateLabel =
+    parsedCeremonyDate && !Number.isNaN(parsedCeremonyDate.valueOf())
+      ? parsedCeremonyDate.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        })
+      : 'No date set'
+
+  const ceremonyHref = initialData.primaryEventId
+    ? `/events?eventId=${initialData.primaryEventId}`
+    : '/events'
+
   return (
     <form
-      onSubmit={handleSubmit((data) => {
-        updateDetails.mutate({
-          ...data,
-          weddingDate: weddingDate?.toISOString(),
-        })
+      onSubmit={handleSubmit((data: WeddingSettingsFormData) => {
+        updateDetails.mutate(data)
       })}
       className='flex flex-col gap-6'
     >
       {updateDetails.isError && (
         <div className='rounded-lg border border-destructive bg-destructive/10 p-4 text-destructive'>
-          <p className='font-semibold'>Error updating wedding details</p>
+          <p className='font-semibold'>Error updating names</p>
           <p className='text-sm'>{updateDetails.error?.message ?? 'Please try again'}</p>
         </div>
       )}
 
       {updateDetails.isSuccess && (
         <div className='rounded-lg border border-success bg-success/10 p-4 text-success'>
-          <p className='text-sm'>Wedding details updated successfully.</p>
+          <p className='text-sm'>Names updated successfully.</p>
         </div>
       )}
 
@@ -148,58 +152,38 @@ export default function WeddingSettingsForm({ initialData }: WeddingSettingsForm
         </div>
       </div>
 
-      {/* Wedding Date & Location */}
+      {/* Ceremony Event Summary */}
       <div className='rounded-lg border border-border/90 bg-card/85 p-5'>
         <h3 className='mb-4 font-mono text-[0.62rem] text-foreground/55 uppercase tracking-widest'>
-          Wedding Details
+          Ceremony Event
         </h3>
-        <div className='grid gap-4 sm:grid-cols-2'>
-          <div className='space-y-2'>
-            <Label>Tentative Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant='outline'
-                  className={cn(
-                    'w-full justify-start text-left font-normal',
-                    !weddingDate && 'text-muted-foreground'
-                  )}
-                  disabled={isSubmitting}
-                >
-                  <CalendarIcon className='mr-2 h-4 w-4' />
-                  {weddingDate ? (
-                    weddingDate.toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })
-                  ) : (
-                    <span>Pick a date</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className='w-auto p-0' align='start'>
-                <Calendar
-                  mode='single'
-                  selected={weddingDate}
-                  onSelect={setWeddingDate}
-                  captionLayout='dropdown'
-                  startMonth={new Date()}
-                  endMonth={new Date(new Date().getFullYear() + 10, 11)}
-                  autoFocus
-                />
-              </PopoverContent>
-            </Popover>
+        <div className='space-y-4'>
+          <div className='grid gap-3 sm:grid-cols-2'>
+            <div className='rounded-md border border-border/70 bg-muted/20 p-3'>
+              <p className='mb-1 font-mono text-[0.62rem] text-foreground/55 uppercase tracking-widest'>
+                Date
+              </p>
+              <p className='flex items-center gap-2 text-sm'>
+                <CalendarIcon className='h-4 w-4 text-foreground/60' />
+                {ceremonyDateLabel}
+              </p>
+            </div>
+            <div className='rounded-md border border-border/70 bg-muted/20 p-3'>
+              <p className='mb-1 font-mono text-[0.62rem] text-foreground/55 uppercase tracking-widest'>
+                Location
+              </p>
+              <p className='flex items-center gap-2 text-sm'>
+                <MapPin className='h-4 w-4 text-foreground/60' />
+                {initialData.weddingLocation ?? 'No location set'}
+              </p>
+            </div>
           </div>
-          <div className='space-y-2'>
-            <Label htmlFor='weddingLocation'>Location</Label>
-            <Input
-              id='weddingLocation'
-              placeholder='e.g., Beach Resort, Cabo'
-              {...register('weddingLocation')}
-              disabled={isSubmitting}
-            />
-          </div>
+          <p className='text-foreground/65 text-sm'>
+            Ceremony details are managed from the Events page.
+          </p>
+          <Button asChild variant='outline' className='w-full sm:w-auto'>
+            <Link href={ceremonyHref}>Edit Ceremony in Events</Link>
+          </Button>
         </div>
       </div>
 

@@ -5,7 +5,13 @@ import { api } from '~/trpc/server'
 export const dynamic = 'force-dynamic'
 
 export default async function SettingsPage() {
-  const details = await api.wedding.getDetails.query()
+  let details: Awaited<ReturnType<typeof api.wedding.getDetails>> | null = null
+
+  try {
+    details = await api.wedding.getDetails()
+  } catch {
+    details = null
+  }
 
   return (
     <>
@@ -15,7 +21,7 @@ export default async function SettingsPage() {
           <div className='mb-6'>
             <h2 className='font-serif text-foreground text-xl'>Wedding Details</h2>
             <p className='mt-1 font-mono text-[0.62rem] text-foreground/55 tracking-wider'>
-              Update your names, wedding date, and location
+              Update your names. Ceremony date and location are managed from Events.
             </p>
           </div>
           {details ? (
@@ -27,6 +33,7 @@ export default async function SettingsPage() {
                 brideLastName: details.brideLastName,
                 weddingDate: details.weddingDate,
                 weddingLocation: details.weddingLocation,
+                primaryEventId: details.primaryEventId,
               }}
             />
           ) : (

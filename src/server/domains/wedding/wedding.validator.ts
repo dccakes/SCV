@@ -33,16 +33,13 @@ export const updateWeddingSchema = z.object({
 })
 
 /**
- * Schema for updating wedding details (names + date + location)
- * Used by the settings page form.
+ * Schema for updating wedding couple names from settings page.
  */
 export const updateWeddingDetailsSchema = z.object({
   groomFirstName: z.string().min(1, 'Groom first name is required'),
   groomLastName: z.string().min(1, 'Groom last name is required'),
   brideFirstName: z.string().min(1, 'Bride first name is required'),
   brideLastName: z.string().min(1, 'Bride last name is required'),
-  weddingDate: z.string().optional(),
-  weddingLocation: z.string().optional(),
 })
 
 /**

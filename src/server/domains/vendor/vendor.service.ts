@@ -258,7 +258,7 @@ export class VendorService {
       await del(urls)
     } catch {
       // biome-ignore lint/suspicious/noConsole: best-effort error logging
-      console.error(`Failed to delete blobs: ${urls.join(', ')}`)
+      console.error(`Failed to delete ${urls.length} blob file(s) during cleanup`)
     }
   }
 

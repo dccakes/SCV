@@ -46,10 +46,12 @@ export const weddingRouter = createTRPCRouter({
    * Get wedding details for settings page (names + first event date/location)
    */
   getDetails: protectedProcedure.query(async ({ ctx }) => {
-    const wedding = await weddingService.getByUserId(ctx.auth.userId)
-    if (!wedding) {
-      return null
-    }
+    const wedding = await weddingService.getScopedWeddingByUserId(
+      ctx.auth.userId,
+      ctx.auth.activeOrganization?.organizationId ?? null
+    )
+
+    // TODO(review-quality): replace first-event fallback with explicit ceremony/primary-event lookup.
     const events = await eventService.getWeddingEvents(wedding.id)
     const primaryEvent = events?.[0]
     return {
@@ -64,15 +66,15 @@ export const weddingRouter = createTRPCRouter({
   }),
 
   /**
-   * Update wedding details (names + date + location) from settings page
+   * Update wedding couple names from settings page
    */
   updateDetails: protectedProcedure
     .input(updateWeddingDetailsSchema)
     .mutation(async ({ ctx, input }) => {
-      const wedding = await weddingService.getByUserId(ctx.auth.userId)
-      if (!wedding) {
-        throw new Error('Wedding not found')
-      }
+      const wedding = await weddingService.getScopedWeddingByUserId(
+        ctx.auth.userId,
+        ctx.auth.activeOrganization?.organizationId ?? null
+      )
 
       // Update wedding names
       await weddingService.updateWedding({
@@ -85,28 +87,6 @@ export const weddingRouter = createTRPCRouter({
           brideLastName: input.brideLastName,
         },
       })
-
-      // Update or create the primary event with date/location
-      const events = await eventService.getWeddingEvents(wedding.id)
-      const primaryEvent = events?.[0]
-
-      if (primaryEvent) {
-        await eventService.updateEvent(ctx.authz, wedding.id, {
-          eventId: primaryEvent.id,
-          eventName: primaryEvent.name,
-          date: input.weddingDate,
-          venue: input.weddingLocation,
-          allowTagAlongs: primaryEvent.allowTagAlongs,
-        })
-      } else if (input.weddingDate || input.weddingLocation) {
-        // No events exist yet — create the Ceremony event
-        await eventService.createEvent(ctx.authz, wedding.id, {
-          eventName: 'Ceremony',
-          date: input.weddingDate,
-          venue: input.weddingLocation,
-          allowTagAlongs: false,
-        })
-      }
 
       return { success: true }
     }),

@@ -17,16 +17,15 @@ jest.mock('~/server/domains/event')
 // We need to mock eventService at the module level
 // @ts-expect-error - Importing mock from mocked module
 import { eventService } from '~/server/domains/event'
-// @ts-expect-error - Importing mock functions from mocked module
 import {
-  mockGetByUserId,
+  mockGetScopedWeddingByUserId,
   mockUpdateWedding,
   mockWedding,
   resetMocks as resetWeddingMocks,
 } from '~/server/domains/wedding'
 import { weddingRouter } from '~/server/domains/wedding/wedding.router'
 
-const mockGetByUserIdFn = mockGetByUserId as jest.Mock
+const mockGetScopedWeddingByUserIdFn = mockGetScopedWeddingByUserId as jest.Mock
 const mockUpdateWeddingFn = mockUpdateWedding as jest.Mock
 const mockGetWeddingEvents = eventService.getWeddingEvents as jest.Mock
 const mockCreateEvent = eventService.createEvent as jest.Mock
@@ -50,17 +49,15 @@ describe('weddingRouter', () => {
   })
 
   describe('getDetails', () => {
-    it('should return null when no wedding exists', async () => {
-      mockGetByUserIdFn.mockResolvedValue(null)
+    it('should throw when no wedding exists', async () => {
+      mockGetScopedWeddingByUserIdFn.mockRejectedValue(new Error('Wedding not found'))
 
       const caller = makeAuthCaller()
-      const result = await caller.getDetails()
-
-      expect(result).toBeNull()
+      await expect(caller.getDetails()).rejects.toThrow('Wedding not found')
     })
 
     it('should return wedding details with event date and location', async () => {
-      mockGetByUserIdFn.mockResolvedValue(mockWedding)
+      mockGetScopedWeddingByUserIdFn.mockResolvedValue(mockWedding)
       mockGetWeddingEvents.mockResolvedValue([
         {
           id: 'event-123',
@@ -74,6 +71,8 @@ describe('weddingRouter', () => {
       const caller = makeAuthCaller()
       const result = await caller.getDetails()
 
+      expect(mockGetScopedWeddingByUserIdFn).toHaveBeenCalledWith('user-123', null)
+
       expect(result).toEqual({
         groomFirstName: 'John',
         groomLastName: 'Doe',
@@ -86,7 +85,7 @@ describe('weddingRouter', () => {
     })
 
     it('should return undefined date/location when no events exist', async () => {
-      mockGetByUserIdFn.mockResolvedValue(mockWedding)
+      mockGetScopedWeddingByUserIdFn.mockResolvedValue(mockWedding)
       mockGetWeddingEvents.mockResolvedValue([])
 
       const caller = makeAuthCaller()
@@ -110,80 +109,34 @@ describe('weddingRouter', () => {
       groomLastName: 'Doe',
       brideFirstName: 'Jane',
       brideLastName: 'Smith',
-      weddingDate: '2025-06-15T00:00:00.000Z',
-      weddingLocation: 'Beach Resort',
     }
 
     it('should throw when no wedding exists', async () => {
-      mockGetByUserIdFn.mockResolvedValue(null)
+      mockGetScopedWeddingByUserIdFn.mockRejectedValue(new Error('Wedding not found'))
 
       const caller = makeAuthCaller()
       await expect(caller.updateDetails(validInput)).rejects.toThrow('Wedding not found')
     })
 
-    it('should update wedding names and existing event', async () => {
-      mockGetByUserIdFn.mockResolvedValue(mockWedding)
+    it('should update wedding names only', async () => {
+      mockGetScopedWeddingByUserIdFn.mockResolvedValue(mockWedding)
       mockUpdateWeddingFn.mockResolvedValue(mockWedding)
-      mockGetWeddingEvents.mockResolvedValue([
-        {
-          id: 'event-123',
-          name: 'Ceremony',
-          date: new Date('2025-01-01'),
-          venue: 'Old Venue',
-          allowTagAlongs: false,
-        },
-      ])
-      mockUpdateEvent.mockResolvedValue({})
 
       const caller = makeAuthCaller()
       const result = await caller.updateDetails(validInput)
 
       expect(result).toEqual({ success: true })
-      expect(mockUpdateWeddingFn).toHaveBeenCalledWith(mockWedding.id, {
-        groomFirstName: 'John',
-        groomLastName: 'Doe',
-        brideFirstName: 'Jane',
-        brideLastName: 'Smith',
+      expect(mockUpdateWeddingFn).toHaveBeenCalledWith({
+        ctx: expect.objectContaining({ userId: 'user-123' }),
+        weddingId: mockWedding.id,
+        data: {
+          groomFirstName: 'John',
+          groomLastName: 'Doe',
+          brideFirstName: 'Jane',
+          brideLastName: 'Smith',
+        },
       })
-      expect(mockUpdateEvent).toHaveBeenCalledWith('wedding-123', {
-        eventId: 'event-123',
-        eventName: 'Ceremony',
-        date: '2025-06-15T00:00:00.000Z',
-        venue: 'Beach Resort',
-        allowTagAlongs: false,
-      })
-    })
-
-    it('should create Ceremony event when none exists and date/location provided', async () => {
-      mockGetByUserIdFn.mockResolvedValue(mockWedding)
-      mockUpdateWeddingFn.mockResolvedValue(mockWedding)
-      mockGetWeddingEvents.mockResolvedValue([]) // No events
-      mockCreateEvent.mockResolvedValue({ id: 'new-event' })
-
-      const caller = makeAuthCaller()
-      await caller.updateDetails(validInput)
-
-      expect(mockCreateEvent).toHaveBeenCalledWith('wedding-123', {
-        eventName: 'Ceremony',
-        date: '2025-06-15T00:00:00.000Z',
-        venue: 'Beach Resort',
-        allowTagAlongs: false,
-      })
-    })
-
-    it('should not create event when no events exist and no date/location provided', async () => {
-      mockGetByUserIdFn.mockResolvedValue(mockWedding)
-      mockUpdateWeddingFn.mockResolvedValue(mockWedding)
-      mockGetWeddingEvents.mockResolvedValue([])
-
-      const caller = makeAuthCaller()
-      await caller.updateDetails({
-        groomFirstName: 'John',
-        groomLastName: 'Doe',
-        brideFirstName: 'Jane',
-        brideLastName: 'Smith',
-      })
-
+      expect(mockGetWeddingEvents).not.toHaveBeenCalled()
       expect(mockCreateEvent).not.toHaveBeenCalled()
       expect(mockUpdateEvent).not.toHaveBeenCalled()
     })
