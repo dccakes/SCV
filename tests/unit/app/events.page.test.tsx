@@ -20,9 +20,7 @@ jest.mock('~/server/application/authenticated-route/authenticated-route-data', (
 jest.mock('~/trpc/server', () => ({
   api: {
     event: {
-      getAllByUserIdWithStats: {
-        query: () => mockGetEventsWithStats(),
-      },
+      getAllByUserIdWithStats: () => mockGetEventsWithStats(),
     },
   },
 }))

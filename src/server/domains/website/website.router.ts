@@ -5,8 +5,6 @@
  * This is a thin layer that handles input validation and delegates to the service.
  */
 
-import { TRPCError } from '@trpc/server'
-
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
 import { rsvpSubmissionService, submitPublicRsvpSchema } from '~/server/application/rsvp-submission'
 import { websiteService } from '~/server/domains/website'
@@ -28,32 +26,24 @@ export const websiteRouter = createTRPCRouter({
    * Note: Wedding must already exist before enabling website add-on
    */
   create: protectedProcedure.input(createWebsiteSchema).mutation(async ({ ctx, input }) => {
-    // Get the user's wedding
-    const wedding = await weddingService.getByUserId(ctx.auth.userId)
-    if (!wedding) {
-      throw new TRPCError({
-        code: 'PRECONDITION_FAILED',
-        message: 'Wedding must be created before enabling website add-on',
-      })
-    }
+    const wedding = await weddingService.getScopedWeddingByUserId(
+      ctx.auth.userId,
+      ctx.auth.activeOrganization?.organizationId ?? null
+    )
 
-    return websiteService.enableWebsite(wedding.id, input)
+    return websiteService.enableWebsite(ctx.authz, wedding.id, input)
   }),
 
   /**
    * Update website settings
    */
   update: protectedProcedure.input(updateWebsiteSchema).mutation(async ({ ctx, input }) => {
-    // Get the user's wedding
-    const wedding = await weddingService.getByUserId(ctx.auth.userId)
-    if (!wedding) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'Wedding not found',
-      })
-    }
+    const wedding = await weddingService.getScopedWeddingByUserId(
+      ctx.auth.userId,
+      ctx.auth.activeOrganization?.organizationId ?? null
+    )
 
-    return websiteService.updateWebsite(wedding.id, input)
+    return websiteService.updateWebsite(ctx.authz, wedding.id, input)
   }),
 
   /**
@@ -61,8 +51,18 @@ export const websiteRouter = createTRPCRouter({
    */
   updateIsRsvpEnabled: protectedProcedure
     .input(updateRsvpEnabledSchema)
-    .mutation(async ({ input }) => {
-      return websiteService.updateRsvpEnabled(input.websiteId, input.isRsvpEnabled)
+    .mutation(async ({ ctx, input }) => {
+      const wedding = await weddingService.getScopedWeddingByUserId(
+        ctx.auth.userId,
+        ctx.auth.activeOrganization?.organizationId ?? null
+      )
+
+      return websiteService.updateRsvpEnabled(
+        ctx.authz,
+        wedding.id,
+        input.websiteId,
+        input.isRsvpEnabled
+      )
     }),
 
   /**
@@ -71,32 +71,22 @@ export const websiteRouter = createTRPCRouter({
   updateCoverPhoto: protectedProcedure
     .input(updateCoverPhotoSchema)
     .mutation(async ({ ctx, input }) => {
-      // Get the user's wedding
-      const wedding = await weddingService.getByUserId(ctx.auth.userId)
-      if (!wedding) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Wedding not found',
-        })
-      }
+      const wedding = await weddingService.getScopedWeddingByUserId(
+        ctx.auth.userId,
+        ctx.auth.activeOrganization?.organizationId ?? null
+      )
 
-      return websiteService.updateCoverPhoto(wedding.id, input.coverPhotoUrl)
+      return websiteService.updateCoverPhoto(ctx.authz, wedding.id, input.coverPhotoUrl)
     }),
 
   /**
    * Get website for current user's wedding
    */
-  getByUserId: publicProcedure.query(async ({ ctx }) => {
-    if (!ctx.auth?.userId) {
-      return null
-    }
-
-    // Get the user's wedding first
-    const wedding = await weddingService.getByUserId(ctx.auth.userId)
-    if (!wedding) {
-      return null
-    }
-
+  getByUserId: protectedProcedure.query(async ({ ctx }) => {
+    const wedding = await weddingService.getScopedWeddingByUserId(
+      ctx.auth.userId,
+      ctx.auth.activeOrganization?.organizationId ?? null
+    )
     return websiteService.getByWeddingId(wedding.id)
   }),
 
@@ -121,7 +111,7 @@ export const websiteRouter = createTRPCRouter({
    * Fetch complete wedding data for public website display
    */
   fetchWeddingData: publicProcedure.input(fetchWeddingDataSchema).query(async ({ input }) => {
-    return websiteService.fetchWeddingData(input.subUrl)
+    return websiteService.fetchWeddingData(input.subUrl, input.accessToken)
   }),
 
   /**
@@ -135,8 +125,4 @@ export const websiteRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
       return rsvpSubmissionService.submitPublicRsvp(input)
     }),
-
-  submitRsvpForm: publicProcedure.input(submitPublicRsvpSchema).mutation(async ({ input }) => {
-    return rsvpSubmissionService.submitPublicRsvp(input)
-  }),
 })

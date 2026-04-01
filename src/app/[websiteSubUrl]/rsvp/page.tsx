@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 
 import { loadWeddingBySubUrl } from '~/app/[websiteSubUrl]/_lib/load-wedding-by-suburl'
@@ -13,7 +14,10 @@ type RsvpPageProps = {
 
 export async function generateMetadata({ params }: RsvpPageProps): Promise<Metadata> {
   const { websiteSubUrl } = await params
-  const weddingData = await loadWeddingBySubUrl(websiteSubUrl)
+  const cookieStore = await cookies()
+  const accessCookieName = `wws_access_${websiteSubUrl}`
+  const accessToken = cookieStore.get(accessCookieName)?.value
+  const weddingData = await loadWeddingBySubUrl(websiteSubUrl, accessToken)
 
   return {
     title: weddingData
@@ -24,7 +28,10 @@ export async function generateMetadata({ params }: RsvpPageProps): Promise<Metad
 
 export default async function RsvpPage({ params }: RsvpPageProps) {
   const { websiteSubUrl } = await params
-  const weddingData = await loadWeddingBySubUrl(websiteSubUrl)
+  const cookieStore = await cookies()
+  const accessCookieName = `wws_access_${websiteSubUrl}`
+  const accessToken = cookieStore.get(accessCookieName)?.value
+  const weddingData = await loadWeddingBySubUrl(websiteSubUrl, accessToken)
 
   if (!weddingData?.website.isRsvpEnabled) return notFound()
 

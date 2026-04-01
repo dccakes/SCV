@@ -14,6 +14,7 @@ export const mockWedding: Wedding = {
   brideFirstName: 'Jane',
   brideLastName: 'Smith',
   enabledAddOns: [],
+  organizationId: null,
   selfFillToken: null,
   selfFillTokenGeneratedAt: null,
   createdAt: new Date('2024-01-01'),
@@ -22,6 +23,7 @@ export const mockWedding: Wedding = {
 
 // Mock functions for weddingService methods
 export const mockGetByUserId = jest.fn()
+export const mockGetScopedWeddingByUserId = jest.fn()
 export const mockGetById = jest.fn()
 export const mockCreate = jest.fn()
 export const mockUpdate = jest.fn()
@@ -37,10 +39,12 @@ export const weddingService = {
   updateWedding: mockUpdateWedding,
   hasWedding: mockHasWedding,
   getWeddingIdByUserId: mockGetWeddingIdByUserId,
+  getScopedWeddingByUserId: mockGetScopedWeddingByUserId,
 }
 
 export const resetMocks = (): void => {
   mockGetByUserId.mockReset()
+  mockGetScopedWeddingByUserId.mockReset()
   mockGetById.mockReset()
   mockCreate.mockReset()
   mockUpdate.mockReset()

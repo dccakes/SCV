@@ -18,7 +18,9 @@
 import type { PrismaClient } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 
-import { RSVP_STATUS } from '~/lib/constants'
+import { RSVP_STATUS } from '~/lib/constants/rsvp'
+import type { AuthzContext } from '~/server/authz/authorization.types'
+import { requirePermission } from '~/server/authz/permission-checker'
 import type { EventRepository } from '~/server/domains/event/event.repository'
 import type { Event, EventWithStats } from '~/server/domains/event/event.types'
 import type { CreateEventInput, UpdateEventInput } from '~/server/domains/event/event.validator'
@@ -38,7 +40,16 @@ export class EventService {
    *
    * Wrapped in a transaction to ensure event + invitations are created atomically.
    */
-  async createEvent(weddingId: string, data: CreateEventInput): Promise<Event> {
+  async createEvent(ctx: AuthzContext, weddingId: string, data: CreateEventInput): Promise<Event> {
+    this.requireEventPermission(ctx, 'create')
+    return this.createEventCore(weddingId, data)
+  }
+
+  async createEventSystem(weddingId: string, data: CreateEventInput): Promise<Event> {
+    return this.createEventCore(weddingId, data)
+  }
+
+  private createEventCore(weddingId: string, data: CreateEventInput): Promise<Event> {
     const {
       eventName: name,
       date,
@@ -141,20 +152,16 @@ export class EventService {
    *
    * Wrapped in a transaction to ensure tag-along invitation creation + event update are atomic.
    */
-  async updateEvent(weddingId: string, data: UpdateEventInput): Promise<Event> {
-    // Verify event belongs to wedding (auth check outside transaction)
-    const belongsToWedding = await this.eventRepository.belongsToWedding(data.eventId, weddingId)
-    if (!belongsToWedding) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to update this event',
-      })
-    }
+  async updateEvent(ctx: AuthzContext, weddingId: string, data: UpdateEventInput): Promise<Event> {
+    this.requireEventPermission(ctx, 'update')
 
     return this.db.$transaction(async (tx) => {
-      // Check if allowTagAlongs is being toggled on
+      // Check if allowTagAlongs is being toggled on; also verifies event belongs to this wedding
       const currentEvent = await tx.event.findUnique({ where: { id: data.eventId } })
-      const wasAllowed = currentEvent?.allowTagAlongs ?? false
+      if (!currentEvent || currentEvent.weddingId !== weddingId) {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      }
+      const wasAllowed = currentEvent.allowTagAlongs
       const nowAllowed = data.allowTagAlongs ?? false
 
       if (!wasAllowed && nowAllowed) {
@@ -203,7 +210,15 @@ export class EventService {
   /**
    * Update collect RSVP status for an event
    */
-  async updateCollectRsvp(eventId: string, collectRsvp: boolean): Promise<Event> {
+  async updateCollectRsvp(
+    ctx: AuthzContext,
+    weddingId: string,
+    eventId: string,
+    collectRsvp: boolean
+  ): Promise<Event> {
+    this.requireEventPermission(ctx, 'rsvp_policy_update')
+    await this.assertEventInWedding(eventId, weddingId)
+
     return this.eventRepository.updateCollectRsvp(eventId, collectRsvp)
   }
 
@@ -212,17 +227,27 @@ export class EventService {
    *
    * Note: Cascades to invitations, gifts, and questions via database relations
    */
-  async deleteEvent(eventId: string, weddingId: string): Promise<string> {
-    // Verify event belongs to wedding
-    const belongsToWedding = await this.eventRepository.belongsToWedding(eventId, weddingId)
-    if (!belongsToWedding) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to delete this event',
-      })
-    }
+  async deleteEvent(ctx: AuthzContext, weddingId: string, eventId: string): Promise<string> {
+    this.requireEventPermission(ctx, 'delete')
+    await this.assertEventInWedding(eventId, weddingId)
 
     const deletedEvent = await this.eventRepository.delete(eventId)
     return deletedEvent.id
+  }
+
+  private async assertEventInWedding(eventId: string, weddingId: string): Promise<void> {
+    const belongs = await this.eventRepository.belongsToWedding(eventId, weddingId)
+    if (!belongs) {
+      throw new TRPCError({ code: 'FORBIDDEN' })
+    }
+  }
+
+  private requireEventPermission(
+    ctx: AuthzContext,
+    action: 'create' | 'update' | 'delete' | 'rsvp_policy_update'
+  ): void {
+    requirePermission(ctx, {
+      event: [action],
+    })
   }
 }

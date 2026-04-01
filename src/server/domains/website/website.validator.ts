@@ -45,12 +45,23 @@ export const submitRsvpSchema = z.object({
 /**
  * Schema for updating website settings
  */
-export const updateWebsiteSchema = z.object({
-  isPasswordEnabled: z.boolean().optional(),
-  password: z.string().optional(),
-  basePath: z.string().optional(),
-  subUrl: z.string().regex(/^\w+$/, 'URL should not contain any special characters!').optional(),
-})
+export const updateWebsiteSchema = z
+  .object({
+    isPasswordEnabled: z.boolean().optional(),
+    password: z.string().optional(),
+    basePath: z.string().optional(),
+    subUrl: z.string().regex(/^\w+$/, 'URL should not contain any special characters!').optional(),
+  })
+  .refine(
+    (data) =>
+      data.isPasswordEnabled !== undefined ||
+      data.password !== undefined ||
+      data.basePath !== undefined ||
+      data.subUrl !== undefined,
+    {
+      message: 'At least one website setting must be provided',
+    }
+  )
 
 /**
  * Schema for updating RSVP enabled status
@@ -79,6 +90,7 @@ export const getBySubUrlSchema = z.object({
  */
 export const fetchWeddingDataSchema = z.object({
   subUrl: z.string().min(1, 'Sub URL is required'),
+  accessToken: z.string().optional(),
 })
 
 export const hasPasswordAccessSchema = z.object({

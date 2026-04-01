@@ -55,7 +55,7 @@ const uploadImage = async (formData: FormData): Promise<{ ok: boolean }> => {
     .then(async () => {
       const photoName = files[0]?.name
       const objectUrl = `https://${Bucket}.s3.${region}.amazonaws.com/${photoName}`
-      await api.website.updateCoverPhoto.mutate({
+      await api.website.updateCoverPhoto({
         coverPhotoUrl: objectUrl,
       })
       return { ok: true }
@@ -80,7 +80,7 @@ const deleteImage = async (imageKey: string): Promise<{ ok: boolean }> => {
       })
     )
       .then(async () => {
-        await api.website.updateCoverPhoto.mutate({
+        await api.website.updateCoverPhoto({
           coverPhotoUrl: null,
         })
         resolve({ ok: true })
@@ -94,7 +94,7 @@ const deleteImage = async (imageKey: string): Promise<{ ok: boolean }> => {
 export default async function DashboardPage() {
   headers() // Make this page dynamic (requires authentication)
 
-  const dashboardData = await api.dashboard.getByUserId.query()
+  const dashboardData = await api.dashboard.getByUserId()
 
   if (dashboardData === null) {
     redirect('/')

@@ -297,9 +297,9 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
             <p className='text-foreground/55'>No communication activity yet.</p>
           ) : (
             <ul className='space-y-2'>
-              {communicationLog.map((item, index) => (
+              {communicationLog.map((item) => (
                 <li
-                  key={`${item.text}-${item.date.toISOString()}-${index}`}
+                  key={`${item.type}-${item.text}-${item.date.toISOString()}`}
                   className='flex gap-2 border-border/50 border-b py-2 last:border-b-0'
                 >
                   <span className='mt-1 h-1.5 w-1.5 rounded-full bg-success' />

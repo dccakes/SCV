@@ -3,22 +3,27 @@ import { expect, test as setup } from '@playwright/test'
 const AUTH_FILE = 'tests/e2e/.auth/user.json'
 
 setup('authenticate as seed user', async ({ page }) => {
-  // Navigate to sign-in page and wait for the auth UI to hydrate
   await page.goto('/auth/sign-in')
-  await page.waitForLoadState('networkidle')
 
-  // Fill in credentials from the seed fixture (shrek@swamp.wed / password123)
-  // The @daveyplate/better-auth-ui library renders "Email" and "Password" labels
+  // Wait for React hydration — the library sets noValidate on the form once hydrated
+  await page.waitForFunction(() => document.querySelector('form')?.hasAttribute('novalidate'), {
+    timeout: 15_000,
+  })
+
   await page.getByLabel('Email').fill('shrek@swamp.wed')
   await page.getByLabel('Password').fill('password123')
 
-  // Submit the form — the auth UI uses "Login" as the submit button text
+  const responsePromise = page.waitForResponse(
+    (res) => res.url().includes('/api/auth/sign-in/email'),
+    { timeout: 15_000 }
+  )
   await page.getByRole('button', { name: 'Login' }).click()
+  await responsePromise
 
-  // Wait for redirect to dashboard after successful login
-  await page.waitForURL('/dashboard', { timeout: 15_000 })
+  // Navigate directly to dashboard — session cookie is now set
+  await page.goto('/dashboard')
+  await page.waitForLoadState('networkidle')
   await expect(page).toHaveURL('/dashboard')
 
-  // Save signed-in state for reuse across tests
   await page.context().storageState({ path: AUTH_FILE })
 })

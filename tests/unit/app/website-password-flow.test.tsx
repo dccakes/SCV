@@ -22,20 +22,13 @@ const mockPasswordPage = jest.fn(
 jest.mock('~/trpc/server', () => ({
   api: {
     user: {
-      get: {
-        query: jest.fn(),
-      },
+      get: jest.fn(),
     },
     website: {
-      getBySubUrl: {
-        query: () => mockGetBySubUrl(),
-      },
-      hasPasswordAccess: {
-        query: () => mockHasPasswordAccess(),
-      },
-      verifyWebsitePassword: {
-        mutate: (input: { subUrl: string; password: string }) => mockVerifyWebsitePassword(input),
-      },
+      getBySubUrl: () => mockGetBySubUrl(),
+      hasPasswordAccess: () => mockHasPasswordAccess(),
+      verifyWebsitePassword: (input: { subUrl: string; password: string }) =>
+        mockVerifyWebsitePassword(input),
     },
   },
 }))

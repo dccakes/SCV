@@ -18,15 +18,22 @@ export const invitationRouter = createTRPCRouter({
    * Create a new invitation
    */
   create: protectedProcedure.input(createInvitationSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
-    return invitationService.createInvitation(weddingId, input)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.activeOrganization?.organizationId ?? null
+    )
+    return invitationService.createInvitation(ctx.authz, weddingId, input)
   }),
 
   /**
    * Update an invitation RSVP
    */
-  update: protectedProcedure.input(updateInvitationSchema).mutation(async ({ input }) => {
-    return invitationService.updateInvitation(input)
+  update: protectedProcedure.input(updateInvitationSchema).mutation(async ({ ctx, input }) => {
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.activeOrganization?.organizationId ?? null
+    )
+    return invitationService.updateInvitation(ctx.authz, weddingId, input)
   }),
 
   /**
@@ -34,7 +41,10 @@ export const invitationRouter = createTRPCRouter({
    */
   getAllByUserId: publicProcedure.query(async ({ ctx }) => {
     if (!ctx.auth.userId) return undefined
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.activeOrganization?.organizationId ?? null
+    )
     return invitationService.getAllByWeddingId(weddingId)
   }),
 })

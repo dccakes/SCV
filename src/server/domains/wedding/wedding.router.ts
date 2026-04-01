@@ -10,7 +10,6 @@ import { eventService } from '~/server/domains/event'
 import { weddingService } from '~/server/domains/wedding'
 import {
   createWeddingSchema,
-  getByUserIdSchema,
   updateWeddingDetailsSchema,
   updateWeddingSchema,
 } from '~/server/domains/wedding/wedding.validator'
@@ -31,22 +30,28 @@ export const weddingRouter = createTRPCRouter({
    * Update wedding settings
    */
   update: protectedProcedure.input(updateWeddingSchema).mutation(async ({ ctx, input }) => {
-    // First get the user's wedding ID
-    const wedding = await weddingService.getByUserId(ctx.auth.userId)
-    if (!wedding) {
-      throw new Error('Wedding not found')
-    }
-    return weddingService.updateWedding(wedding.id, input)
+    const wedding = await weddingService.getScopedWeddingByUserId(
+      ctx.auth.userId,
+      ctx.auth.activeOrganization?.organizationId ?? null
+    )
+
+    return weddingService.updateWedding({
+      ctx: ctx.authz,
+      weddingId: wedding.id,
+      data: input,
+    })
   }),
 
   /**
    * Get wedding details for settings page (names + first event date/location)
    */
   getDetails: protectedProcedure.query(async ({ ctx }) => {
-    const wedding = await weddingService.getByUserId(ctx.auth.userId)
-    if (!wedding) {
-      return null
-    }
+    const wedding = await weddingService.getScopedWeddingByUserId(
+      ctx.auth.userId,
+      ctx.auth.activeOrganization?.organizationId ?? null
+    )
+
+    // TODO(review-quality): replace first-event fallback with explicit ceremony/primary-event lookup.
     const events = await eventService.getWeddingEvents(wedding.id)
     const primaryEvent = events?.[0]
     return {
@@ -61,45 +66,27 @@ export const weddingRouter = createTRPCRouter({
   }),
 
   /**
-   * Update wedding details (names + date + location) from settings page
+   * Update wedding couple names from settings page
    */
   updateDetails: protectedProcedure
     .input(updateWeddingDetailsSchema)
     .mutation(async ({ ctx, input }) => {
-      const wedding = await weddingService.getByUserId(ctx.auth.userId)
-      if (!wedding) {
-        throw new Error('Wedding not found')
-      }
+      const wedding = await weddingService.getScopedWeddingByUserId(
+        ctx.auth.userId,
+        ctx.auth.activeOrganization?.organizationId ?? null
+      )
 
       // Update wedding names
-      await weddingService.updateWedding(wedding.id, {
-        groomFirstName: input.groomFirstName,
-        groomLastName: input.groomLastName,
-        brideFirstName: input.brideFirstName,
-        brideLastName: input.brideLastName,
+      await weddingService.updateWedding({
+        ctx: ctx.authz,
+        weddingId: wedding.id,
+        data: {
+          groomFirstName: input.groomFirstName,
+          groomLastName: input.groomLastName,
+          brideFirstName: input.brideFirstName,
+          brideLastName: input.brideLastName,
+        },
       })
-
-      // Update or create the primary event with date/location
-      const events = await eventService.getWeddingEvents(wedding.id)
-      const primaryEvent = events?.[0]
-
-      if (primaryEvent) {
-        await eventService.updateEvent(wedding.id, {
-          eventId: primaryEvent.id,
-          eventName: primaryEvent.name,
-          date: input.weddingDate,
-          venue: input.weddingLocation,
-          allowTagAlongs: primaryEvent.allowTagAlongs,
-        })
-      } else if (input.weddingDate || input.weddingLocation) {
-        // No events exist yet — create the Ceremony event
-        await eventService.createEvent(wedding.id, {
-          eventName: 'Ceremony',
-          date: input.weddingDate,
-          venue: input.weddingLocation,
-          allowTagAlongs: false,
-        })
-      }
 
       return { success: true }
     }),
@@ -107,8 +94,8 @@ export const weddingRouter = createTRPCRouter({
   /**
    * Get wedding for current user
    */
-  getByUserId: protectedProcedure.input(getByUserIdSchema).query(async ({ ctx, input }) => {
-    return weddingService.getByUserId(input?.userId ?? ctx.auth.userId)
+  getByUserId: protectedProcedure.query(async ({ ctx }) => {
+    return weddingService.getByUserId(ctx.auth.userId)
   }),
 
   /**

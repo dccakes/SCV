@@ -1,27 +1,28 @@
 /**
  * RSVP Submission Application Service - Router
  *
- * tRPC router for guest-facing RSVP submission.
- * This is a public procedure as guests don't need to be authenticated.
+ * tRPC router for authenticated RSVP management submission.
+ * Public RSVP token flow is handled by website router.
  */
 
-import { createTRPCRouter, publicProcedure } from '~/server/api/trpc'
+import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { RsvpSubmissionService } from '~/server/application/rsvp-submission/rsvp-submission.service'
 import { submitRsvpSchema } from '~/server/application/rsvp-submission/rsvp-submission.validator'
+import { weddingService } from '~/server/domains/wedding'
 import { db } from '~/server/infrastructure/database'
 
 const rsvpSubmissionService = new RsvpSubmissionService(db)
 
 export const rsvpSubmissionRouter = createTRPCRouter({
   /**
-   * Submit RSVP form responses
-   *
-   * This is a public procedure because:
-   * - Guests access this from the public wedding website
-   * - Authentication is not required for RSVP submission
-   * - The household/guest IDs provide sufficient authorization
+   * Submit RSVP form responses on behalf of a guest (authenticated coordinator flow).
+   * Guest-facing public RSVP is handled by website.router submitPublicRsvpForm.
    */
-  submit: publicProcedure.input(submitRsvpSchema).mutation(async ({ input }) => {
-    return rsvpSubmissionService.submitRsvp(input)
+  submit: protectedProcedure.input(submitRsvpSchema).mutation(async ({ ctx, input }) => {
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.activeOrganization?.organizationId ?? null
+    )
+    return rsvpSubmissionService.submitManagedRsvp(ctx.authz, weddingId, input)
   }),
 })

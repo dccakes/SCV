@@ -1,5 +1,7 @@
 import { TRPCError } from '@trpc/server'
 
+import type { AuthzContext } from '~/server/authz/authorization.types'
+import { requirePermission } from '~/server/authz/permission-checker'
 import type { GuestTagRepository } from '~/server/domains/guest-tag/guest-tag.repository'
 import type {
   CreateGuestTagInput,
@@ -15,7 +17,9 @@ export class GuestTagService {
    * Create a new guest tag
    * @throws TRPCError if tag with same name already exists
    */
-  async create(data: CreateGuestTagInput): Promise<GuestTag> {
+  async create(ctx: AuthzContext, data: CreateGuestTagInput): Promise<GuestTag> {
+    requirePermission(ctx, { guest: ['update'] })
+
     const trimmedName = data.name.trim()
 
     // Check for duplicate tag name
@@ -36,14 +40,21 @@ export class GuestTagService {
   /**
    * Get all guest tags for a wedding
    */
-  async getByWeddingId(weddingId: string): Promise<GuestTag[]> {
+  async getByWeddingId(ctx: AuthzContext, weddingId: string): Promise<GuestTag[]> {
+    requirePermission(ctx, { guest: ['read'] })
     return this.repo.findByWeddingId(weddingId)
   }
 
   /**
    * Get guest tag by ID with guest count
    */
-  async getByIdWithCount(id: string): Promise<GuestTagWithGuestCount | null> {
+  async getByIdWithCount(
+    ctx: AuthzContext,
+    id: string,
+    weddingId: string
+  ): Promise<GuestTagWithGuestCount | null> {
+    requirePermission(ctx, { guest: ['read'] })
+    await this.assertTagInWeddingScope(id, weddingId)
     return this.repo.findById(id)
   }
 
@@ -51,7 +62,15 @@ export class GuestTagService {
    * Update a guest tag
    * @throws TRPCError if new name conflicts with existing tag
    */
-  async update(id: string, weddingId: string, data: UpdateGuestTagInput): Promise<GuestTag> {
+  async update(
+    ctx: AuthzContext,
+    id: string,
+    weddingId: string,
+    data: UpdateGuestTagInput
+  ): Promise<GuestTag> {
+    requirePermission(ctx, { guest: ['update'] })
+    await this.assertTagInWeddingScope(id, weddingId)
+
     // If updating name, check for duplicates
     if (data.name) {
       const exists = await this.repo.existsByName(weddingId, data.name)
@@ -69,7 +88,9 @@ export class GuestTagService {
   /**
    * Delete a guest tag
    */
-  async delete(id: string): Promise<GuestTag> {
+  async delete(ctx: AuthzContext, id: string, weddingId: string): Promise<GuestTag> {
+    requirePermission(ctx, { guest: ['delete'] })
+    await this.assertTagInWeddingScope(id, weddingId)
     return this.repo.delete(id)
   }
 
@@ -90,6 +111,17 @@ export class GuestTagService {
           color: tag.color,
         })
       }
+    }
+  }
+
+  private async assertTagInWeddingScope(id: string, weddingId: string): Promise<void> {
+    const inScope = await this.repo.belongsToWedding(id, weddingId)
+
+    if (!inScope) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'You do not have permission to access this guest tag',
+      })
     }
   }
 }

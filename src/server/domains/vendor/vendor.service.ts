@@ -10,6 +10,8 @@ import { del } from '@vercel/blob'
 
 import { MAX_FILES_PER_QUOTE } from '~/lib/upload-config'
 
+import type { AuthzContext } from '~/server/authz/authorization.types'
+import { requirePermission } from '~/server/authz/permission-checker'
 import type { VendorRepository } from '~/server/domains/vendor/vendor.repository'
 import type {
   Vendor,
@@ -33,6 +35,9 @@ export class VendorService {
 
   /**
    * Get all vendors for a wedding, optionally filtered by category
+   *
+   * Internal system method — no AuthzContext, no permission check.
+   * Use getVendorsByUserId for user-facing calls. Do NOT call from routers directly.
    */
   async getVendors(weddingId: string, category?: VendorCategory): Promise<VendorWithQuotes[]> {
     return this.vendorRepository.findAllByWeddingId(weddingId, category)
@@ -41,14 +46,25 @@ export class VendorService {
   /**
    * Get all vendors for a user's wedding in a single query (no separate weddingId lookup)
    */
-  async getVendorsByUserId(userId: string, category?: VendorCategory): Promise<VendorWithQuotes[]> {
+  async getVendorsByUserId(
+    ctx: AuthzContext,
+    userId: string,
+    category?: VendorCategory
+  ): Promise<VendorWithQuotes[]> {
+    this.requireVendorPermission(ctx, 'read')
     return this.vendorRepository.findAllByUserId(userId, category)
   }
 
   /**
    * Get a vendor with its quotes, with ownership verification
    */
-  async getVendorWithQuotes(vendorId: string, weddingId: string): Promise<VendorWithQuotes> {
+  async getVendorWithQuotes(
+    ctx: AuthzContext,
+    vendorId: string,
+    weddingId: string
+  ): Promise<VendorWithQuotes> {
+    this.requireVendorPermission(ctx, 'read')
+
     const vendor = await this.vendorRepository.findByIdWithQuotes(vendorId)
 
     if (!vendor) {
@@ -68,7 +84,12 @@ export class VendorService {
   /**
    * Create a new vendor for a wedding
    */
-  async createVendor(weddingId: string, data: CreateVendorInput): Promise<Vendor> {
+  async createVendor(
+    ctx: AuthzContext,
+    weddingId: string,
+    data: CreateVendorInput
+  ): Promise<Vendor> {
+    this.requireVendorPermission(ctx, 'create')
     return this.vendorRepository.create({ ...data, weddingId })
   }
 
@@ -76,10 +97,12 @@ export class VendorService {
    * Update vendor details with ownership verification
    */
   async updateVendor(
+    ctx: AuthzContext,
     vendorId: string,
     weddingId: string,
     data: UpdateVendorInput
   ): Promise<Vendor> {
+    this.requireVendorPermission(ctx, 'update')
     await this.assertVendorOwnership(vendorId, weddingId)
     return this.vendorRepository.update(vendorId, data)
   }
@@ -87,7 +110,13 @@ export class VendorService {
   /**
    * Update vendor status with ownership verification
    */
-  async updateStatus(vendorId: string, weddingId: string, status: VendorStatus): Promise<Vendor> {
+  async updateStatus(
+    ctx: AuthzContext,
+    vendorId: string,
+    weddingId: string,
+    status: VendorStatus
+  ): Promise<Vendor> {
+    this.requireVendorPermission(ctx, 'update')
     await this.assertVendorOwnership(vendorId, weddingId)
     return this.vendorRepository.updateStatus(vendorId, status)
   }
@@ -96,7 +125,8 @@ export class VendorService {
    * Delete a vendor (cascades to quotes) with ownership verification.
    * Cleans up blob storage for all associated files before cascade-deleting.
    */
-  async deleteVendor(vendorId: string, weddingId: string): Promise<string> {
+  async deleteVendor(ctx: AuthzContext, vendorId: string, weddingId: string): Promise<string> {
+    this.requireVendorPermission(ctx, 'delete')
     await this.assertVendorOwnership(vendorId, weddingId)
 
     // Clean up blobs before cascade delete removes DB records
@@ -111,10 +141,12 @@ export class VendorService {
    * Add a quote to a vendor with ownership verification
    */
   async addQuote(
+    ctx: AuthzContext,
     vendorId: string,
     weddingId: string,
     data: CreateQuoteInput
   ): Promise<VendorQuote> {
+    this.requireVendorQuotePermission(ctx, 'create')
     await this.assertVendorOwnership(vendorId, weddingId)
     return this.vendorRepository.createQuote({
       vendorId,
@@ -129,11 +161,13 @@ export class VendorService {
    * Update a quote with ownership verification
    */
   async updateQuote(
+    ctx: AuthzContext,
     quoteId: string,
     vendorId: string,
     weddingId: string,
     data: UpdateQuoteInput
   ): Promise<VendorQuote> {
+    this.requireVendorQuotePermission(ctx, 'update')
     await this.assertVendorOwnership(vendorId, weddingId)
     await this.assertQuoteOwnership(quoteId, vendorId)
     return this.vendorRepository.updateQuote(quoteId, {
@@ -148,7 +182,13 @@ export class VendorService {
    * Delete a quote with ownership verification.
    * Cleans up blob storage for all associated files before deleting.
    */
-  async deleteQuote(quoteId: string, vendorId: string, weddingId: string): Promise<string> {
+  async deleteQuote(
+    ctx: AuthzContext,
+    quoteId: string,
+    vendorId: string,
+    weddingId: string
+  ): Promise<string> {
+    this.requireVendorQuotePermission(ctx, 'delete')
     await this.assertVendorOwnership(vendorId, weddingId)
     await this.assertQuoteOwnership(quoteId, vendorId)
 
@@ -166,10 +206,12 @@ export class VendorService {
    * Save uploaded file metadata for a quote with ownership verification
    */
   async saveQuoteFiles(
+    ctx: AuthzContext,
     vendorId: string,
     weddingId: string,
     data: SaveQuoteFilesInput
   ): Promise<VendorQuoteFile[]> {
+    this.requireVendorQuotePermission(ctx, 'update')
     await this.assertVendorOwnership(vendorId, weddingId)
     await this.assertQuoteOwnership(data.quoteId, vendorId)
 
@@ -190,10 +232,12 @@ export class VendorService {
    * Removes the blob from Vercel Blob storage after deleting the DB record.
    */
   async deleteQuoteFile(
+    ctx: AuthzContext,
     vendorId: string,
     weddingId: string,
     data: DeleteQuoteFileInput
   ): Promise<VendorQuoteFile> {
+    this.requireVendorQuotePermission(ctx, 'update')
     await this.assertVendorOwnership(vendorId, weddingId)
     await this.assertQuoteOwnership(data.quoteId, vendorId)
     await this.assertFileOwnership(data.fileId, data.quoteId)
@@ -214,7 +258,7 @@ export class VendorService {
       await del(urls)
     } catch {
       // biome-ignore lint/suspicious/noConsole: best-effort error logging
-      console.error(`Failed to delete blobs: ${urls.join(', ')}`)
+      console.error(`Failed to delete ${urls.length} blob file(s) during cleanup`)
     }
   }
 
@@ -246,5 +290,23 @@ export class VendorService {
         message: 'You do not have permission to modify this file',
       })
     }
+  }
+
+  private requireVendorPermission(
+    ctx: AuthzContext,
+    action: 'read' | 'create' | 'update' | 'delete'
+  ): void {
+    requirePermission(ctx, {
+      vendor: [action],
+    })
+  }
+
+  private requireVendorQuotePermission(
+    ctx: AuthzContext,
+    action: 'read' | 'create' | 'update' | 'delete'
+  ): void {
+    requirePermission(ctx, {
+      vendor_quote: [action],
+    })
   }
 }

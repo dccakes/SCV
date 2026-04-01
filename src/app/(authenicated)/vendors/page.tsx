@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 }
 
 export default async function VendorsPage() {
-  const vendors = await api.vendor.getAll.query({})
+  const vendors = await api.vendor.getAll({})
 
   if (vendors === null) {
     redirect('/')

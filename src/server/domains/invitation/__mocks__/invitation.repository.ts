@@ -28,6 +28,7 @@ export const mockRsvpStats = {
 }
 
 export const mockFindById = jest.fn()
+export const mockFindOrganizationIdByInvitationId = jest.fn()
 export const mockFindByWeddingId = jest.fn()
 export const mockFindByWeddingIdWithGuestTagAlong = jest.fn()
 export const mockFindByEventId = jest.fn()
@@ -37,10 +38,15 @@ export const mockCreateMany = jest.fn()
 export const mockUpdate = jest.fn()
 export const mockDelete = jest.fn()
 export const mockExists = jest.fn()
+export const mockBelongsToWedding = jest.fn()
+export const mockBelongsToUser = jest.fn()
+export const mockGuestBelongsToWedding = jest.fn()
+export const mockEventBelongsToWedding = jest.fn()
 export const mockGetRsvpCountsByEventId = jest.fn()
 
 export const InvitationRepository = jest.fn().mockImplementation(() => ({
   findById: mockFindById,
+  findOrganizationIdByInvitationId: mockFindOrganizationIdByInvitationId,
   findByWeddingId: mockFindByWeddingId,
   findByWeddingIdWithGuestTagAlong: mockFindByWeddingIdWithGuestTagAlong,
   findByEventId: mockFindByEventId,
@@ -50,12 +56,17 @@ export const InvitationRepository = jest.fn().mockImplementation(() => ({
   update: mockUpdate,
   delete: mockDelete,
   exists: mockExists,
+  belongsToWedding: mockBelongsToWedding,
+  belongsToUser: mockBelongsToUser,
+  guestBelongsToWedding: mockGuestBelongsToWedding,
+  eventBelongsToWedding: mockEventBelongsToWedding,
   getRsvpCountsByEventId: mockGetRsvpCountsByEventId,
 }))
 
 // Helper to reset all mocks
 export const resetMocks = (): void => {
   mockFindById.mockReset()
+  mockFindOrganizationIdByInvitationId.mockReset()
   mockFindByWeddingId.mockReset()
   mockFindByWeddingIdWithGuestTagAlong.mockReset()
   mockFindByEventId.mockReset()
@@ -65,6 +76,10 @@ export const resetMocks = (): void => {
   mockUpdate.mockReset()
   mockDelete.mockReset()
   mockExists.mockReset()
+  mockBelongsToWedding.mockReset()
+  mockBelongsToUser.mockReset()
+  mockGuestBelongsToWedding.mockReset()
+  mockEventBelongsToWedding.mockReset()
   mockGetRsvpCountsByEventId.mockReset()
   InvitationRepository.mockClear()
 }

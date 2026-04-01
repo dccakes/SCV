@@ -193,7 +193,7 @@ function QuoteFileUploader({
           <ul className='space-y-1'>
             {selectedFiles.map((file, i) => (
               <li
-                key={`${file.name}-${i}`}
+                key={`${file.name}-${file.size}-${file.lastModified}`}
                 className='flex items-center justify-between rounded bg-muted px-2.5 py-1.5 font-sans text-[0.85rem]'
               >
                 <span className='truncate'>{file.name}</span>

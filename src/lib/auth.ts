@@ -1,11 +1,25 @@
-import { betterAuth } from 'better-auth'
+// better-auth 1.5.6: OrganizationPlugin / StrictEndpoint no longer structurally satisfies
+// BetterAuthPlugin due to a Zod 4 migration type regression. The cast is safe —
+// plugins satisfy the interface at runtime. Track: https://github.com/better-auth/better-auth/issues/5637
+import { type BetterAuthPlugin, betterAuth } from 'better-auth'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { nextCookies } from 'better-auth/next-js'
-import { emailOTP } from 'better-auth/plugins'
+import { emailOTP, organization } from 'better-auth/plugins'
 
 import { env } from '~/env'
+import { ac, organizationRoles } from '~/lib/auth-permissions'
 import { sendOtpEmail, sendResetPasswordEmail } from '~/lib/email'
 import { db } from '~/server/db'
+
+export const authOrganizationRoles = organizationRoles
+
+export const authPlugins: BetterAuthPlugin[] = [
+  organization({
+    ac,
+    roles: authOrganizationRoles,
+  }) as unknown as BetterAuthPlugin,
+  nextCookies(),
+]
 
 export const auth = betterAuth({
   baseURL: env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${env.PORT ?? '3000'}`,
@@ -47,16 +61,15 @@ export const auth = betterAuth({
     joins: true, // Enable joins for 2-3x performance improvement
   },
   plugins: [
-    nextCookies(),
+    ...authPlugins,
     emailOTP({
       async sendVerificationOTP({ email, otp, type }) {
         await sendOtpEmail({ to: email, otp, type })
       },
       otpLength: 6,
-      expiresIn: 600, // 10 minutes
-      // Replace link-based email verification with OTP system-wide
+      expiresIn: 600,
       overrideDefaultEmailVerification: true,
-    }),
+    }) as unknown as BetterAuthPlugin,
   ],
 })
 

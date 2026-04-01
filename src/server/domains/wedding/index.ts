@@ -32,7 +32,7 @@ export {
   createWeddingSchema,
   getByUserIdSchema,
   type UpdateWeddingDetailsInput,
-  updateWeddingDetailsSchema,
   type UpdateWeddingSchemaInput,
+  updateWeddingDetailsSchema,
   updateWeddingSchema,
 } from '~/server/domains/wedding/wedding.validator'

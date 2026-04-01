@@ -5,9 +5,13 @@
 import { TRPCError } from '@trpc/server'
 
 // Must mock before importing the service
-jest.mock('~/server/domains/event/event.repository')
-jest.mock('~/server/infrastructure/database/client')
+jest.mock('server/authz/permission-checker', () => ({
+  requirePermission: jest.fn(),
+}))
+jest.mock('server/domains/event/event.repository')
+jest.mock('server/infrastructure/database/client')
 
+import { requirePermission } from 'server/authz/permission-checker'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   EventRepository,
@@ -21,8 +25,8 @@ import {
   mockGuests,
   mockUpdateCollectRsvp,
   resetMocks as resetEventMocks,
-} from '~/server/domains/event/event.repository'
-import { EventService } from '~/server/domains/event/event.service'
+} from 'server/domains/event/event.repository'
+import { EventService } from 'server/domains/event/event.service'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   db,
@@ -34,15 +38,15 @@ import {
   mockInvitationCreateMany,
   mockInvitationDeleteMany,
   resetMocks as resetDbMocks,
-} from '~/server/infrastructure/database/client'
+} from 'server/infrastructure/database/client'
 
 // Create typed aliases for mocked functions
+const mockBelongsToWeddingFn = mockBelongsToWedding as jest.Mock
 const mockFindByIdFn = mockFindById as jest.Mock
 const mockFindByWeddingIdFn = mockFindByWeddingId as jest.Mock
 const mockFindByWeddingIdWithStatsFn = mockFindByWeddingIdWithStats as jest.Mock
 const mockUpdateCollectRsvpFn = mockUpdateCollectRsvp as jest.Mock
 const mockDeleteFn = mockDelete as jest.Mock
-const mockBelongsToWeddingFn = mockBelongsToWedding as jest.Mock
 const mockGuestFindManyFn = mockGuestFindMany as jest.Mock
 const mockInvitationCreateFn = mockInvitationCreate as jest.Mock
 const mockInvitationCreateManyFn = mockInvitationCreateMany as jest.Mock
@@ -50,6 +54,15 @@ const mockInvitationDeleteManyFn = mockInvitationDeleteMany as jest.Mock
 const mockEventCreateFn = mockEventCreate as jest.Mock
 const mockEventFindUniqueFn = mockEventFindUnique as jest.Mock
 const mockEventUpdateFn = mockEventUpdate as jest.Mock
+const mockRequirePermission = requirePermission as jest.Mock
+
+const actorContext = {
+  userId: 'user-123',
+  activeOrganization: {
+    organizationId: 'org-123',
+    role: 'owner',
+  },
+}
 
 describe('EventService', () => {
   let eventService: EventService
@@ -57,6 +70,8 @@ describe('EventService', () => {
   beforeEach(() => {
     resetEventMocks()
     resetDbMocks()
+    mockRequirePermission.mockReset()
+    mockRequirePermission.mockReturnValue({ organizationId: 'org-123', role: 'owner' })
     const mockRepository = new EventRepository({})
     // Set default mock returns
     mockGuestFindManyFn.mockResolvedValue([])
@@ -68,7 +83,7 @@ describe('EventService', () => {
     it('should create an event successfully', async () => {
       mockEventCreateFn.mockResolvedValue(mockEvent)
 
-      const result = await eventService.createEvent('wedding-123', {
+      const result = await eventService.createEvent(actorContext, 'wedding-123', {
         eventName: 'Wedding Day',
         date: '2024-06-15',
         startTime: '14:00',
@@ -79,6 +94,9 @@ describe('EventService', () => {
       })
 
       expect(result).toEqual(mockEvent)
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, {
+        event: ['create'],
+      })
       expect(mockEventCreateFn).toHaveBeenCalledWith({
         data: expect.objectContaining({
           name: 'Wedding Day',
@@ -98,7 +116,7 @@ describe('EventService', () => {
       mockGuestFindManyFn.mockResolvedValue(mockGuests)
       mockInvitationCreateManyFn.mockResolvedValue({ count: 2 })
 
-      await eventService.createEvent('wedding-123', {
+      await eventService.createEvent(actorContext, 'wedding-123', {
         eventName: 'Wedding Day',
       })
 
@@ -123,7 +141,7 @@ describe('EventService', () => {
       ])
       mockInvitationCreateManyFn.mockResolvedValue({ count: 1 })
 
-      await eventService.createEvent('wedding-123', {
+      await eventService.createEvent(actorContext, 'wedding-123', {
         eventName: 'Ceremony',
       })
 
@@ -147,7 +165,7 @@ describe('EventService', () => {
       mockGuestFindManyFn.mockResolvedValue(allGuests)
       mockInvitationCreateManyFn.mockResolvedValue({ count: 2 })
 
-      await eventService.createEvent('wedding-123', {
+      await eventService.createEvent(actorContext, 'wedding-123', {
         eventName: 'Welcome Party',
         allowTagAlongs: true,
       })
@@ -160,7 +178,7 @@ describe('EventService', () => {
     it('should handle event with only name', async () => {
       mockEventCreateFn.mockResolvedValue({ ...mockEvent, date: null })
 
-      await eventService.createEvent('wedding-123', {
+      await eventService.createEvent(actorContext, 'wedding-123', {
         eventName: 'Simple Event',
       })
 
@@ -170,6 +188,20 @@ describe('EventService', () => {
           weddingId: 'wedding-123',
         }),
       })
+    })
+
+    it('should reject create when actor lacks event create permission', async () => {
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      })
+
+      await expect(
+        eventService.createEvent(actorContext, 'wedding-123', {
+          eventName: 'Blocked Event',
+        })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+
+      expect(mockEventCreateFn).not.toHaveBeenCalled()
     })
   })
 
@@ -278,16 +310,18 @@ describe('EventService', () => {
   describe('updateEvent', () => {
     it('should update event when wedding owns it', async () => {
       const updatedEvent = { ...mockEvent, name: 'Updated Event' }
-      mockBelongsToWeddingFn.mockResolvedValue(true)
       mockEventFindUniqueFn.mockResolvedValue(mockEvent)
       mockEventUpdateFn.mockResolvedValue(updatedEvent)
 
-      const result = await eventService.updateEvent('wedding-123', {
+      const result = await eventService.updateEvent(actorContext, 'wedding-123', {
         eventId: 'event-123',
         eventName: 'Updated Event',
       })
 
       expect(result.name).toBe('Updated Event')
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, {
+        event: ['update'],
+      })
     })
 
     it('should create invitations only for tag-alongs without existing ones when toggled on', async () => {
@@ -295,13 +329,12 @@ describe('EventService', () => {
         { id: 10, firstName: 'Baby', lastName: 'Doe', weddingId: 'wedding-123', isTagAlong: true },
         { id: 11, firstName: 'Child', lastName: 'Doe', weddingId: 'wedding-123', isTagAlong: true },
       ]
-      mockBelongsToWeddingFn.mockResolvedValue(true)
       mockEventFindUniqueFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: false })
       mockGuestFindManyFn.mockResolvedValue(tagAlongGuests)
       mockInvitationCreateManyFn.mockResolvedValue({ count: 2 })
       mockEventUpdateFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: true })
 
-      await eventService.updateEvent('wedding-123', {
+      await eventService.updateEvent(actorContext, 'wedding-123', {
         eventId: 'event-123',
         eventName: 'Wedding Day',
         allowTagAlongs: true,
@@ -323,11 +356,10 @@ describe('EventService', () => {
     })
 
     it('should NOT delete tag-along invitations when toggled off (preserve RSVP data)', async () => {
-      mockBelongsToWeddingFn.mockResolvedValue(true)
       mockEventFindUniqueFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: true })
       mockEventUpdateFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: false })
 
-      await eventService.updateEvent('wedding-123', {
+      await eventService.updateEvent(actorContext, 'wedding-123', {
         eventId: 'event-123',
         eventName: 'Wedding Day',
         allowTagAlongs: false,
@@ -338,12 +370,11 @@ describe('EventService', () => {
     })
 
     it('should not create duplicate invitations when re-toggling on after off', async () => {
-      mockBelongsToWeddingFn.mockResolvedValue(true)
       mockEventFindUniqueFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: false })
       mockGuestFindManyFn.mockResolvedValue([])
       mockEventUpdateFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: true })
 
-      await eventService.updateEvent('wedding-123', {
+      await eventService.updateEvent(actorContext, 'wedding-123', {
         eventId: 'event-123',
         eventName: 'Wedding Day',
         allowTagAlongs: true,
@@ -360,11 +391,10 @@ describe('EventService', () => {
     })
 
     it('should not modify invitations when allowTagAlongs stays the same', async () => {
-      mockBelongsToWeddingFn.mockResolvedValue(true)
       mockEventFindUniqueFn.mockResolvedValue({ ...mockEvent, allowTagAlongs: false })
       mockEventUpdateFn.mockResolvedValue(mockEvent)
 
-      await eventService.updateEvent('wedding-123', {
+      await eventService.updateEvent(actorContext, 'wedding-123', {
         eventId: 'event-123',
         eventName: 'Wedding Day',
         allowTagAlongs: false,
@@ -375,17 +405,13 @@ describe('EventService', () => {
       expect(mockInvitationDeleteManyFn).not.toHaveBeenCalled()
     })
 
-    it('should throw FORBIDDEN when wedding does not own event', async () => {
-      mockBelongsToWeddingFn.mockResolvedValue(false)
+    it('should reject update when actor lacks event update permission', async () => {
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      })
 
       await expect(
-        eventService.updateEvent('wedding-123', {
-          eventId: 'event-123',
-          eventName: 'Test',
-        })
-      ).rejects.toThrow(TRPCError)
-      await expect(
-        eventService.updateEvent('wedding-123', {
+        eventService.updateEvent(actorContext, 'wedding-123', {
           eventId: 'event-123',
           eventName: 'Test',
         })
@@ -397,32 +423,77 @@ describe('EventService', () => {
     it('should update collectRsvp status', async () => {
       const updatedEvent = { ...mockEvent, collectRsvp: false }
       mockUpdateCollectRsvpFn.mockResolvedValue(updatedEvent)
+      mockBelongsToWeddingFn.mockResolvedValue(true)
 
-      const result = await eventService.updateCollectRsvp('event-123', false)
+      const result = await eventService.updateCollectRsvp(
+        actorContext,
+        'wedding-123',
+        'event-123',
+        false
+      )
 
       expect(result.collectRsvp).toBe(false)
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, {
+        event: ['rsvp_policy_update'],
+      })
       expect(mockUpdateCollectRsvpFn).toHaveBeenCalledWith('event-123', false)
+    })
+
+    it('should reject when event does not belong to wedding', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(false)
+
+      await expect(
+        eventService.updateCollectRsvp(actorContext, 'wedding-123', 'event-123', false)
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+
+      expect(mockUpdateCollectRsvpFn).not.toHaveBeenCalled()
+    })
+
+    it('should reject update collect RSVP when actor lacks permission', async () => {
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      })
+
+      await expect(
+        eventService.updateCollectRsvp(actorContext, 'wedding-123', 'event-123', false)
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+
+      expect(mockUpdateCollectRsvpFn).not.toHaveBeenCalled()
     })
   })
 
   describe('deleteEvent', () => {
     it('should delete event when wedding owns it', async () => {
-      mockBelongsToWeddingFn.mockResolvedValue(true)
       mockDeleteFn.mockResolvedValue(mockEvent)
+      mockBelongsToWeddingFn.mockResolvedValue(true)
 
-      const result = await eventService.deleteEvent('event-123', 'wedding-123')
+      const result = await eventService.deleteEvent(actorContext, 'wedding-123', 'event-123')
 
       expect(result).toBe('event-123')
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, {
+        event: ['delete'],
+      })
       expect(mockDeleteFn).toHaveBeenCalledWith('event-123')
     })
 
-    it('should throw FORBIDDEN when wedding does not own event', async () => {
+    it('should reject when event does not belong to wedding', async () => {
       mockBelongsToWeddingFn.mockResolvedValue(false)
 
-      await expect(eventService.deleteEvent('event-123', 'other-wedding')).rejects.toThrow(
-        TRPCError
-      )
-      await expect(eventService.deleteEvent('event-123', 'other-wedding')).rejects.toMatchObject({
+      await expect(
+        eventService.deleteEvent(actorContext, 'wedding-123', 'event-123')
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+
+      expect(mockDeleteFn).not.toHaveBeenCalled()
+    })
+
+    it('should reject delete when actor lacks event delete permission', async () => {
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      })
+
+      await expect(
+        eventService.deleteEvent(actorContext, 'wedding-123', 'event-123')
+      ).rejects.toMatchObject({
         code: 'FORBIDDEN',
       })
     })

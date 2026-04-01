@@ -8,6 +8,7 @@ import type { Wedding } from '~/server/domains/wedding/wedding.types'
 
 export const mockWedding: Wedding = {
   id: 'wedding-123',
+  organizationId: 'org-123',
   groomFirstName: 'John',
   groomLastName: 'Doe',
   brideFirstName: 'Jane',

@@ -73,15 +73,16 @@ export class QuestionRepository {
     })
   }
 
-  /**
-   * Delete options by IDs
-   */
-  async deleteOptions(optionIds: string[]): Promise<{ count: number }> {
+  async deleteOptionsForQuestion(
+    questionId: string,
+    optionIds: string[]
+  ): Promise<{ count: number }> {
     return this.db.option.deleteMany({
       where: {
         id: {
           in: optionIds,
         },
+        questionId,
       },
     })
   }
@@ -179,5 +180,35 @@ export class QuestionRepository {
       where: { questionId },
       orderBy: { createdAt: 'desc' },
     })
+  }
+
+  async belongsToWedding(questionId: string, weddingId: string): Promise<boolean> {
+    const question = await this.db.question.findFirst({
+      where: {
+        id: questionId,
+        OR: [{ event: { weddingId } }, { website: { weddingId } }],
+      },
+      select: { id: true },
+    })
+
+    return question !== null
+  }
+
+  async eventBelongsToWedding(eventId: string, weddingId: string): Promise<boolean> {
+    const event = await this.db.event.findFirst({
+      where: { id: eventId, weddingId },
+      select: { id: true },
+    })
+
+    return event !== null
+  }
+
+  async websiteBelongsToWedding(websiteId: string, weddingId: string): Promise<boolean> {
+    const website = await this.db.website.findFirst({
+      where: { id: websiteId, weddingId },
+      select: { id: true },
+    })
+
+    return website !== null
   }
 }

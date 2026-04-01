@@ -3,7 +3,6 @@ import { sharedStyles } from '~/app/utils/shared-styles'
 export default function GuestListSkeleton() {
   return (
     <div className={`pt-10 ${sharedStyles.desktopPaddingSidesGuestList}`}>
-      {/* biome-ignore lint/a11y/useSemanticElements: role='status' is correct for a loading skeleton, not an output element */}
       <div
         role='status'
         className='flex animate-pulse flex-col space-y-8 md:space-y-0 rtl:space-x-reverse'
