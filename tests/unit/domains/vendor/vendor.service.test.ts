@@ -280,7 +280,7 @@ describe('VendorService', () => {
       mockFindAllFileUrlsByVendorIdFn.mockResolvedValue(urls)
       mockDeleteFn.mockResolvedValue(mockVendor)
 
-      await vendorService.deleteVendor('vendor-123', 'wedding-123')
+      await vendorService.deleteVendor(actorContext, 'vendor-123', 'wedding-123')
 
       expect(mockDel).toHaveBeenCalledWith(urls)
       expect(mockDeleteFn).toHaveBeenCalledWith('vendor-123')
@@ -294,7 +294,7 @@ describe('VendorService', () => {
       mockDel.mockRejectedValue(new Error('Blob service error'))
       mockDeleteFn.mockResolvedValue(mockVendor)
 
-      const result = await vendorService.deleteVendor('vendor-123', 'wedding-123')
+      const result = await vendorService.deleteVendor(actorContext, 'vendor-123', 'wedding-123')
 
       expect(result).toBe('vendor-123')
     })
@@ -334,7 +334,7 @@ describe('VendorService', () => {
       mockBelongsToWeddingFn.mockResolvedValue(true)
       mockCreateQuoteFn.mockResolvedValue(mockQuote)
 
-      await vendorService.addQuote('vendor-123', 'wedding-123', {
+      await vendorService.addQuote(actorContext, 'vendor-123', 'wedding-123', {
         vendorId: 'vendor-123',
         price: 2500,
         quoteType: 'FLAT_FEE',
@@ -350,7 +350,7 @@ describe('VendorService', () => {
       mockBelongsToWeddingFn.mockResolvedValue(true)
       mockCreateQuoteFn.mockResolvedValue({ ...mockQuote, quoteType: 'PER_GUEST' })
 
-      await vendorService.addQuote('vendor-123', 'wedding-123', {
+      await vendorService.addQuote(actorContext, 'vendor-123', 'wedding-123', {
         vendorId: 'vendor-123',
         price: 75,
         quoteType: 'PER_GUEST',
@@ -404,7 +404,7 @@ describe('VendorService', () => {
       mockQuoteBelongsToVendorFn.mockResolvedValue(true)
       mockUpdateQuoteFn.mockResolvedValue({ ...mockQuote, quoteType: 'PER_GUEST' })
 
-      await vendorService.updateQuote('quote-123', 'vendor-123', 'wedding-123', {
+      await vendorService.updateQuote(actorContext, 'quote-123', 'vendor-123', 'wedding-123', {
         quoteId: 'quote-123',
         vendorId: 'vendor-123',
         quoteType: 'PER_GUEST',
@@ -581,12 +581,12 @@ describe('VendorService', () => {
       mockCreateQuoteFilesFn.mockResolvedValue([mockQuoteFile])
 
       // This should succeed (9 + 1 = 10, at the limit)
-      await vendorService.saveQuoteFiles('vendor-123', 'wedding-123', fileInput)
+      await vendorService.saveQuoteFiles(actorContext, 'vendor-123', 'wedding-123', fileInput)
 
       // Now test exceeding: 10 existing + 1 new = 11
       mockCountFilesByQuoteIdFn.mockResolvedValue(10)
       await expect(
-        vendorService.saveQuoteFiles('vendor-123', 'wedding-123', fileInput)
+        vendorService.saveQuoteFiles(actorContext, 'vendor-123', 'wedding-123', fileInput)
       ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
     })
 
@@ -642,7 +642,12 @@ describe('VendorService', () => {
       mockDeleteQuoteFileFn.mockResolvedValue(mockQuoteFile)
       mockDel.mockRejectedValue(new Error('Blob error'))
 
-      const result = await vendorService.deleteQuoteFile('vendor-123', 'wedding-123', deleteInput)
+      const result = await vendorService.deleteQuoteFile(
+        actorContext,
+        'vendor-123',
+        'wedding-123',
+        deleteInput
+      )
 
       expect(result).toEqual(mockQuoteFile)
     })

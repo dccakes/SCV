@@ -49,7 +49,7 @@ import { requirePermission } from '~/server/authz/permission-checker'
 // Create typed aliases for mock functions
 const mockCreateFn = mockCreate as jest.Mock
 const mockExistsForUserFn = mockExistsForUser as jest.Mock
-const mockFindByIdFn = mockFindById as jest.Mock
+const _mockFindByIdFn = mockFindById as jest.Mock
 const mockFindByUserIdFn = mockFindByUserId as jest.Mock
 const mockUpdateFn = mockUpdate as jest.Mock
 const mockCreateEventFn = mockCreateEventSystem as jest.Mock

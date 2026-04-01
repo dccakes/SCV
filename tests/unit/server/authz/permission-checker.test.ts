@@ -1,6 +1,5 @@
 jest.mock('~/lib/auth-permissions')
 
-import { TRPCError } from '@trpc/server'
 import type { AuthzContext } from 'server/authz/authorization.types'
 import { requirePermission } from 'server/authz/permission-checker'
 

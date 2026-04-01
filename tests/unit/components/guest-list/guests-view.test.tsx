@@ -36,7 +36,7 @@ jest.mock('~/components/hooks', () => {
 })
 
 jest.mock('~/components/ui/select', () => {
-  const React = require('react')
+  const _React = require('react')
   return {
     Select: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
     SelectTrigger: ({
