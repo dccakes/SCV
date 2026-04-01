@@ -40,9 +40,7 @@ describe('getMemoryTools', () => {
 
   describe('memory_read', () => {
     it('searches memories by keyword', async () => {
-      const memories = [
-        { id: 'm1', content: 'Bride prefers peonies', createdAt: new Date() },
-      ]
+      const memories = [{ id: 'm1', content: 'Bride prefers peonies', createdAt: new Date() }]
       mockSearchMemory.mockResolvedValue(memories)
 
       const result = await tools.memory_read.execute({ query: 'flowers' }, toolOpts)
@@ -56,10 +54,7 @@ describe('getMemoryTools', () => {
     it('saves a new memory', async () => {
       mockWriteMemory.mockResolvedValue('mem-new')
 
-      const result = await tools.memory_write.execute(
-        { content: 'Budget is $50,000' },
-        toolOpts
-      )
+      const result = await tools.memory_write.execute({ content: 'Budget is $50,000' }, toolOpts)
 
       expect(mockWriteMemory).toHaveBeenCalledWith('wedding-123', 'Budget is $50,000')
       expect(result).toEqual({ memoryId: 'mem-new', message: 'Memory saved' })

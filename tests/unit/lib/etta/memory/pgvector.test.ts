@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 
-import { searchMemory, writeMemory, deleteMemory } from '~/lib/etta/memory/pgvector'
+import { deleteMemory, searchMemory, writeMemory } from '~/lib/etta/memory/pgvector'
 import { db } from '~/server/db'
 
 jest.mock('~/server/db', () => ({
@@ -37,9 +37,7 @@ describe('pgvector memory', () => {
   describe('searchMemory', () => {
     it('uses vector path when embedding has 1536 dimensions', async () => {
       const embedding = makeEmbedding(1536)
-      const mockResults = [
-        { id: 'm1', content: 'Bride prefers peonies', createdAt: new Date() },
-      ]
+      const mockResults = [{ id: 'm1', content: 'Bride prefers peonies', createdAt: new Date() }]
       mockDb.$queryRaw.mockResolvedValue(mockResults)
 
       const result = await searchMemory(WEDDING_ID, 'flowers', embedding)
@@ -49,9 +47,7 @@ describe('pgvector memory', () => {
     })
 
     it('falls back to keyword search when no embedding is provided', async () => {
-      const mockResults = [
-        { id: 'm2', content: 'Venue is outdoor', createdAt: new Date() },
-      ]
+      const mockResults = [{ id: 'm2', content: 'Venue is outdoor', createdAt: new Date() }]
       mockDb.$queryRaw.mockResolvedValue(mockResults)
 
       const result = await searchMemory(WEDDING_ID, 'venue')
@@ -62,9 +58,7 @@ describe('pgvector memory', () => {
 
     it('falls back to keyword search when embedding has wrong length', async () => {
       const embedding = makeEmbedding(512)
-      const mockResults = [
-        { id: 'm3', content: 'Some memory', createdAt: new Date() },
-      ]
+      const mockResults = [{ id: 'm3', content: 'Some memory', createdAt: new Date() }]
       mockDb.$queryRaw.mockResolvedValue(mockResults)
 
       const result = await searchMemory(WEDDING_ID, 'some query', embedding)

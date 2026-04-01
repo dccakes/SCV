@@ -1,5 +1,5 @@
-import { buildSystemPrompt } from '~/lib/etta/utils/build-system-prompt'
 import type { EttaContext } from '~/lib/etta/types'
+import { buildSystemPrompt } from '~/lib/etta/utils/build-system-prompt'
 
 function makeContext(overrides: Partial<EttaContext> = {}): EttaContext {
   return {

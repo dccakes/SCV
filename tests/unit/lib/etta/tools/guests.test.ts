@@ -2,10 +2,10 @@
  * @jest-environment node
  */
 
-import { guestService } from '~/server/domains/guest'
-import { invitationService } from '~/server/domains/invitation'
 import { getGuestTools } from '~/lib/etta/tools/guests'
 import type { EttaContext } from '~/lib/etta/types'
+import { guestService } from '~/server/domains/guest'
+import { invitationService } from '~/server/domains/invitation'
 
 jest.mock('~/server/domains/guest', () => ({
   guestService: {
@@ -59,7 +59,10 @@ describe('getGuestTools', () => {
       ]
       mockGuestService.getAllByWeddingId.mockResolvedValue(guests)
 
-      const result = await tools.get_guest_list.execute({}, { toolCallId: 'tc1', messages: [], abortSignal: undefined as never })
+      const result = await tools.get_guest_list.execute(
+        {},
+        { toolCallId: 'tc1', messages: [], abortSignal: undefined as never }
+      )
 
       expect(mockGuestService.getAllByWeddingId).toHaveBeenCalledWith('wedding-123')
       expect(result).toEqual({ guests })
@@ -68,7 +71,10 @@ describe('getGuestTools', () => {
     it('returns empty array when no guests', async () => {
       mockGuestService.getAllByWeddingId.mockResolvedValue(undefined)
 
-      const result = await tools.get_guest_list.execute({}, { toolCallId: 'tc2', messages: [], abortSignal: undefined as never })
+      const result = await tools.get_guest_list.execute(
+        {},
+        { toolCallId: 'tc2', messages: [], abortSignal: undefined as never }
+      )
 
       expect(result).toEqual({ guests: [] })
     })
@@ -80,7 +86,11 @@ describe('getGuestTools', () => {
       mockGuestService.updateGuest.mockResolvedValue(updated)
 
       const params = { guestId: 1, lastName: 'Updated', email: 'new@test.com' }
-      const result = await tools.update_guest.execute(params, { toolCallId: 'tc3', messages: [], abortSignal: undefined as never })
+      const result = await tools.update_guest.execute(params, {
+        toolCallId: 'tc3',
+        messages: [],
+        abortSignal: undefined as never,
+      })
 
       expect(mockGuestService.updateGuest).toHaveBeenCalledWith(1, {
         lastName: 'Updated',
@@ -94,7 +104,10 @@ describe('getGuestTools', () => {
     it('returns all zeros for empty invitation list', async () => {
       mockInvitationService.getAllByWeddingId.mockResolvedValue([])
 
-      const result = await tools.get_rsvp_summary.execute({}, { toolCallId: 'tc5', messages: [], abortSignal: undefined as never })
+      const result = await tools.get_rsvp_summary.execute(
+        {},
+        { toolCallId: 'tc5', messages: [], abortSignal: undefined as never }
+      )
 
       expect(mockInvitationService.getAllByWeddingId).toHaveBeenCalledWith('wedding-123')
       expect(result).toEqual({
@@ -116,7 +129,10 @@ describe('getGuestTools', () => {
       ]
       mockInvitationService.getAllByWeddingId.mockResolvedValue(invitations)
 
-      const result = await tools.get_rsvp_summary.execute({}, { toolCallId: 'tc4', messages: [], abortSignal: undefined as never })
+      const result = await tools.get_rsvp_summary.execute(
+        {},
+        { toolCallId: 'tc4', messages: [], abortSignal: undefined as never }
+      )
 
       expect(mockInvitationService.getAllByWeddingId).toHaveBeenCalledWith('wedding-123')
       expect(result).toEqual({

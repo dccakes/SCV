@@ -2,10 +2,10 @@
  * @jest-environment node
  */
 
-import { vendorService } from '~/server/domains/vendor'
-import { db } from '~/server/db'
 import { getVendorTools } from '~/lib/etta/tools/vendors'
 import type { EttaContext } from '~/lib/etta/types'
+import { db } from '~/server/db'
+import { vendorService } from '~/server/domains/vendor'
 
 jest.mock('~/server/domains/vendor', () => ({
   vendorService: {
@@ -61,7 +61,10 @@ describe('getVendorTools', () => {
       ]
       mockVendorService.getVendors.mockResolvedValue(vendors)
 
-      const result = await tools.get_vendor_list.execute({}, { toolCallId: 'tc1', messages: [], abortSignal: undefined as never })
+      const result = await tools.get_vendor_list.execute(
+        {},
+        { toolCallId: 'tc1', messages: [], abortSignal: undefined as never }
+      )
 
       expect(mockVendorService.getVendors).toHaveBeenCalledWith('wedding-123', undefined)
       expect(result).toEqual({ vendors })
@@ -90,7 +93,11 @@ describe('getVendorTools', () => {
         contactEmail: 'bob@catering.com',
       }
 
-      const result = await tools.add_vendor.execute(params, { toolCallId: 'tc3', messages: [], abortSignal: undefined as never })
+      const result = await tools.add_vendor.execute(params, {
+        toolCallId: 'tc3',
+        messages: [],
+        abortSignal: undefined as never,
+      })
 
       expect(mockDb.ettaSuggestion.create).toHaveBeenCalledWith({
         data: {

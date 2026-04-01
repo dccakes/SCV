@@ -2,9 +2,9 @@
  * @jest-environment node
  */
 
-import { logAudit } from '~/lib/etta/utils/audit'
 import { getTimelineTools } from '~/lib/etta/tools/timeline'
 import type { EttaContext } from '~/lib/etta/types'
+import { logAudit } from '~/lib/etta/utils/audit'
 
 jest.mock('~/lib/etta/utils/audit', () => ({
   logAudit: jest.fn(),

@@ -2,8 +2,8 @@
  * @jest-environment node
  */
 
-import { validateCoupleSession } from '~/lib/etta/utils/auth'
 import { logAudit } from '~/lib/etta/utils/audit'
+import { validateCoupleSession } from '~/lib/etta/utils/auth'
 import { db } from '~/server/db'
 
 jest.mock('~/lib/etta/utils/auth', () => ({

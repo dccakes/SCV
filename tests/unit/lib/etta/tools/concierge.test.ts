@@ -2,10 +2,10 @@
  * @jest-environment node
  */
 
-import { db } from '~/server/db'
-import { invitationService } from '~/server/domains/invitation'
 import { getConciergeTools } from '~/lib/etta/tools/concierge'
 import type { EttaContext } from '~/lib/etta/types'
+import { db } from '~/server/db'
+import { invitationService } from '~/server/domains/invitation'
 
 jest.mock('~/server/db', () => ({
   db: {
@@ -122,10 +122,7 @@ describe('getConciergeTools', () => {
       const noGuestTools = getConciergeTools(noGuestCtx)
 
       await expect(
-        noGuestTools.submit_rsvp.execute(
-          { eventId: 'e1', rsvp: 'Attending' as const },
-          toolOpts
-        )
+        noGuestTools.submit_rsvp.execute({ eventId: 'e1', rsvp: 'Attending' as const }, toolOpts)
       ).rejects.toThrow('Guest context required')
     })
   })

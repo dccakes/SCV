@@ -2,9 +2,9 @@
  * @jest-environment node
  */
 
-import { db } from '~/server/db'
 import { getBudgetTools } from '~/lib/etta/tools/budget'
 import type { EttaContext } from '~/lib/etta/types'
+import { db } from '~/server/db'
 
 jest.mock('~/server/db', () => ({
   db: {

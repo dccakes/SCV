@@ -26,10 +26,10 @@ const mockGetWeddingId = weddingService.getWeddingIdByUserId as jest.Mock
 process.env.JWT_SECRET = 'test-secret-key-for-testing-minimum-length'
 
 import {
-  validateCoupleSession,
   issueGuestToken,
-  validateGuestToken,
   resolveEttaAuth,
+  validateCoupleSession,
+  validateGuestToken,
 } from '~/lib/etta/utils/auth'
 
 // ── validateCoupleSession ───────────────────────────────────────────────────

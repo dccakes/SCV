@@ -2,9 +2,9 @@
  * @jest-environment node
  */
 
-import { db } from '~/server/db'
 import { getSuggestionTools } from '~/lib/etta/tools/suggestions'
 import type { EttaContext } from '~/lib/etta/types'
+import { db } from '~/server/db'
 
 jest.mock('~/server/db', () => ({
   db: {
@@ -49,8 +49,20 @@ describe('getSuggestionTools', () => {
   describe('get_pending_suggestions', () => {
     it('returns pending suggestions from DB', async () => {
       const suggestions = [
-        { id: 'sug-1', summary: 'Add vendor', tier: 'T1', actionType: 'add_vendor', createdAt: new Date() },
-        { id: 'sug-2', summary: 'Send blast', tier: 'T2', actionType: 'send_whatsapp_blast', createdAt: new Date() },
+        {
+          id: 'sug-1',
+          summary: 'Add vendor',
+          tier: 'T1',
+          actionType: 'add_vendor',
+          createdAt: new Date(),
+        },
+        {
+          id: 'sug-2',
+          summary: 'Send blast',
+          tier: 'T2',
+          actionType: 'send_whatsapp_blast',
+          createdAt: new Date(),
+        },
       ]
       mockDb.ettaSuggestion.findMany.mockResolvedValue(suggestions)
 

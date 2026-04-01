@@ -24,19 +24,19 @@ import { resolveEttaContext } from '~/lib/etta/utils/resolve-context'
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-function setupMocks(overrides: {
-  actor?: Record<string, unknown> | null
-  wedding?: Record<string, unknown> | null
-  guestCount?: number
-  eventCount?: number
-  vendorCount?: number
-  pendingSuggestionCount?: number
-  memories?: Array<{ content: string; createdAt: Date }>
-} = {}) {
+function setupMocks(
+  overrides: {
+    actor?: Record<string, unknown> | null
+    wedding?: Record<string, unknown> | null
+    guestCount?: number
+    eventCount?: number
+    vendorCount?: number
+    pendingSuggestionCount?: number
+    memories?: Array<{ content: string; createdAt: Date }>
+  } = {}
+) {
   mockEttaActor.mockResolvedValue(
-    overrides.actor !== undefined
-      ? overrides.actor
-      : { id: 'actor-1', weddingId: 'wedding-1' },
+    overrides.actor !== undefined ? overrides.actor : { id: 'actor-1', weddingId: 'wedding-1' }
   )
   mockWedding.mockResolvedValue(
     overrides.wedding !== undefined
@@ -47,7 +47,7 @@ function setupMocks(overrides: {
           groomLastName: 'Smith',
           brideFirstName: 'Emily',
           brideLastName: 'Jones',
-        },
+        }
   )
   mockGuestCount.mockResolvedValue(overrides.guestCount ?? 25)
   mockEventCount.mockResolvedValue(overrides.eventCount ?? 3)
@@ -57,7 +57,7 @@ function setupMocks(overrides: {
     overrides.memories ?? [
       { content: 'Bride prefers peonies', createdAt: new Date() },
       { content: 'Budget is $30k', createdAt: new Date() },
-    ],
+    ]
   )
 }
 
@@ -94,9 +94,9 @@ describe('resolveEttaContext', () => {
   it('throws when etta actor is not provisioned', async () => {
     setupMocks({ actor: null })
 
-    await expect(
-      resolveEttaContext({ actor: 'couple', weddingId: 'wedding-1' }),
-    ).rejects.toThrow('Etta not provisioned for this wedding')
+    await expect(resolveEttaContext({ actor: 'couple', weddingId: 'wedding-1' })).rejects.toThrow(
+      'Etta not provisioned for this wedding'
+    )
   })
 
   it('returns 0 counts when no guests/events/vendors exist', async () => {
@@ -159,9 +159,9 @@ describe('resolveEttaContext', () => {
   it('throws when wedding is not found (null)', async () => {
     setupMocks({ wedding: null })
 
-    await expect(
-      resolveEttaContext({ actor: 'couple', weddingId: 'wedding-1' }),
-    ).rejects.toThrow('Wedding wedding-1 not found')
+    await expect(resolveEttaContext({ actor: 'couple', weddingId: 'wedding-1' })).rejects.toThrow(
+      'Wedding wedding-1 not found'
+    )
   })
 
   it('passes select { content: true } for memory query in planner mode', async () => {
@@ -172,7 +172,7 @@ describe('resolveEttaContext', () => {
     expect(mockMemories).toHaveBeenCalledWith(
       expect.objectContaining({
         select: { content: true },
-      }),
+      })
     )
   })
 })

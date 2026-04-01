@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom'
 
+import { ReadableStream, TransformStream, WritableStream } from 'node:stream/web'
 import { TextDecoder, TextEncoder } from 'node:util'
-import { TransformStream, ReadableStream, WritableStream } from 'node:stream/web'
 
 // Polyfill for Prisma client in Jest
 global.TextEncoder = TextEncoder

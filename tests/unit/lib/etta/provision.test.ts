@@ -1,6 +1,6 @@
-import { db } from '~/server/db'
-import { ETTA_DEFAULT_PERMISSIONS } from '~/lib/etta/types'
 import { provisionEtta, revokeEtta } from '~/lib/etta/provision'
+import { ETTA_DEFAULT_PERMISSIONS } from '~/lib/etta/types'
+import { db } from '~/server/db'
 
 jest.mock('~/server/db', () => ({
   db: {

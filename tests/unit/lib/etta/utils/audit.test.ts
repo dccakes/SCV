@@ -1,6 +1,6 @@
-import { db } from '~/server/db'
-import { logAudit } from '~/lib/etta/utils/audit'
 import type { AuditEntry } from '~/lib/etta/types'
+import { logAudit } from '~/lib/etta/utils/audit'
+import { db } from '~/server/db'
 
 jest.mock('~/server/db', () => ({
   db: {
@@ -76,10 +76,7 @@ describe('logAudit', () => {
 
     await expect(logAudit(entry)).resolves.toBeUndefined()
 
-    expect(consoleSpy).toHaveBeenCalledWith(
-      '[Etta] Audit log failed:',
-      expect.any(Error),
-    )
+    expect(consoleSpy).toHaveBeenCalledWith('[Etta] Audit log failed:', expect.any(Error))
     consoleSpy.mockRestore()
   })
 })

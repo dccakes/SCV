@@ -3,8 +3,8 @@
  */
 
 import { getOutboundTools } from '~/lib/etta/tools/outbound'
-import { db } from '~/server/db'
 import type { EttaContext } from '~/lib/etta/types'
+import { db } from '~/server/db'
 
 jest.mock('~/server/db', () => ({
   db: {
@@ -54,7 +54,7 @@ describe('getOutboundTools', () => {
 
       await tools.send_whatsapp_blast.execute(
         { message: 'Save the date!', recipientFilter: 'all' },
-        toolOpts,
+        toolOpts
       )
 
       expect(mockDb.ettaSuggestion.create).toHaveBeenCalledWith({
@@ -73,33 +73,26 @@ describe('getOutboundTools', () => {
     it('returns suggestionId and pending_approval status', async () => {
       mockDb.ettaSuggestion.create.mockResolvedValue({ id: 'sug-wa-2' })
 
-      const result = await tools.send_whatsapp_blast.execute(
-        { message: 'Hello guests!' },
-        toolOpts,
-      )
+      const result = await tools.send_whatsapp_blast.execute({ message: 'Hello guests!' }, toolOpts)
 
       expect(result).toEqual({
         suggestionId: 'sug-wa-2',
         status: 'pending_approval',
-        message:
-          'WhatsApp blast draft created. Requires your approval before sending.',
+        message: 'WhatsApp blast draft created. Requires your approval before sending.',
       })
     })
 
     it('handles missing recipientFilter', async () => {
       mockDb.ettaSuggestion.create.mockResolvedValue({ id: 'sug-wa-3' })
 
-      await tools.send_whatsapp_blast.execute(
-        { message: 'No filter' },
-        toolOpts,
-      )
+      await tools.send_whatsapp_blast.execute({ message: 'No filter' }, toolOpts)
 
       expect(mockDb.ettaSuggestion.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             payload: { message: 'No filter', recipientFilter: undefined },
           }),
-        }),
+        })
       )
     })
   })
@@ -116,7 +109,7 @@ describe('getOutboundTools', () => {
           subject: 'Menu options',
           body: 'Hi, could you send your latest menu?',
         },
-        toolOpts,
+        toolOpts
       )
 
       expect(mockDb.ettaSuggestion.create).toHaveBeenCalledWith({
@@ -141,7 +134,7 @@ describe('getOutboundTools', () => {
 
       await tools.draft_vendor_email.execute(
         { vendorId: 'v1', subject: 'Pricing inquiry', body: 'Details please' },
-        toolOpts,
+        toolOpts
       )
 
       expect(mockDb.ettaSuggestion.create).toHaveBeenCalledWith(
@@ -149,7 +142,7 @@ describe('getOutboundTools', () => {
           data: expect.objectContaining({
             summary: 'Draft email to vendor: Pricing inquiry',
           }),
-        }),
+        })
       )
     })
 
@@ -158,14 +151,13 @@ describe('getOutboundTools', () => {
 
       const result = await tools.draft_vendor_email.execute(
         { vendorId: 'v1', subject: 'Test', body: 'Body' },
-        toolOpts,
+        toolOpts
       )
 
       expect(result).toEqual({
         suggestionId: 'sug-ve-3',
         status: 'pending_approval',
-        message:
-          'Vendor email draft created. Requires your approval before sending.',
+        message: 'Vendor email draft created. Requires your approval before sending.',
       })
     })
   })

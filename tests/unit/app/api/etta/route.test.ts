@@ -2,8 +2,8 @@
  * @jest-environment node
  */
 
-import { resolveEttaAuth } from '~/lib/etta/utils/auth'
 import { runEttaAgent } from '~/lib/etta/agent'
+import { resolveEttaAuth } from '~/lib/etta/utils/auth'
 
 jest.mock('~/lib/etta/utils/auth', () => ({
   resolveEttaAuth: jest.fn(),
