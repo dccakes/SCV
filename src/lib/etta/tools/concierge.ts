@@ -11,22 +11,11 @@ export function getConciergeTools(ctx: EttaContext) {
       description: 'Returns public wedding info visible to guests',
       inputSchema: zodSchema(z.object({})),
       execute: async () => {
-        const [couple, events] = await Promise.all([
-          db.wedding.findUnique({
-            where: { id: ctx.weddingId },
-            select: {
-              groomFirstName: true,
-              groomLastName: true,
-              brideFirstName: true,
-              brideLastName: true,
-            },
-          }),
-          db.event.findMany({
-            where: { weddingId: ctx.weddingId },
-            select: { name: true, date: true, startTime: true, venue: true },
-          }),
-        ])
-        return { couple, events }
+        const events = await db.event.findMany({
+          where: { weddingId: ctx.weddingId },
+          select: { name: true, date: true, startTime: true, venue: true },
+        })
+        return { couple: ctx.wedding, events }
       },
     }),
 

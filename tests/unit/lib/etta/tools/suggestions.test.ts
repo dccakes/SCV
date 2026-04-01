@@ -59,6 +59,7 @@ describe('getSuggestionTools', () => {
       expect(mockDb.ettaSuggestion.findMany).toHaveBeenCalledWith({
         where: { weddingId: 'wedding-123', status: 'pending' },
         orderBy: { createdAt: 'desc' },
+        select: { id: true, summary: true, tier: true, actionType: true, createdAt: true },
       })
       expect(result).toEqual(suggestions)
     })

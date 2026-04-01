@@ -52,10 +52,9 @@ CREATE TABLE etta_memory (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- IVFFlat index for fast approximate nearest-neighbour search
+-- HNSW index for approximate nearest-neighbour search (handles incremental inserts)
 CREATE INDEX idx_etta_memory_embedding ON etta_memory
-  USING ivfflat (embedding vector_cosine_ops)
-  WITH (lists = 100);
+  USING hnsw (embedding vector_cosine_ops);
 
 CREATE INDEX idx_etta_memory_wedding ON etta_memory(wedding_id);
 

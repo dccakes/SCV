@@ -35,17 +35,20 @@ export async function runEttaAgent(req: EttaRequest) {
     tools,
     stopWhen: stepCountIs(10),
     onStepFinish: async ({ toolResults }) => {
-      // Audit every tool invocation
-      for (const result of toolResults ?? []) {
-        await logAudit({
-          weddingId,
-          actorId: ctx.ettaActorId,
-          actorType: 'etta',
-          action: result.toolName,
-          resourceType: 'tool_call',
-          payload: result as Record<string, unknown>,
-        })
-      }
+      const results = toolResults ?? []
+      if (results.length === 0) return
+      await Promise.all(
+        results.map((r) =>
+          logAudit({
+            weddingId,
+            actorId: ctx.ettaActorId,
+            actorType: 'etta',
+            action: r.toolName,
+            resourceType: 'tool_call',
+            payload: r as Record<string, unknown>,
+          })
+        )
+      )
     },
   })
 

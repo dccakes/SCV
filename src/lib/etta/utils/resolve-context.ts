@@ -7,25 +7,30 @@ export async function resolveEttaContext(params: {
   guestId?: number
 }): Promise<EttaContext> {
   const { actor, weddingId, guestId } = params
+  const isPlanner = actor === 'couple'
 
-  const ettaActor = await db.ettaActor.findUnique({ where: { weddingId } })
-  if (!ettaActor) {
-    throw new Error('Etta not provisioned for this wedding')
-  }
-
-  const [wedding, guestCount, eventCount, vendorCount, pendingSuggestionCount, memories] =
+  // Single parallel batch — concierge skips planner-only queries
+  const [ettaActor, wedding, guestCount, eventCount, vendorCount, pendingSuggestionCount, memories] =
     await Promise.all([
+      db.ettaActor.findUnique({ where: { weddingId } }),
       db.wedding.findUnique({ where: { id: weddingId } }),
       db.guest.count({ where: { weddingId } }),
       db.event.count({ where: { weddingId } }),
-      db.vendor.count({ where: { weddingId } }),
-      db.ettaSuggestion.count({ where: { weddingId, status: 'pending' } }),
-      db.ettaMemory.findMany({
-        where: { weddingId },
-        orderBy: { createdAt: 'desc' },
-        take: 10,
-      }),
+      isPlanner ? db.vendor.count({ where: { weddingId } }) : 0,
+      isPlanner ? db.ettaSuggestion.count({ where: { weddingId, status: 'pending' } }) : 0,
+      isPlanner
+        ? db.ettaMemory.findMany({
+            where: { weddingId },
+            orderBy: { createdAt: 'desc' },
+            take: 10,
+            select: { content: true },
+          })
+        : [],
     ])
+
+  if (!ettaActor) {
+    throw new Error('Etta not provisioned for this wedding')
+  }
 
   return {
     weddingId,
@@ -42,6 +47,6 @@ export async function resolveEttaContext(params: {
     eventCount,
     vendorCount,
     pendingSuggestionCount,
-    recentMemories: memories.map((m: { content: string }) => m.content),
+    recentMemories: memories.map((m) => m.content),
   }
 }

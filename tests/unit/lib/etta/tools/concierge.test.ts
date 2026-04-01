@@ -59,37 +59,23 @@ describe('getConciergeTools', () => {
   const tools = getConciergeTools(mockCtx)
 
   describe('get_public_info', () => {
-    it('returns wedding info and events', async () => {
-      const wedding = {
-        groomFirstName: 'John',
-        groomLastName: 'Doe',
-        brideFirstName: 'Jane',
-        brideLastName: 'Smith',
-      }
+    it('returns wedding info from context and events from DB', async () => {
       const events = [
         { id: 'e1', name: 'Ceremony', date: '2026-06-15', startTime: '14:00', venue: 'Chapel' },
         { id: 'e2', name: 'Reception', date: '2026-06-15', startTime: '18:00', venue: 'Ballroom' },
       ]
-      mockDb.wedding.findUnique.mockResolvedValue(wedding)
       mockDb.event.findMany.mockResolvedValue(events)
 
       const result = await tools.get_public_info.execute({}, toolOpts)
 
-      expect(mockDb.wedding.findUnique).toHaveBeenCalledWith({
-        where: { id: 'wedding-123' },
-        select: {
-          groomFirstName: true,
-          groomLastName: true,
-          brideFirstName: true,
-          brideLastName: true,
-        },
-      })
+      // Wedding data comes from ctx.wedding, not a DB query
+      expect(mockDb.wedding.findUnique).not.toHaveBeenCalled()
       expect(mockDb.event.findMany).toHaveBeenCalledWith({
         where: { weddingId: 'wedding-123' },
         select: { name: true, date: true, startTime: true, venue: true },
       })
       expect(result).toEqual({
-        couple: wedding,
+        couple: mockCtx.wedding,
         events: events,
       })
     })

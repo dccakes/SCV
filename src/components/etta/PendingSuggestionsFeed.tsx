@@ -19,8 +19,18 @@ interface PendingSuggestionsFeedProps {
 export function PendingSuggestionsFeed({ suggestions: initial }: PendingSuggestionsFeedProps) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>(initial)
 
+  function restoreItem(id: string) {
+    const removed = initial.find((s) => s.id === id)
+    if (removed) {
+      setSuggestions((prev) =>
+        [...prev, removed].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+      )
+    }
+  }
+
   async function handleAction(id: string, action: 'approve' | 'dismiss') {
-    // Optimistically remove the card
     setSuggestions((prev) => prev.filter((s) => s.id !== id))
 
     try {
@@ -30,27 +40,9 @@ export function PendingSuggestionsFeed({ suggestions: initial }: PendingSuggesti
         body: JSON.stringify({ action }),
       })
 
-      if (!res.ok) {
-        // Restore on failure
-        const removed = initial.find((s) => s.id === id)
-        if (removed) {
-          setSuggestions((prev) =>
-            [...prev, removed].sort(
-              (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-            )
-          )
-        }
-      }
+      if (!res.ok) restoreItem(id)
     } catch {
-      // Restore on network error
-      const removed = initial.find((s) => s.id === id)
-      if (removed) {
-        setSuggestions((prev) =>
-          [...prev, removed].sort(
-            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          )
-        )
-      }
+      restoreItem(id)
     }
   }
 

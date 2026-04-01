@@ -27,12 +27,14 @@ export async function validateCoupleSession(
 
 // ── Guest Tokens ────────────────────────────────────────────────────────────
 
-function getJwtSecret() {
-  const secret = process.env.JWT_SECRET
-  if (!secret) {
-    throw new Error('JWT_SECRET environment variable is not set')
+let _jwtSecret: Uint8Array | null = null
+function getJwtSecret(): Uint8Array {
+  if (!_jwtSecret) {
+    const secret = process.env.JWT_SECRET
+    if (!secret) throw new Error('JWT_SECRET environment variable is not set')
+    _jwtSecret = new TextEncoder().encode(secret)
   }
-  return new TextEncoder().encode(secret)
+  return _jwtSecret
 }
 
 export async function issueGuestToken(

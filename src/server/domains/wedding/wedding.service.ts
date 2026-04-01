@@ -85,8 +85,10 @@ export class WeddingService {
       })
     }
 
-    // Provision Etta AI agent actor (silent, ~50ms)
-    await provisionEtta(wedding.id)
+    // Provision Etta AI agent actor — fire-and-forget (idempotent)
+    provisionEtta(wedding.id).catch((err) =>
+      console.error('[Etta] Background provision failed:', err)
+    )
 
     return wedding
   }

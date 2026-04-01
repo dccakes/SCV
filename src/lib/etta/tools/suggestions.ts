@@ -14,6 +14,7 @@ export function getSuggestionTools(ctx: EttaContext) {
         return db.ettaSuggestion.findMany({
           where: { weddingId: ctx.weddingId, status: 'pending' },
           orderBy: { createdAt: 'desc' },
+          select: { id: true, summary: true, tier: true, actionType: true, createdAt: true },
         })
       },
     }),

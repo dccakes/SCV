@@ -120,7 +120,7 @@ describe('resolveEttaContext', () => {
     expect(ctx.recentMemories).toEqual([])
   })
 
-  it('returns recent memories as string array (content field)', async () => {
+  it('returns recent memories as string array for planner', async () => {
     setupMocks({
       memories: [
         { content: 'Outdoor ceremony preferred', createdAt: new Date() },
@@ -130,9 +130,8 @@ describe('resolveEttaContext', () => {
     })
 
     const ctx = await resolveEttaContext({
-      actor: 'guest',
+      actor: 'couple',
       weddingId: 'wedding-1',
-      guestId: 42,
     })
 
     expect(ctx.recentMemories).toEqual([
@@ -140,6 +139,20 @@ describe('resolveEttaContext', () => {
       'No shellfish allergies',
       'Jazz band booked',
     ])
+  })
+
+  it('skips planner-only queries for concierge', async () => {
+    setupMocks({})
+
+    const ctx = await resolveEttaContext({
+      actor: 'guest',
+      weddingId: 'wedding-1',
+      guestId: 42,
+    })
+
+    expect(ctx.vendorCount).toBe(0)
+    expect(ctx.pendingSuggestionCount).toBe(0)
+    expect(ctx.recentMemories).toEqual([])
     expect(ctx.guestId).toBe(42)
   })
 })

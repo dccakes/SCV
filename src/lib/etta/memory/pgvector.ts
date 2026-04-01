@@ -36,12 +36,13 @@ export async function searchMemory(
     `
   }
 
-  // Keyword fallback
+  // Keyword fallback — escape ILIKE metacharacters
+  const escaped = query.replace(/[%_\\]/g, '\\$&')
   return db.$queryRaw<MemoryEntry[]>`
     SELECT id, content, created_at AS "createdAt"
     FROM etta_memory
     WHERE wedding_id = ${weddingId}::uuid
-      AND content ILIKE ${'%' + query + '%'}
+      AND content ILIKE ${'%' + escaped + '%'}
     ORDER BY created_at DESC
     LIMIT ${limit}
   `

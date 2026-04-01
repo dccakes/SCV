@@ -2,21 +2,15 @@ import { db } from '~/server/db'
 import { ETTA_DEFAULT_PERMISSIONS } from '~/lib/etta/types'
 
 export async function provisionEtta(weddingId: string) {
-  const existing = await db.ettaActor.findUnique({
+  // Single upsert — idempotent, no race condition
+  await db.ettaActor.upsert({
     where: { weddingId },
-  })
-
-  if (existing) {
-    console.log(`[Etta] Actor already provisioned for wedding ${weddingId}`)
-    return
-  }
-
-  await db.ettaActor.create({
-    data: {
+    create: {
       weddingId,
       actorType: 'etta',
       permissions: [...ETTA_DEFAULT_PERMISSIONS],
     },
+    update: {}, // no-op if already exists
   })
 
   console.log(`[Etta] Provisioned actor for wedding ${weddingId}`)
