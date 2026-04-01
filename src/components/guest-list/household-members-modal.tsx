@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 
-import { TagsModal } from '~/components/forms/guest/tags-modal'
+import { TagInput } from '~/components/guest-list/tag-input'
 import { Button } from '~/components/ui/button'
 import {
   Dialog,
@@ -12,6 +12,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from '~/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/ui/select'
+import { AGE_GROUP_OPTIONS, MAX_TAGS_PER_GUEST } from '~/lib/constants'
+import { api } from '~/trpc/react'
 
 export type HouseholdMemberDraft = {
   id?: number
@@ -44,7 +53,8 @@ export function HouseholdMembersModal(props: Readonly<HouseholdMembersModalProps
   const [draftMembers, setDraftMembers] = useState<HouseholdMemberDraft[]>(members)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [tagModalMemberIndex, setTagModalMemberIndex] = useState<number | null>(null)
+
+  const { data: tags = [], refetch: refetchTags } = api.guestTag.getAll.useQuery()
 
   useEffect(() => {
     if (!open) return
@@ -81,6 +91,13 @@ export function HouseholdMembersModal(props: Readonly<HouseholdMembersModalProps
     return null
   }, [draftMembers, primaryCount])
 
+  const updateMember = (memberIndex: number, patch: Partial<HouseholdMemberDraft>) => {
+    setSaveError(null)
+    setDraftMembers((previous) =>
+      previous.map((member, index) => (index === memberIndex ? { ...member, ...patch } : member))
+    )
+  }
+
   const setPrimaryMember = (memberIndex: number) => {
     setSaveError(null)
     setDraftMembers((previous) =>
@@ -97,7 +114,6 @@ export function HouseholdMembersModal(props: Readonly<HouseholdMembersModalProps
         return {
           ...member,
           isTagAlong: nextIsTagAlong,
-          // Tag-along members cannot be primary contacts
           isPrimaryContact: nextIsTagAlong ? false : member.isPrimaryContact,
         }
       })
@@ -126,6 +142,25 @@ export function HouseholdMembersModal(props: Readonly<HouseholdMembersModalProps
     ])
   }
 
+  const toggleTag = (memberIndex: number, tagId: string) => {
+    setSaveError(null)
+    setDraftMembers((previous) =>
+      previous.map((member, index) => {
+        if (index !== memberIndex) return member
+        const has = member.tagIds.includes(tagId)
+        if (!has && member.tagIds.length >= MAX_TAGS_PER_GUEST) return member
+        return {
+          ...member,
+          tagIds: has ? member.tagIds.filter((id) => id !== tagId) : [...member.tagIds, tagId],
+        }
+      })
+    )
+  }
+
+  const handleTagCreated = async (_tagId: string) => {
+    await refetchTags()
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='max-w-2xl'>
@@ -137,105 +172,21 @@ export function HouseholdMembersModal(props: Readonly<HouseholdMembersModalProps
         </DialogHeader>
 
         <div className='max-h-[60vh] space-y-3 overflow-y-auto pr-1'>
-          {draftMembers.map((member, index) => {
-            const memberName = getMemberName(member)
-            const removeDisabled = member.isPrimaryContact && primaryCount < 2
-
-            return (
-              <div
-                key={member.id ?? `member-${index}`}
-                className='rounded-md border border-border/70 p-3'
-              >
-                <div className='mb-3 flex items-center justify-between gap-2'>
-                  <p className='font-medium text-sm'>{memberName}</p>
-                  <div className='flex gap-2'>
-                    <Button
-                      type='button'
-                      variant={member.isTagAlong ? 'default' : 'outline'}
-                      size='sm'
-                      onClick={() => toggleTagAlong(index)}
-                      aria-label={`Toggle tag-along for ${memberName}`}
-                    >
-                      Tag-along
-                    </Button>
-                    <Button
-                      type='button'
-                      variant='outline'
-                      size='sm'
-                      onClick={() => setPrimaryMember(index)}
-                      disabled={member.isPrimaryContact || member.isTagAlong}
-                      aria-label={`Set ${memberName} as primary`}
-                    >
-                      Set primary
-                    </Button>
-                    <Button
-                      type='button'
-                      variant='outline'
-                      size='sm'
-                      onClick={() => setTagModalMemberIndex(index)}
-                      aria-label={`Tags for ${memberName}`}
-                    >
-                      Tags{member.tagIds.length > 0 ? ` (${member.tagIds.length})` : ''}
-                    </Button>
-                    <Button
-                      type='button'
-                      variant='outline'
-                      size='sm'
-                      onClick={() => removeMember(index)}
-                      disabled={removeDisabled}
-                      aria-label={`Remove ${memberName}`}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                </div>
-
-                <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
-                  <label className='space-y-1'>
-                    <span className='font-mono text-[0.55rem] text-foreground/55 uppercase tracking-wider'>
-                      First name (member {index + 1})
-                    </span>
-                    <input
-                      type='text'
-                      aria-label={`First name (member ${index + 1})`}
-                      value={member.firstName}
-                      onChange={(event) => {
-                        const value = event.target.value
-                        setSaveError(null)
-                        setDraftMembers((previous) =>
-                          previous.map((item, itemIndex) =>
-                            itemIndex === index ? { ...item, firstName: value } : item
-                          )
-                        )
-                      }}
-                      className='h-9 w-full rounded-md border border-border/70 bg-background px-2.5 text-sm'
-                    />
-                  </label>
-
-                  <label className='space-y-1'>
-                    <span className='font-mono text-[0.55rem] text-foreground/55 uppercase tracking-wider'>
-                      Last name (member {index + 1})
-                    </span>
-                    <input
-                      type='text'
-                      aria-label={`Last name (member ${index + 1})`}
-                      value={member.lastName}
-                      onChange={(event) => {
-                        const value = event.target.value
-                        setSaveError(null)
-                        setDraftMembers((previous) =>
-                          previous.map((item, itemIndex) =>
-                            itemIndex === index ? { ...item, lastName: value } : item
-                          )
-                        )
-                      }}
-                      className='h-9 w-full rounded-md border border-border/70 bg-background px-2.5 text-sm'
-                    />
-                  </label>
-                </div>
-              </div>
-            )
-          })}
+          {draftMembers.map((member, index) => (
+            <MemberRow
+              key={member.id ?? `member-${index}`}
+              member={member}
+              index={index}
+              tags={tags}
+              primaryCount={primaryCount}
+              onUpdate={updateMember}
+              onSetPrimary={setPrimaryMember}
+              onToggleTagAlong={toggleTagAlong}
+              onRemove={removeMember}
+              onToggleTag={toggleTag}
+              onTagCreated={handleTagCreated}
+            />
+          ))}
         </div>
 
         {(validationMessage ?? saveError) && (
@@ -274,36 +225,141 @@ export function HouseholdMembersModal(props: Readonly<HouseholdMembersModalProps
             </Button>
           </div>
         </DialogFooter>
-        {tagModalMemberIndex !== null ? (
-          <TagsModal
-            open
-            onOpenChange={(open) => {
-              if (!open) setTagModalMemberIndex(null)
-            }}
-            selectedTagIds={draftMembers[tagModalMemberIndex]?.tagIds ?? []}
-            onTagsChange={(tagIds) => {
-              setDraftMembers((previous) =>
-                previous.map((member, index) =>
-                  index === tagModalMemberIndex ? { ...member, tagIds } : member
-                )
-              )
-              setTagModalMemberIndex(null)
-            }}
-            guestName={getMemberName(
-              draftMembers[tagModalMemberIndex] ?? {
-                firstName: '',
-                lastName: '',
-                email: null,
-                phone: null,
-                tagIds: [],
-                ageGroup: 'ADULT',
-                isPrimaryContact: false,
-                isTagAlong: false,
-              }
-            )}
-          />
-        ) : null}
       </DialogContent>
     </Dialog>
   )
 }
+
+type MemberRowProps = {
+  member: HouseholdMemberDraft
+  index: number
+  tags: Array<{ id: string; name: string; color: string | null }>
+  primaryCount: number
+  onUpdate: (index: number, patch: Partial<HouseholdMemberDraft>) => void
+  onSetPrimary: (index: number) => void
+  onToggleTagAlong: (index: number) => void
+  onRemove: (index: number) => void
+  onToggleTag: (memberIndex: number, tagId: string) => void
+  onTagCreated: (tagId: string) => Promise<void> | void
+}
+
+const MemberRow = memo(function MemberRow(props: Readonly<MemberRowProps>) {
+  const {
+    member,
+    index,
+    tags,
+    primaryCount,
+    onUpdate,
+    onSetPrimary,
+    onToggleTagAlong,
+    onRemove,
+    onToggleTag,
+    onTagCreated,
+  } = props
+
+  const memberName = getMemberName(member)
+  const removeDisabled = member.isPrimaryContact && primaryCount < 2
+
+  return (
+    <div className='rounded-md border border-border/70 p-3'>
+      <div className='mb-3 flex items-center justify-between gap-2'>
+        <p className='font-medium text-sm'>{memberName}</p>
+        <div className='flex gap-2'>
+          <Button
+            type='button'
+            variant={member.isTagAlong ? 'default' : 'outline'}
+            size='sm'
+            onClick={() => onToggleTagAlong(index)}
+            aria-label={`Toggle tag-along for ${memberName}`}
+          >
+            Tag-along
+          </Button>
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            onClick={() => onSetPrimary(index)}
+            disabled={member.isPrimaryContact || member.isTagAlong}
+            aria-label={`Set ${memberName} as primary`}
+          >
+            Set primary
+          </Button>
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            onClick={() => onRemove(index)}
+            disabled={removeDisabled}
+            aria-label={`Remove ${memberName}`}
+          >
+            Remove
+          </Button>
+        </div>
+      </div>
+
+      <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+        <label className='space-y-1'>
+          <span className='font-mono text-[0.55rem] text-foreground/55 uppercase tracking-wider'>
+            First name (member {index + 1})
+          </span>
+          <input
+            type='text'
+            aria-label={`First name (member ${index + 1})`}
+            value={member.firstName}
+            onChange={(e) => onUpdate(index, { firstName: e.target.value })}
+            className='h-9 w-full rounded-md border border-border/70 bg-background px-2.5 text-sm'
+          />
+        </label>
+
+        <label className='space-y-1'>
+          <span className='font-mono text-[0.55rem] text-foreground/55 uppercase tracking-wider'>
+            Last name (member {index + 1})
+          </span>
+          <input
+            type='text'
+            aria-label={`Last name (member ${index + 1})`}
+            value={member.lastName}
+            onChange={(e) => onUpdate(index, { lastName: e.target.value })}
+            className='h-9 w-full rounded-md border border-border/70 bg-background px-2.5 text-sm'
+          />
+        </label>
+
+        <div className='space-y-1'>
+          <span className='font-mono text-[0.55rem] text-foreground/55 uppercase tracking-wider'>
+            Age group
+          </span>
+          <Select
+            value={member.ageGroup}
+            onValueChange={(value) =>
+              onUpdate(index, { ageGroup: value as HouseholdMemberDraft['ageGroup'] })
+            }
+          >
+            <SelectTrigger className='h-9' aria-label={`Age group for ${memberName}`}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {AGE_GROUP_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className='space-y-1 sm:col-span-2'>
+          <span className='font-mono text-[0.55rem] text-foreground/55 uppercase tracking-wider'>
+            Tags
+          </span>
+          <TagInput
+            selectedTagIds={member.tagIds}
+            tags={tags}
+            onToggle={(tagId) => onToggleTag(index, tagId)}
+            onTagCreated={(tagId) => onTagCreated(tagId)}
+            ariaLabel={`Tags for ${memberName}`}
+          />
+        </div>
+      </div>
+    </div>
+  )
+})
