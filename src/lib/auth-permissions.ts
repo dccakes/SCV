@@ -1,8 +1,10 @@
 import { createAccessControl } from 'better-auth/plugins/access'
 
 export const authzStatement = {
-  organization_member: ['read', 'invite', 'role_update', 'remove'],
-  invitation: ['read', 'create', 'send', 'resend', 'cancel'],
+  organization: ['update', 'delete'],
+  member: ['create', 'update', 'delete'],
+  invitation: ['create', 'cancel'],
+  guest_invitation: ['read', 'create', 'send', 'resend', 'cancel'],
   guest_event: ['read', 'add_guest_to_event', 'remove_guest_from_event'],
   rsvp: ['read_responses', 'edit_response', 'export', 'reopen_submission'],
   event: ['read', 'create', 'update', 'delete', 'rsvp_policy_update'],
@@ -15,12 +17,13 @@ export const authzStatement = {
 
 export const ac = createAccessControl(authzStatement)
 
-// owner and admin intentionally have identical permissions for now.
-// owner-exclusive actions (e.g. wedding:delete, organization:transfer) will be
-// added to owner only when those features are implemented.
+// Match Better Auth's organization-management resources for shared UI components.
+// Owner keeps org deletion while admin can still manage members and invitations.
 const owner = ac.newRole({
-  organization_member: ['read', 'invite', 'role_update', 'remove'],
-  invitation: ['read', 'create', 'send', 'resend', 'cancel'],
+  organization: ['update', 'delete'],
+  member: ['create', 'update', 'delete'],
+  invitation: ['create', 'cancel'],
+  guest_invitation: ['read', 'create', 'send', 'resend', 'cancel'],
   guest_event: ['read', 'add_guest_to_event', 'remove_guest_from_event'],
   rsvp: ['read_responses', 'edit_response', 'export', 'reopen_submission'],
   event: ['read', 'create', 'update', 'delete', 'rsvp_policy_update'],
@@ -32,8 +35,10 @@ const owner = ac.newRole({
 })
 
 const admin = ac.newRole({
-  organization_member: ['read', 'invite', 'role_update', 'remove'],
-  invitation: ['read', 'create', 'send', 'resend', 'cancel'],
+  organization: ['update'],
+  member: ['create', 'update', 'delete'],
+  invitation: ['create', 'cancel'],
+  guest_invitation: ['read', 'create', 'send', 'resend', 'cancel'],
   guest_event: ['read', 'add_guest_to_event', 'remove_guest_from_event'],
   rsvp: ['read_responses', 'edit_response', 'export', 'reopen_submission'],
   event: ['read', 'create', 'update', 'delete', 'rsvp_policy_update'],
@@ -45,8 +50,7 @@ const admin = ac.newRole({
 })
 
 const editor = ac.newRole({
-  organization_member: ['read'],
-  invitation: ['read', 'create'],
+  guest_invitation: ['read', 'create'],
   guest_event: ['read', 'add_guest_to_event', 'remove_guest_from_event'],
   event: ['read', 'create', 'update', 'delete', 'rsvp_policy_update'],
   guest: ['read', 'create', 'update', 'delete', 'import'],
@@ -57,8 +61,7 @@ const editor = ac.newRole({
 })
 
 const viewer = ac.newRole({
-  organization_member: ['read'],
-  invitation: ['read'],
+  guest_invitation: ['read'],
   guest_event: ['read'],
   event: ['read'],
   guest: ['read'],

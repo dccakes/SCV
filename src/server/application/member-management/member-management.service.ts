@@ -60,6 +60,13 @@ export class MemberManagementService {
     ctx: AuthzContext,
     action: OrganizationMemberAction
   ): ActiveOrganization {
-    return requirePermission(ctx, { organization_member: [action] })
+    switch (action) {
+      case 'invite':
+        return requirePermission(ctx, { invitation: ['create'] })
+      case 'role_update':
+        return requirePermission(ctx, { member: ['update'] })
+      case 'remove':
+        return requirePermission(ctx, { member: ['delete'] })
+    }
   }
 }

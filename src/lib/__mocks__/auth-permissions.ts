@@ -26,8 +26,10 @@ const makeRole = (grants: PermissionMap) => ({
 })
 
 const ownerGrants: PermissionMap = {
-  organization_member: ['read', 'invite', 'role_update', 'remove'],
-  invitation: ['read', 'create', 'send', 'resend', 'cancel'],
+  organization: ['update', 'delete'],
+  member: ['create', 'update', 'delete'],
+  invitation: ['create', 'cancel'],
+  guest_invitation: ['read', 'create', 'send', 'resend', 'cancel'],
   guest_event: ['read', 'add_guest_to_event', 'remove_guest_from_event'],
   rsvp: ['read_responses', 'edit_response', 'export', 'reopen_submission'],
   event: ['read', 'create', 'update', 'delete', 'rsvp_policy_update'],
@@ -38,11 +40,13 @@ const ownerGrants: PermissionMap = {
   wedding: ['read', 'update'],
 }
 
-const adminGrants: PermissionMap = { ...ownerGrants }
+const adminGrants: PermissionMap = {
+  ...ownerGrants,
+  organization: ['update'],
+}
 
 const editorGrants: PermissionMap = {
-  organization_member: ['read'],
-  invitation: ['read', 'create'],
+  guest_invitation: ['read', 'create'],
   guest_event: ['read', 'add_guest_to_event', 'remove_guest_from_event'],
   event: ['read', 'create', 'update', 'delete', 'rsvp_policy_update'],
   guest: ['read', 'create', 'update', 'delete', 'import'],
@@ -53,8 +57,7 @@ const editorGrants: PermissionMap = {
 }
 
 const viewerGrants: PermissionMap = {
-  organization_member: ['read'],
-  invitation: ['read'],
+  guest_invitation: ['read'],
   guest_event: ['read'],
   event: ['read'],
   guest: ['read'],

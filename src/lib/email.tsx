@@ -3,6 +3,7 @@ import 'server-only'
 import { render } from '@react-email/render'
 import { Resend } from 'resend'
 
+import { OrganizationInvitationEmail } from '~/emails/organization-invitation-email'
 import { OtpEmail } from '~/emails/otp-email'
 import { ResetPasswordEmail } from '~/emails/reset-password-email'
 import { env } from '~/env'
@@ -58,6 +59,36 @@ export async function sendResetPasswordEmail({
     from: env.EMAIL_FROM,
     to,
     subject: 'Reset your password',
+    html,
+  })
+}
+
+export async function sendOrganizationInvitationEmail({
+  to,
+  inviteUrl,
+  organizationName,
+  invitedByName,
+  memberRole,
+}: {
+  to: string
+  inviteUrl: string
+  organizationName: string
+  invitedByName?: string
+  memberRole: string
+}) {
+  const html = await render(
+    <OrganizationInvitationEmail
+      inviteUrl={inviteUrl}
+      invitedByName={invitedByName}
+      organizationName={organizationName}
+      memberRole={memberRole}
+    />
+  )
+
+  await getResend().emails.send({
+    from: env.EMAIL_FROM,
+    to,
+    subject: `You've been invited to join ${organizationName} on OSWP`,
     html,
   })
 }

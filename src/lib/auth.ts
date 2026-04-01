@@ -8,21 +8,92 @@ import { emailOTP, organization } from 'better-auth/plugins'
 
 import { env } from '~/env'
 import { ac, organizationRoles } from '~/lib/auth-permissions'
-import { sendOtpEmail, sendResetPasswordEmail } from '~/lib/email'
+import {
+  sendOrganizationInvitationEmail,
+  sendOtpEmail,
+  sendResetPasswordEmail,
+} from '~/lib/email'
 import { db } from '~/server/db'
 
 export const authOrganizationRoles = organizationRoles
+
+const appBaseUrl = env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${env.PORT ?? '3000'}`
+
+const getInvitationAcceptUrl = (invitationId: string): string => {
+  const url = new URL('/auth/accept-invitation', appBaseUrl)
+  url.searchParams.set('invitationId', invitationId)
+  return url.toString()
+}
+
+const getRoleLabel = (role: string | string[] | undefined): string => {
+  if (Array.isArray(role)) {
+    return role.join(', ')
+  }
+
+  return role ?? 'member'
+}
+
+type OrganizationInvitationEmailPayload = {
+  email: string
+  id?: string
+  role?: string | string[]
+  invitation?: {
+    id?: string
+  }
+  organization?: {
+    name?: string | null
+  }
+  inviter?: {
+    user?: {
+      name?: string | null
+      email?: string | null
+    }
+  }
+}
 
 export const authPlugins: BetterAuthPlugin[] = [
   organization({
     ac,
     roles: authOrganizationRoles,
+    invitationExpiresIn: 60 * 60 * 24 * 7,
+    async sendInvitationEmail(data) {
+      const payload = data as OrganizationInvitationEmailPayload
+      const invitationId =
+        typeof payload.id === 'string'
+          ? payload.id
+          : typeof payload.invitation?.id === 'string'
+            ? payload.invitation.id
+            : null
+
+      if (!invitationId) {
+        throw new Error('Unable to send organization invitation email without an invitation ID')
+      }
+
+      const organizationName =
+        typeof payload.organization?.name === 'string' && payload.organization.name.length > 0
+          ? payload.organization.name
+          : 'your wedding workspace'
+      const invitedByName =
+        typeof payload.inviter?.user?.name === 'string' && payload.inviter.user.name.length > 0
+          ? payload.inviter.user.name
+          : typeof payload.inviter?.user?.email === 'string'
+            ? payload.inviter.user.email
+            : undefined
+
+      await sendOrganizationInvitationEmail({
+        to: payload.email,
+        inviteUrl: getInvitationAcceptUrl(invitationId),
+        organizationName,
+        invitedByName,
+        memberRole: getRoleLabel(payload.role),
+      })
+    },
   }) as unknown as BetterAuthPlugin,
   nextCookies(),
 ]
 
 export const auth = betterAuth({
-  baseURL: env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${env.PORT ?? '3000'}`,
+  baseURL: appBaseUrl,
   secret: env.BETTER_AUTH_SECRET,
   trustedOrigins: [
     'https://oswp.carvallo.io',

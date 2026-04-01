@@ -1,6 +1,6 @@
 import DashboardTopbar from '@/components/dashboard/dashboard-topbar'
 import WeddingSettingsForm from '~/components/forms/wedding-settings-form'
-import { OrganizationMembersReadOnlyCard } from '~/components/settings/organization-members-readonly-card'
+import { OrganizationMembersSettingsCard } from '~/components/settings/organization-members-settings-card'
 import { api } from '~/trpc/server'
 
 export const dynamic = 'force-dynamic'
@@ -42,10 +42,10 @@ export default async function SettingsPage() {
                 <div>
                   <h3 className='font-serif text-foreground text-xl'>Organization Members</h3>
                   <p className='mt-1 font-mono text-[0.62rem] text-foreground/55 tracking-wider'>
-                    View who has access to this workspace.
+                    Invite collaborators and manage access to this workspace.
                   </p>
                 </div>
-                <OrganizationMembersReadOnlyCard />
+                <OrganizationMembersSettingsCard />
               </div>
             </div>
           ) : (

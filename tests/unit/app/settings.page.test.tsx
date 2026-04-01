@@ -11,8 +11,8 @@ const mockDashboardTopbar = jest.fn(
 const mockWeddingSettingsForm = jest.fn((_props: { initialData: Record<string, unknown> }) => (
   <div data-testid='wedding-settings-form'>Wedding form</div>
 ))
-const mockOrganizationMembersReadOnlyCard = jest.fn(() => (
-  <div data-testid='organization-members-readonly-card'>Members card</div>
+const mockOrganizationMembersSettingsCard = jest.fn(() => (
+  <div data-testid='organization-members-settings-card'>Members card</div>
 ))
 
 jest.mock('~/trpc/server', () => ({
@@ -34,9 +34,9 @@ jest.mock('~/components/forms/wedding-settings-form', () => ({
   default: (props: { initialData: Record<string, unknown> }) => mockWeddingSettingsForm(props),
 }))
 
-jest.mock('~/components/settings/organization-members-readonly-card', () => ({
+jest.mock('~/components/settings/organization-members-settings-card', () => ({
   __esModule: true,
-  OrganizationMembersReadOnlyCard: () => mockOrganizationMembersReadOnlyCard(),
+  OrganizationMembersSettingsCard: () => mockOrganizationMembersSettingsCard(),
 }))
 
 describe('SettingsPage', () => {
@@ -44,7 +44,7 @@ describe('SettingsPage', () => {
     mockGetDetails.mockReset()
     mockDashboardTopbar.mockClear()
     mockWeddingSettingsForm.mockClear()
-    mockOrganizationMembersReadOnlyCard.mockClear()
+    mockOrganizationMembersSettingsCard.mockClear()
   })
 
   it('renders wedding settings and organization members section when details exist', async () => {
@@ -67,7 +67,7 @@ describe('SettingsPage', () => {
     })
     expect(screen.getByText('Organization Members')).toBeInTheDocument()
     expect(screen.getByTestId('wedding-settings-form')).toBeInTheDocument()
-    expect(screen.getByTestId('organization-members-readonly-card')).toBeInTheDocument()
+    expect(screen.getByTestId('organization-members-settings-card')).toBeInTheDocument()
   })
 
   it('renders onboarding fallback when details query fails', async () => {
@@ -80,6 +80,6 @@ describe('SettingsPage', () => {
       screen.getByText('No wedding found. Please complete onboarding first.')
     ).toBeInTheDocument()
     expect(mockWeddingSettingsForm).not.toHaveBeenCalled()
-    expect(mockOrganizationMembersReadOnlyCard).not.toHaveBeenCalled()
+    expect(mockOrganizationMembersSettingsCard).not.toHaveBeenCalled()
   })
 })
