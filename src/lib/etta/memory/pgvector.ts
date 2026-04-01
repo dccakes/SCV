@@ -64,6 +64,7 @@ export async function writeMemory(
       RETURNING id
     `
     // INSERT...RETURNING always returns exactly one row
+    // biome-ignore lint/style/noNonNullAssertion: guaranteed by RETURNING clause
     return result[0]!.id
   }
 

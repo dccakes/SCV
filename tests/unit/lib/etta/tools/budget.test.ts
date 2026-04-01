@@ -116,7 +116,7 @@ describe('getBudgetTools', () => {
         abortSignal: undefined as never,
       })
 
-      const call = mockDb.ettaSuggestion.create.mock.calls[0]![0]
+      const call = mockDb.ettaSuggestion.create.mock.calls[0]?.[0]
       expect(call.data.payload).toEqual(params)
     })
   })

@@ -86,8 +86,9 @@ export class WeddingService {
     }
 
     // Provision Etta AI agent actor — fire-and-forget (idempotent)
-    provisionEtta(wedding.id).catch((err) =>
-      console.error('[Etta] Background provision failed:', err)
+    provisionEtta(wedding.id).catch(
+      // biome-ignore lint/suspicious/noConsole: intentional error logging for fire-and-forget
+      (err) => console.error('[Etta] Background provision failed:', err)
     )
 
     return wedding
