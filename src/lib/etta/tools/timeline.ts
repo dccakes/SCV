@@ -27,9 +27,11 @@ export function getTimelineTools(ctx: EttaContext) {
 
     complete_milestone: tool({
       description: 'Mark a milestone as complete (auto-executed, T0)',
-      inputSchema: zodSchema(z.object({
-        title: z.string(),
-      })),
+      inputSchema: zodSchema(
+        z.object({
+          title: z.string(),
+        })
+      ),
       execute: async ({ title }) => {
         await logAudit({
           weddingId: ctx.weddingId,

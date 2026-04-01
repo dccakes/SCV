@@ -42,7 +42,7 @@ export async function searchMemory(
     SELECT id, content, created_at AS "createdAt"
     FROM etta_memory
     WHERE wedding_id = ${weddingId}::uuid
-      AND content ILIKE ${'%' + escaped + '%'}
+      AND content ILIKE ${`%${escaped}%`}
     ORDER BY created_at DESC
     LIMIT ${limit}
   `
@@ -63,6 +63,7 @@ export async function writeMemory(
       VALUES (${weddingId}::uuid, ${content}, ${vectorStr}::vector)
       RETURNING id
     `
+    // INSERT...RETURNING always returns exactly one row
     return result[0]!.id
   }
 

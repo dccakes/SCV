@@ -32,10 +32,12 @@ export function getConciergeTools(ctx: EttaContext) {
 
     submit_rsvp: tool({
       description: 'Submits RSVP for the current guest',
-      inputSchema: zodSchema(z.object({
-        eventId: z.string(),
-        rsvp: z.enum(['Attending', 'Declined']),
-      })),
+      inputSchema: zodSchema(
+        z.object({
+          eventId: z.string(),
+          rsvp: z.enum(['Attending', 'Declined']),
+        })
+      ),
       execute: async ({ eventId, rsvp }) => {
         if (!ctx.guestId) {
           throw new Error('Guest context required')
@@ -51,15 +53,20 @@ export function getConciergeTools(ctx: EttaContext) {
 
     flag_question: tool({
       description: 'Flags a question for the couple to answer',
-      inputSchema: zodSchema(z.object({
-        question: z.string(),
-        context: z.string().optional(),
-      })),
+      inputSchema: zodSchema(
+        z.object({
+          question: z.string(),
+          context: z.string().optional(),
+        })
+      ),
       execute: async ({ question, context }) => {
+        if (!ctx.guestId) {
+          throw new Error('Guest context required')
+        }
         await db.guestQuestion.create({
           data: {
             weddingId: ctx.weddingId,
-            guestId: ctx.guestId!,
+            guestId: ctx.guestId,
             question,
             context,
           },

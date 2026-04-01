@@ -1,5 +1,5 @@
-import { db } from '~/server/db'
 import { ETTA_DEFAULT_PERMISSIONS } from '~/lib/etta/types'
+import { db } from '~/server/db'
 
 export async function provisionEtta(weddingId: string) {
   // Single upsert — idempotent, no race condition
@@ -12,8 +12,6 @@ export async function provisionEtta(weddingId: string) {
     },
     update: {}, // no-op if already exists
   })
-
-  console.log(`[Etta] Provisioned actor for wedding ${weddingId}`)
 }
 
 export async function revokeEtta(weddingId: string) {
@@ -21,6 +19,4 @@ export async function revokeEtta(weddingId: string) {
     where: { weddingId, revokedAt: null },
     data: { revokedAt: new Date() },
   })
-
-  console.log(`[Etta] Revoked actor for wedding ${weddingId}`)
 }

@@ -25,14 +25,14 @@ function getTextContent(parts: UIMessage['parts']): string {
     .join('')
 }
 
-export function EttaChat({ weddingId, persona, guestToken }: EttaChatProps) {
+export function EttaChat({ persona, guestToken }: EttaChatProps) {
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: '/api/etta',
         body: { persona, guestToken },
       }),
-    [persona, guestToken],
+    [persona, guestToken]
   )
 
   const { messages, sendMessage, status } = useChat({ transport })

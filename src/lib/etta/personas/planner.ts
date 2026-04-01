@@ -5,7 +5,6 @@
  * guests, vendors, budget, timeline, memory, suggestions, outbound, research.
  */
 
-import type { EttaContext } from '~/lib/etta/types'
 import { getBudgetTools } from '~/lib/etta/tools/budget'
 import { getGuestTools } from '~/lib/etta/tools/guests'
 import { getMemoryTools } from '~/lib/etta/tools/memory'
@@ -14,6 +13,7 @@ import { getResearchTools } from '~/lib/etta/tools/research'
 import { getSuggestionTools } from '~/lib/etta/tools/suggestions'
 import { getTimelineTools } from '~/lib/etta/tools/timeline'
 import { getVendorTools } from '~/lib/etta/tools/vendors'
+import type { EttaContext } from '~/lib/etta/types'
 
 export function getPlannerTools(ctx: EttaContext) {
   return {

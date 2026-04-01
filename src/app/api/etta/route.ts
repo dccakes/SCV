@@ -5,8 +5,8 @@
  * and streams a response via the Vercel AI SDK.
  */
 
-import { resolveEttaAuth } from '~/lib/etta/utils/auth'
 import { runEttaAgent } from '~/lib/etta/agent'
+import { resolveEttaAuth } from '~/lib/etta/utils/auth'
 
 export async function POST(req: Request) {
   try {
@@ -14,8 +14,7 @@ export async function POST(req: Request) {
     const result = await runEttaAgent(ettaReq)
     return result.toTextStreamResponse()
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Internal server error'
+    const message = error instanceof Error ? error.message : 'Internal server error'
     const status =
       message === 'No active session' || message.includes('token')
         ? 401

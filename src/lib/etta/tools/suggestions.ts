@@ -1,5 +1,5 @@
-import { tool, zodSchema } from 'ai'
 import type { Prisma } from '@prisma/client'
+import { tool, zodSchema } from 'ai'
 import { z } from 'zod'
 
 import type { EttaContext } from '~/lib/etta/types'
@@ -21,12 +21,14 @@ export function getSuggestionTools(ctx: EttaContext) {
 
     create_suggestion: tool({
       description: 'Creates a new T1/T2 suggestion for couple review',
-      inputSchema: zodSchema(z.object({
-        actionType: z.string(),
-        tier: z.enum(['T1', 'T2']),
-        summary: z.string(),
-        payload: z.record(z.string(), z.unknown()),
-      })),
+      inputSchema: zodSchema(
+        z.object({
+          actionType: z.string(),
+          tier: z.enum(['T1', 'T2']),
+          summary: z.string(),
+          payload: z.record(z.string(), z.unknown()),
+        })
+      ),
       execute: async ({ actionType, tier, summary, payload }) => {
         const suggestion = await db.ettaSuggestion.create({
           data: {

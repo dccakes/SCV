@@ -29,12 +29,14 @@ export function getBudgetTools(ctx: EttaContext) {
 
     upsert_budget_item: tool({
       description: 'Suggest a budget item change (requires couple approval)',
-      inputSchema: zodSchema(z.object({
-        category: z.string(),
-        description: z.string(),
-        estimated: z.number(),
-        actual: z.number().optional(),
-      })),
+      inputSchema: zodSchema(
+        z.object({
+          category: z.string(),
+          description: z.string(),
+          estimated: z.number(),
+          actual: z.number().optional(),
+        })
+      ),
       execute: async (params) => {
         const suggestion = await db.ettaSuggestion.create({
           data: {

@@ -1,13 +1,12 @@
-import { SignJWT, jwtVerify } from 'jose'
-
-import type { EttaRequest } from '~/lib/etta/types'
+import { jwtVerify, SignJWT } from 'jose'
 import { auth } from '~/lib/auth'
+import type { EttaRequest } from '~/lib/etta/types'
 import { weddingService } from '~/server/domains/wedding'
 
 // ── Couple Session ──────────────────────────────────────────────────────────
 
 export async function validateCoupleSession(
-  headers: Headers,
+  headers: Headers
 ): Promise<{ weddingId: string; userId: string }> {
   const session = await auth.api.getSession({ headers })
   if (!session) {
@@ -32,10 +31,7 @@ function getJwtSecret(): Uint8Array {
   return _jwtSecret
 }
 
-export async function issueGuestToken(
-  weddingId: string,
-  guestId: number,
-): Promise<string> {
+export async function issueGuestToken(weddingId: string, guestId: number): Promise<string> {
   return new SignJWT({ sub: String(guestId), weddingId })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
@@ -44,7 +40,7 @@ export async function issueGuestToken(
 }
 
 export async function validateGuestToken(
-  token: string,
+  token: string
 ): Promise<{ weddingId: string; guestId: number }> {
   const { payload } = await jwtVerify(token, getJwtSecret())
 

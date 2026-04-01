@@ -6,15 +6,14 @@
  * a response via the Vercel AI SDK + Claude.
  */
 
-import { streamText, stepCountIs } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
-
-import { resolveEttaContext } from '~/lib/etta/utils/resolve-context'
-import { buildSystemPrompt } from '~/lib/etta/utils/build-system-prompt'
-import { getPlannerTools } from '~/lib/etta/personas/planner'
+import { stepCountIs, streamText } from 'ai'
 import { getConciergeTools } from '~/lib/etta/personas/concierge'
-import { logAudit } from '~/lib/etta/utils/audit'
+import { getPlannerTools } from '~/lib/etta/personas/planner'
 import type { EttaRequest } from '~/lib/etta/types'
+import { logAudit } from '~/lib/etta/utils/audit'
+import { buildSystemPrompt } from '~/lib/etta/utils/build-system-prompt'
+import { resolveEttaContext } from '~/lib/etta/utils/resolve-context'
 
 export async function runEttaAgent(req: EttaRequest) {
   const { actor, weddingId, guestId, messages } = req
@@ -23,8 +22,7 @@ export async function runEttaAgent(req: EttaRequest) {
   const ctx = await resolveEttaContext({ actor, weddingId, guestId })
 
   // Load tools and system prompt based on persona
-  const tools =
-    actor === 'couple' ? getPlannerTools(ctx) : getConciergeTools(ctx)
+  const tools = actor === 'couple' ? getPlannerTools(ctx) : getConciergeTools(ctx)
 
   const system = buildSystemPrompt(ctx)
 

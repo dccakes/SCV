@@ -5,8 +5,8 @@
  * Can write: RSVP, dietary, address, flag questions.
  */
 
-import type { EttaContext } from '~/lib/etta/types'
 import { getConciergeTools as getConciergeToolSet } from '~/lib/etta/tools/concierge'
+import type { EttaContext } from '~/lib/etta/types'
 
 export function getConciergeTools(ctx: EttaContext) {
   return {

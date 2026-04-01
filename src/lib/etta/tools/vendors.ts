@@ -1,5 +1,5 @@
-import { tool, zodSchema } from 'ai'
 import { VendorCategory } from '@prisma/client'
+import { tool, zodSchema } from 'ai'
 import { z } from 'zod'
 
 import type { EttaContext } from '~/lib/etta/types'
@@ -12,9 +12,11 @@ export function getVendorTools(ctx: EttaContext) {
   return {
     get_vendor_list: tool({
       description: 'Get all vendors for the wedding, optionally filtered by category',
-      inputSchema: zodSchema(z.object({
-        category: vendorCategory.optional(),
-      })),
+      inputSchema: zodSchema(
+        z.object({
+          category: vendorCategory.optional(),
+        })
+      ),
       execute: async ({ category }) => {
         const vendors = await vendorService.getVendors(ctx.weddingId, category)
         return { vendors }
@@ -23,13 +25,15 @@ export function getVendorTools(ctx: EttaContext) {
 
     add_vendor: tool({
       description: 'Suggest adding a new vendor (requires couple approval)',
-      inputSchema: zodSchema(z.object({
-        name: z.string(),
-        category: vendorCategory,
-        contactName: z.string().optional(),
-        contactEmail: z.string().optional(),
-        website: z.string().optional(),
-      })),
+      inputSchema: zodSchema(
+        z.object({
+          name: z.string(),
+          category: vendorCategory,
+          contactName: z.string().optional(),
+          contactEmail: z.string().optional(),
+          website: z.string().optional(),
+        })
+      ),
       execute: async (params) => {
         const suggestion = await db.ettaSuggestion.create({
           data: {

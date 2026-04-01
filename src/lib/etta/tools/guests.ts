@@ -18,14 +18,16 @@ export function getGuestTools(ctx: EttaContext) {
     }),
 
     update_guest: tool({
-      description: 'Update a guest\'s information (name, email, phone)',
-      inputSchema: zodSchema(z.object({
-        guestId: z.number(),
-        firstName: z.string().optional(),
-        lastName: z.string().optional(),
-        email: z.string().nullable().optional(),
-        phone: z.string().nullable().optional(),
-      })),
+      description: "Update a guest's information (name, email, phone)",
+      inputSchema: zodSchema(
+        z.object({
+          guestId: z.number(),
+          firstName: z.string().optional(),
+          lastName: z.string().optional(),
+          email: z.string().nullable().optional(),
+          phone: z.string().nullable().optional(),
+        })
+      ),
       execute: async ({ guestId, ...data }) => {
         const guest = await guestService.updateGuest(guestId, data)
         return { guest }

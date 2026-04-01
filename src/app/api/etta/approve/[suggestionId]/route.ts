@@ -6,9 +6,8 @@
  */
 
 import { z } from 'zod'
-
-import { validateCoupleSession } from '~/lib/etta/utils/auth'
 import { logAudit } from '~/lib/etta/utils/audit'
+import { validateCoupleSession } from '~/lib/etta/utils/auth'
 import { db } from '~/server/db'
 
 const bodySchema = z.object({
@@ -41,10 +40,7 @@ export async function PATCH(
     }
 
     if (suggestion.status !== 'pending') {
-      return Response.json(
-        { error: `Suggestion already ${suggestion.status}` },
-        { status: 409 }
-      )
+      return Response.json({ error: `Suggestion already ${suggestion.status}` }, { status: 409 })
     }
 
     const newStatus = action === 'approve' ? 'approved' : 'dismissed'
@@ -74,8 +70,7 @@ export async function PATCH(
       message: `Suggestion ${newStatus}`,
     })
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Internal server error'
+    const message = error instanceof Error ? error.message : 'Internal server error'
     const status = message.includes('UNAUTHORIZED') || message === 'No active session' ? 401 : 500
 
     return Response.json({ error: message }, { status })
