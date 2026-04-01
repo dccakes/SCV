@@ -4,13 +4,13 @@ import { TagInput } from '~/components/guest-list/tag-input'
 
 const mockOnToggle = jest.fn()
 const mockOnTagCreated = jest.fn()
-const mockMutate = jest.fn()
+const mockMutateAsync = jest.fn().mockResolvedValue({ id: 'new-tag-id' })
 
 jest.mock('~/trpc/react', () => ({
   api: {
     guestTag: {
       create: {
-        useMutation: () => ({ mutate: mockMutate }),
+        useMutation: () => ({ mutateAsync: mockMutateAsync }),
       },
     },
   },
@@ -174,7 +174,7 @@ describe('TagInput', () => {
     expect(createButton).not.toBeNull()
     fireEvent.click(createButton as HTMLElement)
 
-    expect(mockMutate).toHaveBeenCalledWith({
+    expect(mockMutateAsync).toHaveBeenCalledWith({
       name: 'NewTag',
       color: expect.any(String),
     })
