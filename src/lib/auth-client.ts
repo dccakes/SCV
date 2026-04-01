@@ -1,3 +1,7 @@
+// better-auth 1.5.6: OrganizationPlugin / StrictEndpoint no longer structurally satisfies
+// BetterAuthClientPlugin due to a Zod 4 migration type regression. The cast is safe —
+// plugins satisfy the interface at runtime. Track: https://github.com/better-auth/better-auth/issues/5637
+import type { BetterAuthClientPlugin } from 'better-auth'
 import { emailOTPClient, organizationClient } from 'better-auth/client/plugins'
 import { createAuthClient } from 'better-auth/react'
 
@@ -6,16 +10,16 @@ import { ac, organizationRoles } from '~/lib/auth-permissions'
 
 export const authClientOrganizationRoles = organizationRoles
 
-export const authClientPlugins = [
+export const authClientPlugins: BetterAuthClientPlugin[] = [
   organizationClient({
     ac,
     roles: authClientOrganizationRoles,
-  }),
+  }) as unknown as BetterAuthClientPlugin,
 ]
 
 export const authClient = createAuthClient({
   baseURL: env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000',
-  plugins: [...authClientPlugins, emailOTPClient()],
+  plugins: [...authClientPlugins, emailOTPClient() as unknown as BetterAuthClientPlugin],
 })
 
 export const { signIn, signOut, signUp, useSession } = authClient

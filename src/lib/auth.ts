@@ -1,4 +1,7 @@
-import { betterAuth } from 'better-auth'
+// better-auth 1.5.6: OrganizationPlugin / StrictEndpoint no longer structurally satisfies
+// BetterAuthPlugin due to a Zod 4 migration type regression. The cast is safe —
+// plugins satisfy the interface at runtime. Track: https://github.com/better-auth/better-auth/issues/5637
+import { type BetterAuthPlugin, betterAuth } from 'better-auth'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { nextCookies } from 'better-auth/next-js'
 import { emailOTP, organization } from 'better-auth/plugins'
@@ -10,11 +13,11 @@ import { db } from '~/server/db'
 
 export const authOrganizationRoles = organizationRoles
 
-export const authPlugins = [
+export const authPlugins: BetterAuthPlugin[] = [
   organization({
     ac,
     roles: authOrganizationRoles,
-  }),
+  }) as unknown as BetterAuthPlugin,
   nextCookies(),
 ]
 
@@ -66,7 +69,7 @@ export const auth = betterAuth({
       otpLength: 6,
       expiresIn: 600,
       overrideDefaultEmailVerification: true,
-    }),
+    }) as unknown as BetterAuthPlugin,
   ],
 })
 
