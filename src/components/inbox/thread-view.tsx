@@ -4,6 +4,7 @@ import { useState } from 'react'
 
 import DraftComposer from '~/components/inbox/draft-composer'
 import { formatMessageDateTime } from '~/components/inbox/format-date'
+import { DIRECTION_INBOUND, DIRECTION_OUTBOUND } from '~/server/domains/gmail/gmail.types'
 import { api } from '~/trpc/react'
 
 type ThreadViewProps = {
@@ -72,12 +73,12 @@ export default function ThreadView({ threadId, onBack }: ThreadViewProps) {
                 </span>
                 <span
                   className={`shrink-0 rounded px-1.5 py-0.5 font-mono text-[0.55rem] ${
-                    msg.direction === 'outbound'
+                    msg.direction === DIRECTION_OUTBOUND
                       ? 'bg-primary/10 text-primary'
                       : 'bg-muted text-foreground/50'
                   }`}
                 >
-                  {msg.direction === 'outbound' ? 'Sent' : 'Received'}
+                  {msg.direction === DIRECTION_OUTBOUND ? 'Sent' : 'Received'}
                 </span>
               </div>
               <span className='shrink-0 font-mono text-[0.6rem] text-foreground/40'>
@@ -98,7 +99,7 @@ export default function ThreadView({ threadId, onBack }: ThreadViewProps) {
           <DraftComposer
             threadId={threadId}
             to={
-              lastMessage.direction === 'inbound'
+              lastMessage.direction === DIRECTION_INBOUND
                 ? lastMessage.senderAddress
                 : lastMessage.recipientAddresses[0] ?? ''
             }

@@ -5,6 +5,7 @@ import { useState } from 'react'
 
 import { formatMessageDate } from '~/components/inbox/format-date'
 import ThreadView from '~/components/inbox/thread-view'
+import { DIRECTION_INBOUND } from '~/server/domains/gmail/gmail.types'
 import { api } from '~/trpc/react'
 
 export default function InboxView() {
@@ -113,7 +114,7 @@ export default function InboxView() {
             <div className='flex items-center justify-between gap-4'>
               <div className='flex items-center gap-2 truncate'>
                 <span className='truncate text-sm font-medium text-foreground'>
-                  {msg.direction === 'inbound' ? msg.senderName ?? msg.senderAddress : `To: ${msg.recipientAddresses[0]}`}
+                  {msg.direction === DIRECTION_INBOUND ? msg.senderName ?? msg.senderAddress : `To: ${msg.recipientAddresses[0]}`}
                 </span>
                 {msg.vendorName && (
                   <span className='shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-[0.55rem] text-foreground/50'>

@@ -61,8 +61,7 @@ export const mockFindMessagesByWedding = jest.fn()
 export const mockFindMessagesByThread = jest.fn()
 export const mockDeleteMessagesByConnectionId = jest.fn()
 export const mockGetVendorEmailMap = jest.fn()
-export const mockGetVendorEmail = jest.fn()
-export const mockGetVendorWeddingId = jest.fn()
+export const mockGetVendorForSync = jest.fn()
 
 export const mockFindWeddingIdByUserId = jest.fn()
 
@@ -78,8 +77,7 @@ export const GmailRepository = jest.fn().mockImplementation(() => ({
   findMessagesByThread: mockFindMessagesByThread,
   deleteMessagesByConnectionId: mockDeleteMessagesByConnectionId,
   getVendorEmailMap: mockGetVendorEmailMap,
-  getVendorEmail: mockGetVendorEmail,
-  getVendorWeddingId: mockGetVendorWeddingId,
+  getVendorForSync: mockGetVendorForSync,
   findWeddingIdByUserId: mockFindWeddingIdByUserId,
 }))
 
@@ -95,8 +93,7 @@ export const resetMocks = (): void => {
   mockFindMessagesByThread.mockReset()
   mockDeleteMessagesByConnectionId.mockReset()
   mockGetVendorEmailMap.mockReset()
-  mockGetVendorEmail.mockReset()
-  mockGetVendorWeddingId.mockReset()
+  mockGetVendorForSync.mockReset()
   mockFindWeddingIdByUserId.mockReset()
   GmailRepository.mockClear()
 }

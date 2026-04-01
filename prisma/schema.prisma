@@ -169,6 +169,8 @@ model Verification {
   @@unique([identifier, value])
 }
 
+// TODO: Encrypt accessToken and refreshToken at rest (application-level AES-256-GCM)
+// TODO: Consider extracting Connection/SyncState/CommunicationMessage to a shared `communication` domain
 // Integration connections (Gmail, WhatsApp, etc.) — separate from Better Auth accounts
 model Connection {
   id           String   @id @default(uuid())

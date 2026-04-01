@@ -153,9 +153,9 @@ describe('GmailService', () => {
       mWedding.mockResolvedValue('w1'); mMsgByThread.mockResolvedValue([])
       await expect(svc.getThread('u1', 'x')).rejects.toMatchObject({ code: 'NOT_FOUND' })
     })
-    it('throws FORBIDDEN when thread belongs to different wedding', async () => {
-      mWedding.mockResolvedValue('OTHER'); mMsgByThread.mockResolvedValue([mockStoredMessage])
-      await expect(svc.getThread('u1', 'gmail-thread-abc')).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    it('returns NOT_FOUND when thread belongs to different wedding (query scoped to weddingId)', async () => {
+      mWedding.mockResolvedValue('OTHER'); mMsgByThread.mockResolvedValue([])
+      await expect(svc.getThread('u1', 'gmail-thread-abc')).rejects.toMatchObject({ code: 'NOT_FOUND' })
     })
   })
 

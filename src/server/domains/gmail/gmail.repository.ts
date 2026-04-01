@@ -125,28 +125,24 @@ export class GmailRepository {
       this.db.communicationMessage.count({ where }),
     ])
 
-    return {
-      messages: messages.map((m) => ({
-        ...m,
-        vendorName: m.vendor?.name ?? null,
-        vendor: undefined,
-      })),
-      total,
-    }
+    return { messages: messages.map(this.toStoredMessage), total }
   }
 
-  async findMessagesByThread(externalThreadId: string) {
+  async findMessagesByThread(externalThreadId: string, weddingId: string) {
     const messages = await this.db.communicationMessage.findMany({
-      where: { externalThreadId },
+      where: { externalThreadId, weddingId },
       include: { vendor: { select: { name: true } } },
       orderBy: { sentAt: 'asc' },
     })
-    return messages.map((m) => ({
-      ...m,
-      vendorName: m.vendor?.name ?? null,
-      vendor: undefined,
-    }))
+    return messages.map(this.toStoredMessage)
   }
+
+  // biome-ignore lint/suspicious/noExplicitAny: Prisma include result type is complex
+  private toStoredMessage = (m: any) => ({
+    ...m,
+    vendorName: m.vendor?.name ?? null,
+    vendor: undefined,
+  })
 
   async deleteMessagesByConnectionId(connectionId: string) {
     return this.db.communicationMessage.deleteMany({ where: { connectionId } })
@@ -154,6 +150,8 @@ export class GmailRepository {
 
   // ─── Vendor email lookup ──────────────────────────────────────────────────
 
+  // TODO: Wedding/vendor lookups cross domain boundaries. Consider injecting
+  // weddingService/vendorService interfaces to avoid direct table access.
   // ─── Wedding lookup ───────────────────────────────────────────────────────
 
   async findWeddingIdByUserId(userId: string): Promise<string | null> {
@@ -183,24 +181,12 @@ export class GmailRepository {
   }
 
   /**
-   * Get a single vendor's contact email
+   * Get vendor's contactEmail and weddingId in a single query (used by syncForVendor).
    */
-  async getVendorEmail(vendorId: string): Promise<string | null> {
-    const vendor = await this.db.vendor.findUnique({
+  async getVendorForSync(vendorId: string): Promise<{ contactEmail: string | null; weddingId: string } | null> {
+    return this.db.vendor.findUnique({
       where: { id: vendorId },
-      select: { contactEmail: true },
+      select: { contactEmail: true, weddingId: true },
     })
-    return vendor?.contactEmail ?? null
-  }
-
-  /**
-   * Get the weddingId for a vendor
-   */
-  async getVendorWeddingId(vendorId: string): Promise<string | null> {
-    const vendor = await this.db.vendor.findUnique({
-      where: { id: vendorId },
-      select: { weddingId: true },
-    })
-    return vendor?.weddingId ?? null
   }
 }

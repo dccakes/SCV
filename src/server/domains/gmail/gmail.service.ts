@@ -54,6 +54,7 @@ export class GmailService {
 
   // ─── OAuth ─────────────────────────────────────────────────────────────────
 
+  // TODO: Sign OAuth state with HMAC (using BETTER_AUTH_SECRET) for defense-in-depth CSRF protection
   getAuthUrl(userId: string): string {
     const oauth2Client = this.createOAuth2Client()
     const state = Buffer.from(JSON.stringify({ userId, nonce: crypto.randomUUID() })).toString(
@@ -170,15 +171,19 @@ export class GmailService {
       return { synced: 0, skipped: 0 }
     }
 
-    const vendorEmail = await this.gmailRepository.getVendorEmail(vendorId)
-    if (!vendorEmail) {
+    const vendor = await this.gmailRepository.getVendorForSync(vendorId)
+    if (!vendor?.contactEmail || !vendor.weddingId) {
       return { synced: 0, skipped: 0 }
     }
 
-    const vendorWeddingId = await this.gmailRepository.getVendorWeddingId(vendorId)
-    if (!vendorWeddingId) {
+    // Verify the vendor belongs to the calling user's wedding
+    const userWeddingId = await this.getWeddingIdForUser(userId)
+    if (vendor.weddingId !== userWeddingId) {
       return { synced: 0, skipped: 0 }
     }
+
+    const vendorEmail = vendor.contactEmail
+    const vendorWeddingId = vendor.weddingId
 
     const gmail = await this.getGmailClientForConnection(connection)
     const vendorEmailMap = new Map([[vendorEmail.toLowerCase(), vendorId]])
@@ -294,13 +299,9 @@ export class GmailService {
 
   async getThread(userId: string, threadId: string): Promise<StoredThread> {
     const weddingId = await this.getWeddingIdForUser(userId)
-    const messages = await this.gmailRepository.findMessagesByThread(threadId)
+    const messages = await this.gmailRepository.findMessagesByThread(threadId, weddingId)
     if (messages.length === 0) {
       throw new TRPCError({ code: 'NOT_FOUND', message: 'Thread not found' })
-    }
-    // Verify thread belongs to user's wedding
-    if (messages[0]?.weddingId !== weddingId) {
-      throw new TRPCError({ code: 'FORBIDDEN', message: 'Thread not accessible' })
     }
     return {
       threadId,
@@ -316,12 +317,15 @@ export class GmailService {
     const gmail = await this.getGmailClientForConnection(connection)
     const fromEmail = connection.email
 
+    // Sanitize header values to prevent CRLF injection
+    const sanitizeHeader = (v: string) => v.replace(/[\r\n]/g, '')
+
     const messageParts = [
-      `From: ${fromEmail}`,
-      `To: ${input.to}`,
-      `Subject: ${input.subject}`,
+      `From: ${sanitizeHeader(fromEmail)}`,
+      `To: ${sanitizeHeader(input.to)}`,
+      `Subject: ${sanitizeHeader(input.subject)}`,
       ...(input.inReplyTo
-        ? [`In-Reply-To: ${input.inReplyTo}`, `References: ${input.inReplyTo}`]
+        ? [`In-Reply-To: ${sanitizeHeader(input.inReplyTo)}`, `References: ${sanitizeHeader(input.inReplyTo)}`]
         : []),
       'Content-Type: text/plain; charset=utf-8',
       '',
