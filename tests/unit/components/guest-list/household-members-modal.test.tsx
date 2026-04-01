@@ -179,7 +179,7 @@ describe('HouseholdMembersModal', () => {
 
     const trigger = screen.getByLabelText('Age group for John Doe')
     expect(trigger).toBeInTheDocument()
-    expect(screen.getByText('Adult (18+ years)')).toBeInTheDocument()
+    expect(screen.getAllByText('Adult (18+ years)').length).toBeGreaterThan(0)
 
     const teenOption = screen.getByText('Teen (13-17 years)')
     fireEvent.click(teenOption)

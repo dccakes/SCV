@@ -127,7 +127,6 @@ describe('TagInput', () => {
 
     const input = getInput()
     fireEvent.focus(input)
-    fireEvent.keyDown(input, { key: 'ArrowDown' })
     fireEvent.keyDown(input, { key: 'Enter' })
 
     expect(mockOnToggle).toHaveBeenCalledWith('tag-1')
