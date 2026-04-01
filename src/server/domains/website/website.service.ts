@@ -210,7 +210,7 @@ export class WebsiteService {
   async verifyWebsitePassword(subUrl: string, inputPassword: string): Promise<string | null> {
     const website = await this.websiteRepository.findBySubUrl(subUrl)
 
-    if (!website || !website.isPasswordEnabled) {
+    if (!website?.isPasswordEnabled) {
       return null
     }
 
