@@ -39,9 +39,9 @@ function getAnthropicThinkingOptions(modelId: string) {
 }
 
 export async function runEttaAgent(req: EttaRequest) {
-  const { actor, weddingId, guestId, messages } = req
+  const { actor, weddingId, guestId, authz, messages } = req
 
-  const ctx = await resolveEttaContext({ actor, weddingId, guestId })
+  const ctx = await resolveEttaContext({ actor, weddingId, guestId, authz })
 
   const tools = actor === 'couple' ? getPlannerTools(ctx) : getConciergeTools(ctx)
   const system = buildSystemPrompt(ctx)

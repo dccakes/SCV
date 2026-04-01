@@ -20,12 +20,16 @@ import { TRPCClientError } from '@trpc/client'
 import { TRPCError } from '@trpc/server'
 
 import { calculateDaysRemaining, formatDateNumber } from '~/app/utils/helpers'
+import type { AuthzContext } from '~/server/authz/authorization.types'
+import { requirePermission } from '~/server/authz/permission-checker'
 import type { WebsiteRepository } from '~/server/domains/website/website.repository'
 import type {
   CreateWebsiteInput,
   PublicWebsite,
+  PublicWebsiteWithQuestions,
   UpdateWebsiteInput,
   Website,
+  WebsiteWithQuestions,
   WeddingPageData,
 } from '~/server/domains/website/website.types'
 import type {
@@ -48,7 +52,13 @@ export class WebsiteService {
    * Creates the website configuration and generates URL from wedding details.
    * Note: Wedding must already exist. This is called when user enables the website add-on.
    */
-  async enableWebsite(weddingId: string, data: CreateWebsiteInput): Promise<Website> {
+  async enableWebsite(
+    ctx: AuthzContext,
+    weddingId: string,
+    data: CreateWebsiteInput
+  ): Promise<Website> {
+    this.requireWebsitePermission(ctx, 'publish')
+
     const { basePath } = data
 
     // Get wedding to generate URL
@@ -88,7 +98,30 @@ export class WebsiteService {
   /**
    * Update website settings
    */
-  async updateWebsite(weddingId: string, data: UpdateWebsiteInput): Promise<Website> {
+  async updateWebsite(
+    ctx: AuthzContext,
+    weddingId: string,
+    data: UpdateWebsiteInput
+  ): Promise<Website> {
+    const updateRequiresContentPermission = data.subUrl !== undefined || data.basePath !== undefined
+    const updateRequiresPasswordPermission =
+      data.password !== undefined || data.isPasswordEnabled !== undefined
+
+    if (!updateRequiresContentPermission && !updateRequiresPasswordPermission) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'At least one website setting must be provided',
+      })
+    }
+
+    if (updateRequiresContentPermission) {
+      this.requireWebsitePermission(ctx, 'update')
+    }
+
+    if (updateRequiresPasswordPermission) {
+      this.requireWebsitePermission(ctx, 'password_update')
+    }
+
     const url = data.subUrl !== undefined ? `${data.basePath}/${data.subUrl}` : undefined
     const password = data.password
       ? this.websitePasswordService.hashPassword(data.password)
@@ -105,14 +138,34 @@ export class WebsiteService {
   /**
    * Update RSVP enabled status
    */
-  async updateRsvpEnabled(websiteId: string, isRsvpEnabled: boolean): Promise<Website> {
+  async updateRsvpEnabled(
+    ctx: AuthzContext,
+    weddingId: string,
+    websiteId: string,
+    isRsvpEnabled: boolean
+  ): Promise<Website> {
+    this.requireWebsitePermission(ctx, 'publish')
+
+    const belongsToWedding = await this.websiteRepository.belongsToWedding(websiteId, weddingId)
+    if (!belongsToWedding) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'You do not have permission to modify this website',
+      })
+    }
+
     return this.websiteRepository.updateRsvpEnabled(websiteId, isRsvpEnabled)
   }
 
   /**
    * Update cover photo
    */
-  async updateCoverPhoto(weddingId: string, coverPhotoUrl: string | null): Promise<Website> {
+  async updateCoverPhoto(
+    ctx: AuthzContext,
+    weddingId: string,
+    coverPhotoUrl: string | null
+  ): Promise<Website> {
+    this.requireWebsitePermission(ctx, 'update')
     return this.websiteRepository.updateCoverPhoto(weddingId, coverPhotoUrl)
   }
 
@@ -157,7 +210,7 @@ export class WebsiteService {
   async verifyWebsitePassword(subUrl: string, inputPassword: string): Promise<string | null> {
     const website = await this.websiteRepository.findBySubUrl(subUrl)
 
-    if (!website || !website.isPasswordEnabled) {
+    if (!website?.isPasswordEnabled) {
       return null
     }
 
@@ -179,12 +232,30 @@ export class WebsiteService {
   /**
    * Fetch complete wedding data for public website display
    */
-  async fetchWeddingData(subUrl: string): Promise<WeddingPageData> {
+  async fetchWeddingData(
+    subUrl: string,
+    accessToken: string | undefined
+  ): Promise<WeddingPageData> {
     // Get website with general questions
     const website = await this.websiteRepository.findBySubUrlWithQuestions(subUrl)
 
     if (!website) {
       throw new TRPCClientError('This website does not exist.')
+    }
+
+    if (website.isPasswordEnabled) {
+      const hasAccess = this.websitePasswordService.verifyAccessToken(
+        accessToken,
+        website.id,
+        website.password
+      )
+
+      if (!hasAccess) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Password access required for this wedding website',
+        })
+      }
     }
 
     // Get the wedding entity (couple names live here now)
@@ -234,7 +305,7 @@ export class WebsiteService {
         }),
         numberFormat: formatDateNumber(weddingDate),
       },
-      website,
+      website: this.toPublicWebsiteWithQuestions(website),
       daysRemaining: calculateDaysRemaining(weddingDate) ?? -1,
       events: events.map((event) => ({
         id: event.id,
@@ -371,5 +442,19 @@ export class WebsiteService {
   private toPublicWebsite(website: Website): PublicWebsite {
     const { password: _password, ...publicWebsite } = website
     return publicWebsite
+  }
+
+  private toPublicWebsiteWithQuestions(website: WebsiteWithQuestions): PublicWebsiteWithQuestions {
+    const { password: _password, ...publicWebsite } = website
+    return publicWebsite
+  }
+
+  private requireWebsitePermission(
+    ctx: AuthzContext,
+    action: 'read' | 'update' | 'publish' | 'password_update'
+  ): void {
+    requirePermission(ctx, {
+      website: [action],
+    })
   }
 }

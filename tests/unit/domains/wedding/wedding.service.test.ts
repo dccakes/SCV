@@ -11,10 +11,13 @@
 import { TRPCError } from '@trpc/server'
 
 // Must mock before importing the service
-jest.mock('~/server/domains/wedding/wedding.repository')
-jest.mock('~/server/domains/event/event.service')
-jest.mock('~/server/domains/user/user.service')
-jest.mock('~/server/domains/guest-tag/guest-tag.service')
+jest.mock('server/domains/wedding/wedding.repository')
+jest.mock('server/domains/event/event.service')
+jest.mock('server/domains/user/user.service')
+jest.mock('server/domains/guest-tag/guest-tag.service')
+jest.mock('~/server/authz/permission-checker', () => ({
+  requirePermission: jest.fn(),
+}))
 jest.mock('~/lib/etta/provision', () => ({
   provisionEtta: jest.fn().mockResolvedValue(undefined),
 }))
@@ -22,43 +25,55 @@ jest.mock('~/lib/etta/provision', () => ({
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   EventService,
-  mockCreateEvent,
+  mockCreateEventSystem,
   resetMocks as resetEventMocks,
-} from '~/server/domains/event/event.service'
+} from 'server/domains/event/event.service'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   GuestTagService,
   mockSeedInitialTags,
   resetMocks as resetTagMocks,
-} from '~/server/domains/guest-tag/guest-tag.service'
+} from 'server/domains/guest-tag/guest-tag.service'
 // @ts-expect-error - Importing mock functions from mocked module
-import { mockUpdateProfile, resetMocks as resetUserMocks } from '~/server/domains/user/user.service'
+import { mockUpdateProfile, resetMocks as resetUserMocks } from 'server/domains/user/user.service'
 import {
   mockCreate,
   mockExistsForUser,
+  mockFindById,
   mockFindByUserId,
+  mockUpdate,
   mockWedding,
   resetMocks as resetWeddingMocks,
   WeddingRepository,
-} from '~/server/domains/wedding/wedding.repository'
-import { WeddingService } from '~/server/domains/wedding/wedding.service'
+} from 'server/domains/wedding/wedding.repository'
+import { WeddingService } from 'server/domains/wedding/wedding.service'
+import { requirePermission } from '~/server/authz/permission-checker'
 
 // Create typed aliases for mock functions
 const mockCreateFn = mockCreate as jest.Mock
 const mockExistsForUserFn = mockExistsForUser as jest.Mock
+const _mockFindByIdFn = mockFindById as jest.Mock
 const mockFindByUserIdFn = mockFindByUserId as jest.Mock
-const mockCreateEventFn = mockCreateEvent as jest.Mock
+const mockUpdateFn = mockUpdate as jest.Mock
+const mockCreateEventFn = mockCreateEventSystem as jest.Mock
 const mockUpdateProfileFn = mockUpdateProfile as jest.Mock
 const mockSeedInitialTagsFn = mockSeedInitialTags as jest.Mock
+const mockRequirePermission = requirePermission as jest.Mock
 
 describe('WeddingService', () => {
   let weddingService: WeddingService
+  const actorContext = {
+    userId: 'actor-1',
+    activeOrganization: null,
+  }
 
   beforeEach(() => {
     resetWeddingMocks()
     resetEventMocks()
     resetUserMocks()
     resetTagMocks()
+    mockRequirePermission.mockReset()
+    mockRequirePermission.mockReturnValue({ organizationId: 'org-123', role: 'owner' })
     const mockRepository = new WeddingRepository({})
     const mockEventSvc = new EventService({})
     const mockGuestTagService = new GuestTagService({})
@@ -203,6 +218,38 @@ describe('WeddingService', () => {
       const result = await weddingService.getByUserId('user-123')
 
       expect(result).toBeNull()
+    })
+  })
+
+  describe('updateWedding', () => {
+    it('should update wedding when permission check passes', async () => {
+      const updatedWedding = { ...mockWedding, groomFirstName: 'Updated' }
+      mockUpdateFn.mockResolvedValue(updatedWedding)
+
+      const result = await weddingService.updateWedding({
+        ctx: actorContext,
+        weddingId: 'wedding-123',
+        data: { groomFirstName: 'Updated' },
+      })
+
+      expect(result.groomFirstName).toBe('Updated')
+      expect(mockUpdateFn).toHaveBeenCalledWith('wedding-123', { groomFirstName: 'Updated' })
+    })
+
+    it('should reject update when permission check fails', async () => {
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      })
+
+      await expect(
+        weddingService.updateWedding({
+          ctx: actorContext,
+          weddingId: 'wedding-123',
+          data: { groomFirstName: 'Updated' },
+        })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+
+      expect(mockUpdateFn).not.toHaveBeenCalled()
     })
   })
 

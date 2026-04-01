@@ -1,12 +1,14 @@
 import type { EttaActorType, EttaContext } from '~/lib/etta/types'
+import type { AuthzContext } from '~/server/authz/authorization.types'
 import { db } from '~/server/db'
 
 export async function resolveEttaContext(params: {
   actor: EttaActorType
   weddingId: string
   guestId?: number
+  authz?: AuthzContext
 }): Promise<EttaContext> {
-  const { actor, weddingId, guestId } = params
+  const { actor, weddingId, guestId, authz } = params
   const isPlanner = actor === 'couple'
 
   // Single parallel batch — concierge skips planner-only queries
@@ -47,6 +49,7 @@ export async function resolveEttaContext(params: {
     ettaActorId: ettaActor.id,
     actor,
     guestId,
+    authz,
     wedding: {
       groomFirstName: wedding.groomFirstName,
       groomLastName: wedding.groomLastName,

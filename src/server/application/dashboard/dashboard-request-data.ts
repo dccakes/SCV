@@ -4,6 +4,6 @@ import type { DashboardData } from '~/server/application/dashboard/dashboard.typ
 import { api } from '~/trpc/server'
 
 export const createDashboardOverviewLoader = () =>
-  cache(async (): Promise<DashboardData | null> => api.dashboard.getByUserId.query())
+  cache(async (): Promise<DashboardData | null> => api.dashboard.getByUserId())
 
 export const getDashboardOverview = createDashboardOverviewLoader()

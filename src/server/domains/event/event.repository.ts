@@ -218,4 +218,22 @@ export class EventRepository {
     })
     return event !== null
   }
+
+  async belongsToUser(id: string, userId: string): Promise<boolean> {
+    const event = await this.db.event.findFirst({
+      where: {
+        id,
+        wedding: {
+          userWeddings: {
+            some: {
+              userId,
+            },
+          },
+        },
+      },
+      select: { id: true },
+    })
+
+    return event !== null
+  }
 }

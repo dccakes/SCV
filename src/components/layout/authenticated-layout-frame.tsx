@@ -12,11 +12,13 @@ type AuthenticatedLayoutFrameProps = {
 export async function AuthenticatedLayoutFrame(props: Readonly<AuthenticatedLayoutFrameProps>) {
   const { children, showEttaPanel = false } = props
   const dashboardData = await getDashboardOverview()
-  const { coupleName, weddingDate } = getSidebarWeddingInfo(dashboardData?.weddingData)
+  const { coupleName, weddingDate, weddingLocation } = getSidebarWeddingInfo(
+    dashboardData?.weddingData
+  )
 
   let weddingId: string | undefined
   if (showEttaPanel) {
-    const wedding = await api.wedding.getByUserId.query()
+    const wedding = await api.wedding.getByUserId()
     weddingId = wedding?.id
   }
 
@@ -24,6 +26,7 @@ export async function AuthenticatedLayoutFrame(props: Readonly<AuthenticatedLayo
     <AuthenticatedAppShell
       coupleName={coupleName}
       weddingDate={weddingDate}
+      weddingLocation={weddingLocation}
       showEttaPanel={showEttaPanel}
       weddingId={weddingId}
     >

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.4/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.10/schema.json",
   "files": {
     "includes": [
       "**",
@@ -11,6 +11,7 @@
       "!.agents",
       "!.claude",
       "!tests/resources",
+      "!playwright-report",
       "!next-env.d.ts",
       "!src/types.gen.ts",
       "!src/lib/pickle-iq-sdk"

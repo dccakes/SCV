@@ -32,6 +32,8 @@ export type WebsiteWithQuestions = Website & {
   generalQuestions: Question[]
 }
 
+export type PublicWebsiteWithQuestions = Omit<WebsiteWithQuestions, 'password'>
+
 /**
  * Input for enabling website add-on
  * Note: weddingId comes from authenticated user's wedding
@@ -84,7 +86,7 @@ export type WeddingPageData = {
   brideFirstName: string | null
   brideLastName: string | null
   date: WeddingDate
-  website: WebsiteWithQuestions
+  website: PublicWebsiteWithQuestions
   daysRemaining: number
   events: Array<{
     id: string

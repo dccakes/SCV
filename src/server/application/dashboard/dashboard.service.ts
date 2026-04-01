@@ -85,11 +85,13 @@ export class DashboardService {
       // For now, return minimal wedding data without website
     }
 
-    // Get wedding date from "Wedding Day" event
-    const weddingDate = events.find((event) => event.name === 'Wedding Day')?.date
+    // Get wedding date and location from the first event (created as "Ceremony" during onboarding)
+    const primaryEvent = events[0]
+    const weddingDate = primaryEvent?.date
+    const weddingLocation = primaryEvent?.venue
 
-    // Build wedding data
-    const weddingData = await this.buildWeddingData(website, currentUser, weddingDate)
+    // Build wedding data (names come from the Wedding entity, not the User)
+    const weddingData = await this.buildWeddingData(website, wedding, weddingDate, weddingLocation)
 
     // Build households with guest invitations
     const householdsWithInvitations = this.buildHouseholdsWithInvitations(households, invitations)
@@ -153,8 +155,14 @@ export class DashboardService {
    */
   private async buildWeddingData(
     website: Awaited<ReturnType<typeof this.fetchWebsite>>,
-    currentUser: NonNullable<Awaited<ReturnType<typeof this.fetchUser>>>,
-    weddingDate: Date | null | undefined
+    wedding: {
+      groomFirstName: string
+      groomLastName: string
+      brideFirstName: string
+      brideLastName: string
+    },
+    weddingDate: Date | null | undefined,
+    weddingLocation: string | null | undefined
   ): Promise<WeddingData> {
     let websiteWithQuestions: WebsiteWithQuestions | undefined
 
@@ -181,10 +189,10 @@ export class DashboardService {
 
     return {
       website: websiteWithQuestions,
-      groomFirstName: currentUser.groomFirstName,
-      groomLastName: currentUser.groomLastName,
-      brideFirstName: currentUser.brideFirstName,
-      brideLastName: currentUser.brideLastName,
+      groomFirstName: wedding.groomFirstName,
+      groomLastName: wedding.groomLastName,
+      brideFirstName: wedding.brideFirstName,
+      brideLastName: wedding.brideLastName,
       date: {
         standardFormat: weddingDate?.toLocaleDateString('en-us', {
           weekday: 'long',
@@ -194,6 +202,7 @@ export class DashboardService {
         }),
         numberFormat: formatDateNumber(weddingDate),
       },
+      location: weddingLocation ?? null,
       daysRemaining: calculateDaysRemaining(weddingDate) ?? -1,
     }
   }

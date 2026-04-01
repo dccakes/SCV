@@ -19,6 +19,12 @@ jest.mock('~/server/domains/wedding', () => ({
   },
 }))
 
+jest.mock('~/server/db', () => ({
+  db: {
+    $queryRaw: jest.fn().mockResolvedValue([]),
+  },
+}))
+
 const mockGetSession = auth.api.getSession as jest.Mock
 const mockGetWeddingId = weddingService.getWeddingIdByUserId as jest.Mock
 
@@ -44,8 +50,10 @@ describe('validateCoupleSession', () => {
 
     const result = await validateCoupleSession(new Headers())
 
-    expect(result).toEqual({ weddingId: 'wedding-1', userId: 'user-1' })
-    expect(mockGetWeddingId).toHaveBeenCalledWith('user-1')
+    expect(result.weddingId).toBe('wedding-1')
+    expect(result.userId).toBe('user-1')
+    expect(result.authz).toBeDefined()
+    expect(result.authz.userId).toBe('user-1')
   })
 
   it('throws when no session exists', async () => {

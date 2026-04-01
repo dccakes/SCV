@@ -5,6 +5,8 @@
  * Handles guest creation, updates, and retrieval.
  */
 
+import type { AuthzContext } from '~/server/authz/authorization.types'
+import { requirePermission } from '~/server/authz/permission-checker'
 import type { GuestRepository } from '~/server/domains/guest/guest.repository'
 import type { Guest, GuestWithInvitations } from '~/server/domains/guest/guest.types'
 
@@ -46,6 +48,7 @@ export class GuestService {
    * Create a new guest
    */
   async createGuest(
+    ctx: AuthzContext,
     weddingId: string,
     data: {
       firstName: string
@@ -56,6 +59,7 @@ export class GuestService {
       isPrimaryContact?: boolean
     }
   ): Promise<Guest> {
+    this.requireGuestPermission(ctx, 'create')
     return this.guestRepository.create({
       firstName: data.firstName,
       lastName: data.lastName,
@@ -71,6 +75,7 @@ export class GuestService {
    * Create a guest with invitations
    */
   async createGuestWithInvitations(
+    ctx: AuthzContext,
     weddingId: string,
     data: {
       firstName: string
@@ -85,6 +90,7 @@ export class GuestService {
       }>
     }
   ): Promise<Guest> {
+    this.requireGuestPermission(ctx, 'create')
     return this.guestRepository.create({
       firstName: data.firstName,
       lastName: data.lastName,
@@ -104,6 +110,7 @@ export class GuestService {
    * Upsert a guest
    */
   async upsertGuest(
+    ctx: AuthzContext,
     weddingId: string,
     data: {
       guestId?: number
@@ -119,6 +126,7 @@ export class GuestService {
       rsvp: string
     }>
   ): Promise<Guest> {
+    this.requireGuestPermission(ctx, data.guestId ? 'update' : 'create')
     return this.guestRepository.upsert(
       data.guestId,
       {
@@ -141,6 +149,7 @@ export class GuestService {
    * Update a guest
    */
   async updateGuest(
+    ctx: AuthzContext,
     guestId: number,
     data: {
       firstName?: string
@@ -149,20 +158,32 @@ export class GuestService {
       phone?: string | null
     }
   ): Promise<Guest> {
+    this.requireGuestPermission(ctx, 'update')
     return this.guestRepository.update(guestId, data)
   }
 
   /**
    * Delete a guest
    */
-  async deleteGuest(guestId: number): Promise<Guest> {
+  async deleteGuest(ctx: AuthzContext, guestId: number): Promise<Guest> {
+    this.requireGuestPermission(ctx, 'delete')
     return this.guestRepository.delete(guestId)
   }
 
   /**
    * Delete multiple guests
    */
-  async deleteGuests(guestIds: number[]): Promise<{ count: number }> {
+  async deleteGuests(ctx: AuthzContext, guestIds: number[]): Promise<{ count: number }> {
+    this.requireGuestPermission(ctx, 'delete')
     return this.guestRepository.deleteMany(guestIds)
+  }
+
+  private requireGuestPermission(
+    ctx: AuthzContext,
+    action: 'create' | 'update' | 'delete' | 'import'
+  ): void {
+    requirePermission(ctx, {
+      guest: [action],
+    })
   }
 }

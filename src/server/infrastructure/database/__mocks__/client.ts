@@ -45,6 +45,8 @@ export const mockWeddingFindFirst = jest.fn()
 export const mockWeddingCreate = jest.fn()
 export const mockWeddingUpdate = jest.fn()
 
+export const mockMemberQueryRaw = jest.fn()
+
 const dbModels = {
   user: {
     findUnique: mockUserFindUnique,
@@ -103,6 +105,8 @@ const mock$transaction = jest.fn().mockImplementation(async (fn: (tx: unknown) =
 export const db = {
   ...dbModels,
   $transaction: mock$transaction,
+  $queryRaw: mockMemberQueryRaw,
+  $executeRaw: jest.fn(),
 } as unknown as PrismaClient
 
 export { mock$transaction }
@@ -140,6 +144,7 @@ export const resetMocks = (): void => {
   mockWeddingFindFirst.mockReset()
   mockWeddingCreate.mockReset()
   mockWeddingUpdate.mockReset()
+  mockMemberQueryRaw.mockReset()
   mock$transaction.mockClear()
   // Re-implement $transaction after clear
   mock$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) => {

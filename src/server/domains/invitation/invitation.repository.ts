@@ -163,6 +163,72 @@ export class InvitationRepository {
     return invitation !== null
   }
 
+  async findOrganizationIdByInvitationId(invitation: {
+    guestId: number
+    eventId: string
+  }): Promise<string | null> {
+    const result = await this.db.invitation.findFirst({
+      where: {
+        guestId: invitation.guestId,
+        eventId: invitation.eventId,
+      },
+      select: {
+        wedding: { select: { organizationId: true } },
+      },
+    })
+    return result?.wedding?.organizationId ?? null
+  }
+
+  async belongsToWedding(guestId: number, eventId: string, weddingId: string): Promise<boolean> {
+    const invitation = await this.db.invitation.findFirst({
+      where: {
+        guestId,
+        eventId,
+        weddingId,
+      },
+      select: { id: true },
+    })
+
+    return invitation !== null
+  }
+
+  async belongsToUser(guestId: number, eventId: string, userId: string): Promise<boolean> {
+    const invitation = await this.db.invitation.findFirst({
+      where: {
+        guestId,
+        eventId,
+        wedding: {
+          userWeddings: {
+            some: {
+              userId,
+            },
+          },
+        },
+      },
+      select: { id: true },
+    })
+
+    return invitation !== null
+  }
+
+  async guestBelongsToWedding(guestId: number, weddingId: string): Promise<boolean> {
+    const guest = await this.db.guest.findFirst({
+      where: { id: guestId, weddingId },
+      select: { id: true },
+    })
+
+    return guest !== null
+  }
+
+  async eventBelongsToWedding(eventId: string, weddingId: string): Promise<boolean> {
+    const event = await this.db.event.findFirst({
+      where: { id: eventId, weddingId },
+      select: { id: true },
+    })
+
+    return event !== null
+  }
+
   /**
    * Get RSVP counts for an event
    *

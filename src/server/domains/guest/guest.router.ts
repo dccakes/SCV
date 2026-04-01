@@ -5,7 +5,8 @@
  * This is a thin layer that handles input validation and delegates to the service.
  */
 
-import { createTRPCRouter, publicProcedure } from '~/server/api/trpc'
+import { TRPCError } from '@trpc/server'
+import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { guestService } from '~/server/domains/guest'
 import { getByEventSchema, getByHouseholdSchema } from '~/server/domains/guest/guest.validator'
 import { invitationService } from '~/server/domains/invitation'
@@ -16,28 +17,49 @@ export const guestRouter = createTRPCRouter({
    * Get all invitations by event ID
    * Note: This returns invitations, not guests - maintained for backward compatibility
    */
-  getAllByEventId: publicProcedure.input(getByEventSchema).query(async ({ input }) => {
-    return invitationService.getByEventId(input.eventId)
+  getAllByEventId: protectedProcedure.input(getByEventSchema).query(async ({ ctx, input }) => {
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.activeOrganization?.organizationId ?? null
+    )
+    return invitationService.getByEventIdInWedding(input.eventId, weddingId)
   }),
 
   /**
    * Get all guests by household ID
    */
-  getAllByHouseholdId: publicProcedure.input(getByHouseholdSchema).query(async ({ input }) => {
-    const guests = await guestService.getAllByHouseholdId(input.householdId)
-    // Return in the expected format for backward compatibility
-    return {
-      id: input.householdId,
-      guests,
-    }
-  }),
+  getAllByHouseholdId: protectedProcedure
+    .input(getByHouseholdSchema)
+    .query(async ({ ctx, input }) => {
+      const weddingId = await weddingService.getWeddingIdByUserId(
+        ctx.auth.userId,
+        ctx.auth.activeOrganization?.organizationId ?? null
+      )
+      const guests = await guestService.getAllByHouseholdId(input.householdId)
+
+      const inScope = guests.every((guest) => guest.weddingId === weddingId)
+      if (!inScope) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'You do not have permission to access this household',
+        })
+      }
+
+      // Return in the expected format for backward compatibility
+      return {
+        id: input.householdId,
+        guests,
+      }
+    }),
 
   /**
    * Get all guests for the current user's wedding
    */
-  getAllByUserId: publicProcedure.query(async ({ ctx }) => {
-    if (!ctx.auth.userId) return undefined
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+  getAllByUserId: protectedProcedure.query(async ({ ctx }) => {
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.activeOrganization?.organizationId ?? null
+    )
     return guestService.getAllByWeddingId(weddingId)
   }),
 })

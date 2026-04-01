@@ -7,6 +7,12 @@
 
 import { RsvpSubmissionService } from '~/server/application/rsvp-submission/rsvp-submission.service'
 
+jest.mock('~/server/authz/permission-checker', () => ({
+  requirePermission: jest.fn(),
+}))
+
+import { requirePermission } from '~/server/authz/permission-checker'
+
 // Mock data
 const mockInvitation = {
   guestId: 1,
@@ -90,10 +96,58 @@ const createMockDb = () => {
 describe('RsvpSubmissionService', () => {
   let service: RsvpSubmissionService
   let mockDb: ReturnType<typeof createMockDb>
+  const mockRequirePermission = requirePermission as jest.Mock
+  const actorContext = {
+    userId: 'actor-1',
+    activeOrganization: {
+      organizationId: 'org-1',
+      role: 'owner',
+    },
+  }
 
   beforeEach(() => {
     mockDb = createMockDb()
     service = new RsvpSubmissionService(mockDb as never)
+    mockRequirePermission.mockReset()
+    mockRequirePermission.mockReturnValue({ organizationId: 'org-1', role: 'admin' })
+  })
+
+  describe('submitManagedRsvp', () => {
+    it('requires rsvp edit permission before processing', async () => {
+      mockDb.invitation.count.mockResolvedValue(1)
+      mockDb.guest.count.mockResolvedValue(1)
+      mockDb.household.count.mockResolvedValue(1)
+
+      await service.submitManagedRsvp(actorContext, 'wedding-123', {
+        rsvpResponses: [{ eventId: 'event-123', guestId: 1, rsvp: 'Attending' }],
+        answersToQuestions: [
+          {
+            questionId: 'question-123',
+            questionType: 'Text',
+            response: 'text',
+            guestId: 1,
+            householdId: 'household-123',
+          },
+        ],
+      })
+
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { rsvp: ['edit_response'] })
+    })
+
+    it('rejects when rsvp permission is missing', async () => {
+      mockRequirePermission.mockImplementation(() => {
+        throw new Error('forbidden')
+      })
+
+      await expect(
+        service.submitManagedRsvp(actorContext, 'wedding-123', {
+          rsvpResponses: [],
+          answersToQuestions: [],
+        })
+      ).rejects.toThrow('forbidden')
+
+      expect(mockDb.$transaction).not.toHaveBeenCalled()
+    })
   })
 
   describe('submitRsvp', () => {

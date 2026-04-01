@@ -10,6 +10,7 @@
  */
 export type Wedding = {
   id: string
+  organizationId: string | null
   groomFirstName: string
   groomLastName: string
   brideFirstName: string

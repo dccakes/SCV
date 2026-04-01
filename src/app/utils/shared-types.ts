@@ -176,7 +176,7 @@ type WeddingPageData = {
     standardFormat: string | undefined
     numberFormat: string | undefined
   }
-  website: Website
+  website: PublicWebsite
   daysRemaining: number
   events: Event[]
 }

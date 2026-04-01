@@ -12,6 +12,8 @@ generator client {
 // Core: Wedding is the root entity
 model Wedding {
   id             String          @id @default(uuid())
+  organizationId String?         @unique
+  organization   Organization?   @relation("WeddingOrganization", fields: [organizationId], references: [id])
   groomFirstName String
   groomLastName  String
   brideFirstName String
@@ -129,6 +131,7 @@ model User {
   sessions       Session[]
   accounts       Account[]
   userWeddings   UserWedding[]
+  members        Member[]
 }
 
 model Session {
@@ -137,10 +140,11 @@ model Session {
   token     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  ipAddress String?
-  userAgent String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress              String?
+  userAgent              String?
+  userId                 String
+  activeOrganizationId   String?
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@index([userId])
 }
@@ -163,6 +167,53 @@ model Account {
   
   @@unique([providerId, accountId])
   @@index([userId])
+}
+
+// Better Auth Organization Plugin Tables
+model Organization {
+  id          String       @id
+  name        String
+  slug        String       @unique
+  logo        String?
+  metadata    String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  members     Member[]
+  invitations OrganizationInvitation[]
+  weddings    Wedding[]    @relation("WeddingOrganization")
+
+  @@map("organization")
+}
+
+model Member {
+  id             String       @id
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@index([userId])
+  @@map("member")
+}
+
+model OrganizationInvitation {
+  id             String       @id
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  role           String?
+  status         String       @default("pending")
+  expiresAt      DateTime
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId])
+  @@index([email])
+  @@map("invitation")
 }
 
 model Verification {

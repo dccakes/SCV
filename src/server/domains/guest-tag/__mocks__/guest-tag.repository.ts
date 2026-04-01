@@ -24,6 +24,7 @@ export const mockFindByWeddingId = jest.fn()
 export const mockUpdate = jest.fn()
 export const mockDelete = jest.fn()
 export const mockExistsByName = jest.fn()
+export const mockBelongsToWedding = jest.fn()
 
 // Export mocked class
 export const GuestTagRepository = jest.fn().mockImplementation(() => ({
@@ -33,6 +34,7 @@ export const GuestTagRepository = jest.fn().mockImplementation(() => ({
   update: mockUpdate,
   delete: mockDelete,
   existsByName: mockExistsByName,
+  belongsToWedding: mockBelongsToWedding,
 }))
 
 // Export reset helper
@@ -43,5 +45,6 @@ export const resetMocks = (): void => {
   mockUpdate.mockReset()
   mockDelete.mockReset()
   mockExistsByName.mockReset()
+  mockBelongsToWedding.mockReset()
   GuestTagRepository.mockClear()
 }

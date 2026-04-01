@@ -46,7 +46,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: process.env.CI ? `node .next/standalone/server.js` : `npx next start -p ${PORT}`,
+    command: `cp -r .next/static .next/standalone/.next/static && node .next/standalone/server.js`,
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

@@ -33,6 +33,7 @@ const mockCtx: EttaContext = {
   weddingId: 'wedding-123',
   ettaActorId: 'actor-123',
   actor: 'couple',
+  authz: { userId: 'user-1', activeOrganization: { organizationId: 'org-1', role: 'owner' } },
   wedding: {
     groomFirstName: 'John',
     groomLastName: 'Doe',
@@ -92,7 +93,7 @@ describe('getGuestTools', () => {
         abortSignal: undefined as never,
       })
 
-      expect(mockGuestService.updateGuest).toHaveBeenCalledWith(1, {
+      expect(mockGuestService.updateGuest).toHaveBeenCalledWith(mockCtx.authz, 1, {
         lastName: 'Updated',
         email: 'new@test.com',
       })

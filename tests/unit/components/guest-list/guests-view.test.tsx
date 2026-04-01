@@ -24,25 +24,39 @@ jest.mock('~/components/contexts/event-form-context', () => ({
   useToggleEventForm: () => jest.fn(),
 }))
 
-jest.mock('~/components/forms/guest/tags-modal', () => ({
-  TagsModal: ({
-    open,
-    onTagsChange,
-    guestName,
-  }: {
-    open: boolean
-    onTagsChange: (tagIds: string[]) => void
-    guestName: string
-  }) => {
-    if (!open) return null
-
-    return (
-      <button type='button' onClick={() => onTagsChange(['vip'])}>
-        Apply tags for {guestName}
-      </button>
-    )
-  },
+jest.mock('~/components/guest-list/tag-input', () => ({
+  TagInput: ({ ariaLabel }: { ariaLabel: string }) => <div data-testid={ariaLabel} />,
 }))
+
+jest.mock('~/components/hooks', () => {
+  const React = require('react')
+  return {
+    useOuterClick: () => React.createRef(),
+  }
+})
+
+jest.mock('~/components/ui/select', () => {
+  const _React = require('react')
+  return {
+    Select: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    SelectTrigger: ({
+      children,
+      'aria-label': ariaLabel,
+    }: {
+      children: React.ReactNode
+      'aria-label'?: string
+    }) => (
+      <button type='button' aria-label={ariaLabel}>
+        {children}
+      </button>
+    ),
+    SelectValue: () => <span />,
+    SelectContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    SelectItem: ({ children }: { children: React.ReactNode; value: string }) => (
+      <div>{children}</div>
+    ),
+  }
+})
 
 let mockTagsData: Array<{ id: string; name: string; color?: string | null }> = []
 
@@ -57,7 +71,10 @@ jest.mock('~/trpc/react', () => ({
     }),
     guestTag: {
       getAll: {
-        useQuery: () => ({ data: mockTagsData }),
+        useQuery: () => ({ data: mockTagsData, refetch: jest.fn() }),
+      },
+      create: {
+        useMutation: () => ({ mutate: jest.fn() }),
       },
     },
     household: {
@@ -494,7 +511,7 @@ describe('GuestsView', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('should update member tags from household members modal', async () => {
+  it('should render inline tag input for each member in the modal', () => {
     render(
       <GuestsView
         events={events}
@@ -508,20 +525,8 @@ describe('GuestsView', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
     fireEvent.click(screen.getByRole('button', { name: 'Manage members' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Tags for Alex Rivera' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Apply tags for Alex Rivera' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Save members' }))
 
-    await waitFor(() => {
-      expect(mockHouseholdUpdateMutate).toHaveBeenCalled()
-    })
-
-    const payload = mockHouseholdUpdateMutate.mock.calls.at(-1)?.[0] as {
-      guestParty: Array<{ guestId: number; tagIds: string[] }>
-    }
-    expect(payload.guestParty).toEqual(
-      expect.arrayContaining([expect.objectContaining({ guestId: 1, tagIds: ['vip'] })])
-    )
+    expect(screen.getByTestId('Tags for Alex Rivera')).toBeInTheDocument()
   })
 
   it('should open Manage Household Members modal from Party Members section', () => {

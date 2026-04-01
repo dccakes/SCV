@@ -1,10 +1,17 @@
 import { TRPCError } from '@trpc/server'
 
+jest.mock('~/server/authz/permission-checker', () => ({
+  requirePermission: jest.fn(),
+}))
+
 jest.mock('~/server/domains/guest-tag/guest-tag.repository')
+
+import { requirePermission } from '~/server/authz/permission-checker'
 
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   GuestTagRepository,
+  mockBelongsToWedding,
   mockCreate,
   mockDelete,
   mockExistsByName,
@@ -23,12 +30,24 @@ const mockFindByWeddingIdFn = mockFindByWeddingId as jest.Mock
 const mockUpdateFn = mockUpdate as jest.Mock
 const mockDeleteFn = mockDelete as jest.Mock
 const mockExistsByNameFn = mockExistsByName as jest.Mock
+const mockBelongsToWeddingFn = mockBelongsToWedding as jest.Mock
+const mockRequirePermission = requirePermission as jest.Mock
 
 describe('GuestTagService', () => {
   let guestTagService: GuestTagService
+  const actorContext = {
+    userId: 'actor-1',
+    activeOrganization: {
+      organizationId: 'org-1',
+      role: 'owner',
+    },
+  }
 
   beforeEach(() => {
     resetMocks()
+    mockRequirePermission.mockReset()
+    mockRequirePermission.mockReturnValue(undefined)
+    mockBelongsToWeddingFn.mockResolvedValue(true)
     const mockRepository = new GuestTagRepository()
     guestTagService = new GuestTagService(mockRepository)
   })
@@ -38,7 +57,7 @@ describe('GuestTagService', () => {
       mockExistsByNameFn.mockResolvedValue(false)
       mockCreateFn.mockResolvedValue(mockGuestTag)
 
-      const result = await guestTagService.create({
+      const result = await guestTagService.create(actorContext, {
         weddingId: 'wedding-123',
         name: 'Family',
         color: '#3b82f6',
@@ -56,7 +75,7 @@ describe('GuestTagService', () => {
       mockExistsByNameFn.mockResolvedValue(false)
       mockCreateFn.mockResolvedValue({ ...mockGuestTag, color: null })
 
-      const result = await guestTagService.create({
+      const result = await guestTagService.create(actorContext, {
         weddingId: 'wedding-123',
         name: 'Friends',
       })
@@ -68,7 +87,7 @@ describe('GuestTagService', () => {
       mockExistsByNameFn.mockResolvedValue(true)
 
       await expect(
-        guestTagService.create({
+        guestTagService.create(actorContext, {
           weddingId: 'wedding-123',
           name: 'Family',
           color: '#3b82f6',
@@ -82,7 +101,7 @@ describe('GuestTagService', () => {
       mockExistsByNameFn.mockResolvedValue(false)
       mockCreateFn.mockResolvedValue(mockGuestTag)
 
-      await guestTagService.create({
+      await guestTagService.create(actorContext, {
         weddingId: 'wedding-123',
         name: '  Family  ',
         color: '#3b82f6',
@@ -97,7 +116,7 @@ describe('GuestTagService', () => {
       const tags = [mockGuestTag, { ...mockGuestTag, id: 'tag-456', name: 'Friends' }]
       mockFindByWeddingIdFn.mockResolvedValue(tags)
 
-      const result = await guestTagService.getByWeddingId('wedding-123')
+      const result = await guestTagService.getByWeddingId(actorContext, 'wedding-123')
 
       expect(result).toEqual(tags)
       expect(mockFindByWeddingIdFn).toHaveBeenCalledWith('wedding-123')
@@ -106,7 +125,7 @@ describe('GuestTagService', () => {
     it('should return empty array if no tags exist', async () => {
       mockFindByWeddingIdFn.mockResolvedValue([])
 
-      const result = await guestTagService.getByWeddingId('wedding-123')
+      const result = await guestTagService.getByWeddingId(actorContext, 'wedding-123')
 
       expect(result).toEqual([])
     })
@@ -116,7 +135,7 @@ describe('GuestTagService', () => {
     it('should return tag with guest count', async () => {
       mockFindByIdFn.mockResolvedValue(mockGuestTagWithCount)
 
-      const result = await guestTagService.getByIdWithCount('tag-123')
+      const result = await guestTagService.getByIdWithCount(actorContext, 'tag-123', 'wedding-123')
 
       expect(result).toEqual(mockGuestTagWithCount)
       expect(result?._count?.guestTagAssignments).toBe(5)
@@ -125,7 +144,11 @@ describe('GuestTagService', () => {
     it('should return null if tag not found', async () => {
       mockFindByIdFn.mockResolvedValue(null)
 
-      const result = await guestTagService.getByIdWithCount('nonexistent-id')
+      const result = await guestTagService.getByIdWithCount(
+        actorContext,
+        'nonexistent-id',
+        'wedding-123'
+      )
 
       expect(result).toBeNull()
     })
@@ -137,7 +160,7 @@ describe('GuestTagService', () => {
       mockExistsByNameFn.mockResolvedValue(false)
       mockUpdateFn.mockResolvedValue(updatedTag)
 
-      const result = await guestTagService.update('tag-123', 'wedding-123', {
+      const result = await guestTagService.update(actorContext, 'tag-123', 'wedding-123', {
         name: 'Extended Family',
       })
 
@@ -151,7 +174,7 @@ describe('GuestTagService', () => {
       const updatedTag = { ...mockGuestTag, color: '#10b981' }
       mockUpdateFn.mockResolvedValue(updatedTag)
 
-      const result = await guestTagService.update('tag-123', 'wedding-123', {
+      const result = await guestTagService.update(actorContext, 'tag-123', 'wedding-123', {
         color: '#10b981',
       })
 
@@ -162,7 +185,7 @@ describe('GuestTagService', () => {
       mockExistsByNameFn.mockResolvedValue(true)
 
       await expect(
-        guestTagService.update('tag-123', 'wedding-123', {
+        guestTagService.update(actorContext, 'tag-123', 'wedding-123', {
           name: 'Family',
         })
       ).rejects.toThrow(TRPCError)
@@ -175,7 +198,7 @@ describe('GuestTagService', () => {
     it('should delete tag', async () => {
       mockDeleteFn.mockResolvedValue(mockGuestTag)
 
-      const result = await guestTagService.delete('tag-123')
+      const result = await guestTagService.delete(actorContext, 'tag-123', 'wedding-123')
 
       expect(result).toEqual(mockGuestTag)
       expect(mockDeleteFn).toHaveBeenCalledWith('tag-123')

@@ -5,7 +5,6 @@
 import { getConciergeTools } from '~/lib/etta/tools/concierge'
 import type { EttaContext } from '~/lib/etta/types'
 import { db } from '~/server/db'
-import { invitationService } from '~/server/domains/invitation'
 
 jest.mock('~/server/db', () => ({
   db: {
@@ -13,12 +12,7 @@ jest.mock('~/server/db', () => ({
     event: { findMany: jest.fn() },
     faq: { findMany: jest.fn() },
     guestQuestion: { create: jest.fn() },
-  },
-}))
-
-jest.mock('~/server/domains/invitation', () => ({
-  invitationService: {
-    updateInvitation: jest.fn(),
+    invitation: { updateMany: jest.fn() },
   },
 }))
 
@@ -27,10 +21,7 @@ const mockDb = db as {
   event: { findMany: jest.Mock }
   faq: { findMany: jest.Mock }
   guestQuestion: { create: jest.Mock }
-}
-
-const mockInvitationService = invitationService as {
-  updateInvitation: jest.Mock
+  invitation: { updateMany: jest.Mock }
 }
 
 const mockCtx: EttaContext = {
@@ -100,8 +91,8 @@ describe('getConciergeTools', () => {
   })
 
   describe('submit_rsvp', () => {
-    it('calls invitationService with correct params', async () => {
-      mockInvitationService.updateInvitation.mockResolvedValue({})
+    it('updates invitation via Prisma with correct params', async () => {
+      mockDb.invitation.updateMany.mockResolvedValue({ count: 1 })
 
       const params = {
         eventId: 'e1',
@@ -109,10 +100,9 @@ describe('getConciergeTools', () => {
       }
       const result = await tools.submit_rsvp.execute(params, toolOpts)
 
-      expect(mockInvitationService.updateInvitation).toHaveBeenCalledWith({
-        guestId: 42,
-        eventId: 'e1',
-        rsvp: 'Attending',
+      expect(mockDb.invitation.updateMany).toHaveBeenCalledWith({
+        where: { guestId: 42, eventId: 'e1' },
+        data: { rsvp: 'Attending' },
       })
       expect(result).toEqual({ message: 'RSVP submitted successfully' })
     })

@@ -5,6 +5,10 @@
  * Handles invitation creation, RSVP updates, and retrieval.
  */
 
+import { TRPCError } from '@trpc/server'
+
+import type { AuthzContext } from '~/server/authz/authorization.types'
+import { requirePermission } from '~/server/authz/permission-checker'
 import type { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
 import type {
   CreateInvitationInput,
@@ -19,7 +23,25 @@ export class InvitationService {
   /**
    * Create a new invitation
    */
-  async createInvitation(weddingId: string, data: CreateInvitationInput): Promise<Invitation> {
+  async createInvitation(
+    ctx: AuthzContext,
+    weddingId: string,
+    data: CreateInvitationInput
+  ): Promise<Invitation> {
+    this.requireInvitationPermission(ctx, 'create')
+
+    const [guestInWedding, eventInWedding] = await Promise.all([
+      this.invitationRepository.guestBelongsToWedding(data.guestId, weddingId),
+      this.invitationRepository.eventBelongsToWedding(data.eventId, weddingId),
+    ])
+
+    if (!guestInWedding || !eventInWedding) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Invitation target is outside the requested wedding scope',
+      })
+    }
+
     return this.invitationRepository.create({
       guestId: data.guestId,
       eventId: data.eventId,
@@ -31,7 +53,22 @@ export class InvitationService {
   /**
    * Update an invitation RSVP
    */
-  async updateInvitation(data: UpdateInvitationInput): Promise<Invitation> {
+  async updateInvitation(
+    ctx: AuthzContext,
+    weddingId: string,
+    data: UpdateInvitationInput
+  ): Promise<Invitation> {
+    this.requireRsvpPermission(ctx, 'edit_response')
+
+    const belongs = await this.invitationRepository.belongsToWedding(
+      data.guestId,
+      data.eventId,
+      weddingId
+    )
+    if (!belongs) {
+      throw new TRPCError({ code: 'FORBIDDEN' })
+    }
+
     return this.invitationRepository.update(data.guestId, data.eventId, {
       rsvp: data.rsvp,
     })
@@ -45,6 +82,17 @@ export class InvitationService {
       return undefined
     }
     return this.invitationRepository.findByWeddingId(weddingId)
+  }
+
+  /**
+   * Get all invitations for an event, scoped to a wedding (throws FORBIDDEN if out of scope)
+   */
+  async getByEventIdInWedding(eventId: string, weddingId: string): Promise<Invitation[]> {
+    const inScope = await this.invitationRepository.eventBelongsToWedding(eventId, weddingId)
+    if (!inScope) {
+      throw new TRPCError({ code: 'FORBIDDEN' })
+    }
+    return this.invitationRepository.findByEventId(eventId)
   }
 
   /**
@@ -105,5 +153,17 @@ export class InvitationService {
       }))
     )
     return this.invitationRepository.createMany(invitations)
+  }
+
+  private requireInvitationPermission(ctx: AuthzContext, action: 'create'): void {
+    requirePermission(ctx, {
+      invitation: [action],
+    })
+  }
+
+  private requireRsvpPermission(ctx: AuthzContext, action: 'edit_response'): void {
+    requirePermission(ctx, {
+      rsvp: [action],
+    })
   }
 }

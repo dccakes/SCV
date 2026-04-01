@@ -1,4 +1,5 @@
 import type { ModelMessage } from 'ai'
+import type { AuthzContext } from '~/server/authz/authorization.types'
 
 // ── Actor Types ──────────────────────────────────────────────────────────────
 
@@ -12,6 +13,7 @@ export interface EttaRequest {
   actor: EttaActorType
   weddingId: string
   guestId?: number
+  authz?: AuthzContext
   messages: ModelMessage[]
 }
 
@@ -20,6 +22,7 @@ export interface EttaContext {
   ettaActorId: string
   actor: EttaActorType
   guestId?: number
+  authz?: AuthzContext
 
   // Wedding snapshot injected into system prompt
   wedding: {

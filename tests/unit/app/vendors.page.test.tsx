@@ -20,9 +20,7 @@ jest.mock('next/navigation', () => ({
 jest.mock('~/trpc/server', () => ({
   api: {
     vendor: {
-      getAll: {
-        query: () => mockGetVendors(),
-      },
+      getAll: () => mockGetVendors(),
     },
   },
 }))

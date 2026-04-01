@@ -15,13 +15,14 @@
 // biome-ignore lint/style/noRestrictedImports: architectural violation, tracked in ARCHITECTURAL_VIOLATIONS.md
 import type { PrismaClient } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
-
 import type {
   CreateHouseholdResult,
   CreateHouseholdWithGuestsInput,
   UpdateHouseholdResult,
   UpdateHouseholdWithGuestsInput,
 } from '~/server/application/household-management/household-management.types'
+import type { AuthzContext } from '~/server/authz/authorization.types'
+import { requirePermission } from '~/server/authz/permission-checker'
 import type { GiftRepository } from '~/server/domains/gift/gift.repository'
 import type { GuestRepository } from '~/server/domains/guest/guest.repository'
 import type { HouseholdRepository } from '~/server/domains/household/household.repository'
@@ -31,8 +32,8 @@ import type { InvitationRepository } from '~/server/domains/invitation/invitatio
 export class HouseholdManagementService {
   constructor(
     private householdRepo: HouseholdRepository,
-    _guestRepo: GuestRepository,
-    _invitationRepo: InvitationRepository,
+    private guestRepo: GuestRepository,
+    private invitationRepo: InvitationRepository,
     _giftRepo: GiftRepository,
     private db: PrismaClient // For guestTagAssignment operations until we create a repository
   ) {}
@@ -50,9 +51,16 @@ export class HouseholdManagementService {
    * Wrapped in a transaction to ensure household + guests + invitations are created atomically.
    */
   async createHouseholdWithGuests(
+    ctx: AuthzContext,
     weddingId: string,
     data: CreateHouseholdWithGuestsInput
   ): Promise<CreateHouseholdResult> {
+    requirePermission(ctx, { guest: ['create'] })
+    await this.assertEventIdsInWeddingScope(
+      data.guestParty.flatMap((guest) => Object.keys(guest.invites)),
+      weddingId
+    )
+
     return this.db.$transaction(async (tx) => {
       // Extract event IDs from the first guest's invites
       const eventIds = Object.keys(data.guestParty[0]?.invites ?? {})
@@ -177,9 +185,25 @@ export class HouseholdManagementService {
    * Wrapped in a transaction to ensure all updates are atomic.
    */
   async updateHouseholdWithGuests(
+    ctx: AuthzContext,
     weddingId: string,
     data: UpdateHouseholdWithGuestsInput
   ): Promise<UpdateHouseholdResult> {
+    requirePermission(ctx, { guest: ['update'] })
+    await this.assertHouseholdInWeddingScope(data.householdId, weddingId)
+    await this.assertGuestIdsInWeddingScope(
+      data.guestParty.flatMap((guest) => (guest.guestId ? [guest.guestId] : [])),
+      weddingId
+    )
+    await this.assertGuestIdsInWeddingScope(data.deletedGuests ?? [], weddingId)
+    await this.assertEventIdsInWeddingScope(
+      [
+        ...data.guestParty.flatMap((guest) => Object.keys(guest.invites)),
+        ...data.gifts.map((gift) => gift.eventId),
+      ],
+      weddingId
+    )
+
     return this.db.$transaction(async (tx) => {
       // 1. Update household details
       const updatedHousehold = await tx.household.update({
@@ -355,7 +379,14 @@ export class HouseholdManagementService {
    *
    * Note: Cascading deletes are handled by database relations
    */
-  async deleteHousehold(householdId: string): Promise<string> {
+  async deleteHousehold(
+    ctx: AuthzContext,
+    householdId: string,
+    weddingId: string
+  ): Promise<string> {
+    requirePermission(ctx, { guest: ['delete'] })
+    await this.assertHouseholdInWeddingScope(householdId, weddingId)
+
     const deletedHousehold = await this.householdRepo.delete(householdId)
     return deletedHousehold.id
   }
@@ -367,16 +398,22 @@ export class HouseholdManagementService {
    * Returns the count of successfully created households.
    */
   async bulkCreateHouseholds(
+    ctx: AuthzContext,
     weddingId: string,
-    households: Parameters<HouseholdManagementService['createHouseholdWithGuests']>[1][]
+    households: Parameters<HouseholdManagementService['createHouseholdWithGuests']>[2][]
   ): Promise<{ created: number; failed: number }> {
+    requirePermission(ctx, { guest: ['import'] })
+
     let created = 0
     let failed = 0
     for (const household of households) {
       try {
-        await this.createHouseholdWithGuests(weddingId, household)
+        await this.createHouseholdWithGuests(ctx, weddingId, household)
         created++
-      } catch {
+      } catch (error) {
+        if (error instanceof TRPCError && ['FORBIDDEN', 'UNAUTHORIZED'].includes(error.code)) {
+          throw error
+        }
         failed++
       }
     }
@@ -386,7 +423,52 @@ export class HouseholdManagementService {
   /**
    * Search households by guest name
    */
-  async searchHouseholds(searchText: string): Promise<HouseholdSearchResult[]> {
-    return this.householdRepo.search(searchText)
+  async searchHouseholds(
+    ctx: AuthzContext,
+    weddingId: string,
+    searchText: string
+  ): Promise<HouseholdSearchResult[]> {
+    requirePermission(ctx, { guest: ['read'] })
+    return this.householdRepo.search(searchText, weddingId)
+  }
+
+  private async assertHouseholdInWeddingScope(
+    householdId: string,
+    weddingId: string
+  ): Promise<void> {
+    const belongsToWedding = await this.householdRepo.belongsToWedding(householdId, weddingId)
+
+    if (!belongsToWedding) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'You do not have permission to modify this household',
+      })
+    }
+  }
+
+  private async assertGuestIdsInWeddingScope(guestIds: number[], weddingId: string): Promise<void> {
+    const uniqueGuestIds = [...new Set(guestIds)]
+    for (const guestId of uniqueGuestIds) {
+      const belongsToWedding = await this.guestRepo.belongsToWedding(guestId, weddingId)
+      if (!belongsToWedding) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: `Guest ${guestId} is outside the requested wedding scope`,
+        })
+      }
+    }
+  }
+
+  private async assertEventIdsInWeddingScope(eventIds: string[], weddingId: string): Promise<void> {
+    const uniqueEventIds = [...new Set(eventIds)]
+    for (const eventId of uniqueEventIds) {
+      const belongsToWedding = await this.invitationRepo.eventBelongsToWedding(eventId, weddingId)
+      if (!belongsToWedding) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: `Event ${eventId} is outside the requested wedding scope`,
+        })
+      }
+    }
   }
 }

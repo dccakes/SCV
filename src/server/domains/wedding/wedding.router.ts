@@ -6,10 +6,11 @@
  */
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
+import { eventService } from '~/server/domains/event'
 import { weddingService } from '~/server/domains/wedding'
 import {
   createWeddingSchema,
-  getByUserIdSchema,
+  updateWeddingDetailsSchema,
   updateWeddingSchema,
 } from '~/server/domains/wedding/wedding.validator'
 
@@ -29,19 +30,72 @@ export const weddingRouter = createTRPCRouter({
    * Update wedding settings
    */
   update: protectedProcedure.input(updateWeddingSchema).mutation(async ({ ctx, input }) => {
-    // First get the user's wedding ID
-    const wedding = await weddingService.getByUserId(ctx.auth.userId)
-    if (!wedding) {
-      throw new Error('Wedding not found')
-    }
-    return weddingService.updateWedding(wedding.id, input)
+    const wedding = await weddingService.getScopedWeddingByUserId(
+      ctx.auth.userId,
+      ctx.auth.activeOrganization?.organizationId ?? null
+    )
+
+    return weddingService.updateWedding({
+      ctx: ctx.authz,
+      weddingId: wedding.id,
+      data: input,
+    })
   }),
+
+  /**
+   * Get wedding details for settings page (names + first event date/location)
+   */
+  getDetails: protectedProcedure.query(async ({ ctx }) => {
+    const wedding = await weddingService.getScopedWeddingByUserId(
+      ctx.auth.userId,
+      ctx.auth.activeOrganization?.organizationId ?? null
+    )
+
+    // TODO(review-quality): replace first-event fallback with explicit ceremony/primary-event lookup.
+    const events = await eventService.getWeddingEvents(wedding.id)
+    const primaryEvent = events?.[0]
+    return {
+      groomFirstName: wedding.groomFirstName,
+      groomLastName: wedding.groomLastName,
+      brideFirstName: wedding.brideFirstName,
+      brideLastName: wedding.brideLastName,
+      weddingDate: primaryEvent?.date?.toISOString() ?? undefined,
+      weddingLocation: primaryEvent?.venue ?? undefined,
+      primaryEventId: primaryEvent?.id ?? undefined,
+    }
+  }),
+
+  /**
+   * Update wedding couple names from settings page
+   */
+  updateDetails: protectedProcedure
+    .input(updateWeddingDetailsSchema)
+    .mutation(async ({ ctx, input }) => {
+      const wedding = await weddingService.getScopedWeddingByUserId(
+        ctx.auth.userId,
+        ctx.auth.activeOrganization?.organizationId ?? null
+      )
+
+      // Update wedding names
+      await weddingService.updateWedding({
+        ctx: ctx.authz,
+        weddingId: wedding.id,
+        data: {
+          groomFirstName: input.groomFirstName,
+          groomLastName: input.groomLastName,
+          brideFirstName: input.brideFirstName,
+          brideLastName: input.brideLastName,
+        },
+      })
+
+      return { success: true }
+    }),
 
   /**
    * Get wedding for current user
    */
-  getByUserId: protectedProcedure.input(getByUserIdSchema).query(async ({ ctx, input }) => {
-    return weddingService.getByUserId(input?.userId ?? ctx.auth.userId)
+  getByUserId: protectedProcedure.query(async ({ ctx }) => {
+    return weddingService.getByUserId(ctx.auth.userId)
   }),
 
   /**

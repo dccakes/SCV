@@ -9,6 +9,10 @@
 import { TRPCError } from '@trpc/server'
 
 // Must mock before importing the service
+jest.mock('~/server/authz/permission-checker', () => ({
+  requirePermission: jest.fn(),
+}))
+
 jest.mock('~/server/domains/household/household.repository')
 jest.mock('~/server/domains/guest/guest.repository')
 jest.mock('~/server/domains/invitation/invitation.repository')
@@ -16,15 +20,18 @@ jest.mock('~/server/domains/gift/gift.repository')
 
 // @ts-expect-error - Importing mock functions from mocked module
 import { HouseholdManagementService } from '~/server/application/household-management/household-management.service'
+import { requirePermission } from '~/server/authz/permission-checker'
 import { GiftRepository, resetMocks as resetGiftMocks } from '~/server/domains/gift/gift.repository'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   GuestRepository,
+  mockBelongsToWedding as mockGuestBelongsToWedding,
   resetMocks as resetGuestMocks,
 } from '~/server/domains/guest/guest.repository'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   HouseholdRepository,
+  mockBelongsToWedding,
   mockDelete,
   mockHousehold,
   resetMocks as resetHouseholdMocks,
@@ -32,11 +39,16 @@ import {
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   InvitationRepository,
+  mockEventBelongsToWedding,
   mockInvitation,
   resetMocks as resetInvitationMocks,
 } from '~/server/domains/invitation/invitation.repository'
 
 const mockDeleteFn = mockDelete as jest.Mock
+const mockBelongsToWeddingFn = mockBelongsToWedding as jest.Mock
+const mockGuestBelongsToWeddingFn = mockGuestBelongsToWedding as jest.Mock
+const mockEventBelongsToWeddingFn = mockEventBelongsToWedding as jest.Mock
+const mockRequirePermission = requirePermission as jest.Mock
 
 // Mock guest data for refetch
 const mockGuestWithInvitations = {
@@ -105,6 +117,10 @@ const createMockDb = () => {
 describe('HouseholdManagementService', () => {
   let service: HouseholdManagementService
   let mockDb: ReturnType<typeof createMockDb>
+  const actorContext = {
+    userId: 'actor-1',
+    activeOrganization: null,
+  }
 
   beforeEach(() => {
     resetHouseholdMocks()
@@ -112,6 +128,11 @@ describe('HouseholdManagementService', () => {
     resetInvitationMocks()
     resetGiftMocks()
     mockDb = createMockDb()
+    mockRequirePermission.mockReset()
+    mockRequirePermission.mockReturnValue({ organizationId: 'org-1', role: 'admin' })
+    mockBelongsToWeddingFn.mockResolvedValue(true)
+    mockGuestBelongsToWeddingFn.mockResolvedValue(true)
+    mockEventBelongsToWeddingFn.mockResolvedValue(true)
 
     const mockHouseholdRepo = new HouseholdRepository({})
     const mockGuestRepo = new GuestRepository({})
@@ -128,6 +149,36 @@ describe('HouseholdManagementService', () => {
   })
 
   describe('createHouseholdWithGuests', () => {
+    it('should reject create when actor lacks guest create permission', async () => {
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      })
+
+      await expect(
+        service.createHouseholdWithGuests(actorContext, 'wedding-123', {
+          guestParty: [{ firstName: 'John', lastName: 'Doe', invites: {} }],
+        })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+
+    it('should reject create when invitation event is outside wedding scope', async () => {
+      mockEventBelongsToWeddingFn.mockResolvedValue(false)
+
+      await expect(
+        service.createHouseholdWithGuests(actorContext, 'wedding-123', {
+          guestParty: [
+            {
+              firstName: 'John',
+              lastName: 'Doe',
+              invites: { 'event-out': 'Invited' },
+            },
+          ],
+        })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+
+      expect(mockDb.$transaction).not.toHaveBeenCalled()
+    })
+
     it('should create a household with guests and invitations in a transaction', async () => {
       mockDb.household.create.mockResolvedValue({
         ...mockHousehold,
@@ -137,7 +188,7 @@ describe('HouseholdManagementService', () => {
       mockDb.guest.create.mockResolvedValue(mockGuestWithInvitations)
       mockDb.guest.findUnique.mockResolvedValue(mockGuestWithInvitations)
 
-      const result = await service.createHouseholdWithGuests('wedding-123', {
+      const result = await service.createHouseholdWithGuests(actorContext, 'wedding-123', {
         address1: '123 Main St',
         city: 'New York',
         state: 'NY',
@@ -177,7 +228,7 @@ describe('HouseholdManagementService', () => {
         .mockResolvedValueOnce({ ...mockGuestWithInvitations, isPrimaryContact: true })
         .mockResolvedValueOnce(mockGuest2)
 
-      const result = await service.createHouseholdWithGuests('wedding-123', {
+      const result = await service.createHouseholdWithGuests(actorContext, 'wedding-123', {
         guestParty: [
           { firstName: 'John', lastName: 'Doe', invites: { 'event-123': 'Invited' } },
           { firstName: 'Jane', lastName: 'Doe', invites: { 'event-123': 'Invited' } },
@@ -197,7 +248,7 @@ describe('HouseholdManagementService', () => {
       mockDb.guest.create.mockResolvedValue(mockGuestWithInvitations)
       mockDb.guest.findUnique.mockResolvedValue(mockGuestWithInvitations)
 
-      await service.createHouseholdWithGuests('wedding-123', {
+      await service.createHouseholdWithGuests(actorContext, 'wedding-123', {
         guestParty: [
           {
             firstName: 'Baby',
@@ -228,7 +279,7 @@ describe('HouseholdManagementService', () => {
       mockDb.guest.create.mockResolvedValue(mockGuestWithInvitations)
       mockDb.guest.findUnique.mockResolvedValue(mockGuestWithInvitations)
 
-      await service.createHouseholdWithGuests('wedding-123', {
+      await service.createHouseholdWithGuests(actorContext, 'wedding-123', {
         guestParty: [
           {
             firstName: 'Regular',
@@ -255,7 +306,7 @@ describe('HouseholdManagementService', () => {
       mockDb.household.create.mockResolvedValue(null)
 
       await expect(
-        service.createHouseholdWithGuests('wedding-123', {
+        service.createHouseholdWithGuests(actorContext, 'wedding-123', {
           guestParty: [{ firstName: 'John', lastName: 'Doe', invites: {} }],
         })
       ).rejects.toThrow(TRPCError)
@@ -263,6 +314,51 @@ describe('HouseholdManagementService', () => {
   })
 
   describe('updateHouseholdWithGuests', () => {
+    it('should reject update when deleted guest is outside wedding scope', async () => {
+      mockGuestBelongsToWeddingFn.mockResolvedValue(false)
+
+      await expect(
+        service.updateHouseholdWithGuests(actorContext, 'wedding-123', {
+          householdId: 'household-123',
+          guestParty: [
+            {
+              guestId: 1,
+              firstName: 'John',
+              lastName: 'Doe',
+              isPrimaryContact: true,
+              invites: {},
+            },
+          ],
+          deletedGuests: [999],
+          gifts: [],
+        })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+
+      expect(mockDb.$transaction).not.toHaveBeenCalled()
+    })
+
+    it('should reject update when gift event is outside wedding scope', async () => {
+      mockEventBelongsToWeddingFn.mockResolvedValue(false)
+
+      await expect(
+        service.updateHouseholdWithGuests(actorContext, 'wedding-123', {
+          householdId: 'household-123',
+          guestParty: [
+            {
+              guestId: 1,
+              firstName: 'John',
+              lastName: 'Doe',
+              isPrimaryContact: true,
+              invites: {},
+            },
+          ],
+          gifts: [{ eventId: 'event-out', description: 'x', thankyou: false }],
+        })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+
+      expect(mockDb.$transaction).not.toHaveBeenCalled()
+    })
+
     it('should update household details in a transaction', async () => {
       const updatedHousehold = { ...mockHousehold, address1: '456 New St' }
       mockDb.household.update.mockResolvedValue(updatedHousehold)
@@ -272,7 +368,7 @@ describe('HouseholdManagementService', () => {
       mockDb.invitation.update.mockResolvedValue(mockInvitation)
       mockDb.gift.upsert.mockResolvedValue(mockGift)
 
-      const result = await service.updateHouseholdWithGuests('wedding-123', {
+      const result = await service.updateHouseholdWithGuests(actorContext, 'wedding-123', {
         householdId: 'household-123',
         address1: '456 New St',
         guestParty: [
@@ -294,7 +390,7 @@ describe('HouseholdManagementService', () => {
       mockDb.invitation.update.mockResolvedValue(mockInvitation)
       mockDb.gift.upsert.mockResolvedValue(mockGift)
 
-      await service.updateHouseholdWithGuests('wedding-123', {
+      await service.updateHouseholdWithGuests(actorContext, 'wedding-123', {
         householdId: 'household-123',
         guestParty: [
           { guestId: 1, firstName: 'John', lastName: 'Doe', invites: { 'event-123': 'Attending' } },
@@ -316,7 +412,7 @@ describe('HouseholdManagementService', () => {
       mockDb.invitation.update.mockResolvedValue(mockInvitation)
       mockDb.gift.upsert.mockResolvedValue(mockGift)
 
-      await service.updateHouseholdWithGuests('wedding-123', {
+      await service.updateHouseholdWithGuests(actorContext, 'wedding-123', {
         householdId: 'household-123',
         guestParty: [
           { guestId: 1, firstName: 'John', lastName: 'Doe', invites: { 'event-123': 'Attending' } },
@@ -335,7 +431,7 @@ describe('HouseholdManagementService', () => {
       mockDb.invitation.update.mockResolvedValue(mockInvitation)
       mockDb.gift.upsert.mockResolvedValue(mockGift)
 
-      await service.updateHouseholdWithGuests('wedding-123', {
+      await service.updateHouseholdWithGuests(actorContext, 'wedding-123', {
         householdId: 'household-123',
         guestParty: [
           {
@@ -363,7 +459,7 @@ describe('HouseholdManagementService', () => {
       mockDb.invitation.update.mockResolvedValue(mockInvitation)
       mockDb.gift.upsert.mockResolvedValue(mockGift)
 
-      await service.updateHouseholdWithGuests('wedding-123', {
+      await service.updateHouseholdWithGuests(actorContext, 'wedding-123', {
         householdId: 'household-123',
         guestParty: [
           { guestId: 1, firstName: 'John', lastName: 'Doe', invites: { 'event-123': 'Attending' } },
@@ -386,7 +482,7 @@ describe('HouseholdManagementService', () => {
       mockDb.invitation.update.mockResolvedValue(mockInvitation)
       mockDb.gift.upsert.mockResolvedValue(mockGift)
 
-      await service.updateHouseholdWithGuests('wedding-123', {
+      await service.updateHouseholdWithGuests(actorContext, 'wedding-123', {
         householdId: 'household-123',
         guestParty: [
           { guestId: 1, firstName: 'John', lastName: 'Doe', invites: { 'event-123': 'Attending' } },
@@ -412,7 +508,7 @@ describe('HouseholdManagementService', () => {
       mockDb.invitation.deleteMany.mockResolvedValue({ count: 1 })
       mockDb.gift.upsert.mockResolvedValue(mockGift)
 
-      await service.updateHouseholdWithGuests('wedding-123', {
+      await service.updateHouseholdWithGuests(actorContext, 'wedding-123', {
         householdId: 'household-123',
         guestParty: [
           {
@@ -442,7 +538,7 @@ describe('HouseholdManagementService', () => {
       mockDb.invitation.deleteMany.mockResolvedValue({ count: 2 })
       mockDb.gift.upsert.mockResolvedValue(mockGift)
 
-      await service.updateHouseholdWithGuests('wedding-123', {
+      await service.updateHouseholdWithGuests(actorContext, 'wedding-123', {
         householdId: 'household-123',
         guestParty: [
           {
@@ -466,7 +562,7 @@ describe('HouseholdManagementService', () => {
     it('should delete a household and return its id', async () => {
       mockDeleteFn.mockResolvedValue(mockHousehold)
 
-      const result = await service.deleteHousehold('household-123')
+      const result = await service.deleteHousehold(actorContext, 'household-123', 'wedding-123')
 
       expect(result).toBe('household-123')
       expect(mockDeleteFn).toHaveBeenCalledWith('household-123')
@@ -475,7 +571,7 @@ describe('HouseholdManagementService', () => {
     it('should call delete with correct householdId', async () => {
       mockDeleteFn.mockResolvedValue({ ...mockHousehold, id: 'another-household' })
 
-      await service.deleteHousehold('another-household')
+      await service.deleteHousehold(actorContext, 'another-household', 'wedding-123')
 
       expect(mockDeleteFn).toHaveBeenCalledWith('another-household')
     })

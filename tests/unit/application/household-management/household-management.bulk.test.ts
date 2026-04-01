@@ -8,6 +8,10 @@
 import { TRPCError } from '@trpc/server'
 
 // Must mock before importing the service
+jest.mock('~/server/authz/permission-checker', () => ({
+  requirePermission: jest.fn(),
+}))
+
 jest.mock('~/server/domains/household/household.repository')
 jest.mock('~/server/domains/guest/guest.repository')
 jest.mock('~/server/domains/invitation/invitation.repository')
@@ -15,10 +19,12 @@ jest.mock('~/server/domains/gift/gift.repository')
 
 // @ts-expect-error - Importing mock functions from mocked module
 import { HouseholdManagementService } from '~/server/application/household-management/household-management.service'
+import { requirePermission } from '~/server/authz/permission-checker'
 import { GiftRepository, resetMocks as resetGiftMocks } from '~/server/domains/gift/gift.repository'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   GuestRepository,
+  mockBelongsToWedding as mockGuestBelongsToWedding,
   resetMocks as resetGuestMocks,
 } from '~/server/domains/guest/guest.repository'
 // @ts-expect-error - Importing mock functions from mocked module
@@ -29,8 +35,13 @@ import {
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   InvitationRepository,
+  mockEventBelongsToWedding,
   resetMocks as resetInvitationMocks,
 } from '~/server/domains/invitation/invitation.repository'
+
+const mockRequirePermission = requirePermission as jest.Mock
+const mockGuestBelongsToWeddingFn = mockGuestBelongsToWedding as jest.Mock
+const mockEventBelongsToWeddingFn = mockEventBelongsToWedding as jest.Mock
 
 // Mock guest returned from tx.guest.create / findUnique
 const mockCreatedGuest = {
@@ -119,12 +130,20 @@ const SECOND_HOUSEHOLD = {
 describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
   let service: HouseholdManagementService
   let mockTx: MockTx
+  const actorContext = {
+    userId: 'actor-1',
+    activeOrganization: null,
+  }
 
   beforeEach(() => {
     resetHouseholdMocks()
     resetGuestMocks()
     resetInvitationMocks()
     resetGiftMocks()
+    mockRequirePermission.mockReset()
+    mockRequirePermission.mockReturnValue({ organizationId: 'org-1', role: 'admin' })
+    mockGuestBelongsToWeddingFn.mockResolvedValue(true)
+    mockEventBelongsToWeddingFn.mockResolvedValue(true)
     mockTx = createMockTx()
     const mockDb = createMockDb(mockTx)
 
@@ -144,13 +163,15 @@ describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
 
   describe('success cases', () => {
     it('should return { created: 1 } for a single household', async () => {
-      const result = await service.bulkCreateHouseholds('wedding-123', [SINGLE_GUEST_HOUSEHOLD])
+      const result = await service.bulkCreateHouseholds(actorContext, 'wedding-123', [
+        SINGLE_GUEST_HOUSEHOLD,
+      ])
 
       expect(result).toEqual({ created: 1, failed: 0 })
     })
 
     it('should return { created: 2 } when two households succeed', async () => {
-      const result = await service.bulkCreateHouseholds('wedding-123', [
+      const result = await service.bulkCreateHouseholds(actorContext, 'wedding-123', [
         SINGLE_GUEST_HOUSEHOLD,
         SECOND_HOUSEHOLD,
       ])
@@ -159,13 +180,16 @@ describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
     })
 
     it('should call tx.household.create once per household', async () => {
-      await service.bulkCreateHouseholds('wedding-123', [SINGLE_GUEST_HOUSEHOLD, SECOND_HOUSEHOLD])
+      await service.bulkCreateHouseholds(actorContext, 'wedding-123', [
+        SINGLE_GUEST_HOUSEHOLD,
+        SECOND_HOUSEHOLD,
+      ])
 
       expect(mockTx.household.create).toHaveBeenCalledTimes(2)
     })
 
     it('should forward the weddingId to each household creation', async () => {
-      await service.bulkCreateHouseholds('wedding-xyz', [SINGLE_GUEST_HOUSEHOLD])
+      await service.bulkCreateHouseholds(actorContext, 'wedding-xyz', [SINGLE_GUEST_HOUSEHOLD])
 
       expect(mockTx.household.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -190,7 +214,9 @@ describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
         ],
       }
 
-      const result = await service.bulkCreateHouseholds('wedding-123', [householdWithAddress])
+      const result = await service.bulkCreateHouseholds(actorContext, 'wedding-123', [
+        householdWithAddress,
+      ])
 
       expect(result).toEqual({ created: 1, failed: 0 })
       expect(mockTx.household.create).toHaveBeenCalledWith(
@@ -207,13 +233,13 @@ describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
 
   describe('empty array', () => {
     it('should return { created: 0 } for an empty households array', async () => {
-      const result = await service.bulkCreateHouseholds('wedding-123', [])
+      const result = await service.bulkCreateHouseholds(actorContext, 'wedding-123', [])
 
       expect(result).toEqual({ created: 0, failed: 0 })
     })
 
     it('should not call the database when given an empty array', async () => {
-      await service.bulkCreateHouseholds('wedding-123', [])
+      await service.bulkCreateHouseholds(actorContext, 'wedding-123', [])
 
       expect(mockTx.household.create).not.toHaveBeenCalled()
       expect(mockTx.guest.create).not.toHaveBeenCalled()
@@ -221,12 +247,20 @@ describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
   })
 
   describe('partial failure', () => {
+    it('should rethrow FORBIDDEN errors from nested household authorization checks', async () => {
+      mockEventBelongsToWeddingFn.mockResolvedValue(false)
+
+      await expect(
+        service.bulkCreateHouseholds(actorContext, 'wedding-123', [SINGLE_GUEST_HOUSEHOLD])
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+
     it('should count the second household as failed when tx.household.create returns null', async () => {
       mockTx.household.create
         .mockResolvedValueOnce(mockCreatedHousehold) // household #1 succeeds
         .mockResolvedValueOnce(null) // household #2 returns null → TRPCError
 
-      const result = await service.bulkCreateHouseholds('wedding-123', [
+      const result = await service.bulkCreateHouseholds(actorContext, 'wedding-123', [
         SINGLE_GUEST_HOUSEHOLD,
         SECOND_HOUSEHOLD,
       ])
@@ -242,7 +276,7 @@ describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
         return Promise.resolve(mockCreatedHousehold)
       })
 
-      const result = await service.bulkCreateHouseholds('wedding-123', [
+      const result = await service.bulkCreateHouseholds(actorContext, 'wedding-123', [
         SINGLE_GUEST_HOUSEHOLD,
         SECOND_HOUSEHOLD,
         { guestParty: [{ firstName: 'Third', lastName: 'Guest', invites: {} }] },
@@ -257,7 +291,9 @@ describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
       // Simulate guest refetch returning null → TRPCError inside createHouseholdWithGuests
       mockTx.guest.findUnique.mockResolvedValue(null)
 
-      const result = await service.bulkCreateHouseholds('wedding-123', [SINGLE_GUEST_HOUSEHOLD])
+      const result = await service.bulkCreateHouseholds(actorContext, 'wedding-123', [
+        SINGLE_GUEST_HOUSEHOLD,
+      ])
 
       expect(result).toEqual({ created: 0, failed: 1 })
     })
@@ -265,7 +301,7 @@ describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
     it('should not throw when all households fail', async () => {
       mockTx.household.create.mockRejectedValue(new Error('DB down'))
 
-      const result = await service.bulkCreateHouseholds('wedding-123', [
+      const result = await service.bulkCreateHouseholds(actorContext, 'wedding-123', [
         SINGLE_GUEST_HOUSEHOLD,
         SECOND_HOUSEHOLD,
       ])
@@ -278,7 +314,9 @@ describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
         new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Something broke' })
       )
 
-      const result = await service.bulkCreateHouseholds('wedding-123', [SINGLE_GUEST_HOUSEHOLD])
+      const result = await service.bulkCreateHouseholds(actorContext, 'wedding-123', [
+        SINGLE_GUEST_HOUSEHOLD,
+      ])
 
       expect(result).toEqual({ created: 0, failed: 1 })
     })

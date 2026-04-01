@@ -29,7 +29,8 @@ export function getGuestTools(ctx: EttaContext) {
         })
       ),
       execute: async ({ guestId, ...data }) => {
-        const guest = await guestService.updateGuest(guestId, data)
+        if (!ctx.authz) throw new Error('Authorization context required')
+        const guest = await guestService.updateGuest(ctx.authz, guestId, data)
         return { guest }
       },
     }),

@@ -336,6 +336,17 @@ test.describe('XSS Injection Prevention', () => {
 
     const xssPayload = '<script>alert("xss")</script>'
 
+    // Clean up any leftover XSS vendors from prior runs before the test
+    const escapedPayload = xssPayload.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const removeBtns = page.getByLabel(new RegExp(`remove.*${escapedPayload}`, 'i'))
+    let leftoverCount = await removeBtns.count()
+    while (leftoverCount > 0) {
+      page.once('dialog', (d) => d.accept())
+      await removeBtns.first().click()
+      await page.waitForTimeout(300)
+      leftoverCount = await removeBtns.count()
+    }
+
     // Create a vendor with XSS in the name
     const otherSection = page.locator('section').filter({ hasText: /^other/i })
     await otherSection.getByRole('button', { name: /add vendor/i }).click()
@@ -348,21 +359,26 @@ test.describe('XSS Injection Prevention', () => {
     // The vendor should be rendered as text, not executed
     await expect(page.locator('body')).toContainText(xssPayload)
 
-    // Verify no injected script tags contain the XSS payload
+    // Verify no executable script tags contain the XSS payload.
+    // Exclude Next.js RSC flight data scripts (self.__next_f.push) and __NEXT_DATA__ which
+    // serialize page data as escaped text — not executable JS — so "alert" in them is safe.
     const injectedScripts = await page.evaluate(() => {
-      return Array.from(document.querySelectorAll('script')).filter((s) =>
-        s.textContent?.includes('alert')
-      ).length
+      return Array.from(document.querySelectorAll('script')).filter((s) => {
+        const text = s.textContent ?? ''
+        const isNextRscFlight = text.trimStart().startsWith('self.__next_f')
+        const isNextData = s.id === '__NEXT_DATA__' || s.type === 'application/json'
+        return !isNextRscFlight && !isNextData && text.includes('alert')
+      }).length
     })
     expect(injectedScripts).toBe(0)
 
-    // Clean up — delete the vendor
-    page.once('dialog', (d) => d.accept())
-    const removeBtn = page.getByLabel(
-      new RegExp(`remove.*${xssPayload.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i')
-    )
-    if (await removeBtn.isVisible()) {
-      await removeBtn.click()
+    // Clean up — delete all XSS vendors created in this test
+    let remaining = await removeBtns.count()
+    while (remaining > 0) {
+      page.once('dialog', (d) => d.accept())
+      await removeBtns.first().click()
+      await page.waitForTimeout(300)
+      remaining = await removeBtns.count()
     }
   })
 
@@ -370,6 +386,16 @@ test.describe('XSS Injection Prevention', () => {
     await page.goto('/vendors')
 
     const xssPayload = '"><img src=x onerror=alert(1)>'
+
+    // Clean up any leftover "XSS Location Test" vendors from prior runs
+    const locationRemoveBtns = page.getByLabel(/remove.*xss location test/i)
+    let leftoverCount = await locationRemoveBtns.count()
+    while (leftoverCount > 0) {
+      page.once('dialog', (d) => d.accept())
+      await locationRemoveBtns.first().click()
+      await page.waitForTimeout(300)
+      leftoverCount = await locationRemoveBtns.count()
+    }
 
     const otherSection = page.locator('section').filter({ hasText: /^other/i })
     await otherSection.getByRole('button', { name: /add vendor/i }).click()
@@ -381,7 +407,10 @@ test.describe('XSS Injection Prevention', () => {
     await dialog.getByRole('button', { name: /add vendor/i }).click()
 
     // Open detail panel to verify location renders as text
-    await page.getByLabel(/view.*xss location test.*details/i).click()
+    await page
+      .getByLabel(/view.*xss location test.*details/i)
+      .first()
+      .click()
     const detailDialog = page.getByRole('dialog')
     await expect(detailDialog).toBeVisible()
 
@@ -391,6 +420,16 @@ test.describe('XSS Injection Prevention', () => {
     // Verify no rogue img elements were injected
     const rogueImages = await page.locator('img[src="x"]').count()
     expect(rogueImages).toBe(0)
+
+    // Clean up
+    await detailDialog.getByRole('button', { name: /close/i }).last().click()
+    let remaining = await locationRemoveBtns.count()
+    while (remaining > 0) {
+      page.once('dialog', (d) => d.accept())
+      await locationRemoveBtns.first().click()
+      await page.waitForTimeout(300)
+      remaining = await locationRemoveBtns.count()
+    }
   })
 
   test('should safely render XSS payload in quote notes', async ({ page }) => {
@@ -441,9 +480,11 @@ test.describe('Multi-User Data Isolation', () => {
 
     // Navigate to vendors page
     await page.goto('/vendors')
-    await page.waitForSelector('section')
+    // New users without an organization are redirected away from /vendors (to / or /onboarding)
+    // Either way they cannot see Shrek's seeded vendors
+    await page.waitForLoadState('networkidle')
 
-    // This new user should NOT see Shrek's seeded vendors
+    // This new user should NOT see Shrek's seeded vendors (regardless of where they land)
     const body = page.locator('body')
     await expect(body).not.toContainText(/far far away banquet hall/i)
     await expect(body).not.toContainText(/dragonfire catering/i)

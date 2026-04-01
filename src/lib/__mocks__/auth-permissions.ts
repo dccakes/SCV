@@ -1,0 +1,74 @@
+/**
+ * Manual mock for ~/lib/auth-permissions
+ *
+ * Reimplements the organizationRoles permission structure without importing
+ * from better-auth (which ships ESM-only and cannot be parsed by Jest).
+ *
+ * The permission sets here must mirror the real auth-permissions.ts exactly.
+ */
+
+type PermissionMap = Record<string, readonly string[]>
+
+type AuthorizeResult = { success: boolean; error?: string }
+
+const makeRole = (grants: PermissionMap) => ({
+  authorize: (permissions: PermissionMap): AuthorizeResult => {
+    for (const [resource, actions] of Object.entries(permissions)) {
+      const allowed = grants[resource] ?? []
+      for (const action of actions) {
+        if (!allowed.includes(action)) {
+          return { success: false, error: `${resource}:${action} not allowed` }
+        }
+      }
+    }
+    return { success: true }
+  },
+})
+
+const ownerGrants: PermissionMap = {
+  organization_member: ['read', 'invite', 'role_update', 'remove'],
+  invitation: ['read', 'create', 'send', 'resend', 'cancel'],
+  guest_event: ['read', 'add_guest_to_event', 'remove_guest_from_event'],
+  rsvp: ['read_responses', 'edit_response', 'export', 'reopen_submission'],
+  event: ['read', 'create', 'update', 'delete', 'rsvp_policy_update'],
+  guest: ['read', 'create', 'update', 'delete', 'import'],
+  vendor: ['read', 'create', 'update', 'delete'],
+  vendor_quote: ['read', 'create', 'update', 'delete'],
+  website: ['read', 'update', 'publish', 'password_update'],
+  wedding: ['read', 'update'],
+}
+
+const adminGrants: PermissionMap = { ...ownerGrants }
+
+const editorGrants: PermissionMap = {
+  organization_member: ['read'],
+  invitation: ['read', 'create'],
+  guest_event: ['read', 'add_guest_to_event', 'remove_guest_from_event'],
+  event: ['read', 'create', 'update', 'delete', 'rsvp_policy_update'],
+  guest: ['read', 'create', 'update', 'delete', 'import'],
+  vendor: ['read', 'create', 'update', 'delete'],
+  vendor_quote: ['read', 'create', 'update', 'delete'],
+  website: ['read', 'update', 'publish'],
+  wedding: ['read', 'update'],
+}
+
+const viewerGrants: PermissionMap = {
+  organization_member: ['read'],
+  invitation: ['read'],
+  guest_event: ['read'],
+  event: ['read'],
+  guest: ['read'],
+  vendor: ['read'],
+  vendor_quote: ['read'],
+  website: ['read'],
+  wedding: ['read'],
+}
+
+export const organizationRoles = {
+  owner: makeRole(ownerGrants),
+  admin: makeRole(adminGrants),
+  editor: makeRole(editorGrants),
+  viewer: makeRole(viewerGrants),
+} as const
+
+export type OrganizationRole = keyof typeof organizationRoles

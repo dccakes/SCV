@@ -27,16 +27,22 @@ export const householdRouter = createTRPCRouter({
    * Create a new household with guests
    */
   create: protectedProcedure.input(createHouseholdSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
-    return householdManagementService.createHouseholdWithGuests(weddingId, input)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.activeOrganization?.organizationId ?? null
+    )
+    return householdManagementService.createHouseholdWithGuests(ctx.authz, weddingId, input)
   }),
 
   /**
    * Update a household with guests
    */
   update: protectedProcedure.input(updateHouseholdSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
-    return householdManagementService.updateHouseholdWithGuests(weddingId, input)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.activeOrganization?.organizationId ?? null
+    )
+    return householdManagementService.updateHouseholdWithGuests(ctx.authz, weddingId, input)
   }),
 
   /**
@@ -45,7 +51,10 @@ export const householdRouter = createTRPCRouter({
   bulkCreate: protectedProcedure
     .input(bulkCreateHouseholdsSchema)
     .mutation(async ({ ctx, input }) => {
-      const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
+      const weddingId = await weddingService.getWeddingIdByUserId(
+        ctx.auth.userId,
+        ctx.auth.activeOrganization?.organizationId ?? null
+      )
 
       // Validate that all invites event IDs belong to this wedding
       const validEvents = await eventService.getWeddingEvents(weddingId)
@@ -63,20 +72,28 @@ export const householdRouter = createTRPCRouter({
         }
       }
 
-      return householdManagementService.bulkCreateHouseholds(weddingId, input.households)
+      return householdManagementService.bulkCreateHouseholds(ctx.authz, weddingId, input.households)
     }),
 
   /**
    * Delete a household
    */
-  delete: protectedProcedure.input(deleteHouseholdSchema).mutation(async ({ input }) => {
-    return householdManagementService.deleteHousehold(input.householdId)
+  delete: protectedProcedure.input(deleteHouseholdSchema).mutation(async ({ ctx, input }) => {
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.activeOrganization?.organizationId ?? null
+    )
+    return householdManagementService.deleteHousehold(ctx.authz, input.householdId, weddingId)
   }),
 
   /**
    * Search households by guest name
    */
-  findBySearch: protectedProcedure.input(searchHouseholdSchema).query(async ({ input }) => {
-    return householdManagementService.searchHouseholds(input.searchText)
+  findBySearch: protectedProcedure.input(searchHouseholdSchema).query(async ({ ctx, input }) => {
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.activeOrganization?.organizationId ?? null
+    )
+    return householdManagementService.searchHouseholds(ctx.authz, weddingId, input.searchText)
   }),
 })

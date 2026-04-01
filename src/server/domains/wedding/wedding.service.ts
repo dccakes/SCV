@@ -8,6 +8,8 @@
 import { TRPCError } from '@trpc/server'
 
 import { provisionEtta } from '~/lib/etta/provision'
+import type { AuthzContext } from '~/server/authz/authorization.types'
+import { requirePermission } from '~/server/authz/permission-checker'
 import type { EventService } from '~/server/domains/event/event.service'
 import type { GuestTagService } from '~/server/domains/guest-tag/guest-tag.service'
 import type { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
@@ -77,7 +79,7 @@ export class WeddingService {
 
     // Create default "Wedding Day" event if date/location provided
     if (data.hasWeddingDetails && (weddingDate || weddingLocation)) {
-      await this.eventService.createEvent(wedding.id, {
+      await this.eventService.createEventSystem(wedding.id, {
         eventName: 'Ceremony',
         date: weddingDate ?? undefined,
         venue: weddingLocation ?? undefined,
@@ -97,7 +99,13 @@ export class WeddingService {
   /**
    * Update wedding settings
    */
-  async updateWedding(weddingId: string, data: UpdateWeddingInput): Promise<Wedding> {
+  async updateWedding(input: {
+    ctx: AuthzContext
+    weddingId: string
+    data: UpdateWeddingInput
+  }): Promise<Wedding> {
+    const { ctx, weddingId, data } = input
+    requirePermission(ctx, { wedding: ['update'] })
     return this.weddingRepository.update(weddingId, data)
   }
 
@@ -109,6 +117,35 @@ export class WeddingService {
       return null
     }
     return this.weddingRepository.findByUserId(userId)
+  }
+
+  async getScopedWeddingByUserId(
+    userId: string,
+    sessionActiveOrganizationId: string | null
+  ): Promise<Wedding> {
+    const wedding = await this.weddingRepository.findByUserId(userId)
+    if (!wedding) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'No wedding found for user. Please complete onboarding first.',
+      })
+    }
+
+    if (!wedding.organizationId) {
+      throw new TRPCError({
+        code: 'PRECONDITION_FAILED',
+        message: 'Wedding must be linked to an organization before protected actions are allowed',
+      })
+    }
+
+    if (sessionActiveOrganizationId && sessionActiveOrganizationId !== wedding.organizationId) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Active organization does not match the selected wedding',
+      })
+    }
+
+    return wedding
   }
 
   /**
@@ -129,14 +166,11 @@ export class WeddingService {
    * Get the wedding ID for a given user, throwing if not found.
    * Centralised helper used by domain routers to avoid duplication.
    */
-  async getWeddingIdByUserId(userId: string): Promise<string> {
-    const wedding = await this.weddingRepository.findByUserId(userId)
-    if (!wedding) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'No wedding found for user. Please complete onboarding first.',
-      })
-    }
+  async getWeddingIdByUserId(
+    userId: string,
+    sessionActiveOrganizationId: string | null = null
+  ): Promise<string> {
+    const wedding = await this.getScopedWeddingByUserId(userId, sessionActiveOrganizationId)
     return wedding.id
   }
 }

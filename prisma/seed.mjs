@@ -32,6 +32,10 @@ async function seed() {
   await prisma.$transaction(async (tx) => {
     await tx.wedding.deleteMany({ where: { id: fixture.wedding.id } })
 
+    if (fixture.organization) {
+      await tx.organization.deleteMany({ where: { id: fixture.organization.id } })
+    }
+
     for (const user of fixture.users) {
       const userName = `${user.firstName} ${user.lastName}`
       const hashedPassword = await hashPassword(user.password)
@@ -81,6 +85,27 @@ async function seed() {
       })
     }
 
+    if (fixture.organization) {
+      await tx.organization.create({
+        data: {
+          id: fixture.organization.id,
+          name: fixture.organization.name,
+          slug: fixture.organization.slug,
+        },
+      })
+
+      for (const user of fixture.users) {
+        await tx.member.create({
+          data: {
+            id: `member-${fixture.organization.id}-${user.id}`,
+            organizationId: fixture.organization.id,
+            userId: user.id,
+            role: user.isPrimary ? 'owner' : 'member',
+          },
+        })
+      }
+    }
+
     await tx.wedding.create({
       data: {
         id: fixture.wedding.id,
@@ -88,6 +113,7 @@ async function seed() {
         groomLastName: fixture.wedding.groomLastName,
         brideFirstName: fixture.wedding.brideFirstName,
         brideLastName: fixture.wedding.brideLastName,
+        organizationId: fixture.wedding.organizationId ?? fixture.organization?.id ?? null,
         enabledAddOns: fixture.wedding.enabledAddOns,
         selfFillToken: fixture.wedding.selfFillToken,
         selfFillTokenGeneratedAt: new Date(fixture.wedding.selfFillTokenGeneratedAt),

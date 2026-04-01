@@ -3,7 +3,6 @@ import { z } from 'zod'
 
 import type { EttaContext } from '~/lib/etta/types'
 import { db } from '~/server/db'
-import { invitationService } from '~/server/domains/invitation'
 
 export function getConciergeTools(ctx: EttaContext) {
   return {
@@ -42,10 +41,10 @@ export function getConciergeTools(ctx: EttaContext) {
         if (!ctx.guestId) {
           throw new Error('Guest context required')
         }
-        await invitationService.updateInvitation({
-          guestId: ctx.guestId,
-          eventId,
-          rsvp,
+        // Guest RSVP bypasses AuthzContext — authenticated via JWT token
+        await db.invitation.updateMany({
+          where: { guestId: ctx.guestId, eventId },
+          data: { rsvp },
         })
         return { message: 'RSVP submitted successfully' }
       },

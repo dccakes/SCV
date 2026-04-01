@@ -6,11 +6,17 @@ import { TRPCClientError } from '@trpc/client'
 import { TRPCError } from '@trpc/server'
 
 // Must mock before importing the service
+jest.mock('~/server/authz/permission-checker', () => ({
+  requirePermission: jest.fn(),
+}))
+
 jest.mock('~/server/domains/website/website.repository')
 jest.mock('~/server/infrastructure/database/client')
 
+import { requirePermission } from '~/server/authz/permission-checker'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
+  mockBelongsToWedding,
   mockCreate,
   mockFindBySubUrl,
   mockFindBySubUrlWithQuestions,
@@ -42,6 +48,8 @@ const mockUpdateRsvpEnabledFn = mockUpdateRsvpEnabled as jest.Mock
 const mockUpdateCoverPhotoFn = mockUpdateCoverPhoto as jest.Mock
 const mockWeddingFindUniqueFn = mockWeddingFindUnique as jest.Mock
 const mockEventFindManyFn = mockEventFindMany as jest.Mock
+const mockRequirePermission = requirePermission as jest.Mock
+const mockBelongsToWeddingFn = mockBelongsToWedding as jest.Mock
 
 const mockWedding = {
   id: 'wedding-123',
@@ -56,6 +64,10 @@ const mockWedding = {
 
 describe('WebsiteService', () => {
   let websiteService: WebsiteService
+  const actorContext = {
+    userId: 'actor-1',
+    activeOrganization: null,
+  }
   const mockHashPassword = jest.fn()
   const mockVerifyPassword = jest.fn()
   const mockCreateAccessToken = jest.fn()
@@ -68,6 +80,9 @@ describe('WebsiteService', () => {
     mockVerifyPassword.mockReset()
     mockCreateAccessToken.mockReset()
     mockVerifyAccessToken.mockReset()
+    mockRequirePermission.mockReset()
+    mockRequirePermission.mockReturnValue({ organizationId: 'org-1', role: 'admin' })
+    mockBelongsToWeddingFn.mockResolvedValue(true)
     const mockRepository = new WebsiteRepository({})
     const mockPasswordService = {
       hashPassword: mockHashPassword,
@@ -84,7 +99,7 @@ describe('WebsiteService', () => {
       mockFindBySubUrlFn.mockResolvedValue(null) // URL not taken
       mockCreateFn.mockResolvedValue(mockWebsite)
 
-      const result = await websiteService.enableWebsite('wedding-123', {
+      const result = await websiteService.enableWebsite(actorContext, 'wedding-123', {
         basePath: 'https://example.com',
         email: 'john@example.com',
       })
@@ -112,7 +127,7 @@ describe('WebsiteService', () => {
       mockFindBySubUrlFn.mockResolvedValue(null)
       mockCreateFn.mockResolvedValue(mockWebsite)
 
-      await websiteService.enableWebsite('wedding-123', {
+      await websiteService.enableWebsite(actorContext, 'wedding-123', {
         basePath: 'https://example.com',
         email: 'john@example.com',
       })
@@ -129,14 +144,14 @@ describe('WebsiteService', () => {
       mockWeddingFindUniqueFn.mockResolvedValue(null)
 
       await expect(
-        websiteService.enableWebsite('wedding-123', {
+        websiteService.enableWebsite(actorContext, 'wedding-123', {
           basePath: 'https://example.com',
           email: 'john@example.com',
         })
       ).rejects.toThrow(TRPCError)
 
       await expect(
-        websiteService.enableWebsite('wedding-123', {
+        websiteService.enableWebsite(actorContext, 'wedding-123', {
           basePath: 'https://example.com',
           email: 'john@example.com',
         })
@@ -150,14 +165,14 @@ describe('WebsiteService', () => {
       mockFindBySubUrlFn.mockResolvedValue(mockWebsite) // URL is taken
 
       await expect(
-        websiteService.enableWebsite('wedding-123', {
+        websiteService.enableWebsite(actorContext, 'wedding-123', {
           basePath: 'https://example.com',
           email: 'john@example.com',
         })
       ).rejects.toThrow(TRPCError)
 
       await expect(
-        websiteService.enableWebsite('wedding-123', {
+        websiteService.enableWebsite(actorContext, 'wedding-123', {
           basePath: 'https://example.com',
           email: 'john@example.com',
         })
@@ -172,7 +187,7 @@ describe('WebsiteService', () => {
       const updatedWebsite = { ...mockWebsite, subUrl: 'newsuburl' }
       mockUpdateFn.mockResolvedValue(updatedWebsite)
 
-      const result = await websiteService.updateWebsite('wedding-123', {
+      const result = await websiteService.updateWebsite(actorContext, 'wedding-123', {
         basePath: 'https://example.com',
         subUrl: 'newsuburl',
       })
@@ -191,7 +206,7 @@ describe('WebsiteService', () => {
       mockUpdateFn.mockResolvedValue(updatedWebsite)
       mockHashPassword.mockReturnValue('salt:hashed-password')
 
-      await websiteService.updateWebsite('wedding-123', {
+      await websiteService.updateWebsite(actorContext, 'wedding-123', {
         isPasswordEnabled: true,
         password: 'secret123',
       })
@@ -204,6 +219,16 @@ describe('WebsiteService', () => {
       })
       expect(mockHashPassword).toHaveBeenCalledWith('secret123')
     })
+
+    it('should reject update when no fields are provided', async () => {
+      await expect(
+        websiteService.updateWebsite(actorContext, 'wedding-123', {})
+      ).rejects.toMatchObject({
+        code: 'BAD_REQUEST',
+      })
+
+      expect(mockUpdateFn).not.toHaveBeenCalled()
+    })
   })
 
   describe('updateRsvpEnabled', () => {
@@ -211,10 +236,25 @@ describe('WebsiteService', () => {
       const updatedWebsite = { ...mockWebsite, isRsvpEnabled: false }
       mockUpdateRsvpEnabledFn.mockResolvedValue(updatedWebsite)
 
-      const result = await websiteService.updateRsvpEnabled('website-123', false)
+      const result = await websiteService.updateRsvpEnabled(
+        actorContext,
+        'wedding-123',
+        'website-123',
+        false
+      )
 
       expect(result.isRsvpEnabled).toBe(false)
       expect(mockUpdateRsvpEnabledFn).toHaveBeenCalledWith('website-123', false)
+    })
+
+    it('should reject update when website is outside wedding scope', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(false)
+
+      await expect(
+        websiteService.updateRsvpEnabled(actorContext, 'wedding-123', 'website-123', false)
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+
+      expect(mockUpdateRsvpEnabledFn).not.toHaveBeenCalled()
     })
   })
 
@@ -224,7 +264,11 @@ describe('WebsiteService', () => {
       const updatedWebsite = { ...mockWebsite, coverPhotoUrl }
       mockUpdateCoverPhotoFn.mockResolvedValue(updatedWebsite)
 
-      const result = await websiteService.updateCoverPhoto('wedding-123', coverPhotoUrl)
+      const result = await websiteService.updateCoverPhoto(
+        actorContext,
+        'wedding-123',
+        coverPhotoUrl
+      )
 
       expect(result.coverPhotoUrl).toBe(coverPhotoUrl)
       expect(mockUpdateCoverPhotoFn).toHaveBeenCalledWith('wedding-123', coverPhotoUrl)
@@ -234,7 +278,7 @@ describe('WebsiteService', () => {
       const updatedWebsite = { ...mockWebsite, coverPhotoUrl: null }
       mockUpdateCoverPhotoFn.mockResolvedValue(updatedWebsite)
 
-      await websiteService.updateCoverPhoto('wedding-123', null)
+      await websiteService.updateCoverPhoto(actorContext, 'wedding-123', null)
 
       expect(mockUpdateCoverPhotoFn).toHaveBeenCalledWith('wedding-123', null)
     })
@@ -357,16 +401,21 @@ describe('WebsiteService', () => {
       mockWeddingFindUniqueFn.mockResolvedValue(mockWedding)
       mockEventFindManyFn.mockResolvedValue(mockEvents)
 
-      const result = await websiteService.fetchWeddingData('johndoeandjanesmith')
+      const result = await websiteService.fetchWeddingData('johndoeandjanesmith', undefined)
 
       expect(result).toMatchObject({
         groomFirstName: 'John',
         groomLastName: 'Doe',
         brideFirstName: 'Jane',
         brideLastName: 'Smith',
-        website: mockWebsiteWithQuestions,
+        website: expect.objectContaining({
+          id: 'website-123',
+          subUrl: 'johndoeandjanesmith',
+          isPasswordEnabled: false,
+        }),
         events: mockEvents,
       })
+      expect(result.website).not.toHaveProperty('password')
       expect(result.date).toBeDefined()
       expect(result.daysRemaining).toBeGreaterThanOrEqual(0)
     })
@@ -374,17 +423,21 @@ describe('WebsiteService', () => {
     it('should throw error when website does not exist', async () => {
       mockFindBySubUrlWithQuestionsFn.mockResolvedValue(null)
 
-      await expect(websiteService.fetchWeddingData('nonexistent')).rejects.toThrow(TRPCClientError)
+      await expect(websiteService.fetchWeddingData('nonexistent', undefined)).rejects.toThrow(
+        TRPCClientError
+      )
     })
 
     it('should throw error when wedding does not exist', async () => {
       mockFindBySubUrlWithQuestionsFn.mockResolvedValue(mockWebsiteWithQuestions)
       mockWeddingFindUniqueFn.mockResolvedValue(null)
 
-      await expect(websiteService.fetchWeddingData('johndoeandjanesmith')).rejects.toThrow(
-        TRPCError
-      )
-      await expect(websiteService.fetchWeddingData('johndoeandjanesmith')).rejects.toMatchObject({
+      await expect(
+        websiteService.fetchWeddingData('johndoeandjanesmith', undefined)
+      ).rejects.toThrow(TRPCError)
+      await expect(
+        websiteService.fetchWeddingData('johndoeandjanesmith', undefined)
+      ).rejects.toMatchObject({
         code: 'INTERNAL_SERVER_ERROR',
       })
     })

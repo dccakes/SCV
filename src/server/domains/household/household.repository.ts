@@ -218,9 +218,10 @@ export class HouseholdRepository {
   /**
    * Search households by guest name
    */
-  async search(searchText: string): Promise<HouseholdSearchResult[]> {
+  async search(searchText: string, weddingId: string): Promise<HouseholdSearchResult[]> {
     return this.db.household.findMany({
       where: {
+        weddingId,
         OR: [
           {
             guests: {
@@ -296,7 +297,7 @@ export class HouseholdRepository {
   /**
    * Check if a household belongs to a user
    */
-  async belongsToUser(id: string, weddingId: string): Promise<boolean> {
+  async belongsToWedding(id: string, weddingId: string): Promise<boolean> {
     const household = await this.db.household.findFirst({
       where: { id, weddingId },
       select: { id: true },
