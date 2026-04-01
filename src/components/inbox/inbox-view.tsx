@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 
+import { formatMessageDate } from '~/components/inbox/format-date'
 import ThreadView from '~/components/inbox/thread-view'
 import { api } from '~/trpc/react'
 
@@ -121,7 +122,7 @@ export default function InboxView() {
                 )}
               </div>
               <span className='shrink-0 font-mono text-[0.6rem] text-foreground/40'>
-                {formatDate(msg.sentAt)}
+                {formatMessageDate(msg.sentAt)}
               </span>
             </div>
             {msg.subject && (
@@ -159,18 +160,3 @@ export default function InboxView() {
   )
 }
 
-function formatDate(date: Date | string): string {
-  try {
-    const d = typeof date === 'string' ? new Date(date) : date
-    const now = new Date()
-    const isToday = d.toDateString() === now.toDateString()
-
-    if (isToday) {
-      return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
-    }
-
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-  } catch {
-    return String(date)
-  }
-}

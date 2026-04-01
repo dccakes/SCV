@@ -12,6 +12,11 @@ import crypto from 'node:crypto'
 import { env } from '~/env'
 
 import type { GmailRepository } from '~/server/domains/gmail/gmail.repository'
+import {
+  DIRECTION_INBOUND,
+  DIRECTION_OUTBOUND,
+  PROVIDER_GMAIL,
+} from '~/server/domains/gmail/gmail.types'
 import type {
   GmailConnectionStatus,
   GmailMessage,
@@ -93,8 +98,8 @@ export class GmailService {
     })
 
     // Trigger initial sync in background (fire and forget)
-    this.syncAllVendorEmails(userId).catch(() => {
-      // Best-effort — sync errors shouldn't block the callback
+    this.syncAllVendorEmails(userId).catch((err) => {
+      console.error('Initial Gmail sync failed for user:', userId, err)
     })
   }
 
@@ -139,7 +144,7 @@ export class GmailService {
       return { synced: 0, skipped: 0 }
     }
 
-    const gmail = await this.getGmailClient(userId)
+    const gmail = await this.getGmailClientForConnection(connection)
     const vendorEmails = Array.from(vendorEmailMap.keys())
 
     // Build Gmail search query: messages from/to any vendor email
@@ -175,7 +180,7 @@ export class GmailService {
       return { synced: 0, skipped: 0 }
     }
 
-    const gmail = await this.getGmailClient(userId)
+    const gmail = await this.getGmailClientForConnection(connection)
     const vendorEmailMap = new Map([[vendorEmail.toLowerCase(), vendorId]])
     const gmailQuery = `from:${vendorEmail} OR to:${vendorEmail}`
 
@@ -197,11 +202,15 @@ export class GmailService {
     vendorEmailMap: Map<string, string>,
     gmailQuery: string
   ): Promise<SyncResult> {
+    const MAX_SYNC_PAGES = 20 // Safety limit: max 20 pages × 50 = 1000 messages per sync
     let synced = 0
     let skipped = 0
     let pageToken: string | undefined
+    let pagesProcessed = 0
 
     do {
+      pagesProcessed++
+
       const listRes = await gmail.users.messages.list({
         userId: 'me',
         q: gmailQuery,
@@ -211,51 +220,59 @@ export class GmailService {
 
       if (!listRes.data.messages?.length) break
 
-      for (const msg of listRes.data.messages) {
-        if (!msg.id) continue
+      // Process messages in parallel batches of 10
+      const batchSize = 10
+      for (let i = 0; i < listRes.data.messages.length; i += batchSize) {
+        const batch = listRes.data.messages.slice(i, i + batchSize)
+        const results = await Promise.allSettled(
+          batch.map(async (msg) => {
+            if (!msg.id) return null
 
-        try {
-          const detail = await gmail.users.messages.get({
-            userId: 'me',
-            id: msg.id,
-            format: 'full',
+            const detail = await gmail.users.messages.get({
+              userId: 'me',
+              id: msg.id,
+              format: 'full',
+            })
+
+            const parsed = this.parseFullMessage(detail.data)
+            const vendorId = this.matchVendorEmail(parsed, vendorEmailMap)
+
+            if (!vendorId) {
+              return null
+            }
+
+            const direction = this.isOutbound(parsed.from, connectedEmail)
+              ? DIRECTION_OUTBOUND
+              : DIRECTION_INBOUND
+
+            await this.gmailRepository.upsertMessage({
+              connectionId,
+              weddingId,
+              vendorId,
+              provider: PROVIDER_GMAIL,
+              externalMessageId: parsed.id,
+              externalThreadId: parsed.threadId,
+              subject: parsed.subject || null,
+              body: parsed.body,
+              snippet: parsed.snippet || null,
+              senderAddress: this.extractEmail(parsed.from),
+              senderName: this.extractName(parsed.from),
+              recipientAddresses: parsed.to.split(',').map((r) => this.extractEmail(r.trim())),
+              direction,
+              sentAt: new Date(parsed.date),
+              isDraft: false,
+            })
+            return 'synced' as const
           })
-
-          const parsed = this.parseFullMessage(detail.data)
-          const vendorId = this.matchVendorEmail(parsed, vendorEmailMap)
-
-          if (!vendorId) {
-            skipped++
-            continue
-          }
-
-          const direction = this.isOutbound(parsed.from, connectedEmail) ? 'outbound' : 'inbound'
-
-          await this.gmailRepository.upsertMessage({
-            connectionId,
-            weddingId,
-            vendorId,
-            provider: 'gmail',
-            externalMessageId: parsed.id,
-            externalThreadId: parsed.threadId,
-            subject: parsed.subject || null,
-            body: parsed.body,
-            snippet: parsed.snippet || null,
-            senderAddress: this.extractEmail(parsed.from),
-            senderName: this.extractName(parsed.from),
-            recipientAddresses: parsed.to.split(',').map((r) => this.extractEmail(r.trim())),
-            direction,
-            sentAt: new Date(parsed.date),
-            isDraft: false,
-          })
-          synced++
-        } catch {
-          skipped++
+        )
+        for (const r of results) {
+          if (r.status === 'fulfilled' && r.value === 'synced') synced++
+          else skipped++
         }
       }
 
       pageToken = listRes.data.nextPageToken ?? undefined
-    } while (pageToken)
+    } while (pageToken && pagesProcessed < MAX_SYNC_PAGES)
 
     // Update sync state
     await this.gmailRepository.upsertSyncState(connectionId, {
@@ -276,9 +293,14 @@ export class GmailService {
   }
 
   async getThread(userId: string, threadId: string): Promise<StoredThread> {
+    const weddingId = await this.getWeddingIdForUser(userId)
     const messages = await this.gmailRepository.findMessagesByThread(threadId)
     if (messages.length === 0) {
       throw new TRPCError({ code: 'NOT_FOUND', message: 'Thread not found' })
+    }
+    // Verify thread belongs to user's wedding
+    if (messages[0]?.weddingId !== weddingId) {
+      throw new TRPCError({ code: 'FORBIDDEN', message: 'Thread not accessible' })
     }
     return {
       threadId,
@@ -290,9 +312,9 @@ export class GmailService {
   // ─── Draft creation (still calls Gmail API directly) ──────────────────────
 
   async createDraft(userId: string, input: GmailCreateDraftInput): Promise<string> {
-    const gmail = await this.getGmailClient(userId)
-    const connection = await this.gmailRepository.findConnectionByUserId(userId)
-    const fromEmail = connection?.email ?? 'me'
+    const connection = await this.getRequiredConnection(userId)
+    const gmail = await this.getGmailClientForConnection(connection)
+    const fromEmail = connection.email
 
     const messageParts = [
       `From: ${fromEmail}`,
@@ -317,7 +339,10 @@ export class GmailService {
       },
     })
 
-    return draft.data.id!
+    if (!draft.data.id) {
+      throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to create draft' })
+    }
+    return draft.data.id
   }
 
   // ─── Private helpers ───────────────────────────────────────────────────────
@@ -334,19 +359,14 @@ export class GmailService {
   }
 
   private async getWeddingIdForUser(userId: string): Promise<string> {
-    // Use the same pattern as other domains — look up via UserWedding
-    const userWedding = await this.gmailRepository['db'].userWedding.findFirst({
-      where: { userId },
-      select: { weddingId: true },
-    })
-    if (!userWedding) {
+    const weddingId = await this.gmailRepository.findWeddingIdByUserId(userId)
+    if (!weddingId) {
       throw new TRPCError({ code: 'NOT_FOUND', message: 'No wedding found for user' })
     }
-    return userWedding.weddingId
+    return weddingId
   }
 
-  private async getGmailClient(userId: string) {
-    const connection = await this.getRequiredConnection(userId)
+  private async getGmailClientForConnection(connection: { accessToken: string; refreshToken: string; expiresAt: Date; id: string }) {
     const oauth2Client = this.createOAuth2Client()
     oauth2Client.setCredentials({
       access_token: connection.accessToken,

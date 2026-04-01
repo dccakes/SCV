@@ -4,6 +4,12 @@
  * TypeScript types for Gmail integration.
  */
 
+export const PROVIDER_GMAIL = 'gmail' as const
+export const DIRECTION_INBOUND = 'inbound' as const
+export const DIRECTION_OUTBOUND = 'outbound' as const
+export type MessageDirection = typeof DIRECTION_INBOUND | typeof DIRECTION_OUTBOUND
+export type ConnectionProvider = typeof PROVIDER_GMAIL
+
 export type GmailConnection = {
   id: string
   userId: string

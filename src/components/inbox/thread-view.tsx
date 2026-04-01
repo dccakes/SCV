@@ -3,6 +3,7 @@
 import { useState } from 'react'
 
 import DraftComposer from '~/components/inbox/draft-composer'
+import { formatMessageDateTime } from '~/components/inbox/format-date'
 import { api } from '~/trpc/react'
 
 type ThreadViewProps = {
@@ -80,7 +81,7 @@ export default function ThreadView({ threadId, onBack }: ThreadViewProps) {
                 </span>
               </div>
               <span className='shrink-0 font-mono text-[0.6rem] text-foreground/40'>
-                {formatDate(msg.sentAt)}
+                {formatMessageDateTime(msg.sentAt)}
               </span>
             </div>
             <div className='mt-1 font-mono text-[0.6rem] text-foreground/40'>
@@ -124,16 +125,3 @@ export default function ThreadView({ threadId, onBack }: ThreadViewProps) {
   )
 }
 
-function formatDate(date: Date | string): string {
-  try {
-    const d = typeof date === 'string' ? new Date(date) : date
-    return d.toLocaleString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    })
-  } catch {
-    return String(date)
-  }
-}

@@ -49,7 +49,9 @@ export const vendorRouter = createTRPCRouter({
 
     // Background sync: fetch Gmail messages for this vendor's contact email
     if (input.contactEmail) {
-      gmailService.syncForVendor(ctx.auth.userId, vendor.id).catch(() => {})
+      gmailService.syncForVendor(ctx.auth.userId, vendor.id).catch((err) => {
+        console.error('Gmail sync failed for vendor:', vendor.id, err)
+      })
     }
 
     return vendor
@@ -64,7 +66,9 @@ export const vendorRouter = createTRPCRouter({
 
     // Background sync: if contact email was updated, re-sync for this vendor
     if (input.contactEmail) {
-      gmailService.syncForVendor(ctx.auth.userId, vendor.id).catch(() => {})
+      gmailService.syncForVendor(ctx.auth.userId, vendor.id).catch((err) => {
+        console.error('Gmail sync failed for vendor:', vendor.id, err)
+      })
     }
 
     return vendor

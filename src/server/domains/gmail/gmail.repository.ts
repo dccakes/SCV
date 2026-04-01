@@ -7,7 +7,9 @@
 
 import type { PrismaClient } from '@prisma/client'
 
-const PROVIDER = 'gmail' as const
+import { DIRECTION_INBOUND, DIRECTION_OUTBOUND, PROVIDER_GMAIL } from '~/server/domains/gmail/gmail.types'
+
+const PROVIDER = PROVIDER_GMAIL
 
 export class GmailRepository {
   constructor(private db: PrismaClient) {}
@@ -151,6 +153,16 @@ export class GmailRepository {
   }
 
   // ─── Vendor email lookup ──────────────────────────────────────────────────
+
+  // ─── Wedding lookup ───────────────────────────────────────────────────────
+
+  async findWeddingIdByUserId(userId: string): Promise<string | null> {
+    const uw = await this.db.userWedding.findFirst({
+      where: { userId },
+      select: { weddingId: true },
+    })
+    return uw?.weddingId ?? null
+  }
 
   /**
    * Get all vendor contact emails for a wedding, mapped to vendorId.
