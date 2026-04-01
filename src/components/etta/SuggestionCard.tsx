@@ -1,32 +1,12 @@
 'use client'
 
-interface Suggestion {
-  id: string
-  summary: string
-  tier: 'T1' | 'T2'
-  actionType: string
-  createdAt: string
-  payload: Record<string, unknown>
-}
+import { formatDistanceToNow } from 'date-fns'
+import type { EttaSuggestionView } from '~/lib/etta/types'
 
 interface SuggestionCardProps {
-  suggestion: Suggestion
+  suggestion: EttaSuggestionView
   onApprove: (id: string) => void
   onDismiss: (id: string) => void
-}
-
-function relativeTime(dateString: string): string {
-  const now = Date.now()
-  const then = new Date(dateString).getTime()
-  const diffSeconds = Math.floor((now - then) / 1000)
-
-  if (diffSeconds < 60) return 'just now'
-  const diffMinutes = Math.floor(diffSeconds / 60)
-  if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes === 1 ? '' : 's'} ago`
-  const diffHours = Math.floor(diffMinutes / 60)
-  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`
-  const diffDays = Math.floor(diffHours / 24)
-  return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`
 }
 
 export function SuggestionCard({ suggestion, onApprove, onDismiss }: SuggestionCardProps) {
@@ -46,7 +26,9 @@ export function SuggestionCard({ suggestion, onApprove, onDismiss }: SuggestionC
         <span className='rounded bg-gray-100 px-2 py-0.5 font-medium text-gray-600 text-xs'>
           {suggestion.actionType}
         </span>
-        <span className='ml-auto text-gray-400 text-xs'>{relativeTime(suggestion.createdAt)}</span>
+        <span className='ml-auto text-gray-400 text-xs'>
+          {formatDistanceToNow(new Date(suggestion.createdAt), { addSuffix: true })}
+        </span>
       </div>
 
       <p className='mb-3 text-gray-800 text-sm leading-relaxed'>{suggestion.summary}</p>

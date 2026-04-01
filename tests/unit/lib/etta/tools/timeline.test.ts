@@ -2,23 +2,15 @@
  * @jest-environment node
  */
 
-import { db } from '~/server/db'
+import { logAudit } from '~/lib/etta/utils/audit'
 import { getTimelineTools } from '~/lib/etta/tools/timeline'
 import type { EttaContext } from '~/lib/etta/types'
 
-jest.mock('~/server/db', () => ({
-  db: {
-    auditLog: {
-      create: jest.fn(),
-    },
-  },
+jest.mock('~/lib/etta/utils/audit', () => ({
+  logAudit: jest.fn(),
 }))
 
-const mockDb = db as {
-  auditLog: {
-    create: jest.Mock
-  }
-}
+const mockLogAudit = logAudit as jest.Mock
 
 const mockCtx: EttaContext = {
   weddingId: 'wedding-123',
@@ -59,8 +51,6 @@ describe('getTimelineTools', () => {
 
   describe('complete_milestone', () => {
     it('returns success message with title', async () => {
-      mockDb.auditLog.create.mockResolvedValue({ id: 'log-1' })
-
       const result = await tools.complete_milestone.execute(
         { title: 'Book venue' },
         { toolCallId: 'tc2', messages: [], abortSignal: undefined as never }
@@ -71,23 +61,19 @@ describe('getTimelineTools', () => {
       })
     })
 
-    it('creates an audit log entry', async () => {
-      mockDb.auditLog.create.mockResolvedValue({ id: 'log-2' })
-
+    it('calls logAudit with correct params', async () => {
       await tools.complete_milestone.execute(
         { title: 'Send invitations' },
         { toolCallId: 'tc3', messages: [], abortSignal: undefined as never }
       )
 
-      expect(mockDb.auditLog.create).toHaveBeenCalledWith({
-        data: {
-          weddingId: 'wedding-123',
-          actorId: 'actor-123',
-          actorType: 'etta',
-          action: 'complete_milestone',
-          resourceType: 'milestone',
-          payloadSnapshot: { title: 'Send invitations' },
-        },
+      expect(mockLogAudit).toHaveBeenCalledWith({
+        weddingId: 'wedding-123',
+        actorId: 'actor-123',
+        actorType: 'etta',
+        action: 'complete_milestone',
+        resourceType: 'milestone',
+        payload: { title: 'Send invitations' },
       })
     })
   })

@@ -58,6 +58,17 @@ export const ETTA_DEFAULT_PERMISSIONS = [
 
 export type EttaPermission = (typeof ETTA_DEFAULT_PERMISSIONS)[number]
 
+// ── Suggestion (shared by UI components) ─────────────────────────────────────
+
+export interface EttaSuggestionView {
+  id: string
+  summary: string
+  tier: 'T1' | 'T2'
+  actionType: string
+  createdAt: string
+  payload: Record<string, unknown>
+}
+
 // ── Audit ────────────────────────────────────────────────────────────────────
 
 export interface AuditEntry {

@@ -1,19 +1,12 @@
 import { tool, zodSchema } from 'ai'
+import { VendorCategory } from '@prisma/client'
 import { z } from 'zod'
 
 import type { EttaContext } from '~/lib/etta/types'
 import { db } from '~/server/db'
 import { vendorService } from '~/server/domains/vendor'
 
-const vendorCategory = z.enum([
-  'VENUE',
-  'CATERING',
-  'PHOTOGRAPHER',
-  'VIDEOGRAPHER',
-  'MUSIC',
-  'FLOWERS',
-  'OTHER',
-])
+const vendorCategory = z.enum(VendorCategory)
 
 export function getVendorTools(ctx: EttaContext) {
   return {

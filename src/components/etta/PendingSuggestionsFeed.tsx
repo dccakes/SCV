@@ -2,22 +2,14 @@
 
 import { useState } from 'react'
 import { SuggestionCard } from '~/components/etta/SuggestionCard'
-
-interface Suggestion {
-  id: string
-  summary: string
-  tier: 'T1' | 'T2'
-  actionType: string
-  createdAt: string
-  payload: Record<string, unknown>
-}
+import type { EttaSuggestionView } from '~/lib/etta/types'
 
 interface PendingSuggestionsFeedProps {
-  suggestions: Array<Suggestion>
+  suggestions: Array<EttaSuggestionView>
 }
 
 export function PendingSuggestionsFeed({ suggestions: initial }: PendingSuggestionsFeedProps) {
-  const [suggestions, setSuggestions] = useState<Suggestion[]>(initial)
+  const [suggestions, setSuggestions] = useState<EttaSuggestionView[]>(initial)
 
   function restoreItem(id: string) {
     const removed = initial.find((s) => s.id === id)

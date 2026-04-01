@@ -1,6 +1,7 @@
 import { tool, zodSchema } from 'ai'
 import { z } from 'zod'
 
+import { RSVP_STATUS } from '~/lib/constants/rsvp'
 import type { EttaContext } from '~/lib/etta/types'
 import { guestService } from '~/server/domains/guest'
 import { invitationService } from '~/server/domains/invitation'
@@ -38,8 +39,8 @@ export function getGuestTools(ctx: EttaContext) {
         const invitations = await invitationService.getAllByWeddingId(ctx.weddingId)
         const list = invitations ?? []
 
-        const attending = list.filter((i) => i.rsvp === 'Attending').length
-        const declined = list.filter((i) => i.rsvp === 'Declined').length
+        const attending = list.filter((i) => i.rsvp === RSVP_STATUS.ATTENDING).length
+        const declined = list.filter((i) => i.rsvp === RSVP_STATUS.DECLINED).length
         const pending = list.length - attending - declined
 
         return { total: list.length, attending, declined, pending }

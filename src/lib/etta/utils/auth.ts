@@ -2,7 +2,7 @@ import { SignJWT, jwtVerify } from 'jose'
 
 import type { EttaRequest } from '~/lib/etta/types'
 import { auth } from '~/lib/auth'
-import { db } from '~/server/db'
+import { weddingService } from '~/server/domains/wedding'
 
 // ── Couple Session ──────────────────────────────────────────────────────────
 
@@ -15,14 +15,9 @@ export async function validateCoupleSession(
   }
 
   const userId = session.user.id
-  const userWedding = await db.userWedding.findFirst({
-    where: { userId },
-  })
-  if (!userWedding) {
-    throw new Error('No wedding found for user')
-  }
+  const weddingId = await weddingService.getWeddingIdByUserId(userId)
 
-  return { weddingId: userWedding.weddingId, userId }
+  return { weddingId, userId }
 }
 
 // ── Guest Tokens ────────────────────────────────────────────────────────────

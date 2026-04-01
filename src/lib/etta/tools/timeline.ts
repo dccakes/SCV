@@ -2,7 +2,7 @@ import { tool, zodSchema } from 'ai'
 import { z } from 'zod'
 
 import type { EttaContext } from '~/lib/etta/types'
-import { db } from '~/server/db'
+import { logAudit } from '~/lib/etta/utils/audit'
 
 // Stub — full implementation requires a Milestone Prisma model.
 // For now, returns a default milestone list and logs completions via audit.
@@ -31,15 +31,13 @@ export function getTimelineTools(ctx: EttaContext) {
         title: z.string(),
       })),
       execute: async ({ title }) => {
-        await db.auditLog.create({
-          data: {
-            weddingId: ctx.weddingId,
-            actorId: ctx.ettaActorId,
-            actorType: 'etta',
-            action: 'complete_milestone',
-            resourceType: 'milestone',
-            payloadSnapshot: { title },
-          },
+        await logAudit({
+          weddingId: ctx.weddingId,
+          actorId: ctx.ettaActorId,
+          actorType: 'etta',
+          action: 'complete_milestone',
+          resourceType: 'milestone',
+          payload: { title },
         })
 
         return { message: `Milestone marked as complete: ${title}` }
