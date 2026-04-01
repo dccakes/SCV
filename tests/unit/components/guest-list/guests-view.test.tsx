@@ -35,6 +35,29 @@ jest.mock('~/components/hooks', () => {
   }
 })
 
+jest.mock('~/components/ui/select', () => {
+  const React = require('react')
+  return {
+    Select: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    SelectTrigger: ({
+      children,
+      'aria-label': ariaLabel,
+    }: {
+      children: React.ReactNode
+      'aria-label'?: string
+    }) => (
+      <button type='button' aria-label={ariaLabel}>
+        {children}
+      </button>
+    ),
+    SelectValue: () => <span />,
+    SelectContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    SelectItem: ({ children }: { children: React.ReactNode; value: string }) => (
+      <div>{children}</div>
+    ),
+  }
+})
+
 let mockTagsData: Array<{ id: string; name: string; color?: string | null }> = []
 
 jest.mock('~/trpc/react', () => ({
