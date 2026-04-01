@@ -23,7 +23,6 @@ describe('OrganizationMembersReadOnlyCard', () => {
       expect.objectContaining({
         disabled: true,
         description: 'People who can access this wedding workspace.',
-        instructions: 'Read-only list',
         className: 'border-0 bg-transparent shadow-none',
       })
     )

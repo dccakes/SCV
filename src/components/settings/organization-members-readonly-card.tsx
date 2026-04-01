@@ -13,10 +13,8 @@ export function OrganizationMembersReadOnlyCard() {
           content: 'pt-2',
           description: 'text-foreground/70',
           header: 'pb-2',
-          instructions: 'font-mono text-[0.62rem] uppercase tracking-widest text-foreground/50',
         }}
         description='People who can access this wedding workspace.'
-        instructions='Read-only list'
         disabled
       />
     </div>

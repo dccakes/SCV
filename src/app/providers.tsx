@@ -22,6 +22,12 @@ export function Providers({ children }: { children: ReactNode }) {
         }}
         Link={Link}
         emailOTP
+        organization={{
+          customRoles: [
+            { role: 'editor', label: 'Editor' },
+            { role: 'viewer', label: 'Viewer' },
+          ],
+        }}
       >
         {children}
       </AuthUIProvider>
