@@ -35,8 +35,9 @@ model Wedding {
   guestTags      GuestTag[]
 
   // Add-on relationships
-  website        Website?
-  vendors        Vendor[]
+  website                Website?
+  vendors                Vendor[]
+  communicationMessages  CommunicationMessage[]
 }
 
 // Join table: Allows multiple users per wedding (co-management)
@@ -181,6 +182,9 @@ model Connection {
   expiresAt    DateTime // Access token expiry
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  syncState              SyncState?
+  communicationMessages  CommunicationMessage[]
 
   @@unique([userId, provider])
   @@index([userId])
@@ -499,7 +503,8 @@ model Vendor {
   contactEmail String?
   contactPhone String?
 
-  quotes       VendorQuote[]
+  quotes                VendorQuote[]
+  communicationMessages CommunicationMessage[]
 
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
@@ -542,4 +547,67 @@ model VendorQuoteFile {
   createdAt DateTime    @default(now())
 
   @@index([quoteId])
+}
+
+// Track sync progress per connection (Gmail historyId, page tokens, etc.)
+model SyncState {
+  id           String     @id @default(uuid())
+  connectionId String     @unique
+  connection   Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  cursor       String?    // Provider-specific sync cursor (Gmail historyId, Slack cursor, etc.)
+  pageToken    String?    // For paginated initial sync (Gmail nextPageToken)
+  lastSyncedAt DateTime?  // Last successful sync timestamp
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+// Synced messages from communication providers (Gmail, WhatsApp, Slack, etc.)
+model CommunicationMessage {
+  id                  String     @id @default(uuid())
+  weddingId           String
+  wedding             Wedding    @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
+  connectionId        String
+  connection          Connection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  vendorId            String?
+  vendor              Vendor?    @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+
+  provider            String     // "gmail", "whatsapp", "slack" — denormalized for query convenience
+
+  // External IDs for deduplication and thread grouping
+  externalMessageId   String?    // Gmail message ID, Slack ts, etc. Null for unsent drafts
+  externalThreadId    String?    // Gmail threadId, Slack thread_ts, WhatsApp chat ID
+
+  // Message content
+  subject             String?    // Email subject; null for chat providers
+  body                String     // Message body (plain text preferred)
+  snippet             String?    // Short preview text
+
+  // Participants
+  senderAddress       String     // Email address, phone number, or Slack user ID
+  senderName          String?    // Display name if available
+  recipientAddresses  String[]   // Array of recipient addresses (To + CC for email)
+
+  // Direction relative to the user
+  direction           String     // "inbound" or "outbound"
+
+  sentAt              DateTime   // When the message was originally sent
+  isDraft             Boolean    @default(false)
+
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  // Deduplication: one external message per connection
+  @@unique([connectionId, externalMessageId])
+  // Primary query: all messages for a vendor in a wedding
+  @@index([weddingId, vendorId])
+  // Thread grouping
+  @@index([externalThreadId])
+  // Chronological listing
+  @@index([weddingId, sentAt])
+  // Connection-scoped queries during sync
+  @@index([connectionId])
 }

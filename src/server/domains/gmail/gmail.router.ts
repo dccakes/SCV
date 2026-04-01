@@ -3,6 +3,9 @@
  *
  * tRPC router for Gmail integration endpoints.
  * All endpoints are protected — Gmail data is private to the user.
+ *
+ * Messages are read from local CommunicationMessage storage (not Gmail API).
+ * Sync operations fetch from Gmail and store locally.
  */
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
@@ -11,6 +14,7 @@ import {
   gmailCreateDraftSchema,
   gmailGetThreadSchema,
   gmailListMessagesSchema,
+  gmailSyncForVendorSchema,
 } from '~/server/domains/gmail/gmail.validator'
 
 export const gmailRouter = createTRPCRouter({
@@ -37,14 +41,34 @@ export const gmailRouter = createTRPCRouter({
   }),
 
   /**
-   * List messages from the user's Gmail inbox.
+   * Trigger a full sync of vendor emails from Gmail.
    */
-  listMessages: protectedProcedure.input(gmailListMessagesSchema).query(async ({ ctx, input }) => {
-    return gmailService.listMessages(ctx.auth.userId, input.query, input.maxResults, input.pageToken)
+  sync: protectedProcedure.mutation(async ({ ctx }) => {
+    return gmailService.syncAllVendorEmails(ctx.auth.userId)
   }),
 
   /**
-   * Get a full thread with all messages.
+   * Trigger sync for a specific vendor.
+   */
+  syncForVendor: protectedProcedure
+    .input(gmailSyncForVendorSchema)
+    .mutation(async ({ ctx, input }) => {
+      return gmailService.syncForVendor(ctx.auth.userId, input.vendorId)
+    }),
+
+  /**
+   * List messages from local storage (vendor-filtered).
+   */
+  listMessages: protectedProcedure.input(gmailListMessagesSchema).query(async ({ ctx, input }) => {
+    return gmailService.listMessages(ctx.auth.userId, {
+      vendorId: input.vendorId,
+      limit: input.limit,
+      offset: input.offset,
+    })
+  }),
+
+  /**
+   * Get a full thread from local storage.
    */
   getThread: protectedProcedure.input(gmailGetThreadSchema).query(async ({ ctx, input }) => {
     return gmailService.getThread(ctx.auth.userId, input.threadId)

@@ -36,9 +36,16 @@ export default function ThreadView({ threadId, onBack }: ThreadViewProps) {
             <path strokeLinecap='round' strokeLinejoin='round' d='M15.75 19.5L8.25 12l7.5-7.5' />
           </svg>
         </button>
-        <h2 className='truncate font-serif text-base text-foreground'>
-          {lastMessage?.subject ?? 'Thread'}
-        </h2>
+        <div className='min-w-0 flex-1'>
+          <h2 className='truncate font-serif text-base text-foreground'>
+            {lastMessage?.subject ?? 'Thread'}
+          </h2>
+          {threadQuery.data?.vendorName && (
+            <span className='font-mono text-[0.6rem] text-foreground/40'>
+              {threadQuery.data.vendorName}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Messages */}
@@ -58,12 +65,27 @@ export default function ThreadView({ threadId, onBack }: ThreadViewProps) {
         {threadQuery.data?.messages.map((msg) => (
           <div key={msg.id} className='mb-4 rounded-lg border border-border/80 bg-card p-4'>
             <div className='flex items-center justify-between gap-4'>
-              <span className='truncate text-sm font-medium text-foreground'>{msg.from}</span>
+              <div className='flex items-center gap-2 truncate'>
+                <span className='truncate text-sm font-medium text-foreground'>
+                  {msg.senderName ?? msg.senderAddress}
+                </span>
+                <span
+                  className={`shrink-0 rounded px-1.5 py-0.5 font-mono text-[0.55rem] ${
+                    msg.direction === 'outbound'
+                      ? 'bg-primary/10 text-primary'
+                      : 'bg-muted text-foreground/50'
+                  }`}
+                >
+                  {msg.direction === 'outbound' ? 'Sent' : 'Received'}
+                </span>
+              </div>
               <span className='shrink-0 font-mono text-[0.6rem] text-foreground/40'>
-                {formatDate(msg.date)}
+                {formatDate(msg.sentAt)}
               </span>
             </div>
-            <div className='mt-1 font-mono text-[0.6rem] text-foreground/40'>To: {msg.to}</div>
+            <div className='mt-1 font-mono text-[0.6rem] text-foreground/40'>
+              To: {msg.recipientAddresses.join(', ')}
+            </div>
             <div className='mt-3 whitespace-pre-wrap text-sm text-foreground/80'>{msg.body}</div>
           </div>
         ))}
@@ -74,13 +96,17 @@ export default function ThreadView({ threadId, onBack }: ThreadViewProps) {
         {showComposer && lastMessage ? (
           <DraftComposer
             threadId={threadId}
-            to={lastMessage.from}
-            subject={
-              lastMessage.subject.startsWith('Re:')
-                ? lastMessage.subject
-                : `Re: ${lastMessage.subject}`
+            to={
+              lastMessage.direction === 'inbound'
+                ? lastMessage.senderAddress
+                : lastMessage.recipientAddresses[0] ?? ''
             }
-            inReplyTo={lastMessage.id}
+            subject={
+              lastMessage.subject?.startsWith('Re:')
+                ? lastMessage.subject
+                : `Re: ${lastMessage.subject ?? ''}`
+            }
+            inReplyTo={lastMessage.externalMessageId ?? undefined}
             onClose={() => setShowComposer(false)}
           />
         ) : (
@@ -98,16 +124,16 @@ export default function ThreadView({ threadId, onBack }: ThreadViewProps) {
   )
 }
 
-function formatDate(dateStr: string): string {
+function formatDate(date: Date | string): string {
   try {
-    const date = new Date(dateStr)
-    return date.toLocaleString(undefined, {
+    const d = typeof date === 'string' ? new Date(date) : date
+    return d.toLocaleString(undefined, {
       month: 'short',
       day: 'numeric',
       hour: 'numeric',
       minute: '2-digit',
     })
   } catch {
-    return dateStr
+    return String(date)
   }
 }

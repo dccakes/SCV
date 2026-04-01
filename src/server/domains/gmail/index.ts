@@ -22,8 +22,11 @@ export type {
   GmailConnectionStatus,
   GmailMessage,
   GmailMessageHeader,
-  GmailMessageList,
   GmailThread,
+  StoredMessage,
+  StoredMessageList,
+  StoredThread,
+  SyncResult,
 } from '~/server/domains/gmail/gmail.types'
 
 // Export validators
@@ -32,8 +35,10 @@ export {
   type GmailCreateDraftInput,
   type GmailGetThreadInput,
   type GmailListMessagesInput,
+  type GmailSyncForVendorInput,
   gmailCallbackSchema,
   gmailCreateDraftSchema,
   gmailGetThreadSchema,
   gmailListMessagesSchema,
+  gmailSyncForVendorSchema,
 } from '~/server/domains/gmail/gmail.validator'

@@ -20,6 +20,8 @@ export type GmailConnectionStatus = {
   email: string | null
 }
 
+// ─── Gmail API types (used during sync) ────────────────────────────────────
+
 export type GmailMessageHeader = {
   id: string
   threadId: string
@@ -40,8 +42,41 @@ export type GmailThread = {
   messages: GmailMessage[]
 }
 
-export type GmailMessageList = {
-  messages: GmailMessageHeader[]
-  nextPageToken: string | null
-  resultSizeEstimate: number
+// ─── Local stored message types ────────────────────────────────────────────
+
+export type StoredMessage = {
+  id: string
+  weddingId: string
+  connectionId: string
+  vendorId: string | null
+  vendorName: string | null
+  provider: string
+  externalMessageId: string | null
+  externalThreadId: string | null
+  subject: string | null
+  body: string
+  snippet: string | null
+  senderAddress: string
+  senderName: string | null
+  recipientAddresses: string[]
+  direction: string
+  sentAt: Date
+  isDraft: boolean
+  createdAt: Date
+}
+
+export type StoredMessageList = {
+  messages: StoredMessage[]
+  total: number
+}
+
+export type StoredThread = {
+  threadId: string
+  messages: StoredMessage[]
+  vendorName: string | null
+}
+
+export type SyncResult = {
+  synced: number
+  skipped: number
 }

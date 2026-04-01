@@ -6,6 +6,7 @@
  */
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
+import { gmailService } from '~/server/domains/gmail'
 import { vendorService } from '~/server/domains/vendor'
 import {
   createQuoteSchema,
@@ -44,7 +45,14 @@ export const vendorRouter = createTRPCRouter({
    */
   create: protectedProcedure.input(createVendorSchema).mutation(async ({ ctx, input }) => {
     const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
-    return vendorService.createVendor(weddingId, input)
+    const vendor = await vendorService.createVendor(weddingId, input)
+
+    // Background sync: fetch Gmail messages for this vendor's contact email
+    if (input.contactEmail) {
+      gmailService.syncForVendor(ctx.auth.userId, vendor.id).catch(() => {})
+    }
+
+    return vendor
   }),
 
   /**
@@ -52,7 +60,14 @@ export const vendorRouter = createTRPCRouter({
    */
   update: protectedProcedure.input(updateVendorSchema).mutation(async ({ ctx, input }) => {
     const weddingId = await weddingService.getWeddingIdByUserId(ctx.auth.userId)
-    return vendorService.updateVendor(input.vendorId, weddingId, input)
+    const vendor = await vendorService.updateVendor(input.vendorId, weddingId, input)
+
+    // Background sync: if contact email was updated, re-sync for this vendor
+    if (input.contactEmail) {
+      gmailService.syncForVendor(ctx.auth.userId, vendor.id).catch(() => {})
+    }
+
+    return vendor
   }),
 
   /**
