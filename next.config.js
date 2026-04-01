@@ -19,7 +19,6 @@ const config = {
   },
   experimental: {
     optimizePackageImports: ['date-fns', 'lucide-react', 'react-icons'],
-    instrumentationHook: true,
   },
   images: {
     remotePatterns: [
