@@ -15,6 +15,9 @@ jest.mock('~/server/domains/wedding/wedding.repository')
 jest.mock('~/server/domains/event/event.service')
 jest.mock('~/server/domains/user/user.service')
 jest.mock('~/server/domains/guest-tag/guest-tag.service')
+jest.mock('~/lib/etta/provision', () => ({
+  provisionEtta: jest.fn().mockResolvedValue(undefined),
+}))
 
 // @ts-expect-error - Importing mock functions from mocked module
 import {
