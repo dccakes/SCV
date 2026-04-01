@@ -14,7 +14,7 @@ export default async function AuthenicatedLayout({ children }: Readonly<Authenic
   return (
     <EventFormProvider>
       <GuestFormProvider>
-        <AuthenticatedLayoutFrame>{children}</AuthenticatedLayoutFrame>
+        <AuthenticatedLayoutFrame showEttaPanel>{children}</AuthenticatedLayoutFrame>
       </GuestFormProvider>
     </EventFormProvider>
   )

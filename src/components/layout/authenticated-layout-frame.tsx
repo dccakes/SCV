@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import AuthenticatedAppShell from '@/components/layout/authenticated-app-shell'
 import { getSidebarWeddingInfo } from '@/components/old_dashboard/sidebar-wedding-info'
 import { getDashboardOverview } from '~/server/application/dashboard/dashboard-request-data'
+import { api } from '~/trpc/server'
 
 type AuthenticatedLayoutFrameProps = {
   children: ReactNode
@@ -13,11 +14,18 @@ export async function AuthenticatedLayoutFrame(props: Readonly<AuthenticatedLayo
   const dashboardData = await getDashboardOverview()
   const { coupleName, weddingDate } = getSidebarWeddingInfo(dashboardData?.weddingData)
 
+  let weddingId: string | undefined
+  if (showEttaPanel) {
+    const wedding = await api.wedding.getByUserId.query()
+    weddingId = wedding?.id
+  }
+
   return (
     <AuthenticatedAppShell
       coupleName={coupleName}
       weddingDate={weddingDate}
       showEttaPanel={showEttaPanel}
+      weddingId={weddingId}
     >
       {children}
     </AuthenticatedAppShell>

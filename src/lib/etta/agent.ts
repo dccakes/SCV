@@ -27,7 +27,7 @@ export async function runEttaAgent(req: EttaRequest) {
   const system = buildSystemPrompt(ctx)
 
   const result = streamText({
-    model: anthropic('claude-sonnet-4-5-20250514'),
+    model: anthropic('claude-haiku-4-5-20251001'),
     system,
     messages,
     tools,
