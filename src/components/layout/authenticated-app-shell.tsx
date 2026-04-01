@@ -21,11 +21,12 @@ type AuthenticatedAppShellProps = {
   children: ReactNode
   coupleName?: string
   weddingDate?: string
+  weddingLocation?: string
   showEttaPanel?: boolean
 }
 
 export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppShellProps>) {
-  const { children, coupleName, weddingDate, showEttaPanel = false } = props
+  const { children, coupleName, weddingDate, weddingLocation, showEttaPanel = false } = props
   const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
@@ -41,6 +42,7 @@ export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppSh
           setIsOpen={setIsOpen}
           coupleName={coupleName}
           weddingDate={weddingDate}
+          weddingLocation={weddingLocation}
         />
         <div className='flex min-h-0 flex-1 overflow-hidden'>
           <div className='flex min-h-0 flex-1 flex-col overflow-hidden'>

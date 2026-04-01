@@ -27,6 +27,7 @@ export type WeddingData = {
   brideFirstName: string | null
   brideLastName: string | null
   date: WeddingDate
+  location?: string | null
   daysRemaining: number
 }
 

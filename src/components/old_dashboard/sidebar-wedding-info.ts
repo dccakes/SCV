@@ -4,11 +4,13 @@ type WeddingInfoInput = {
   date?: {
     standardFormat?: string | null
   } | null
+  location?: string | null
 }
 
 type SidebarWeddingInfo = {
   coupleName: string | undefined
   weddingDate: string | undefined
+  weddingLocation: string | undefined
 }
 
 export function getSidebarWeddingInfo(weddingData?: WeddingInfoInput): SidebarWeddingInfo {
@@ -17,9 +19,11 @@ export function getSidebarWeddingInfo(weddingData?: WeddingInfoInput): SidebarWe
   const coupleName =
     brideFirstName && groomFirstName ? `${brideFirstName} & ${groomFirstName}` : undefined
   const weddingDate = weddingData?.date?.standardFormat?.trim() || undefined
+  const weddingLocation = weddingData?.location?.trim() || undefined
 
   return {
     coupleName,
     weddingDate,
+    weddingLocation,
   }
 }

@@ -139,9 +139,9 @@ export default function SidebarNavFrame(props: SidebarNavFrameProps) {
   const drawerRef = useRef<HTMLDivElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
 
-  const resolvedCoupleName = coupleName ?? 'Holly & Diego'
-  const resolvedWeddingDate = weddingDate ?? '17 May 2027'
-  const resolvedWeddingLocation = weddingLocation ?? 'Oaxaca, Mexico'
+  const resolvedCoupleName = coupleName
+  const resolvedWeddingDate = weddingDate
+  const resolvedWeddingLocation = weddingLocation
 
   useEffect(() => {
     const saved = localStorage.getItem('sidebar-collapsed') === 'true'

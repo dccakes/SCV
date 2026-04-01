@@ -546,13 +546,38 @@ describe('DashboardService', () => {
     })
 
     it('should handle missing wedding date gracefully', async () => {
-      const eventsWithoutWeddingDay = [mockEvents[1]] // Only rehearsal dinner
-      mockEventFindByWeddingIdWithQuestionsFn.mockResolvedValue(eventsWithoutWeddingDay)
+      mockEventFindByWeddingIdWithQuestionsFn.mockResolvedValue([]) // No events at all
 
       const result = await service.getOverview('user-123')
 
       expect(result?.weddingData.date.standardFormat).toBeUndefined()
       expect(result?.weddingData.daysRemaining).toBe(-1)
+    })
+
+    it('should include wedding location from primary event', async () => {
+      const result = await service.getOverview('user-123')
+
+      expect(result?.weddingData.location).toBe('The Grand Ballroom')
+    })
+
+    it('should return null location when primary event has no venue', async () => {
+      const eventsWithNoVenue = [{ ...mockEvents[0], venue: null }]
+      mockEventFindByWeddingIdWithQuestionsFn.mockResolvedValue(eventsWithNoVenue)
+
+      const result = await service.getOverview('user-123')
+
+      expect(result?.weddingData.location).toBeNull()
+    })
+
+    it('should use first event for date and location', async () => {
+      // Verify that the service uses events[0] regardless of event name
+      const customEvents = [{ ...mockEvents[0], name: 'Ceremony', venue: 'Beach Resort' }]
+      mockEventFindByWeddingIdWithQuestionsFn.mockResolvedValue(customEvents)
+
+      const result = await service.getOverview('user-123')
+
+      expect(result?.weddingData.location).toBe('Beach Resort')
+      expect(result?.weddingData.date.standardFormat).toContain('2025')
     })
 
     it('should handle empty households', async () => {
