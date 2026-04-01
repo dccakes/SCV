@@ -6,11 +6,14 @@
  */
 
 import { runEttaAgent } from '~/lib/etta/agent'
+import { logAudit } from '~/lib/etta/utils/audit'
 import { resolveEttaAuth } from '~/lib/etta/utils/auth'
 
 export async function POST(req: Request) {
+  let ettaReq: Awaited<ReturnType<typeof resolveEttaAuth>> | null = null
+
   try {
-    const ettaReq = await resolveEttaAuth(req)
+    ettaReq = await resolveEttaAuth(req)
     const result = await runEttaAgent(ettaReq)
     return result.toTextStreamResponse()
   } catch (error) {
@@ -21,6 +24,20 @@ export async function POST(req: Request) {
         : message === 'No wedding found for user'
           ? 404
           : 500
+
+    // Log the error for debugging
+    await logAudit({
+      weddingId: ettaReq?.weddingId ?? 'unknown',
+      actorId: ettaReq?.authz?.userId ?? 'unknown',
+      actorType: ettaReq?.actor === 'guest' ? 'guest' : 'couple',
+      action: 'chat_error',
+      resourceType: 'conversation',
+      payload: {
+        error: message,
+        status,
+        stack: error instanceof Error ? error.stack?.slice(0, 500) : undefined,
+      },
+    })
 
     return Response.json({ error: message }, { status })
   }

@@ -21,7 +21,6 @@ const ADAPTIVE_MODELS = ['anthropic/claude-opus-4.6', 'anthropic/claude-sonnet-4
 function getAnthropicThinkingOptions(modelId: string) {
   if (!modelId.startsWith('anthropic/')) return undefined
 
-  // Claude 4.6 models use adaptive thinking
   if (ADAPTIVE_MODELS.some((m) => modelId.startsWith(m))) {
     return {
       anthropic: {
@@ -30,7 +29,6 @@ function getAnthropicThinkingOptions(modelId: string) {
     }
   }
 
-  // Claude 4.5 and earlier use manual thinking with budget
   return {
     anthropic: {
       thinking: { type: 'enabled' as const, budgetTokens: 5000 },
@@ -40,6 +38,7 @@ function getAnthropicThinkingOptions(modelId: string) {
 
 export async function runEttaAgent(req: EttaRequest) {
   const { actor, weddingId, guestId, authz, messages } = req
+  const startTime = Date.now()
 
   const ctx = await resolveEttaContext({ actor, weddingId, guestId, authz })
 
@@ -48,11 +47,28 @@ export async function runEttaAgent(req: EttaRequest) {
 
   const modelId = process.env.ETTA_MODEL || DEFAULT_MODEL
   const model = gateway(modelId)
-
-  // Enable thinking for Anthropic models
-  // Claude 4.6: adaptive thinking (model decides when/how much to think)
-  // Claude 4.5 and earlier: manual thinking with fixed token budget
   const providerOptions = getAnthropicThinkingOptions(modelId)
+
+  // Log inbound request
+  const userMessage = messages.at(-1)
+  await logAudit({
+    weddingId,
+    actorId: authz?.userId ?? `guest:${guestId}`,
+    actorType: actor === 'couple' ? 'couple' : 'guest',
+    action: 'chat_request',
+    resourceType: 'conversation',
+    payload: {
+      model: modelId,
+      persona: actor,
+      messageCount: messages.length,
+      latestMessage:
+        userMessage && 'content' in userMessage
+          ? String(userMessage.content).slice(0, 500)
+          : undefined,
+    },
+  })
+
+  let stepCount = 0
 
   const result = streamText({
     model,
@@ -61,21 +77,74 @@ export async function runEttaAgent(req: EttaRequest) {
     tools,
     stopWhen: stepCountIs(10),
     providerOptions,
-    onStepFinish: async ({ toolResults }) => {
+    onStepFinish: async ({ text, toolCalls, toolResults, usage, reasoning }) => {
+      stepCount++
+
+      // Log tool invocations
       const results = toolResults ?? []
-      if (results.length === 0) return
-      await Promise.all(
-        results.map((r) =>
-          logAudit({
-            weddingId,
-            actorId: ctx.ettaActorId,
-            actorType: 'etta',
-            action: r.toolName,
-            resourceType: 'tool_call',
-            payload: r as Record<string, unknown>,
-          })
+      if (results.length > 0) {
+        await Promise.all(
+          results.map((r) =>
+            logAudit({
+              weddingId,
+              actorId: ctx.ettaActorId,
+              actorType: 'etta',
+              action: r.toolName,
+              resourceType: 'tool_call',
+              payload: r as Record<string, unknown>,
+            })
+          )
         )
-      )
+      }
+
+      // Log step completion with usage
+      await logAudit({
+        weddingId,
+        actorId: ctx.ettaActorId,
+        actorType: 'etta',
+        action: 'step_complete',
+        resourceType: 'conversation',
+        payload: {
+          step: stepCount,
+          hasText: !!text,
+          textLength: text?.length ?? 0,
+          toolCallCount: toolCalls?.length ?? 0,
+          toolNames: toolCalls?.map((tc) => tc.toolName) ?? [],
+          hasReasoning: !!reasoning,
+          usage: usage
+            ? {
+                inputTokens: usage.inputTokens,
+                outputTokens: usage.outputTokens,
+                totalTokens: usage.totalTokens,
+              }
+            : undefined,
+        },
+      })
+    },
+    onFinish: async ({ text, usage, steps }) => {
+      const durationMs = Date.now() - startTime
+
+      await logAudit({
+        weddingId,
+        actorId: ctx.ettaActorId,
+        actorType: 'etta',
+        action: 'chat_response',
+        resourceType: 'conversation',
+        payload: {
+          model: modelId,
+          persona: actor,
+          durationMs,
+          responseLength: text?.length ?? 0,
+          totalSteps: steps?.length ?? stepCount,
+          usage: usage
+            ? {
+                inputTokens: usage.inputTokens,
+                outputTokens: usage.outputTokens,
+                totalTokens: usage.totalTokens,
+              }
+            : undefined,
+        },
+      })
     },
   })
 

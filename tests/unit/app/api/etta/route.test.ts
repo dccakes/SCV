@@ -13,6 +13,10 @@ jest.mock('~/lib/etta/agent', () => ({
   runEttaAgent: jest.fn(),
 }))
 
+jest.mock('~/lib/etta/utils/audit', () => ({
+  logAudit: jest.fn(),
+}))
+
 const mockResolveAuth = resolveEttaAuth as jest.Mock
 const mockRunAgent = runEttaAgent as jest.Mock
 
