@@ -51,7 +51,8 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
   const bride = weddingData?.brideFirstName ?? ''
   const groom = weddingData?.groomFirstName ?? ''
   const coupleName = bride && groom ? `${bride} & ${groom}` : bride || groom || 'Your Wedding'
-  const days = weddingData?.daysRemaining ?? 0
+  const hasDate = weddingData?.daysRemaining != null && weddingData.daysRemaining >= 0
+  const days = hasDate ? weddingData.daysRemaining : null
   const dateLabel = weddingData?.date?.standardFormat ?? ''
   const location = weddingData?.location ?? ''
 
@@ -74,7 +75,7 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
       <div className='relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div>
           <p className='mb-1 font-mono text-[0.6rem] text-sidebar-cream/40 uppercase tracking-[0.18em]'>
-            Days until the big day
+            {hasDate ? 'Days until the big day' : 'Your wedding'}
           </p>
           <p className='font-serif text-2xl text-sidebar-cream italic leading-tight'>
             {coupleName}
@@ -82,6 +83,14 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
           {(dateLabel || location) && (
             <p className='mt-0.5 font-mono text-[0.62rem] text-sidebar-cream/40 tracking-wider'>
               {[dateLabel, location].filter(Boolean).join(' · ')}
+            </p>
+          )}
+          {!hasDate && !location && (
+            <p className='mt-0.5 font-mono text-[0.62rem] text-sidebar-cream/30 tracking-wider'>
+              Set your date & location in{' '}
+              <Link href='/settings' className='text-primary underline underline-offset-2'>
+                Settings
+              </Link>
             </p>
           )}
           <div className='mt-3 h-[2px] w-full max-w-[200px] overflow-hidden rounded-full bg-white/[0.08]'>
@@ -95,34 +104,45 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
           </p>
         </div>
 
-        <div className='flex items-end gap-3'>
+        {hasDate ? (
+          <div className='flex items-end gap-3'>
+            <div className='text-center'>
+              <span className='block font-serif text-5xl text-sidebar-cream leading-none'>
+                {days}
+              </span>
+              <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
+                Days
+              </span>
+            </div>
+            <span className='pb-1 font-serif text-3xl text-sidebar-cream/15'>:</span>
+            <div className='text-center'>
+              <span className='block font-serif text-5xl text-sidebar-cream leading-none'>
+                {String(hours).padStart(2, '0')}
+              </span>
+              <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
+                Hours
+              </span>
+            </div>
+            <span className='pb-1 font-serif text-3xl text-sidebar-cream/15'>:</span>
+            <div className='text-center'>
+              <span className='block font-serif text-5xl text-sidebar-cream leading-none'>
+                {String(mins).padStart(2, '0')}
+              </span>
+              <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
+                Mins
+              </span>
+            </div>
+          </div>
+        ) : (
           <div className='text-center'>
-            <span className='block font-serif text-5xl text-sidebar-cream leading-none'>
-              {days}
+            <span className='block font-serif text-3xl text-sidebar-cream/30 leading-none'>
+              --:--:--
             </span>
             <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
-              Days
+              No date set
             </span>
           </div>
-          <span className='pb-1 font-serif text-3xl text-sidebar-cream/15'>:</span>
-          <div className='text-center'>
-            <span className='block font-serif text-5xl text-sidebar-cream leading-none'>
-              {String(hours).padStart(2, '0')}
-            </span>
-            <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
-              Hours
-            </span>
-          </div>
-          <span className='pb-1 font-serif text-3xl text-sidebar-cream/15'>:</span>
-          <div className='text-center'>
-            <span className='block font-serif text-5xl text-sidebar-cream leading-none'>
-              {String(mins).padStart(2, '0')}
-            </span>
-            <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
-              Mins
-            </span>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   )

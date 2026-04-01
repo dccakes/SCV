@@ -32,9 +32,12 @@ type WeddingSettingsFormProps = {
 
 export default function WeddingSettingsForm({ initialData }: WeddingSettingsFormProps) {
   const router = useRouter()
+  const utils = api.useUtils()
 
   const updateDetails = api.wedding.updateDetails.useMutation({
     onSuccess: () => {
+      void utils.dashboard.getByUserId.invalidate()
+      void utils.wedding.getDetails.invalidate()
       router.refresh()
     },
   })

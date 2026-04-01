@@ -308,6 +308,6 @@ describe('PlanningOverview', () => {
   it('renders without crashing when dashboardData is null', () => {
     render(<PlanningOverview dashboardData={null} />)
     expect(screen.getByText('Your Wedding')).toBeInTheDocument()
-    expect(screen.getByText('Days')).toBeInTheDocument()
+    expect(screen.getByText('No date set')).toBeInTheDocument()
   })
 })
