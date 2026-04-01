@@ -36,16 +36,7 @@ export function TagInput({
 
   const containerRef = useOuterClick<HTMLDivElement>(useCallback(() => setIsOpen(false), []))
 
-  const createTagMutation = api.guestTag.create.useMutation({
-    onSuccess: async (created) => {
-      await onTagCreated(created.id)
-      onToggle(created.id)
-      setQuery('')
-    },
-    onError: (error) => {
-      toast.error(error.message ?? 'Failed to create tag')
-    },
-  })
+  const createTagMutation = api.guestTag.create.useMutation()
 
   const selectedTags = useMemo(
     () => tags.filter((tag) => selectedTagIds.includes(tag.id)),
@@ -70,7 +61,7 @@ export function TagInput({
     return result
   }, [tags, trimmedQuery, isMaxReached, query])
 
-  const selectOption = (index: number) => {
+  const selectOption = async (index: number) => {
     const option = options[index]
     if (!option) return
 
@@ -80,7 +71,19 @@ export function TagInput({
       onToggle(option.tag.id)
       setQuery('')
     } else {
-      createTagMutation.mutate({ name: option.name, color: pickRandomTagColor() })
+      try {
+        const created = await createTagMutation.mutateAsync({
+          name: option.name,
+          color: pickRandomTagColor(),
+        })
+        await onTagCreated(created.id)
+        onToggle(created.id)
+        setQuery('')
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Failed to create tag'
+        toast.error(message)
+      }
     }
   }
 
