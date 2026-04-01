@@ -31,11 +31,7 @@ export const websiteRouter = createTRPCRouter({
       ctx.auth.activeOrganization?.organizationId ?? null
     )
 
-    return websiteService.enableWebsite(
-      ctx.authz,
-      wedding.id,
-      input
-    )
+    return websiteService.enableWebsite(ctx.authz, wedding.id, input)
   }),
 
   /**
@@ -47,11 +43,7 @@ export const websiteRouter = createTRPCRouter({
       ctx.auth.activeOrganization?.organizationId ?? null
     )
 
-    return websiteService.updateWebsite(
-      ctx.authz,
-      wedding.id,
-      input
-    )
+    return websiteService.updateWebsite(ctx.authz, wedding.id, input)
   }),
 
   /**
@@ -84,11 +76,7 @@ export const websiteRouter = createTRPCRouter({
         ctx.auth.activeOrganization?.organizationId ?? null
       )
 
-      return websiteService.updateCoverPhoto(
-        ctx.authz,
-        wedding.id,
-        input.coverPhotoUrl
-      )
+      return websiteService.updateCoverPhoto(ctx.authz, wedding.id, input.coverPhotoUrl)
     }),
 
   /**

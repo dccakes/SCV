@@ -425,7 +425,12 @@ describe('EventService', () => {
       mockUpdateCollectRsvpFn.mockResolvedValue(updatedEvent)
       mockBelongsToWeddingFn.mockResolvedValue(true)
 
-      const result = await eventService.updateCollectRsvp(actorContext, 'wedding-123', 'event-123', false)
+      const result = await eventService.updateCollectRsvp(
+        actorContext,
+        'wedding-123',
+        'event-123',
+        false
+      )
 
       expect(result.collectRsvp).toBe(false)
       expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, {

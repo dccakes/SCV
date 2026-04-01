@@ -31,11 +31,7 @@ export const householdRouter = createTRPCRouter({
       ctx.auth.userId,
       ctx.auth.activeOrganization?.organizationId ?? null
     )
-    return householdManagementService.createHouseholdWithGuests(
-      ctx.authz,
-      weddingId,
-      input
-    )
+    return householdManagementService.createHouseholdWithGuests(ctx.authz, weddingId, input)
   }),
 
   /**
@@ -46,11 +42,7 @@ export const householdRouter = createTRPCRouter({
       ctx.auth.userId,
       ctx.auth.activeOrganization?.organizationId ?? null
     )
-    return householdManagementService.updateHouseholdWithGuests(
-      ctx.authz,
-      weddingId,
-      input
-    )
+    return householdManagementService.updateHouseholdWithGuests(ctx.authz, weddingId, input)
   }),
 
   /**
@@ -80,11 +72,7 @@ export const householdRouter = createTRPCRouter({
         }
       }
 
-      return householdManagementService.bulkCreateHouseholds(
-        ctx.authz,
-        weddingId,
-        input.households
-      )
+      return householdManagementService.bulkCreateHouseholds(ctx.authz, weddingId, input.households)
     }),
 
   /**
@@ -95,11 +83,7 @@ export const householdRouter = createTRPCRouter({
       ctx.auth.userId,
       ctx.auth.activeOrganization?.organizationId ?? null
     )
-    return householdManagementService.deleteHousehold(
-      ctx.authz,
-      input.householdId,
-      weddingId
-    )
+    return householdManagementService.deleteHousehold(ctx.authz, input.householdId, weddingId)
   }),
 
   /**
@@ -110,10 +94,6 @@ export const householdRouter = createTRPCRouter({
       ctx.auth.userId,
       ctx.auth.activeOrganization?.organizationId ?? null
     )
-    return householdManagementService.searchHouseholds(
-      ctx.authz,
-      weddingId,
-      input.searchText
-    )
+    return householdManagementService.searchHouseholds(ctx.authz, weddingId, input.searchText)
   }),
 })

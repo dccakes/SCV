@@ -74,12 +74,7 @@ export const vendorRouter = createTRPCRouter({
         ctx.auth.userId,
         ctx.auth.activeOrganization?.organizationId ?? null
       )
-      return vendorService.updateStatus(
-        ctx.authz,
-        input.vendorId,
-        weddingId,
-        input.status
-      )
+      return vendorService.updateStatus(ctx.authz, input.vendorId, weddingId, input.status)
     }),
 
   /**
@@ -112,13 +107,7 @@ export const vendorRouter = createTRPCRouter({
       ctx.auth.userId,
       ctx.auth.activeOrganization?.organizationId ?? null
     )
-    return vendorService.updateQuote(
-      ctx.authz,
-      input.quoteId,
-      input.vendorId,
-      weddingId,
-      input
-    )
+    return vendorService.updateQuote(ctx.authz, input.quoteId, input.vendorId, weddingId, input)
   }),
 
   /**
