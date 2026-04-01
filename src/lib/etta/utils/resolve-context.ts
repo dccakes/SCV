@@ -31,6 +31,9 @@ export async function resolveEttaContext(params: {
   if (!ettaActor) {
     throw new Error('Etta not provisioned for this wedding')
   }
+  if (!wedding) {
+    throw new Error(`Wedding ${weddingId} not found`)
+  }
 
   return {
     weddingId,
@@ -38,10 +41,10 @@ export async function resolveEttaContext(params: {
     actor,
     guestId,
     wedding: {
-      groomFirstName: wedding!.groomFirstName,
-      groomLastName: wedding!.groomLastName,
-      brideFirstName: wedding!.brideFirstName,
-      brideLastName: wedding!.brideLastName,
+      groomFirstName: wedding.groomFirstName,
+      groomLastName: wedding.groomLastName,
+      brideFirstName: wedding.brideFirstName,
+      brideLastName: wedding.brideLastName,
     },
     guestCount,
     eventCount,

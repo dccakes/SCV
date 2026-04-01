@@ -25,14 +25,14 @@ function makeContext(overrides: Partial<EttaContext> = {}): EttaContext {
 
 describe('buildSystemPrompt — couple (planner)', () => {
   it('includes couple names', () => {
-    const prompt = buildSystemPrompt('couple', makeContext())
+    const prompt = buildSystemPrompt(makeContext())
 
     expect(prompt).toContain('Emily')
     expect(prompt).toContain('James')
   })
 
   it('includes current counts', () => {
-    const prompt = buildSystemPrompt('couple', makeContext())
+    const prompt = buildSystemPrompt(makeContext())
 
     expect(prompt).toContain('25 guests')
     expect(prompt).toContain('3 events')
@@ -41,7 +41,7 @@ describe('buildSystemPrompt — couple (planner)', () => {
   })
 
   it('includes action tier descriptions', () => {
-    const prompt = buildSystemPrompt('couple', makeContext())
+    const prompt = buildSystemPrompt(makeContext())
 
     expect(prompt).toContain('T0')
     expect(prompt).toContain('T1')
@@ -53,7 +53,7 @@ describe('buildSystemPrompt — couple (planner)', () => {
       recentMemories: ['Bride prefers peonies', 'Budget is $30k'],
     })
 
-    const prompt = buildSystemPrompt('couple', ctx)
+    const prompt = buildSystemPrompt(ctx)
 
     expect(prompt).toContain('Bride prefers peonies')
     expect(prompt).toContain('Budget is $30k')
@@ -64,14 +64,14 @@ describe('buildSystemPrompt — couple (planner)', () => {
 
 describe('buildSystemPrompt — guest (concierge)', () => {
   it('includes couple names', () => {
-    const prompt = buildSystemPrompt('guest', makeContext({ actor: 'guest' }))
+    const prompt = buildSystemPrompt(makeContext({ actor: 'guest' }))
 
     expect(prompt).toContain('Emily')
     expect(prompt).toContain('James')
   })
 
   it('does NOT include action tiers', () => {
-    const prompt = buildSystemPrompt('guest', makeContext({ actor: 'guest' }))
+    const prompt = buildSystemPrompt(makeContext({ actor: 'guest' }))
 
     expect(prompt).not.toContain('T0')
     expect(prompt).not.toContain('T1')
@@ -79,7 +79,7 @@ describe('buildSystemPrompt — guest (concierge)', () => {
   })
 
   it('mentions RSVP capability', () => {
-    const prompt = buildSystemPrompt('guest', makeContext({ actor: 'guest' }))
+    const prompt = buildSystemPrompt(makeContext({ actor: 'guest' }))
 
     expect(prompt).toContain('RSVP')
   })

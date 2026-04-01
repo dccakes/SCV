@@ -26,7 +26,7 @@ export async function runEttaAgent(req: EttaRequest) {
   const tools =
     actor === 'couple' ? getPlannerTools(ctx) : getConciergeTools(ctx)
 
-  const system = buildSystemPrompt(actor, ctx)
+  const system = buildSystemPrompt(ctx)
 
   const result = streamText({
     model: anthropic('claude-sonnet-4-5-20250514'),

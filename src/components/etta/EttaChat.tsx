@@ -30,9 +30,9 @@ export function EttaChat({ weddingId, persona, guestToken }: EttaChatProps) {
     () =>
       new DefaultChatTransport({
         api: '/api/etta',
-        body: { persona, guestToken, weddingId },
+        body: { persona, guestToken },
       }),
-    [persona, guestToken, weddingId],
+    [persona, guestToken],
   )
 
   const { messages, sendMessage, status } = useChat({ transport })

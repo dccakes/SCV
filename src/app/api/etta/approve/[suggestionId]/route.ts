@@ -5,9 +5,15 @@
  * and updates status to approved/dismissed.
  */
 
+import { z } from 'zod'
+
 import { validateCoupleSession } from '~/lib/etta/utils/auth'
 import { logAudit } from '~/lib/etta/utils/audit'
 import { db } from '~/server/db'
+
+const bodySchema = z.object({
+  action: z.enum(['approve', 'dismiss']),
+})
 
 export async function PATCH(
   req: Request,
@@ -17,17 +23,15 @@ export async function PATCH(
     const { weddingId, userId } = await validateCoupleSession(req.headers)
     const { suggestionId } = await params
 
-    const body = await req.json()
-    const action = body.action as 'approve' | 'dismiss'
-
-    if (!action || !['approve', 'dismiss'].includes(action)) {
+    const parsed = bodySchema.safeParse(await req.json())
+    if (!parsed.success) {
       return Response.json(
         { error: 'Invalid action. Must be "approve" or "dismiss".' },
         { status: 400 }
       )
     }
+    const { action } = parsed.data
 
-    // Fetch suggestion and verify ownership
     const suggestion = await db.ettaSuggestion.findUnique({
       where: { id: suggestionId },
     })
@@ -43,7 +47,6 @@ export async function PATCH(
       )
     }
 
-    // Update suggestion status
     const newStatus = action === 'approve' ? 'approved' : 'dismissed'
     const updated = await db.ettaSuggestion.update({
       where: { id: suggestionId },
@@ -54,7 +57,6 @@ export async function PATCH(
       },
     })
 
-    // Audit the action
     await logAudit({
       weddingId,
       actorId: userId,
@@ -74,7 +76,7 @@ export async function PATCH(
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'Internal server error'
-    const status = message === 'No active session' ? 401 : 500
+    const status = message.includes('UNAUTHORIZED') || message === 'No active session' ? 401 : 500
 
     return Response.json({ error: message }, { status })
   }

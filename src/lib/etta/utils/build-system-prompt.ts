@@ -1,9 +1,9 @@
-import type { EttaActorType, EttaContext } from '~/lib/etta/types'
+import type { EttaContext } from '~/lib/etta/types'
 
-export function buildSystemPrompt(actor: EttaActorType, ctx: EttaContext): string {
+export function buildSystemPrompt(ctx: EttaContext): string {
   const { brideFirstName: bride, groomFirstName: groom } = ctx.wedding
 
-  if (actor === 'couple') {
+  if (ctx.actor === 'couple') {
     return buildPlannerPrompt(bride, groom, ctx)
   }
 
