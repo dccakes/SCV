@@ -91,6 +91,20 @@ describe('getGuestTools', () => {
   })
 
   describe('get_rsvp_summary', () => {
+    it('returns all zeros for empty invitation list', async () => {
+      mockInvitationService.getAllByWeddingId.mockResolvedValue([])
+
+      const result = await tools.get_rsvp_summary.execute({}, { toolCallId: 'tc5', messages: [], abortSignal: undefined as never })
+
+      expect(mockInvitationService.getAllByWeddingId).toHaveBeenCalledWith('wedding-123')
+      expect(result).toEqual({
+        total: 0,
+        attending: 0,
+        declined: 0,
+        pending: 0,
+      })
+    })
+
     it('computes correct counts from invitations', async () => {
       const invitations = [
         { id: '1', rsvp: 'Attending' },

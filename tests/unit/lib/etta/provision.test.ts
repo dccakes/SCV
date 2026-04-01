@@ -16,6 +16,8 @@ const mockEttaActor = db.ettaActor as {
   updateMany: jest.Mock
 }
 
+beforeEach(() => jest.clearAllMocks())
+
 describe('provisionEtta', () => {
   it('upserts an EttaActor with correct permissions', async () => {
     mockEttaActor.upsert.mockResolvedValue({ id: 'etta-wedding-1' })

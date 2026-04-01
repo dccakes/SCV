@@ -155,4 +155,24 @@ describe('resolveEttaContext', () => {
     expect(ctx.recentMemories).toEqual([])
     expect(ctx.guestId).toBe(42)
   })
+
+  it('throws when wedding is not found (null)', async () => {
+    setupMocks({ wedding: null })
+
+    await expect(
+      resolveEttaContext({ actor: 'couple', weddingId: 'wedding-1' }),
+    ).rejects.toThrow('Wedding wedding-1 not found')
+  })
+
+  it('passes select { content: true } for memory query in planner mode', async () => {
+    setupMocks()
+
+    await resolveEttaContext({ actor: 'couple', weddingId: 'wedding-1' })
+
+    expect(mockMemories).toHaveBeenCalledWith(
+      expect.objectContaining({
+        select: { content: true },
+      }),
+    )
+  })
 })

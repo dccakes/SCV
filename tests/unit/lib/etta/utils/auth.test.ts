@@ -113,6 +113,27 @@ describe('resolveEttaAuth', () => {
     expect(result.weddingId).toBe('wedding-1')
   })
 
+  it('falls through to couple auth when persona=concierge but no guestToken', async () => {
+    mockGetSession.mockResolvedValue({
+      user: { id: 'u1' },
+      session: { id: 'session-1' },
+    })
+    mockGetWeddingId.mockResolvedValue('w1')
+
+    const req = new Request('http://localhost/api/etta', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: 'hello' }],
+        persona: 'concierge',
+      }),
+    })
+
+    const result = await resolveEttaAuth(req)
+
+    expect(result.actor).toBe('couple')
+  })
+
   it('resolves guest auth when persona=concierge with guestToken', async () => {
     const token = await issueGuestToken('wedding-2', 99)
 
