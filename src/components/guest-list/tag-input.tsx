@@ -19,7 +19,7 @@ type TagInputProps = {
   selectedTagIds: string[]
   tags: Tag[]
   onToggle: (tagId: string) => void
-  onTagCreated: (tagId: string) => void
+  onTagCreated: (tagId: string) => Promise<void> | void
   ariaLabel?: string
 }
 
@@ -37,8 +37,8 @@ export function TagInput({
   const containerRef = useOuterClick<HTMLDivElement>(useCallback(() => setIsOpen(false), []))
 
   const createTagMutation = api.guestTag.create.useMutation({
-    onSuccess: (created) => {
-      onTagCreated(created.id)
+    onSuccess: async (created) => {
+      await onTagCreated(created.id)
       onToggle(created.id)
       setQuery('')
     },
