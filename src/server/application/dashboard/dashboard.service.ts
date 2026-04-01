@@ -90,13 +90,8 @@ export class DashboardService {
     const weddingDate = primaryEvent?.date
     const weddingLocation = primaryEvent?.venue
 
-    // Build wedding data
-    const weddingData = await this.buildWeddingData(
-      website,
-      currentUser,
-      weddingDate,
-      weddingLocation
-    )
+    // Build wedding data (names come from the Wedding entity, not the User)
+    const weddingData = await this.buildWeddingData(website, wedding, weddingDate, weddingLocation)
 
     // Build households with guest invitations
     const householdsWithInvitations = this.buildHouseholdsWithInvitations(households, invitations)
@@ -160,7 +155,12 @@ export class DashboardService {
    */
   private async buildWeddingData(
     website: Awaited<ReturnType<typeof this.fetchWebsite>>,
-    currentUser: NonNullable<Awaited<ReturnType<typeof this.fetchUser>>>,
+    wedding: {
+      groomFirstName: string
+      groomLastName: string
+      brideFirstName: string
+      brideLastName: string
+    },
     weddingDate: Date | null | undefined,
     weddingLocation: string | null | undefined
   ): Promise<WeddingData> {
@@ -189,10 +189,10 @@ export class DashboardService {
 
     return {
       website: websiteWithQuestions,
-      groomFirstName: currentUser.groomFirstName,
-      groomLastName: currentUser.groomLastName,
-      brideFirstName: currentUser.brideFirstName,
-      brideLastName: currentUser.brideLastName,
+      groomFirstName: wedding.groomFirstName,
+      groomLastName: wedding.groomLastName,
+      brideFirstName: wedding.brideFirstName,
+      brideLastName: wedding.brideLastName,
       date: {
         standardFormat: weddingDate?.toLocaleDateString('en-us', {
           weekday: 'long',
