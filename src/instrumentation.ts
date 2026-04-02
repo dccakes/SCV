@@ -5,11 +5,7 @@ export function register() {
   registerOTel({ serviceName: 'scv' })
 }
 
-export const onRequestError: Instrumentation.onRequestError = async (
-  err,
-  request,
-  context,
-) => {
+export const onRequestError: Instrumentation.onRequestError = async (err, request, context) => {
   console.error('[scv:error]', {
     message: (err as Error).message,
     digest: (err as Error & { digest?: string }).digest,
