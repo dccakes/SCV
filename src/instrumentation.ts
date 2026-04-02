@@ -6,13 +6,16 @@ export function register() {
 }
 
 export const onRequestError: Instrumentation.onRequestError = async (err, request, context) => {
-  console.error('[scv:error]', {
-    message: (err as Error).message,
-    digest: (err as Error & { digest?: string }).digest,
-    path: request.path,
-    method: request.method,
-    routerKind: context.routerKind,
-    routePath: context.routePath,
-    routeType: context.routeType,
-  })
+  process.stderr.write(
+    `${JSON.stringify({
+      digest: (err as Error & { digest?: string }).digest,
+      message: (err as Error).message,
+      method: request.method,
+      path: request.path,
+      routePath: context.routePath,
+      routeType: context.routeType,
+      routerKind: context.routerKind,
+      tag: 'scv:error',
+    })}\n`
+  )
 }
