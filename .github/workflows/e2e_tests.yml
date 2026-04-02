@@ -19,7 +19,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16-alpine
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_USER: e2e_user
           POSTGRES_PASSWORD: e2e_password
