@@ -37,14 +37,10 @@ jest.mock('~/env', () => ({
   env: { RESEND_API_KEY: 're_test_key', EMAIL_FROM: 'test@example.com' },
 }))
 
-import { OtpEmail } from '~/emails/otp-email'
 import { OrganizationInvitationEmail } from '~/emails/organization-invitation-email'
+import { OtpEmail } from '~/emails/otp-email'
 import { ResetPasswordEmail } from '~/emails/reset-password-email'
-import {
-  sendOrganizationInvitationEmail,
-  sendOtpEmail,
-  sendResetPasswordEmail,
-} from '~/lib/email'
+import { sendOrganizationInvitationEmail, sendOtpEmail, sendResetPasswordEmail } from '~/lib/email'
 
 beforeEach(() => {
   mockEmailsSend.mockClear()
@@ -139,7 +135,7 @@ describe('sendOrganizationInvitationEmail', () => {
       inviteUrl: INVITE_URL,
       organizationName: 'Shrek & Fiona',
       invitedByName: 'Fiona',
-      role: 'editor',
+      memberRole: 'editor',
     })
 
     expect(mockEmailsSend).toHaveBeenCalledWith(
@@ -157,7 +153,7 @@ describe('sendOrganizationInvitationEmail', () => {
       inviteUrl: INVITE_URL,
       organizationName: 'Shrek & Fiona',
       invitedByName: 'Fiona',
-      role: 'viewer',
+      memberRole: 'viewer',
     })
 
     const element = mockRender.mock.calls[0][0]
