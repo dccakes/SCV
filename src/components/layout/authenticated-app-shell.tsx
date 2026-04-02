@@ -24,6 +24,7 @@ type AuthenticatedAppShellProps = {
   weddingLocation?: string
   showEttaPanel?: boolean
   weddingId?: string
+  isEttaConfigured?: boolean
 }
 
 export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppShellProps>) {
@@ -34,6 +35,7 @@ export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppSh
     weddingLocation,
     showEttaPanel = false,
     weddingId,
+    isEttaConfigured = false,
   } = props
   const [isOpen, setIsOpen] = useState(false)
 
@@ -80,7 +82,7 @@ export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppSh
           </div>
           {showEttaPanel && weddingId && (
             <aside className='hidden w-80 flex-shrink-0 border-l border-white/10 lg:flex'>
-              <EttaChat weddingId={weddingId} persona='planner' />
+              <EttaChat weddingId={weddingId} persona='planner' isConfigured={isEttaConfigured} />
             </aside>
           )}
         </div>

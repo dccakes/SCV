@@ -12,6 +12,7 @@ type AuthenticatedLayoutFrameProps = {
 export async function AuthenticatedLayoutFrame(props: Readonly<AuthenticatedLayoutFrameProps>) {
   const { children, showEttaPanel = false } = props
   const dashboardData = await getDashboardOverview()
+  const isEttaConfigured = Boolean(process.env.AI_GATEWAY_API_KEY)
   const { coupleName, weddingDate, weddingLocation } = getSidebarWeddingInfo(
     dashboardData?.weddingData
   )
@@ -29,6 +30,7 @@ export async function AuthenticatedLayoutFrame(props: Readonly<AuthenticatedLayo
       weddingLocation={weddingLocation}
       showEttaPanel={showEttaPanel}
       weddingId={weddingId}
+      isEttaConfigured={isEttaConfigured}
     >
       {children}
     </AuthenticatedAppShell>

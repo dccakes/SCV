@@ -1,9 +1,31 @@
+import { convertToModelMessages } from 'ai'
 import { jwtVerify, SignJWT } from 'jose'
 import { auth } from '~/lib/auth'
 import type { EttaRequest } from '~/lib/etta/types'
 import type { ActiveOrganization, AuthzContext } from '~/server/authz/authorization.types'
 import { db } from '~/server/db'
 import { weddingService } from '~/server/domains/wedding'
+
+async function normalizeMessages(messages: unknown): Promise<EttaRequest['messages']> {
+  if (!Array.isArray(messages)) {
+    throw new Error('Invalid request: messages must be an array')
+  }
+
+  if (
+    messages.every(
+      (message) =>
+        message &&
+        typeof message === 'object' &&
+        'role' in message &&
+        'content' in message &&
+        typeof (message as { role?: unknown }).role === 'string'
+    )
+  ) {
+    return messages as EttaRequest['messages']
+  }
+
+  return convertToModelMessages(messages)
+}
 
 // ── Couple Session ──────────────────────────────────────────────────────────
 
@@ -118,12 +140,13 @@ export async function validateGuestToken(
 export async function resolveEttaAuth(req: Request): Promise<EttaRequest> {
   const body = await req.json()
   const { messages, persona, guestToken } = body
+  const modelMessages = await normalizeMessages(messages)
 
   if (persona === 'concierge' && guestToken) {
     const { weddingId, guestId } = await validateGuestToken(guestToken)
-    return { actor: 'guest', weddingId, guestId, messages }
+    return { actor: 'guest', weddingId, guestId, messages: modelMessages }
   }
 
   const { weddingId, authz } = await validateCoupleSession(req.headers)
-  return { actor: 'couple', weddingId, authz, messages }
+  return { actor: 'couple', weddingId, authz, messages: modelMessages }
 }

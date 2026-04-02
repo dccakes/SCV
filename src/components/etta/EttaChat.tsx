@@ -16,6 +16,7 @@ interface EttaChatProps {
   weddingId: string
   persona: 'planner' | 'concierge'
   guestToken?: string
+  isConfigured?: boolean
 }
 
 type Part = UIMessage['parts'][number]
@@ -110,7 +111,7 @@ function MessageParts({ parts }: { parts: Part[] }) {
 
 // ── Main chat component ──────────────────────────────────────────────────────
 
-export function EttaChat({ persona, guestToken }: EttaChatProps) {
+export function EttaChat({ persona, guestToken, isConfigured = true }: EttaChatProps) {
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -128,6 +129,11 @@ export function EttaChat({ persona, guestToken }: EttaChatProps) {
   const isLoading = status === 'submitted' || status === 'streaming'
   const suggestions = persona === 'planner' ? PLANNER_SUGGESTIONS : CONCIERGE_SUGGESTIONS
   const subtitle = persona === 'planner' ? 'OSWP AI Planner' : 'Wedding Concierge'
+  const statusLabel = isConfigured ? 'online' : 'offline'
+  const statusClassName = isConfigured ? 'text-emerald-400' : 'text-red-400'
+  const statusDotClassName = isConfigured
+    ? 'bg-emerald-400 motion-safe:animate-pulse'
+    : 'bg-red-400'
 
   const messageCount = messages.length
   // biome-ignore lint/correctness/useExhaustiveDependencies: messageCount and isLoading are intentional triggers for auto-scroll
@@ -163,9 +169,9 @@ export function EttaChat({ persona, guestToken }: EttaChatProps) {
             {subtitle}
           </p>
         </div>
-        <span className='flex items-center gap-1.5 font-mono text-[0.58rem] text-emerald-400'>
-          <span className='h-1.5 w-1.5 rounded-full bg-emerald-400 motion-safe:animate-pulse' />
-          online
+        <span className={`flex items-center gap-1.5 font-mono text-[0.58rem] ${statusClassName}`}>
+          <span className={`h-1.5 w-1.5 rounded-full ${statusDotClassName}`} />
+          {statusLabel}
         </span>
       </div>
 

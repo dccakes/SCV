@@ -1,3 +1,4 @@
+import { provisionEtta } from '~/lib/etta/provision'
 import { db } from '~/server/db'
 
 jest.mock('~/server/db', () => ({
@@ -12,6 +13,10 @@ jest.mock('~/server/db', () => ({
   },
 }))
 
+jest.mock('~/lib/etta/provision', () => ({
+  provisionEtta: jest.fn(),
+}))
+
 const mockEttaActor = db.ettaActor.findUnique as jest.Mock
 const mockWedding = db.wedding.findUnique as jest.Mock
 const mockGuestCount = db.guest.count as jest.Mock
@@ -19,6 +24,7 @@ const mockEventCount = db.event.count as jest.Mock
 const mockVendorCount = db.vendor.count as jest.Mock
 const mockSuggestionCount = db.ettaSuggestion.count as jest.Mock
 const mockMemories = db.ettaMemory.findMany as jest.Mock
+const mockProvisionEtta = provisionEtta as jest.Mock
 
 import { resolveEttaContext } from '~/lib/etta/utils/resolve-context'
 
@@ -59,6 +65,7 @@ function setupMocks(
       { content: 'Budget is $30k', createdAt: new Date() },
     ]
   )
+  mockProvisionEtta.mockResolvedValue({ id: 'actor-provisioned', weddingId: 'wedding-1' })
 }
 
 // ── Tests ───────────────────────────────────────────────────────────────────
@@ -91,12 +98,13 @@ describe('resolveEttaContext', () => {
     })
   })
 
-  it('throws when etta actor is not provisioned', async () => {
+  it('provisions etta when actor is not provisioned', async () => {
     setupMocks({ actor: null })
 
-    await expect(resolveEttaContext({ actor: 'couple', weddingId: 'wedding-1' })).rejects.toThrow(
-      'Etta not provisioned for this wedding'
-    )
+    const ctx = await resolveEttaContext({ actor: 'couple', weddingId: 'wedding-1' })
+
+    expect(mockProvisionEtta).toHaveBeenCalledWith('wedding-1')
+    expect(ctx.ettaActorId).toBe('actor-provisioned')
   })
 
   it('returns 0 counts when no guests/events/vendors exist', async () => {

@@ -3,7 +3,7 @@ import { db } from '~/server/db'
 
 export async function provisionEtta(weddingId: string) {
   // Single upsert — idempotent, no race condition
-  await db.ettaActor.upsert({
+  return db.ettaActor.upsert({
     where: { weddingId },
     create: {
       weddingId,

@@ -121,6 +121,37 @@ describe('resolveEttaAuth', () => {
     expect(result.weddingId).toBe('wedding-1')
   })
 
+  it('converts UI messages into model messages', async () => {
+    mockGetSession.mockResolvedValue({
+      user: { id: 'user-1' },
+      session: { id: 'session-1' },
+    })
+    mockGetWeddingId.mockResolvedValue('wedding-1')
+
+    const req = new Request('http://localhost/api/etta', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [
+          {
+            id: 'msg-1',
+            role: 'user',
+            parts: [{ type: 'text', text: 'hello from ui message' }],
+          },
+        ],
+      }),
+    })
+
+    const result = await resolveEttaAuth(req)
+
+    expect(result.messages).toEqual([
+      {
+        role: 'user',
+        content: [{ type: 'text', text: 'hello from ui message' }],
+      },
+    ])
+  })
+
   it('falls through to couple auth when persona=concierge but no guestToken', async () => {
     mockGetSession.mockResolvedValue({
       user: { id: 'u1' },

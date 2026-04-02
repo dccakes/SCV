@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   try {
     ettaReq = await resolveEttaAuth(req)
     const result = await runEttaAgent(ettaReq)
-    return result.toTextStreamResponse()
+    return result.toUIMessageStreamResponse()
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error'
     const status =
@@ -23,21 +23,24 @@ export async function POST(req: Request) {
         ? 401
         : message === 'No wedding found for user'
           ? 404
-          : 500
+          : message.startsWith('Etta is not configured:')
+            ? 503
+            : 500
 
-    // Log the error for debugging
-    await logAudit({
-      weddingId: ettaReq?.weddingId ?? 'unknown',
-      actorId: ettaReq?.authz?.userId ?? 'unknown',
-      actorType: ettaReq?.actor === 'guest' ? 'guest' : 'couple',
-      action: 'chat_error',
-      resourceType: 'conversation',
-      payload: {
-        error: message,
-        status,
-        stack: error instanceof Error ? error.stack?.slice(0, 500) : undefined,
-      },
-    })
+    if (ettaReq?.weddingId) {
+      await logAudit({
+        weddingId: ettaReq.weddingId,
+        actorId: ettaReq?.authz?.userId ?? 'unknown',
+        actorType: ettaReq.actor === 'guest' ? 'guest' : 'couple',
+        action: 'chat_error',
+        resourceType: 'conversation',
+        payload: {
+          error: message,
+          status,
+          stack: error instanceof Error ? error.stack?.slice(0, 500) : undefined,
+        },
+      })
+    }
 
     return Response.json({ error: message }, { status })
   }

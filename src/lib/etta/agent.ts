@@ -18,6 +18,12 @@ const DEFAULT_MODEL = 'anthropic/claude-haiku-4.5'
 
 const ADAPTIVE_MODELS = ['anthropic/claude-opus-4.6', 'anthropic/claude-sonnet-4.6']
 
+function assertEttaRuntimeConfig() {
+  if (!process.env.AI_GATEWAY_API_KEY) {
+    throw new Error('Etta is not configured: AI_GATEWAY_API_KEY is missing')
+  }
+}
+
 function getAnthropicThinkingOptions(modelId: string) {
   if (!modelId.startsWith('anthropic/')) return undefined
 
@@ -37,6 +43,8 @@ function getAnthropicThinkingOptions(modelId: string) {
 }
 
 export async function runEttaAgent(req: EttaRequest) {
+  assertEttaRuntimeConfig()
+
   const { actor, weddingId, guestId, authz, messages } = req
   const startTime = Date.now()
 

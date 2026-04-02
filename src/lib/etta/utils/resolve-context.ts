@@ -1,3 +1,4 @@
+import { provisionEtta } from '~/lib/etta/provision'
 import type { EttaActorType, EttaContext } from '~/lib/etta/types'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { db } from '~/server/db'
@@ -37,16 +38,15 @@ export async function resolveEttaContext(params: {
       : [],
   ])
 
-  if (!ettaActor) {
-    throw new Error('Etta not provisioned for this wedding')
-  }
   if (!wedding) {
     throw new Error(`Wedding ${weddingId} not found`)
   }
 
+  const resolvedEttaActor = ettaActor ?? (await provisionEtta(weddingId))
+
   return {
     weddingId,
-    ettaActorId: ettaActor.id,
+    ettaActorId: resolvedEttaActor.id,
     actor,
     guestId,
     authz,

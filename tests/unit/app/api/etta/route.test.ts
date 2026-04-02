@@ -3,6 +3,7 @@
  */
 
 import { runEttaAgent } from '~/lib/etta/agent'
+import { logAudit } from '~/lib/etta/utils/audit'
 import { resolveEttaAuth } from '~/lib/etta/utils/auth'
 
 jest.mock('~/lib/etta/utils/auth', () => ({
@@ -19,6 +20,7 @@ jest.mock('~/lib/etta/utils/audit', () => ({
 
 const mockResolveAuth = resolveEttaAuth as jest.Mock
 const mockRunAgent = runEttaAgent as jest.Mock
+const mockLogAudit = logAudit as jest.Mock
 
 import { POST } from '~/app/api/etta/route'
 
@@ -41,7 +43,7 @@ describe('POST /api/etta', () => {
     }
     mockResolveAuth.mockResolvedValue(ettaReq)
     mockRunAgent.mockResolvedValue({
-      toTextStreamResponse: () => new Response('streamed', { status: 200 }),
+      toUIMessageStreamResponse: () => new Response('streamed', { status: 200 }),
     })
 
     const res = await POST(makeRequest({ messages: [{ role: 'user', content: 'hello' }] }))
@@ -59,6 +61,7 @@ describe('POST /api/etta', () => {
 
     expect(res.status).toBe(401)
     expect(body.error).toBe('No active session')
+    expect(mockLogAudit).not.toHaveBeenCalled()
   })
 
   it('returns 401 for token-related errors', async () => {
@@ -89,5 +92,29 @@ describe('POST /api/etta', () => {
 
     expect(res.status).toBe(500)
     expect(body.error).toBe('Something unexpected')
+  })
+
+  it('returns 503 for missing Etta runtime configuration', async () => {
+    mockResolveAuth.mockResolvedValue({
+      actor: 'couple',
+      weddingId: 'w-1',
+      authz: { userId: 'user-1', activeOrganization: null },
+      messages: [{ role: 'user', content: 'hello' }],
+    })
+    mockRunAgent.mockRejectedValue(
+      new Error('Etta is not configured: AI_GATEWAY_API_KEY is missing')
+    )
+
+    const res = await POST(makeRequest({ messages: [{ role: 'user', content: 'hello' }] }))
+    const body = await res.json()
+
+    expect(res.status).toBe(503)
+    expect(body.error).toBe('Etta is not configured: AI_GATEWAY_API_KEY is missing')
+    expect(mockLogAudit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'chat_error',
+        weddingId: 'w-1',
+      })
+    )
   })
 })
