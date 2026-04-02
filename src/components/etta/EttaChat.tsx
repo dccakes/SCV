@@ -87,8 +87,7 @@ function ToolCallIndicator({ name }: { name: string }) {
 function MessageParts({ parts }: { parts: Part[] }) {
   const elements: React.ReactNode[] = []
 
-  for (let i = 0; i < parts.length; i++) {
-    const part = parts[i]!
+  for (const [i, part] of parts.entries()) {
     const key = `${part.type}-${i}`
 
     if (isReasoningPart(part)) {

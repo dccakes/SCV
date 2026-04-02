@@ -16,8 +16,6 @@ export const weddingService = new WeddingService(weddingRepository, eventService
 
 // Export classes for testing/DI
 export { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
-// Export router
-export { weddingRouter } from '~/server/domains/wedding/wedding.router'
 export { WeddingService } from '~/server/domains/wedding/wedding.service'
 // Export types
 export type {

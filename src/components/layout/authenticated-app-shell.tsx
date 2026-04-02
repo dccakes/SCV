@@ -81,7 +81,7 @@ export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppSh
             {children}
           </div>
           {showEttaPanel && weddingId && (
-            <aside className='hidden w-80 flex-shrink-0 border-l border-white/10 lg:flex'>
+            <aside className='hidden w-80 flex-shrink-0 border-white/10 border-l lg:flex'>
               <EttaChat weddingId={weddingId} persona='planner' isConfigured={isEttaConfigured} />
             </aside>
           )}

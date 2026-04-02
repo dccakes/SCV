@@ -11,10 +11,10 @@ export {
   type Event,
   type EventWithQuestions,
   type EventWithStats,
-  eventRouter,
   eventService,
   type UpdateEventInput,
 } from '~/server/domains/event'
+export { eventRouter } from '~/server/domains/event/event.router'
 // Gift Domain
 export {
   type CreateGiftInput,
@@ -33,6 +33,7 @@ export {
   guestService,
   type UpdateGuestInput,
 } from '~/server/domains/guest'
+export { guestTagRouter } from '~/server/domains/guest-tag/guest-tag.router'
 // Household Domain
 export {
   type CreateHouseholdInput,
@@ -85,3 +86,4 @@ export {
   websiteRouter,
   websiteService,
 } from '~/server/domains/website'
+export { weddingRouter } from '~/server/domains/wedding/wedding.router'
