@@ -179,9 +179,9 @@ model Organization {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  members     Member[]
-  invitations OrganizationInvitation[]
-  weddings    Wedding[]    @relation("WeddingOrganization")
+  members                  Member[]
+  organizationinvitations  OrganizationInvitation[]
+  weddings                 Wedding[]    @relation("WeddingOrganization")
 
   @@map("organization")
 }

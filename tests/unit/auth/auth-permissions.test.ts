@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+
 jest.mock('better-auth/plugins/access', () => ({
   createAccessControl: (statement: Record<string, readonly string[]>) => {
     const newRole = (grants: Record<string, readonly string[]>) => ({
@@ -159,7 +161,7 @@ describe('organization plugin wiring', () => {
     expect(organizationRoles.editor.statements.invitation).toBeUndefined()
   })
 
-  it('maps Better Auth organization invitations to the organizationInvitation Prisma model', () => {
+  it('maps Better Auth organization invitations to the dedicated OrganizationInvitation Prisma model', () => {
     expect(authOrganizationSchema).toEqual({
       invitation: {
         modelName: 'organizationInvitation',
@@ -177,5 +179,11 @@ describe('organization plugin wiring', () => {
         schema: expect.anything(),
       }),
     })
+  })
+
+  it('keeps the Prisma Organization invitation relation compatible with Better Auth joins', () => {
+    const prismaSchema = readFileSync('prisma/schema.prisma', 'utf8')
+
+    expect(prismaSchema).toMatch(/\borganizationinvitations\s+OrganizationInvitation\[\]/)
   })
 })

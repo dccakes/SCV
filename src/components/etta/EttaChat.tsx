@@ -190,8 +190,8 @@ export function EttaChat({ persona, guestToken, isConfigured = true }: EttaChatP
             <div
               className={`max-w-[88%] rounded px-3 py-2 font-serif text-[0.82rem] leading-relaxed ${
                 msg.role === 'assistant'
-                  ? 'flex flex-col gap-2 rounded-tl-none bg-white/[0.05] text-sidebar-cream/82'
-                  : 'rounded-tr-none border border-primary/25 bg-primary/18 text-sidebar-cream/88 italic'
+                  ? 'flex flex-col gap-2 rounded-tl-none bg-white/[0.08] text-sidebar-cream'
+                  : 'rounded-tr-none border border-primary/35 bg-primary/25 text-sidebar-cream italic'
               }`}
             >
               {msg.role === 'assistant' ? (
@@ -208,7 +208,7 @@ export function EttaChat({ persona, guestToken, isConfigured = true }: EttaChatP
 
         {isLoading && messages.at(-1)?.role !== 'assistant' && (
           <div className='flex items-start'>
-            <div className='rounded rounded-tl-none bg-white/[0.05] px-3 py-2 font-serif text-[0.82rem] text-sidebar-cream/50 italic'>
+            <div className='rounded rounded-tl-none bg-white/[0.08] px-3 py-2 font-serif text-[0.82rem] text-sidebar-cream/70 italic'>
               <span className='inline-flex gap-1'>
                 <span className='animate-bounce'>·</span>
                 <span className='animate-bounce [animation-delay:150ms]'>·</span>
@@ -245,7 +245,7 @@ export function EttaChat({ persona, guestToken, isConfigured = true }: EttaChatP
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder='Ask Etta anything…'
-          className='flex-1 rounded border border-white/8 bg-white/[0.05] px-3 py-2 font-serif text-[0.82rem] text-sidebar-cream/60 italic placeholder:text-sidebar-cream/28 focus:border-accent/40 focus:text-sidebar-cream/85 focus:outline-none focus:ring-2 focus:ring-accent/32'
+          className='flex-1 rounded border border-white/10 bg-white/[0.06] px-3 py-2 font-serif text-[0.82rem] text-sidebar-cream/80 italic placeholder:text-sidebar-cream/35 focus:border-accent/50 focus:text-sidebar-cream focus:outline-none focus:ring-2 focus:ring-accent/40'
         />
         <button
           type='submit'
