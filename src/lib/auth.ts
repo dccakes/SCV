@@ -7,12 +7,9 @@ import { nextCookies } from 'better-auth/next-js'
 import { emailOTP, organization } from 'better-auth/plugins'
 
 import { env } from '~/env'
+import { authOrganizationSchema } from '~/lib/auth-organization-schema'
 import { ac, organizationRoles } from '~/lib/auth-permissions'
-import {
-  sendOrganizationInvitationEmail,
-  sendOtpEmail,
-  sendResetPasswordEmail,
-} from '~/lib/email'
+import { sendOrganizationInvitationEmail, sendOtpEmail, sendResetPasswordEmail } from '~/lib/email'
 import { db } from '~/server/db'
 
 export const authOrganizationRoles = organizationRoles
@@ -55,6 +52,7 @@ export const authPlugins: BetterAuthPlugin[] = [
   organization({
     ac,
     roles: authOrganizationRoles,
+    schema: authOrganizationSchema,
     invitationExpiresIn: 60 * 60 * 24 * 7,
     async sendInvitationEmail(data) {
       const payload = data as OrganizationInvitationEmailPayload

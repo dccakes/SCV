@@ -41,6 +41,10 @@ jest.mock('better-auth/next-js', () => ({
 }))
 
 jest.mock('better-auth/plugins', () => ({
+  emailOTP: jest.fn((options: unknown) => ({
+    id: 'email-otp-plugin',
+    options,
+  })),
   organization: jest.fn((options: unknown) => ({
     id: 'organization-plugin',
     options,
@@ -48,6 +52,9 @@ jest.mock('better-auth/plugins', () => ({
 }))
 
 jest.mock('better-auth/client/plugins', () => ({
+  emailOTPClient: jest.fn(() => ({
+    id: 'email-otp-client-plugin',
+  })),
   organizationClient: jest.fn((options: unknown) => ({
     id: 'organization-client-plugin',
     options,
@@ -77,6 +84,15 @@ jest.mock('~/server/db', () => ({
   db: {},
 }))
 
+jest.mock('~/lib/email', () => ({
+  sendOrganizationInvitationEmail: jest.fn(),
+  sendOtpEmail: jest.fn(),
+  sendResetPasswordEmail: jest.fn(),
+}))
+
+import { authPlugins } from 'lib/auth'
+import { authClientPlugins } from 'lib/auth-client'
+import { authOrganizationSchema } from 'lib/auth-organization-schema'
 import {
   authzStatement,
   type OrganizationRole,
@@ -141,5 +157,25 @@ describe('organization plugin wiring', () => {
     expect(organizationRoles.owner.statements.member).toEqual(['create', 'update', 'delete'])
     expect(organizationRoles.editor.statements.guest_invitation).toEqual(['read', 'create'])
     expect(organizationRoles.editor.statements.invitation).toBeUndefined()
+  })
+
+  it('maps Better Auth organization invitations to the organizationInvitation Prisma model', () => {
+    expect(authOrganizationSchema).toEqual({
+      invitation: {
+        modelName: 'organizationInvitation',
+      },
+    })
+
+    expect(authPlugins[0]).toMatchObject({
+      options: expect.objectContaining({
+        schema: authOrganizationSchema,
+      }),
+    })
+
+    expect(authClientPlugins[0]).toMatchObject({
+      options: expect.not.objectContaining({
+        schema: expect.anything(),
+      }),
+    })
   })
 })
