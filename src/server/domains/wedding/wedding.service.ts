@@ -7,6 +7,7 @@
 
 import { TRPCError } from '@trpc/server'
 
+import { provisionEtta } from '~/lib/etta/provision'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { EventService } from '~/server/domains/event/event.service'
@@ -85,6 +86,12 @@ export class WeddingService {
         allowTagAlongs: false,
       })
     }
+
+    // Provision Etta AI agent actor — fire-and-forget (idempotent)
+    provisionEtta(wedding.id).catch(
+      // biome-ignore lint/suspicious/noConsole: intentional error logging for fire-and-forget
+      (err) => console.error('[Etta] Background provision failed:', err)
+    )
 
     return wedding
   }

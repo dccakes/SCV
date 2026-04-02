@@ -82,6 +82,29 @@ export class VendorService {
   }
 
   /**
+   * Get a single quote with ownership verification
+   */
+  async getQuote(
+    ctx: AuthzContext,
+    quoteId: string,
+    vendorId: string,
+    weddingId: string
+  ): Promise<VendorQuote> {
+    this.requireVendorQuotePermission(ctx, 'read')
+    await this.assertVendorOwnership(vendorId, weddingId)
+    await this.assertQuoteOwnership(quoteId, vendorId)
+
+    const vendor = await this.vendorRepository.findByIdWithQuotes(vendorId)
+    const quote = vendor?.quotes.find((item) => item.id === quoteId)
+
+    if (!quote) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Quote not found' })
+    }
+
+    return quote
+  }
+
+  /**
    * Create a new vendor for a wedding
    */
   async createVendor(

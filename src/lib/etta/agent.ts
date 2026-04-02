@@ -1,0 +1,160 @@
+/**
+ * Etta Agent — Core streamText() orchestrator
+ *
+ * Uses the Vercel AI Gateway to route to any supported model provider.
+ * Configure via ETTA_MODEL env var (e.g. "anthropic/claude-haiku-4.5").
+ */
+
+import { gateway } from '@ai-sdk/gateway'
+import { stepCountIs, streamText } from 'ai'
+import { getConciergeTools } from '~/lib/etta/personas/concierge'
+import { getPlannerTools } from '~/lib/etta/personas/planner'
+import type { EttaRequest } from '~/lib/etta/types'
+import { logAudit } from '~/lib/etta/utils/audit'
+import { buildSystemPrompt } from '~/lib/etta/utils/build-system-prompt'
+import { resolveEttaContext } from '~/lib/etta/utils/resolve-context'
+
+const DEFAULT_MODEL = 'anthropic/claude-haiku-4.5'
+
+const ADAPTIVE_MODELS = ['anthropic/claude-opus-4.6', 'anthropic/claude-sonnet-4.6']
+
+function assertEttaRuntimeConfig() {
+  if (!process.env.AI_GATEWAY_API_KEY) {
+    throw new Error('Etta is not configured: AI_GATEWAY_API_KEY is missing')
+  }
+}
+
+function getAnthropicThinkingOptions(modelId: string) {
+  if (!modelId.startsWith('anthropic/')) return undefined
+
+  if (ADAPTIVE_MODELS.some((m) => modelId.startsWith(m))) {
+    return {
+      anthropic: {
+        thinking: { type: 'adaptive' as const },
+      },
+    }
+  }
+
+  return {
+    anthropic: {
+      thinking: { type: 'enabled' as const, budgetTokens: 5000 },
+    },
+  }
+}
+
+export async function runEttaAgent(req: EttaRequest) {
+  assertEttaRuntimeConfig()
+
+  const { actor, weddingId, guestId, authz, messages } = req
+  const startTime = Date.now()
+
+  const ctx = await resolveEttaContext({ actor, weddingId, guestId, authz })
+
+  const tools = actor === 'couple' ? getPlannerTools(ctx) : getConciergeTools(ctx)
+  const system = buildSystemPrompt(ctx)
+
+  const modelId = process.env.ETTA_MODEL || DEFAULT_MODEL
+  const model = gateway(modelId)
+  const providerOptions = getAnthropicThinkingOptions(modelId)
+
+  // Log inbound request
+  const userMessage = messages.at(-1)
+  await logAudit({
+    weddingId,
+    actorId: authz?.userId ?? `guest:${guestId}`,
+    actorType: actor === 'couple' ? 'couple' : 'guest',
+    action: 'chat_request',
+    resourceType: 'conversation',
+    payload: {
+      model: modelId,
+      persona: actor,
+      messageCount: messages.length,
+      latestMessage:
+        userMessage && 'content' in userMessage
+          ? String(userMessage.content).slice(0, 500)
+          : undefined,
+    },
+  })
+
+  let stepCount = 0
+
+  const result = streamText({
+    model,
+    system,
+    messages,
+    tools,
+    stopWhen: stepCountIs(10),
+    providerOptions,
+    onStepFinish: async ({ text, toolCalls, toolResults, usage, reasoning }) => {
+      stepCount++
+
+      // Log tool invocations
+      const results = toolResults ?? []
+      if (results.length > 0) {
+        await Promise.all(
+          results.map((r) =>
+            logAudit({
+              weddingId,
+              actorId: ctx.ettaActorId,
+              actorType: 'etta',
+              action: r.toolName,
+              resourceType: 'tool_call',
+              payload: r as Record<string, unknown>,
+            })
+          )
+        )
+      }
+
+      // Log step completion with usage
+      await logAudit({
+        weddingId,
+        actorId: ctx.ettaActorId,
+        actorType: 'etta',
+        action: 'step_complete',
+        resourceType: 'conversation',
+        payload: {
+          step: stepCount,
+          hasText: !!text,
+          textLength: text?.length ?? 0,
+          toolCallCount: toolCalls?.length ?? 0,
+          toolNames: toolCalls?.map((tc) => tc.toolName) ?? [],
+          hasReasoning: !!reasoning,
+          usage: usage
+            ? {
+                inputTokens: usage.inputTokens,
+                outputTokens: usage.outputTokens,
+                totalTokens: usage.totalTokens,
+              }
+            : undefined,
+        },
+      })
+    },
+    onFinish: async ({ text, usage, steps }) => {
+      const durationMs = Date.now() - startTime
+
+      await logAudit({
+        weddingId,
+        actorId: ctx.ettaActorId,
+        actorType: 'etta',
+        action: 'chat_response',
+        resourceType: 'conversation',
+        payload: {
+          model: modelId,
+          persona: actor,
+          durationMs,
+          responseLength: text?.length ?? 0,
+          totalSteps: steps?.length ?? stepCount,
+          usage: usage
+            ? {
+                inputTokens: usage.inputTokens,
+                outputTokens: usage.outputTokens,
+                totalTokens: usage.totalTokens,
+              }
+            : undefined,
+        },
+      })
+    },
+  })
+
+  return result
+}

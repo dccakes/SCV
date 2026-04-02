@@ -12,6 +12,7 @@
       "!.claude",
       "!tests/resources",
       "!playwright-report",
+      "!tests/unit/coverage",
       "!next-env.d.ts",
       "!src/types.gen.ts",
       "!src/lib/pickle-iq-sdk"

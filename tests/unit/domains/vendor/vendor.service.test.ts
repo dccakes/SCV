@@ -179,6 +179,34 @@ describe('VendorService', () => {
     })
   })
 
+  describe('getQuote', () => {
+    it('should return a single quote with files when quote belongs to vendor and wedding', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockQuoteBelongsToVendorFn.mockResolvedValue(true)
+      mockFindByIdWithQuotesFn.mockResolvedValue(mockVendorWithQuotes)
+
+      const result = await vendorService.getQuote(
+        actorContext,
+        'quote-123',
+        'vendor-123',
+        'wedding-123'
+      )
+
+      expect(result).toEqual(mockQuote)
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { vendor_quote: ['read'] })
+    })
+
+    it('should throw NOT_FOUND when quote is missing from the vendor', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockQuoteBelongsToVendorFn.mockResolvedValue(true)
+      mockFindByIdWithQuotesFn.mockResolvedValue({ ...mockVendorWithQuotes, quotes: [] })
+
+      await expect(
+        vendorService.getQuote(actorContext, 'quote-123', 'vendor-123', 'wedding-123')
+      ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+    })
+  })
+
   // ─── createVendor ──────────────────────────────────────────────────────────
 
   describe('createVendor', () => {

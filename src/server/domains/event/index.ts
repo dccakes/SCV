@@ -14,8 +14,6 @@ export const eventService = new EventService(eventRepository, db)
 
 // Export classes for testing/DI
 export { EventRepository } from '~/server/domains/event/event.repository'
-// Export router
-export { eventRouter } from '~/server/domains/event/event.router'
 export { EventService } from '~/server/domains/event/event.service'
 // Export types
 export type { Event, EventWithQuestions, EventWithStats } from '~/server/domains/event/event.types'

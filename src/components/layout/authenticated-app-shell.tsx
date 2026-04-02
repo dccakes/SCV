@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react'
 import { createContext, useContext, useEffect, useState } from 'react'
-import EttaPanel from '@/components/old_dashboard/etta-panel'
+import { EttaChat } from '~/components/etta/EttaChat'
 import SidebarNavFrame from '~/components/nav/sidebar-nav'
 
 type AuthenticatedSidebarContextValue = {
@@ -23,10 +23,20 @@ type AuthenticatedAppShellProps = {
   weddingDate?: string
   weddingLocation?: string
   showEttaPanel?: boolean
+  weddingId?: string
+  isEttaConfigured?: boolean
 }
 
 export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppShellProps>) {
-  const { children, coupleName, weddingDate, weddingLocation, showEttaPanel = false } = props
+  const {
+    children,
+    coupleName,
+    weddingDate,
+    weddingLocation,
+    showEttaPanel = false,
+    weddingId,
+    isEttaConfigured = false,
+  } = props
   const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
@@ -70,7 +80,11 @@ export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppSh
             </button>
             {children}
           </div>
-          {showEttaPanel && <EttaPanel />}
+          {showEttaPanel && weddingId && (
+            <aside className='hidden w-80 flex-shrink-0 border-white/10 border-l lg:flex'>
+              <EttaChat weddingId={weddingId} persona='planner' isConfigured={isEttaConfigured} />
+            </aside>
+          )}
         </div>
       </div>
     </AuthenticatedSidebarContext.Provider>

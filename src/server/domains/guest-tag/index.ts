@@ -14,8 +14,6 @@ export const guestTagService = new GuestTagService(guestTagRepository)
 
 // Export classes for testing/DI
 export { GuestTagRepository } from '~/server/domains/guest-tag/guest-tag.repository'
-// Export router
-export { guestTagRouter } from '~/server/domains/guest-tag/guest-tag.router'
 export { GuestTagService } from '~/server/domains/guest-tag/guest-tag.service'
 // Export types
 export type {
