@@ -27,19 +27,19 @@ export async function POST(req: Request) {
             ? 503
             : 500
 
+    // Only write audit log if we have a valid weddingId (FK constraint)
     if (ettaReq?.weddingId) {
       await logAudit({
         weddingId: ettaReq.weddingId,
-        actorId: ettaReq?.authz?.userId ?? 'unknown',
+        actorId: ettaReq.authz?.userId ?? `guest:${ettaReq.guestId}`,
         actorType: ettaReq.actor === 'guest' ? 'guest' : 'couple',
         action: 'chat_error',
         resourceType: 'conversation',
-        payload: {
-          error: message,
-          status,
-          stack: error instanceof Error ? error.stack?.slice(0, 500) : undefined,
-        },
+        payload: { error: message, status },
       })
+    } else {
+      // biome-ignore lint/suspicious/noConsole: error logging for unauthenticated requests
+      console.error('[Etta] Chat error (pre-auth):', message)
     }
 
     return Response.json({ error: message }, { status })
