@@ -10,6 +10,8 @@ import { vendorService } from '~/server/domains/vendor'
 jest.mock('~/server/domains/vendor', () => ({
   vendorService: {
     getVendors: jest.fn(),
+    getQuote: jest.fn(),
+    updateQuote: jest.fn(),
   },
 }))
 
@@ -23,6 +25,8 @@ jest.mock('~/server/db', () => ({
 
 const mockVendorService = vendorService as {
   getVendors: jest.Mock
+  getQuote: jest.Mock
+  updateQuote: jest.Mock
 }
 
 const mockDb = db as {
@@ -35,6 +39,10 @@ const mockCtx: EttaContext = {
   weddingId: 'wedding-123',
   ettaActorId: 'actor-123',
   actor: 'couple',
+  authz: {
+    userId: 'user-123',
+    activeOrganization: null,
+  },
   wedding: {
     groomFirstName: 'John',
     groomLastName: 'Doe',
@@ -126,6 +134,123 @@ describe('getVendorTools', () => {
       )
 
       expect(result.suggestionId).toBe('sug-42')
+    })
+  })
+
+  describe('get_vendor_quote', () => {
+    it('returns a single quote including files', async () => {
+      const quote = {
+        id: 'quote-1',
+        vendorId: 'vendor-1',
+        price: 2500,
+        quoteType: 'FLAT_FEE',
+        quoteDate: new Date('2026-04-01'),
+        notes: 'Includes setup',
+        files: [
+          {
+            id: 'file-1',
+            quoteId: 'quote-1',
+            name: 'proposal.pdf',
+            url: 'https://files.example.com/proposal.pdf',
+            key: 'proposal.pdf',
+            size: 1024,
+            createdAt: new Date('2026-04-01'),
+          },
+        ],
+        createdAt: new Date('2026-04-01'),
+        updatedAt: new Date('2026-04-01'),
+      }
+      mockVendorService.getQuote.mockResolvedValue(quote)
+
+      const result = await tools.get_vendor_quote.execute(
+        { vendorId: 'vendor-1', quoteId: 'quote-1' },
+        { toolCallId: 'tc5', messages: [], abortSignal: undefined as never }
+      )
+
+      expect(mockVendorService.getQuote).toHaveBeenCalledWith(
+        mockCtx.authz,
+        'quote-1',
+        'vendor-1',
+        'wedding-123'
+      )
+      expect(result).toEqual({ quote })
+    })
+
+    it('requires authz context', async () => {
+      const toolsWithoutAuthz = getVendorTools({ ...mockCtx, authz: undefined })
+
+      await expect(
+        toolsWithoutAuthz.get_vendor_quote.execute(
+          { vendorId: 'vendor-1', quoteId: 'quote-1' },
+          { toolCallId: 'tc6', messages: [], abortSignal: undefined as never }
+        )
+      ).rejects.toThrow('Authorization context required')
+    })
+  })
+
+  describe('update_vendor_quote', () => {
+    it('updates a quote and returns files', async () => {
+      const quote = {
+        id: 'quote-1',
+        vendorId: 'vendor-1',
+        price: 2750,
+        quoteType: 'PER_GUEST',
+        quoteDate: new Date('2026-04-15'),
+        notes: 'Updated package',
+        files: [
+          {
+            id: 'file-1',
+            quoteId: 'quote-1',
+            name: 'proposal.pdf',
+            url: 'https://files.example.com/proposal.pdf',
+            key: 'proposal.pdf',
+            size: 1024,
+            createdAt: new Date('2026-04-01'),
+          },
+        ],
+        createdAt: new Date('2026-04-01'),
+        updatedAt: new Date('2026-04-02'),
+      }
+      mockVendorService.updateQuote.mockResolvedValue(quote)
+
+      const result = await tools.update_vendor_quote.execute(
+        {
+          vendorId: 'vendor-1',
+          quoteId: 'quote-1',
+          price: 2750,
+          quoteType: 'PER_GUEST',
+          quoteDate: '2026-04-15',
+          notes: 'Updated package',
+        },
+        { toolCallId: 'tc7', messages: [], abortSignal: undefined as never }
+      )
+
+      expect(mockVendorService.updateQuote).toHaveBeenCalledWith(
+        mockCtx.authz,
+        'quote-1',
+        'vendor-1',
+        'wedding-123',
+        {
+          quoteId: 'quote-1',
+          vendorId: 'vendor-1',
+          price: 2750,
+          quoteType: 'PER_GUEST',
+          quoteDate: '2026-04-15',
+          notes: 'Updated package',
+        }
+      )
+      expect(result).toEqual({ quote })
+    })
+
+    it('requires authz context', async () => {
+      const toolsWithoutAuthz = getVendorTools({ ...mockCtx, authz: undefined })
+
+      await expect(
+        toolsWithoutAuthz.update_vendor_quote.execute(
+          { vendorId: 'vendor-1', quoteId: 'quote-1', notes: 'Updated package' },
+          { toolCallId: 'tc8', messages: [], abortSignal: undefined as never }
+        )
+      ).rejects.toThrow('Authorization context required')
     })
   })
 })
