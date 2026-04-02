@@ -79,7 +79,7 @@ describe('InvitationService', () => {
 
       expect(result).toEqual(mockInvitation)
       expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, {
-        invitation: ['create'],
+        guest_invitation: ['create'],
       })
       expect(mockCreateFn).toHaveBeenCalledWith({
         guestId: 1,
@@ -89,7 +89,7 @@ describe('InvitationService', () => {
       })
     })
 
-    it('should reject create when actor lacks invitation create permission', async () => {
+    it('should reject create when actor lacks guest invitation create permission', async () => {
       mockRequirePermission.mockImplementation(() => {
         throw new TRPCError({ code: 'FORBIDDEN' })
       })

@@ -16,13 +16,36 @@ jest.mock('@react-email/render', () => {
   mockRender = jest.fn().mockResolvedValue('<html>rendered</html>')
   return { render: mockRender }
 })
+jest.mock('~/emails/otp-email', () => ({
+  OtpEmail: function OtpEmail(_props: Record<string, unknown>) {
+    return null
+  },
+}))
+jest.mock('~/emails/reset-password-email', () => ({
+  ResetPasswordEmail: function ResetPasswordEmail(_props: Record<string, unknown>) {
+    return null
+  },
+}))
+jest.mock('~/emails/organization-invitation-email', () => ({
+  OrganizationInvitationEmail: function OrganizationInvitationEmail(
+    _props: Record<string, unknown>
+  ) {
+    return null
+  },
+}))
 jest.mock('~/env', () => ({
   env: { RESEND_API_KEY: 're_test_key', EMAIL_FROM: 'test@example.com' },
 }))
 
+import { OrganizationInvitationEmail } from '~/emails/organization-invitation-email'
 import { OtpEmail } from '~/emails/otp-email'
 import { ResetPasswordEmail } from '~/emails/reset-password-email'
-import { sendOtpEmail, sendResetPasswordEmail } from '~/lib/email'
+import { sendOrganizationInvitationEmail, sendOtpEmail, sendResetPasswordEmail } from '~/lib/email'
+
+beforeEach(() => {
+  mockEmailsSend.mockClear()
+  mockRender.mockClear()
+})
 
 describe('sendOtpEmail', () => {
   const TO = 'recipient@example.com'
@@ -99,5 +122,47 @@ describe('sendResetPasswordEmail', () => {
     await sendResetPasswordEmail({ to: TO, url: URL })
 
     expect(mockRender.mock.calls[0][0].props.userName).toBeUndefined()
+  })
+})
+
+describe('sendOrganizationInvitationEmail', () => {
+  const TO = 'planner@example.com'
+  const INVITE_URL = 'https://example.com/auth/accept-invitation?invitationId=inv_123'
+
+  it('sends with the organization invitation subject', async () => {
+    await sendOrganizationInvitationEmail({
+      to: TO,
+      inviteUrl: INVITE_URL,
+      organizationName: 'Shrek & Fiona',
+      invitedByName: 'Fiona',
+      memberRole: 'editor',
+    })
+
+    expect(mockEmailsSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: "You've been invited to join Shrek & Fiona on OSWP",
+        to: TO,
+        from: 'test@example.com',
+      })
+    )
+  })
+
+  it('renders OrganizationInvitationEmail with the invite details', async () => {
+    await sendOrganizationInvitationEmail({
+      to: TO,
+      inviteUrl: INVITE_URL,
+      organizationName: 'Shrek & Fiona',
+      invitedByName: 'Fiona',
+      memberRole: 'viewer',
+    })
+
+    const element = mockRender.mock.calls[0][0]
+    expect(element.type).toBe(OrganizationInvitationEmail)
+    expect(element.props).toMatchObject({
+      inviteUrl: INVITE_URL,
+      organizationName: 'Shrek & Fiona',
+      invitedByName: 'Fiona',
+      memberRole: 'viewer',
+    })
   })
 })

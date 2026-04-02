@@ -40,8 +40,8 @@ describe('requirePermission', () => {
     )
   })
 
-  it('throws FORBIDDEN when editor attempts invitation send', () => {
-    expect(() => requirePermission(editorCtx, { invitation: ['send'] })).toThrow(
+  it('throws FORBIDDEN when editor attempts guest invitation send', () => {
+    expect(() => requirePermission(editorCtx, { guest_invitation: ['send'] })).toThrow(
       expect.objectContaining({ code: 'FORBIDDEN' })
     )
   })
@@ -52,8 +52,13 @@ describe('requirePermission', () => {
     ).not.toThrow()
   })
 
-  it('allows admin to send invitations', () => {
-    expect(() => requirePermission(adminCtx, { invitation: ['send'] })).not.toThrow()
+  it('allows admin to send guest invitations', () => {
+    expect(() => requirePermission(adminCtx, { guest_invitation: ['send'] })).not.toThrow()
+  })
+
+  it('allows admin to manage organization members through Better Auth resources', () => {
+    expect(() => requirePermission(adminCtx, { invitation: ['create'] })).not.toThrow()
+    expect(() => requirePermission(adminCtx, { member: ['update', 'delete'] })).not.toThrow()
   })
 
   it('throws PRECONDITION_FAILED when no active organization in context', () => {

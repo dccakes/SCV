@@ -41,6 +41,10 @@ jest.mock('better-auth/next-js', () => ({
 }))
 
 jest.mock('better-auth/plugins', () => ({
+  emailOTP: jest.fn((options: unknown) => ({
+    id: 'email-otp-plugin',
+    options,
+  })),
   organization: jest.fn((options: unknown) => ({
     id: 'organization-plugin',
     options,
@@ -48,6 +52,9 @@ jest.mock('better-auth/plugins', () => ({
 }))
 
 jest.mock('better-auth/client/plugins', () => ({
+  emailOTPClient: jest.fn(() => ({
+    id: 'email-otp-client-plugin',
+  })),
   organizationClient: jest.fn((options: unknown) => ({
     id: 'organization-client-plugin',
     options,
@@ -77,6 +84,15 @@ jest.mock('~/server/db', () => ({
   db: {},
 }))
 
+jest.mock('~/lib/email', () => ({
+  sendOrganizationInvitationEmail: jest.fn(),
+  sendOtpEmail: jest.fn(),
+  sendResetPasswordEmail: jest.fn(),
+}))
+
+import { authPlugins } from 'lib/auth'
+import { authClientPlugins } from 'lib/auth-client'
+import { authOrganizationSchema } from 'lib/auth-organization-schema'
 import {
   authzStatement,
   type OrganizationRole,
@@ -89,9 +105,10 @@ const can = (role: OrganizationRole, permissions: PermissionRequest): boolean =>
 }
 
 describe('auth permission matrix', () => {
-  it('defines approved resources and split permission actions', () => {
-    expect(authzStatement.organization_member).toEqual(['read', 'invite', 'role_update', 'remove'])
-    expect(authzStatement.invitation).toEqual(['read', 'create', 'send', 'resend', 'cancel'])
+  it('defines separate resources for org membership and guest invitations', () => {
+    expect(authzStatement.member).toEqual(['create', 'update', 'delete'])
+    expect(authzStatement.invitation).toEqual(['create', 'cancel'])
+    expect(authzStatement.guest_invitation).toEqual(['read', 'create', 'send', 'resend', 'cancel'])
     expect(authzStatement.guest_event).toEqual([
       'read',
       'add_guest_to_event',
@@ -109,9 +126,11 @@ describe('auth permission matrix', () => {
   it('allows editor guest-event assignment, but denies invitation delivery actions', () => {
     expect(can('editor', { guest_event: ['add_guest_to_event'] })).toBe(true)
     expect(can('editor', { guest_event: ['remove_guest_from_event'] })).toBe(true)
-    expect(can('editor', { invitation: ['send'] })).toBe(false)
-    expect(can('editor', { invitation: ['resend'] })).toBe(false)
-    expect(can('editor', { invitation: ['cancel'] })).toBe(false)
+    expect(can('editor', { guest_invitation: ['send'] })).toBe(false)
+    expect(can('editor', { guest_invitation: ['resend'] })).toBe(false)
+    expect(can('editor', { guest_invitation: ['cancel'] })).toBe(false)
+    expect(can('editor', { invitation: ['create'] })).toBe(false)
+    expect(can('editor', { member: ['update'] })).toBe(false)
   })
 
   it('keeps viewer read-only and admin/owner invitation delivery-capable', () => {
@@ -119,22 +138,44 @@ describe('auth permission matrix', () => {
     expect(can('viewer', { event: ['read'] })).toBe(true)
     expect(can('viewer', { wedding: ['update'] })).toBe(false)
     expect(can('editor', { wedding: ['update'] })).toBe(true)
-    expect(can('admin', { invitation: ['send', 'resend', 'cancel'] })).toBe(true)
-    expect(can('owner', { invitation: ['send', 'resend', 'cancel'] })).toBe(true)
+    expect(can('admin', { guest_invitation: ['send', 'resend', 'cancel'] })).toBe(true)
+    expect(can('owner', { guest_invitation: ['send', 'resend', 'cancel'] })).toBe(true)
+  })
+
+  it('allows only owner and admin to manage organization members through Better Auth resources', () => {
+    expect(can('owner', { invitation: ['create'], member: ['update', 'delete'] })).toBe(true)
+    expect(can('admin', { invitation: ['create'], member: ['update', 'delete'] })).toBe(true)
+    expect(can('editor', { invitation: ['create'] })).toBe(false)
+    expect(can('viewer', { member: ['delete'] })).toBe(false)
   })
 })
 
 describe('organization plugin wiring', () => {
   it('exports the full organization role matrix', () => {
     expect(Object.keys(organizationRoles)).toEqual(['owner', 'admin', 'editor', 'viewer'])
-    expect(organizationRoles.owner.statements.invitation).toEqual([
-      'read',
-      'create',
-      'send',
-      'resend',
-      'cancel',
-    ])
-    expect(organizationRoles.editor.statements.invitation).toEqual(['read', 'create'])
-    expect(organizationRoles.viewer.statements.organization_member).toEqual(['read'])
+    expect(organizationRoles.owner.statements.invitation).toEqual(['create', 'cancel'])
+    expect(organizationRoles.owner.statements.member).toEqual(['create', 'update', 'delete'])
+    expect(organizationRoles.editor.statements.guest_invitation).toEqual(['read', 'create'])
+    expect(organizationRoles.editor.statements.invitation).toBeUndefined()
+  })
+
+  it('maps Better Auth organization invitations to the organizationInvitation Prisma model', () => {
+    expect(authOrganizationSchema).toEqual({
+      invitation: {
+        modelName: 'organizationInvitation',
+      },
+    })
+
+    expect(authPlugins[0]).toMatchObject({
+      options: expect.objectContaining({
+        schema: authOrganizationSchema,
+      }),
+    })
+
+    expect(authClientPlugins[0]).toMatchObject({
+      options: expect.not.objectContaining({
+        schema: expect.anything(),
+      }),
+    })
   })
 })

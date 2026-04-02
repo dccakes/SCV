@@ -157,7 +157,7 @@ export class InvitationService {
 
   private requireInvitationPermission(ctx: AuthzContext, action: 'create'): void {
     requirePermission(ctx, {
-      invitation: [action],
+      guest_invitation: [action],
     })
   }
 

@@ -42,7 +42,7 @@ describe('MemberManagementService', () => {
 
       expect(result).toEqual(invitedMember)
       expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, {
-        organization_member: ['invite'],
+        invitation: ['create'],
       })
     })
 
@@ -79,7 +79,7 @@ describe('MemberManagementService', () => {
 
       expect(result).toEqual(updatedMember)
       expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, {
-        organization_member: ['role_update'],
+        member: ['update'],
       })
     })
 
@@ -113,7 +113,7 @@ describe('MemberManagementService', () => {
       })
 
       expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, {
-        organization_member: ['remove'],
+        member: ['delete'],
       })
       expect(mockMemberRepository.removeMember).toHaveBeenCalledWith({
         organizationId: 'org-1',
