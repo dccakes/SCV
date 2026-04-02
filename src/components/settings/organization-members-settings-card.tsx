@@ -50,10 +50,8 @@ type AuthFetchResult<T> = {
   error?: AuthFetchError | null
 }
 
-type FullOrganizationResponse = Organization
-
-type ListMembersResponse = {
-  members: Member[]
+type FullOrganizationResponse = Organization & {
+  members?: Member[]
 }
 
 type HasPermissionResponse = {
@@ -69,6 +67,9 @@ const initialState: OrganizationState = {
   organization: null,
 }
 
+// TODO(review-implementation/code-quality): centralize these labels with the shared
+// organization role configuration used by the auth provider once that source can be
+// imported here without coupling this component back to Better Auth UI config.
 const inviteRoleOptions = [
   { label: 'Admin', value: 'admin' },
   { label: 'Member', value: 'member' },
@@ -96,7 +97,7 @@ async function authGet<T>(path: string, fallbackMessage: string): Promise<T> {
   const result = (await authClient.$fetch(path)) as AuthFetchResult<T>
 
   if (result.error) {
-    throw new Error(result.error.message || fallbackMessage)
+    throw new Error(fallbackMessage)
   }
 
   if (!result.data) {
@@ -117,7 +118,7 @@ async function authPost<T>(
   })) as AuthFetchResult<T>
 
   if (result.error) {
-    throw new Error(result.error.message || fallbackMessage)
+    throw new Error(fallbackMessage)
   }
 
   if (!result.data) {
@@ -137,11 +138,7 @@ async function fetchOrganizationState(): Promise<Omit<OrganizationState, 'error'
     throw new Error('No active organization found.')
   }
 
-  const [membersResult, invitePermissionResult, updateMemberPermissionResult] = await Promise.all([
-    authGet<ListMembersResponse>(
-      `/organization/list-members?organizationId=${organization.id}`,
-      'Unable to load organization members.'
-    ),
+  const [invitePermissionResult, updateMemberPermissionResult] = await Promise.all([
     authPost<HasPermissionResponse>(
       '/organization/has-permission',
       {
@@ -167,23 +164,17 @@ async function fetchOrganizationState(): Promise<Omit<OrganizationState, 'error'
   return {
     canInvite: !!invitePermissionResult.success,
     canUpdateMembers: !!updateMemberPermissionResult.success,
-    members: membersResult.members ?? [],
+    members: organization.members ?? [],
     organization,
   }
 }
 
 export function OrganizationMembersSettingsCard() {
   const [state, setState] = useState<OrganizationState>(initialState)
-  const [reloadKey, setReloadKey] = useState(0)
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false)
   const [roleDialogMember, setRoleDialogMember] = useState<Member | null>(null)
 
-  const reload = useCallback(() => {
-    setReloadKey((current) => current + 1)
-  }, [])
-
-  useEffect(() => {
-    const loadAttempt = reloadKey
+  const loadOrganizationState = useCallback(() => {
     let isActive = true
 
     setState((current) => ({
@@ -214,10 +205,11 @@ export function OrganizationMembersSettingsCard() {
       })
 
     return () => {
-      void loadAttempt
       isActive = false
     }
-  }, [reloadKey])
+  }, [])
+
+  useEffect(() => loadOrganizationState(), [loadOrganizationState])
 
   return (
     <div className='rounded-xl border border-border/90 bg-card/85 p-1'>
@@ -234,7 +226,7 @@ export function OrganizationMembersSettingsCard() {
               {state.error ? (
                 <Button
                   className='gap-2'
-                  onClick={reload}
+                  onClick={loadOrganizationState}
                   size='sm'
                   type='button'
                   variant='outline'
@@ -259,7 +251,7 @@ export function OrganizationMembersSettingsCard() {
         <CardContent className='pt-2'>
           {state.isLoading ? <OrganizationMembersLoadingState /> : null}
           {!state.isLoading && state.error ? (
-            <OrganizationMembersErrorState error={state.error} onRetry={reload} />
+            <OrganizationMembersErrorState error={state.error} onRetry={loadOrganizationState} />
           ) : null}
           {!state.isLoading && !state.error ? (
             <OrganizationMembersList
@@ -274,7 +266,6 @@ export function OrganizationMembersSettingsCard() {
         <InviteMemberDialog
           onInviteSent={() => {
             setInviteDialogOpen(false)
-            reload()
           }}
           open={inviteDialogOpen}
           onOpenChange={setInviteDialogOpen}
@@ -286,7 +277,7 @@ export function OrganizationMembersSettingsCard() {
           member={roleDialogMember}
           onRoleUpdated={() => {
             setRoleDialogMember(null)
-            reload()
+            loadOrganizationState()
           }}
           open={!!roleDialogMember}
           onOpenChange={(open) => {

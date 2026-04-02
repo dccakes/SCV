@@ -38,14 +38,8 @@ describe('OrganizationMembersSettingsCard', () => {
 
         if (path === '/organization/get-full-organization') {
           return Promise.resolve({
-            data: { id: 'org-seed-shrek-fiona', name: 'Couple' },
-            error: null,
-          })
-        }
-
-        if (path === '/organization/list-members?organizationId=org-seed-shrek-fiona') {
-          return Promise.resolve({
             data: {
+              id: 'org-seed-shrek-fiona',
               members: [
                 {
                   id: 'member-fiona',
@@ -58,6 +52,7 @@ describe('OrganizationMembersSettingsCard', () => {
                   user: { email: 'shrek@swamp.wed', name: 'Shrek Ogre' },
                 },
               ],
+              name: 'Couple',
             },
             error: null,
           })
@@ -99,14 +94,8 @@ describe('OrganizationMembersSettingsCard', () => {
 
         if (path === '/organization/get-full-organization') {
           return Promise.resolve({
-            data: { id: 'org-seed-shrek-fiona', name: 'Couple' },
-            error: null,
-          })
-        }
-
-        if (path === '/organization/list-members?organizationId=org-seed-shrek-fiona') {
-          return Promise.resolve({
             data: {
+              id: 'org-seed-shrek-fiona',
               members: [
                 {
                   id: 'member-fiona',
@@ -114,6 +103,7 @@ describe('OrganizationMembersSettingsCard', () => {
                   user: { email: 'fiona@swamp.wed', name: 'Fiona Ogre' },
                 },
               ],
+              name: 'Couple',
             },
             error: null,
           })
@@ -154,14 +144,8 @@ describe('OrganizationMembersSettingsCard', () => {
 
         if (path === '/organization/get-full-organization') {
           return Promise.resolve({
-            data: { id: 'org-seed-shrek-fiona', name: 'Couple' },
-            error: null,
-          })
-        }
-
-        if (path === '/organization/list-members?organizationId=org-seed-shrek-fiona') {
-          return Promise.resolve({
             data: {
+              id: 'org-seed-shrek-fiona',
               members: [
                 {
                   id: 'member-fiona',
@@ -169,6 +153,7 @@ describe('OrganizationMembersSettingsCard', () => {
                   user: { email: 'fiona@swamp.wed', name: 'Fiona Ogre' },
                 },
               ],
+              name: 'Couple',
             },
             error: null,
           })
@@ -214,7 +199,7 @@ describe('OrganizationMembersSettingsCard', () => {
       expect(screen.getByText('Unable to load organization members.')).toBeInTheDocument()
     })
 
-    expect(screen.getByText('organization/list-invitations failed upstream')).toBeInTheDocument()
+    expect(screen.getByText('Unable to load organization.')).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: 'Retry' })).not.toHaveLength(0)
   })
 
@@ -225,15 +210,10 @@ describe('OrganizationMembersSettingsCard', () => {
 
         if (path === '/organization/get-full-organization') {
           return Promise.resolve({
-            data: { id: 'org-seed-shrek-fiona', name: 'Couple' },
-            error: null,
-          })
-        }
-
-        if (path === '/organization/list-members?organizationId=org-seed-shrek-fiona') {
-          return Promise.resolve({
             data: {
+              id: 'org-seed-shrek-fiona',
               members: [],
+              name: 'Couple',
             },
             error: null,
           })
@@ -306,14 +286,8 @@ describe('OrganizationMembersSettingsCard', () => {
 
         if (path === '/organization/get-full-organization') {
           return Promise.resolve({
-            data: { id: 'org-seed-shrek-fiona', name: 'Couple' },
-            error: null,
-          })
-        }
-
-        if (path === '/organization/list-members?organizationId=org-seed-shrek-fiona') {
-          return Promise.resolve({
             data: {
+              id: 'org-seed-shrek-fiona',
               members: [
                 {
                   id: 'member-fiona',
@@ -321,6 +295,7 @@ describe('OrganizationMembersSettingsCard', () => {
                   user: { email: 'fiona@swamp.wed', name: 'Fiona Ogre' },
                 },
               ],
+              name: 'Couple',
             },
             error: null,
           })
