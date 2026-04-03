@@ -28,7 +28,11 @@ export const vendorRouter = createTRPCRouter({
    * Uses a single JOIN query to avoid a separate weddingId lookup.
    */
   getAll: protectedProcedure.input(getVendorsByCategorySchema).query(async ({ ctx, input }) => {
-    return vendorService.getVendorsByUserId(ctx.authz, ctx.auth.userId, input.category)
+    const weddingId = await weddingService.getWeddingIdByUserId(
+      ctx.auth.userId,
+      ctx.auth.activeOrganization?.organizationId ?? null
+    )
+    return vendorService.getVendorsForWedding(ctx.authz, weddingId, input.category)
   }),
 
   /**

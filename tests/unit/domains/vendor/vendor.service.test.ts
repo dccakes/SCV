@@ -144,6 +144,18 @@ describe('VendorService', () => {
     })
   })
 
+  describe('getVendorsForWedding', () => {
+    it('returns vendors for the active wedding scope', async () => {
+      mockFindAllByWeddingIdFn.mockResolvedValue([mockVendorWithQuotes])
+
+      const result = await vendorService.getVendorsForWedding(actorContext, 'wedding-123')
+
+      expect(result).toEqual([mockVendorWithQuotes])
+      expect(mockFindAllByWeddingIdFn).toHaveBeenCalledWith('wedding-123', undefined)
+      expect(mockFindAllByUserIdFn).not.toHaveBeenCalled()
+    })
+  })
+
   // ─── getVendorWithQuotes ───────────────────────────────────────────────────
 
   describe('getVendorWithQuotes', () => {

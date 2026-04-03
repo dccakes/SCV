@@ -6,6 +6,21 @@
 
 import { z } from 'zod'
 
+const parseDateInput = (value: string): Date => {
+  const [year, month, day] = value.split('-').map(Number)
+  return new Date(year ?? 0, (month ?? 1) - 1, day ?? 1)
+}
+
+const isTodayOrFutureDate = (value: string | undefined): boolean => {
+  if (!value) return true
+
+  const eventDate = parseDateInput(value)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  return eventDate >= today
+}
+
 /**
  * Schema for creating a new event
  */
@@ -23,23 +38,10 @@ export const createEventSchema = z
     description: z.string().optional(),
     allowTagAlongs: z.boolean().default(false),
   })
-  .refine(
-    (data) => {
-      // If no date provided, validation passes
-      if (!data.date) return true
-
-      // Parse the date string and compare with today
-      const eventDate = new Date(data.date)
-      const today = new Date()
-      today.setHours(0, 0, 0, 0) // Reset time to start of day
-
-      return eventDate >= today
-    },
-    {
-      message: 'Event date cannot be in the past',
-      path: ['date'],
-    }
-  )
+  .refine((data) => isTodayOrFutureDate(data.date), {
+    message: 'Event date cannot be in the past',
+    path: ['date'],
+  })
 
 /**
  * Schema for updating an existing event
@@ -59,23 +61,10 @@ export const updateEventSchema = z
     description: z.string().optional(),
     allowTagAlongs: z.boolean().default(false),
   })
-  .refine(
-    (data) => {
-      // If no date provided, validation passes
-      if (!data.date) return true
-
-      // Parse the date string and compare with today
-      const eventDate = new Date(data.date)
-      const today = new Date()
-      today.setHours(0, 0, 0, 0) // Reset time to start of day
-
-      return eventDate >= today
-    },
-    {
-      message: 'Event date cannot be in the past',
-      path: ['date'],
-    }
-  )
+  .refine((data) => isTodayOrFutureDate(data.date), {
+    message: 'Event date cannot be in the past',
+    path: ['date'],
+  })
 
 /**
  * Schema for updating collect RSVP status

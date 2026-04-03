@@ -27,6 +27,13 @@ const createMockEventDate = () => {
   return futureDate
 }
 
+const toDateInputValue = (date: Date): string => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 const mockEvent: Event = {
   id: 'event-123',
   name: 'Wedding Ceremony',
@@ -59,7 +66,7 @@ describe('EventForm - Create Event', () => {
     // Use a future date
     const futureDate = new Date()
     futureDate.setFullYear(futureDate.getFullYear() + 1)
-    const futureDateString = futureDate.toISOString().split('T')[0] ?? ''
+    const futureDateString = toDateInputValue(futureDate)
 
     // Fill in all form fields
     act(() => {
@@ -478,7 +485,7 @@ describe('EventForm - Field Validation', () => {
     // Use a date far in the future
     const futureDate = new Date()
     futureDate.setFullYear(futureDate.getFullYear() + 1)
-    const futureDateString = futureDate.toISOString().split('T')[0]
+    const futureDateString = toDateInputValue(futureDate)
 
     act(() => {
       result.current.setValue('eventName', 'Wedding', { shouldDirty: true })
@@ -509,7 +516,7 @@ describe('EventForm - Field Validation', () => {
 
     // Use today's date
     const today = new Date()
-    const todayString = today.toISOString().split('T')[0]
+    const todayString = toDateInputValue(today)
 
     act(() => {
       result.current.setValue('eventName', 'Wedding', { shouldDirty: true })

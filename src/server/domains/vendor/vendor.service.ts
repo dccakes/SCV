@@ -56,6 +56,18 @@ export class VendorService {
   }
 
   /**
+   * Get all vendors for the active wedding scope.
+   */
+  async getVendorsForWedding(
+    ctx: AuthzContext,
+    weddingId: string,
+    category?: VendorCategory
+  ): Promise<VendorWithQuotes[]> {
+    this.requireVendorPermission(ctx, 'read')
+    return this.vendorRepository.findAllByWeddingId(weddingId, category)
+  }
+
+  /**
    * Get a vendor with its quotes, with ownership verification
    */
   async getVendorWithQuotes(

@@ -55,9 +55,10 @@ export class DashboardService {
    * Aggregates data from multiple domains in parallel where possible
    * to optimize performance.
    */
-  async getOverview(userId: string): Promise<DashboardData | null> {
-    // First, get the user's wedding
-    const wedding = await this.weddingRepo.findByUserId(userId)
+  async getOverview(userId: string, scopedWeddingId?: string): Promise<DashboardData | null> {
+    const wedding = scopedWeddingId
+      ? await this.weddingRepo.findById(scopedWeddingId)
+      : await this.weddingRepo.findByUserId(userId)
 
     if (!wedding) {
       return null

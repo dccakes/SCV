@@ -92,8 +92,8 @@ jest.mock('~/lib/email', () => ({
   sendResetPasswordEmail: jest.fn(),
 }))
 
-import { authPlugins } from 'lib/auth'
-import { authClientPlugins } from 'lib/auth-client'
+import { authPlugins, resolveTrustedOrigins } from 'lib/auth'
+import { authClientPlugins, resolveAuthClientBaseUrl } from 'lib/auth-client'
 import { authOrganizationSchema } from 'lib/auth-organization-schema'
 import {
   authzStatement,
@@ -185,5 +185,26 @@ describe('organization plugin wiring', () => {
     const prismaSchema = readFileSync('prisma/schema.prisma', 'utf8')
 
     expect(prismaSchema).toMatch(/\borganizationinvitations\s+OrganizationInvitation\[\]/)
+  })
+
+  it('uses the browser origin for auth client requests when available', () => {
+    expect(resolveAuthClientBaseUrl('https://preview.example.com')).toBe(
+      'https://preview.example.com'
+    )
+  })
+
+  it('falls back to NEXT_PUBLIC_APP_URL for server-side auth client requests', () => {
+    expect(resolveAuthClientBaseUrl()).toBe('http://localhost:3000')
+  })
+
+  it('trusts the current request origin for auth callbacks and form posts', () => {
+    expect(resolveTrustedOrigins('http://localhost:3001/api/auth/sign-in/email')).toContain(
+      'http://localhost:3001'
+    )
+    expect(
+      resolveTrustedOrigins(
+        'https://scv-git-bugfix-org-invites-carvallo-io.vercel.app/api/auth/sign-in/email'
+      )
+    ).toContain('https://scv-git-bugfix-org-invites-carvallo-io.vercel.app')
   })
 })

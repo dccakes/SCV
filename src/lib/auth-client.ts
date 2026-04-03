@@ -10,6 +10,14 @@ import { ac, organizationRoles } from '~/lib/auth-permissions'
 
 export const authClientOrganizationRoles = organizationRoles
 
+export function resolveAuthClientBaseUrl(windowLocationOrigin?: string): string {
+  if (windowLocationOrigin) {
+    return windowLocationOrigin
+  }
+
+  return env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+}
+
 export const authClientPlugins: BetterAuthClientPlugin[] = [
   organizationClient({
     ac,
@@ -18,7 +26,9 @@ export const authClientPlugins: BetterAuthClientPlugin[] = [
 ]
 
 export const authClient = createAuthClient({
-  baseURL: env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000',
+  baseURL: resolveAuthClientBaseUrl(
+    typeof window !== 'undefined' ? window.location.origin : undefined
+  ),
   plugins: [...authClientPlugins, emailOTPClient() as unknown as BetterAuthClientPlugin],
 })
 

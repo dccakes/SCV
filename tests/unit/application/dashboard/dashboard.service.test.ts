@@ -62,6 +62,7 @@ import {
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   mockFindByUserId,
+  mockFindById as mockWeddingFindById,
   resetMocks as resetWeddingMocks,
   WeddingRepository,
 } from '~/server/domains/wedding/wedding.repository'
@@ -76,6 +77,7 @@ const mockWebsiteFindByWeddingIdWithQuestionsFn =
   mockWebsiteFindByWeddingIdWithQuestions as jest.Mock
 const mockGuestCountByWeddingIdFn = mockCountByWeddingId as jest.Mock
 const mockQuestionFindMostRecentAnswerFn = mockFindMostRecentAnswerByQuestionId as jest.Mock
+const mockWeddingFindByIdFn = mockWeddingFindById as jest.Mock
 const mockWeddingFindByUserIdFn = mockFindByUserId as jest.Mock
 
 // Mock data
@@ -418,6 +420,53 @@ describe('DashboardService', () => {
       questionRepo,
       weddingRepo
     )
+  })
+
+  it('uses the provided active wedding scope instead of resolving by user id again', async () => {
+    mockWeddingFindByIdFn.mockResolvedValue({
+      id: 'wedding-scoped',
+      organizationId: 'org-123',
+      groomFirstName: 'John',
+      groomLastName: 'Smith',
+      brideFirstName: 'Jane',
+      brideLastName: 'Doe',
+      enabledAddOns: [],
+      selfFillToken: null,
+      selfFillTokenGeneratedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    mockHouseholdFindByWeddingIdWithGuestsAndGifts.mockResolvedValue(mockHouseholds)
+    mockInvitationFindByWeddingIdFn.mockResolvedValue([])
+    mockEventFindByWeddingIdWithQuestionsFn.mockResolvedValue(mockEvents)
+    mockUserFindByIdFn.mockResolvedValue(mockUser)
+    mockWebsiteFindByWeddingIdWithQuestionsFn.mockResolvedValue(mockWebsite)
+    mockGuestCountByWeddingIdFn.mockResolvedValue(2)
+    mockQuestionFindMostRecentAnswerFn.mockResolvedValue(null)
+
+    const householdRepo = new HouseholdRepository({})
+    const invitationRepo = new InvitationRepository({})
+    const eventRepo = new EventRepository({})
+    const userRepo = new UserRepository({})
+    const websiteRepo = new WebsiteRepository({})
+    const guestRepo = new GuestRepository({})
+    const questionRepo = new QuestionRepository({})
+    const weddingRepo = new WeddingRepository({})
+    const service = new DashboardService(
+      householdRepo,
+      invitationRepo,
+      eventRepo,
+      userRepo,
+      websiteRepo,
+      guestRepo,
+      questionRepo,
+      weddingRepo
+    )
+
+    await service.getOverview('user-123', 'wedding-scoped')
+
+    expect(mockHouseholdFindByWeddingIdWithGuestsAndGifts).toHaveBeenCalledWith('wedding-scoped')
+    expect(mockWeddingFindByUserIdFn).not.toHaveBeenCalled()
   })
 
   describe('getOverview', () => {

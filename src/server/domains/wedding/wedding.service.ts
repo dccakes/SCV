@@ -123,6 +123,21 @@ export class WeddingService {
     userId: string,
     sessionActiveOrganizationId: string | null
   ): Promise<Wedding> {
+    if (sessionActiveOrganizationId) {
+      const scopedWedding = await this.weddingRepository.findByOrganizationId(
+        sessionActiveOrganizationId
+      )
+
+      if (!scopedWedding) {
+        throw new TRPCError({
+          code: 'PRECONDITION_FAILED',
+          message: 'Active organization is not linked to a wedding',
+        })
+      }
+
+      return scopedWedding
+    }
+
     const wedding = await this.weddingRepository.findByUserId(userId)
     if (!wedding) {
       throw new TRPCError({
@@ -135,13 +150,6 @@ export class WeddingService {
       throw new TRPCError({
         code: 'PRECONDITION_FAILED',
         message: 'Wedding must be linked to an organization before protected actions are allowed',
-      })
-    }
-
-    if (sessionActiveOrganizationId && sessionActiveOrganizationId !== wedding.organizationId) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'Active organization does not match the selected wedding',
       })
     }
 

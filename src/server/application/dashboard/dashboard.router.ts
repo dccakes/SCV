@@ -48,9 +48,9 @@ export const dashboardRouter = createTRPCRouter({
    * dashboard to gracefully handle unauthenticated states.
    */
   getByUserId: publicProcedure.query(async ({ ctx }) => {
-    if (!ctx.auth.userId) {
+    if (!ctx.auth.userId || !ctx.auth.activeWeddingId) {
       return null
     }
-    return dashboardService.getOverview(ctx.auth.userId)
+    return dashboardService.getOverview(ctx.auth.userId, ctx.auth.activeWeddingId)
   }),
 })
