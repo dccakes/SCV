@@ -392,3 +392,5 @@ Recommended approach:
   `DashboardOverviewUseCase` and updated router wiring.
 - 2026-04-03: Added `GuestInsightsService` application boundary for guest/event/invitation reads
   and rewired guest router + Etta guest read tools to use it.
+- 2026-04-03: Added `EventInsightsService` application boundary and rewired event/invitation read
+  routes to delegate authorization and scoped reads through it.

@@ -1,3 +1,5 @@
+import { TRPCError } from '@trpc/server'
+
 jest.mock('lib/auth', () => ({
   auth: { api: { getSession: jest.fn().mockResolvedValue(null) } },
 }))
@@ -6,19 +8,25 @@ jest.mock('~/lib/auth-permissions', () => require('~/lib/__mocks__/auth-permissi
 
 jest.mock('server/db', () => ({ db: {} }))
 
+jest.mock('server/application/event-insights', () => ({
+  eventInsightsService: {
+    listInvitations: jest.fn(),
+  },
+}))
+
 jest.mock('server/domains/invitation', () => ({
   invitationService: {
     createInvitation: jest.fn(),
-    getAllByWeddingId: jest.fn(),
     updateInvitation: jest.fn(),
   },
 }))
 
+import { eventInsightsService } from 'server/application/event-insights'
 import { invitationService } from 'server/domains/invitation'
 import { invitationRouter } from 'server/domains/invitation/invitation.router'
 
 const mockCreateInvitation = invitationService.createInvitation as jest.Mock
-const mockGetAllByWeddingId = invitationService.getAllByWeddingId as jest.Mock
+const mockListInvitations = eventInsightsService.listInvitations as jest.Mock
 const mockUpdateInvitation = invitationService.updateInvitation as jest.Mock
 
 describe('invitationRouter authz context plumbing', () => {
@@ -93,11 +101,14 @@ describe('invitationRouter authz context plumbing', () => {
   })
 
   it('keeps invitation list route protected and scoped to active wedding', async () => {
-    mockGetAllByWeddingId.mockResolvedValue([{ id: 'inv-1' }])
+    mockListInvitations.mockResolvedValue([{ id: 'inv-1' }])
 
     await caller.getAllByUserId()
 
-    expect(mockGetAllByWeddingId).toHaveBeenCalledWith('wedding-123')
+    expect(mockListInvitations).toHaveBeenCalledWith(
+      { userId: 'user-123', activeOrganization },
+      'wedding-123'
+    )
   })
 
   it('rejects unauthenticated invitation reads with UNAUTHORIZED', async () => {
@@ -122,6 +133,9 @@ describe('invitationRouter authz context plumbing', () => {
   })
 
   it('rejects viewer invitation reads with FORBIDDEN', async () => {
+    const forbiddenError = new TRPCError({ code: 'FORBIDDEN' })
+    mockListInvitations.mockRejectedValue(forbiddenError)
+
     const viewerCaller = invitationRouter.createCaller({
       auth: {
         session: { user: { id: 'user-123' } },

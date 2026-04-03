@@ -1,3 +1,5 @@
+import { TRPCError } from '@trpc/server'
+
 jest.mock('lib/auth', () => ({
   auth: { api: { getSession: jest.fn().mockResolvedValue(null) } },
 }))
@@ -6,25 +8,31 @@ jest.mock('~/lib/auth-permissions', () => require('~/lib/__mocks__/auth-permissi
 
 jest.mock('server/db', () => ({ db: {} }))
 
+jest.mock('server/application/event-insights', () => ({
+  eventInsightsService: {
+    listEvents: jest.fn(),
+    listEventsWithStats: jest.fn(),
+  },
+}))
+
 jest.mock('server/domains/event', () => ({
   eventService: {
     createEvent: jest.fn(),
     deleteEvent: jest.fn(),
-    getWeddingEvents: jest.fn(),
-    getWeddingEventsWithStats: jest.fn(),
     updateCollectRsvp: jest.fn(),
     updateEvent: jest.fn(),
   },
 }))
 
+import { eventInsightsService } from 'server/application/event-insights'
 import { eventService } from 'server/domains/event'
 import { eventRouter } from 'server/domains/event/event.router'
 
 const mockCreateEvent = eventService.createEvent as jest.Mock
-const mockGetWeddingEvents = eventService.getWeddingEvents as jest.Mock
-const mockGetWeddingEventsWithStats = eventService.getWeddingEventsWithStats as jest.Mock
 const mockUpdateEvent = eventService.updateEvent as jest.Mock
 const mockDeleteEvent = eventService.deleteEvent as jest.Mock
+const mockListEvents = eventInsightsService.listEvents as jest.Mock
+const mockListEventsWithStats = eventInsightsService.listEventsWithStats as jest.Mock
 
 describe('eventRouter authz context plumbing', () => {
   const activeOrganization = {
@@ -93,14 +101,20 @@ describe('eventRouter authz context plumbing', () => {
   })
 
   it('keeps read routes protected and scoped to active wedding', async () => {
-    mockGetWeddingEvents.mockResolvedValue([{ id: 'event-1' }])
-    mockGetWeddingEventsWithStats.mockResolvedValue([{ id: 'event-1', guestResponses: {} }])
+    mockListEvents.mockResolvedValue([{ id: 'event-1' }])
+    mockListEventsWithStats.mockResolvedValue([{ id: 'event-1', guestResponses: {} }])
 
     await caller.getAllByUserId()
     await caller.getAllByUserIdWithStats()
 
-    expect(mockGetWeddingEvents).toHaveBeenCalledWith('wedding-123')
-    expect(mockGetWeddingEventsWithStats).toHaveBeenCalledWith('wedding-123')
+    expect(mockListEvents).toHaveBeenCalledWith(
+      { userId: 'user-123', activeOrganization },
+      'wedding-123'
+    )
+    expect(mockListEventsWithStats).toHaveBeenCalledWith(
+      { userId: 'user-123', activeOrganization },
+      'wedding-123'
+    )
   })
 
   it('rejects unauthenticated reads with UNAUTHORIZED', async () => {
@@ -125,6 +139,9 @@ describe('eventRouter authz context plumbing', () => {
   })
 
   it('rejects viewer read access with FORBIDDEN', async () => {
+    const forbiddenError = new TRPCError({ code: 'FORBIDDEN' })
+    mockListEvents.mockRejectedValue(forbiddenError)
+
     const viewerCaller = eventRouter.createCaller({
       auth: {
         session: { user: { id: 'user-123' } },
