@@ -3,6 +3,13 @@
  *
  * Uses the Vercel AI Gateway to route to any supported model provider.
  * Configure via ETTA_MODEL env var (e.g. "anthropic/claude-haiku-4.5").
+ *
+ * Authorization and attribution contract (must remain true):
+ * 1) Permission checks execute as the acting signed-in user (ctx.authz/role-based authz).
+ * 2) Audit attribution for tool execution is recorded as actorType='etta' with ettaActorId.
+ *
+ * This distinction is intentional: Etta can only do what the user is allowed to do, while
+ * still preserving an agent-specific audit trail for observability and governance.
  */
 
 import { gateway } from '@ai-sdk/gateway'

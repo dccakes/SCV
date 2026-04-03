@@ -70,16 +70,16 @@ describe('SettingsPage', () => {
     expect(screen.getByTestId('organization-members-settings-card')).toBeInTheDocument()
   })
 
-  it('renders onboarding fallback when details query fails', async () => {
+  it('still renders organization members when wedding details query fails', async () => {
     mockGetDetails.mockRejectedValue(new Error('No wedding'))
 
     const page = await SettingsPage()
     render(page)
 
     expect(
-      screen.getByText('No wedding found. Please complete onboarding first.')
+      screen.getByText('Unable to load wedding details for the active workspace.')
     ).toBeInTheDocument()
     expect(mockWeddingSettingsForm).not.toHaveBeenCalled()
-    expect(mockOrganizationMembersSettingsCard).not.toHaveBeenCalled()
+    expect(mockOrganizationMembersSettingsCard).toHaveBeenCalledTimes(1)
   })
 })
