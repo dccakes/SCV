@@ -6,6 +6,7 @@
  */
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
+import { vendorInsightsService } from '~/server/application/vendor-insights'
 import { requireActiveWeddingId } from '~/server/authz/active-wedding'
 import { vendorService } from '~/server/domains/vendor'
 import {
@@ -29,7 +30,7 @@ export const vendorRouter = createTRPCRouter({
    */
   getAll: protectedProcedure.input(getVendorsByCategorySchema).query(async ({ ctx, input }) => {
     const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
-    return vendorService.getVendorsForWedding(ctx.authz, weddingId, input.category)
+    return vendorInsightsService.listVendors(ctx.authz, weddingId, input.category)
   }),
 
   /**
@@ -37,7 +38,7 @@ export const vendorRouter = createTRPCRouter({
    */
   getById: protectedProcedure.input(getVendorSchema).query(async ({ ctx, input }) => {
     const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
-    return vendorService.getVendorWithQuotes(ctx.authz, input.vendorId, weddingId)
+    return vendorInsightsService.getVendor(ctx.authz, weddingId, input.vendorId)
   }),
 
   /**

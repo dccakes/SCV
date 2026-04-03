@@ -4,6 +4,7 @@ import { z } from 'zod'
 
 import type { EttaContext } from '~/lib/etta/types'
 import { requireEttaPermission, requirePlannerAuthz } from '~/lib/etta/utils/authorization'
+import { vendorInsightsService } from '~/server/application/vendor-insights'
 import { db } from '~/server/db'
 import { vendorService } from '~/server/domains/vendor'
 
@@ -21,7 +22,7 @@ export function getVendorTools(ctx: EttaContext) {
       ),
       execute: async ({ category }) => {
         const authz = requirePlannerAuthz(ctx)
-        const vendors = await vendorService.getVendorsForWedding(authz, ctx.weddingId, category)
+        const vendors = await vendorInsightsService.listVendors(authz, ctx.weddingId, category)
         return { vendors }
       },
     }),
@@ -69,7 +70,7 @@ export function getVendorTools(ctx: EttaContext) {
       ),
       execute: async ({ vendorId, quoteId }) => {
         const authz = requirePlannerAuthz(ctx)
-        const quote = await vendorService.getQuote(authz, quoteId, vendorId, ctx.weddingId)
+        const quote = await vendorInsightsService.getQuote(authz, ctx.weddingId, vendorId, quoteId)
         return { quote }
       },
     }),

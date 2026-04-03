@@ -398,3 +398,5 @@ Recommended approach:
   `getVendorsSystem` to make system-only usage explicit.
 - 2026-04-03: Added vendor authz regression coverage for router (`viewer`, unauthenticated, missing
   active wedding) and Etta vendor tool permission-denied scenarios.
+- 2026-04-03: Added `VendorInsightsService` and rewired vendor read routes plus Etta vendor read
+  tools to consume the same application-layer authorized read boundary.

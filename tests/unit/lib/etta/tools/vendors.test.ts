@@ -10,14 +10,20 @@ jest.mock('~/server/authz/permission-checker', () => ({
 
 import { getVendorTools } from '~/lib/etta/tools/vendors'
 import type { EttaContext } from '~/lib/etta/types'
+import { vendorInsightsService } from '~/server/application/vendor-insights'
 import { requirePermission } from '~/server/authz/permission-checker'
 import { db } from '~/server/db'
 import { vendorService } from '~/server/domains/vendor'
 
+jest.mock('~/server/application/vendor-insights', () => ({
+  vendorInsightsService: {
+    getQuote: jest.fn(),
+    listVendors: jest.fn(),
+  },
+}))
+
 jest.mock('~/server/domains/vendor', () => ({
   vendorService: {
-    getVendorsForWedding: jest.fn(),
-    getQuote: jest.fn(),
     updateQuote: jest.fn(),
   },
 }))
@@ -31,12 +37,14 @@ jest.mock('~/server/db', () => ({
 }))
 
 const mockVendorService = vendorService as {
-  getVendorsForWedding: jest.Mock
-  getQuote: jest.Mock
   updateQuote: jest.Mock
 }
 
 const mockRequirePermission = requirePermission as jest.Mock
+const mockVendorInsightsService = vendorInsightsService as {
+  getQuote: jest.Mock
+  listVendors: jest.Mock
+}
 
 const mockDb = db as {
   ettaSuggestion: {
@@ -79,14 +87,14 @@ describe('getVendorTools', () => {
         { id: 'v1', name: 'Photo Pro', category: 'PHOTOGRAPHER', quotes: [] },
         { id: 'v2', name: 'DJ Mix', category: 'MUSIC', quotes: [] },
       ]
-      mockVendorService.getVendorsForWedding.mockResolvedValue(vendors)
+      mockVendorInsightsService.listVendors.mockResolvedValue(vendors)
 
       const result = await tools.get_vendor_list.execute(
         {},
         { toolCallId: 'tc1', messages: [], abortSignal: undefined as never }
       )
 
-      expect(mockVendorService.getVendorsForWedding).toHaveBeenCalledWith(
+      expect(mockVendorInsightsService.listVendors).toHaveBeenCalledWith(
         mockCtx.authz,
         'wedding-123',
         undefined
@@ -95,14 +103,14 @@ describe('getVendorTools', () => {
     })
 
     it('passes category filter', async () => {
-      mockVendorService.getVendorsForWedding.mockResolvedValue([])
+      mockVendorInsightsService.listVendors.mockResolvedValue([])
 
       await tools.get_vendor_list.execute(
         { category: 'VENUE' },
         { toolCallId: 'tc2', messages: [], abortSignal: undefined as never }
       )
 
-      expect(mockVendorService.getVendorsForWedding).toHaveBeenCalledWith(
+      expect(mockVendorInsightsService.listVendors).toHaveBeenCalledWith(
         mockCtx.authz,
         'wedding-123',
         'VENUE'
@@ -204,18 +212,18 @@ describe('getVendorTools', () => {
         createdAt: new Date('2026-04-01'),
         updatedAt: new Date('2026-04-01'),
       }
-      mockVendorService.getQuote.mockResolvedValue(quote)
+      mockVendorInsightsService.getQuote.mockResolvedValue(quote)
 
       const result = await tools.get_vendor_quote.execute(
         { vendorId: 'vendor-1', quoteId: 'quote-1' },
         { toolCallId: 'tc5', messages: [], abortSignal: undefined as never }
       )
 
-      expect(mockVendorService.getQuote).toHaveBeenCalledWith(
+      expect(mockVendorInsightsService.getQuote).toHaveBeenCalledWith(
         mockCtx.authz,
-        'quote-1',
+        'wedding-123',
         'vendor-1',
-        'wedding-123'
+        'quote-1'
       )
       expect(result).toEqual({ quote })
     })
