@@ -7,6 +7,7 @@ import type { ReactNode } from 'react'
 
 import { ThemeProvider } from '~/components/theme-provider'
 import { authClient } from '~/lib/auth-client'
+import { authUiCustomOrganizationRoles } from '~/lib/organization-roles'
 
 export function Providers({ children }: { children: ReactNode }) {
   const router = useRouter()
@@ -23,10 +24,7 @@ export function Providers({ children }: { children: ReactNode }) {
         Link={Link}
         emailOTP
         organization={{
-          customRoles: [
-            { role: 'member', label: 'Member' },
-            { role: 'viewer', label: 'Viewer' },
-          ],
+          customRoles: authUiCustomOrganizationRoles,
         }}
       >
         {children}

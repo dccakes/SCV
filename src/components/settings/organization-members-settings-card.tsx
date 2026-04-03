@@ -16,6 +16,11 @@ import {
 } from '~/components/ui/dialog'
 import { Input } from '~/components/ui/input'
 import { authClient } from '~/lib/auth-client'
+import {
+  getOrganizationRoleLabel,
+  type OrganizationRoleOption,
+  organizationRoleOptions,
+} from '~/lib/organization-roles'
 
 type Organization = {
   id: string
@@ -67,20 +72,8 @@ const initialState: OrganizationState = {
   organization: null,
 }
 
-// TODO(review-implementation/code-quality): centralize these labels with the shared
-// organization role configuration used by the auth provider once that source can be
-// imported here without coupling this component back to Better Auth UI config.
-const inviteRoleOptions = [
-  { label: 'Admin', value: 'admin' },
-  { label: 'Member', value: 'member' },
-  { label: 'Viewer', value: 'viewer' },
-] as const
-
 function getRoleLabel(role: string) {
-  const normalizedRole = role.trim().toLowerCase()
-  return normalizedRole
-    ? normalizedRole.charAt(0).toUpperCase() + normalizedRole.slice(1)
-    : 'Member'
+  return getOrganizationRoleLabel(role)
 }
 
 function getInitials(name?: string | null, email?: string | null) {
@@ -428,7 +421,7 @@ function InviteMemberDialog({
   organizationId: string
 }) {
   const [email, setEmail] = useState('')
-  const [role, setRole] = useState<(typeof inviteRoleOptions)[number]['value']>('member')
+  const [role, setRole] = useState<OrganizationRoleOption>('member')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const reset = useCallback(() => {
@@ -510,12 +503,10 @@ function InviteMemberDialog({
             <select
               className='flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm'
               id='organization-invite-role'
-              onChange={(event) =>
-                setRole(event.target.value as (typeof inviteRoleOptions)[number]['value'])
-              }
+              onChange={(event) => setRole(event.target.value as OrganizationRoleOption)}
               value={role}
             >
-              {inviteRoleOptions.map((option) => (
+              {organizationRoleOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -556,13 +547,13 @@ function EditMemberRoleDialog({
   open: boolean
   organizationId: string
 }) {
-  const [role, setRole] = useState<(typeof inviteRoleOptions)[number]['value']>(
-    (member.role as (typeof inviteRoleOptions)[number]['value']) || 'member'
+  const [role, setRole] = useState<OrganizationRoleOption>(
+    (member.role as OrganizationRoleOption) || 'member'
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    setRole((member.role as (typeof inviteRoleOptions)[number]['value']) || 'member')
+    setRole((member.role as OrganizationRoleOption) || 'member')
     setIsSubmitting(false)
   }, [member])
 
@@ -610,12 +601,10 @@ function EditMemberRoleDialog({
             <select
               className='flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm'
               id='organization-member-role'
-              onChange={(event) =>
-                setRole(event.target.value as (typeof inviteRoleOptions)[number]['value'])
-              }
+              onChange={(event) => setRole(event.target.value as OrganizationRoleOption)}
               value={role}
             >
-              {inviteRoleOptions.map((option) => (
+              {organizationRoleOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
