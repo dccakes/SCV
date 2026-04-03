@@ -6,11 +6,10 @@
  */
 
 import { TRPCError } from '@trpc/server'
-import { organizationRoles } from '~/lib/auth-permissions'
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { requireActiveWeddingId } from '~/server/authz/active-wedding'
-import type { PermissionInput } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
+import { readWorkspaceCapabilities } from '~/server/authz/workspace-capabilities'
 import { eventService } from '~/server/domains/event'
 import { weddingService } from '~/server/domains/wedding'
 import {
@@ -18,29 +17,6 @@ import {
   updateWeddingDetailsSchema,
   updateWeddingSchema,
 } from '~/server/domains/wedding/wedding.validator'
-
-const readWorkspaceCapabilities = (role: string | null | undefined) => {
-  const roleKey = role as keyof typeof organizationRoles
-  if (!role || !(roleKey in organizationRoles)) {
-    return {
-      canInviteMembers: false,
-      canManageMembers: false,
-      canSendInvites: false,
-      canViewPlanning: false,
-    }
-  }
-
-  type AuthorizeCallable = { authorize: (permissions: PermissionInput) => { success: boolean } }
-  const authorize = (organizationRoles[roleKey] as unknown as AuthorizeCallable).authorize
-  const can = (permissions: PermissionInput) => authorize(permissions).success
-
-  return {
-    canInviteMembers: can({ invitation: ['create'] }),
-    canManageMembers: can({ member: ['update'] }),
-    canSendInvites: can({ guest_invitation: ['send'] }),
-    canViewPlanning: can({ wedding: ['read'] }),
-  }
-}
 
 export const weddingRouter = createTRPCRouter({
   /**

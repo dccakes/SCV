@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import SidebarNavContent, { type SidebarSection } from '~/components/nav/sidebar-nav-content'
 import SidebarUserAvatarButton from '~/components/nav/sidebar-user-avatar-button'
 import WeddingChipCard from '~/components/nav/wedding-chip-card'
+import { useWorkspace } from '~/hooks/use-workspace'
 import { signOut } from '~/lib/auth-client'
 
 const SIDEBAR_SECTIONS: readonly SidebarSection[] = [
@@ -30,6 +31,25 @@ const SIDEBAR_SECTIONS: readonly SidebarSection[] = [
   },
 ]
 
+type WorkspaceSnapshot = {
+  role: string | null
+  capabilities: {
+    canViewPlanning: boolean
+  }
+}
+
+function getSidebarSections(workspace: WorkspaceSnapshot): readonly SidebarSection[] {
+  if (!workspace.role) {
+    return SIDEBAR_SECTIONS
+  }
+
+  if (!workspace.capabilities.canViewPlanning) {
+    return SIDEBAR_SECTIONS.filter((section) => section.title === 'Settings')
+  }
+
+  return SIDEBAR_SECTIONS
+}
+
 export type SidebarNavFrameProps = Readonly<{
   ettaPanelOpen?: boolean
   isOpen: boolean
@@ -54,6 +74,7 @@ type SidebarNavProps = Readonly<{
   onToggleEttaPanel?: () => void
   onNavClick?: () => void
   showCollapseToggle?: boolean
+  sections: readonly SidebarSection[]
   userFirstName?: string
   userInitials?: string
 }>
@@ -70,6 +91,7 @@ function SidebarNav({
   onToggleEttaPanel,
   onNavClick,
   showCollapseToggle = true,
+  sections,
   userFirstName,
   userInitials,
 }: SidebarNavProps) {
@@ -156,7 +178,7 @@ function SidebarNav({
       )}
 
       <SidebarNavContent
-        sections={SIDEBAR_SECTIONS}
+        sections={sections}
         isCollapsed={isCollapsed}
         isActive={isActive}
         onNavClick={onNavClick}
@@ -185,6 +207,13 @@ export default function SidebarNavFrame(props: SidebarNavFrameProps) {
     weddingLocation,
   } = props
   const pathname = usePathname()
+  const { workspace } = useWorkspace()
+  const sidebarSections = getSidebarSections({
+    role: workspace.role,
+    capabilities: {
+      canViewPlanning: workspace.capabilities.canViewPlanning,
+    },
+  })
   // Start collapsed=false for SSR safety; sync from localStorage on client after mount
   const [isCollapsed, setIsCollapsed] = useState(false)
   const drawerRef = useRef<HTMLDivElement>(null)
@@ -279,6 +308,7 @@ export default function SidebarNavFrame(props: SidebarNavFrameProps) {
           weddingLocation={resolvedWeddingLocation}
           onSignOut={handleSignOut}
           onToggleEttaPanel={onToggleEttaPanel}
+          sections={sidebarSections}
           userFirstName={userFirstName}
           userInitials={userInitials}
         />
@@ -311,6 +341,7 @@ export default function SidebarNavFrame(props: SidebarNavFrameProps) {
               onToggleEttaPanel={onToggleEttaPanel}
               onNavClick={() => setIsOpen(false)}
               showCollapseToggle={false}
+              sections={sidebarSections}
               userFirstName={userFirstName}
               userInitials={userInitials}
             />

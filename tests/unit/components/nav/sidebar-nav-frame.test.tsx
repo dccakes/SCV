@@ -8,16 +8,33 @@ jest.mock('~/lib/auth-client', () => ({
 }))
 
 jest.mock('~/hooks/use-workspace', () => ({
-  useWorkspace: () => ({
-    workspace: { role: 'admin' },
-  }),
+  useWorkspace: jest.fn(() => ({
+    workspace: {
+      role: 'admin',
+      capabilities: {
+        canViewPlanning: true,
+      },
+    },
+  })),
 }))
 
 const mockSignOut = signOut as jest.Mock
+const { useWorkspace } = jest.requireMock('~/hooks/use-workspace') as {
+  useWorkspace: jest.Mock
+}
 
 describe('SidebarNavFrame', () => {
   beforeEach(() => {
     mockSignOut.mockReset()
+    useWorkspace.mockReset()
+    useWorkspace.mockReturnValue({
+      workspace: {
+        role: 'admin',
+        capabilities: {
+          canViewPlanning: true,
+        },
+      },
+    })
     localStorage.clear()
   })
 
@@ -90,5 +107,23 @@ describe('SidebarNavFrame', () => {
     expect(
       navElements.every((navElement) => navElement.classList.contains('overflow-y-auto'))
     ).toBe(true)
+  })
+
+  it('hides planning navigation when workspace cannot view planning', () => {
+    useWorkspace.mockReturnValue({
+      workspace: {
+        role: 'viewer',
+        capabilities: {
+          canViewPlanning: false,
+        },
+      },
+    })
+
+    render(<SidebarNavFrame isOpen={false} setIsOpen={jest.fn()} />)
+
+    expect(screen.queryByText('Planning')).not.toBeInTheDocument()
+    expect(screen.queryByText('Guests')).not.toBeInTheDocument()
+    expect(screen.queryByText('Dashboard')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument()
   })
 })

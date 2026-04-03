@@ -5,6 +5,7 @@ import AuthenticatedAppShell from '@/components/layout/authenticated-app-shell'
 import { getSidebarWeddingInfo } from '@/components/old_dashboard/sidebar-wedding-info'
 import { auth } from '~/lib/auth'
 import { getDashboardOverview } from '~/server/application/dashboard/dashboard-request-data'
+import { readWorkspaceCapabilities } from '~/server/authz/workspace-capabilities'
 import { resolveWorkspaceScope } from '~/server/authz/workspace-scope'
 import { api } from '~/trpc/server'
 
@@ -75,7 +76,8 @@ export async function AuthenticatedLayoutFrame(props: Readonly<AuthenticatedLayo
     userId,
   })
 
-  if (workspaceScope.activeOrganization?.role === 'viewer') {
+  const workspaceCapabilities = readWorkspaceCapabilities(workspaceScope.activeOrganization?.role)
+  if (!workspaceCapabilities.canViewPlanning) {
     redirect('/')
   }
 
