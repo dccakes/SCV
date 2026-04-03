@@ -51,6 +51,6 @@ export const dashboardRouter = createTRPCRouter({
     if (!ctx.auth.userId || !ctx.auth.activeWeddingId) {
       return null
     }
-    return dashboardService.getOverview(ctx.auth.userId, ctx.auth.activeWeddingId)
+    return dashboardService.getOverviewForScopedWedding(ctx.auth.userId, ctx.auth.activeWeddingId)
   }),
 })

@@ -50,23 +50,48 @@ export class DashboardService {
   ) {}
 
   /**
-   * Get complete dashboard overview data for a user
-   *
-   * Aggregates data from multiple domains in parallel where possible
-   * to optimize performance.
-   *
-   * TODO(review-implementation): split this into explicit scoped and legacy entrypoints
-   * so dashboard aggregation does not keep two workspace-resolution modes in one method.
+   * Legacy entrypoint: resolves wedding by user and returns dashboard overview.
+   * Prefer getOverviewForScopedWedding for workspace-scoped routes.
    */
-  async getOverview(userId: string, scopedWeddingId?: string): Promise<DashboardData | null> {
-    const wedding = scopedWeddingId
-      ? await this.weddingRepo.findById(scopedWeddingId)
-      : await this.weddingRepo.findByUserId(userId)
-
+  async getOverview(userId: string): Promise<DashboardData | null> {
+    const wedding = await this.weddingRepo.findByUserId(userId)
     if (!wedding) {
       return null
     }
+    return this.getOverviewForWedding(userId, wedding)
+  }
 
+  /**
+   * Scoped entrypoint: returns dashboard overview for a specific wedding id.
+   * This is the primary path for protected workspace routes.
+   */
+  async getOverviewForScopedWedding(
+    userId: string,
+    weddingId: string
+  ): Promise<DashboardData | null> {
+    const wedding = await this.weddingRepo.findById(weddingId)
+    if (!wedding) {
+      return null
+    }
+    return this.getOverviewForWedding(userId, wedding)
+  }
+
+  /**
+   * Get complete dashboard overview data for a resolved wedding.
+   *
+   * Aggregates data from multiple domains in parallel where possible
+   * to optimize performance.
+   */
+  private async getOverviewForWedding(
+    userId: string,
+    wedding: {
+      id: string
+      groomFirstName: string
+      groomLastName: string
+      brideFirstName: string
+      brideLastName: string
+    }
+  ): Promise<DashboardData | null> {
     const weddingId = wedding.id
 
     // Fetch all data in parallel

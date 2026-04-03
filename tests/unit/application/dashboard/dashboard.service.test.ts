@@ -463,7 +463,7 @@ describe('DashboardService', () => {
       weddingRepo
     )
 
-    await service.getOverview('user-123', 'wedding-scoped')
+    await service.getOverviewForScopedWedding('user-123', 'wedding-scoped')
 
     expect(mockHouseholdFindByWeddingIdWithGuestsAndGifts).toHaveBeenCalledWith('wedding-scoped')
     expect(mockWeddingFindByUserIdFn).not.toHaveBeenCalled()
