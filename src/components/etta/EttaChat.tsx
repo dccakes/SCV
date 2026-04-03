@@ -156,7 +156,7 @@ export function EttaChat({ persona, guestToken, isConfigured = true }: EttaChatP
   }
 
   return (
-    <div className='flex h-full flex-col overflow-hidden bg-etta-ink'>
+    <div className='flex h-full w-full flex-col overflow-hidden bg-etta-ink'>
       {/* Header */}
       <div className='flex items-center gap-3 border-white/10 border-b px-4 py-3.5'>
         <div className='flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent to-primary font-serif text-lg text-white italic shadow-md'>

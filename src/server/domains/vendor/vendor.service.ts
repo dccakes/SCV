@@ -44,18 +44,6 @@ export class VendorService {
   }
 
   /**
-   * Get all vendors for a user's wedding in a single query (no separate weddingId lookup)
-   */
-  async getVendorsByUserId(
-    ctx: AuthzContext,
-    userId: string,
-    category?: VendorCategory
-  ): Promise<VendorWithQuotes[]> {
-    this.requireVendorPermission(ctx, 'read')
-    return this.vendorRepository.findAllByUserId(userId, category)
-  }
-
-  /**
    * Get all vendors for the active wedding scope.
    */
   async getVendorsForWedding(

@@ -35,7 +35,7 @@ describe('createTRPCContext active organization resolution', () => {
       session: { activeOrganizationId: 'org-1' },
     })
     mockQueryRaw.mockResolvedValue([
-      { organizationId: 'org-1', role: 'admin', weddingId: 'wedding-1' },
+      { isPrimaryWedding: false, organizationId: 'org-1', role: 'admin', weddingId: 'wedding-1' },
     ])
 
     const context = await createTRPCContext({ headers: new Headers() })
@@ -53,7 +53,7 @@ describe('createTRPCContext active organization resolution', () => {
       session: { token: 'tok-1' },
     })
     mockQueryRaw.mockResolvedValueOnce([
-      { organizationId: 'org-1', role: 'owner', weddingId: 'wedding-1' },
+      { isPrimaryWedding: true, organizationId: 'org-1', role: 'owner', weddingId: 'wedding-1' },
     ])
     mockExecuteRaw.mockResolvedValue(1)
 
@@ -69,7 +69,6 @@ describe('createTRPCContext active organization resolution', () => {
       session: { token: 'tok-1' },
     })
     mockQueryRaw.mockResolvedValueOnce([])
-    mockQueryRaw.mockResolvedValueOnce([])
 
     const context = await createTRPCContext({ headers: new Headers() })
 
@@ -84,7 +83,7 @@ describe('createTRPCContext active organization resolution', () => {
     })
     mockQueryRaw.mockResolvedValueOnce([])
     mockQueryRaw.mockResolvedValueOnce([
-      { organizationId: 'org-1', role: 'owner', weddingId: 'wedding-1' },
+      { isPrimaryWedding: true, organizationId: 'org-1', role: 'owner', weddingId: 'wedding-1' },
     ])
     mockExecuteRaw.mockResolvedValue(1)
 

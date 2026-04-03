@@ -15,6 +15,7 @@ import { db } from '~/server/db'
 export const authOrganizationRoles = organizationRoles
 
 const appBaseUrl = env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${env.PORT ?? '3000'}`
+const localTrustedHostnames = new Set(['127.0.0.1', '::1', 'localhost'])
 const staticTrustedOrigins = [
   'https://oswp.carvallo.io',
   'https://scv-teal.vercel.app',
@@ -28,7 +29,10 @@ export function resolveTrustedOrigins(requestUrl?: string): string[] {
 
   if (requestUrl) {
     try {
-      origins.add(new URL(requestUrl).origin)
+      const requestOrigin = new URL(requestUrl)
+      if (localTrustedHostnames.has(requestOrigin.hostname)) {
+        origins.add(requestOrigin.origin)
+      }
     } catch {
       // Ignore invalid request URLs; static trusted origins remain available.
     }

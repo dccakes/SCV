@@ -1,6 +1,8 @@
 import type { ActiveOrganization } from '~/server/authz/authorization.types'
 import { db } from '~/server/db'
 
+// TODO(review-implementation): move this request-scope resolver behind an application/infrastructure
+// boundary so authz consumes resolved scope instead of owning session persistence and raw SQL directly.
 type WorkspaceScope = {
   activeOrganization: ActiveOrganization | null
   activeWeddingId: string | null
@@ -8,6 +10,7 @@ type WorkspaceScope = {
 
 type WorkspaceScopeRow = {
   organizationId: string
+  isPrimaryWedding: boolean
   role: string | null
   weddingId: string | null
 }
@@ -80,6 +83,7 @@ const findScopeForOrganization = async (
   const rows = await db.$queryRaw<WorkspaceScopeRow[]>`
     SELECT
       m."organizationId" AS "organizationId",
+      FALSE AS "isPrimaryWedding",
       m."role" AS "role",
       w."id" AS "weddingId"
     FROM "member" m
@@ -92,36 +96,27 @@ const findScopeForOrganization = async (
   return rows[0]
 }
 
-const findPrimaryWeddingScope = async (userId: string): Promise<WorkspaceScopeRow | undefined> => {
-  const rows = await db.$queryRaw<WorkspaceScopeRow[]>`
-    SELECT
-      w."organizationId" AS "organizationId",
-      m."role" AS "role",
-      w."id" AS "weddingId"
-    FROM "UserWedding" uw
-    JOIN "Wedding" w ON w."id" = uw."weddingId"
-    JOIN "member" m
-      ON m."organizationId" = w."organizationId"
-     AND m."userId" = uw."userId"
-    WHERE uw."userId" = ${userId}
-      AND w."organizationId" IS NOT NULL
-    ORDER BY uw."isPrimary" DESC, uw."createdAt" ASC
-    LIMIT 1
-  `
-
-  return rows[0]
-}
-
-const findValidScopes = async (userId: string): Promise<WorkspaceScopeRow[]> => {
+const findCandidateScopes = async (userId: string): Promise<WorkspaceScopeRow[]> => {
   return db.$queryRaw<WorkspaceScopeRow[]>`
     SELECT
       m."organizationId" AS "organizationId",
+      COALESCE(BOOL_OR(uw."isPrimary"), FALSE) AS "isPrimaryWedding",
       m."role" AS "role",
       w."id" AS "weddingId"
     FROM "member" m
     JOIN "Wedding" w ON w."organizationId" = m."organizationId"
+    LEFT JOIN "UserWedding" uw
+      ON uw."userId" = m."userId"
+     AND uw."weddingId" = w."id"
     WHERE m."userId" = ${userId}
-    ORDER BY m."createdAt" ASC
+    GROUP BY
+      m."organizationId",
+      m."role",
+      w."id",
+      m."createdAt"
+    ORDER BY
+      COALESCE(BOOL_OR(uw."isPrimary"), FALSE) DESC,
+      m."createdAt" ASC
   `
 }
 
@@ -171,15 +166,15 @@ export async function resolveWorkspaceScope(input: {
     await clearActiveOrganizationId(sessionToken)
   }
 
-  const primaryWeddingScope = await findPrimaryWeddingScope(userId)
+  const candidateScopes = await findCandidateScopes(userId)
+  const primaryWeddingScope = candidateScopes.find((scope) => scope.isPrimaryWedding)
   if (primaryWeddingScope?.organizationId && primaryWeddingScope.weddingId) {
     await persistActiveOrganizationId(sessionToken, primaryWeddingScope.organizationId)
     return toWorkspaceScope(primaryWeddingScope)
   }
 
-  const validScopes = await findValidScopes(userId)
-  if (validScopes.length === 1) {
-    const scopedRow = validScopes[0]
+  if (candidateScopes.length === 1) {
+    const scopedRow = candidateScopes[0]
     if (scopedRow) {
       await persistActiveOrganizationId(sessionToken, scopedRow.organizationId)
       return toWorkspaceScope(scopedRow)

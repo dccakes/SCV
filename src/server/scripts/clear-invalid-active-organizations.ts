@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url'
+import { Prisma } from '@prisma/client'
 
 type DatabaseClient = Awaited<typeof import('~/server/db')>['db']
 
@@ -11,6 +12,8 @@ type InvalidSessionRow = {
 }
 
 export const parseArgs = (argv: string[]): ParsedArgs => ({
+  // TODO(review-implementation): extract the shared dry-run/write flag parser
+  // used by the workspace-scope operational scripts.
   dryRun: !argv.includes('--write'),
 })
 
@@ -35,14 +38,17 @@ export async function clearInvalidActiveOrganizations(
   `
 
   if (!dryRun) {
-    for (const row of rows) {
-      await db.$executeRaw`
-        UPDATE "Session"
-        SET
-          "activeOrganizationId" = NULL,
-          "updatedAt" = NOW()
-        WHERE "id" = ${row.sessionId}
-      `
+    const sessionIds = rows.map((row) => row.sessionId)
+    if (sessionIds.length > 0) {
+      await db.$executeRaw(
+        Prisma.sql`
+          UPDATE "Session"
+          SET
+            "activeOrganizationId" = NULL,
+            "updatedAt" = NOW()
+          WHERE "id" IN (${Prisma.join(sessionIds)})
+        `
+      )
     }
   }
 

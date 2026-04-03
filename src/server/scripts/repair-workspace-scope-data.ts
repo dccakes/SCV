@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url'
+import { Prisma } from '@prisma/client'
 
 type DatabaseClient = Awaited<typeof import('~/server/db')>['db']
 
@@ -110,6 +111,8 @@ export async function repairWorkspaceScopeData(
   }
 
   const rows = await loadSessionRepairRows(db)
+  const sessionsToClear: string[] = []
+  const sessionsToSet = new Map<string, string[]>()
 
   for (const row of rows) {
     const decision = decideSessionRepair({
@@ -124,13 +127,42 @@ export async function repairWorkspaceScopeData(
       continue
     }
 
-    await db.$executeRaw`
-      UPDATE "Session"
-      SET
-        "activeOrganizationId" = ${decision.nextActiveOrganizationId},
-        "updatedAt" = NOW()
-      WHERE "id" = ${row.sessionId}
-    `
+    if (decision.action === 'clear') {
+      sessionsToClear.push(row.sessionId)
+      continue
+    }
+
+    if (decision.action === 'set' && decision.nextActiveOrganizationId) {
+      const sessionIds = sessionsToSet.get(decision.nextActiveOrganizationId) ?? []
+      sessionIds.push(row.sessionId)
+      sessionsToSet.set(decision.nextActiveOrganizationId, sessionIds)
+    }
+  }
+
+  if (!dryRun && sessionsToClear.length > 0) {
+    await db.$executeRaw(
+      Prisma.sql`
+        UPDATE "Session"
+        SET
+          "activeOrganizationId" = NULL,
+          "updatedAt" = NOW()
+        WHERE "id" IN (${Prisma.join(sessionsToClear)})
+      `
+    )
+  }
+
+  if (!dryRun) {
+    for (const [organizationId, sessionIds] of sessionsToSet) {
+      await db.$executeRaw(
+        Prisma.sql`
+          UPDATE "Session"
+          SET
+            "activeOrganizationId" = ${organizationId},
+            "updatedAt" = NOW()
+          WHERE "id" IN (${Prisma.join(sessionIds)})
+        `
+      )
+    }
   }
 
   return summary

@@ -34,7 +34,12 @@ describe('workspace scope resolver', () => {
 
   it('resolves an explicit session organization when it has a linked wedding', async () => {
     mockQueryRaw.mockResolvedValueOnce([
-      { organizationId: 'org-1', role: 'admin', weddingId: 'wedding-1' },
+      {
+        isPrimaryWedding: false,
+        organizationId: 'org-1',
+        role: 'admin',
+        weddingId: 'wedding-1',
+      },
     ])
 
     const result = await resolveWorkspaceScope({
@@ -52,7 +57,12 @@ describe('workspace scope resolver', () => {
   it('replaces an invalid session organization with the primary wedding organization', async () => {
     mockQueryRaw.mockResolvedValueOnce([])
     mockQueryRaw.mockResolvedValueOnce([
-      { organizationId: 'org-primary', role: 'owner', weddingId: 'wedding-primary' },
+      {
+        isPrimaryWedding: true,
+        organizationId: 'org-primary',
+        role: 'owner',
+        weddingId: 'wedding-primary',
+      },
     ])
 
     const result = await resolveWorkspaceScope({
@@ -69,7 +79,12 @@ describe('workspace scope resolver', () => {
 
   it('bootstraps from the primary wedding organization instead of the first member row', async () => {
     mockQueryRaw.mockResolvedValueOnce([
-      { organizationId: 'org-primary', role: 'editor', weddingId: 'wedding-primary' },
+      {
+        isPrimaryWedding: true,
+        organizationId: 'org-primary',
+        role: 'editor',
+        weddingId: 'wedding-primary',
+      },
     ])
 
     const result = await resolveWorkspaceScope({
@@ -85,10 +100,9 @@ describe('workspace scope resolver', () => {
   })
 
   it('does not guess when the user has multiple valid organization-wedding scopes and no active org', async () => {
-    mockQueryRaw.mockResolvedValueOnce([])
     mockQueryRaw.mockResolvedValueOnce([
-      { organizationId: 'org-1', role: 'owner', weddingId: 'wedding-1' },
-      { organizationId: 'org-2', role: 'admin', weddingId: 'wedding-2' },
+      { isPrimaryWedding: false, organizationId: 'org-1', role: 'owner', weddingId: 'wedding-1' },
+      { isPrimaryWedding: false, organizationId: 'org-2', role: 'admin', weddingId: 'wedding-2' },
     ])
 
     const result = await resolveWorkspaceScope({

@@ -28,7 +28,6 @@ import {
   mockDeleteQuote,
   mockDeleteQuoteFile,
   mockFileBelongsToQuote,
-  mockFindAllByUserId,
   mockFindAllByWeddingId,
   mockFindAllFileUrlsByQuoteId,
   mockFindAllFileUrlsByVendorId,
@@ -47,7 +46,6 @@ import {
 import { VendorService } from '~/server/domains/vendor/vendor.service'
 
 const mockFindAllByWeddingIdFn = mockFindAllByWeddingId as jest.Mock
-const mockFindAllByUserIdFn = mockFindAllByUserId as jest.Mock
 const mockFindByIdWithQuotesFn = mockFindByIdWithQuotes as jest.Mock
 const mockCreateFn = mockCreate as jest.Mock
 const mockUpdateFn = mockUpdate as jest.Mock
@@ -115,35 +113,6 @@ describe('VendorService', () => {
     })
   })
 
-  // ─── getVendorsByUserId ────────────────────────────────────────────────────
-
-  describe('getVendorsByUserId', () => {
-    it('should return vendors via userId JOIN without separate weddingId lookup', async () => {
-      mockFindAllByUserIdFn.mockResolvedValue([mockVendorWithQuotes])
-
-      const result = await vendorService.getVendorsByUserId(actorContext, 'user-123')
-
-      expect(result).toEqual([mockVendorWithQuotes])
-      expect(mockFindAllByUserIdFn).toHaveBeenCalledWith('user-123', undefined)
-    })
-
-    it('should pass category filter through', async () => {
-      mockFindAllByUserIdFn.mockResolvedValue([mockVendorWithQuotes])
-
-      await vendorService.getVendorsByUserId(actorContext, 'user-123', VendorCategory.VENUE)
-
-      expect(mockFindAllByUserIdFn).toHaveBeenCalledWith('user-123', VendorCategory.VENUE)
-    })
-
-    it('should return empty array when user has no vendors', async () => {
-      mockFindAllByUserIdFn.mockResolvedValue([])
-
-      const result = await vendorService.getVendorsByUserId(actorContext, 'user-123')
-
-      expect(result).toEqual([])
-    })
-  })
-
   describe('getVendorsForWedding', () => {
     it('returns vendors for the active wedding scope', async () => {
       mockFindAllByWeddingIdFn.mockResolvedValue([mockVendorWithQuotes])
@@ -152,7 +121,6 @@ describe('VendorService', () => {
 
       expect(result).toEqual([mockVendorWithQuotes])
       expect(mockFindAllByWeddingIdFn).toHaveBeenCalledWith('wedding-123', undefined)
-      expect(mockFindAllByUserIdFn).not.toHaveBeenCalled()
     })
   })
 

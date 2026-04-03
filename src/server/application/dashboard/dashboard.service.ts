@@ -54,6 +54,9 @@ export class DashboardService {
    *
    * Aggregates data from multiple domains in parallel where possible
    * to optimize performance.
+   *
+   * TODO(review-implementation): split this into explicit scoped and legacy entrypoints
+   * so dashboard aggregation does not keep two workspace-resolution modes in one method.
    */
   async getOverview(userId: string, scopedWeddingId?: string): Promise<DashboardData | null> {
     const wedding = scopedWeddingId

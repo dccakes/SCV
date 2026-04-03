@@ -202,9 +202,7 @@ describe('organization plugin wiring', () => {
       'http://localhost:3001'
     )
     expect(
-      resolveTrustedOrigins(
-        'https://scv-git-bugfix-org-invites-carvallo-io.vercel.app/api/auth/sign-in/email'
-      )
-    ).toContain('https://scv-git-bugfix-org-invites-carvallo-io.vercel.app')
+      resolveTrustedOrigins('https://preview.example.com/api/auth/sign-in/email')
+    ).not.toContain('https://preview.example.com')
   })
 })
