@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 
 import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
 import VendorList from '~/components/vendor'
+import { getRequiredWedding } from '~/server/application/authenticated-route/authenticated-route-data'
 import { api } from '~/trpc/server'
 
 export const metadata: Metadata = {
@@ -12,7 +13,15 @@ export const metadata: Metadata = {
 }
 
 export default async function VendorsPage() {
-  const vendors = await api.vendor.getAll({})
+  await getRequiredWedding()
+
+  let vendors: Awaited<ReturnType<typeof api.vendor.getAll>>
+
+  try {
+    vendors = await api.vendor.getAll({})
+  } catch {
+    redirect('/')
+  }
 
   if (vendors === null) {
     redirect('/')

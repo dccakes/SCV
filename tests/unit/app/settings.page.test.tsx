@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import SettingsPage from '~/app/(authenicated)/settings/page'
 
 const mockGetDetails = jest.fn()
+const mockGetRequiredWedding = jest.fn()
 const mockDashboardTopbar = jest.fn(
   (_props: { title?: string; showManagementActions?: boolean }) => (
     <header data-testid='dashboard-topbar'>Topbar</header>
@@ -21,6 +22,10 @@ jest.mock('~/trpc/server', () => ({
       getDetails: () => mockGetDetails(),
     },
   },
+}))
+
+jest.mock('~/server/application/authenticated-route/authenticated-route-data', () => ({
+  getRequiredWedding: () => mockGetRequiredWedding(),
 }))
 
 jest.mock('@/components/dashboard/dashboard-topbar', () => ({
@@ -42,6 +47,8 @@ jest.mock('~/components/settings/organization-members-settings-card', () => ({
 describe('SettingsPage', () => {
   beforeEach(() => {
     mockGetDetails.mockReset()
+    mockGetRequiredWedding.mockReset()
+    mockGetRequiredWedding.mockResolvedValue({ id: 'wedding-123' })
     mockDashboardTopbar.mockClear()
     mockWeddingSettingsForm.mockClear()
     mockOrganizationMembersSettingsCard.mockClear()

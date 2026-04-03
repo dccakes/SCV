@@ -6,7 +6,8 @@
       "lastName": "Ogre",
       "email": "shrek@swamp.wed",
       "password": "password123",
-      "isPrimary": true
+      "isPrimary": true,
+      "role": "owner"
     },
     {
       "id": "user-seed-fiona",
@@ -14,7 +15,8 @@
       "lastName": "Ogre",
       "email": "fiona@swamp.wed",
       "password": "password123",
-      "isPrimary": false
+      "isPrimary": false,
+      "role": "viewer"
     }
   ],
   "wedding": {

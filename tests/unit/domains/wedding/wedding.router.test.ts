@@ -9,6 +9,7 @@
 jest.mock('~/lib/auth', () => ({
   auth: { api: { getSession: jest.fn().mockResolvedValue(null) } },
 }))
+jest.mock('~/lib/auth-permissions', () => require('~/lib/__mocks__/auth-permissions'))
 jest.mock('~/server/db', () => ({ db: {} }))
 
 jest.mock('~/server/domains/wedding')
@@ -32,10 +33,22 @@ const mockCreateEvent = eventService.createEvent as jest.Mock
 const mockUpdateEvent = eventService.updateEvent as jest.Mock
 
 // ── tRPC caller helpers ──────────────────────────────────────────────────────
-function makeAuthCaller(userId = 'user-123', activeWeddingId: string | null = 'wedding-123') {
+function makeAuthCaller(
+  userId = 'user-123',
+  activeWeddingId: string | null = 'wedding-123',
+  role: 'owner' | 'admin' | 'member' | 'viewer' = 'owner'
+) {
+  const activeOrganization = { organizationId: 'org-123', role }
+
   return weddingRouter.createCaller({
     db: {} as never,
-    auth: { userId, session: { user: { id: userId } } as never, activeWeddingId },
+    auth: {
+      userId,
+      session: { user: { id: userId } } as never,
+      activeWeddingId,
+      activeOrganization,
+    },
+    authz: { userId, activeOrganization },
     headers: new Headers(),
   })
 }
@@ -49,6 +62,11 @@ describe('weddingRouter', () => {
   })
 
   describe('getDetails', () => {
+    it('should throw FORBIDDEN for viewer role', async () => {
+      const caller = makeAuthCaller('user-123', 'wedding-123', 'viewer')
+      await expect(caller.getDetails()).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+
     it('should throw when active wedding is missing', async () => {
       const caller = makeAuthCaller('user-123', null)
       await expect(caller.getDetails()).rejects.toMatchObject({ code: 'PRECONDITION_FAILED' })
@@ -162,6 +180,13 @@ describe('weddingRouter', () => {
           brideLastName: 'Smith',
         })
       ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+    })
+  })
+
+  describe('getActive', () => {
+    it('should throw FORBIDDEN for viewer role', async () => {
+      const caller = makeAuthCaller('user-123', 'wedding-123', 'viewer')
+      await expect(caller.getActive()).rejects.toMatchObject({ code: 'FORBIDDEN' })
     })
   })
 })

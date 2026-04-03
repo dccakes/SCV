@@ -8,6 +8,7 @@
 import { TRPCError } from '@trpc/server'
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { requireActiveWeddingId } from '~/server/authz/active-wedding'
+import { requirePermission } from '~/server/authz/permission-checker'
 import { eventService } from '~/server/domains/event'
 import { weddingService } from '~/server/domains/wedding'
 import {
@@ -45,6 +46,7 @@ export const weddingRouter = createTRPCRouter({
    * Get wedding details for settings page (names + first event date/location)
    */
   getDetails: protectedProcedure.query(async ({ ctx }) => {
+    requirePermission(ctx.authz, { wedding: ['read'] })
     const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     const wedding = await weddingService.getById(weddingId)
     if (!wedding) {
@@ -99,6 +101,7 @@ export const weddingRouter = createTRPCRouter({
    * Get wedding for current active workspace scope
    */
   getActive: protectedProcedure.query(async ({ ctx }) => {
+    requirePermission(ctx.authz, { wedding: ['read'] })
     const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     const wedding = await weddingService.getById(weddingId)
     if (!wedding) {

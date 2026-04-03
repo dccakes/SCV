@@ -1,14 +1,32 @@
 import { headers } from 'next/headers'
+import { redirect } from 'next/navigation'
 import type { ReactNode } from 'react'
 import AuthenticatedAppShell from '@/components/layout/authenticated-app-shell'
 import { getSidebarWeddingInfo } from '@/components/old_dashboard/sidebar-wedding-info'
 import { auth } from '~/lib/auth'
 import { getDashboardOverview } from '~/server/application/dashboard/dashboard-request-data'
+import { resolveWorkspaceScope } from '~/server/authz/workspace-scope'
 import { api } from '~/trpc/server'
 
 type AuthenticatedLayoutFrameProps = {
   children: ReactNode
   showEttaPanel?: boolean
+}
+
+const NON_FATAL_AUTH_ERROR_CODES = new Set([
+  'FORBIDDEN',
+  'UNAUTHORIZED',
+  'PRECONDITION_FAILED',
+  'NOT_FOUND',
+])
+
+function getErrorCode(error: unknown): string | null {
+  if (!error || typeof error !== 'object') {
+    return null
+  }
+
+  const candidate = (error as { code?: unknown }).code
+  return typeof candidate === 'string' ? candidate : null
 }
 
 function getUserFirstName(name?: string | null, email?: string | null): string | undefined {
@@ -47,7 +65,28 @@ export async function AuthenticatedLayoutFrame(props: Readonly<AuthenticatedLayo
   const session = await auth.api.getSession({
     headers: await headers(),
   })
-  const dashboardData = await getDashboardOverview()
+  const userId = session?.user?.id ?? null
+  if (!userId) {
+    redirect('/signin')
+  }
+
+  const workspaceScope = await resolveWorkspaceScope({
+    session,
+    userId,
+  })
+
+  if (workspaceScope.activeOrganization?.role === 'viewer') {
+    redirect('/')
+  }
+
+  let dashboardData: Awaited<ReturnType<typeof getDashboardOverview>> = null
+  try {
+    dashboardData = await getDashboardOverview()
+  } catch (error) {
+    if (!NON_FATAL_AUTH_ERROR_CODES.has(getErrorCode(error) ?? '')) {
+      throw error
+    }
+  }
   const isEttaConfigured = Boolean(process.env.AI_GATEWAY_API_KEY)
   const { coupleName, weddingDate, weddingLocation } = getSidebarWeddingInfo(
     dashboardData?.weddingData
@@ -57,8 +96,14 @@ export async function AuthenticatedLayoutFrame(props: Readonly<AuthenticatedLayo
 
   let weddingId: string | undefined
   if (showEttaPanel) {
-    const wedding = await api.wedding.getActive()
-    weddingId = wedding?.id
+    try {
+      const wedding = await api.wedding.getActive()
+      weddingId = wedding?.id
+    } catch (error) {
+      if (!NON_FATAL_AUTH_ERROR_CODES.has(getErrorCode(error) ?? '')) {
+        throw error
+      }
+    }
   }
 
   return (

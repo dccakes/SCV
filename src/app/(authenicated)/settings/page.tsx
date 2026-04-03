@@ -1,11 +1,14 @@
 import DashboardTopbar from '@/components/dashboard/dashboard-topbar'
 import WeddingSettingsForm from '~/components/forms/wedding-settings-form'
 import { OrganizationMembersSettingsCard } from '~/components/settings/organization-members-settings-card'
+import { getRequiredWedding } from '~/server/application/authenticated-route/authenticated-route-data'
 import { api } from '~/trpc/server'
 
 export const dynamic = 'force-dynamic'
 
 export default async function SettingsPage() {
+  await getRequiredWedding()
+
   let details: Awaited<ReturnType<typeof api.wedding.getDetails>> | null = null
   let weddingDetailsLoadFailed = false
 
