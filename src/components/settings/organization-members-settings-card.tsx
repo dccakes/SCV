@@ -73,7 +73,6 @@ const initialState: OrganizationState = {
 const inviteRoleOptions = [
   { label: 'Admin', value: 'admin' },
   { label: 'Member', value: 'member' },
-  { label: 'Editor', value: 'editor' },
   { label: 'Viewer', value: 'viewer' },
 ] as const
 

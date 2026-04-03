@@ -3,12 +3,12 @@ import { fileURLToPath } from 'node:url'
 
 type DatabaseClient = Awaited<typeof import('~/server/db')>['db']
 
-type LegacyRole = 'owner' | 'admin' | 'editor' | 'viewer'
+type OrganizationRole = 'owner' | 'admin' | 'member' | 'viewer'
 
-export const mapLegacyRole = (role: string): LegacyRole => {
+export const mapLegacyRole = (role: string): OrganizationRole => {
   if (role === 'owner') return 'owner'
   if (role === 'admin') return 'admin'
-  if (role === 'editor') return 'editor'
+  if (role === 'editor' || role === 'member') return 'member'
   return 'viewer'
 }
 
@@ -82,7 +82,7 @@ const ensureMemberRole = async (
   input: {
     organizationId: string
     userId: string
-    role: LegacyRole
+    role: OrganizationRole
   }
 ): Promise<'created' | 'updated' | 'unchanged'> => {
   const existing = await db.$queryRaw<Array<{ id: string; role: string }>>`

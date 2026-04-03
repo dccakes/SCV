@@ -82,7 +82,7 @@ describe('workspace scope resolver', () => {
       {
         isPrimaryWedding: true,
         organizationId: 'org-primary',
-        role: 'editor',
+        role: 'member',
         weddingId: 'wedding-primary',
       },
     ])
@@ -93,7 +93,7 @@ describe('workspace scope resolver', () => {
     })
 
     expect(result).toEqual({
-      activeOrganization: { organizationId: 'org-primary', role: 'editor' },
+      activeOrganization: { organizationId: 'org-primary', role: 'member' },
       activeWeddingId: 'wedding-primary',
     })
     expect(mockExecuteRaw).toHaveBeenCalled()

@@ -125,21 +125,21 @@ describe('auth permission matrix', () => {
     expect(authzStatement.wedding).toEqual(['read', 'update'])
   })
 
-  it('allows editor guest-event assignment, but denies invitation delivery actions', () => {
-    expect(can('editor', { guest_event: ['add_guest_to_event'] })).toBe(true)
-    expect(can('editor', { guest_event: ['remove_guest_from_event'] })).toBe(true)
-    expect(can('editor', { guest_invitation: ['send'] })).toBe(false)
-    expect(can('editor', { guest_invitation: ['resend'] })).toBe(false)
-    expect(can('editor', { guest_invitation: ['cancel'] })).toBe(false)
-    expect(can('editor', { invitation: ['create'] })).toBe(false)
-    expect(can('editor', { member: ['update'] })).toBe(false)
+  it('allows member guest-event assignment, but denies invitation delivery actions', () => {
+    expect(can('member', { guest_event: ['add_guest_to_event'] })).toBe(true)
+    expect(can('member', { guest_event: ['remove_guest_from_event'] })).toBe(true)
+    expect(can('member', { guest_invitation: ['send'] })).toBe(false)
+    expect(can('member', { guest_invitation: ['resend'] })).toBe(false)
+    expect(can('member', { guest_invitation: ['cancel'] })).toBe(true)
+    expect(can('member', { invitation: ['create'] })).toBe(false)
+    expect(can('member', { member: ['update'] })).toBe(false)
   })
 
   it('keeps viewer read-only and admin/owner invitation delivery-capable', () => {
     expect(can('viewer', { guest: ['create'] })).toBe(false)
     expect(can('viewer', { event: ['read'] })).toBe(true)
     expect(can('viewer', { wedding: ['update'] })).toBe(false)
-    expect(can('editor', { wedding: ['update'] })).toBe(true)
+    expect(can('member', { wedding: ['update'] })).toBe(true)
     expect(can('admin', { guest_invitation: ['send', 'resend', 'cancel'] })).toBe(true)
     expect(can('owner', { guest_invitation: ['send', 'resend', 'cancel'] })).toBe(true)
   })
@@ -147,18 +147,22 @@ describe('auth permission matrix', () => {
   it('allows only owner and admin to manage organization members through Better Auth resources', () => {
     expect(can('owner', { invitation: ['create'], member: ['update', 'delete'] })).toBe(true)
     expect(can('admin', { invitation: ['create'], member: ['update', 'delete'] })).toBe(true)
-    expect(can('editor', { invitation: ['create'] })).toBe(false)
+    expect(can('member', { invitation: ['create'] })).toBe(false)
     expect(can('viewer', { member: ['delete'] })).toBe(false)
   })
 })
 
 describe('organization plugin wiring', () => {
   it('exports the full organization role matrix', () => {
-    expect(Object.keys(organizationRoles)).toEqual(['owner', 'admin', 'editor', 'viewer'])
+    expect(Object.keys(organizationRoles)).toEqual(['owner', 'admin', 'member', 'viewer'])
     expect(organizationRoles.owner.statements.invitation).toEqual(['create', 'cancel'])
     expect(organizationRoles.owner.statements.member).toEqual(['create', 'update', 'delete'])
-    expect(organizationRoles.editor.statements.guest_invitation).toEqual(['read', 'create'])
-    expect(organizationRoles.editor.statements.invitation).toBeUndefined()
+    expect(organizationRoles.member.statements.guest_invitation).toEqual([
+      'read',
+      'create',
+      'cancel',
+    ])
+    expect(organizationRoles.member.statements.invitation).toBeUndefined()
   })
 
   it('maps Better Auth organization invitations to the dedicated OrganizationInvitation Prisma model', () => {

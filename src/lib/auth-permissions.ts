@@ -49,14 +49,14 @@ const admin = ac.newRole({
   wedding: ['read', 'update'],
 })
 
-const editor = ac.newRole({
-  guest_invitation: ['read', 'create'],
+const member = ac.newRole({
+  guest_invitation: ['read', 'create', 'cancel'],
   guest_event: ['read', 'add_guest_to_event', 'remove_guest_from_event'],
   event: ['read', 'create', 'update', 'delete', 'rsvp_policy_update'],
   guest: ['read', 'create', 'update', 'delete', 'import'],
   vendor: ['read', 'create', 'update', 'delete'],
   vendor_quote: ['read', 'create', 'update', 'delete'],
-  website: ['read', 'update', 'publish'],
+  website: ['read', 'update', 'publish', 'password_update'],
   wedding: ['read', 'update'],
 })
 
@@ -74,7 +74,7 @@ const viewer = ac.newRole({
 export const organizationRoles = {
   owner,
   admin,
-  editor,
+  member,
   viewer,
 } as const
 

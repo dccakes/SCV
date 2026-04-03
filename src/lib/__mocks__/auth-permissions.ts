@@ -45,14 +45,14 @@ const adminGrants: PermissionMap = {
   organization: ['update'],
 }
 
-const editorGrants: PermissionMap = {
-  guest_invitation: ['read', 'create'],
+const memberGrants: PermissionMap = {
+  guest_invitation: ['read', 'create', 'cancel'],
   guest_event: ['read', 'add_guest_to_event', 'remove_guest_from_event'],
   event: ['read', 'create', 'update', 'delete', 'rsvp_policy_update'],
   guest: ['read', 'create', 'update', 'delete', 'import'],
   vendor: ['read', 'create', 'update', 'delete'],
   vendor_quote: ['read', 'create', 'update', 'delete'],
-  website: ['read', 'update', 'publish'],
+  website: ['read', 'update', 'publish', 'password_update'],
   wedding: ['read', 'update'],
 }
 
@@ -70,7 +70,7 @@ const viewerGrants: PermissionMap = {
 export const organizationRoles = {
   owner: makeRole(ownerGrants),
   admin: makeRole(adminGrants),
-  editor: makeRole(editorGrants),
+  member: makeRole(memberGrants),
   viewer: makeRole(viewerGrants),
 } as const
 

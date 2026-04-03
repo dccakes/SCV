@@ -50,7 +50,7 @@ describe('Providers', () => {
         emailOTP: true,
         organization: {
           customRoles: [
-            { role: 'editor', label: 'Editor' },
+            { role: 'member', label: 'Member' },
             { role: 'viewer', label: 'Viewer' },
           ],
         },
