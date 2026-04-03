@@ -34,7 +34,7 @@ export default function WeddingSettingsForm({ initialData }: WeddingSettingsForm
 
   const updateDetails = api.wedding.updateDetails.useMutation({
     onSuccess: () => {
-      void utils.dashboard.getByUserId.invalidate()
+      void utils.dashboard.getForActiveWorkspace.invalidate()
       void utils.wedding.getDetails.invalidate()
       router.refresh()
     },

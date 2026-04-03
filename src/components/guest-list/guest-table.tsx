@@ -271,7 +271,7 @@ const SingleEventCard = ({
   const toggleGuestForm = useToggleGuestForm()
   const updateGift = api.gift.update.useMutation({
     onSuccess: () => {
-      void utils.dashboard.getByUserId.invalidate()
+      void utils.dashboard.getForActiveWorkspace.invalidate()
     },
     onError: () => {
       toast.error('Failed to update gift. Please try again.')
@@ -458,7 +458,7 @@ const InvitationDropdown = ({ guest, event, rsvp }: InvitationDropdownProps) => 
 
   const updateInvitation = api.invitation.update.useMutation({
     onSuccess: () => {
-      void utils.dashboard.getByUserId.invalidate()
+      void utils.dashboard.getForActiveWorkspace.invalidate()
     },
     onError: () => {
       toast.error('Failed to update invitation. Please try again.')

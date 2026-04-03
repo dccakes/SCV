@@ -21,6 +21,7 @@ import {
   type OrganizationRoleOption,
   organizationRoleOptions,
 } from '~/lib/organization-roles'
+import { getUserInitials } from '~/lib/user-display'
 
 type Organization = {
   id: string
@@ -77,12 +78,11 @@ function getRoleLabel(role: string) {
 }
 
 function getInitials(name?: string | null, email?: string | null) {
-  const source = name?.trim() || email?.trim() || '?'
-  const [first = '', second = ''] = source.split(/\s+/, 2)
-  if (first && second) {
-    return `${first[0]}${second[0]}`.toUpperCase()
+  if (!name?.trim() && !email?.trim()) {
+    return '?'
   }
-  return source.slice(0, 2).toUpperCase()
+
+  return getUserInitials(name, email)
 }
 
 async function authGet<T>(path: string, fallbackMessage: string): Promise<T> {

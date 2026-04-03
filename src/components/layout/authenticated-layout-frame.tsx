@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import type { ReactNode } from 'react'
 import AuthenticatedAppShell from '@/components/layout/authenticated-app-shell'
 import { auth } from '~/lib/auth'
+import { getUserFirstName, getUserInitials } from '~/lib/user-display'
+import { isAccessError } from '~/server/authz/auth-error-helpers'
 import { readWorkspaceCapabilities } from '~/server/authz/workspace-capabilities'
 import { resolveWorkspaceScope } from '~/server/authz/workspace-scope'
 import { api } from '~/trpc/server'
@@ -10,53 +12,6 @@ import { api } from '~/trpc/server'
 type AuthenticatedLayoutFrameProps = {
   children: ReactNode
   showEttaPanel?: boolean
-}
-
-const NON_FATAL_AUTH_ERROR_CODES = new Set([
-  'FORBIDDEN',
-  'UNAUTHORIZED',
-  'PRECONDITION_FAILED',
-  'NOT_FOUND',
-])
-
-function getErrorCode(error: unknown): string | null {
-  if (!error || typeof error !== 'object') {
-    return null
-  }
-
-  const candidate = (error as { code?: unknown }).code
-  return typeof candidate === 'string' ? candidate : null
-}
-
-function getUserFirstName(name?: string | null, email?: string | null): string | undefined {
-  const trimmedName = name?.trim()
-  if (trimmedName) {
-    return trimmedName.split(/\s+/, 1)[0]
-  }
-
-  const localPart = email?.split('@')[0]?.trim()
-  if (!localPart) {
-    return undefined
-  }
-
-  return localPart.charAt(0).toUpperCase() + localPart.slice(1)
-}
-
-function getUserInitials(name?: string | null, email?: string | null): string {
-  const trimmedName = name?.trim()
-  if (trimmedName) {
-    const parts = trimmedName.split(/\s+/).filter(Boolean)
-    const first = parts[0]?.[0] ?? ''
-    const second = parts[1]?.[0] ?? ''
-    return `${first}${second || first}`.toUpperCase()
-  }
-
-  const localPart = email?.split('@')[0]?.trim()
-  if (!localPart) {
-    return 'U'
-  }
-
-  return localPart.slice(0, 2).toUpperCase()
 }
 
 export async function AuthenticatedLayoutFrame(props: Readonly<AuthenticatedLayoutFrameProps>) {
@@ -98,7 +53,7 @@ export async function AuthenticatedLayoutFrame(props: Readonly<AuthenticatedLayo
       : undefined
     weddingLocation = details?.weddingLocation?.trim() || undefined
   } catch (error) {
-    if (!NON_FATAL_AUTH_ERROR_CODES.has(getErrorCode(error) ?? '')) {
+    if (!isAccessError(error)) {
       throw error
     }
   }
@@ -112,7 +67,7 @@ export async function AuthenticatedLayoutFrame(props: Readonly<AuthenticatedLayo
       const wedding = await api.wedding.getActive()
       weddingId = wedding?.id
     } catch (error) {
-      if (!NON_FATAL_AUTH_ERROR_CODES.has(getErrorCode(error) ?? '')) {
+      if (!isAccessError(error)) {
         throw error
       }
     }
