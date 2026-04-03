@@ -7,7 +7,7 @@
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { DashboardService } from '~/server/application/dashboard/dashboard.service'
-import { requirePermission } from '~/server/authz/permission-checker'
+import { DashboardOverviewUseCase } from '~/server/application/dashboard/dashboard-overview.use-case'
 import { EventRepository } from '~/server/domains/event/event.repository'
 import { GuestRepository } from '~/server/domains/guest/guest.repository'
 import { HouseholdRepository } from '~/server/domains/household/household.repository'
@@ -39,13 +39,14 @@ const dashboardService = new DashboardService(
   questionRepo,
   weddingRepo
 )
+const dashboardOverviewUseCase = new DashboardOverviewUseCase(dashboardService)
 
 export const dashboardRouter = createTRPCRouter({
   getForActiveWorkspace: protectedProcedure.query(async ({ ctx }) => {
-    requirePermission(ctx.authz, { wedding: ['read'] })
-    if (!ctx.auth.activeWeddingId) {
-      return null
-    }
-    return dashboardService.getOverviewForScopedWedding(ctx.auth.userId, ctx.auth.activeWeddingId)
+    return dashboardOverviewUseCase.execute({
+      userId: ctx.auth.userId,
+      authz: ctx.authz,
+      activeWeddingId: ctx.auth.activeWeddingId,
+    })
   }),
 })

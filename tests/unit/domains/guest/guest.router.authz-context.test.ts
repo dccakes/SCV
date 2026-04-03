@@ -1,3 +1,5 @@
+import { TRPCError } from '@trpc/server'
+
 jest.mock('lib/auth', () => ({
   auth: { api: { getSession: jest.fn().mockResolvedValue(null) } },
 }))
@@ -6,26 +8,20 @@ jest.mock('~/lib/auth-permissions', () => require('~/lib/__mocks__/auth-permissi
 
 jest.mock('server/db', () => ({ db: {} }))
 
-jest.mock('server/domains/guest', () => ({
-  guestService: {
-    getAllByHouseholdId: jest.fn(),
-    getAllByWeddingId: jest.fn(),
+jest.mock('server/application/guest-insights', () => ({
+  guestInsightsService: {
+    listEventInvitations: jest.fn(),
+    listHouseholdGuests: jest.fn(),
+    listGuests: jest.fn(),
   },
 }))
 
-jest.mock('server/domains/invitation', () => ({
-  invitationService: {
-    getByEventIdInWedding: jest.fn(),
-  },
-}))
-
-import { guestService } from 'server/domains/guest'
+import { guestInsightsService } from 'server/application/guest-insights'
 import { guestRouter } from 'server/domains/guest/guest.router'
-import { invitationService } from 'server/domains/invitation'
 
-const mockGetAllByHouseholdId = guestService.getAllByHouseholdId as jest.Mock
-const mockGetAllByWeddingId = guestService.getAllByWeddingId as jest.Mock
-const mockGetByEventIdInWedding = invitationService.getByEventIdInWedding as jest.Mock
+const mockListEventInvitations = guestInsightsService.listEventInvitations as jest.Mock
+const mockListHouseholdGuests = guestInsightsService.listHouseholdGuests as jest.Mock
+const mockListGuests = guestInsightsService.listGuests as jest.Mock
 
 describe('guestRouter authz context plumbing', () => {
   const activeOrganization = {
@@ -53,17 +49,28 @@ describe('guestRouter authz context plumbing', () => {
   })
 
   it('keeps read routes scoped to active wedding', async () => {
-    mockGetByEventIdInWedding.mockResolvedValue([{ id: 'inv-1' }])
-    mockGetAllByHouseholdId.mockResolvedValue([{ id: 1, weddingId: 'wedding-123' }])
-    mockGetAllByWeddingId.mockResolvedValue([{ id: 1 }])
+    mockListEventInvitations.mockResolvedValue([{ id: 'inv-1' }])
+    mockListHouseholdGuests.mockResolvedValue({ id: 'household-1', guests: [{ id: 1 }] })
+    mockListGuests.mockResolvedValue([{ id: 1 }])
 
     await caller.getAllByEventId({ eventId: 'event-1' })
     await caller.getAllByHouseholdId({ householdId: 'household-1' })
     await caller.getAllByUserId()
 
-    expect(mockGetByEventIdInWedding).toHaveBeenCalledWith('event-1', 'wedding-123')
-    expect(mockGetAllByHouseholdId).toHaveBeenCalledWith('household-1')
-    expect(mockGetAllByWeddingId).toHaveBeenCalledWith('wedding-123')
+    expect(mockListEventInvitations).toHaveBeenCalledWith(
+      { userId: 'user-123', activeOrganization },
+      'wedding-123',
+      'event-1'
+    )
+    expect(mockListHouseholdGuests).toHaveBeenCalledWith(
+      { userId: 'user-123', activeOrganization },
+      'wedding-123',
+      'household-1'
+    )
+    expect(mockListGuests).toHaveBeenCalledWith(
+      { userId: 'user-123', activeOrganization },
+      'wedding-123'
+    )
   })
 
   it('rejects unauthenticated reads with UNAUTHORIZED', async () => {
@@ -92,6 +99,11 @@ describe('guestRouter authz context plumbing', () => {
   })
 
   it('rejects viewer guest reads with FORBIDDEN', async () => {
+    const forbiddenError = new TRPCError({ code: 'FORBIDDEN' })
+    mockListEventInvitations.mockRejectedValue(forbiddenError)
+    mockListHouseholdGuests.mockRejectedValue(forbiddenError)
+    mockListGuests.mockRejectedValue(forbiddenError)
+
     const viewerCaller = guestRouter.createCaller({
       auth: {
         session: { user: { id: 'user-123' } },

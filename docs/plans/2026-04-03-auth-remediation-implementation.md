@@ -388,3 +388,7 @@ Recommended approach:
   endpoint fallout updates.
 - 2026-04-03: Added shared script dry-run arg parser and rewired workspace operational scripts to
   use it.
+- 2026-04-03: Moved dashboard read authorization from router into
+  `DashboardOverviewUseCase` and updated router wiring.
+- 2026-04-03: Added `GuestInsightsService` application boundary for guest/event/invitation reads
+  and rewired guest router + Etta guest read tools to use it.

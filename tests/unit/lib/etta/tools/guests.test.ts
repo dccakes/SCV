@@ -8,35 +8,33 @@ jest.mock('~/server/authz/permission-checker', () => ({
 
 import { getGuestTools } from '~/lib/etta/tools/guests'
 import type { EttaContext } from '~/lib/etta/types'
-import { eventService } from '~/server/domains/event'
+import { guestInsightsService } from '~/server/application/guest-insights'
 import { guestService } from '~/server/domains/guest'
-import { invitationService } from '~/server/domains/invitation'
 
-jest.mock('~/server/domains/event')
+jest.mock('~/server/application/guest-insights', () => ({
+  guestInsightsService: {
+    listGuests: jest.fn(),
+    getRsvpSummary: jest.fn(),
+    getGuestEventAttendance: jest.fn(),
+    listEventAttendance: jest.fn(),
+  },
+}))
+
 jest.mock('~/server/domains/guest', () => ({
   guestService: {
-    getAllByWeddingId: jest.fn(),
     updateGuest: jest.fn(),
   },
 }))
 
-jest.mock('~/server/domains/invitation', () => ({
-  invitationService: {
-    getAllByWeddingId: jest.fn(),
-  },
-}))
-
 const mockGuestService = guestService as {
-  getAllByWeddingId: jest.Mock
   updateGuest: jest.Mock
 }
 
-const mockEventService = eventService as {
-  getWeddingEvents: jest.Mock
-}
-
-const mockInvitationService = invitationService as {
-  getAllByWeddingId: jest.Mock
+const mockGuestInsightsService = guestInsightsService as {
+  listGuests: jest.Mock
+  getRsvpSummary: jest.Mock
+  getGuestEventAttendance: jest.Mock
+  listEventAttendance: jest.Mock
 }
 
 const mockCtx: EttaContext = {
@@ -68,19 +66,19 @@ describe('getGuestTools', () => {
         { id: 1, firstName: 'Alice', lastName: 'Wonder', email: 'alice@test.com' },
         { id: 2, firstName: 'Bob', lastName: 'Builder', email: null },
       ]
-      mockGuestService.getAllByWeddingId.mockResolvedValue(guests)
+      mockGuestInsightsService.listGuests.mockResolvedValue(guests)
 
       const result = await tools.get_guest_list.execute(
         {},
         { toolCallId: 'tc1', messages: [], abortSignal: undefined as never }
       )
 
-      expect(mockGuestService.getAllByWeddingId).toHaveBeenCalledWith('wedding-123')
+      expect(mockGuestInsightsService.listGuests).toHaveBeenCalledWith(mockCtx.authz, 'wedding-123')
       expect(result).toEqual({ guests })
     })
 
     it('returns empty array when no guests', async () => {
-      mockGuestService.getAllByWeddingId.mockResolvedValue(undefined)
+      mockGuestInsightsService.listGuests.mockResolvedValue([])
 
       const result = await tools.get_guest_list.execute(
         {},
@@ -113,14 +111,22 @@ describe('getGuestTools', () => {
 
   describe('get_rsvp_summary', () => {
     it('returns all zeros for empty invitation list', async () => {
-      mockInvitationService.getAllByWeddingId.mockResolvedValue([])
+      mockGuestInsightsService.getRsvpSummary.mockResolvedValue({
+        total: 0,
+        attending: 0,
+        declined: 0,
+        pending: 0,
+      })
 
       const result = await tools.get_rsvp_summary.execute(
         {},
         { toolCallId: 'tc5', messages: [], abortSignal: undefined as never }
       )
 
-      expect(mockInvitationService.getAllByWeddingId).toHaveBeenCalledWith('wedding-123')
+      expect(mockGuestInsightsService.getRsvpSummary).toHaveBeenCalledWith(
+        mockCtx.authz,
+        'wedding-123'
+      )
       expect(result).toEqual({
         total: 0,
         attending: 0,
@@ -130,22 +136,22 @@ describe('getGuestTools', () => {
     })
 
     it('computes correct counts from invitations', async () => {
-      const invitations = [
-        { id: '1', rsvp: 'Attending' },
-        { id: '2', rsvp: 'Attending' },
-        { id: '3', rsvp: 'Declined' },
-        { id: '4', rsvp: 'Invited' },
-        { id: '5', rsvp: 'Invited' },
-        { id: '6', rsvp: 'Invited' },
-      ]
-      mockInvitationService.getAllByWeddingId.mockResolvedValue(invitations)
+      mockGuestInsightsService.getRsvpSummary.mockResolvedValue({
+        total: 6,
+        attending: 2,
+        declined: 1,
+        pending: 3,
+      })
 
       const result = await tools.get_rsvp_summary.execute(
         {},
         { toolCallId: 'tc4', messages: [], abortSignal: undefined as never }
       )
 
-      expect(mockInvitationService.getAllByWeddingId).toHaveBeenCalledWith('wedding-123')
+      expect(mockGuestInsightsService.getRsvpSummary).toHaveBeenCalledWith(
+        mockCtx.authz,
+        'wedding-123'
+      )
       expect(result).toEqual({
         total: 6,
         attending: 2,
@@ -157,25 +163,19 @@ describe('getGuestTools', () => {
 
   describe('get_guest_event_attendance', () => {
     it('returns matching guest attendance across events', async () => {
-      mockGuestService.getAllByWeddingId.mockResolvedValue([
-        {
+      mockGuestInsightsService.getGuestEventAttendance.mockResolvedValue({
+        guest: {
           id: 7,
-          firstName: 'Gingy',
-          lastName: 'Cookie',
+          name: 'Gingy Cookie',
           email: 'gingy@swamp.wed',
           householdId: 'household-seed-gingy',
         },
-      ])
-      mockEventService.getWeddingEvents.mockResolvedValue([
-        { id: 'evt-1', name: 'Ceremony' },
-        { id: 'evt-2', name: 'Reception' },
-        { id: 'evt-3', name: 'Breakfast' },
-      ])
-      mockInvitationService.getAllByWeddingId.mockResolvedValue([
-        { guestId: 7, eventId: 'evt-1', rsvp: 'Attending' },
-        { guestId: 7, eventId: 'evt-2', rsvp: 'Declined' },
-        { guestId: 7, eventId: 'evt-3', rsvp: 'Invited' },
-      ])
+        attendance: [
+          { eventId: 'evt-3', eventName: 'Breakfast', rsvp: 'Invited' },
+          { eventId: 'evt-1', eventName: 'Ceremony', rsvp: 'Attending' },
+          { eventId: 'evt-2', eventName: 'Reception', rsvp: 'Declined' },
+        ],
+      })
 
       const result = await tools.get_guest_event_attendance.execute(
         { guestQuery: 'Gingy' },
@@ -195,12 +195,19 @@ describe('getGuestTools', () => {
           { eventId: 'evt-2', eventName: 'Reception', rsvp: 'Declined' },
         ],
       })
+      expect(mockGuestInsightsService.getGuestEventAttendance).toHaveBeenCalledWith(
+        mockCtx.authz,
+        'wedding-123',
+        'Gingy'
+      )
     })
 
     it('returns a not found payload when no guest matches the query', async () => {
-      mockGuestService.getAllByWeddingId.mockResolvedValue([
-        { id: 7, firstName: 'Gingy', lastName: 'Cookie', email: 'gingy@swamp.wed' },
-      ])
+      mockGuestInsightsService.getGuestEventAttendance.mockResolvedValue({
+        guest: null,
+        attendance: [],
+        message: 'No guest found matching "Donkey".',
+      })
 
       const result = await tools.get_guest_event_attendance.execute(
         { guestQuery: 'Donkey' },
@@ -212,25 +219,23 @@ describe('getGuestTools', () => {
         attendance: [],
         message: 'No guest found matching "Donkey".',
       })
+      expect(mockGuestInsightsService.getGuestEventAttendance).toHaveBeenCalledWith(
+        mockCtx.authz,
+        'wedding-123',
+        'Donkey'
+      )
     })
   })
 
   describe('list_event_attendance', () => {
     it('returns attendees for a matching event filtered by RSVP status', async () => {
-      mockGuestService.getAllByWeddingId.mockResolvedValue([
-        { id: 7, firstName: 'Gingy', lastName: 'Cookie', email: 'gingy@swamp.wed' },
-        { id: 8, firstName: 'Shrek', lastName: 'Ogre', email: 'shrek@swamp.wed' },
-        { id: 9, firstName: 'Fiona', lastName: 'Ogre', email: 'fiona@swamp.wed' },
-      ])
-      mockEventService.getWeddingEvents.mockResolvedValue([
-        { id: 'evt-1', name: 'Ceremony' },
-        { id: 'evt-2', name: 'Breakfast' },
-      ])
-      mockInvitationService.getAllByWeddingId.mockResolvedValue([
-        { guestId: 7, eventId: 'evt-1', rsvp: 'Attending' },
-        { guestId: 8, eventId: 'evt-1', rsvp: 'Declined' },
-        { guestId: 9, eventId: 'evt-1', rsvp: 'Attending' },
-      ])
+      mockGuestInsightsService.listEventAttendance.mockResolvedValue({
+        event: { id: 'evt-1', name: 'Ceremony' },
+        guests: [
+          { guestId: 9, name: 'Fiona Ogre', email: 'fiona@swamp.wed', rsvp: 'Attending' },
+          { guestId: 7, name: 'Gingy Cookie', email: 'gingy@swamp.wed', rsvp: 'Attending' },
+        ],
+      })
 
       const result = await tools.list_event_attendance.execute(
         { eventQuery: 'ceremony', rsvpFilter: 'Attending' },
@@ -244,18 +249,22 @@ describe('getGuestTools', () => {
           { guestId: 7, name: 'Gingy Cookie', email: 'gingy@swamp.wed', rsvp: 'Attending' },
         ],
       })
+      expect(mockGuestInsightsService.listEventAttendance).toHaveBeenCalledWith(
+        mockCtx.authz,
+        'wedding-123',
+        'ceremony',
+        'Attending'
+      )
     })
 
     it('returns all RSVP buckets when no filter is provided', async () => {
-      mockGuestService.getAllByWeddingId.mockResolvedValue([
-        { id: 7, firstName: 'Gingy', lastName: 'Cookie', email: 'gingy@swamp.wed' },
-        { id: 8, firstName: 'Shrek', lastName: 'Ogre', email: 'shrek@swamp.wed' },
-      ])
-      mockEventService.getWeddingEvents.mockResolvedValue([{ id: 'evt-2', name: 'Breakfast' }])
-      mockInvitationService.getAllByWeddingId.mockResolvedValue([
-        { guestId: 7, eventId: 'evt-2', rsvp: 'Invited' },
-        { guestId: 8, eventId: 'evt-2', rsvp: 'Declined' },
-      ])
+      mockGuestInsightsService.listEventAttendance.mockResolvedValue({
+        event: { id: 'evt-2', name: 'Breakfast' },
+        guests: [
+          { guestId: 8, name: 'Shrek Ogre', email: 'shrek@swamp.wed', rsvp: 'Declined' },
+          { guestId: 7, name: 'Gingy Cookie', email: 'gingy@swamp.wed', rsvp: 'Invited' },
+        ],
+      })
 
       const result = await tools.list_event_attendance.execute(
         { eventQuery: 'Breakfast' },
@@ -269,6 +278,12 @@ describe('getGuestTools', () => {
           { guestId: 7, name: 'Gingy Cookie', email: 'gingy@swamp.wed', rsvp: 'Invited' },
         ],
       })
+      expect(mockGuestInsightsService.listEventAttendance).toHaveBeenCalledWith(
+        mockCtx.authz,
+        'wedding-123',
+        'Breakfast',
+        undefined
+      )
     })
   })
 })
