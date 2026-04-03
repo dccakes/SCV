@@ -5,6 +5,7 @@ import { headers } from 'next/headers'
 import AuthenticatedView from '~/components/home/authenticated-view'
 import NonAuthenticatedView from '~/components/home/non-authenticated-view'
 import { auth } from '~/lib/auth'
+import { readWorkspaceCapabilities } from '~/server/authz/workspace-capabilities'
 import { resolveWorkspaceScope } from '~/server/authz/workspace-scope'
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
@@ -143,7 +144,8 @@ export default async function Home() {
       userId: session.user.id,
     })
 
-    if (scope.activeOrganization?.role === 'viewer') {
+    const capabilities = readWorkspaceCapabilities(scope.activeOrganization?.role)
+    if (!capabilities.canViewPlanning) {
       isSignedIn = false
     }
   }

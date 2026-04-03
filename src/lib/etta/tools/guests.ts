@@ -65,7 +65,7 @@ export function getGuestTools(ctx: EttaContext) {
       ),
       execute: async ({ guestId, ...data }) => {
         const authz = requirePlannerAuthz(ctx)
-        const guest = await guestService.updateGuest(authz, guestId, data)
+        const guest = await guestService.updateGuest(authz, ctx.weddingId, guestId, data)
         return { guest }
       },
     }),

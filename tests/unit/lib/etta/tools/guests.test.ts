@@ -103,7 +103,7 @@ describe('getGuestTools', () => {
         abortSignal: undefined as never,
       })
 
-      expect(mockGuestService.updateGuest).toHaveBeenCalledWith(mockCtx.authz, 1, {
+      expect(mockGuestService.updateGuest).toHaveBeenCalledWith(mockCtx.authz, 'wedding-123', 1, {
         lastName: 'Updated',
         email: 'new@test.com',
       })

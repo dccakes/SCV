@@ -1,18 +1,12 @@
 import type { ActiveOrganization } from '~/server/authz/authorization.types'
-import { db } from '~/server/db'
+import { WorkspaceScopeRepository } from '~/server/authz/workspace-scope.repository'
+import { WorkspaceScopeService } from '~/server/authz/workspace-scope.service'
 
 // TODO(review-implementation): move this request-scope resolver behind an application/infrastructure
 // boundary so authz consumes resolved scope instead of owning session persistence and raw SQL directly.
 type WorkspaceScope = {
   activeOrganization: ActiveOrganization | null
   activeWeddingId: string | null
-}
-
-type WorkspaceScopeRow = {
-  organizationId: string
-  isPrimaryWedding: boolean
-  role: string | null
-  weddingId: string | null
 }
 
 const getSessionToken = (session: unknown): string | null => {
@@ -66,88 +60,7 @@ export const getSessionActiveOrganizationId = (session: unknown): string | null 
   return null
 }
 
-const toWorkspaceScope = (row: WorkspaceScopeRow | undefined): WorkspaceScope => ({
-  activeOrganization: row
-    ? {
-        organizationId: row.organizationId,
-        role: row.role,
-      }
-    : null,
-  activeWeddingId: row?.weddingId ?? null,
-})
-
-const findScopeForOrganization = async (
-  userId: string,
-  organizationId: string
-): Promise<WorkspaceScopeRow | undefined> => {
-  const rows = await db.$queryRaw<WorkspaceScopeRow[]>`
-    SELECT
-      m."organizationId" AS "organizationId",
-      FALSE AS "isPrimaryWedding",
-      m."role" AS "role",
-      w."id" AS "weddingId"
-    FROM "member" m
-    LEFT JOIN "Wedding" w ON w."organizationId" = m."organizationId"
-    WHERE m."userId" = ${userId}
-      AND m."organizationId" = ${organizationId}
-    LIMIT 1
-  `
-
-  return rows[0]
-}
-
-const findCandidateScopes = async (userId: string): Promise<WorkspaceScopeRow[]> => {
-  return db.$queryRaw<WorkspaceScopeRow[]>`
-    SELECT
-      m."organizationId" AS "organizationId",
-      COALESCE(BOOL_OR(uw."isPrimary"), FALSE) AS "isPrimaryWedding",
-      m."role" AS "role",
-      w."id" AS "weddingId"
-    FROM "member" m
-    JOIN "Wedding" w ON w."organizationId" = m."organizationId"
-    LEFT JOIN "UserWedding" uw
-      ON uw."userId" = m."userId"
-     AND uw."weddingId" = w."id"
-    WHERE m."userId" = ${userId}
-    GROUP BY
-      m."organizationId",
-      m."role",
-      w."id",
-      m."createdAt"
-    ORDER BY
-      COALESCE(BOOL_OR(uw."isPrimary"), FALSE) DESC,
-      m."createdAt" ASC
-  `
-}
-
-const persistActiveOrganizationId = async (
-  sessionToken: string | null,
-  organizationId: string
-): Promise<void> => {
-  if (!sessionToken) {
-    return
-  }
-
-  await db.$executeRaw`
-    UPDATE "Session"
-    SET "activeOrganizationId" = ${organizationId}
-    WHERE "token" = ${sessionToken}
-      AND ("activeOrganizationId" IS NULL OR "activeOrganizationId" != ${organizationId})
-  `
-}
-
-const clearActiveOrganizationId = async (sessionToken: string | null): Promise<void> => {
-  if (!sessionToken) {
-    return
-  }
-
-  await db.$executeRaw`
-    UPDATE "Session"
-    SET "activeOrganizationId" = NULL
-    WHERE "token" = ${sessionToken}
-      AND "activeOrganizationId" IS NOT NULL
-  `
-}
+const workspaceScopeService = new WorkspaceScopeService(new WorkspaceScopeRepository())
 
 export async function resolveWorkspaceScope(input: {
   session: unknown
@@ -157,32 +70,9 @@ export async function resolveWorkspaceScope(input: {
   const sessionActiveOrganizationId = getSessionActiveOrganizationId(session)
   const sessionToken = getSessionToken(session)
 
-  if (sessionActiveOrganizationId) {
-    const scopedRow = await findScopeForOrganization(userId, sessionActiveOrganizationId)
-    if (scopedRow?.weddingId) {
-      return toWorkspaceScope(scopedRow)
-    }
-
-    await clearActiveOrganizationId(sessionToken)
-  }
-
-  const candidateScopes = await findCandidateScopes(userId)
-  const primaryWeddingScope = candidateScopes.find((scope) => scope.isPrimaryWedding)
-  if (primaryWeddingScope?.organizationId && primaryWeddingScope.weddingId) {
-    await persistActiveOrganizationId(sessionToken, primaryWeddingScope.organizationId)
-    return toWorkspaceScope(primaryWeddingScope)
-  }
-
-  if (candidateScopes.length === 1) {
-    const scopedRow = candidateScopes[0]
-    if (scopedRow) {
-      await persistActiveOrganizationId(sessionToken, scopedRow.organizationId)
-      return toWorkspaceScope(scopedRow)
-    }
-  }
-
-  return {
-    activeOrganization: null,
-    activeWeddingId: null,
-  }
+  return workspaceScopeService.resolve({
+    userId,
+    sessionToken,
+    sessionActiveOrganizationId,
+  })
 }
