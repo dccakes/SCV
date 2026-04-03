@@ -54,6 +54,7 @@ function setupMocks({
   expiresAt,
   earliestEventDate,
   isLoading = false,
+  error,
   generateIsPending = false,
   revokeIsPending = false,
 }: {
@@ -61,6 +62,7 @@ function setupMocks({
   expiresAt?: string | null
   earliestEventDate?: string | null
   isLoading?: boolean
+  error?: { data?: { code?: string } } | null
   generateIsPending?: boolean
   revokeIsPending?: boolean
 } = {}) {
@@ -70,6 +72,7 @@ function setupMocks({
         ? { token, expiresAt: expiresAt ?? null, earliestEventDate: earliestEventDate ?? null }
         : undefined,
     isLoading,
+    error,
     refetch: mockRefetch,
   })
   mockGenerateMutation.mockImplementation(
@@ -111,6 +114,22 @@ describe('render branches', () => {
     render(<SelfInviteLinkManager />)
 
     expect(screen.getByRole('status')).toHaveTextContent('Loading invite link...')
+  })
+
+  it('shows permission-specific message when token query is forbidden', () => {
+    setupMocks({ error: { data: { code: 'FORBIDDEN' } } })
+    render(<SelfInviteLinkManager />)
+
+    expect(
+      screen.getByText('Invite link management requires permission to send invitations.')
+    ).toBeInTheDocument()
+  })
+
+  it('shows generic error state for non-forbidden query errors', () => {
+    setupMocks({ error: { data: { code: 'INTERNAL_SERVER_ERROR' } } })
+    render(<SelfInviteLinkManager />)
+
+    expect(screen.getByText('Unable to load invite link.')).toBeInTheDocument()
   })
 
   it('shows "Generate Invite Link" button when data is undefined (no token fetched yet)', () => {

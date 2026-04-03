@@ -53,6 +53,13 @@ export function SelfInviteLinkManager() {
   }
 
   if (error) {
+    if (error.data?.code === 'FORBIDDEN') {
+      return (
+        <p className='text-muted-foreground text-sm'>
+          Invite link management requires permission to send invitations.
+        </p>
+      )
+    }
     return <AsyncState error='Unable to load invite link.' />
   }
 
