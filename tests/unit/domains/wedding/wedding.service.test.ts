@@ -285,21 +285,11 @@ describe('WeddingService', () => {
       expect(mockFindByUserIdFn).not.toHaveBeenCalled()
     })
 
-    it('should return wedding id when wedding exists', async () => {
-      mockFindByUserIdFn.mockResolvedValue(mockWedding)
-
-      const result = await weddingService.getWeddingIdByUserId('user-123')
-
-      expect(result).toBe(mockWedding.id)
-      expect(mockFindByUserIdFn).toHaveBeenCalledWith('user-123')
-    })
-
-    it('should throw NOT_FOUND when no wedding exists for user', async () => {
-      mockFindByUserIdFn.mockResolvedValue(null)
-
+    it('throws PRECONDITION_FAILED when no active organization is provided', async () => {
       await expect(weddingService.getWeddingIdByUserId('user-123')).rejects.toMatchObject({
-        code: 'NOT_FOUND',
+        code: 'PRECONDITION_FAILED',
       })
+      expect(mockFindByUserIdFn).not.toHaveBeenCalled()
     })
 
     it('throws PRECONDITION_FAILED when active organization has no linked wedding', async () => {
