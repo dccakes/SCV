@@ -13,10 +13,14 @@ jest.mock('~/lib/auth', () => ({
   auth: { api: { getSession: jest.fn().mockResolvedValue(null) } },
 }))
 jest.mock('~/server/db', () => ({ db: {} }))
+jest.mock('~/server/authz/permission-checker', () => ({
+  requirePermission: jest.fn(() => ({ organizationId: 'org-123', role: 'owner' })),
+}))
 
 jest.mock('~/server/domains/self-fill')
 jest.mock('~/server/domains/wedding')
 
+import { requirePermission } from '~/server/authz/permission-checker'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   mockFindByToken,
@@ -27,24 +31,20 @@ import {
   resetMocks as resetSelfFillMocks,
 } from '~/server/domains/self-fill'
 import { createSelfFillRouter } from '~/server/domains/self-fill/self-fill.router'
-
 import type {
   ISelfFillRegistration,
   SelfFillRegistrationResult,
 } from '~/server/domains/self-fill/self-fill.types'
 // @ts-expect-error - Importing mock functions from mocked module
-import {
-  mockGetByUserId,
-  mockWedding,
-  resetMocks as resetWeddingMocks,
-} from '~/server/domains/wedding'
+import { mockGetById, mockWedding, resetMocks as resetWeddingMocks } from '~/server/domains/wedding'
 
 // ── Typed mock aliases ───────────────────────────────────────────────────────
 const mockFindByTokenFn = mockFindByToken as jest.Mock
 const mockGenerateTokenFn = mockGenerateToken as jest.Mock
 const mockGetTokenWithContextFn = mockGetTokenWithContext as jest.Mock
 const mockRevokeTokenFn = mockRevokeToken as jest.Mock
-const mockGetByUserIdFn = mockGetByUserId as jest.Mock
+const mockGetByIdFn = mockGetById as jest.Mock
+const mockRequirePermission = requirePermission as jest.Mock
 
 // ── Mock registration service ────────────────────────────────────────────────
 const mockRegisterGuest = jest.fn()
@@ -74,10 +74,15 @@ function makePublicCaller() {
   })
 }
 
-function makeAuthCaller(userId = 'user-123') {
+function makeAuthCaller(userId = 'user-123', activeWeddingId: string | null = 'wedding-123') {
   return makeRouter().createCaller({
     db: {} as never,
-    auth: { userId, session: { user: { id: userId } } as never },
+    auth: {
+      userId,
+      session: { user: { id: userId } } as never,
+      activeWeddingId,
+      activeOrganization: { organizationId: 'org-123', role: 'owner' },
+    },
     headers: new Headers(),
   })
 }
@@ -89,6 +94,8 @@ describe('selfFillRouter', () => {
     resetSelfFillMocks()
     resetWeddingMocks()
     mockRegisterGuest.mockReset()
+    mockRequirePermission.mockReset()
+    mockRequirePermission.mockReturnValue({ organizationId: 'org-123', role: 'owner' })
   })
 
   // ─── getByToken (public query) ─────────────────────────────────────────────
@@ -186,19 +193,23 @@ describe('selfFillRouter', () => {
 
   describe('generateToken', () => {
     it('should generate a token for the user wedding', async () => {
-      mockGetByUserIdFn.mockResolvedValue(mockWedding)
+      mockGetByIdFn.mockResolvedValue(mockWedding)
       mockGenerateTokenFn.mockResolvedValue('a'.repeat(32))
 
       const caller = makeAuthCaller()
       const result = await caller.generateToken({})
 
       expect(result).toEqual({ token: 'a'.repeat(32) })
-      expect(mockGetByUserIdFn).toHaveBeenCalledWith('user-123')
+      expect(mockRequirePermission).toHaveBeenCalledWith(
+        { userId: 'user-123', activeOrganization: { organizationId: 'org-123', role: 'owner' } },
+        { guest_invitation: ['send'] }
+      )
+      expect(mockGetByIdFn).toHaveBeenCalledWith('wedding-123')
       expect(mockGenerateTokenFn).toHaveBeenCalledWith(mockWedding.id)
     })
 
     it('should throw NOT_FOUND if user has no wedding', async () => {
-      mockGetByUserIdFn.mockResolvedValue(null)
+      mockGetByIdFn.mockResolvedValue(null)
 
       const caller = makeAuthCaller()
 
@@ -215,13 +226,32 @@ describe('selfFillRouter', () => {
         code: 'UNAUTHORIZED',
       })
     })
+    it('should throw PRECONDITION_FAILED when active wedding is missing', async () => {
+      const caller = makeAuthCaller('user-123', null)
+
+      await expect(caller.generateToken({})).rejects.toMatchObject({
+        code: 'PRECONDITION_FAILED',
+      })
+    })
+
+    it('should throw FORBIDDEN when missing permission', async () => {
+      const { TRPCError } = await import('@trpc/server')
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      })
+      const caller = makeAuthCaller()
+
+      await expect(caller.generateToken({})).rejects.toMatchObject({
+        code: 'FORBIDDEN',
+      })
+    })
   })
 
   // ─── revokeToken (protected mutation) ─────────────────────────────────────
 
   describe('revokeToken', () => {
     it('should revoke the token and return success', async () => {
-      mockGetByUserIdFn.mockResolvedValue(mockWedding)
+      mockGetByIdFn.mockResolvedValue(mockWedding)
       mockRevokeTokenFn.mockResolvedValue(undefined)
 
       const caller = makeAuthCaller()
@@ -232,7 +262,7 @@ describe('selfFillRouter', () => {
     })
 
     it('should throw NOT_FOUND if user has no wedding', async () => {
-      mockGetByUserIdFn.mockResolvedValue(null)
+      mockGetByIdFn.mockResolvedValue(null)
 
       const caller = makeAuthCaller()
 
@@ -257,7 +287,7 @@ describe('selfFillRouter', () => {
     const expiresAt = new Date('2026-06-01')
 
     it('should return token, expiresAt, and earliestEventDate', async () => {
-      mockGetByUserIdFn.mockResolvedValue(mockWedding)
+      mockGetByIdFn.mockResolvedValue(mockWedding)
       mockGetTokenWithContextFn.mockResolvedValue({
         token: validToken,
         expiresAt,
@@ -272,7 +302,7 @@ describe('selfFillRouter', () => {
     })
 
     it('should return null token, null expiresAt, and null earliestEventDate when no token is set', async () => {
-      mockGetByUserIdFn.mockResolvedValue(mockWedding)
+      mockGetByIdFn.mockResolvedValue(mockWedding)
       mockGetTokenWithContextFn.mockResolvedValue({
         token: null,
         expiresAt: null,
@@ -286,7 +316,7 @@ describe('selfFillRouter', () => {
     })
 
     it('should return null expiresAt for legacy tokens with no timestamp', async () => {
-      mockGetByUserIdFn.mockResolvedValue(mockWedding)
+      mockGetByIdFn.mockResolvedValue(mockWedding)
       mockGetTokenWithContextFn.mockResolvedValue({
         token: validToken,
         expiresAt: null,
@@ -301,7 +331,7 @@ describe('selfFillRouter', () => {
     })
 
     it('should return null earliestEventDate when wedding has no dated events', async () => {
-      mockGetByUserIdFn.mockResolvedValue(mockWedding)
+      mockGetByIdFn.mockResolvedValue(mockWedding)
       mockGetTokenWithContextFn.mockResolvedValue({
         token: validToken,
         expiresAt,
@@ -315,7 +345,7 @@ describe('selfFillRouter', () => {
     })
 
     it('should throw NOT_FOUND if user has no wedding', async () => {
-      mockGetByUserIdFn.mockResolvedValue(null)
+      mockGetByIdFn.mockResolvedValue(null)
 
       const caller = makeAuthCaller()
 
