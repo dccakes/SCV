@@ -44,18 +44,34 @@ describe('middleware', () => {
     mockGetSessionCookie.mockReset()
   })
 
-  it('redirects unauthenticated users away from /events', async () => {
+  it('redirects unauthenticated users from protected routes to /signin with callbackUrl', async () => {
     mockGetSessionCookie.mockReturnValue(null)
     const response = await middleware(createRequest('/events'))
 
-    expect(response.headers.get('location')).toBe('https://example.com/')
+    expect(response.headers.get('location')).toBe(
+      'https://example.com/signin?callbackUrl=%2Fevents'
+    )
   })
 
-  it('redirects unauthenticated users away from /vendors', async () => {
+  it('redirects unauthenticated users from any non-public route', async () => {
     mockGetSessionCookie.mockReturnValue(null)
-    const response = await middleware(createRequest('/vendors'))
+    const response = await middleware(createRequest('/settings'))
 
-    expect(response.headers.get('location')).toBe('https://example.com/')
+    expect(response.headers.get('location')).toBe(
+      'https://example.com/signin?callbackUrl=%2Fsettings'
+    )
+  })
+
+  it('allows unauthenticated users on public routes', async () => {
+    mockGetSessionCookie.mockReturnValue(null)
+
+    const rootResponse = await middleware(createRequest('/'))
+    const signInResponse = await middleware(createRequest('/signin'))
+    const authApiResponse = await middleware(createRequest('/api/auth/session'))
+
+    expect(rootResponse.headers.get('location')).toBeNull()
+    expect(signInResponse.headers.get('location')).toBeNull()
+    expect(authApiResponse.headers.get('location')).toBeNull()
   })
 
   it('allows authenticated users to access protected routes', async () => {

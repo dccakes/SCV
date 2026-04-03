@@ -5,8 +5,8 @@
  * All endpoints are protected — vendor data is private to the couple.
  */
 
-import { TRPCError } from '@trpc/server'
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
+import { requireActiveWeddingId } from '~/server/authz/active-wedding'
 import { vendorService } from '~/server/domains/vendor'
 import {
   createQuoteSchema,
@@ -22,24 +22,13 @@ import {
   updateVendorStatusSchema,
 } from '~/server/domains/vendor/vendor.validator'
 
-const getActiveWeddingId = (weddingId: string | null): string => {
-  if (!weddingId) {
-    throw new TRPCError({
-      code: 'PRECONDITION_FAILED',
-      message: 'No active wedding found for the current workspace.',
-    })
-  }
-
-  return weddingId
-}
-
 export const vendorRouter = createTRPCRouter({
   /**
    * Get all vendors for the current user's wedding, optionally filtered by category.
    * Uses the request-scoped active wedding from tRPC context.
    */
   getAll: protectedProcedure.input(getVendorsByCategorySchema).query(async ({ ctx, input }) => {
-    const weddingId = getActiveWeddingId(ctx.auth.activeWeddingId)
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return vendorService.getVendorsForWedding(ctx.authz, weddingId, input.category)
   }),
 
@@ -47,7 +36,7 @@ export const vendorRouter = createTRPCRouter({
    * Get a single vendor with all its quotes
    */
   getById: protectedProcedure.input(getVendorSchema).query(async ({ ctx, input }) => {
-    const weddingId = getActiveWeddingId(ctx.auth.activeWeddingId)
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return vendorService.getVendorWithQuotes(ctx.authz, input.vendorId, weddingId)
   }),
 
@@ -55,7 +44,7 @@ export const vendorRouter = createTRPCRouter({
    * Create a new vendor
    */
   create: protectedProcedure.input(createVendorSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = getActiveWeddingId(ctx.auth.activeWeddingId)
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return vendorService.createVendor(ctx.authz, weddingId, input)
   }),
 
@@ -63,7 +52,7 @@ export const vendorRouter = createTRPCRouter({
    * Update vendor details (name, location, contact, social links)
    */
   update: protectedProcedure.input(updateVendorSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = getActiveWeddingId(ctx.auth.activeWeddingId)
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return vendorService.updateVendor(ctx.authz, input.vendorId, weddingId, input)
   }),
 
@@ -73,7 +62,7 @@ export const vendorRouter = createTRPCRouter({
   updateStatus: protectedProcedure
     .input(updateVendorStatusSchema)
     .mutation(async ({ ctx, input }) => {
-      const weddingId = getActiveWeddingId(ctx.auth.activeWeddingId)
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
       return vendorService.updateStatus(ctx.authz, input.vendorId, weddingId, input.status)
     }),
 
@@ -81,7 +70,7 @@ export const vendorRouter = createTRPCRouter({
    * Delete a vendor (and all its quotes)
    */
   delete: protectedProcedure.input(deleteVendorSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = getActiveWeddingId(ctx.auth.activeWeddingId)
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return vendorService.deleteVendor(ctx.authz, input.vendorId, weddingId)
   }),
 
@@ -89,7 +78,7 @@ export const vendorRouter = createTRPCRouter({
    * Add a quote to a vendor
    */
   addQuote: protectedProcedure.input(createQuoteSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = getActiveWeddingId(ctx.auth.activeWeddingId)
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return vendorService.addQuote(ctx.authz, input.vendorId, weddingId, input)
   }),
 
@@ -97,7 +86,7 @@ export const vendorRouter = createTRPCRouter({
    * Update an existing quote
    */
   updateQuote: protectedProcedure.input(updateQuoteSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = getActiveWeddingId(ctx.auth.activeWeddingId)
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return vendorService.updateQuote(ctx.authz, input.quoteId, input.vendorId, weddingId, input)
   }),
 
@@ -105,7 +94,7 @@ export const vendorRouter = createTRPCRouter({
    * Delete a quote
    */
   deleteQuote: protectedProcedure.input(deleteQuoteSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = getActiveWeddingId(ctx.auth.activeWeddingId)
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return vendorService.deleteQuote(ctx.authz, input.quoteId, input.vendorId, weddingId)
   }),
 
@@ -115,7 +104,7 @@ export const vendorRouter = createTRPCRouter({
   saveQuoteFiles: protectedProcedure
     .input(saveQuoteFilesSchema)
     .mutation(async ({ ctx, input }) => {
-      const weddingId = getActiveWeddingId(ctx.auth.activeWeddingId)
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
       return vendorService.saveQuoteFiles(ctx.authz, input.vendorId, weddingId, input)
     }),
 
@@ -125,7 +114,7 @@ export const vendorRouter = createTRPCRouter({
   deleteQuoteFile: protectedProcedure
     .input(deleteQuoteFileSchema)
     .mutation(async ({ ctx, input }) => {
-      const weddingId = getActiveWeddingId(ctx.auth.activeWeddingId)
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
       return vendorService.deleteQuoteFile(ctx.authz, input.vendorId, weddingId, input)
     }),
 })

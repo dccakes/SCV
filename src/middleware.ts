@@ -2,23 +2,32 @@ import { getSessionCookie } from 'better-auth/cookies'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
-// Define protected routes
-const protectedRoutes = ['/dashboard', '/guest-list', '/events', '/vendors']
+const PUBLIC_PATHS = ['/', '/signin']
+const PUBLIC_PREFIXES = ['/api/auth']
+
+const isPublicPath = (pathname: string): boolean => {
+  if (PUBLIC_PATHS.includes(pathname)) {
+    return true
+  }
+
+  return PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+}
 
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname
 
-  // Check if route is protected
-  const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route))
+  if (isPublicPath(pathname)) {
+    return NextResponse.next()
+  }
 
-  if (isProtectedRoute) {
-    // Check for session token using Better Auth's utility (handles cookie prefixes)
-    const sessionToken = getSessionCookie(req)
+  // Check for session token using Better Auth's utility (handles cookie prefixes)
+  const sessionToken = getSessionCookie(req)
 
-    // Redirect to home if not authenticated
-    if (!sessionToken) {
-      return NextResponse.redirect(new URL('/', req.url))
-    }
+  // Redirect to sign in for unauthenticated access to protected routes
+  if (!sessionToken) {
+    const redirectUrl = new URL('/signin', req.url)
+    redirectUrl.searchParams.set('callbackUrl', pathname)
+    return NextResponse.redirect(redirectUrl)
   }
 
   return NextResponse.next()
