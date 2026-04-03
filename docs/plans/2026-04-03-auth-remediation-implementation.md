@@ -394,3 +394,5 @@ Recommended approach:
   and rewired guest router + Etta guest read tools to use it.
 - 2026-04-03: Added `EventInsightsService` application boundary and rewired event/invitation read
   routes to delegate authorization and scoped reads through it.
+- 2026-04-03: Hardened vendor domain API shape by renaming the unpermissioned raw list method to
+  `getVendorsSystem` to make system-only usage explicit.

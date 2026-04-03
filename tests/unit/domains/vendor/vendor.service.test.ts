@@ -87,7 +87,7 @@ describe('VendorService', () => {
     it('should return all vendors for a wedding', async () => {
       mockFindAllByWeddingIdFn.mockResolvedValue([mockVendorWithQuotes])
 
-      const result = await vendorService.getVendors('wedding-123')
+      const result = await vendorService.getVendorsSystem('wedding-123')
 
       expect(result).toEqual([mockVendorWithQuotes])
       expect(mockFindAllByWeddingIdFn).toHaveBeenCalledWith('wedding-123', undefined)
@@ -96,7 +96,7 @@ describe('VendorService', () => {
     it('should filter by category when provided', async () => {
       mockFindAllByWeddingIdFn.mockResolvedValue([mockVendorWithQuotes])
 
-      await vendorService.getVendors('wedding-123', VendorCategory.PHOTOGRAPHER)
+      await vendorService.getVendorsSystem('wedding-123', VendorCategory.PHOTOGRAPHER)
 
       expect(mockFindAllByWeddingIdFn).toHaveBeenCalledWith(
         'wedding-123',
@@ -107,7 +107,7 @@ describe('VendorService', () => {
     it('should return empty array when no vendors exist', async () => {
       mockFindAllByWeddingIdFn.mockResolvedValue([])
 
-      const result = await vendorService.getVendors('wedding-123')
+      const result = await vendorService.getVendorsSystem('wedding-123')
 
       expect(result).toEqual([])
     })
