@@ -7,6 +7,12 @@ jest.mock('~/lib/auth-client', () => ({
   signOut: jest.fn(),
 }))
 
+jest.mock('~/hooks/use-workspace', () => ({
+  useWorkspace: () => ({
+    workspace: { role: 'admin' },
+  }),
+}))
+
 const mockSignOut = signOut as jest.Mock
 
 describe('SidebarNavFrame', () => {

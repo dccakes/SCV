@@ -1,3 +1,6 @@
+import { useWorkspace } from '~/hooks/use-workspace'
+import { getOrganizationRoleLabel } from '~/lib/organization-roles'
+
 type SidebarUserAvatarButtonProps = {
   firstName?: string
   initials?: string
@@ -7,6 +10,8 @@ type SidebarUserAvatarButtonProps = {
 
 export default function SidebarUserAvatarButton(props: Readonly<SidebarUserAvatarButtonProps>) {
   const { firstName = 'User', initials = 'U', isCollapsed, onSignOut } = props
+  const { workspace } = useWorkspace()
+  const roleLabel = getOrganizationRoleLabel(workspace.role ?? 'member')
 
   return (
     <div className='flex flex-col gap-1.5 border-white/10 border-t p-3'>
@@ -24,7 +29,7 @@ export default function SidebarUserAvatarButton(props: Readonly<SidebarUserAvata
               {firstName}
             </div>
             <div className='text-[0.55rem] text-muted-foreground uppercase tracking-wider'>
-              Admin
+              {roleLabel}
             </div>
           </div>
         )}

@@ -189,4 +189,38 @@ describe('weddingRouter', () => {
       await expect(caller.getActive()).rejects.toMatchObject({ code: 'FORBIDDEN' })
     })
   })
+
+  describe('getWorkspace', () => {
+    it('returns canonical workspace payload for owner role', async () => {
+      const caller = makeAuthCaller('user-123', 'wedding-123', 'owner')
+
+      await expect(caller.getWorkspace()).resolves.toEqual({
+        organizationId: 'org-123',
+        weddingId: 'wedding-123',
+        role: 'owner',
+        capabilities: {
+          canInviteMembers: true,
+          canManageMembers: true,
+          canSendInvites: true,
+          canViewPlanning: true,
+        },
+      })
+    })
+
+    it('returns restricted capabilities for viewer role', async () => {
+      const caller = makeAuthCaller('user-123', 'wedding-123', 'viewer')
+
+      await expect(caller.getWorkspace()).resolves.toEqual({
+        organizationId: 'org-123',
+        weddingId: 'wedding-123',
+        role: 'viewer',
+        capabilities: {
+          canInviteMembers: false,
+          canManageMembers: false,
+          canSendInvites: false,
+          canViewPlanning: false,
+        },
+      })
+    })
+  })
 })

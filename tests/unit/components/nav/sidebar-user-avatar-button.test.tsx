@@ -1,8 +1,24 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
 import SidebarUserAvatarButton from '~/components/nav/sidebar-user-avatar-button'
+import { useWorkspace } from '~/hooks/use-workspace'
+
+jest.mock('~/hooks/use-workspace', () => ({
+  useWorkspace: jest.fn(() => ({
+    workspace: { role: 'admin' },
+  })),
+}))
+
+const mockUseWorkspace = useWorkspace as jest.Mock
 
 describe('SidebarUserAvatarButton', () => {
+  beforeEach(() => {
+    mockUseWorkspace.mockReset()
+    mockUseWorkspace.mockReturnValue({
+      workspace: { role: 'admin' },
+    })
+  })
+
   it('should render profile details and sign out label when expanded', () => {
     render(
       <SidebarUserAvatarButton
@@ -30,5 +46,22 @@ describe('SidebarUserAvatarButton', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /sign out/i }))
     expect(onSignOut).toHaveBeenCalledTimes(1)
+  })
+
+  it('renders workspace role label from the active role', () => {
+    mockUseWorkspace.mockReturnValue({
+      workspace: { role: 'viewer' },
+    })
+
+    render(
+      <SidebarUserAvatarButton
+        firstName='Lillian'
+        initials='QL'
+        isCollapsed={false}
+        onSignOut={jest.fn()}
+      />
+    )
+
+    expect(screen.getByText('Viewer')).toBeInTheDocument()
   })
 })
