@@ -6,6 +6,7 @@
  */
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
+import { requireActiveWeddingId } from '~/server/authz/active-wedding'
 import { eventService } from '~/server/domains/event'
 import {
   createEventSchema,
@@ -13,7 +14,6 @@ import {
   updateCollectRsvpSchema,
   updateEventSchema,
 } from '~/server/domains/event/event.validator'
-import { weddingService } from '~/server/domains/wedding'
 
 export const eventRouter = createTRPCRouter({
   /**
@@ -21,10 +21,7 @@ export const eventRouter = createTRPCRouter({
    * Auto-creates invitations for all existing guests
    */
   create: protectedProcedure.input(createEventSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(
-      ctx.auth.userId,
-      ctx.auth.activeOrganization?.organizationId ?? null
-    )
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return eventService.createEvent(ctx.authz, weddingId, input)
   }),
 
@@ -32,11 +29,8 @@ export const eventRouter = createTRPCRouter({
    * Get all events for the current user's wedding
    */
   getAllByUserId: publicProcedure.query(async ({ ctx }) => {
-    if (!ctx.auth.userId) return undefined
-    const weddingId = await weddingService.getWeddingIdByUserId(
-      ctx.auth.userId,
-      ctx.auth.activeOrganization?.organizationId ?? null
-    )
+    if (!ctx.auth.userId || !ctx.auth.activeWeddingId) return undefined
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return eventService.getWeddingEvents(weddingId)
   }),
 
@@ -44,11 +38,8 @@ export const eventRouter = createTRPCRouter({
    * Get all events for the current user's wedding with RSVP statistics
    */
   getAllByUserIdWithStats: publicProcedure.query(async ({ ctx }) => {
-    if (!ctx.auth.userId) return undefined
-    const weddingId = await weddingService.getWeddingIdByUserId(
-      ctx.auth.userId,
-      ctx.auth.activeOrganization?.organizationId ?? null
-    )
+    if (!ctx.auth.userId || !ctx.auth.activeWeddingId) return undefined
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return eventService.getWeddingEventsWithStats(weddingId)
   }),
 
@@ -56,10 +47,7 @@ export const eventRouter = createTRPCRouter({
    * Update an existing event
    */
   update: protectedProcedure.input(updateEventSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(
-      ctx.auth.userId,
-      ctx.auth.activeOrganization?.organizationId ?? null
-    )
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return eventService.updateEvent(ctx.authz, weddingId, input)
   }),
 
@@ -69,10 +57,7 @@ export const eventRouter = createTRPCRouter({
   updateCollectRsvp: protectedProcedure
     .input(updateCollectRsvpSchema)
     .mutation(async ({ ctx, input }) => {
-      const weddingId = await weddingService.getWeddingIdByUserId(
-        ctx.auth.userId,
-        ctx.auth.activeOrganization?.organizationId ?? null
-      )
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
       return eventService.updateCollectRsvp(ctx.authz, weddingId, input.eventId, input.collectRsvp)
     }),
 
@@ -80,10 +65,7 @@ export const eventRouter = createTRPCRouter({
    * Delete an event
    */
   delete: protectedProcedure.input(deleteEventSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(
-      ctx.auth.userId,
-      ctx.auth.activeOrganization?.organizationId ?? null
-    )
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return eventService.deleteEvent(ctx.authz, weddingId, input.eventId)
   }),
 })

@@ -5,7 +5,9 @@
  * This is a thin layer that handles input validation and delegates to the service.
  */
 
+import { TRPCError } from '@trpc/server'
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
+import { requireActiveWeddingId } from '~/server/authz/active-wedding'
 import { eventService } from '~/server/domains/event'
 import { weddingService } from '~/server/domains/wedding'
 import {
@@ -30,14 +32,11 @@ export const weddingRouter = createTRPCRouter({
    * Update wedding settings
    */
   update: protectedProcedure.input(updateWeddingSchema).mutation(async ({ ctx, input }) => {
-    const wedding = await weddingService.getScopedWeddingByUserId(
-      ctx.auth.userId,
-      ctx.auth.activeOrganization?.organizationId ?? null
-    )
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
 
     return weddingService.updateWedding({
       ctx: ctx.authz,
-      weddingId: wedding.id,
+      weddingId,
       data: input,
     })
   }),
@@ -46,10 +45,11 @@ export const weddingRouter = createTRPCRouter({
    * Get wedding details for settings page (names + first event date/location)
    */
   getDetails: protectedProcedure.query(async ({ ctx }) => {
-    const wedding = await weddingService.getScopedWeddingByUserId(
-      ctx.auth.userId,
-      ctx.auth.activeOrganization?.organizationId ?? null
-    )
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+    const wedding = await weddingService.getById(weddingId)
+    if (!wedding) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Wedding not found' })
+    }
 
     // TODO(review-quality): replace first-event fallback with explicit ceremony/primary-event lookup.
     const events = await eventService.getWeddingEvents(wedding.id)
@@ -71,15 +71,12 @@ export const weddingRouter = createTRPCRouter({
   updateDetails: protectedProcedure
     .input(updateWeddingDetailsSchema)
     .mutation(async ({ ctx, input }) => {
-      const wedding = await weddingService.getScopedWeddingByUserId(
-        ctx.auth.userId,
-        ctx.auth.activeOrganization?.organizationId ?? null
-      )
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
 
       // Update wedding names
       await weddingService.updateWedding({
         ctx: ctx.authz,
-        weddingId: wedding.id,
+        weddingId,
         data: {
           groomFirstName: input.groomFirstName,
           groomLastName: input.groomLastName,

@@ -18,24 +18,24 @@ jest.mock('~/server/domains/event')
 // @ts-expect-error - Importing mock from mocked module
 import { eventService } from '~/server/domains/event'
 import {
-  mockGetScopedWeddingByUserId,
+  mockGetById,
   mockUpdateWedding,
   mockWedding,
   resetMocks as resetWeddingMocks,
 } from '~/server/domains/wedding'
 import { weddingRouter } from '~/server/domains/wedding/wedding.router'
 
-const mockGetScopedWeddingByUserIdFn = mockGetScopedWeddingByUserId as jest.Mock
+const mockGetByIdFn = mockGetById as jest.Mock
 const mockUpdateWeddingFn = mockUpdateWedding as jest.Mock
 const mockGetWeddingEvents = eventService.getWeddingEvents as jest.Mock
 const mockCreateEvent = eventService.createEvent as jest.Mock
 const mockUpdateEvent = eventService.updateEvent as jest.Mock
 
 // ── tRPC caller helpers ──────────────────────────────────────────────────────
-function makeAuthCaller(userId = 'user-123') {
+function makeAuthCaller(userId = 'user-123', activeWeddingId: string | null = 'wedding-123') {
   return weddingRouter.createCaller({
     db: {} as never,
-    auth: { userId, session: { user: { id: userId } } as never },
+    auth: { userId, session: { user: { id: userId } } as never, activeWeddingId },
     headers: new Headers(),
   })
 }
@@ -49,15 +49,20 @@ describe('weddingRouter', () => {
   })
 
   describe('getDetails', () => {
-    it('should throw when no wedding exists', async () => {
-      mockGetScopedWeddingByUserIdFn.mockRejectedValue(new Error('Wedding not found'))
+    it('should throw when active wedding is missing', async () => {
+      const caller = makeAuthCaller('user-123', null)
+      await expect(caller.getDetails()).rejects.toMatchObject({ code: 'PRECONDITION_FAILED' })
+    })
+
+    it('should throw when wedding lookup fails', async () => {
+      mockGetByIdFn.mockRejectedValue(new Error('Wedding not found'))
 
       const caller = makeAuthCaller()
       await expect(caller.getDetails()).rejects.toThrow('Wedding not found')
     })
 
     it('should return wedding details with event date and location', async () => {
-      mockGetScopedWeddingByUserIdFn.mockResolvedValue(mockWedding)
+      mockGetByIdFn.mockResolvedValue(mockWedding)
       mockGetWeddingEvents.mockResolvedValue([
         {
           id: 'event-123',
@@ -71,7 +76,7 @@ describe('weddingRouter', () => {
       const caller = makeAuthCaller()
       const result = await caller.getDetails()
 
-      expect(mockGetScopedWeddingByUserIdFn).toHaveBeenCalledWith('user-123', null)
+      expect(mockGetByIdFn).toHaveBeenCalledWith('wedding-123')
 
       expect(result).toEqual({
         groomFirstName: 'John',
@@ -85,7 +90,7 @@ describe('weddingRouter', () => {
     })
 
     it('should return undefined date/location when no events exist', async () => {
-      mockGetScopedWeddingByUserIdFn.mockResolvedValue(mockWedding)
+      mockGetByIdFn.mockResolvedValue(mockWedding)
       mockGetWeddingEvents.mockResolvedValue([])
 
       const caller = makeAuthCaller()
@@ -111,15 +116,20 @@ describe('weddingRouter', () => {
       brideLastName: 'Smith',
     }
 
-    it('should throw when no wedding exists', async () => {
-      mockGetScopedWeddingByUserIdFn.mockRejectedValue(new Error('Wedding not found'))
+    it('should throw when active wedding is missing', async () => {
+      const caller = makeAuthCaller('user-123', null)
+      await expect(caller.updateDetails(validInput)).rejects.toMatchObject({
+        code: 'PRECONDITION_FAILED',
+      })
+    })
 
+    it('should propagate service errors', async () => {
+      mockUpdateWeddingFn.mockRejectedValue(new Error('Wedding not found'))
       const caller = makeAuthCaller()
       await expect(caller.updateDetails(validInput)).rejects.toThrow('Wedding not found')
     })
 
     it('should update wedding names only', async () => {
-      mockGetScopedWeddingByUserIdFn.mockResolvedValue(mockWedding)
       mockUpdateWeddingFn.mockResolvedValue(mockWedding)
 
       const caller = makeAuthCaller()

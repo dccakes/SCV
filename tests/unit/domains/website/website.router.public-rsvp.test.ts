@@ -21,12 +21,6 @@ jest.mock('~/server/domains/website', () => ({
   },
 }))
 
-jest.mock('~/server/domains/wedding', () => ({
-  weddingService: {
-    getByUserId: jest.fn(),
-  },
-}))
-
 jest.mock('~/server/application/rsvp-submission', () => {
   const { z } = require('zod')
 

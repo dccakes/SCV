@@ -12,19 +12,11 @@ jest.mock('server/domains/invitation', () => ({
   },
 }))
 
-jest.mock('server/domains/wedding', () => ({
-  weddingService: {
-    getWeddingIdByUserId: jest.fn(),
-  },
-}))
-
 import { invitationService } from 'server/domains/invitation'
 import { invitationRouter } from 'server/domains/invitation/invitation.router'
-import { weddingService } from 'server/domains/wedding'
 
 const mockCreateInvitation = invitationService.createInvitation as jest.Mock
 const mockUpdateInvitation = invitationService.updateInvitation as jest.Mock
-const mockGetWeddingIdByUserId = weddingService.getWeddingIdByUserId as jest.Mock
 
 describe('invitationRouter authz context plumbing', () => {
   const activeOrganization = {
@@ -36,6 +28,7 @@ describe('invitationRouter authz context plumbing', () => {
     auth: {
       session: { user: { id: 'user-123' } },
       activeOrganization,
+      activeWeddingId: 'wedding-123',
       userId: 'user-123',
     },
     authz: {
@@ -48,7 +41,6 @@ describe('invitationRouter authz context plumbing', () => {
 
   beforeEach(() => {
     jest.resetAllMocks()
-    mockGetWeddingIdByUserId.mockResolvedValue('wedding-123')
   })
 
   it('passes authz context to create mutation service call', async () => {

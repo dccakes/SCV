@@ -7,10 +7,10 @@
 
 import { TRPCError } from '@trpc/server'
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
+import { requireActiveWeddingId } from '~/server/authz/active-wedding'
 import { guestService } from '~/server/domains/guest'
 import { getByEventSchema, getByHouseholdSchema } from '~/server/domains/guest/guest.validator'
 import { invitationService } from '~/server/domains/invitation'
-import { weddingService } from '~/server/domains/wedding'
 
 export const guestRouter = createTRPCRouter({
   /**
@@ -18,10 +18,7 @@ export const guestRouter = createTRPCRouter({
    * Note: This returns invitations, not guests - maintained for backward compatibility
    */
   getAllByEventId: protectedProcedure.input(getByEventSchema).query(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(
-      ctx.auth.userId,
-      ctx.auth.activeOrganization?.organizationId ?? null
-    )
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return invitationService.getByEventIdInWedding(input.eventId, weddingId)
   }),
 
@@ -31,10 +28,7 @@ export const guestRouter = createTRPCRouter({
   getAllByHouseholdId: protectedProcedure
     .input(getByHouseholdSchema)
     .query(async ({ ctx, input }) => {
-      const weddingId = await weddingService.getWeddingIdByUserId(
-        ctx.auth.userId,
-        ctx.auth.activeOrganization?.organizationId ?? null
-      )
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
       const guests = await guestService.getAllByHouseholdId(input.householdId)
 
       const inScope = guests.every((guest) => guest.weddingId === weddingId)
@@ -56,10 +50,7 @@ export const guestRouter = createTRPCRouter({
    * Get all guests for the current user's wedding
    */
   getAllByUserId: protectedProcedure.query(async ({ ctx }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(
-      ctx.auth.userId,
-      ctx.auth.activeOrganization?.organizationId ?? null
-    )
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return guestService.getAllByWeddingId(weddingId)
   }),
 })

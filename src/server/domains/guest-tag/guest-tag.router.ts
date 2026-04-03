@@ -8,23 +8,20 @@
 import { z } from 'zod'
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
+import { requireActiveWeddingId } from '~/server/authz/active-wedding'
 import { guestTagService } from '~/server/domains/guest-tag'
 import {
   createGuestTagSchema,
   guestTagIdSchema,
   updateGuestTagSchema,
 } from '~/server/domains/guest-tag/guest-tag.validator'
-import { weddingService } from '~/server/domains/wedding'
 
 export const guestTagRouter = createTRPCRouter({
   /**
    * Create a new guest tag
    */
   create: protectedProcedure.input(createGuestTagSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(
-      ctx.auth.userId,
-      ctx.auth.activeOrganization?.organizationId ?? null
-    )
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return guestTagService.create(ctx.authz, {
       ...input,
       weddingId,
@@ -35,10 +32,7 @@ export const guestTagRouter = createTRPCRouter({
    * Get all guest tags for the current user's wedding
    */
   getAll: protectedProcedure.query(async ({ ctx }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(
-      ctx.auth.userId,
-      ctx.auth.activeOrganization?.organizationId ?? null
-    )
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return guestTagService.getByWeddingId(ctx.authz, weddingId)
   }),
 
@@ -46,10 +40,7 @@ export const guestTagRouter = createTRPCRouter({
    * Get guest tag by ID with guest count
    */
   getById: protectedProcedure.input(guestTagIdSchema).query(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(
-      ctx.auth.userId,
-      ctx.auth.activeOrganization?.organizationId ?? null
-    )
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return guestTagService.getByIdWithCount(ctx.authz, input, weddingId)
   }),
 
@@ -64,10 +55,7 @@ export const guestTagRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const weddingId = await weddingService.getWeddingIdByUserId(
-        ctx.auth.userId,
-        ctx.auth.activeOrganization?.organizationId ?? null
-      )
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
       return guestTagService.update(ctx.authz, input.id, weddingId, input.data)
     }),
 
@@ -75,10 +63,7 @@ export const guestTagRouter = createTRPCRouter({
    * Delete a guest tag
    */
   delete: protectedProcedure.input(guestTagIdSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(
-      ctx.auth.userId,
-      ctx.auth.activeOrganization?.organizationId ?? null
-    )
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return guestTagService.delete(ctx.authz, input, weddingId)
   }),
 })

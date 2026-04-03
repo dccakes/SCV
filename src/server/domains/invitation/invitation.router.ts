@@ -6,22 +6,19 @@
  */
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
+import { requireActiveWeddingId } from '~/server/authz/active-wedding'
 import { invitationService } from '~/server/domains/invitation'
 import {
   createInvitationSchema,
   updateInvitationSchema,
 } from '~/server/domains/invitation/invitation.validator'
-import { weddingService } from '~/server/domains/wedding'
 
 export const invitationRouter = createTRPCRouter({
   /**
    * Create a new invitation
    */
   create: protectedProcedure.input(createInvitationSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(
-      ctx.auth.userId,
-      ctx.auth.activeOrganization?.organizationId ?? null
-    )
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return invitationService.createInvitation(ctx.authz, weddingId, input)
   }),
 
@@ -29,10 +26,7 @@ export const invitationRouter = createTRPCRouter({
    * Update an invitation RSVP
    */
   update: protectedProcedure.input(updateInvitationSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(
-      ctx.auth.userId,
-      ctx.auth.activeOrganization?.organizationId ?? null
-    )
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return invitationService.updateInvitation(ctx.authz, weddingId, input)
   }),
 
@@ -40,11 +34,8 @@ export const invitationRouter = createTRPCRouter({
    * Get all invitations for the current user's wedding
    */
   getAllByUserId: publicProcedure.query(async ({ ctx }) => {
-    if (!ctx.auth.userId) return undefined
-    const weddingId = await weddingService.getWeddingIdByUserId(
-      ctx.auth.userId,
-      ctx.auth.activeOrganization?.organizationId ?? null
-    )
+    if (!ctx.auth.userId || !ctx.auth.activeWeddingId) return undefined
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return invitationService.getAllByWeddingId(weddingId)
   }),
 })

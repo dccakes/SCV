@@ -13,19 +13,11 @@ jest.mock('~/server/domains/question', () => ({
   },
 }))
 
-jest.mock('~/server/domains/wedding', () => ({
-  weddingService: {
-    getScopedWeddingByUserId: jest.fn(),
-  },
-}))
-
 import { questionService } from '~/server/domains/question'
 import { questionRouter } from '~/server/domains/question/question.router'
-import { weddingService } from '~/server/domains/wedding'
 
 const mockUpsertQuestion = questionService.upsertQuestion as jest.Mock
 const mockDeleteQuestion = questionService.deleteQuestion as jest.Mock
-const mockGetScopedWeddingByUserId = weddingService.getScopedWeddingByUserId as jest.Mock
 
 describe('questionRouter authz context plumbing', () => {
   const activeOrganization = {
@@ -37,6 +29,7 @@ describe('questionRouter authz context plumbing', () => {
     auth: {
       session: { user: { id: 'user-123' } },
       activeOrganization,
+      activeWeddingId: 'wedding-123',
       userId: 'user-123',
     },
     db: {} as never,
@@ -45,7 +38,6 @@ describe('questionRouter authz context plumbing', () => {
 
   beforeEach(() => {
     jest.resetAllMocks()
-    mockGetScopedWeddingByUserId.mockResolvedValue({ id: 'wedding-123', organizationId: 'org-123' })
   })
 
   it('passes authz context and wedding linkage to upsert service call', async () => {
@@ -92,32 +84,58 @@ describe('questionRouter authz context plumbing', () => {
     })
   })
 
-  it('throws NOT_FOUND when wedding is missing for upsert', async () => {
-    mockGetScopedWeddingByUserId.mockRejectedValue(
-      new TRPCError({ code: 'NOT_FOUND', message: 'No wedding found' })
-    )
+  it('throws PRECONDITION_FAILED when active wedding is missing for upsert', async () => {
+    const callerWithoutWedding = questionRouter.createCaller({
+      auth: {
+        session: { user: { id: 'user-123' } },
+        activeOrganization,
+        activeWeddingId: null,
+        userId: 'user-123',
+      },
+      db: {} as never,
+      headers: new Headers(),
+    })
 
     await expect(
-      caller.upsert({
+      callerWithoutWedding.upsert({
         eventId: 'event-123',
         isRequired: false,
         text: 'Meal?',
         type: 'Text',
       })
-    ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+    ).rejects.toMatchObject({ code: 'PRECONDITION_FAILED' })
 
     expect(mockUpsertQuestion).not.toHaveBeenCalled()
   })
 
-  it('throws NOT_FOUND when wedding is missing for delete', async () => {
-    mockGetScopedWeddingByUserId.mockRejectedValue(
-      new TRPCError({ code: 'NOT_FOUND', message: 'No wedding found' })
+  it('throws PRECONDITION_FAILED when active wedding is missing for delete', async () => {
+    const callerWithoutWedding = questionRouter.createCaller({
+      auth: {
+        session: { user: { id: 'user-123' } },
+        activeOrganization,
+        activeWeddingId: null,
+        userId: 'user-123',
+      },
+      db: {} as never,
+      headers: new Headers(),
+    })
+
+    await expect(callerWithoutWedding.delete({ questionId: 'question-1' })).rejects.toMatchObject({
+      code: 'PRECONDITION_FAILED',
+    })
+
+    expect(mockDeleteQuestion).not.toHaveBeenCalled()
+  })
+
+  it('passes through service-level NOT_FOUND errors', async () => {
+    mockDeleteQuestion.mockRejectedValue(
+      new TRPCError({ code: 'NOT_FOUND', message: 'Question not found' })
     )
 
     await expect(caller.delete({ questionId: 'question-1' })).rejects.toMatchObject({
       code: 'NOT_FOUND',
     })
 
-    expect(mockDeleteQuestion).not.toHaveBeenCalled()
+    expect(mockDeleteQuestion).toHaveBeenCalledTimes(1)
   })
 })
