@@ -4,7 +4,6 @@ import { auth } from '~/lib/auth'
 import type { EttaRequest } from '~/lib/etta/types'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { resolveWorkspaceScope } from '~/server/authz/workspace-scope'
-import { weddingService } from '~/server/domains/wedding'
 
 async function normalizeMessages(messages: unknown): Promise<EttaRequest['messages']> {
   if (!Array.isArray(messages)) {
@@ -47,13 +46,13 @@ export async function validateCoupleSession(
     userId,
   })
 
-  const weddingId =
-    activeWeddingId ??
-    (await weddingService.getWeddingIdByUserId(userId, activeOrganization?.organizationId ?? null))
+  if (!activeWeddingId) {
+    throw new Error('No active wedding in workspace scope')
+  }
 
   const authz: AuthzContext = { userId, activeOrganization }
 
-  return { weddingId, userId, authz }
+  return { weddingId: activeWeddingId, userId, authz }
 }
 
 // ── Guest Tokens ────────────────────────────────────────────────────────────

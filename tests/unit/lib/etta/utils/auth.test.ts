@@ -3,7 +3,7 @@
  */
 
 import { auth } from '~/lib/auth'
-import { weddingService } from '~/server/domains/wedding'
+import { resolveWorkspaceScope } from '~/server/authz/workspace-scope'
 
 jest.mock('~/lib/auth', () => ({
   auth: {
@@ -13,10 +13,8 @@ jest.mock('~/lib/auth', () => ({
   },
 }))
 
-jest.mock('~/server/domains/wedding', () => ({
-  weddingService: {
-    getWeddingIdByUserId: jest.fn(),
-  },
+jest.mock('~/server/authz/workspace-scope', () => ({
+  resolveWorkspaceScope: jest.fn(),
 }))
 
 jest.mock('~/server/db', () => ({
@@ -26,7 +24,7 @@ jest.mock('~/server/db', () => ({
 }))
 
 const mockGetSession = auth.api.getSession as jest.Mock
-const mockGetWeddingId = weddingService.getWeddingIdByUserId as jest.Mock
+const mockResolveWorkspaceScope = resolveWorkspaceScope as jest.Mock
 
 // Set JWT_SECRET before importing auth utils (module reads it at call time)
 process.env.JWT_SECRET = 'test-secret-key-for-testing-minimum-length'
@@ -46,7 +44,10 @@ describe('validateCoupleSession', () => {
       user: { id: 'user-1' },
       session: { id: 'session-1' },
     })
-    mockGetWeddingId.mockResolvedValue('wedding-1')
+    mockResolveWorkspaceScope.mockResolvedValue({
+      activeOrganization: { organizationId: 'org-1', role: 'owner' },
+      activeWeddingId: 'wedding-1',
+    })
 
     const result = await validateCoupleSession(new Headers())
 
@@ -62,12 +63,15 @@ describe('validateCoupleSession', () => {
     await expect(validateCoupleSession(new Headers())).rejects.toThrow()
   })
 
-  it('throws when the user has no wedding', async () => {
+  it('throws when there is no active wedding in workspace scope', async () => {
     mockGetSession.mockResolvedValue({
       user: { id: 'user-1' },
       session: { id: 'session-1' },
     })
-    mockGetWeddingId.mockRejectedValue(new Error('No wedding found'))
+    mockResolveWorkspaceScope.mockResolvedValue({
+      activeOrganization: { organizationId: 'org-1', role: 'member' },
+      activeWeddingId: null,
+    })
 
     await expect(validateCoupleSession(new Headers())).rejects.toThrow()
   })
@@ -105,7 +109,10 @@ describe('resolveEttaAuth', () => {
       user: { id: 'user-1' },
       session: { id: 'session-1' },
     })
-    mockGetWeddingId.mockResolvedValue('wedding-1')
+    mockResolveWorkspaceScope.mockResolvedValue({
+      activeOrganization: { organizationId: 'org-1', role: 'owner' },
+      activeWeddingId: 'wedding-1',
+    })
 
     const req = new Request('http://localhost/api/etta', {
       method: 'POST',
@@ -126,7 +133,10 @@ describe('resolveEttaAuth', () => {
       user: { id: 'user-1' },
       session: { id: 'session-1' },
     })
-    mockGetWeddingId.mockResolvedValue('wedding-1')
+    mockResolveWorkspaceScope.mockResolvedValue({
+      activeOrganization: { organizationId: 'org-1', role: 'owner' },
+      activeWeddingId: 'wedding-1',
+    })
 
     const req = new Request('http://localhost/api/etta', {
       method: 'POST',
@@ -157,7 +167,10 @@ describe('resolveEttaAuth', () => {
       user: { id: 'u1' },
       session: { id: 'session-1' },
     })
-    mockGetWeddingId.mockResolvedValue('w1')
+    mockResolveWorkspaceScope.mockResolvedValue({
+      activeOrganization: { organizationId: 'org-1', role: 'owner' },
+      activeWeddingId: 'w1',
+    })
 
     const req = new Request('http://localhost/api/etta', {
       method: 'POST',
