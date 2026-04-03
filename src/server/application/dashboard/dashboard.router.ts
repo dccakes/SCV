@@ -7,6 +7,7 @@
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { DashboardService } from '~/server/application/dashboard/dashboard.service'
+import { requirePermission } from '~/server/authz/permission-checker'
 import { EventRepository } from '~/server/domains/event/event.repository'
 import { GuestRepository } from '~/server/domains/guest/guest.repository'
 import { HouseholdRepository } from '~/server/domains/household/household.repository'
@@ -41,6 +42,7 @@ const dashboardService = new DashboardService(
 
 export const dashboardRouter = createTRPCRouter({
   getByUserId: protectedProcedure.query(async ({ ctx }) => {
+    requirePermission(ctx.authz, { wedding: ['read'] })
     if (!ctx.auth.activeWeddingId) {
       return null
     }

@@ -7,6 +7,7 @@
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { requireActiveWeddingId } from '~/server/authz/active-wedding'
+import { requirePermission } from '~/server/authz/permission-checker'
 import { invitationService } from '~/server/domains/invitation'
 import {
   createInvitationSchema,
@@ -34,6 +35,7 @@ export const invitationRouter = createTRPCRouter({
    * Get all invitations for the current user's wedding
    */
   getAllByUserId: protectedProcedure.query(async ({ ctx }) => {
+    requirePermission(ctx.authz, { guest_invitation: ['read'] })
     const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return invitationService.getAllByWeddingId(weddingId)
   }),

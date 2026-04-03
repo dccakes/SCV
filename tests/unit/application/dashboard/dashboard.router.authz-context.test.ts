@@ -4,6 +4,8 @@ jest.mock('lib/auth', () => ({
   auth: { api: { getSession: jest.fn().mockResolvedValue(null) } },
 }))
 
+jest.mock('~/lib/auth-permissions', () => require('~/lib/__mocks__/auth-permissions'))
+
 jest.mock('server/db', () => ({ db: {} }))
 jest.mock('server/infrastructure/database', () => ({ db: {} }))
 jest.mock('server/domains/event/event.repository', () => ({
@@ -89,5 +91,24 @@ describe('dashboardRouter authz context plumbing', () => {
     })
 
     await expect(caller.getByUserId()).rejects.toMatchObject({ code: 'UNAUTHORIZED' })
+  })
+
+  it('rejects viewer dashboard reads with FORBIDDEN', async () => {
+    const caller = dashboardRouter.createCaller({
+      auth: {
+        session: { user: { id: 'user-123' } },
+        activeOrganization: { organizationId: 'org-123', role: 'viewer' },
+        activeWeddingId: 'wedding-123',
+        userId: 'user-123',
+      },
+      authz: {
+        userId: 'user-123',
+        activeOrganization: { organizationId: 'org-123', role: 'viewer' },
+      },
+      db: {} as never,
+      headers: new Headers(),
+    })
+
+    await expect(caller.getByUserId()).rejects.toMatchObject({ code: 'FORBIDDEN' })
   })
 })

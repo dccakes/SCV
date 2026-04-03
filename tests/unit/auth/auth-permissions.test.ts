@@ -136,10 +136,11 @@ describe('auth permission matrix', () => {
     expect(can('member', { member: ['update'] })).toBe(false)
   })
 
-  it('keeps viewer read-only and admin/owner invitation delivery-capable', () => {
+  it('keeps viewer fully restricted and admin/owner invitation delivery-capable', () => {
     expect(can('viewer', { guest: ['create'] })).toBe(false)
-    expect(can('viewer', { event: ['read'] })).toBe(true)
-    expect(can('viewer', { rsvp: ['read_responses'] })).toBe(true)
+    expect(can('viewer', { event: ['read'] })).toBe(false)
+    expect(can('viewer', { rsvp: ['read_responses'] })).toBe(false)
+    expect(can('viewer', { wedding: ['read'] })).toBe(false)
     expect(can('viewer', { wedding: ['update'] })).toBe(false)
     expect(can('member', { wedding: ['update'] })).toBe(true)
     expect(can('admin', { guest_invitation: ['send', 'resend', 'cancel'] })).toBe(true)

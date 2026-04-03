@@ -58,15 +58,18 @@ const memberGrants: PermissionMap = {
 }
 
 const viewerGrants: PermissionMap = {
-  guest_invitation: ['read'],
-  guest_event: ['read'],
-  rsvp: ['read_responses'],
-  event: ['read'],
-  guest: ['read'],
-  vendor: ['read'],
-  vendor_quote: ['read'],
-  website: ['read'],
-  wedding: ['read'],
+  organization: [],
+  member: [],
+  invitation: [],
+  guest_invitation: [],
+  guest_event: [],
+  rsvp: [],
+  event: [],
+  guest: [],
+  vendor: [],
+  vendor_quote: [],
+  website: [],
+  wedding: [],
 }
 
 export const organizationRoles = {

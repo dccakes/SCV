@@ -7,6 +7,7 @@
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { requireActiveWeddingId } from '~/server/authz/active-wedding'
+import { requirePermission } from '~/server/authz/permission-checker'
 import { eventService } from '~/server/domains/event'
 import {
   createEventSchema,
@@ -29,6 +30,7 @@ export const eventRouter = createTRPCRouter({
    * Get all events for the current user's wedding
    */
   getAllByUserId: protectedProcedure.query(async ({ ctx }) => {
+    requirePermission(ctx.authz, { event: ['read'] })
     const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return eventService.getWeddingEvents(weddingId)
   }),
@@ -37,6 +39,7 @@ export const eventRouter = createTRPCRouter({
    * Get all events for the current user's wedding with RSVP statistics
    */
   getAllByUserIdWithStats: protectedProcedure.query(async ({ ctx }) => {
+    requirePermission(ctx.authz, { event: ['read'] })
     const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return eventService.getWeddingEventsWithStats(weddingId)
   }),
