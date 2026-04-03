@@ -13,7 +13,7 @@ export default async function AuthPage({ params }: { params: Promise<{ path: str
           <section className='rounded-md border border-border bg-card p-3 text-card-foreground shadow-sm'>
             <h2 className='font-medium text-sm'>Demo Accounts</h2>
             <p className='mt-1 text-muted-foreground text-xs'>
-              Try the seeded wedding demo data with either account.
+              Try the seeded wedding demo data with one of these accounts.
             </p>
             <ul className='mt-2 list-disc space-y-1 pl-5 text-xs'>
               <li>
@@ -21,6 +21,9 @@ export default async function AuthPage({ params }: { params: Promise<{ path: str
               </li>
               <li>
                 <span className='font-medium'>fiona@swamp.wed</span>
+              </li>
+              <li>
+                <span className='font-medium'>queen.lillian@swamp.wed</span>
               </li>
             </ul>
             <p className='mt-2 text-xs'>Password: password123</p>

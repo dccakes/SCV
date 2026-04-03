@@ -8,6 +8,7 @@ test.describe('Authentication Flow', () => {
     await expect(page.getByLabel('Email')).toBeVisible()
     await expect(page.getByLabel('Password')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Login' })).toBeVisible()
+    await expect(page.getByText('queen.lillian@swamp.wed')).toBeVisible()
   })
 
   test('should reject invalid credentials', async ({ page }) => {

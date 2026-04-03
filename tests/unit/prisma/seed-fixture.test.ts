@@ -2,7 +2,12 @@ import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 type SeedFixture = {
-  users: Array<{ firstName: string; email: string; password: string }>
+  users: Array<{
+    firstName: string
+    email: string
+    password: string
+    role: 'owner' | 'admin' | 'member' | 'viewer'
+  }>
   wedding: { groomFirstName: string; brideFirstName: string }
   events: Array<{ slug: string; name: string }>
   households: Array<{
@@ -37,9 +42,14 @@ describe('Shrek and Fiona seed fixture', () => {
     const fixture = readFixture()
 
     expect(fixture.users.map((user) => user.email)).toEqual(
-      expect.arrayContaining(['shrek@swamp.wed', 'fiona@swamp.wed'])
+      expect.arrayContaining(['shrek@swamp.wed', 'fiona@swamp.wed', 'queen.lillian@swamp.wed'])
     )
     expect(fixture.users.every((user) => user.password === 'password123')).toBe(true)
+    expect(fixture.users.find((user) => user.email === 'shrek@swamp.wed')?.role).toBe('owner')
+    expect(fixture.users.find((user) => user.email === 'fiona@swamp.wed')?.role).toBe('member')
+    expect(fixture.users.find((user) => user.email === 'queen.lillian@swamp.wed')?.role).toBe(
+      'viewer'
+    )
 
     expect(fixture.wedding.groomFirstName).toBe('Shrek')
     expect(fixture.wedding.brideFirstName).toBe('Fiona')
