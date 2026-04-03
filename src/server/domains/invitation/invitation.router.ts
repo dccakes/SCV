@@ -5,7 +5,7 @@
  * This is a thin layer that handles input validation and delegates to the service.
  */
 
-import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
+import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { requireActiveWeddingId } from '~/server/authz/active-wedding'
 import { invitationService } from '~/server/domains/invitation'
 import {
@@ -33,8 +33,7 @@ export const invitationRouter = createTRPCRouter({
   /**
    * Get all invitations for the current user's wedding
    */
-  getAllByUserId: publicProcedure.query(async ({ ctx }) => {
-    if (!ctx.auth.userId || !ctx.auth.activeWeddingId) return undefined
+  getAllByUserId: protectedProcedure.query(async ({ ctx }) => {
     const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return invitationService.getAllByWeddingId(weddingId)
   }),

@@ -19,6 +19,8 @@ import { eventService } from 'server/domains/event'
 import { eventRouter } from 'server/domains/event/event.router'
 
 const mockCreateEvent = eventService.createEvent as jest.Mock
+const mockGetWeddingEvents = eventService.getWeddingEvents as jest.Mock
+const mockGetWeddingEventsWithStats = eventService.getWeddingEventsWithStats as jest.Mock
 const mockUpdateEvent = eventService.updateEvent as jest.Mock
 const mockDeleteEvent = eventService.deleteEvent as jest.Mock
 
@@ -86,5 +88,37 @@ describe('eventRouter authz context plumbing', () => {
       'wedding-123',
       'event-1'
     )
+  })
+
+  it('keeps read routes protected and scoped to active wedding', async () => {
+    mockGetWeddingEvents.mockResolvedValue([{ id: 'event-1' }])
+    mockGetWeddingEventsWithStats.mockResolvedValue([{ id: 'event-1', guestResponses: {} }])
+
+    await caller.getAllByUserId()
+    await caller.getAllByUserIdWithStats()
+
+    expect(mockGetWeddingEvents).toHaveBeenCalledWith('wedding-123')
+    expect(mockGetWeddingEventsWithStats).toHaveBeenCalledWith('wedding-123')
+  })
+
+  it('rejects unauthenticated reads with UNAUTHORIZED', async () => {
+    const unauthenticatedCaller = eventRouter.createCaller({
+      auth: {
+        session: null,
+        activeOrganization: null,
+        activeWeddingId: 'wedding-123',
+        userId: null,
+      },
+      authz: {
+        userId: '',
+        activeOrganization: null,
+      },
+      db: {} as never,
+      headers: new Headers(),
+    })
+
+    await expect(unauthenticatedCaller.getAllByUserId()).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+    })
   })
 })

@@ -16,6 +16,7 @@ import { invitationService } from 'server/domains/invitation'
 import { invitationRouter } from 'server/domains/invitation/invitation.router'
 
 const mockCreateInvitation = invitationService.createInvitation as jest.Mock
+const mockGetAllByWeddingId = invitationService.getAllByWeddingId as jest.Mock
 const mockUpdateInvitation = invitationService.updateInvitation as jest.Mock
 
 describe('invitationRouter authz context plumbing', () => {
@@ -87,5 +88,34 @@ describe('invitationRouter authz context plumbing', () => {
         rsvp: 'Attending',
       }
     )
+  })
+
+  it('keeps invitation list route protected and scoped to active wedding', async () => {
+    mockGetAllByWeddingId.mockResolvedValue([{ id: 'inv-1' }])
+
+    await caller.getAllByUserId()
+
+    expect(mockGetAllByWeddingId).toHaveBeenCalledWith('wedding-123')
+  })
+
+  it('rejects unauthenticated invitation reads with UNAUTHORIZED', async () => {
+    const unauthenticatedCaller = invitationRouter.createCaller({
+      auth: {
+        session: null,
+        activeOrganization: null,
+        activeWeddingId: 'wedding-123',
+        userId: null,
+      },
+      authz: {
+        userId: '',
+        activeOrganization: null,
+      },
+      db: {} as never,
+      headers: new Headers(),
+    })
+
+    await expect(unauthenticatedCaller.getAllByUserId()).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+    })
   })
 })
