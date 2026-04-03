@@ -253,11 +253,17 @@ export function OrganizationMembersSettingsCard() {
             <OrganizationMembersErrorState error={state.error} onRetry={loadOrganizationState} />
           ) : null}
           {!state.isLoading && !state.error ? (
-            <OrganizationMembersList
-              canUpdateMembers={state.canUpdateMembers}
-              members={state.members}
-              onEditRole={setRoleDialogMember}
-            />
+            <div className='space-y-3'>
+              <OrganizationMembersList
+                canUpdateMembers={state.canUpdateMembers}
+                members={state.members}
+                onEditRole={setRoleDialogMember}
+              />
+              <OrganizationPermissionsHint
+                canInvite={state.canInvite}
+                canUpdateMembers={state.canUpdateMembers}
+              />
+            </div>
           ) : null}
         </CardContent>
       </Card>
@@ -373,6 +379,40 @@ function OrganizationMembersList({
           </div>
         ))}
     </div>
+  )
+}
+
+function OrganizationPermissionsHint({
+  canInvite,
+  canUpdateMembers,
+}: {
+  canInvite: boolean
+  canUpdateMembers: boolean
+}) {
+  if (canInvite && canUpdateMembers) {
+    return null
+  }
+
+  if (!canInvite && !canUpdateMembers) {
+    return (
+      <p className='text-foreground/60 text-sm'>
+        You currently have view-only access in this workspace.
+      </p>
+    )
+  }
+
+  if (!canInvite) {
+    return (
+      <p className='text-foreground/60 text-sm'>
+        Your role can edit members but cannot send member invitations.
+      </p>
+    )
+  }
+
+  return (
+    <p className='text-foreground/60 text-sm'>
+      Your role can invite members but cannot change existing member roles.
+    </p>
   )
 }
 
