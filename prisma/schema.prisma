@@ -58,7 +58,7 @@ model UserWedding {
   weddingId  String
   wedding    Wedding  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
 
-  // Role for future access control (e.g., "owner", "editor", "viewer")
+  // Role for future access control (e.g., "owner", "member", "viewer")
   role       String   @default("owner")
 
   // Indicates if this is the primary/creator user
