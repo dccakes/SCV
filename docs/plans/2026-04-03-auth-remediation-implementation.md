@@ -373,3 +373,18 @@ Recommended approach:
 5. add server page gating
 6. refactor Etta onto the same use-cases
 7. run production audit
+
+## Progress Log
+
+- 2026-04-03: Added canonical workspace capabilities in request context and gated nav/layout by
+  capability.
+- 2026-04-03: Updated seed/e2e role fixtures to owner/member/viewer and removed editor role usage
+  in runtime authz paths.
+- 2026-04-03: Hardened read authorization across guest/event/invitation/dashboard surfaces and
+  aligned dashboard APIs to scoped-only reads.
+- 2026-04-03: Refactored workspace scope resolution into resolver/repository/service layers with
+  compatibility tests preserved.
+- 2026-04-03: Consolidated shared auth display/error helpers and completed dashboard workspace
+  endpoint fallout updates.
+- 2026-04-03: Added shared script dry-run arg parser and rewired workspace operational scripts to
+  use it.
