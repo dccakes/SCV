@@ -2,9 +2,7 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { ReactNode } from 'react'
 import AuthenticatedAppShell from '@/components/layout/authenticated-app-shell'
-import { getSidebarWeddingInfo } from '@/components/old_dashboard/sidebar-wedding-info'
 import { auth } from '~/lib/auth'
-import { getDashboardOverview } from '~/server/application/dashboard/dashboard-request-data'
 import { readWorkspaceCapabilities } from '~/server/authz/workspace-capabilities'
 import { resolveWorkspaceScope } from '~/server/authz/workspace-scope'
 import { api } from '~/trpc/server'
@@ -81,18 +79,30 @@ export async function AuthenticatedLayoutFrame(props: Readonly<AuthenticatedLayo
     redirect('/')
   }
 
-  let dashboardData: Awaited<ReturnType<typeof getDashboardOverview>> = null
+  let coupleName: string | undefined
+  let weddingDate: string | undefined
+  let weddingLocation: string | undefined
   try {
-    dashboardData = await getDashboardOverview()
+    const details = await api.wedding.getDetails()
+    const brideFirstName = details?.brideFirstName?.trim() ?? ''
+    const groomFirstName = details?.groomFirstName?.trim() ?? ''
+    coupleName =
+      brideFirstName && groomFirstName ? `${brideFirstName} & ${groomFirstName}` : undefined
+    weddingDate = details?.weddingDate
+      ? new Date(details.weddingDate).toLocaleDateString('en-us', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        })
+      : undefined
+    weddingLocation = details?.weddingLocation?.trim() || undefined
   } catch (error) {
     if (!NON_FATAL_AUTH_ERROR_CODES.has(getErrorCode(error) ?? '')) {
       throw error
     }
   }
   const isEttaConfigured = Boolean(process.env.AI_GATEWAY_API_KEY)
-  const { coupleName, weddingDate, weddingLocation } = getSidebarWeddingInfo(
-    dashboardData?.weddingData
-  )
   const currentUserFirstName = getUserFirstName(session?.user?.name, session?.user?.email)
   const currentUserInitials = getUserInitials(session?.user?.name, session?.user?.email)
 

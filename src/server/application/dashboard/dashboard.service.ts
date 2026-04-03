@@ -50,18 +50,6 @@ export class DashboardService {
   ) {}
 
   /**
-   * Legacy entrypoint: resolves wedding by user and returns dashboard overview.
-   * Prefer getOverviewForScopedWedding for workspace-scoped routes.
-   */
-  async getOverview(userId: string): Promise<DashboardData | null> {
-    const wedding = await this.weddingRepo.findByUserId(userId)
-    if (!wedding) {
-      return null
-    }
-    return this.getOverviewForWedding(userId, wedding)
-  }
-
-  /**
    * Scoped entrypoint: returns dashboard overview for a specific wedding id.
    * This is the primary path for protected workspace routes.
    */

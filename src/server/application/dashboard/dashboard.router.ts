@@ -41,7 +41,7 @@ const dashboardService = new DashboardService(
 )
 
 export const dashboardRouter = createTRPCRouter({
-  getByUserId: protectedProcedure.query(async ({ ctx }) => {
+  getForActiveWorkspace: protectedProcedure.query(async ({ ctx }) => {
     requirePermission(ctx.authz, { wedding: ['read'] })
     if (!ctx.auth.activeWeddingId) {
       return null

@@ -61,7 +61,6 @@ import {
 } from '~/server/domains/website/website.repository'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
-  mockFindByUserId,
   mockFindById as mockWeddingFindById,
   resetMocks as resetWeddingMocks,
   WeddingRepository,
@@ -78,7 +77,6 @@ const mockWebsiteFindByWeddingIdWithQuestionsFn =
 const mockGuestCountByWeddingIdFn = mockCountByWeddingId as jest.Mock
 const mockQuestionFindMostRecentAnswerFn = mockFindMostRecentAnswerByQuestionId as jest.Mock
 const mockWeddingFindByIdFn = mockWeddingFindById as jest.Mock
-const mockWeddingFindByUserIdFn = mockFindByUserId as jest.Mock
 
 // Mock data
 const mockUser = {
@@ -400,7 +398,7 @@ describe('DashboardService', () => {
     const weddingRepo = new WeddingRepository({} as never)
 
     // Setup default mock return values
-    mockWeddingFindByUserIdFn.mockResolvedValue(mockWedding)
+    mockWeddingFindByIdFn.mockResolvedValue(mockWedding)
     mockHouseholdFindByWeddingIdWithGuestsAndGifts.mockResolvedValue(mockHouseholds)
     mockInvitationFindByWeddingIdFn.mockResolvedValue(mockInvitations)
     mockEventFindByWeddingIdWithQuestionsFn.mockResolvedValue(mockEvents)
@@ -466,14 +464,15 @@ describe('DashboardService', () => {
     await service.getOverviewForScopedWedding('user-123', 'wedding-scoped')
 
     expect(mockHouseholdFindByWeddingIdWithGuestsAndGifts).toHaveBeenCalledWith('wedding-scoped')
-    expect(mockWeddingFindByUserIdFn).not.toHaveBeenCalled()
   })
 
-  describe('getOverview', () => {
-    it('should return null when wedding not found', async () => {
-      mockWeddingFindByUserIdFn.mockResolvedValue(null)
+  describe('getOverviewForScopedWedding', () => {
+    const getOverview = () => service.getOverviewForScopedWedding('user-123', 'wedding-123')
 
-      const result = await service.getOverview('user-123')
+    it('should return null when wedding not found', async () => {
+      mockWeddingFindByIdFn.mockResolvedValue(null)
+
+      const result = await getOverview()
 
       expect(result).toBeNull()
     })
@@ -481,7 +480,7 @@ describe('DashboardService', () => {
     it('should return null when user not found', async () => {
       mockUserFindByIdFn.mockResolvedValue(null)
 
-      const result = await service.getOverview('user-123')
+      const result = await getOverview()
 
       expect(result).toBeNull()
     })
@@ -489,7 +488,7 @@ describe('DashboardService', () => {
     it('should return data even when website not found', async () => {
       mockWebsiteFindByWeddingIdWithQuestionsFn.mockResolvedValue(null)
 
-      const result = await service.getOverview('user-123')
+      const result = await getOverview()
 
       // Should not be null - website is optional
       expect(result).not.toBeNull()
@@ -498,7 +497,7 @@ describe('DashboardService', () => {
     })
 
     it('should return complete dashboard data', async () => {
-      const result = await service.getOverview('user-123')
+      const result = await getOverview()
 
       expect(result).not.toBeNull()
       expect(result?.weddingData).toBeDefined()
@@ -509,7 +508,7 @@ describe('DashboardService', () => {
     })
 
     it('should include wedding data with names', async () => {
-      const result = await service.getOverview('user-123')
+      const result = await getOverview()
 
       expect(result?.weddingData.groomFirstName).toBe('John')
       expect(result?.weddingData.groomLastName).toBe('Smith')
@@ -518,21 +517,21 @@ describe('DashboardService', () => {
     })
 
     it('should include formatted wedding date', async () => {
-      const result = await service.getOverview('user-123')
+      const result = await getOverview()
 
       expect(result?.weddingData.date).toBeDefined()
       expect(result?.weddingData.date.standardFormat).toContain('2025')
     })
 
     it('should calculate days remaining', async () => {
-      const result = await service.getOverview('user-123')
+      const result = await getOverview()
 
       // Days remaining should be calculated (will vary based on current date)
       expect(result?.weddingData.daysRemaining).toBeDefined()
     })
 
     it('should include website with general questions', async () => {
-      const result = await service.getOverview('user-123')
+      const result = await getOverview()
 
       expect(result?.weddingData.website).toBeDefined()
       expect(result?.weddingData.website.generalQuestions).toHaveLength(1)
@@ -542,7 +541,7 @@ describe('DashboardService', () => {
     })
 
     it('should include recent answers for questions', async () => {
-      const result = await service.getOverview('user-123')
+      const result = await getOverview()
 
       const question = result?.weddingData.website.generalQuestions[0]
       expect(question?.recentAnswer).toBeDefined()
@@ -550,7 +549,7 @@ describe('DashboardService', () => {
     })
 
     it('should merge guest invitations into households', async () => {
-      const result = await service.getOverview('user-123')
+      const result = await getOverview()
 
       const household1 = result?.households.find((h) => h.id === 'household-1')
       expect(household1?.guests[0]?.invitations).toBeDefined()
@@ -558,7 +557,7 @@ describe('DashboardService', () => {
     })
 
     it('should calculate RSVP statistics for each event', async () => {
-      const result = await service.getOverview('user-123')
+      const result = await getOverview()
 
       const weddingEvent = result?.events.find((e) => e.id === 'event-wedding')
       expect(weddingEvent?.guestResponses).toBeDefined()
@@ -567,7 +566,7 @@ describe('DashboardService', () => {
     })
 
     it('should count invited guests correctly', async () => {
-      const result = await service.getOverview('user-123')
+      const result = await getOverview()
 
       const rehearsalEvent = result?.events.find((e) => e.id === 'event-rehearsal')
       expect(rehearsalEvent?.guestResponses.invited).toBe(1)
@@ -575,7 +574,7 @@ describe('DashboardService', () => {
     })
 
     it('should include event questions with recent answers', async () => {
-      const result = await service.getOverview('user-123')
+      const result = await getOverview()
 
       const weddingEvent = result?.events.find((e) => e.id === 'event-wedding')
       expect(weddingEvent?.questions).toHaveLength(1)
@@ -583,7 +582,7 @@ describe('DashboardService', () => {
     })
 
     it('should call repositories with correct weddingId', async () => {
-      await service.getOverview('user-123')
+      await getOverview()
 
       expect(mockHouseholdFindByWeddingIdWithGuestsAndGifts).toHaveBeenCalledWith('wedding-123')
       expect(mockInvitationFindByWeddingIdFn).toHaveBeenCalledWith('wedding-123') // findByWeddingIdWithGuestTagAlong
@@ -597,14 +596,14 @@ describe('DashboardService', () => {
     it('should handle missing wedding date gracefully', async () => {
       mockEventFindByWeddingIdWithQuestionsFn.mockResolvedValue([]) // No events at all
 
-      const result = await service.getOverview('user-123')
+      const result = await getOverview()
 
       expect(result?.weddingData.date.standardFormat).toBeUndefined()
       expect(result?.weddingData.daysRemaining).toBe(-1)
     })
 
     it('should include wedding location from primary event', async () => {
-      const result = await service.getOverview('user-123')
+      const result = await getOverview()
 
       expect(result?.weddingData.location).toBe('The Grand Ballroom')
     })
@@ -613,7 +612,7 @@ describe('DashboardService', () => {
       const eventsWithNoVenue = [{ ...mockEvents[0], venue: null }]
       mockEventFindByWeddingIdWithQuestionsFn.mockResolvedValue(eventsWithNoVenue)
 
-      const result = await service.getOverview('user-123')
+      const result = await getOverview()
 
       expect(result?.weddingData.location).toBeNull()
     })
@@ -623,7 +622,7 @@ describe('DashboardService', () => {
       const customEvents = [{ ...mockEvents[0], name: 'Ceremony', venue: 'Beach Resort' }]
       mockEventFindByWeddingIdWithQuestionsFn.mockResolvedValue(customEvents)
 
-      const result = await service.getOverview('user-123')
+      const result = await getOverview()
 
       expect(result?.weddingData.location).toBe('Beach Resort')
       expect(result?.weddingData.date.standardFormat).toContain('2025')
@@ -633,7 +632,7 @@ describe('DashboardService', () => {
       mockHouseholdFindByWeddingIdWithGuestsAndGifts.mockResolvedValue([])
       mockGuestCountByWeddingIdFn.mockResolvedValue(0)
 
-      const result = await service.getOverview('user-123')
+      const result = await getOverview()
 
       expect(result?.households).toEqual([])
       expect(result?.totalGuests).toBe(0)
@@ -642,7 +641,7 @@ describe('DashboardService', () => {
     it('should handle empty events', async () => {
       mockEventFindByWeddingIdWithQuestionsFn.mockResolvedValue([])
 
-      const result = await service.getOverview('user-123')
+      const result = await getOverview()
 
       expect(result?.events).toEqual([])
       expect(result?.totalEvents).toBe(0)
@@ -662,14 +661,14 @@ describe('DashboardService', () => {
         },
       ])
 
-      const result = await service.getOverview('user-123')
+      const result = await getOverview()
 
       expect(result?.households[0]?.guests[0]?.guestTags).toEqual([{ tagId }])
     })
 
     it('should return empty guestTags array when guest has no tag assignments', async () => {
       // Default mock has guestTagAssignments: []
-      const result = await service.getOverview('user-123')
+      const result = await getOverview()
 
       expect(result?.households[0]?.guests[0]?.guestTags).toEqual([])
     })
@@ -689,7 +688,7 @@ describe('DashboardService', () => {
         },
       ])
 
-      const result = await service.getOverview('user-123')
+      const result = await getOverview()
 
       expect(result?.households[0]?.guests[0]?.guestTags).toEqual([
         { tagId: tagId1 },
@@ -715,7 +714,7 @@ describe('DashboardService', () => {
         },
       ])
 
-      const result = await service.getOverview('user-123')
+      const result = await getOverview()
 
       expect(result?.households[0]?.guests[0]?.guestTags).toEqual([{ tagId }])
       expect(result?.households[0]?.guests[1]?.guestTags).toEqual([])

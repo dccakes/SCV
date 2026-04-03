@@ -4,12 +4,12 @@ import { api } from '~/trpc/server'
 jest.mock('~/trpc/server', () => ({
   api: {
     dashboard: {
-      getByUserId: jest.fn(),
+      getForActiveWorkspace: jest.fn(),
     },
   },
 }))
 
-const mockDashboardQuery = api.dashboard.getByUserId as jest.Mock
+const mockDashboardQuery = api.dashboard.getForActiveWorkspace as jest.Mock
 
 describe('dashboard request data loader', () => {
   beforeEach(() => {
