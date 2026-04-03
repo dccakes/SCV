@@ -2,12 +2,15 @@
  * @jest-environment node
  */
 
+import { TRPCError } from '@trpc/server'
+
 jest.mock('~/server/authz/permission-checker', () => ({
   requirePermission: jest.fn(() => ({ organizationId: 'org-1', role: 'owner' })),
 }))
 
 import { getVendorTools } from '~/lib/etta/tools/vendors'
 import type { EttaContext } from '~/lib/etta/types'
+import { requirePermission } from '~/server/authz/permission-checker'
 import { db } from '~/server/db'
 import { vendorService } from '~/server/domains/vendor'
 
@@ -32,6 +35,8 @@ const mockVendorService = vendorService as {
   getQuote: jest.Mock
   updateQuote: jest.Mock
 }
+
+const mockRequirePermission = requirePermission as jest.Mock
 
 const mockDb = db as {
   ettaSuggestion: {
@@ -61,7 +66,10 @@ const mockCtx: EttaContext = {
 }
 
 describe('getVendorTools', () => {
-  beforeEach(() => jest.clearAllMocks())
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockRequirePermission.mockImplementation(() => ({ organizationId: 'org-1', role: 'owner' }))
+  })
 
   const tools = getVendorTools(mockCtx)
 
@@ -99,6 +107,17 @@ describe('getVendorTools', () => {
         'wedding-123',
         'VENUE'
       )
+    })
+
+    it('requires authz context', async () => {
+      const toolsWithoutAuthz = getVendorTools({ ...mockCtx, authz: undefined })
+
+      await expect(
+        toolsWithoutAuthz.get_vendor_list.execute(
+          {},
+          { toolCallId: 'tc2b', messages: [], abortSignal: undefined as never }
+        )
+      ).rejects.toThrow('Authorization context required')
     })
   })
 
@@ -146,6 +165,19 @@ describe('getVendorTools', () => {
       )
 
       expect(result.suggestionId).toBe('sug-42')
+    })
+
+    it('rejects viewer add_vendor when permission check fails', async () => {
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      })
+
+      await expect(
+        tools.add_vendor.execute(
+          { name: 'No Access Vendor', category: 'MUSIC' as const },
+          { toolCallId: 'tc4b', messages: [], abortSignal: undefined as never }
+        )
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
     })
   })
 

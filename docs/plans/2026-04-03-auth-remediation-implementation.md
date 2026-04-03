@@ -396,3 +396,5 @@ Recommended approach:
   routes to delegate authorization and scoped reads through it.
 - 2026-04-03: Hardened vendor domain API shape by renaming the unpermissioned raw list method to
   `getVendorsSystem` to make system-only usage explicit.
+- 2026-04-03: Added vendor authz regression coverage for router (`viewer`, unauthenticated, missing
+  active wedding) and Etta vendor tool permission-denied scenarios.
