@@ -8,7 +8,7 @@ jest.mock('~/server/db', () => ({
 import {
   getSessionActiveOrganizationId,
   resolveWorkspaceScope,
-} from '~/server/authz/workspace-scope'
+} from '~/server/application/workspace/workspace-scope'
 import { db } from '~/server/db'
 
 const mockQueryRaw = db.$queryRaw as unknown as jest.Mock

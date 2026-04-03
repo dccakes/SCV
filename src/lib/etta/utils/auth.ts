@@ -2,8 +2,8 @@ import { convertToModelMessages } from 'ai'
 import { jwtVerify, SignJWT } from 'jose'
 import { auth } from '~/lib/auth'
 import type { EttaRequest } from '~/lib/etta/types'
+import { resolveWorkspaceScope } from '~/server/application/workspace/workspace-scope'
 import type { AuthzContext } from '~/server/authz/authorization.types'
-import { resolveWorkspaceScope } from '~/server/authz/workspace-scope'
 
 async function normalizeMessages(messages: unknown): Promise<EttaRequest['messages']> {
   if (!Array.isArray(messages)) {

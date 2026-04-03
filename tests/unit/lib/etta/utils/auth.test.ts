@@ -3,7 +3,7 @@
  */
 
 import { auth } from '~/lib/auth'
-import { resolveWorkspaceScope } from '~/server/authz/workspace-scope'
+import { resolveWorkspaceScope } from '~/server/application/workspace/workspace-scope'
 
 jest.mock('~/lib/auth', () => ({
   auth: {
@@ -13,7 +13,7 @@ jest.mock('~/lib/auth', () => ({
   },
 }))
 
-jest.mock('~/server/authz/workspace-scope', () => ({
+jest.mock('~/server/application/workspace/workspace-scope', () => ({
   resolveWorkspaceScope: jest.fn(),
 }))
 

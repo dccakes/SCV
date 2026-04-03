@@ -4,9 +4,9 @@ import type { ReactNode } from 'react'
 import AuthenticatedAppShell from '@/components/layout/authenticated-app-shell'
 import { auth } from '~/lib/auth'
 import { getUserFirstName, getUserInitials } from '~/lib/user-display'
+import { resolveWorkspaceScope } from '~/server/application/workspace/workspace-scope'
 import { isAccessError } from '~/server/authz/auth-error-helpers'
 import { readWorkspaceCapabilities } from '~/server/authz/workspace-capabilities'
-import { resolveWorkspaceScope } from '~/server/authz/workspace-scope'
 import { api } from '~/trpc/server'
 
 type AuthenticatedLayoutFrameProps = {

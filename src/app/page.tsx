@@ -5,8 +5,8 @@ import { headers } from 'next/headers'
 import AuthenticatedView from '~/components/home/authenticated-view'
 import NonAuthenticatedView from '~/components/home/non-authenticated-view'
 import { auth } from '~/lib/auth'
+import { resolveWorkspaceScope } from '~/server/application/workspace/workspace-scope'
 import { readWorkspaceCapabilities } from '~/server/authz/workspace-capabilities'
-import { resolveWorkspaceScope } from '~/server/authz/workspace-scope'
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 

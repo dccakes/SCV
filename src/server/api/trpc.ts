@@ -11,8 +11,8 @@ import { initTRPC, TRPCError } from '@trpc/server'
 import superjson from 'superjson'
 import { z } from 'zod'
 import { auth } from '~/lib/auth'
+import { resolveWorkspaceScope } from '~/server/application/workspace/workspace-scope'
 import type { ActiveOrganization, AuthzContext } from '~/server/authz/authorization.types'
-import { resolveWorkspaceScope } from '~/server/authz/workspace-scope'
 import { db } from '~/server/db'
 
 /**
