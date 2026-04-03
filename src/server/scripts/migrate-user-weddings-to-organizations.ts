@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
+import { parseDryRunArgs } from '~/server/scripts/script-args'
 
 type DatabaseClient = Awaited<typeof import('~/server/db')>['db']
 
@@ -21,18 +22,7 @@ type ParsedArgs = {
 }
 
 export const parseArgs = (argv: string[]): ParsedArgs => {
-  const hasWriteFlag = argv.includes('--write')
-  const hasDryRunFlag = argv.includes('--dry-run')
-
-  if (hasWriteFlag) {
-    return { dryRun: false }
-  }
-
-  if (hasDryRunFlag) {
-    return { dryRun: true }
-  }
-
-  return { dryRun: true }
+  return parseDryRunArgs(argv)
 }
 
 const findOrganizationIdBySlug = async (

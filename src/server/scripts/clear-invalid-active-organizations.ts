@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url'
 import { Prisma } from '@prisma/client'
+import { parseDryRunArgs } from '~/server/scripts/script-args'
 
 type DatabaseClient = Awaited<typeof import('~/server/db')>['db']
 
@@ -12,9 +13,7 @@ type InvalidSessionRow = {
 }
 
 export const parseArgs = (argv: string[]): ParsedArgs => ({
-  // TODO(review-implementation): extract the shared dry-run/write flag parser
-  // used by the workspace-scope operational scripts.
-  dryRun: !argv.includes('--write'),
+  dryRun: parseDryRunArgs(argv).dryRun,
 })
 
 export async function clearInvalidActiveOrganizations(

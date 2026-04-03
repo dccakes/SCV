@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url'
 import { Prisma } from '@prisma/client'
+import { parseDryRunArgs } from '~/server/scripts/script-args'
 
 type DatabaseClient = Awaited<typeof import('~/server/db')>['db']
 
@@ -17,7 +18,7 @@ type SessionRepairRow = {
 export type SessionRepairAction = 'clear' | 'keep' | 'noop' | 'set'
 
 export const parseArgs = (argv: string[]): ParsedArgs => ({
-  dryRun: !argv.includes('--write'),
+  dryRun: parseDryRunArgs(argv).dryRun,
 })
 
 const unique = (values: string[]): string[] => Array.from(new Set(values))
