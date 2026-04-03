@@ -2,21 +2,22 @@ import { getSessionCookie } from 'better-auth/cookies'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
-const PUBLIC_PATHS = ['/', '/signin']
-const PUBLIC_PREFIXES = ['/api/auth']
+const PROTECTED_PREFIXES = [
+  '/dashboard',
+  '/guest-list',
+  '/events',
+  '/vendors',
+  '/settings',
+  '/old_dashboard',
+]
 
-const isPublicPath = (pathname: string): boolean => {
-  if (PUBLIC_PATHS.includes(pathname)) {
-    return true
-  }
-
-  return PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))
-}
+const isProtectedPath = (pathname: string): boolean =>
+  PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix))
 
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname
 
-  if (isPublicPath(pathname)) {
+  if (!isProtectedPath(pathname)) {
     return NextResponse.next()
   }
 
@@ -37,7 +38,5 @@ export const config = {
   matcher: [
     // Skip Next.js internals and all static files, unless found in search params
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for API routes
-    '/(api|trpc)(.*)',
   ],
 }

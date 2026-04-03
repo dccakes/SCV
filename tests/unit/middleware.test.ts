@@ -53,7 +53,7 @@ describe('middleware', () => {
     )
   })
 
-  it('redirects unauthenticated users from any non-public route', async () => {
+  it('redirects unauthenticated users from protected app routes', async () => {
     mockGetSessionCookie.mockReturnValue(null)
     const response = await middleware(createRequest('/settings'))
 
@@ -67,11 +67,13 @@ describe('middleware', () => {
 
     const rootResponse = await middleware(createRequest('/'))
     const signInResponse = await middleware(createRequest('/signin'))
-    const authApiResponse = await middleware(createRequest('/api/auth/session'))
+    const joinResponse = await middleware(createRequest('/join/sample-token'))
+    const websiteResponse = await middleware(createRequest('/shrek-and-fiona'))
 
     expect(rootResponse.headers.get('location')).toBeNull()
     expect(signInResponse.headers.get('location')).toBeNull()
-    expect(authApiResponse.headers.get('location')).toBeNull()
+    expect(joinResponse.headers.get('location')).toBeNull()
+    expect(websiteResponse.headers.get('location')).toBeNull()
   })
 
   it('allows authenticated users to access protected routes', async () => {
