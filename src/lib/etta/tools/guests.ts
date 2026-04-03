@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { RSVP_STATUS } from '~/lib/constants/rsvp'
 import type { EttaContext } from '~/lib/etta/types'
+import { requireEttaPermission, requirePlannerAuthz } from '~/lib/etta/utils/authorization'
 import { eventService } from '~/server/domains/event'
 import { guestService } from '~/server/domains/guest'
 import { invitationService } from '~/server/domains/invitation'
@@ -45,6 +46,7 @@ export function getGuestTools(ctx: EttaContext) {
       description: 'Get the complete guest list for the wedding',
       inputSchema: zodSchema(z.object({})),
       execute: async () => {
+        requireEttaPermission(ctx, { guest: ['read'] })
         const guests = await guestService.getAllByWeddingId(ctx.weddingId)
         return { guests: guests ?? [] }
       },
@@ -62,8 +64,8 @@ export function getGuestTools(ctx: EttaContext) {
         })
       ),
       execute: async ({ guestId, ...data }) => {
-        if (!ctx.authz) throw new Error('Authorization context required')
-        const guest = await guestService.updateGuest(ctx.authz, guestId, data)
+        const authz = requirePlannerAuthz(ctx)
+        const guest = await guestService.updateGuest(authz, guestId, data)
         return { guest }
       },
     }),
@@ -72,6 +74,7 @@ export function getGuestTools(ctx: EttaContext) {
       description: 'Get RSVP statistics for the wedding',
       inputSchema: zodSchema(z.object({})),
       execute: async () => {
+        requireEttaPermission(ctx, { rsvp: ['read_responses'] })
         const invitations = await invitationService.getAllByWeddingId(ctx.weddingId)
         const list = invitations ?? []
 
@@ -92,6 +95,7 @@ export function getGuestTools(ctx: EttaContext) {
         })
       ),
       execute: async ({ guestQuery }) => {
+        requireEttaPermission(ctx, { rsvp: ['read_responses'] })
         const [guests, invitations, events] = await Promise.all([
           guestService.getAllByWeddingId(ctx.weddingId),
           invitationService.getAllByWeddingId(ctx.weddingId),
@@ -143,6 +147,7 @@ export function getGuestTools(ctx: EttaContext) {
         })
       ),
       execute: async ({ eventQuery, rsvpFilter }) => {
+        requireEttaPermission(ctx, { rsvp: ['read_responses'] })
         const [guests, invitations, events] = await Promise.all([
           guestService.getAllByWeddingId(ctx.weddingId),
           invitationService.getAllByWeddingId(ctx.weddingId),

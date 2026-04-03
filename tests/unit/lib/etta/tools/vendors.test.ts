@@ -2,6 +2,10 @@
  * @jest-environment node
  */
 
+jest.mock('~/server/authz/permission-checker', () => ({
+  requirePermission: jest.fn(() => ({ organizationId: 'org-1', role: 'owner' })),
+}))
+
 import { getVendorTools } from '~/lib/etta/tools/vendors'
 import type { EttaContext } from '~/lib/etta/types'
 import { db } from '~/server/db'
@@ -9,7 +13,7 @@ import { vendorService } from '~/server/domains/vendor'
 
 jest.mock('~/server/domains/vendor', () => ({
   vendorService: {
-    getVendors: jest.fn(),
+    getVendorsForWedding: jest.fn(),
     getQuote: jest.fn(),
     updateQuote: jest.fn(),
   },
@@ -24,7 +28,7 @@ jest.mock('~/server/db', () => ({
 }))
 
 const mockVendorService = vendorService as {
-  getVendors: jest.Mock
+  getVendorsForWedding: jest.Mock
   getQuote: jest.Mock
   updateQuote: jest.Mock
 }
@@ -67,26 +71,34 @@ describe('getVendorTools', () => {
         { id: 'v1', name: 'Photo Pro', category: 'PHOTOGRAPHER', quotes: [] },
         { id: 'v2', name: 'DJ Mix', category: 'MUSIC', quotes: [] },
       ]
-      mockVendorService.getVendors.mockResolvedValue(vendors)
+      mockVendorService.getVendorsForWedding.mockResolvedValue(vendors)
 
       const result = await tools.get_vendor_list.execute(
         {},
         { toolCallId: 'tc1', messages: [], abortSignal: undefined as never }
       )
 
-      expect(mockVendorService.getVendors).toHaveBeenCalledWith('wedding-123', undefined)
+      expect(mockVendorService.getVendorsForWedding).toHaveBeenCalledWith(
+        mockCtx.authz,
+        'wedding-123',
+        undefined
+      )
       expect(result).toEqual({ vendors })
     })
 
     it('passes category filter', async () => {
-      mockVendorService.getVendors.mockResolvedValue([])
+      mockVendorService.getVendorsForWedding.mockResolvedValue([])
 
       await tools.get_vendor_list.execute(
         { category: 'VENUE' },
         { toolCallId: 'tc2', messages: [], abortSignal: undefined as never }
       )
 
-      expect(mockVendorService.getVendors).toHaveBeenCalledWith('wedding-123', 'VENUE')
+      expect(mockVendorService.getVendorsForWedding).toHaveBeenCalledWith(
+        mockCtx.authz,
+        'wedding-123',
+        'VENUE'
+      )
     })
   })
 

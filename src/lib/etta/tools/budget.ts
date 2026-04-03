@@ -2,6 +2,7 @@ import { tool, zodSchema } from 'ai'
 import { z } from 'zod'
 
 import type { EttaContext } from '~/lib/etta/types'
+import { requireEttaPermission } from '~/lib/etta/utils/authorization'
 import { db } from '~/server/db'
 
 // Stub — full implementation requires a BudgetItem Prisma model.
@@ -13,6 +14,7 @@ export function getBudgetTools(ctx: EttaContext) {
       description: 'Get budget overview for the wedding',
       inputSchema: zodSchema(z.object({})),
       execute: async () => {
+        requireEttaPermission(ctx, { wedding: ['read'] })
         const pendingCount = await db.ettaSuggestion.count({
           where: {
             weddingId: ctx.weddingId,
@@ -38,6 +40,7 @@ export function getBudgetTools(ctx: EttaContext) {
         })
       ),
       execute: async (params) => {
+        requireEttaPermission(ctx, { wedding: ['update'] })
         const suggestion = await db.ettaSuggestion.create({
           data: {
             weddingId: ctx.weddingId,

@@ -2,6 +2,10 @@
  * @jest-environment node
  */
 
+jest.mock('~/server/authz/permission-checker', () => ({
+  requirePermission: jest.fn(() => ({ organizationId: 'org-1', role: 'owner' })),
+}))
+
 import { searchMemory, writeMemory } from '~/lib/etta/memory/pgvector'
 import { getMemoryTools } from '~/lib/etta/tools/memory'
 import type { EttaContext } from '~/lib/etta/types'
@@ -18,6 +22,7 @@ const mockCtx: EttaContext = {
   weddingId: 'wedding-123',
   ettaActorId: 'actor-123',
   actor: 'couple',
+  authz: { userId: 'user-1', activeOrganization: { organizationId: 'org-1', role: 'owner' } },
   wedding: {
     groomFirstName: 'John',
     groomLastName: 'Doe',

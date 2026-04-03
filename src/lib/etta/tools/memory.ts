@@ -2,6 +2,7 @@ import { tool, zodSchema } from 'ai'
 import { z } from 'zod'
 import { searchMemory, writeMemory } from '~/lib/etta/memory/pgvector'
 import type { EttaContext } from '~/lib/etta/types'
+import { requireEttaPermission } from '~/lib/etta/utils/authorization'
 
 export function getMemoryTools(ctx: EttaContext) {
   return {
@@ -13,6 +14,7 @@ export function getMemoryTools(ctx: EttaContext) {
         })
       ),
       execute: async ({ query }) => {
+        requireEttaPermission(ctx, { wedding: ['read'] })
         return searchMemory(ctx.weddingId, query)
       },
     }),
@@ -25,6 +27,7 @@ export function getMemoryTools(ctx: EttaContext) {
         })
       ),
       execute: async ({ content }) => {
+        requireEttaPermission(ctx, { wedding: ['update'] })
         const memoryId = await writeMemory(ctx.weddingId, content)
         return { memoryId, message: 'Memory saved' }
       },

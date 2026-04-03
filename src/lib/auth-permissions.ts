@@ -52,6 +52,7 @@ const admin = ac.newRole({
 const member = ac.newRole({
   guest_invitation: ['read', 'create', 'cancel'],
   guest_event: ['read', 'add_guest_to_event', 'remove_guest_from_event'],
+  rsvp: ['read_responses', 'edit_response', 'export', 'reopen_submission'],
   event: ['read', 'create', 'update', 'delete', 'rsvp_policy_update'],
   guest: ['read', 'create', 'update', 'delete', 'import'],
   vendor: ['read', 'create', 'update', 'delete'],
@@ -63,6 +64,7 @@ const member = ac.newRole({
 const viewer = ac.newRole({
   guest_invitation: ['read'],
   guest_event: ['read'],
+  rsvp: ['read_responses'],
   event: ['read'],
   guest: ['read'],
   vendor: ['read'],

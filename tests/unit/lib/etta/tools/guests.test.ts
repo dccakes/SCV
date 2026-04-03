@@ -2,6 +2,10 @@
  * @jest-environment node
  */
 
+jest.mock('~/server/authz/permission-checker', () => ({
+  requirePermission: jest.fn(() => ({ organizationId: 'org-1', role: 'owner' })),
+}))
+
 import { getGuestTools } from '~/lib/etta/tools/guests'
 import type { EttaContext } from '~/lib/etta/types'
 import { eventService } from '~/server/domains/event'

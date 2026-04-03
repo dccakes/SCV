@@ -128,6 +128,7 @@ describe('auth permission matrix', () => {
   it('allows member guest-event assignment, but denies invitation delivery actions', () => {
     expect(can('member', { guest_event: ['add_guest_to_event'] })).toBe(true)
     expect(can('member', { guest_event: ['remove_guest_from_event'] })).toBe(true)
+    expect(can('member', { rsvp: ['read_responses', 'edit_response'] })).toBe(true)
     expect(can('member', { guest_invitation: ['send'] })).toBe(false)
     expect(can('member', { guest_invitation: ['resend'] })).toBe(false)
     expect(can('member', { guest_invitation: ['cancel'] })).toBe(true)
@@ -138,6 +139,7 @@ describe('auth permission matrix', () => {
   it('keeps viewer read-only and admin/owner invitation delivery-capable', () => {
     expect(can('viewer', { guest: ['create'] })).toBe(false)
     expect(can('viewer', { event: ['read'] })).toBe(true)
+    expect(can('viewer', { rsvp: ['read_responses'] })).toBe(true)
     expect(can('viewer', { wedding: ['update'] })).toBe(false)
     expect(can('member', { wedding: ['update'] })).toBe(true)
     expect(can('admin', { guest_invitation: ['send', 'resend', 'cancel'] })).toBe(true)
