@@ -1,10 +1,12 @@
 type SidebarUserAvatarButtonProps = {
+  firstName?: string
+  initials?: string
   isCollapsed: boolean
   onSignOut: () => void
 }
 
 export default function SidebarUserAvatarButton(props: Readonly<SidebarUserAvatarButtonProps>) {
-  const { isCollapsed, onSignOut } = props
+  const { firstName = 'User', initials = 'U', isCollapsed, onSignOut } = props
 
   return (
     <div className='flex flex-col gap-1.5 border-white/10 border-t p-3'>
@@ -14,12 +16,12 @@ export default function SidebarUserAvatarButton(props: Readonly<SidebarUserAvata
         }`}
       >
         <span className='flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent font-serif text-white text-xs italic'>
-          W
+          {initials}
         </span>
         {!isCollapsed && (
           <div>
             <div className='font-serif text-[0.75rem] text-muted-foreground leading-tight'>
-              Couple
+              {firstName}
             </div>
             <div className='text-[0.55rem] text-muted-foreground uppercase tracking-wider'>
               Admin

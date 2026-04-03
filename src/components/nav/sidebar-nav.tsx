@@ -31,9 +31,13 @@ const SIDEBAR_SECTIONS: readonly SidebarSection[] = [
 ]
 
 export type SidebarNavFrameProps = Readonly<{
+  ettaPanelOpen?: boolean
   isOpen: boolean
+  onToggleEttaPanel?: () => void
   setIsOpen: (open: boolean) => void
   coupleName?: string
+  userFirstName?: string
+  userInitials?: string
   weddingDate?: string
   weddingLocation?: string
 }>
@@ -43,11 +47,15 @@ type SidebarNavProps = Readonly<{
   onToggleCollapse: () => void
   isActive: (href: string) => boolean
   coupleName?: string
+  ettaPanelOpen?: boolean
   weddingDate?: string
   weddingLocation?: string
   onSignOut: () => void
+  onToggleEttaPanel?: () => void
   onNavClick?: () => void
   showCollapseToggle?: boolean
+  userFirstName?: string
+  userInitials?: string
 }>
 
 function SidebarNav({
@@ -55,11 +63,15 @@ function SidebarNav({
   onToggleCollapse,
   isActive,
   coupleName,
+  ettaPanelOpen = false,
   weddingDate,
   weddingLocation,
   onSignOut,
+  onToggleEttaPanel,
   onNavClick,
   showCollapseToggle = true,
+  userFirstName,
+  userInitials,
 }: SidebarNavProps) {
   return (
     <div className='flex h-full min-h-0 flex-col overflow-hidden bg-sidebar-ink'>
@@ -78,36 +90,60 @@ function SidebarNav({
           </div>
         )}
 
-        {showCollapseToggle && (
-          <button
-            type='button'
-            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            aria-expanded={!isCollapsed}
-            onClick={onToggleCollapse}
-            className='flex h-11 w-11 items-center justify-center rounded-md text-sidebar-cream/55 transition-colors hover:bg-white/[0.08] hover:text-sidebar-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar-ink'
-          >
-            <svg
-              aria-hidden='true'
-              className='h-4 w-4'
-              fill='none'
-              stroke='currentColor'
-              viewBox='0 0 24 24'
-              strokeWidth={1.5}
+        <div className='flex items-center gap-1'>
+          {onToggleEttaPanel ? (
+            <button
+              type='button'
+              aria-label={ettaPanelOpen ? 'Hide Etta panel' : 'Show Etta panel'}
+              aria-pressed={ettaPanelOpen}
+              onClick={onToggleEttaPanel}
+              className={`flex h-11 items-center justify-center rounded-md text-sidebar-cream/55 transition-colors hover:bg-white/[0.08] hover:text-sidebar-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar-ink ${
+                isCollapsed ? 'w-11' : 'gap-1.5 px-2.5'
+              }`}
+              title={ettaPanelOpen ? 'Hide Etta panel' : 'Show Etta panel'}
             >
-              {isCollapsed ? (
-                /* chevron-right — click to expand */
-                <path strokeLinecap='round' strokeLinejoin='round' d='M8.25 4.5l7.5 7.5-7.5 7.5' />
-              ) : (
-                /* chevron-left — click to collapse */
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  d='M15.75 19.5L8.25 12l7.5-7.5'
-                />
+              <span aria-hidden='true' className='text-[0.82rem]'>
+                ✦
+              </span>
+              {!isCollapsed && (
+                <span className='font-mono text-[0.58rem] uppercase tracking-widest'>AI</span>
               )}
-            </svg>
-          </button>
-        )}
+            </button>
+          ) : null}
+
+          {showCollapseToggle && (
+            <button
+              type='button'
+              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-expanded={!isCollapsed}
+              onClick={onToggleCollapse}
+              className='flex h-11 w-11 items-center justify-center rounded-md text-sidebar-cream/55 transition-colors hover:bg-white/[0.08] hover:text-sidebar-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar-ink'
+            >
+              <svg
+                aria-hidden='true'
+                className='h-4 w-4'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+                strokeWidth={1.5}
+              >
+                {isCollapsed ? (
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='M8.25 4.5l7.5 7.5-7.5 7.5'
+                  />
+                ) : (
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    d='M15.75 19.5L8.25 12l7.5-7.5'
+                  />
+                )}
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Wedding chip — hidden when collapsed */}
@@ -126,13 +162,28 @@ function SidebarNav({
         onNavClick={onNavClick}
       />
 
-      <SidebarUserAvatarButton isCollapsed={isCollapsed} onSignOut={onSignOut} />
+      <SidebarUserAvatarButton
+        firstName={userFirstName}
+        initials={userInitials}
+        isCollapsed={isCollapsed}
+        onSignOut={onSignOut}
+      />
     </div>
   )
 }
 
 export default function SidebarNavFrame(props: SidebarNavFrameProps) {
-  const { isOpen, setIsOpen, coupleName, weddingDate, weddingLocation } = props
+  const {
+    ettaPanelOpen,
+    isOpen,
+    onToggleEttaPanel,
+    setIsOpen,
+    coupleName,
+    userFirstName,
+    userInitials,
+    weddingDate,
+    weddingLocation,
+  } = props
   const pathname = usePathname()
   // Start collapsed=false for SSR safety; sync from localStorage on client after mount
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -223,9 +274,13 @@ export default function SidebarNavFrame(props: SidebarNavFrameProps) {
           onToggleCollapse={toggleCollapse}
           isActive={isActive}
           coupleName={resolvedCoupleName}
+          ettaPanelOpen={ettaPanelOpen}
           weddingDate={resolvedWeddingDate}
           weddingLocation={resolvedWeddingLocation}
           onSignOut={handleSignOut}
+          onToggleEttaPanel={onToggleEttaPanel}
+          userFirstName={userFirstName}
+          userInitials={userInitials}
         />
       </aside>
 
@@ -249,11 +304,15 @@ export default function SidebarNavFrame(props: SidebarNavFrameProps) {
               onToggleCollapse={() => {}}
               isActive={isActive}
               coupleName={resolvedCoupleName}
+              ettaPanelOpen={ettaPanelOpen}
               weddingDate={resolvedWeddingDate}
               weddingLocation={resolvedWeddingLocation}
               onSignOut={handleSignOut}
+              onToggleEttaPanel={onToggleEttaPanel}
               onNavClick={() => setIsOpen(false)}
               showCollapseToggle={false}
+              userFirstName={userFirstName}
+              userInitials={userInitials}
             />
             <button
               ref={closeButtonRef}

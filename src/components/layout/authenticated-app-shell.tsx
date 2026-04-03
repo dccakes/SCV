@@ -20,6 +20,8 @@ export function useAuthenticatedSidebar(): AuthenticatedSidebarContextValue {
 type AuthenticatedAppShellProps = {
   children: ReactNode
   coupleName?: string
+  currentUserFirstName?: string
+  currentUserInitials?: string
   weddingDate?: string
   weddingLocation?: string
   showEttaPanel?: boolean
@@ -31,6 +33,8 @@ export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppSh
   const {
     children,
     coupleName,
+    currentUserFirstName,
+    currentUserInitials,
     weddingDate,
     weddingLocation,
     showEttaPanel = false,
@@ -38,11 +42,30 @@ export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppSh
     isEttaConfigured = false,
   } = props
   const [isOpen, setIsOpen] = useState(false)
+  const [isEttaPanelOpen, setIsEttaPanelOpen] = useState(showEttaPanel)
 
   useEffect(() => {
     document.body.classList.add('overflow-hidden')
     return () => document.body.classList.remove('overflow-hidden')
   }, [])
+
+  useEffect(() => {
+    if (!showEttaPanel) {
+      setIsEttaPanelOpen(false)
+      return
+    }
+
+    const saved = localStorage.getItem('etta-panel-open')
+    setIsEttaPanelOpen(saved ? saved === 'true' : true)
+  }, [showEttaPanel])
+
+  const toggleEttaPanel = () => {
+    setIsEttaPanelOpen((prev) => {
+      const next = !prev
+      localStorage.setItem('etta-panel-open', String(next))
+      return next
+    })
+  }
 
   return (
     <AuthenticatedSidebarContext.Provider value={{ openSidebar: () => setIsOpen(true) }}>
@@ -51,6 +74,10 @@ export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppSh
           isOpen={isOpen}
           setIsOpen={setIsOpen}
           coupleName={coupleName}
+          ettaPanelOpen={isEttaPanelOpen}
+          onToggleEttaPanel={showEttaPanel ? toggleEttaPanel : undefined}
+          userFirstName={currentUserFirstName}
+          userInitials={currentUserInitials}
           weddingDate={weddingDate}
           weddingLocation={weddingLocation}
         />
@@ -80,7 +107,7 @@ export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppSh
             </button>
             {children}
           </div>
-          {showEttaPanel && weddingId && (
+          {showEttaPanel && weddingId && isEttaPanelOpen && (
             <aside className='hidden w-80 flex-shrink-0 border-white/10 border-l lg:flex lg:flex-col'>
               <EttaChat weddingId={weddingId} persona='planner' isConfigured={isEttaConfigured} />
             </aside>
