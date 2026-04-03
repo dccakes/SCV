@@ -20,14 +20,14 @@ jest.mock('~/server/application/dashboard/dashboard-request-data', () => ({
 jest.mock('~/trpc/server', () => ({
   api: {
     wedding: {
-      getByUserId: jest.fn(),
+      getActive: jest.fn(),
     },
   },
 }))
 
 const mockRedirect = redirect as unknown as jest.Mock
 const mockGetDashboardOverview = getDashboardOverview as jest.Mock
-const mockGetWedding = api.wedding.getByUserId as jest.Mock
+const mockGetWedding = api.wedding.getActive as jest.Mock
 
 describe('authenticated route data', () => {
   beforeEach(() => {

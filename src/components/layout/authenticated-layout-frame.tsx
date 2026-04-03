@@ -57,7 +57,7 @@ export async function AuthenticatedLayoutFrame(props: Readonly<AuthenticatedLayo
 
   let weddingId: string | undefined
   if (showEttaPanel) {
-    const wedding = await api.wedding.getByUserId()
+    const wedding = await api.wedding.getActive()
     weddingId = wedding?.id
   }
 

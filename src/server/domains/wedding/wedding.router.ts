@@ -96,6 +96,18 @@ export const weddingRouter = createTRPCRouter({
   }),
 
   /**
+   * Get wedding for current active workspace scope
+   */
+  getActive: protectedProcedure.query(async ({ ctx }) => {
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+    const wedding = await weddingService.getById(weddingId)
+    if (!wedding) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Wedding not found' })
+    }
+    return wedding
+  }),
+
+  /**
    * Check if current user has a wedding
    */
   hasWedding: protectedProcedure.query(async ({ ctx }) => {
