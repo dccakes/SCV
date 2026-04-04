@@ -95,6 +95,7 @@ export const weddingRouter = createTRPCRouter({
    * Get wedding for current user
    */
   getByUserId: protectedProcedure.query(async ({ ctx }) => {
+    requirePermission(ctx.authz, { wedding: ['read'] })
     return weddingService.getByUserId(ctx.auth.userId)
   }),
 

@@ -23,8 +23,8 @@ jest.mock('better-auth/cookies', () => ({
 
 import { middleware } from '~/middleware'
 
-const createRequest = (pathname: string, sessionToken?: string): NextRequest => {
-  const url = `https://example.com${pathname}`
+const createRequest = (pathname: string, sessionToken?: string, search = ''): NextRequest => {
+  const url = `https://example.com${pathname}${search}`
   const headers = new Headers()
   if (sessionToken) {
     headers.set('cookie', `better-auth.session_token=${sessionToken}`)
@@ -33,7 +33,7 @@ const createRequest = (pathname: string, sessionToken?: string): NextRequest => 
   return {
     url,
     headers,
-    nextUrl: { pathname },
+    nextUrl: { pathname, search },
   } as unknown as NextRequest
 }
 
@@ -69,11 +69,16 @@ describe('middleware', () => {
     const signInResponse = await middleware(createRequest('/auth/sign-in'))
     const joinResponse = await middleware(createRequest('/join/sample-token'))
     const websiteResponse = await middleware(createRequest('/shrek-and-fiona'))
+    const websiteRsvpResponse = await middleware(createRequest('/shrek-and-fiona/rsvp'))
+    const authApiResponse = await middleware(createRequest('/api/auth/session'))
 
     expect(rootResponse.headers.get('location')).toBeNull()
     expect(signInResponse.headers.get('location')).toBeNull()
     expect(joinResponse.headers.get('location')).toBeNull()
     expect(websiteResponse.headers.get('location')).toBeNull()
+    expect(websiteRsvpResponse.headers.get('location')).toBeNull()
+    expect(authApiResponse.headers.get('location')).toBeNull()
+    expect(mockGetSessionCookie).not.toHaveBeenCalled()
   })
 
   it('allows authenticated users to access protected routes', async () => {
@@ -91,6 +96,30 @@ describe('middleware', () => {
 
     expect(response.headers.get('location')).toBe(
       'https://example.com/auth/sign-in?callbackUrl=%2Fdesign-system'
+    )
+  })
+
+  it('preserves query params in the callbackUrl for protected routes', async () => {
+    mockGetSessionCookie.mockReturnValue(null)
+
+    const response = await middleware(createRequest('/events', undefined, '?tab=upcoming'))
+
+    expect(response.headers.get('location')).toBe(
+      'https://example.com/auth/sign-in?callbackUrl=%2Fevents%3Ftab%3Dupcoming'
+    )
+  })
+
+  it('does not treat prefix lookalikes as public', async () => {
+    mockGetSessionCookie.mockReturnValue(null)
+
+    const authLikeResponse = await middleware(createRequest('/authentic'))
+    const joinLikeResponse = await middleware(createRequest('/joinery'))
+
+    expect(authLikeResponse.headers.get('location')).toBe(
+      'https://example.com/auth/sign-in?callbackUrl=%2Fauthentic'
+    )
+    expect(joinLikeResponse.headers.get('location')).toBe(
+      'https://example.com/auth/sign-in?callbackUrl=%2Fjoinery'
     )
   })
 })

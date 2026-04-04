@@ -7,12 +7,25 @@
 
 import { z } from 'zod'
 import { logAudit } from '~/lib/etta/utils/audit'
-import { validateCoupleSession } from '~/lib/etta/utils/auth'
+import { EttaAuthError, validateCoupleSession } from '~/lib/etta/utils/auth'
 import { db } from '~/server/db'
 
 const bodySchema = z.object({
   action: z.enum(['approve', 'dismiss']),
 })
+
+const inferAuthStatus = (error: unknown, message: string): number => {
+  if (error instanceof EttaAuthError) {
+    return error.status
+  }
+  if (message === 'No active session') {
+    return 401
+  }
+  if (message === 'No active wedding in workspace scope') {
+    return 412
+  }
+  return 500
+}
 
 export async function PATCH(
   req: Request,
@@ -71,7 +84,7 @@ export async function PATCH(
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error'
-    const status = message.includes('UNAUTHORIZED') || message === 'No active session' ? 401 : 500
+    const status = inferAuthStatus(error, message)
 
     return Response.json({ error: message }, { status })
   }

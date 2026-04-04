@@ -5,6 +5,16 @@ import type { EttaRequest } from '~/lib/etta/types'
 import { resolveWorkspaceScope } from '~/server/application/workspace/workspace-scope'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 
+export class EttaAuthError extends Error {
+  constructor(
+    message: string,
+    readonly status: 401 | 403 | 412
+  ) {
+    super(message)
+    this.name = 'EttaAuthError'
+  }
+}
+
 async function normalizeMessages(messages: unknown): Promise<EttaRequest['messages']> {
   if (!Array.isArray(messages)) {
     throw new Error('Invalid request: messages must be an array')
@@ -37,7 +47,7 @@ export async function validateCoupleSession(
 ): Promise<{ weddingId: string; userId: string; authz: AuthzContext }> {
   const session = await auth.api.getSession({ headers })
   if (!session) {
-    throw new Error('No active session')
+    throw new EttaAuthError('No active session', 401)
   }
 
   const userId = session.user.id
@@ -47,7 +57,7 @@ export async function validateCoupleSession(
   })
 
   if (!activeWeddingId) {
-    throw new Error('No active wedding in workspace scope')
+    throw new EttaAuthError('No active wedding in workspace scope', 412)
   }
 
   const authz: AuthzContext = { userId, activeOrganization }
@@ -84,7 +94,7 @@ export async function validateGuestToken(
   const sub = payload.sub
 
   if (!weddingId || !sub) {
-    throw new Error('Invalid guest token: missing claims')
+    throw new EttaAuthError('Invalid guest token: missing claims', 401)
   }
 
   return { weddingId, guestId: Number(sub) }

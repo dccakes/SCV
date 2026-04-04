@@ -17,10 +17,7 @@ type ResolveWorkspaceScopeInput = {
 
 type WorkspaceScopeRepositoryContract = Pick<
   WorkspaceScopeRepository,
-  | 'clearActiveOrganizationId'
-  | 'findCandidateScopes'
-  | 'findScopeForOrganization'
-  | 'persistActiveOrganizationId'
+  'findCandidateScopes' | 'findScopeForOrganization' | 'setActiveOrganizationId'
 >
 
 export class WorkspaceScopeService {
@@ -45,12 +42,8 @@ export class WorkspaceScopeService {
       candidateScopes,
     })
 
-    if (decision.clearSessionActiveOrganizationId) {
-      await this.repository.clearActiveOrganizationId(sessionToken)
-    }
-
-    if (decision.persistActiveOrganizationId) {
-      await this.repository.persistActiveOrganizationId(
+    if (decision.clearSessionActiveOrganizationId || decision.persistActiveOrganizationId) {
+      await this.repository.setActiveOrganizationId(
         sessionToken,
         decision.persistActiveOrganizationId
       )

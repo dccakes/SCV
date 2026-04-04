@@ -2,6 +2,7 @@
  * @jest-environment node
  */
 
+import { SignJWT } from 'jose'
 import { auth } from '~/lib/auth'
 import { resolveWorkspaceScope } from '~/server/application/workspace/workspace-scope'
 
@@ -30,6 +31,7 @@ const mockResolveWorkspaceScope = resolveWorkspaceScope as jest.Mock
 process.env.JWT_SECRET = 'test-secret-key-for-testing-minimum-length'
 
 import {
+  type EttaAuthError,
   issueGuestToken,
   resolveEttaAuth,
   validateCoupleSession,
@@ -73,7 +75,13 @@ describe('validateCoupleSession', () => {
       activeWeddingId: null,
     })
 
-    await expect(validateCoupleSession(new Headers())).rejects.toThrow()
+    await expect(validateCoupleSession(new Headers())).rejects.toEqual(
+      expect.objectContaining({
+        message: 'No active wedding in workspace scope',
+        name: 'EttaAuthError',
+        status: 412,
+      } satisfies Partial<EttaAuthError>)
+    )
   })
 })
 
@@ -98,6 +106,23 @@ describe('validateGuestToken', () => {
 
   it('throws on an invalid token', async () => {
     await expect(validateGuestToken('invalid.token.here')).rejects.toThrow()
+  })
+
+  it('throws a typed auth error when guest token claims are missing', async () => {
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET)
+    const token = await new SignJWT({ sub: '42' })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('24h')
+      .sign(secret)
+
+    await expect(validateGuestToken(token)).rejects.toEqual(
+      expect.objectContaining({
+        message: 'Invalid guest token: missing claims',
+        name: 'EttaAuthError',
+        status: 401,
+      } satisfies Partial<EttaAuthError>)
+    )
   })
 })
 
@@ -204,5 +229,20 @@ describe('resolveEttaAuth', () => {
     expect(result.actor).toBe('guest')
     expect(result.weddingId).toBe('wedding-2')
     expect(result.guestId).toBe(99)
+  })
+
+  it('rejects invalid concierge guest tokens instead of falling back to couple auth', async () => {
+    const req = new Request('http://localhost/api/etta', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: 'hello' }],
+        persona: 'concierge',
+        guestToken: 'invalid.token.here',
+      }),
+    })
+
+    await expect(resolveEttaAuth(req)).rejects.toThrow()
+    expect(mockGetSession).not.toHaveBeenCalled()
   })
 })

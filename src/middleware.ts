@@ -19,16 +19,34 @@ const RESERVED_ROOT_SEGMENTS = new Set([
 ])
 
 const isPublicWebsitePath = (pathname: string): boolean => {
-  if (pathname === '/' || pathname.includes('/')) {
+  const segments = pathname.split('/').filter(Boolean)
+  if (segments.length === 0) {
     return false
   }
-  return !RESERVED_ROOT_SEGMENTS.has(pathname)
+  if (segments.length > 2 || (segments.length === 2 && segments[1] !== 'rsvp')) {
+    return false
+  }
+
+  const [rootSegment] = segments
+  if (!rootSegment) {
+    return false
+  }
+
+  if (
+    RESERVED_ROOT_SEGMENTS.has(rootSegment) ||
+    rootSegment.startsWith('auth') ||
+    rootSegment.startsWith('join')
+  ) {
+    return false
+  }
+
+  return true
 }
 
 const isPublicPath = (pathname: string): boolean =>
   PUBLIC_EXACT_PATHS.includes(pathname) ||
-  PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix)) ||
-  isPublicWebsitePath(pathname.slice(1))
+  PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)) ||
+  isPublicWebsitePath(pathname)
 
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname
@@ -43,7 +61,7 @@ export async function middleware(req: NextRequest) {
   // Redirect to sign in for unauthenticated access to protected routes
   if (!sessionToken) {
     const redirectUrl = new URL('/auth/sign-in', req.url)
-    redirectUrl.searchParams.set('callbackUrl', pathname)
+    redirectUrl.searchParams.set('callbackUrl', `${pathname}${req.nextUrl.search}`)
     return NextResponse.redirect(redirectUrl)
   }
 

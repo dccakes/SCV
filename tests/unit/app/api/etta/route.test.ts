@@ -4,9 +4,17 @@
 
 import { runEttaAgent } from '~/lib/etta/agent'
 import { logAudit } from '~/lib/etta/utils/audit'
-import { resolveEttaAuth } from '~/lib/etta/utils/auth'
+import { EttaAuthError, resolveEttaAuth } from '~/lib/etta/utils/auth'
 
 jest.mock('~/lib/etta/utils/auth', () => ({
+  EttaAuthError: class EttaAuthError extends Error {
+    constructor(
+      message: string,
+      readonly status: 401 | 403 | 412
+    ) {
+      super(message)
+    }
+  },
   resolveEttaAuth: jest.fn(),
 }))
 
@@ -72,6 +80,18 @@ describe('POST /api/etta', () => {
 
     expect(res.status).toBe(401)
     expect(body.error).toContain('token')
+  })
+
+  it('returns 412 when there is no active wedding in workspace scope', async () => {
+    mockResolveAuth.mockRejectedValue(
+      new EttaAuthError('No active wedding in workspace scope', 412)
+    )
+
+    const res = await POST(makeRequest())
+    const body = await res.json()
+
+    expect(res.status).toBe(412)
+    expect(body.error).toBe('No active wedding in workspace scope')
   })
 
   it('returns 404 for "No wedding found for user"', async () => {

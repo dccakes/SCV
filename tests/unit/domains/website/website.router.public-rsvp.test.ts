@@ -5,6 +5,7 @@
 jest.mock('~/lib/auth', () => ({
   auth: { api: { getSession: jest.fn().mockResolvedValue(null) } },
 }))
+jest.mock('~/lib/auth-permissions', () => require('~/lib/__mocks__/auth-permissions'))
 jest.mock('~/server/db', () => ({ db: {} }))
 
 jest.mock('~/server/domains/website', () => ({

@@ -190,6 +190,13 @@ describe('weddingRouter', () => {
     })
   })
 
+  describe('getByUserId', () => {
+    it('should throw FORBIDDEN for viewer role', async () => {
+      const caller = makeAuthCaller('user-123', 'wedding-123', 'viewer')
+      await expect(caller.getByUserId()).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+  })
+
   describe('getWorkspace', () => {
     it('returns canonical workspace payload for owner role', async () => {
       const caller = makeAuthCaller('user-123', 'wedding-123', 'owner')

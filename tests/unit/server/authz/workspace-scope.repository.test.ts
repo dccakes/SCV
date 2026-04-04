@@ -63,30 +63,16 @@ describe('WorkspaceScopeRepository', () => {
     expect(mockQueryRaw).toHaveBeenCalledTimes(1)
   })
 
-  it('persistActiveOrganizationId is a no-op when session token is missing', async () => {
-    await repository.persistActiveOrganizationId(null, 'org-1')
+  it('setActiveOrganizationId is a no-op when session token is missing', async () => {
+    await repository.setActiveOrganizationId(null, 'org-1')
 
     expect(mockExecuteRaw).not.toHaveBeenCalled()
   })
 
-  it('persistActiveOrganizationId writes when session token exists', async () => {
+  it('setActiveOrganizationId writes when session token exists', async () => {
     mockExecuteRaw.mockResolvedValue(1)
 
-    await repository.persistActiveOrganizationId('tok-1', 'org-1')
-
-    expect(mockExecuteRaw).toHaveBeenCalledTimes(1)
-  })
-
-  it('clearActiveOrganizationId is a no-op when session token is missing', async () => {
-    await repository.clearActiveOrganizationId(null)
-
-    expect(mockExecuteRaw).not.toHaveBeenCalled()
-  })
-
-  it('clearActiveOrganizationId writes when session token exists', async () => {
-    mockExecuteRaw.mockResolvedValue(1)
-
-    await repository.clearActiveOrganizationId('tok-1')
+    await repository.setActiveOrganizationId('tok-1', 'org-1')
 
     expect(mockExecuteRaw).toHaveBeenCalledTimes(1)
   })

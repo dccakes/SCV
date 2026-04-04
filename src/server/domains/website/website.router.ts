@@ -8,6 +8,7 @@
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
 import { rsvpSubmissionService, submitPublicRsvpSchema } from '~/server/application/rsvp-submission'
 import { requireActiveWeddingId } from '~/server/authz/active-wedding'
+import { requirePermission } from '~/server/authz/permission-checker'
 import { websiteService } from '~/server/domains/website'
 import {
   createWebsiteSchema,
@@ -70,6 +71,7 @@ export const websiteRouter = createTRPCRouter({
    * Get website for current user's wedding
    */
   getByUserId: protectedProcedure.query(async ({ ctx }) => {
+    requirePermission(ctx.authz, { website: ['read'] })
     const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return websiteService.getByWeddingId(weddingId)
   }),

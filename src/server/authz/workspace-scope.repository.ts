@@ -16,6 +16,7 @@ export class WorkspaceScopeRepository {
       LEFT JOIN "Wedding" w ON w."organizationId" = m."organizationId"
       WHERE m."userId" = ${userId}
         AND m."organizationId" = ${organizationId}
+      ORDER BY m."createdAt" ASC
       LIMIT 1
     `
 
@@ -38,17 +39,16 @@ export class WorkspaceScopeRepository {
       GROUP BY
         m."organizationId",
         m."role",
-        w."id",
-        m."createdAt"
+        w."id"
       ORDER BY
         COALESCE(BOOL_OR(uw."isPrimary"), FALSE) DESC,
-        m."createdAt" ASC
+        MIN(m."createdAt") ASC
     `
   }
 
-  async persistActiveOrganizationId(
+  async setActiveOrganizationId(
     sessionToken: string | null,
-    organizationId: string
+    organizationId: string | null
   ): Promise<void> {
     if (!sessionToken) {
       return
@@ -58,20 +58,7 @@ export class WorkspaceScopeRepository {
       UPDATE "Session"
       SET "activeOrganizationId" = ${organizationId}
       WHERE "token" = ${sessionToken}
-        AND ("activeOrganizationId" IS NULL OR "activeOrganizationId" != ${organizationId})
-    `
-  }
-
-  async clearActiveOrganizationId(sessionToken: string | null): Promise<void> {
-    if (!sessionToken) {
-      return
-    }
-
-    await db.$executeRaw`
-      UPDATE "Session"
-      SET "activeOrganizationId" = NULL
-      WHERE "token" = ${sessionToken}
-        AND "activeOrganizationId" IS NOT NULL
+        AND "activeOrganizationId" IS DISTINCT FROM ${organizationId}
     `
   }
 }

@@ -5,8 +5,7 @@ function makeRepository() {
   return {
     findScopeForOrganization: jest.fn(),
     findCandidateScopes: jest.fn(),
-    persistActiveOrganizationId: jest.fn(),
-    clearActiveOrganizationId: jest.fn(),
+    setActiveOrganizationId: jest.fn(),
   }
 }
 
@@ -30,8 +29,7 @@ describe('WorkspaceScopeService', () => {
 
     expect(repository.findScopeForOrganization).toHaveBeenCalledWith('user-1', 'org-1')
     expect(repository.findCandidateScopes).not.toHaveBeenCalled()
-    expect(repository.clearActiveOrganizationId).not.toHaveBeenCalled()
-    expect(repository.persistActiveOrganizationId).not.toHaveBeenCalled()
+    expect(repository.setActiveOrganizationId).not.toHaveBeenCalled()
     expect(result).toEqual({
       activeOrganization: { organizationId: 'org-1', role: 'admin' },
       activeWeddingId: 'wedding-1',
@@ -58,8 +56,7 @@ describe('WorkspaceScopeService', () => {
       sessionActiveOrganizationId: 'org-stale',
     })
 
-    expect(repository.clearActiveOrganizationId).toHaveBeenCalledWith('tok-1')
-    expect(repository.persistActiveOrganizationId).toHaveBeenCalledWith('tok-1', 'org-primary')
+    expect(repository.setActiveOrganizationId).toHaveBeenCalledWith('tok-1', 'org-primary')
     expect(result).toEqual({
       activeOrganization: { organizationId: 'org-primary', role: 'owner' },
       activeWeddingId: 'wedding-primary',
@@ -91,8 +88,7 @@ describe('WorkspaceScopeService', () => {
       sessionActiveOrganizationId: null,
     })
 
-    expect(repository.clearActiveOrganizationId).not.toHaveBeenCalled()
-    expect(repository.persistActiveOrganizationId).not.toHaveBeenCalled()
+    expect(repository.setActiveOrganizationId).not.toHaveBeenCalled()
     expect(result).toEqual({
       activeOrganization: null,
       activeWeddingId: null,
