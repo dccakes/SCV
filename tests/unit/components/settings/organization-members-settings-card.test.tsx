@@ -242,7 +242,7 @@ describe('OrganizationMembersSettingsCard', () => {
     expect(screen.getByRole('button', { name: 'Invite Member' })).toBeDisabled()
     expect(screen.queryByRole('button', { name: 'Edit Role' })).not.toBeInTheDocument()
     expect(
-      screen.getByText('You currently have view-only access in this workspace.')
+      screen.getByText('Your role cannot manage organization members or send member invitations.')
     ).toBeInTheDocument()
   })
 

@@ -389,7 +389,7 @@ function OrganizationPermissionsHint({
   if (!canInvite && !canUpdateMembers) {
     return (
       <p className='text-foreground/60 text-sm'>
-        You currently have view-only access in this workspace.
+        Your role cannot manage organization members or send member invitations.
       </p>
     )
   }
