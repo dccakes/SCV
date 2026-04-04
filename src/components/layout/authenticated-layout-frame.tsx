@@ -21,7 +21,7 @@ export async function AuthenticatedLayoutFrame(props: Readonly<AuthenticatedLayo
   })
   const userId = session?.user?.id ?? null
   if (!userId) {
-    redirect('/signin')
+    redirect('/auth/sign-in')
   }
 
   const workspaceScope = await resolveWorkspaceScope({

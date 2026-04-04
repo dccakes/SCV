@@ -44,12 +44,12 @@ describe('middleware', () => {
     mockGetSessionCookie.mockReset()
   })
 
-  it('redirects unauthenticated users from protected routes to /signin with callbackUrl', async () => {
+  it('redirects unauthenticated users from protected routes to /auth/sign-in with callbackUrl', async () => {
     mockGetSessionCookie.mockReturnValue(null)
     const response = await middleware(createRequest('/events'))
 
     expect(response.headers.get('location')).toBe(
-      'https://example.com/signin?callbackUrl=%2Fevents'
+      'https://example.com/auth/sign-in?callbackUrl=%2Fevents'
     )
   })
 
@@ -58,7 +58,7 @@ describe('middleware', () => {
     const response = await middleware(createRequest('/settings'))
 
     expect(response.headers.get('location')).toBe(
-      'https://example.com/signin?callbackUrl=%2Fsettings'
+      'https://example.com/auth/sign-in?callbackUrl=%2Fsettings'
     )
   })
 
@@ -66,7 +66,7 @@ describe('middleware', () => {
     mockGetSessionCookie.mockReturnValue(null)
 
     const rootResponse = await middleware(createRequest('/'))
-    const signInResponse = await middleware(createRequest('/signin'))
+    const signInResponse = await middleware(createRequest('/auth/sign-in'))
     const joinResponse = await middleware(createRequest('/join/sample-token'))
     const websiteResponse = await middleware(createRequest('/shrek-and-fiona'))
 
@@ -83,5 +83,14 @@ describe('middleware', () => {
     expect(response.headers.get('location')).toBeNull()
     expect(mockNext).toHaveBeenCalledTimes(1)
     expect(mockNext).toHaveBeenCalledWith()
+  })
+
+  it('protects non-public routes by default', async () => {
+    mockGetSessionCookie.mockReturnValue(null)
+    const response = await middleware(createRequest('/design-system'))
+
+    expect(response.headers.get('location')).toBe(
+      'https://example.com/auth/sign-in?callbackUrl=%2Fdesign-system'
+    )
   })
 })

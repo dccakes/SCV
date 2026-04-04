@@ -400,3 +400,5 @@ Recommended approach:
   active wedding) and Etta vendor tool permission-denied scenarios.
 - 2026-04-03: Added `VendorInsightsService` and rewired vendor read routes plus Etta vendor read
   tools to consume the same application-layer authorized read boundary.
+- 2026-04-04: Tightened middleware to treat non-public routes as protected by default and redirect
+  unauthenticated access to `/auth/sign-in`; added regression coverage for default-protected paths.
