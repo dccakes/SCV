@@ -309,7 +309,7 @@ export default function GuestsView({
             setEditingSections(new Set())
           }
           toast.success('Guest details saved')
-          void utils.dashboard.getByUserId.invalidate()
+          void utils.dashboard.getForActiveWorkspace.invalidate()
         },
         onError: () => {
           toast.error('Failed to save guest details')
@@ -446,7 +446,7 @@ export default function GuestsView({
                 })
               )
               toast.success('Household members saved')
-              void utils.dashboard.getByUserId.invalidate()
+              void utils.dashboard.getForActiveWorkspace.invalidate()
               resolve(true)
             },
             onError: () => {
@@ -520,7 +520,7 @@ export default function GuestsView({
             previous.filter((household) => household.id !== householdId)
           )
           toast.success('Party deleted successfully')
-          void utils.dashboard.getByUserId.invalidate()
+          void utils.dashboard.getForActiveWorkspace.invalidate()
         },
         onError: () => {
           toast.error('Failed to delete party')

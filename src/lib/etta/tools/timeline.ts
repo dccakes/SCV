@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import type { EttaContext } from '~/lib/etta/types'
 import { logAudit } from '~/lib/etta/utils/audit'
+import { requireEttaPermission } from '~/lib/etta/utils/authorization'
 
 // Stub — full implementation requires a Milestone Prisma model.
 // For now, returns a default milestone list and logs completions via audit.
@@ -21,6 +22,7 @@ export function getTimelineTools(ctx: EttaContext) {
       description: 'Get wedding planning milestones',
       inputSchema: zodSchema(z.object({})),
       execute: async () => {
+        requireEttaPermission(ctx, { wedding: ['read'] })
         return { milestones: DEFAULT_MILESTONES }
       },
     }),
@@ -33,6 +35,7 @@ export function getTimelineTools(ctx: EttaContext) {
         })
       ),
       execute: async ({ title }) => {
+        requireEttaPermission(ctx, { wedding: ['update'] })
         await logAudit({
           weddingId: ctx.weddingId,
           actorId: ctx.ettaActorId,

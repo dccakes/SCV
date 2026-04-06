@@ -31,13 +31,13 @@ describe('MemberManagementService', () => {
   describe('inviteMember', () => {
     it('should invite member when actor can invite organization members', async () => {
       mockRequirePermission.mockReturnValue({ organizationId: 'org-1', role: 'admin' })
-      const invitedMember = { id: 'member-1', email: 'new@example.com', role: 'editor' }
+      const invitedMember = { id: 'member-1', email: 'new@example.com', role: 'member' }
       mockMemberRepository.inviteMember.mockResolvedValue(invitedMember)
 
       const result = await service.inviteMember(actorContext, {
         organizationId: 'org-1',
         email: 'new@example.com',
-        role: 'editor',
+        role: 'member',
       })
 
       expect(result).toEqual(invitedMember)
@@ -55,7 +55,7 @@ describe('MemberManagementService', () => {
         service.inviteMember(actorContext, {
           organizationId: 'org-1',
           email: 'new@example.com',
-          role: 'editor',
+          role: 'member',
         })
       ).rejects.toMatchObject({
         code: 'FORBIDDEN',

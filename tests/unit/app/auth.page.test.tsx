@@ -24,6 +24,7 @@ describe('AuthPage', () => {
     expect(screen.getByText('Demo Accounts')).toBeInTheDocument()
     expect(screen.getByText(/shrek@swamp\.wed/)).toBeInTheDocument()
     expect(screen.getByText(/fiona@swamp\.wed/)).toBeInTheDocument()
+    expect(screen.getByText(/queen\.lillian@swamp\.wed/)).toBeInTheDocument()
     expect(screen.getByText(/password123/)).toBeInTheDocument()
   })
 

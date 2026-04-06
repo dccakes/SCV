@@ -3,6 +3,8 @@ import { tool, zodSchema } from 'ai'
 import { z } from 'zod'
 
 import type { EttaContext } from '~/lib/etta/types'
+import { requireEttaPermission, requirePlannerAuthz } from '~/lib/etta/utils/authorization'
+import { vendorInsightsService } from '~/server/application/vendor-insights'
 import { db } from '~/server/db'
 import { vendorService } from '~/server/domains/vendor'
 
@@ -19,7 +21,8 @@ export function getVendorTools(ctx: EttaContext) {
         })
       ),
       execute: async ({ category }) => {
-        const vendors = await vendorService.getVendors(ctx.weddingId, category)
+        const authz = requirePlannerAuthz(ctx)
+        const vendors = await vendorInsightsService.listVendors(authz, ctx.weddingId, category)
         return { vendors }
       },
     }),
@@ -36,6 +39,7 @@ export function getVendorTools(ctx: EttaContext) {
         })
       ),
       execute: async (params) => {
+        requireEttaPermission(ctx, { vendor: ['create'] })
         const suggestion = await db.ettaSuggestion.create({
           data: {
             weddingId: ctx.weddingId,
@@ -65,8 +69,8 @@ export function getVendorTools(ctx: EttaContext) {
         })
       ),
       execute: async ({ vendorId, quoteId }) => {
-        if (!ctx.authz) throw new Error('Authorization context required')
-        const quote = await vendorService.getQuote(ctx.authz, quoteId, vendorId, ctx.weddingId)
+        const authz = requirePlannerAuthz(ctx)
+        const quote = await vendorInsightsService.getQuote(authz, ctx.weddingId, vendorId, quoteId)
         return { quote }
       },
     }),
@@ -87,8 +91,8 @@ export function getVendorTools(ctx: EttaContext) {
         })
       ),
       execute: async ({ vendorId, quoteId, ...data }) => {
-        if (!ctx.authz) throw new Error('Authorization context required')
-        const quote = await vendorService.updateQuote(ctx.authz, quoteId, vendorId, ctx.weddingId, {
+        const authz = requirePlannerAuthz(ctx)
+        const quote = await vendorService.updateQuote(authz, quoteId, vendorId, ctx.weddingId, {
           quoteId,
           vendorId,
           ...data,

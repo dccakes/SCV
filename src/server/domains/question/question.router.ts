@@ -6,28 +6,25 @@
  */
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
+import { requireActiveWeddingId } from '~/server/authz/active-wedding'
 
 import { questionService } from '~/server/domains/question'
 import {
   deleteQuestionSchema,
   upsertQuestionSchema,
 } from '~/server/domains/question/question.validator'
-import { weddingService } from '~/server/domains/wedding'
 
 export const questionRouter = createTRPCRouter({
   /**
    * Upsert a question (create or update)
    */
   upsert: protectedProcedure.input(upsertQuestionSchema).mutation(async ({ ctx, input }) => {
-    const wedding = await weddingService.getScopedWeddingByUserId(
-      ctx.auth.userId,
-      ctx.auth.activeOrganization?.organizationId ?? null
-    )
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
 
     return questionService.upsertQuestion({
       ctx: ctx.authz,
-      weddingId: wedding.id,
-      organizationId: wedding.organizationId,
+      weddingId,
+      organizationId: ctx.auth.activeOrganization?.organizationId ?? null,
       data: input,
     })
   }),
@@ -36,15 +33,12 @@ export const questionRouter = createTRPCRouter({
    * Delete a question
    */
   delete: protectedProcedure.input(deleteQuestionSchema).mutation(async ({ ctx, input }) => {
-    const wedding = await weddingService.getScopedWeddingByUserId(
-      ctx.auth.userId,
-      ctx.auth.activeOrganization?.organizationId ?? null
-    )
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
 
     return questionService.deleteQuestion({
       ctx: ctx.authz,
-      weddingId: wedding.id,
-      organizationId: wedding.organizationId,
+      weddingId,
+      organizationId: ctx.auth.activeOrganization?.organizationId ?? null,
       data: input,
     })
   }),

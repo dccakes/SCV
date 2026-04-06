@@ -29,7 +29,7 @@ export type UserWedding = {
   id: string
   userId: string
   weddingId: string
-  role: string // e.g., "owner", "editor", "viewer"
+  role: string // e.g., "owner", "member", "viewer"
   isPrimary: boolean
   createdAt: Date
   updatedAt: Date

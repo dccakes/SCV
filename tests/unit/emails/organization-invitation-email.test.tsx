@@ -26,7 +26,7 @@ describe('OrganizationInvitationEmail', () => {
         inviteUrl={INVITE_URL}
         invitedByName='Shrek'
         organizationName='Shrek & Fiona'
-        memberRole='editor'
+        memberRole='member'
       />
     )
 
@@ -56,7 +56,7 @@ describe('OrganizationInvitationEmail', () => {
         inviteUrl={INVITE_URL}
         invitedByName='Fiona'
         organizationName='Shrek & Fiona'
-        memberRole='editor'
+        memberRole='member'
       />
     )
 

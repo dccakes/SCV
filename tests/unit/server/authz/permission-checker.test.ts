@@ -13,9 +13,9 @@ const adminCtx: AuthzContext = {
   activeOrganization: { organizationId: 'org-1', role: 'admin' },
 }
 
-const editorCtx: AuthzContext = {
+const memberCtx: AuthzContext = {
   userId: 'user-3',
-  activeOrganization: { organizationId: 'org-1', role: 'editor' },
+  activeOrganization: { organizationId: 'org-1', role: 'member' },
 }
 
 const viewerCtx: AuthzContext = {
@@ -40,15 +40,15 @@ describe('requirePermission', () => {
     )
   })
 
-  it('throws FORBIDDEN when editor attempts guest invitation send', () => {
-    expect(() => requirePermission(editorCtx, { guest_invitation: ['send'] })).toThrow(
+  it('throws FORBIDDEN when member attempts guest invitation send', () => {
+    expect(() => requirePermission(memberCtx, { guest_invitation: ['send'] })).toThrow(
       expect.objectContaining({ code: 'FORBIDDEN' })
     )
   })
 
-  it('allows editor to add guests to events', () => {
+  it('allows member to add guests to events', () => {
     expect(() =>
-      requirePermission(editorCtx, { guest_event: ['add_guest_to_event'] })
+      requirePermission(memberCtx, { guest_event: ['add_guest_to_event'] })
     ).not.toThrow()
   })
 

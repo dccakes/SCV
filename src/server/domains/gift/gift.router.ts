@@ -6,19 +6,16 @@
  */
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
+import { requireActiveWeddingId } from '~/server/authz/active-wedding'
 import { giftService } from '~/server/domains/gift'
 import { updateGiftSchema } from '~/server/domains/gift/gift.validator'
-import { weddingService } from '~/server/domains/wedding'
 
 export const giftRouter = createTRPCRouter({
   /**
    * Update a gift
    */
   update: protectedProcedure.input(updateGiftSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(
-      ctx.auth.userId,
-      ctx.auth.activeOrganization?.organizationId ?? null
-    )
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return giftService.updateGift(ctx.authz, weddingId, input)
   }),
 })

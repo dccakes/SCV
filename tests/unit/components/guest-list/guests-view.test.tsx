@@ -64,7 +64,7 @@ jest.mock('~/trpc/react', () => ({
   api: {
     useUtils: () => ({
       dashboard: {
-        getByUserId: {
+        getForActiveWorkspace: {
           invalidate: (...args: unknown[]) => mockDashboardInvalidate(...args),
         },
       },

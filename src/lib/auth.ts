@@ -15,6 +15,31 @@ import { db } from '~/server/db'
 export const authOrganizationRoles = organizationRoles
 
 const appBaseUrl = env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${env.PORT ?? '3000'}`
+const localTrustedHostnames = new Set(['127.0.0.1', '::1', 'localhost'])
+const staticTrustedOrigins = [
+  'https://oswp.carvallo.io',
+  'https://scv-teal.vercel.app',
+  ...(env.VERCEL_URL ? [`https://${env.VERCEL_URL}`] : []),
+  ...(env.VERCEL_BRANCH_URL ? [`https://${env.VERCEL_BRANCH_URL}`] : []),
+  new URL(appBaseUrl).origin,
+]
+
+export function resolveTrustedOrigins(requestUrl?: string): string[] {
+  const origins = new Set(staticTrustedOrigins)
+
+  if (requestUrl) {
+    try {
+      const requestOrigin = new URL(requestUrl)
+      if (localTrustedHostnames.has(requestOrigin.hostname)) {
+        origins.add(requestOrigin.origin)
+      }
+    } catch {
+      // Ignore invalid request URLs; static trusted origins remain available.
+    }
+  }
+
+  return [...origins]
+}
 
 const getInvitationAcceptUrl = (invitationId: string): string => {
   const url = new URL('/auth/accept-invitation', appBaseUrl)
@@ -93,13 +118,7 @@ export const authPlugins: BetterAuthPlugin[] = [
 export const auth = betterAuth({
   baseURL: appBaseUrl,
   secret: env.BETTER_AUTH_SECRET,
-  trustedOrigins: [
-    'https://oswp.carvallo.io',
-    'https://scv-teal.vercel.app',
-    ...(env.VERCEL_URL ? [`https://${env.VERCEL_URL}`] : []),
-    ...(env.VERCEL_BRANCH_URL ? [`https://${env.VERCEL_BRANCH_URL}`] : []),
-    ...(env.NEXT_PUBLIC_APP_URL ? [env.NEXT_PUBLIC_APP_URL] : []),
-  ],
+  trustedOrigins: (request) => resolveTrustedOrigins(request?.url),
   database: prismaAdapter(db, {
     provider: 'postgresql',
   }),

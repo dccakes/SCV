@@ -229,33 +229,51 @@ describe('GuestService', () => {
   describe('updateGuest', () => {
     it('should update a guest', async () => {
       const updatedGuest = { ...mockGuest, firstName: 'Jane' }
+      mockFindByIdFn.mockResolvedValue(mockGuest)
       mockUpdateFn.mockResolvedValue(updatedGuest)
 
-      const result = await guestService.updateGuest(actorContext, 1, { firstName: 'Jane' })
+      const result = await guestService.updateGuest(actorContext, 'wedding-123', 1, {
+        firstName: 'Jane',
+      })
 
       expect(result.firstName).toBe('Jane')
+      expect(mockFindByIdFn).toHaveBeenCalledWith(1)
       expect(mockUpdateFn).toHaveBeenCalledWith(1, { firstName: 'Jane' })
+    })
+
+    it('should reject updates for guests outside the wedding scope', async () => {
+      mockFindByIdFn.mockResolvedValue({ ...mockGuest, weddingId: 'wedding-999' })
+
+      await expect(
+        guestService.updateGuest(actorContext, 'wedding-123', 1, { firstName: 'Jane' })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+
+      expect(mockUpdateFn).not.toHaveBeenCalled()
     })
   })
 
   describe('deleteGuest', () => {
     it('should delete a guest', async () => {
+      mockFindByIdFn.mockResolvedValue(mockGuest)
       mockDeleteFn.mockResolvedValue(mockGuest)
 
-      const result = await guestService.deleteGuest(actorContext, 1)
+      const result = await guestService.deleteGuest(actorContext, 'wedding-123', 1)
 
       expect(result).toEqual(mockGuest)
+      expect(mockFindByIdFn).toHaveBeenCalledWith(1)
       expect(mockDeleteFn).toHaveBeenCalledWith(1)
     })
   })
 
   describe('deleteGuests', () => {
     it('should delete multiple guests', async () => {
+      mockFindByIdFn.mockResolvedValue(mockGuest)
       mockDeleteManyFn.mockResolvedValue({ count: 3 })
 
-      const result = await guestService.deleteGuests(actorContext, [1, 2, 3])
+      const result = await guestService.deleteGuests(actorContext, 'wedding-123', [1, 2, 3])
 
       expect(result).toEqual({ count: 3 })
+      expect(mockFindByIdFn).toHaveBeenCalledTimes(3)
       expect(mockDeleteManyFn).toHaveBeenCalledWith([1, 2, 3])
     })
   })

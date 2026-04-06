@@ -1,34 +1,38 @@
+import { TRPCError } from '@trpc/server'
+
 jest.mock('lib/auth', () => ({
   auth: { api: { getSession: jest.fn().mockResolvedValue(null) } },
 }))
 
+jest.mock('~/lib/auth-permissions', () => require('~/lib/__mocks__/auth-permissions'))
+
 jest.mock('server/db', () => ({ db: {} }))
+
+jest.mock('server/application/event-insights', () => ({
+  eventInsightsService: {
+    listEvents: jest.fn(),
+    listEventsWithStats: jest.fn(),
+  },
+}))
 
 jest.mock('server/domains/event', () => ({
   eventService: {
     createEvent: jest.fn(),
     deleteEvent: jest.fn(),
-    getWeddingEvents: jest.fn(),
-    getWeddingEventsWithStats: jest.fn(),
     updateCollectRsvp: jest.fn(),
     updateEvent: jest.fn(),
   },
 }))
 
-jest.mock('server/domains/wedding', () => ({
-  weddingService: {
-    getWeddingIdByUserId: jest.fn(),
-  },
-}))
-
+import { eventInsightsService } from 'server/application/event-insights'
 import { eventService } from 'server/domains/event'
 import { eventRouter } from 'server/domains/event/event.router'
-import { weddingService } from 'server/domains/wedding'
 
 const mockCreateEvent = eventService.createEvent as jest.Mock
 const mockUpdateEvent = eventService.updateEvent as jest.Mock
 const mockDeleteEvent = eventService.deleteEvent as jest.Mock
-const mockGetWeddingIdByUserId = weddingService.getWeddingIdByUserId as jest.Mock
+const mockListEvents = eventInsightsService.listEvents as jest.Mock
+const mockListEventsWithStats = eventInsightsService.listEventsWithStats as jest.Mock
 
 describe('eventRouter authz context plumbing', () => {
   const activeOrganization = {
@@ -40,6 +44,7 @@ describe('eventRouter authz context plumbing', () => {
     auth: {
       session: { user: { id: 'user-123' } },
       activeOrganization,
+      activeWeddingId: 'wedding-123',
       userId: 'user-123',
     },
     authz: {
@@ -52,7 +57,6 @@ describe('eventRouter authz context plumbing', () => {
 
   beforeEach(() => {
     jest.resetAllMocks()
-    mockGetWeddingIdByUserId.mockResolvedValue('wedding-123')
   })
 
   it('passes authz context to create mutation service call', async () => {
@@ -94,5 +98,67 @@ describe('eventRouter authz context plumbing', () => {
       'wedding-123',
       'event-1'
     )
+  })
+
+  it('keeps read routes protected and scoped to active wedding', async () => {
+    mockListEvents.mockResolvedValue([{ id: 'event-1' }])
+    mockListEventsWithStats.mockResolvedValue([{ id: 'event-1', guestResponses: {} }])
+
+    await caller.getAllByUserId()
+    await caller.getAllByUserIdWithStats()
+
+    expect(mockListEvents).toHaveBeenCalledWith(
+      { userId: 'user-123', activeOrganization },
+      'wedding-123'
+    )
+    expect(mockListEventsWithStats).toHaveBeenCalledWith(
+      { userId: 'user-123', activeOrganization },
+      'wedding-123'
+    )
+  })
+
+  it('rejects unauthenticated reads with UNAUTHORIZED', async () => {
+    const unauthenticatedCaller = eventRouter.createCaller({
+      auth: {
+        session: null,
+        activeOrganization: null,
+        activeWeddingId: 'wedding-123',
+        userId: null,
+      },
+      authz: {
+        userId: '',
+        activeOrganization: null,
+      },
+      db: {} as never,
+      headers: new Headers(),
+    })
+
+    await expect(unauthenticatedCaller.getAllByUserId()).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+    })
+  })
+
+  it('rejects viewer read access with FORBIDDEN', async () => {
+    const forbiddenError = new TRPCError({ code: 'FORBIDDEN' })
+    mockListEvents.mockRejectedValue(forbiddenError)
+
+    const viewerCaller = eventRouter.createCaller({
+      auth: {
+        session: { user: { id: 'user-123' } },
+        activeOrganization: { organizationId: 'org-123', role: 'viewer' },
+        activeWeddingId: 'wedding-123',
+        userId: 'user-123',
+      },
+      authz: {
+        userId: 'user-123',
+        activeOrganization: { organizationId: 'org-123', role: 'viewer' },
+      },
+      db: {} as never,
+      headers: new Headers(),
+    })
+
+    await expect(viewerCaller.getAllByUserId()).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+    })
   })
 })

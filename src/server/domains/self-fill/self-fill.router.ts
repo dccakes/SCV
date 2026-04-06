@@ -12,6 +12,9 @@
 import { TRPCError } from '@trpc/server'
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
+import { requireActiveWeddingId } from '~/server/authz/active-wedding'
+import type { AuthzContext } from '~/server/authz/authorization.types'
+import { requirePermission } from '~/server/authz/permission-checker'
 import { selfFillService } from '~/server/domains/self-fill'
 import type { ISelfFillRegistration } from '~/server/domains/self-fill/self-fill.types'
 import {
@@ -23,11 +26,11 @@ import {
 import { weddingService } from '~/server/domains/wedding'
 
 /**
- * Fetch the authenticated user's wedding and assert ownership.
- * Throws NOT_FOUND if the user has no associated wedding.
+ * Fetch the active wedding from workspace scope.
+ * Throws NOT_FOUND if the active wedding no longer exists.
  */
-async function getOwnedWedding(userId: string) {
-  const wedding = await weddingService.getByUserId(userId)
+async function getActiveWedding(activeWeddingId: string) {
+  const wedding = await weddingService.getById(activeWeddingId)
   if (!wedding) {
     throw new TRPCError({
       code: 'NOT_FOUND',
@@ -35,6 +38,10 @@ async function getOwnedWedding(userId: string) {
     })
   }
   return wedding
+}
+
+function assertCanManageSelfFill(ctx: AuthzContext) {
+  requirePermission(ctx, { guest_invitation: ['send'] })
 }
 
 /**
@@ -73,10 +80,12 @@ export function createSelfFillRouter(registrationService: ISelfFillRegistration)
 
     /**
      * Generate a new self-fill token (protected)
-     * Only the wedding owner can generate tokens.
+     * Requires outbound invite permission.
      */
     generateToken: protectedProcedure.input(generateTokenSchema).mutation(async ({ ctx }) => {
-      const wedding = await getOwnedWedding(ctx.auth.userId)
+      assertCanManageSelfFill(ctx.authz)
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+      const wedding = await getActiveWedding(weddingId)
       const token = await selfFillService.generateToken(wedding.id)
       return { token }
     }),
@@ -86,7 +95,9 @@ export function createSelfFillRouter(registrationService: ISelfFillRegistration)
      * Disables the self-fill registration link.
      */
     revokeToken: protectedProcedure.input(revokeTokenSchema).mutation(async ({ ctx }) => {
-      const wedding = await getOwnedWedding(ctx.auth.userId)
+      assertCanManageSelfFill(ctx.authz)
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+      const wedding = await getActiveWedding(weddingId)
       await selfFillService.revokeToken(wedding.id)
       return { success: true }
     }),
@@ -98,7 +109,9 @@ export function createSelfFillRouter(registrationService: ISelfFillRegistration)
      * earliestEventDate so the UI can warn if the link expires before the wedding.
      */
     getToken: protectedProcedure.query(async ({ ctx }) => {
-      const wedding = await getOwnedWedding(ctx.auth.userId)
+      assertCanManageSelfFill(ctx.authz)
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+      const wedding = await getActiveWedding(weddingId)
       return selfFillService.getTokenWithContext(wedding.id)
     }),
   })

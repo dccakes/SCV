@@ -2,6 +2,10 @@
  * @jest-environment node
  */
 
+jest.mock('~/server/authz/permission-checker', () => ({
+  requirePermission: jest.fn(() => ({ organizationId: 'org-1', role: 'owner' })),
+}))
+
 import { getTimelineTools } from '~/lib/etta/tools/timeline'
 import type { EttaContext } from '~/lib/etta/types'
 import { logAudit } from '~/lib/etta/utils/audit'
@@ -16,6 +20,7 @@ const mockCtx: EttaContext = {
   weddingId: 'wedding-123',
   ettaActorId: 'actor-123',
   actor: 'couple',
+  authz: { userId: 'user-1', activeOrganization: { organizationId: 'org-1', role: 'owner' } },
   wedding: {
     groomFirstName: 'John',
     groomLastName: 'Doe',

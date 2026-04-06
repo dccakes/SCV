@@ -34,7 +34,9 @@ describe('createTRPCContext active organization resolution', () => {
       user: { id: 'user-1' },
       session: { activeOrganizationId: 'org-1' },
     })
-    mockQueryRaw.mockResolvedValue([{ role: 'admin' }])
+    mockQueryRaw.mockResolvedValue([
+      { isPrimaryWedding: false, organizationId: 'org-1', role: 'admin', weddingId: 'wedding-1' },
+    ])
 
     const context = await createTRPCContext({ headers: new Headers() })
 
@@ -42,19 +44,23 @@ describe('createTRPCContext active organization resolution', () => {
       organizationId: 'org-1',
       role: 'admin',
     })
+    expect(context.auth.activeWeddingId).toBe('wedding-1')
   })
 
-  it('auto-activates first org when session has no activeOrganizationId', async () => {
+  it('auto-activates the primary wedding organization when session has no activeOrganizationId', async () => {
     mockGetSession.mockResolvedValue({
       user: { id: 'user-1' },
       session: { token: 'tok-1' },
     })
-    mockQueryRaw.mockResolvedValue([{ organizationId: 'org-1', role: 'owner' }])
+    mockQueryRaw.mockResolvedValueOnce([
+      { isPrimaryWedding: true, organizationId: 'org-1', role: 'owner', weddingId: 'wedding-1' },
+    ])
     mockExecuteRaw.mockResolvedValue(1)
 
     const context = await createTRPCContext({ headers: new Headers() })
 
     expect(context.auth.activeOrganization).toEqual({ organizationId: 'org-1', role: 'owner' })
+    expect(context.auth.activeWeddingId).toBe('wedding-1')
   })
 
   it('sets activeOrganization to null when no activeOrganizationId and no member rows', async () => {
@@ -62,23 +68,32 @@ describe('createTRPCContext active organization resolution', () => {
       user: { id: 'user-1' },
       session: { token: 'tok-1' },
     })
-    mockQueryRaw.mockResolvedValue([])
+    mockQueryRaw.mockResolvedValueOnce([])
 
     const context = await createTRPCContext({ headers: new Headers() })
 
     expect(context.auth.activeOrganization).toBeNull()
+    expect(context.auth.activeWeddingId).toBeNull()
   })
 
-  it('sets activeOrganization to null when member record is not found for active org', async () => {
+  it('repairs a stale active organization when the primary wedding organization is still valid', async () => {
     mockGetSession.mockResolvedValue({
       user: { id: 'user-1' },
-      session: { activeOrganizationId: 'org-1' },
+      session: { activeOrganizationId: 'org-stale', token: 'tok-1' },
     })
-    mockQueryRaw.mockResolvedValue([])
+    mockQueryRaw.mockResolvedValueOnce([])
+    mockQueryRaw.mockResolvedValueOnce([
+      { isPrimaryWedding: true, organizationId: 'org-1', role: 'owner', weddingId: 'wedding-1' },
+    ])
+    mockExecuteRaw.mockResolvedValue(1)
 
     const context = await createTRPCContext({ headers: new Headers() })
 
-    expect(context.auth.activeOrganization).toBeNull()
+    expect(context.auth.activeOrganization).toEqual({
+      organizationId: 'org-1',
+      role: 'owner',
+    })
+    expect(context.auth.activeWeddingId).toBe('wedding-1')
   })
 
   it('sets activeOrganization to null when session is null (unauthenticated)', async () => {
@@ -87,6 +102,7 @@ describe('createTRPCContext active organization resolution', () => {
     const context = await createTRPCContext({ headers: new Headers() })
 
     expect(context.auth.activeOrganization).toBeNull()
+    expect(context.auth.activeWeddingId).toBeNull()
     expect(mockQueryRaw).not.toHaveBeenCalled()
   })
 

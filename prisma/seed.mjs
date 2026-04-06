@@ -14,6 +14,15 @@ const prisma = new PrismaClient({
 
 const fixturePath = new URL('./seed-fixture.json', import.meta.url)
 
+/** @param {{ isPrimary?: boolean; role?: string }} user */
+function resolveSeedRole(user) {
+  if (typeof user.role === 'string' && user.role.length > 0) {
+    return user.role
+  }
+
+  return user.isPrimary ? 'owner' : 'member'
+}
+
 /** @returns {import('@prisma/client').Prisma.JsonObject} */
 function loadFixture() {
   const raw = readFileSync(fixturePath, 'utf-8')
@@ -100,7 +109,7 @@ async function seed() {
             id: `member-${fixture.organization.id}-${user.id}`,
             organizationId: fixture.organization.id,
             userId: user.id,
-            role: user.isPrimary ? 'owner' : 'member',
+            role: resolveSeedRole(user),
           },
         })
       }
@@ -125,7 +134,7 @@ async function seed() {
         data: {
           userId: user.id,
           weddingId: fixture.wedding.id,
-          role: user.isPrimary ? 'owner' : 'editor',
+          role: resolveSeedRole(user),
           isPrimary: user.isPrimary,
         },
       })
@@ -366,7 +375,14 @@ async function seed() {
 
 seed()
   .catch((error) => {
-    process.stderr.write(`Seed failed: ${String(error)}\n`)
+    if (error instanceof AggregateError) {
+      process.stderr.write(`Seed failed with AggregateError: ${error.message}\n`)
+      for (const [index, cause] of error.errors.entries()) {
+        process.stderr.write(`  [${index + 1}] ${String(cause)}\n`)
+      }
+    } else {
+      process.stderr.write(`Seed failed: ${String(error)}\n`)
+    }
     process.exit(1)
   })
   .finally(async () => {

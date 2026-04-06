@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import VendorsPage from '~/app/(authenicated)/vendors/page'
 
 const mockGetVendors = jest.fn()
+const mockGetRequiredWedding = jest.fn()
 const mockRedirect = jest.fn()
 const mockVendorList = jest.fn((_props: { initialVendors: unknown[] }) => (
   <div data-testid='vendor-list'>Vendor list</div>
@@ -25,6 +26,10 @@ jest.mock('~/trpc/server', () => ({
   },
 }))
 
+jest.mock('~/server/application/authenticated-route/authenticated-route-data', () => ({
+  getRequiredWedding: () => mockGetRequiredWedding(),
+}))
+
 jest.mock('~/components/vendor', () => ({
   __esModule: true,
   default: ({ initialVendors }: { initialVendors: unknown[] }) =>
@@ -40,6 +45,8 @@ jest.mock('~/components/dashboard/dashboard-topbar', () => ({
 describe('VendorsPage', () => {
   beforeEach(() => {
     mockGetVendors.mockReset()
+    mockGetRequiredWedding.mockReset()
+    mockGetRequiredWedding.mockResolvedValue({ id: 'wedding-123' })
     mockRedirect.mockReset()
     mockVendorList.mockClear()
     mockDashboardTopbar.mockClear()

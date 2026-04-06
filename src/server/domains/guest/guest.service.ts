@@ -5,6 +5,7 @@
  * Handles guest creation, updates, and retrieval.
  */
 
+import { TRPCError } from '@trpc/server'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { GuestRepository } from '~/server/domains/guest/guest.repository'
@@ -150,6 +151,7 @@ export class GuestService {
    */
   async updateGuest(
     ctx: AuthzContext,
+    weddingId: string,
     guestId: number,
     data: {
       firstName?: string
@@ -159,22 +161,29 @@ export class GuestService {
     }
   ): Promise<Guest> {
     this.requireGuestPermission(ctx, 'update')
+    await this.assertGuestInWedding(guestId, weddingId)
     return this.guestRepository.update(guestId, data)
   }
 
   /**
    * Delete a guest
    */
-  async deleteGuest(ctx: AuthzContext, guestId: number): Promise<Guest> {
+  async deleteGuest(ctx: AuthzContext, weddingId: string, guestId: number): Promise<Guest> {
     this.requireGuestPermission(ctx, 'delete')
+    await this.assertGuestInWedding(guestId, weddingId)
     return this.guestRepository.delete(guestId)
   }
 
   /**
    * Delete multiple guests
    */
-  async deleteGuests(ctx: AuthzContext, guestIds: number[]): Promise<{ count: number }> {
+  async deleteGuests(
+    ctx: AuthzContext,
+    weddingId: string,
+    guestIds: number[]
+  ): Promise<{ count: number }> {
     this.requireGuestPermission(ctx, 'delete')
+    await Promise.all(guestIds.map((guestId) => this.assertGuestInWedding(guestId, weddingId)))
     return this.guestRepository.deleteMany(guestIds)
   }
 
@@ -185,5 +194,15 @@ export class GuestService {
     requirePermission(ctx, {
       guest: [action],
     })
+  }
+
+  private async assertGuestInWedding(guestId: number, weddingId: string): Promise<void> {
+    const guest = await this.guestRepository.findById(guestId)
+    if (!guest || guest.weddingId !== weddingId) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'You do not have permission to modify this guest',
+      })
+    }
   }
 }

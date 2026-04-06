@@ -135,6 +135,9 @@ describe('OrganizationMembersSettingsCard', () => {
 
     expect(screen.getByRole('button', { name: 'Invite Member' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Edit Role' })).toBeEnabled()
+    expect(
+      screen.getByText('Your role can edit members but cannot send member invitations.')
+    ).toBeInTheDocument()
   })
 
   it('hides role editing without member:update even if inviting is allowed', async () => {
@@ -185,6 +188,62 @@ describe('OrganizationMembersSettingsCard', () => {
 
     expect(screen.getByRole('button', { name: 'Invite Member' })).toBeEnabled()
     expect(screen.queryByRole('button', { name: 'Edit Role' })).not.toBeInTheDocument()
+    expect(
+      screen.getByText('Your role can invite members but cannot change existing member roles.')
+    ).toBeInTheDocument()
+  })
+
+  it('shows view-only hint when invite and role-update permissions are both missing', async () => {
+    mockFetch.mockImplementation(
+      (path: string, options?: { body?: { permissions?: Record<string, unknown> } }) => {
+        const body = options?.body
+
+        if (path === '/organization/get-full-organization') {
+          return Promise.resolve({
+            data: {
+              id: 'org-seed-shrek-fiona',
+              members: [
+                {
+                  id: 'member-fiona',
+                  role: 'viewer',
+                  user: { email: 'fiona@swamp.wed', name: 'Fiona Ogre' },
+                },
+              ],
+              name: 'Couple',
+            },
+            error: null,
+          })
+        }
+
+        if (path === '/organization/has-permission' && body?.permissions?.invitation) {
+          return Promise.resolve({
+            data: { success: false },
+            error: null,
+          })
+        }
+
+        if (path === '/organization/has-permission' && body?.permissions?.member) {
+          return Promise.resolve({
+            data: { success: false },
+            error: null,
+          })
+        }
+
+        throw new Error(`Unexpected fetch path: ${path}`)
+      }
+    )
+
+    render(<OrganizationMembersSettingsCard />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Fiona Ogre')).toBeInTheDocument()
+    })
+
+    expect(screen.getByRole('button', { name: 'Invite Member' })).toBeDisabled()
+    expect(screen.queryByRole('button', { name: 'Edit Role' })).not.toBeInTheDocument()
+    expect(
+      screen.getByText('Your role cannot manage organization members or send member invitations.')
+    ).toBeInTheDocument()
   })
 
   it('surfaces fetch failures with retry instead of staying pending forever', async () => {

@@ -3,10 +3,18 @@
  */
 
 import { logAudit } from '~/lib/etta/utils/audit'
-import { validateCoupleSession } from '~/lib/etta/utils/auth'
+import { EttaAuthError, validateCoupleSession } from '~/lib/etta/utils/auth'
 import { db } from '~/server/db'
 
 jest.mock('~/lib/etta/utils/auth', () => ({
+  EttaAuthError: class EttaAuthError extends Error {
+    constructor(
+      message: string,
+      readonly status: 401 | 403 | 412
+    ) {
+      super(message)
+    }
+  },
   validateCoupleSession: jest.fn(),
 }))
 jest.mock('~/lib/etta/utils/audit', () => ({
@@ -110,12 +118,23 @@ describe('PATCH /api/etta/approve/[suggestionId]', () => {
   // ── Authentication ──────────────────────────────────────────────────────
 
   it('returns 401 when there is no active session', async () => {
-    mockValidateSession.mockRejectedValue(new Error('No active session'))
+    mockValidateSession.mockRejectedValue(new EttaAuthError('No active session', 401))
 
     const res = await PATCH(makeRequest({ action: 'approve' }), makeParams())
 
     expect(res.status).toBe(401)
     expect((await res.json()).error).toBe('No active session')
+  })
+
+  it('returns 412 when there is no active wedding in workspace scope', async () => {
+    mockValidateSession.mockRejectedValue(
+      new EttaAuthError('No active wedding in workspace scope', 412)
+    )
+
+    const res = await PATCH(makeRequest({ action: 'approve' }), makeParams())
+
+    expect(res.status).toBe(412)
+    expect((await res.json()).error).toBe('No active wedding in workspace scope')
   })
 
   // ── Authorization / ownership ───────────────────────────────────────────

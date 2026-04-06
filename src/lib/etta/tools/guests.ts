@@ -3,9 +3,9 @@ import { z } from 'zod'
 
 import { RSVP_STATUS } from '~/lib/constants/rsvp'
 import type { EttaContext } from '~/lib/etta/types'
-import { eventService } from '~/server/domains/event'
+import { requirePlannerAuthz } from '~/lib/etta/utils/authorization'
+import { guestInsightsService } from '~/server/application/guest-insights'
 import { guestService } from '~/server/domains/guest'
-import { invitationService } from '~/server/domains/invitation'
 
 const rsvpFilterSchema = z.enum([
   RSVP_STATUS.ATTENDING,
@@ -14,39 +14,15 @@ const rsvpFilterSchema = z.enum([
   RSVP_STATUS.NOT_INVITED,
 ])
 
-function normalizeSearchValue(value: string | null | undefined) {
-  return (value ?? '').trim().toLowerCase()
-}
-
-function buildGuestSearchIndex(guest: {
-  firstName?: string | null
-  lastName?: string | null
-  email?: string | null
-  householdId?: string | null
-}) {
-  return [
-    guest.firstName,
-    guest.lastName,
-    `${guest.firstName ?? ''} ${guest.lastName ?? ''}`.trim(),
-    guest.email,
-    guest.householdId,
-  ]
-    .map(normalizeSearchValue)
-    .filter(Boolean)
-}
-
-function buildGuestName(guest: { firstName?: string | null; lastName?: string | null }) {
-  return [guest.firstName, guest.lastName].filter(Boolean).join(' ').trim()
-}
-
 export function getGuestTools(ctx: EttaContext) {
   return {
     get_guest_list: tool({
       description: 'Get the complete guest list for the wedding',
       inputSchema: zodSchema(z.object({})),
       execute: async () => {
-        const guests = await guestService.getAllByWeddingId(ctx.weddingId)
-        return { guests: guests ?? [] }
+        const authz = requirePlannerAuthz(ctx)
+        const guests = await guestInsightsService.listGuests(authz, ctx.weddingId)
+        return { guests }
       },
     }),
 
@@ -62,8 +38,8 @@ export function getGuestTools(ctx: EttaContext) {
         })
       ),
       execute: async ({ guestId, ...data }) => {
-        if (!ctx.authz) throw new Error('Authorization context required')
-        const guest = await guestService.updateGuest(ctx.authz, guestId, data)
+        const authz = requirePlannerAuthz(ctx)
+        const guest = await guestService.updateGuest(authz, ctx.weddingId, guestId, data)
         return { guest }
       },
     }),
@@ -72,14 +48,8 @@ export function getGuestTools(ctx: EttaContext) {
       description: 'Get RSVP statistics for the wedding',
       inputSchema: zodSchema(z.object({})),
       execute: async () => {
-        const invitations = await invitationService.getAllByWeddingId(ctx.weddingId)
-        const list = invitations ?? []
-
-        const attending = list.filter((i) => i.rsvp === RSVP_STATUS.ATTENDING).length
-        const declined = list.filter((i) => i.rsvp === RSVP_STATUS.DECLINED).length
-        const pending = list.length - attending - declined
-
-        return { total: list.length, attending, declined, pending }
+        const authz = requirePlannerAuthz(ctx)
+        return guestInsightsService.getRsvpSummary(authz, ctx.weddingId)
       },
     }),
 
@@ -92,44 +62,8 @@ export function getGuestTools(ctx: EttaContext) {
         })
       ),
       execute: async ({ guestQuery }) => {
-        const [guests, invitations, events] = await Promise.all([
-          guestService.getAllByWeddingId(ctx.weddingId),
-          invitationService.getAllByWeddingId(ctx.weddingId),
-          eventService.getWeddingEvents(ctx.weddingId),
-        ])
-
-        const normalizedQuery = normalizeSearchValue(guestQuery)
-        const matchedGuest = (guests ?? []).find((guest) =>
-          buildGuestSearchIndex(guest).some((value) => value.includes(normalizedQuery))
-        )
-
-        if (!matchedGuest) {
-          return {
-            guest: null,
-            attendance: [],
-            message: `No guest found matching "${guestQuery}".`,
-          }
-        }
-
-        const eventNameById = new Map((events ?? []).map((event) => [event.id, event.name]))
-        const attendance = (invitations ?? [])
-          .filter((invitation) => invitation.guestId === matchedGuest.id)
-          .map((invitation) => ({
-            eventId: invitation.eventId,
-            eventName: eventNameById.get(invitation.eventId) ?? invitation.eventId,
-            rsvp: invitation.rsvp,
-          }))
-          .sort((a, b) => a.eventName.localeCompare(b.eventName))
-
-        return {
-          guest: {
-            id: matchedGuest.id,
-            name: buildGuestName(matchedGuest),
-            email: matchedGuest.email ?? null,
-            householdId: matchedGuest.householdId ?? null,
-          },
-          attendance,
-        }
+        const authz = requirePlannerAuthz(ctx)
+        return guestInsightsService.getGuestEventAttendance(authz, ctx.weddingId, guestQuery)
       },
     }),
 
@@ -143,51 +77,13 @@ export function getGuestTools(ctx: EttaContext) {
         })
       ),
       execute: async ({ eventQuery, rsvpFilter }) => {
-        const [guests, invitations, events] = await Promise.all([
-          guestService.getAllByWeddingId(ctx.weddingId),
-          invitationService.getAllByWeddingId(ctx.weddingId),
-          eventService.getWeddingEvents(ctx.weddingId),
-        ])
-
-        const normalizedQuery = normalizeSearchValue(eventQuery)
-        const matchedEvent = (events ?? []).find((event) => {
-          const values = [event.name, event.id].map(normalizeSearchValue).filter(Boolean)
-          return values.some((value) => value.includes(normalizedQuery))
-        })
-
-        if (!matchedEvent) {
-          return {
-            event: null,
-            guests: [],
-            message: `No event found matching "${eventQuery}".`,
-          }
-        }
-
-        const guestById = new Map((guests ?? []).map((guest) => [guest.id, guest]))
-        const eventGuests = (invitations ?? [])
-          .filter((invitation) => invitation.eventId === matchedEvent.id)
-          .filter((invitation) => (rsvpFilter ? invitation.rsvp === rsvpFilter : true))
-          .map((invitation) => {
-            const guest = guestById.get(invitation.guestId)
-            return {
-              guestId: invitation.guestId,
-              name: guest ? buildGuestName(guest) : `Guest ${invitation.guestId}`,
-              email: guest?.email ?? null,
-              rsvp: invitation.rsvp,
-            }
-          })
-          .sort((a, b) => {
-            if (a.rsvp === b.rsvp) return a.name.localeCompare(b.name)
-            return a.rsvp.localeCompare(b.rsvp)
-          })
-
-        return {
-          event: {
-            id: matchedEvent.id,
-            name: matchedEvent.name,
-          },
-          guests: eventGuests,
-        }
+        const authz = requirePlannerAuthz(ctx)
+        return guestInsightsService.listEventAttendance(
+          authz,
+          ctx.weddingId,
+          eventQuery,
+          rsvpFilter
+        )
       },
     }),
   }

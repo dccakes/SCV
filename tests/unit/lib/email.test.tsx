@@ -135,7 +135,7 @@ describe('sendOrganizationInvitationEmail', () => {
       inviteUrl: INVITE_URL,
       organizationName: 'Shrek & Fiona',
       invitedByName: 'Fiona',
-      memberRole: 'editor',
+      memberRole: 'member',
     })
 
     expect(mockEmailsSend).toHaveBeenCalledWith(

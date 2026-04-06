@@ -11,92 +11,9 @@ import { initTRPC, TRPCError } from '@trpc/server'
 import superjson from 'superjson'
 import { z } from 'zod'
 import { auth } from '~/lib/auth'
+import { resolveWorkspaceScope } from '~/server/application/workspace/workspace-scope'
 import type { ActiveOrganization, AuthzContext } from '~/server/authz/authorization.types'
 import { db } from '~/server/db'
-
-const getSessionActiveOrganizationId = (session: unknown): string | null => {
-  if (!session || typeof session !== 'object') {
-    return null
-  }
-
-  const sessionRecord =
-    'session' in session && typeof session.session === 'object' && session.session !== null
-      ? (session.session as Record<string, unknown>)
-      : null
-
-  if (!sessionRecord) {
-    return null
-  }
-
-  const activeOrganizationId = sessionRecord.activeOrganizationId
-  if (typeof activeOrganizationId === 'string' && activeOrganizationId.length > 0) {
-    return activeOrganizationId
-  }
-
-  const activeOrganization =
-    typeof sessionRecord.activeOrganization === 'object' &&
-    sessionRecord.activeOrganization !== null
-      ? (sessionRecord.activeOrganization as Record<string, unknown>)
-      : null
-
-  const nestedOrganizationId = activeOrganization?.id
-  if (typeof nestedOrganizationId === 'string' && nestedOrganizationId.length > 0) {
-    return nestedOrganizationId
-  }
-
-  return null
-}
-
-const fetchActiveMember = async (
-  userId: string,
-  organizationId: string
-): Promise<ActiveOrganization | null> => {
-  const rows = await db.$queryRaw<Array<{ role: string }>>`
-    SELECT "role"
-    FROM "member"
-    WHERE "userId" = ${userId}
-      AND "organizationId" = ${organizationId}
-    LIMIT 1
-  `
-
-  const row = rows[0]
-  if (!row) return null
-
-  return { organizationId, role: row.role }
-}
-
-/**
- * If the session has no active organization, find the user's first member row and
- * write it back to the session so subsequent requests don't need to repeat this.
- * Covers: existing users migrated via backfill, and new users who create an org
- * programmatically (not via the Better Auth API route which sets it automatically).
- */
-const autoActivateFirstOrganization = async (
-  userId: string,
-  sessionToken: string | null
-): Promise<ActiveOrganization | null> => {
-  const rows = await db.$queryRaw<Array<{ organizationId: string; role: string }>>`
-    SELECT "organizationId", "role"
-    FROM "member"
-    WHERE "userId" = ${userId}
-    ORDER BY "createdAt" ASC
-    LIMIT 1
-  `
-
-  const row = rows[0]
-  if (!row) return null
-
-  if (sessionToken) {
-    await db.$executeRaw`
-      UPDATE "Session"
-      SET "activeOrganizationId" = ${row.organizationId}
-      WHERE "token" = ${sessionToken}
-        AND ("activeOrganizationId" IS NULL OR "activeOrganizationId" != ${row.organizationId})
-    `
-  }
-
-  return { organizationId: row.organizationId, role: row.role }
-}
 
 /**
  * 1. CONTEXT
@@ -116,25 +33,23 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
   })
 
   const userId = session?.user?.id ?? null
-  const sessionActiveOrganizationId = getSessionActiveOrganizationId(session)
-
-  const sessionToken =
-    session && typeof session === 'object' && 'session' in session
-      ? (((session.session as Record<string, unknown>)?.token as string | null) ?? null)
-      : null
-
-  const activeOrganization: ActiveOrganization | null = userId
-    ? sessionActiveOrganizationId
-      ? await fetchActiveMember(userId, sessionActiveOrganizationId)
-      : await autoActivateFirstOrganization(userId, sessionToken)
-    : null
+  const resolvedScope = userId
+    ? await resolveWorkspaceScope({
+        session,
+        userId,
+      })
+    : {
+        activeOrganization: null as ActiveOrganization | null,
+        activeWeddingId: null as string | null,
+      }
 
   return {
     db,
     auth: {
       userId,
       session: session,
-      activeOrganization,
+      activeOrganization: resolvedScope.activeOrganization,
+      activeWeddingId: resolvedScope.activeWeddingId,
     },
     ...opts,
   }

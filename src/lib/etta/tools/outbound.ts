@@ -2,6 +2,7 @@ import { tool, zodSchema } from 'ai'
 import { z } from 'zod'
 
 import type { EttaContext } from '~/lib/etta/types'
+import { requireEttaPermission } from '~/lib/etta/utils/authorization'
 import { db } from '~/server/db'
 
 export function getOutboundTools(ctx: EttaContext) {
@@ -15,6 +16,7 @@ export function getOutboundTools(ctx: EttaContext) {
         })
       ),
       execute: async ({ message, recipientFilter }) => {
+        requireEttaPermission(ctx, { guest_invitation: ['send'] })
         const suggestion = await db.ettaSuggestion.create({
           data: {
             weddingId: ctx.weddingId,
@@ -44,6 +46,7 @@ export function getOutboundTools(ctx: EttaContext) {
         })
       ),
       execute: async ({ vendorId, subject, body }) => {
+        requireEttaPermission(ctx, { guest_invitation: ['send'] })
         const suggestion = await db.ettaSuggestion.create({
           data: {
             weddingId: ctx.weddingId,

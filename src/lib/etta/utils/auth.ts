@@ -2,9 +2,18 @@ import { convertToModelMessages } from 'ai'
 import { jwtVerify, SignJWT } from 'jose'
 import { auth } from '~/lib/auth'
 import type { EttaRequest } from '~/lib/etta/types'
-import type { ActiveOrganization, AuthzContext } from '~/server/authz/authorization.types'
-import { db } from '~/server/db'
-import { weddingService } from '~/server/domains/wedding'
+import { resolveWorkspaceScope } from '~/server/application/workspace/workspace-scope'
+import type { AuthzContext } from '~/server/authz/authorization.types'
+
+export class EttaAuthError extends Error {
+  constructor(
+    message: string,
+    readonly status: 401 | 403 | 412
+  ) {
+    super(message)
+    this.name = 'EttaAuthError'
+  }
+}
 
 async function normalizeMessages(messages: unknown): Promise<EttaRequest['messages']> {
   if (!Array.isArray(messages)) {
@@ -38,66 +47,22 @@ export async function validateCoupleSession(
 ): Promise<{ weddingId: string; userId: string; authz: AuthzContext }> {
   const session = await auth.api.getSession({ headers })
   if (!session) {
-    throw new Error('No active session')
+    throw new EttaAuthError('No active session', 401)
   }
 
   const userId = session.user.id
-
-  // Resolve active organization from session (mirrors tRPC protectedProcedure)
-  const activeOrganization = await resolveActiveOrganization(userId, session)
-
-  const weddingId = await weddingService.getWeddingIdByUserId(
+  const { activeOrganization, activeWeddingId } = await resolveWorkspaceScope({
+    session,
     userId,
-    activeOrganization?.organizationId ?? null
-  )
+  })
+
+  if (!activeWeddingId) {
+    throw new EttaAuthError('No active wedding in workspace scope', 412)
+  }
 
   const authz: AuthzContext = { userId, activeOrganization }
 
-  return { weddingId, userId, authz }
-}
-
-async function resolveActiveOrganization(
-  userId: string,
-  session: unknown
-): Promise<ActiveOrganization | null> {
-  const orgId = getSessionActiveOrganizationId(session)
-
-  if (orgId) {
-    const rows = await db.$queryRaw<Array<{ role: string }>>`
-      SELECT "role" FROM "member"
-      WHERE "userId" = ${userId} AND "organizationId" = ${orgId}
-      LIMIT 1
-    `
-    const row = rows[0]
-    return row ? { organizationId: orgId, role: row.role } : null
-  }
-
-  // Auto-activate first organization if none set
-  const rows = await db.$queryRaw<Array<{ organizationId: string; role: string }>>`
-    SELECT "organizationId", "role" FROM "member"
-    WHERE "userId" = ${userId}
-    ORDER BY "createdAt" ASC
-    LIMIT 1
-  `
-  return rows[0] ?? null
-}
-
-function getSessionActiveOrganizationId(session: unknown): string | null {
-  if (!session || typeof session !== 'object') return null
-
-  const sessionRecord =
-    'session' in session && typeof session.session === 'object' && session.session !== null
-      ? (session.session as Record<string, unknown>)
-      : null
-
-  if (!sessionRecord) return null
-
-  const activeOrganizationId = sessionRecord.activeOrganizationId
-  if (typeof activeOrganizationId === 'string' && activeOrganizationId.length > 0) {
-    return activeOrganizationId
-  }
-
-  return null
+  return { weddingId: activeWeddingId, userId, authz }
 }
 
 // ── Guest Tokens ────────────────────────────────────────────────────────────
@@ -129,7 +94,7 @@ export async function validateGuestToken(
   const sub = payload.sub
 
   if (!weddingId || !sub) {
-    throw new Error('Invalid guest token: missing claims')
+    throw new EttaAuthError('Invalid guest token: missing claims', 401)
   }
 
   return { weddingId, guestId: Number(sub) }

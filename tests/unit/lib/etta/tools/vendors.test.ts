@@ -2,15 +2,28 @@
  * @jest-environment node
  */
 
+import { TRPCError } from '@trpc/server'
+
+jest.mock('~/server/authz/permission-checker', () => ({
+  requirePermission: jest.fn(() => ({ organizationId: 'org-1', role: 'owner' })),
+}))
+
 import { getVendorTools } from '~/lib/etta/tools/vendors'
 import type { EttaContext } from '~/lib/etta/types'
+import { vendorInsightsService } from '~/server/application/vendor-insights'
+import { requirePermission } from '~/server/authz/permission-checker'
 import { db } from '~/server/db'
 import { vendorService } from '~/server/domains/vendor'
 
+jest.mock('~/server/application/vendor-insights', () => ({
+  vendorInsightsService: {
+    getQuote: jest.fn(),
+    listVendors: jest.fn(),
+  },
+}))
+
 jest.mock('~/server/domains/vendor', () => ({
   vendorService: {
-    getVendors: jest.fn(),
-    getQuote: jest.fn(),
     updateQuote: jest.fn(),
   },
 }))
@@ -24,9 +37,13 @@ jest.mock('~/server/db', () => ({
 }))
 
 const mockVendorService = vendorService as {
-  getVendors: jest.Mock
-  getQuote: jest.Mock
   updateQuote: jest.Mock
+}
+
+const mockRequirePermission = requirePermission as jest.Mock
+const mockVendorInsightsService = vendorInsightsService as {
+  getQuote: jest.Mock
+  listVendors: jest.Mock
 }
 
 const mockDb = db as {
@@ -57,7 +74,10 @@ const mockCtx: EttaContext = {
 }
 
 describe('getVendorTools', () => {
-  beforeEach(() => jest.clearAllMocks())
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockRequirePermission.mockImplementation(() => ({ organizationId: 'org-1', role: 'owner' }))
+  })
 
   const tools = getVendorTools(mockCtx)
 
@@ -67,26 +87,45 @@ describe('getVendorTools', () => {
         { id: 'v1', name: 'Photo Pro', category: 'PHOTOGRAPHER', quotes: [] },
         { id: 'v2', name: 'DJ Mix', category: 'MUSIC', quotes: [] },
       ]
-      mockVendorService.getVendors.mockResolvedValue(vendors)
+      mockVendorInsightsService.listVendors.mockResolvedValue(vendors)
 
       const result = await tools.get_vendor_list.execute(
         {},
         { toolCallId: 'tc1', messages: [], abortSignal: undefined as never }
       )
 
-      expect(mockVendorService.getVendors).toHaveBeenCalledWith('wedding-123', undefined)
+      expect(mockVendorInsightsService.listVendors).toHaveBeenCalledWith(
+        mockCtx.authz,
+        'wedding-123',
+        undefined
+      )
       expect(result).toEqual({ vendors })
     })
 
     it('passes category filter', async () => {
-      mockVendorService.getVendors.mockResolvedValue([])
+      mockVendorInsightsService.listVendors.mockResolvedValue([])
 
       await tools.get_vendor_list.execute(
         { category: 'VENUE' },
         { toolCallId: 'tc2', messages: [], abortSignal: undefined as never }
       )
 
-      expect(mockVendorService.getVendors).toHaveBeenCalledWith('wedding-123', 'VENUE')
+      expect(mockVendorInsightsService.listVendors).toHaveBeenCalledWith(
+        mockCtx.authz,
+        'wedding-123',
+        'VENUE'
+      )
+    })
+
+    it('requires authz context', async () => {
+      const toolsWithoutAuthz = getVendorTools({ ...mockCtx, authz: undefined })
+
+      await expect(
+        toolsWithoutAuthz.get_vendor_list.execute(
+          {},
+          { toolCallId: 'tc2b', messages: [], abortSignal: undefined as never }
+        )
+      ).rejects.toThrow('Authorization context required')
     })
   })
 
@@ -135,6 +174,19 @@ describe('getVendorTools', () => {
 
       expect(result.suggestionId).toBe('sug-42')
     })
+
+    it('rejects viewer add_vendor when permission check fails', async () => {
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      })
+
+      await expect(
+        tools.add_vendor.execute(
+          { name: 'No Access Vendor', category: 'MUSIC' as const },
+          { toolCallId: 'tc4b', messages: [], abortSignal: undefined as never }
+        )
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
   })
 
   describe('get_vendor_quote', () => {
@@ -160,18 +212,18 @@ describe('getVendorTools', () => {
         createdAt: new Date('2026-04-01'),
         updatedAt: new Date('2026-04-01'),
       }
-      mockVendorService.getQuote.mockResolvedValue(quote)
+      mockVendorInsightsService.getQuote.mockResolvedValue(quote)
 
       const result = await tools.get_vendor_quote.execute(
         { vendorId: 'vendor-1', quoteId: 'quote-1' },
         { toolCallId: 'tc5', messages: [], abortSignal: undefined as never }
       )
 
-      expect(mockVendorService.getQuote).toHaveBeenCalledWith(
+      expect(mockVendorInsightsService.getQuote).toHaveBeenCalledWith(
         mockCtx.authz,
-        'quote-1',
+        'wedding-123',
         'vendor-1',
-        'wedding-123'
+        'quote-1'
       )
       expect(result).toEqual({ quote })
     })

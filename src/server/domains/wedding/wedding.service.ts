@@ -120,32 +120,27 @@ export class WeddingService {
   }
 
   async getScopedWeddingByUserId(
-    userId: string,
+    _userId: string,
     sessionActiveOrganizationId: string | null
   ): Promise<Wedding> {
-    const wedding = await this.weddingRepository.findByUserId(userId)
-    if (!wedding) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'No wedding found for user. Please complete onboarding first.',
-      })
-    }
-
-    if (!wedding.organizationId) {
+    if (!sessionActiveOrganizationId) {
       throw new TRPCError({
         code: 'PRECONDITION_FAILED',
-        message: 'Wedding must be linked to an organization before protected actions are allowed',
+        message: 'No active organization in session',
       })
     }
 
-    if (sessionActiveOrganizationId && sessionActiveOrganizationId !== wedding.organizationId) {
+    const scopedWedding = await this.weddingRepository.findByOrganizationId(
+      sessionActiveOrganizationId
+    )
+    if (!scopedWedding) {
       throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'Active organization does not match the selected wedding',
+        code: 'PRECONDITION_FAILED',
+        message: 'Active organization is not linked to a wedding',
       })
     }
 
-    return wedding
+    return scopedWedding
   }
 
   /**

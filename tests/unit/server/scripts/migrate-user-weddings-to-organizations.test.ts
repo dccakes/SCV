@@ -8,7 +8,8 @@ describe('migrate-user-weddings-to-organizations helpers', () => {
   it('maps legacy roles to organization roles', () => {
     expect(mapLegacyRole('owner')).toBe('owner')
     expect(mapLegacyRole('admin')).toBe('admin')
-    expect(mapLegacyRole('editor')).toBe('editor')
+    expect(mapLegacyRole('editor')).toBe('member')
+    expect(mapLegacyRole('member')).toBe('member')
     expect(mapLegacyRole('something-unknown')).toBe('viewer')
   })
 

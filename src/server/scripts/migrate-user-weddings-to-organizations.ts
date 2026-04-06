@@ -1,14 +1,15 @@
 import { randomUUID } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
+import { parseDryRunArgs } from '~/server/scripts/script-args'
 
 type DatabaseClient = Awaited<typeof import('~/server/db')>['db']
 
-type LegacyRole = 'owner' | 'admin' | 'editor' | 'viewer'
+type OrganizationRole = 'owner' | 'admin' | 'member' | 'viewer'
 
-export const mapLegacyRole = (role: string): LegacyRole => {
+export const mapLegacyRole = (role: string): OrganizationRole => {
   if (role === 'owner') return 'owner'
   if (role === 'admin') return 'admin'
-  if (role === 'editor') return 'editor'
+  if (role === 'editor' || role === 'member') return 'member'
   return 'viewer'
 }
 
@@ -21,18 +22,7 @@ type ParsedArgs = {
 }
 
 export const parseArgs = (argv: string[]): ParsedArgs => {
-  const hasWriteFlag = argv.includes('--write')
-  const hasDryRunFlag = argv.includes('--dry-run')
-
-  if (hasWriteFlag) {
-    return { dryRun: false }
-  }
-
-  if (hasDryRunFlag) {
-    return { dryRun: true }
-  }
-
-  return { dryRun: true }
+  return parseDryRunArgs(argv)
 }
 
 const findOrganizationIdBySlug = async (
@@ -82,7 +72,7 @@ const ensureMemberRole = async (
   input: {
     organizationId: string
     userId: string
-    role: LegacyRole
+    role: OrganizationRole
   }
 ): Promise<'created' | 'updated' | 'unchanged'> => {
   const existing = await db.$queryRaw<Array<{ id: string; role: string }>>`

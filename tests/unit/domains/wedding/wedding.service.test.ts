@@ -40,6 +40,7 @@ import {
   mockCreate,
   mockExistsForUser,
   mockFindById,
+  mockFindByOrganizationId,
   mockFindByUserId,
   mockUpdate,
   mockWedding,
@@ -53,6 +54,7 @@ import { requirePermission } from '~/server/authz/permission-checker'
 const mockCreateFn = mockCreate as jest.Mock
 const mockExistsForUserFn = mockExistsForUser as jest.Mock
 const _mockFindByIdFn = mockFindById as jest.Mock
+const mockFindByOrganizationIdFn = mockFindByOrganizationId as jest.Mock
 const mockFindByUserIdFn = mockFindByUserId as jest.Mock
 const mockUpdateFn = mockUpdate as jest.Mock
 const mockCreateEventFn = mockCreateEventSystem as jest.Mock
@@ -272,20 +274,31 @@ describe('WeddingService', () => {
   })
 
   describe('getWeddingIdByUserId', () => {
-    it('should return wedding id when wedding exists', async () => {
-      mockFindByUserIdFn.mockResolvedValue(mockWedding)
+    it('returns the wedding linked to the active organization when provided', async () => {
+      const scopedWedding = { ...mockWedding, id: 'wedding-org-123', organizationId: 'org-789' }
+      mockFindByOrganizationIdFn.mockResolvedValue(scopedWedding)
 
-      const result = await weddingService.getWeddingIdByUserId('user-123')
+      const result = await weddingService.getWeddingIdByUserId('user-123', 'org-789')
 
-      expect(result).toBe(mockWedding.id)
-      expect(mockFindByUserIdFn).toHaveBeenCalledWith('user-123')
+      expect(result).toBe('wedding-org-123')
+      expect(mockFindByOrganizationIdFn).toHaveBeenCalledWith('org-789')
+      expect(mockFindByUserIdFn).not.toHaveBeenCalled()
     })
 
-    it('should throw NOT_FOUND when no wedding exists for user', async () => {
-      mockFindByUserIdFn.mockResolvedValue(null)
-
+    it('throws PRECONDITION_FAILED when no active organization is provided', async () => {
       await expect(weddingService.getWeddingIdByUserId('user-123')).rejects.toMatchObject({
-        code: 'NOT_FOUND',
+        code: 'PRECONDITION_FAILED',
+      })
+      expect(mockFindByUserIdFn).not.toHaveBeenCalled()
+    })
+
+    it('throws PRECONDITION_FAILED when active organization has no linked wedding', async () => {
+      mockFindByOrganizationIdFn.mockResolvedValue(null)
+
+      await expect(
+        weddingService.getWeddingIdByUserId('user-123', 'org-orphan')
+      ).rejects.toMatchObject({
+        code: 'PRECONDITION_FAILED',
       })
     })
   })

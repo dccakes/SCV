@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import SettingsPage from '~/app/(authenicated)/settings/page'
 
 const mockGetDetails = jest.fn()
+const mockGetRequiredWedding = jest.fn()
 const mockDashboardTopbar = jest.fn(
   (_props: { title?: string; showManagementActions?: boolean }) => (
     <header data-testid='dashboard-topbar'>Topbar</header>
@@ -21,6 +22,10 @@ jest.mock('~/trpc/server', () => ({
       getDetails: () => mockGetDetails(),
     },
   },
+}))
+
+jest.mock('~/server/application/authenticated-route/authenticated-route-data', () => ({
+  getRequiredWedding: () => mockGetRequiredWedding(),
 }))
 
 jest.mock('@/components/dashboard/dashboard-topbar', () => ({
@@ -42,6 +47,8 @@ jest.mock('~/components/settings/organization-members-settings-card', () => ({
 describe('SettingsPage', () => {
   beforeEach(() => {
     mockGetDetails.mockReset()
+    mockGetRequiredWedding.mockReset()
+    mockGetRequiredWedding.mockResolvedValue({ id: 'wedding-123' })
     mockDashboardTopbar.mockClear()
     mockWeddingSettingsForm.mockClear()
     mockOrganizationMembersSettingsCard.mockClear()
@@ -70,16 +77,16 @@ describe('SettingsPage', () => {
     expect(screen.getByTestId('organization-members-settings-card')).toBeInTheDocument()
   })
 
-  it('renders onboarding fallback when details query fails', async () => {
+  it('still renders organization members when wedding details query fails', async () => {
     mockGetDetails.mockRejectedValue(new Error('No wedding'))
 
     const page = await SettingsPage()
     render(page)
 
     expect(
-      screen.getByText('No wedding found. Please complete onboarding first.')
+      screen.getByText('Unable to load wedding details for the active workspace.')
     ).toBeInTheDocument()
     expect(mockWeddingSettingsForm).not.toHaveBeenCalled()
-    expect(mockOrganizationMembersSettingsCard).not.toHaveBeenCalled()
+    expect(mockOrganizationMembersSettingsCard).toHaveBeenCalledTimes(1)
   })
 })

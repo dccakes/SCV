@@ -8,7 +8,7 @@
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { RsvpSubmissionService } from '~/server/application/rsvp-submission/rsvp-submission.service'
 import { submitRsvpSchema } from '~/server/application/rsvp-submission/rsvp-submission.validator'
-import { weddingService } from '~/server/domains/wedding'
+import { requireActiveWeddingId } from '~/server/authz/active-wedding'
 import { db } from '~/server/infrastructure/database'
 
 const rsvpSubmissionService = new RsvpSubmissionService(db)
@@ -19,10 +19,7 @@ export const rsvpSubmissionRouter = createTRPCRouter({
    * Guest-facing public RSVP is handled by website.router submitPublicRsvpForm.
    */
   submit: protectedProcedure.input(submitRsvpSchema).mutation(async ({ ctx, input }) => {
-    const weddingId = await weddingService.getWeddingIdByUserId(
-      ctx.auth.userId,
-      ctx.auth.activeOrganization?.organizationId ?? null
-    )
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return rsvpSubmissionService.submitManagedRsvp(ctx.authz, weddingId, input)
   }),
 })

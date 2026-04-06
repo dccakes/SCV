@@ -94,7 +94,7 @@ const deleteImage = async (imageKey: string): Promise<{ ok: boolean }> => {
 export default async function DashboardPage() {
   headers() // Make this page dynamic (requires authentication)
 
-  const dashboardData = await api.dashboard.getByUserId()
+  const dashboardData = await api.dashboard.getForActiveWorkspace()
 
   if (dashboardData === null) {
     redirect('/')

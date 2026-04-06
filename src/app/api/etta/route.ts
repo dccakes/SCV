@@ -7,7 +7,26 @@
 
 import { runEttaAgent } from '~/lib/etta/agent'
 import { logAudit } from '~/lib/etta/utils/audit'
-import { resolveEttaAuth } from '~/lib/etta/utils/auth'
+import { EttaAuthError, resolveEttaAuth } from '~/lib/etta/utils/auth'
+
+const inferAuthStatus = (error: unknown, message: string): number => {
+  if (error instanceof EttaAuthError) {
+    return error.status
+  }
+  if (message === 'No active session' || message.startsWith('Invalid guest token:')) {
+    return 401
+  }
+  if (message === 'No active wedding in workspace scope') {
+    return 412
+  }
+  if (message === 'No wedding found for user') {
+    return 404
+  }
+  if (message.startsWith('Etta is not configured:')) {
+    return 503
+  }
+  return 500
+}
 
 export async function POST(req: Request) {
   let ettaReq: Awaited<ReturnType<typeof resolveEttaAuth>> | null = null
@@ -18,14 +37,7 @@ export async function POST(req: Request) {
     return result.toUIMessageStreamResponse()
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error'
-    const status =
-      message === 'No active session' || message.includes('token')
-        ? 401
-        : message === 'No wedding found for user'
-          ? 404
-          : message.startsWith('Etta is not configured:')
-            ? 503
-            : 500
+    const status = inferAuthStatus(error, message)
 
     // Only write audit log if we have a valid weddingId (FK constraint)
     if (ettaReq?.weddingId) {

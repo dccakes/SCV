@@ -50,19 +50,36 @@ export class DashboardService {
   ) {}
 
   /**
-   * Get complete dashboard overview data for a user
+   * Scoped entrypoint: returns dashboard overview for a specific wedding id.
+   * This is the primary path for protected workspace routes.
+   */
+  async getOverviewForScopedWedding(
+    userId: string,
+    weddingId: string
+  ): Promise<DashboardData | null> {
+    const wedding = await this.weddingRepo.findById(weddingId)
+    if (!wedding) {
+      return null
+    }
+    return this.getOverviewForWedding(userId, wedding)
+  }
+
+  /**
+   * Get complete dashboard overview data for a resolved wedding.
    *
    * Aggregates data from multiple domains in parallel where possible
    * to optimize performance.
    */
-  async getOverview(userId: string): Promise<DashboardData | null> {
-    // First, get the user's wedding
-    const wedding = await this.weddingRepo.findByUserId(userId)
-
-    if (!wedding) {
-      return null
+  private async getOverviewForWedding(
+    userId: string,
+    wedding: {
+      id: string
+      groomFirstName: string
+      groomLastName: string
+      brideFirstName: string
+      brideLastName: string
     }
-
+  ): Promise<DashboardData | null> {
     const weddingId = wedding.id
 
     // Fetch all data in parallel

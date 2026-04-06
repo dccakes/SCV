@@ -22,6 +22,15 @@ export class WeddingRepository {
   }
 
   /**
+   * Find a wedding by organization ID
+   */
+  async findByOrganizationId(organizationId: string): Promise<Wedding | null> {
+    return this.db.wedding.findFirst({
+      where: { organizationId },
+    })
+  }
+
+  /**
    * Find a wedding by user ID (through UserWedding join table)
    */
   async findByUserId(userId: string): Promise<Wedding | null> {

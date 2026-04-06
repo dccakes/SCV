@@ -3,6 +3,7 @@ import { tool, zodSchema } from 'ai'
 import { z } from 'zod'
 
 import type { EttaContext } from '~/lib/etta/types'
+import { requireEttaPermission } from '~/lib/etta/utils/authorization'
 import { db } from '~/server/db'
 
 export function getSuggestionTools(ctx: EttaContext) {
@@ -11,6 +12,7 @@ export function getSuggestionTools(ctx: EttaContext) {
       description: 'Lists pending suggestions awaiting review',
       inputSchema: zodSchema(z.object({})),
       execute: async () => {
+        requireEttaPermission(ctx, { wedding: ['read'] })
         return db.ettaSuggestion.findMany({
           where: { weddingId: ctx.weddingId, status: 'pending' },
           orderBy: { createdAt: 'desc' },
@@ -30,6 +32,7 @@ export function getSuggestionTools(ctx: EttaContext) {
         })
       ),
       execute: async ({ actionType, tier, summary, payload }) => {
+        requireEttaPermission(ctx, { wedding: ['update'] })
         const suggestion = await db.ettaSuggestion.create({
           data: {
             weddingId: ctx.weddingId,

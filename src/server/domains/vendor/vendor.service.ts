@@ -39,20 +39,24 @@ export class VendorService {
    * Internal system method — no AuthzContext, no permission check.
    * Use getVendorsByUserId for user-facing calls. Do NOT call from routers directly.
    */
-  async getVendors(weddingId: string, category?: VendorCategory): Promise<VendorWithQuotes[]> {
+  // System-only read path. App and Etta planner flows should use permissioned methods.
+  async getVendorsSystem(
+    weddingId: string,
+    category?: VendorCategory
+  ): Promise<VendorWithQuotes[]> {
     return this.vendorRepository.findAllByWeddingId(weddingId, category)
   }
 
   /**
-   * Get all vendors for a user's wedding in a single query (no separate weddingId lookup)
+   * Get all vendors for the active wedding scope.
    */
-  async getVendorsByUserId(
+  async getVendorsForWedding(
     ctx: AuthzContext,
-    userId: string,
+    weddingId: string,
     category?: VendorCategory
   ): Promise<VendorWithQuotes[]> {
     this.requireVendorPermission(ctx, 'read')
-    return this.vendorRepository.findAllByUserId(userId, category)
+    return this.vendorRepository.findAllByWeddingId(weddingId, category)
   }
 
   /**

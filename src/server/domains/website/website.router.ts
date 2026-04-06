@@ -7,6 +7,8 @@
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
 import { rsvpSubmissionService, submitPublicRsvpSchema } from '~/server/application/rsvp-submission'
+import { requireActiveWeddingId } from '~/server/authz/active-wedding'
+import { requirePermission } from '~/server/authz/permission-checker'
 import { websiteService } from '~/server/domains/website'
 import {
   createWebsiteSchema,
@@ -18,32 +20,24 @@ import {
   updateWebsiteSchema,
   verifyWebsitePasswordSchema,
 } from '~/server/domains/website/website.validator'
-import { weddingService } from '~/server/domains/wedding'
-
 export const websiteRouter = createTRPCRouter({
   /**
    * Enable website add-on for wedding
    * Note: Wedding must already exist before enabling website add-on
    */
   create: protectedProcedure.input(createWebsiteSchema).mutation(async ({ ctx, input }) => {
-    const wedding = await weddingService.getScopedWeddingByUserId(
-      ctx.auth.userId,
-      ctx.auth.activeOrganization?.organizationId ?? null
-    )
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
 
-    return websiteService.enableWebsite(ctx.authz, wedding.id, input)
+    return websiteService.enableWebsite(ctx.authz, weddingId, input)
   }),
 
   /**
    * Update website settings
    */
   update: protectedProcedure.input(updateWebsiteSchema).mutation(async ({ ctx, input }) => {
-    const wedding = await weddingService.getScopedWeddingByUserId(
-      ctx.auth.userId,
-      ctx.auth.activeOrganization?.organizationId ?? null
-    )
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
 
-    return websiteService.updateWebsite(ctx.authz, wedding.id, input)
+    return websiteService.updateWebsite(ctx.authz, weddingId, input)
   }),
 
   /**
@@ -52,14 +46,11 @@ export const websiteRouter = createTRPCRouter({
   updateIsRsvpEnabled: protectedProcedure
     .input(updateRsvpEnabledSchema)
     .mutation(async ({ ctx, input }) => {
-      const wedding = await weddingService.getScopedWeddingByUserId(
-        ctx.auth.userId,
-        ctx.auth.activeOrganization?.organizationId ?? null
-      )
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
 
       return websiteService.updateRsvpEnabled(
         ctx.authz,
-        wedding.id,
+        weddingId,
         input.websiteId,
         input.isRsvpEnabled
       )
@@ -71,23 +62,18 @@ export const websiteRouter = createTRPCRouter({
   updateCoverPhoto: protectedProcedure
     .input(updateCoverPhotoSchema)
     .mutation(async ({ ctx, input }) => {
-      const wedding = await weddingService.getScopedWeddingByUserId(
-        ctx.auth.userId,
-        ctx.auth.activeOrganization?.organizationId ?? null
-      )
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
 
-      return websiteService.updateCoverPhoto(ctx.authz, wedding.id, input.coverPhotoUrl)
+      return websiteService.updateCoverPhoto(ctx.authz, weddingId, input.coverPhotoUrl)
     }),
 
   /**
    * Get website for current user's wedding
    */
   getByUserId: protectedProcedure.query(async ({ ctx }) => {
-    const wedding = await weddingService.getScopedWeddingByUserId(
-      ctx.auth.userId,
-      ctx.auth.activeOrganization?.organizationId ?? null
-    )
-    return websiteService.getByWeddingId(wedding.id)
+    requirePermission(ctx.authz, { website: ['read'] })
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+    return websiteService.getByWeddingId(weddingId)
   }),
 
   /**

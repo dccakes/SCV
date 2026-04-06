@@ -5,8 +5,9 @@
  * This is a protected procedure as dashboard data requires authentication.
  */
 
-import { createTRPCRouter, publicProcedure } from '~/server/api/trpc'
+import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { DashboardService } from '~/server/application/dashboard/dashboard.service'
+import { DashboardOverviewUseCase } from '~/server/application/dashboard/dashboard-overview.use-case'
 import { EventRepository } from '~/server/domains/event/event.repository'
 import { GuestRepository } from '~/server/domains/guest/guest.repository'
 import { HouseholdRepository } from '~/server/domains/household/household.repository'
@@ -38,19 +39,14 @@ const dashboardService = new DashboardService(
   questionRepo,
   weddingRepo
 )
+const dashboardOverviewUseCase = new DashboardOverviewUseCase(dashboardService)
 
 export const dashboardRouter = createTRPCRouter({
-  /**
-   * Get dashboard overview data for the authenticated user
-   *
-   * Note: Uses publicProcedure to match existing behavior where
-   * the procedure handles null userId internally. This allows the
-   * dashboard to gracefully handle unauthenticated states.
-   */
-  getByUserId: publicProcedure.query(async ({ ctx }) => {
-    if (!ctx.auth.userId) {
-      return null
-    }
-    return dashboardService.getOverview(ctx.auth.userId)
+  getForActiveWorkspace: protectedProcedure.query(async ({ ctx }) => {
+    return dashboardOverviewUseCase.execute({
+      userId: ctx.auth.userId,
+      authz: ctx.authz,
+      activeWeddingId: ctx.auth.activeWeddingId,
+    })
   }),
 })
