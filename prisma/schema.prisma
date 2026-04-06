@@ -132,6 +132,7 @@ model User {
   accounts       Account[]
   userWeddings   UserWedding[]
   members        Member[]
+  sentOrganizationInvitations OrganizationInvitation[] @relation("OrganizationInvitationInviter")
 }
 
 model Session {
@@ -210,9 +211,12 @@ model OrganizationInvitation {
   status         String       @default("pending")
   expiresAt      DateTime
   createdAt      DateTime     @default(now())
+  inviterId      String
+  inviter        User         @relation("OrganizationInvitationInviter", fields: [inviterId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
   @@index([email])
+  @@index([inviterId])
   @@map("invitation")
 }
 
