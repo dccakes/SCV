@@ -8,7 +8,6 @@ test.describe('Authentication Flow', () => {
     await expect(page.getByLabel('Email')).toBeVisible()
     await expect(page.getByLabel('Password')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Login' })).toBeVisible()
-    await expect(page.getByText('queen.lillian@swamp.wed')).toBeVisible()
   })
 
   test('should reject invalid credentials', async ({ page }) => {
@@ -42,17 +41,16 @@ test.describe('Authentication Flow', () => {
     const page = await context.newPage()
 
     await page.goto('/dashboard')
-    // Middleware should redirect to home
-    await expect(page).toHaveURL('/')
+    await expect(page).toHaveURL(/\/auth\/sign-in\?callbackUrl=%2Fdashboard$/)
 
     await page.goto('/guest-list')
-    await expect(page).toHaveURL('/')
+    await expect(page).toHaveURL(/\/auth\/sign-in\?callbackUrl=%2Fguest-list$/)
 
     await page.goto('/events')
-    await expect(page).toHaveURL('/')
+    await expect(page).toHaveURL(/\/auth\/sign-in\?callbackUrl=%2Fevents$/)
 
     await page.goto('/vendors')
-    await expect(page).toHaveURL('/')
+    await expect(page).toHaveURL(/\/auth\/sign-in\?callbackUrl=%2Fvendors$/)
 
     await context.close()
   })

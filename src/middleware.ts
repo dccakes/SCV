@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
 const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/join']
-const PUBLIC_EXACT_PATHS = ['/']
+const PUBLIC_EXACT_PATHS = ['/', '/api/blob/upload']
 const RESERVED_ROOT_SEGMENTS = new Set([
   '',
   'api',

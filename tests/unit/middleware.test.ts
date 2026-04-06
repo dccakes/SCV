@@ -71,6 +71,7 @@ describe('middleware', () => {
     const websiteResponse = await middleware(createRequest('/shrek-and-fiona'))
     const websiteRsvpResponse = await middleware(createRequest('/shrek-and-fiona/rsvp'))
     const authApiResponse = await middleware(createRequest('/api/auth/session'))
+    const blobUploadResponse = await middleware(createRequest('/api/blob/upload'))
 
     expect(rootResponse.headers.get('location')).toBeNull()
     expect(signInResponse.headers.get('location')).toBeNull()
@@ -78,6 +79,7 @@ describe('middleware', () => {
     expect(websiteResponse.headers.get('location')).toBeNull()
     expect(websiteRsvpResponse.headers.get('location')).toBeNull()
     expect(authApiResponse.headers.get('location')).toBeNull()
+    expect(blobUploadResponse.headers.get('location')).toBeNull()
     expect(mockGetSessionCookie).not.toHaveBeenCalled()
   })
 
