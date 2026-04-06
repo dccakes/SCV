@@ -192,6 +192,10 @@ describe('organization plugin wiring', () => {
     const prismaSchema = readFileSync('prisma/schema.prisma', 'utf8')
 
     expect(prismaSchema).toMatch(/\borganizationinvitations\s+OrganizationInvitation\[\]/)
+    expect(prismaSchema).toMatch(/\binviterId\s+String\b/)
+    expect(prismaSchema).toMatch(
+      /\binviter\s+User\s+@relation\([^)]*fields:\s*\[inviterId\],\s*references:\s*\[id\]/
+    )
   })
 
   it('uses the browser origin for auth client requests when available', () => {
