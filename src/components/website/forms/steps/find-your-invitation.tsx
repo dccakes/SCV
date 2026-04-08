@@ -11,8 +11,10 @@ export default function FindYourInvitationForm({ goNext }: StepFormProps) {
   const [name, setName] = useState<string>('')
   const [showError, setShowError] = useState<boolean>(false)
 
-  const { refetch, isFetching } = api.household.findBySearch.useQuery(
-    { searchText: name },
+  const subUrl = weddingData.website?.subUrl ?? ''
+
+  const { refetch, isFetching } = api.website.lookupHouseholdByName.useQuery(
+    { subUrl, name },
     {
       enabled: false,
       retry: false,
@@ -20,12 +22,11 @@ export default function FindYourInvitationForm({ goNext }: StepFormProps) {
   )
 
   const handleOnSearch = () => {
-    // the method to conditionally execute client db queries?
     void refetch().then((res) => {
-      if (res.error ?? res.data?.length === 0) {
+      if (res.error ?? (res.data?.length ?? 0) === 0) {
         setShowError(true)
       } else {
-        updateRsvpForm({ matchedHouseholds: res.data })
+        updateRsvpForm({ matchedHouseholdsPublic: res.data })
         goNext?.()
       }
     })
@@ -50,13 +51,13 @@ export default function FindYourInvitationForm({ goNext }: StepFormProps) {
       {showError && (
         <p className='text-xs'>
           Oops! We&apos;re having trouble finding your invite. Please try another spelling of your
-          name or contact the couple
+          name or contact the couple.
         </p>
       )}
       <button
         className={`mt-3 py-3 text-white text-xl tracking-wide ${name.length === 0 || isFetching ? 'cursor-not-allowed bg-stone-400' : 'bg-stone-700'}`}
         type='button'
-        disabled={name.length === 0}
+        disabled={name.length === 0 || isFetching}
         onClick={handleOnSearch}
       >
         {isFetching ? 'Searching...' : 'FIND YOUR INVITATION'}

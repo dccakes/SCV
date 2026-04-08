@@ -103,6 +103,41 @@ export const verifyWebsitePasswordSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 })
 
+/**
+ * Schema for looking up households by guest name (public, no auth)
+ */
+export const lookupHouseholdByNameSchema = z.object({
+  subUrl: z.string().min(1, 'Sub URL is required'),
+  name: z.string().min(1, 'Name is required'),
+})
+
+/**
+ * Schema for validating a household RSVP token
+ */
+export const validateRsvpTokenSchema = z.object({
+  subUrl: z.string().min(1, 'Sub URL is required'),
+  rsvpToken: z.string().uuid('Invalid RSVP token format'),
+})
+
+/**
+ * Schema for confirming household identity via name + email
+ */
+export const confirmHouseholdIdentitySchema = z.object({
+  subUrl: z.string().min(1, 'Sub URL is required'),
+  householdId: z.string().min(1, 'Household ID is required'),
+  email: z.string().email('Valid email is required'),
+})
+
+/**
+ * Schema for updating primary contact info after RSVP token auth
+ */
+export const updateGuestContactInfoSchema = z.object({
+  subUrl: z.string().min(1, 'Sub URL is required'),
+  rsvpToken: z.string().uuid('Invalid RSVP token format'),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+})
+
 // Export inferred types
 export type CreateWebsiteSchemaInput = z.infer<typeof createWebsiteSchema>
 export type UpdateWebsiteSchemaInput = z.infer<typeof updateWebsiteSchema>
@@ -113,3 +148,7 @@ export type HasPasswordAccessSchemaInput = z.infer<typeof hasPasswordAccessSchem
 export type VerifyWebsitePasswordSchemaInput = z.infer<typeof verifyWebsitePasswordSchema>
 export type RsvpResponse = SubmitRsvpSchemaInput['rsvpResponses'][number]
 export type AnswerToQuestion = SubmitRsvpSchemaInput['answersToQuestions'][number]
+export type LookupHouseholdByNameSchemaInput = z.infer<typeof lookupHouseholdByNameSchema>
+export type ValidateRsvpTokenSchemaInput = z.infer<typeof validateRsvpTokenSchema>
+export type ConfirmHouseholdIdentitySchemaInput = z.infer<typeof confirmHouseholdIdentitySchema>
+export type UpdateGuestContactInfoSchemaInput = z.infer<typeof updateGuestContactInfoSchema>

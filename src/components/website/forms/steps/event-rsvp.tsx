@@ -20,7 +20,25 @@ export default function EventRsvpForm({
 }: EventRsvpFormProps) {
   const rsvpFormData = useRsvpForm()
   const updateRsvpForm = useUpdateRsvpForm()
-  const [rsvpResponses, setRsvpResponses] = useState<RsvpFormResponse[]>([])
+
+  // Pre-populate from confirmedHousehold invitation status
+  const getInitialRsvp = (guestId: number): 'Attending' | 'Declined' | undefined => {
+    const guest = rsvpFormData.confirmedHousehold?.guests.find((g) => g.id === guestId)
+    const invitation = guest?.invitations.find((i) => i.eventId === event.id)
+    if (invitation?.rsvp === 'Attending' || invitation?.rsvp === 'Declined') {
+      return invitation.rsvp
+    }
+    return undefined
+  }
+
+  const buildInitialResponses = (): RsvpFormResponse[] =>
+    invitedGuests.flatMap((guest) => {
+      const initial = getInitialRsvp(guest.id)
+      if (!initial) return []
+      return [{ eventId: event.id, guestId: guest.id, rsvp: initial, guestName: `${guest.firstName} ${guest.lastName}` }]
+    })
+
+  const [rsvpResponses, setRsvpResponses] = useState<RsvpFormResponse[]>(buildInitialResponses)
 
   return (
     <div className='flex flex-col gap-5'>
@@ -45,6 +63,7 @@ export default function EventRsvpForm({
                 <RsvpSelection
                   eventId={event.id}
                   guestId={guest.id}
+                  initialRsvp={getInitialRsvp(guest.id)}
                   setRsvpResponses={setRsvpResponses}
                   guestName={`${guest.firstName} ${guest.lastName}`}
                 />
@@ -67,7 +86,7 @@ export default function EventRsvpForm({
         CONTINUE
       </button>
       <button
-        className={`mt-3 bg-gray-700 py-3 text-white text-xl tracking-wide`}
+        className='mt-3 bg-gray-700 py-3 text-white text-xl tracking-wide'
         type='submit'
         onClick={() => goBack?.()}
       >
@@ -80,21 +99,30 @@ export default function EventRsvpForm({
 type RsvpSelectionProps = {
   eventId: string
   guestId: number
+  initialRsvp?: 'Attending' | 'Declined'
   setRsvpResponses: Dispatch<SetStateAction<RsvpFormResponse[]>>
   guestName: string
 }
 
-function RsvpSelection({ eventId, guestId, setRsvpResponses, guestName }: RsvpSelectionProps) {
-  const [rsvpSelection, setRsvpSelection] = useState<'Attending' | 'Declined'>()
-  const handleOnSelect = (rsvpSelection: 'Attending' | 'Declined', currentGuestId: number) => {
-    setRsvpSelection(rsvpSelection)
+function RsvpSelection({
+  eventId,
+  guestId,
+  initialRsvp,
+  setRsvpResponses,
+  guestName,
+}: RsvpSelectionProps) {
+  const [rsvpSelection, setRsvpSelection] = useState<'Attending' | 'Declined' | undefined>(
+    initialRsvp
+  )
+  const handleOnSelect = (selection: 'Attending' | 'Declined', currentGuestId: number) => {
+    setRsvpSelection(selection)
     setRsvpResponses((prev) => {
-      const rsvpResponse = prev.find((response) => response.guestId === currentGuestId)
-      if (rsvpResponse === undefined) {
-        return [...prev, { eventId, guestId, rsvp: rsvpSelection, guestName }]
+      const existing = prev.find((r) => r.guestId === currentGuestId)
+      if (existing === undefined) {
+        return [...prev, { eventId, guestId, rsvp: selection, guestName }]
       }
-      return prev.map((response) =>
-        response.guestId === currentGuestId ? { ...response, rsvp: rsvpSelection } : response
+      return prev.map((r) =>
+        r.guestId === currentGuestId ? { ...r, rsvp: selection } : r
       )
     })
   }

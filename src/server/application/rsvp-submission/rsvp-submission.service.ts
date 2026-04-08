@@ -29,8 +29,6 @@ import { requirePermission } from '~/server/authz/permission-checker'
 type RsvpResponse = SubmitRsvpSchemaInput['rsvpResponses'][number]
 type AnswerToQuestion = SubmitRsvpSchemaInput['answersToQuestions'][number]
 
-const TOKEN_EXPIRY_DAYS = 90
-
 export class RsvpSubmissionService {
   constructor(private db: PrismaClient) {}
 
@@ -45,8 +43,11 @@ export class RsvpSubmissionService {
   }
 
   async submitPublicRsvp(data: SubmitPublicRsvpSchemaInput): Promise<{ success: boolean }> {
-    const weddingId = await this.getWeddingIdFromValidToken(data.subUrl, data.token)
-    await this.ensureSubmissionBelongsToWedding(weddingId, data)
+    const { householdId, weddingId } = await this.getHouseholdFromRsvpToken(
+      data.subUrl,
+      data.rsvpToken
+    )
+    await this.ensureSubmissionBelongsToHousehold(householdId, weddingId, data)
 
     return this.submitRsvp({
       rsvpResponses: data.rsvpResponses,
@@ -202,32 +203,6 @@ export class RsvpSubmissionService {
     })
   }
 
-  private async getWeddingIdFromValidToken(subUrl: string, token: string): Promise<string> {
-    const expiryDate = new Date()
-    expiryDate.setDate(expiryDate.getDate() - TOKEN_EXPIRY_DAYS)
-
-    const wedding = await this.db.wedding.findFirst({
-      where: {
-        selfFillToken: token,
-        website: { is: { subUrl } },
-        OR: [
-          { selfFillTokenGeneratedAt: { equals: null } },
-          { selfFillTokenGeneratedAt: { gte: expiryDate } },
-        ],
-      },
-      select: { id: true },
-    })
-
-    if (!wedding) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'Invalid or expired RSVP token',
-      })
-    }
-
-    return wedding.id
-  }
-
   private async ensureSubmissionBelongsToWedding(
     weddingId: string,
     data: Pick<SubmitRsvpSchemaInput, 'rsvpResponses' | 'answersToQuestions'>
@@ -236,6 +211,61 @@ export class RsvpSubmissionService {
       const invitationCount = await this.db.invitation.count({
         where: {
           weddingId,
+          OR: data.rsvpResponses.map((r) => ({ guestId: r.guestId, eventId: r.eventId })),
+        },
+      })
+      if (invitationCount !== data.rsvpResponses.length) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Invalid RSVP submission scope' })
+      }
+    }
+
+    const guestIds = new Set(data.rsvpResponses.map((r) => r.guestId))
+    for (const a of data.answersToQuestions) {
+      if (typeof a.guestId === 'number') guestIds.add(a.guestId)
+    }
+
+    if (guestIds.size > 0) {
+      const count = await this.db.guest.count({
+        where: { weddingId, id: { in: Array.from(guestIds) } },
+      })
+      if (count !== guestIds.size) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Invalid RSVP submission scope' })
+      }
+    }
+  }
+
+  private async getHouseholdFromRsvpToken(
+    subUrl: string,
+    rsvpToken: string
+  ): Promise<{ householdId: string; weddingId: string }> {
+    const household = await this.db.household.findFirst({
+      where: {
+        rsvpToken,
+        wedding: { website: { subUrl } },
+      },
+      select: { id: true, weddingId: true },
+    })
+
+    if (!household) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Invalid or expired RSVP token',
+      })
+    }
+
+    return { householdId: household.id, weddingId: household.weddingId }
+  }
+
+  private async ensureSubmissionBelongsToHousehold(
+    householdId: string,
+    weddingId: string,
+    data: Pick<SubmitRsvpSchemaInput, 'rsvpResponses' | 'answersToQuestions'>
+  ): Promise<void> {
+    if (data.rsvpResponses.length > 0) {
+      const invitationCount = await this.db.invitation.count({
+        where: {
+          weddingId,
+          guest: { householdId },
           OR: data.rsvpResponses.map((response) => ({
             guestId: response.guestId,
             eventId: response.eventId,
@@ -262,7 +292,6 @@ export class RsvpSubmissionService {
       if (typeof answer.guestId === 'number') {
         guestIds.add(answer.guestId)
       }
-
       if (typeof answer.householdId === 'string') {
         householdIds.add(answer.householdId)
       }
@@ -271,7 +300,7 @@ export class RsvpSubmissionService {
     if (guestIds.size > 0) {
       const guestCount = await this.db.guest.count({
         where: {
-          weddingId,
+          householdId,
           id: { in: Array.from(guestIds) },
         },
       })
@@ -287,8 +316,8 @@ export class RsvpSubmissionService {
     if (householdIds.size > 0) {
       const householdCount = await this.db.household.count({
         where: {
-          weddingId,
-          id: { in: Array.from(householdIds) },
+          id: householdId,
+          AND: { id: { in: Array.from(householdIds) } },
         },
       })
 

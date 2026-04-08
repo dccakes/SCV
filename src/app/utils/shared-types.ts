@@ -244,6 +244,8 @@ interface CoverPhoto extends FileWithPath {
 type RouterOutput = inferRouterOutputs<AppRouter>
 type DashboardData = RouterOutput['dashboard']['getForActiveWorkspace']
 type HouseholdSearch = RouterOutput['household']['findBySearch']
+type HouseholdRsvpLookup = RouterOutput['website']['lookupHouseholdByName']
+type HouseholdRsvpData = RouterOutput['website']['validateRsvpToken']['household']
 type RsvpPageData = RouterOutput['website']['fetchWeddingData']
 
 export type {
@@ -259,6 +261,8 @@ export type {
   GuestFormData,
   Household,
   HouseholdFormData,
+  HouseholdRsvpData,
+  HouseholdRsvpLookup,
   HouseholdSearch,
   Invitation,
   Option,

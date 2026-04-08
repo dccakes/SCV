@@ -14,6 +14,7 @@
 
 // biome-ignore lint/style/noRestrictedImports: architectural violation, tracked in ARCHITECTURAL_VIOLATIONS.md
 import type { PrismaClient } from '@prisma/client'
+import { randomUUID } from 'crypto'
 import { TRPCError } from '@trpc/server'
 import type {
   CreateHouseholdResult,
@@ -76,6 +77,7 @@ export class HouseholdManagementService {
           country: data.country,
           zipCode: data.zipCode,
           notes: data.notes,
+          rsvpToken: randomUUID(),
           gifts: {
             createMany: {
               data: eventIds.map((eventId) => ({

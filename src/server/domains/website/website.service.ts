@@ -16,6 +16,7 @@
 
 // biome-ignore lint/style/noRestrictedImports: architectural violation, tracked in ARCHITECTURAL_VIOLATIONS.md
 import type { Prisma, PrismaClient } from '@prisma/client'
+import { randomUUID } from 'crypto'
 import { TRPCClientError } from '@trpc/client'
 import { TRPCError } from '@trpc/server'
 
@@ -437,6 +438,201 @@ export class WebsiteService {
         })
       )
     })
+  }
+
+  /**
+   * Look up households by guest name — public, returns no email addresses
+   */
+  async lookupHouseholdByName(subUrl: string, name: string) {
+    const website = await this.websiteRepository.findBySubUrl(subUrl)
+    if (!website) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Wedding website not found' })
+    }
+
+    const households = await this.db.household.findMany({
+      where: {
+        weddingId: website.weddingId,
+        OR: [
+          {
+            guests: {
+              some: {
+                firstName: { contains: name, mode: 'insensitive' },
+                invitations: { some: { rsvp: { in: ['Invited', 'Attending', 'Declined'] } } },
+              },
+            },
+          },
+          {
+            guests: {
+              some: {
+                lastName: { contains: name, mode: 'insensitive' },
+                invitations: { some: { rsvp: { in: ['Invited', 'Attending', 'Declined'] } } },
+              },
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        guests: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            isPrimaryContact: true,
+            isTagAlong: true,
+            invitations: {
+              select: { eventId: true, rsvp: true },
+            },
+          },
+        },
+      },
+    })
+
+    return households.map((h) => {
+      const primaryContact = h.guests.find((g) => g.isPrimaryContact)
+      return {
+        id: h.id,
+        primaryContactHasEmail: !!primaryContact?.email,
+        guests: h.guests.map(({ email: _email, ...g }) => g),
+      }
+    })
+  }
+
+  /**
+   * Validate a household RSVP token and return household data
+   */
+  async validateRsvpToken(subUrl: string, rsvpToken: string) {
+    const household = await this.db.household.findFirst({
+      where: {
+        rsvpToken,
+        wedding: { website: { subUrl } },
+      },
+      select: {
+        id: true,
+        guests: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+            isPrimaryContact: true,
+            isTagAlong: true,
+            invitations: { select: { eventId: true, rsvp: true } },
+          },
+        },
+      },
+    })
+
+    if (!household) {
+      throw new TRPCError({ code: 'FORBIDDEN', message: 'Invalid RSVP token' })
+    }
+
+    return {
+      rsvpToken,
+      household: { id: household.id, guests: household.guests },
+    }
+  }
+
+  /**
+   * Confirm household identity by name + email; returns rsvpToken on match
+   */
+  async confirmHouseholdIdentity(subUrl: string, householdId: string, email: string) {
+    const household = await this.db.household.findFirst({
+      where: {
+        id: householdId,
+        wedding: { website: { subUrl } },
+      },
+      select: {
+        id: true,
+        rsvpToken: true,
+        guests: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+            isPrimaryContact: true,
+            isTagAlong: true,
+            invitations: { select: { eventId: true, rsvp: true } },
+          },
+        },
+      },
+    })
+
+    if (!household) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Household not found' })
+    }
+
+    const primaryContact = household.guests.find((g) => g.isPrimaryContact)
+    if (!primaryContact?.email) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message:
+          'No email on file. Please contact the couple to receive your personal RSVP link.',
+      })
+    }
+
+    if (primaryContact.email.toLowerCase() !== email.toLowerCase().trim()) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Email does not match our records. Please try again.',
+      })
+    }
+
+    let { rsvpToken } = household
+    if (!rsvpToken) {
+      rsvpToken = randomUUID()
+      await this.db.household.update({ where: { id: householdId }, data: { rsvpToken } })
+    }
+
+    return {
+      rsvpToken,
+      household: { id: household.id, guests: household.guests },
+    }
+  }
+
+  /**
+   * Update primary contact's email/phone — scoped by rsvpToken
+   */
+  async updateGuestContactInfo(
+    subUrl: string,
+    rsvpToken: string,
+    data: { email?: string; phone?: string }
+  ) {
+    const household = await this.db.household.findFirst({
+      where: {
+        rsvpToken,
+        wedding: { website: { subUrl } },
+      },
+      select: {
+        guests: {
+          where: { isPrimaryContact: true },
+          select: { id: true },
+        },
+      },
+    })
+
+    if (!household) {
+      throw new TRPCError({ code: 'FORBIDDEN', message: 'Invalid RSVP token' })
+    }
+
+    const primaryContact = household.guests[0]
+    if (!primaryContact) {
+      return { success: false }
+    }
+
+    await this.db.guest.update({
+      where: { id: primaryContact.id },
+      data: {
+        ...(data.email !== undefined && { email: data.email }),
+        ...(data.phone !== undefined && { phone: data.phone }),
+      },
+    })
+
+    return { success: true }
   }
 
   private toPublicWebsite(website: Website): PublicWebsite {

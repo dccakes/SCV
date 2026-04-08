@@ -248,6 +248,9 @@ model Household {
   // General notes about the household
   notes          String?
 
+  // Per-household RSVP access token for personalized invite links
+  rsvpToken      String?          @unique
+
   // Relations
   guests         Guest[]          @relation(name: "Household_Guests")
   gifts          Gift[]           @relation(name: "Household_Gifts")
@@ -258,6 +261,7 @@ model Household {
   updatedAt      DateTime         @updatedAt
 
   @@index([weddingId])
+  @@index([rsvpToken])
 }
 
 // NOTE: Contact info (email, phone) lives on Guest, not Household

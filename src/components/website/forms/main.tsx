@@ -2,7 +2,8 @@
 
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { IoMdClose } from 'react-icons/io'
-import type { Event, Question, RsvpPageData } from '~/app/utils/shared-types'
+import { useSearchParams } from 'next/navigation'
+import type { Event, Guest, HouseholdRsvpData, Question, RsvpPageData } from '~/app/utils/shared-types'
 import { useRsvpForm, useUpdateRsvpForm } from '~/components/contexts/rsvp-form-context'
 import { useConfirmReloadPage } from '~/components/hooks'
 import { AsyncState } from '~/components/ui/async-state'
@@ -13,6 +14,7 @@ import FindYourInvitationForm from '~/components/website/forms/steps/find-your-i
 import QuestionMultipleChoice from '~/components/website/forms/steps/question-multiple-choice'
 import QuestionShortAnswer from '~/components/website/forms/steps/question-short-answer'
 import SendRsvp from '~/components/website/forms/steps/send-rsvp'
+import UpdateContactInfoForm from '~/components/website/forms/steps/update-contact-info'
 import RsvpConfirmation from '~/components/website/rsvp-confirmation'
 import { api } from '~/trpc/react'
 
@@ -23,7 +25,6 @@ type MainRsvpFormProps = {
 
 const getMutationErrorMessage = (error: unknown, fallback: string): string => {
   if (error instanceof Error) return error.message
-
   if (
     typeof error === 'object' &&
     error !== null &&
@@ -32,23 +33,92 @@ const getMutationErrorMessage = (error: unknown, fallback: string): string => {
   ) {
     return error.message
   }
-
   return fallback
 }
 
-const NUM_STATIC_STEPS = 4 // find invitation step, confirm household step, final step, and confirmation
+// find invitation + confirm name + contact info + send rsvp + confirmation
+const NUM_STATIC_STEPS = 5
+
+/** Coerce confirmedHousehold guests into the Guest shape EventRsvpForm expects */
+function toGuests(
+  household: HouseholdRsvpData,
+  weddingId: string
+): Array<Guest & { invitations: Guest['invitations'] }> {
+  return household.guests.map((g) => ({
+    id: g.id,
+    firstName: g.firstName,
+    lastName: g.lastName,
+    email: g.email,
+    phone: g.phone,
+    isPrimaryContact: g.isPrimaryContact,
+    isTagAlong: g.isTagAlong,
+    householdId: household.id,
+    weddingId,
+    ageGroup: null,
+    createdAt: new Date(0),
+    updatedAt: new Date(0),
+    invitations: g.invitations.map((i) => ({
+      id: '',
+      guestId: g.id,
+      eventId: i.eventId,
+      weddingId,
+      rsvp: i.rsvp,
+      dietaryRestrictions: null,
+      submittedBy: null,
+      submittedAt: null,
+      invitedAt: new Date(0),
+      createdAt: new Date(0),
+      updatedAt: new Date(0),
+    })),
+  }))
+}
 
 export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProps) {
   const rsvpFormData = useRsvpForm()
   const numSteps = useRef(NUM_STATIC_STEPS)
   const updateRsvpForm = useUpdateRsvpForm()
+  const searchParams = useSearchParams()
   const [currentStep, setCurrentStep] = useState<number>(1)
   const [submitError, setSubmitError] = useState<string | null>(null)
   useConfirmReloadPage(currentStep > 1 && currentStep < numSteps.current)
+
+  const subUrl = weddingData.website?.subUrl ?? ''
+  const weddingId = weddingData.website?.weddingId ?? ''
+
   useEffect(() => {
     updateRsvpForm({ weddingData })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [updateRsvpForm, weddingData])
+
+  // On mount, try rsvp_token from URL or localStorage
+  const urlRsvpToken = searchParams.get('rsvp_token')
+  const storedToken =
+    typeof window !== 'undefined' ? localStorage.getItem(`rsvp_token_${subUrl}`) : null
+  const initialToken = urlRsvpToken ?? storedToken ?? null
+
+  const validateToken = api.website.validateRsvpToken.useQuery(
+    { subUrl, rsvpToken: initialToken ?? '' },
+    {
+      enabled: !!initialToken && !!subUrl,
+      retry: false,
+    }
+  )
+
+  useEffect(() => {
+    if (validateToken.data) {
+      updateRsvpForm({
+        rsvpToken: validateToken.data.rsvpToken,
+        confirmedHousehold: validateToken.data.household,
+      })
+      try {
+        localStorage.setItem(`rsvp_token_${subUrl}`, validateToken.data.rsvpToken)
+      } catch {
+        // localStorage unavailable — ignore
+      }
+      // Skip find-invitation (1) and confirm-name (2) steps
+      setCurrentStep(3)
+    }
+  }, [validateToken.data, updateRsvpForm, subUrl])
 
   const submitRsvpForm = api.website.submitPublicRsvpForm.useMutation({
     onSuccess: () => {
@@ -59,24 +129,34 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
       setSubmitError(getMutationErrorMessage(err, 'Failed to submit RSVP. Please try again.'))
     },
   })
+
   const progress = (currentStep / numSteps.current) * 100
 
+  const confirmedHousehold = rsvpFormData.confirmedHousehold
+
   const generateDynamicStepForms = useCallback((): ReactNode[] => {
+    // Prefer confirmedHousehold (new flow) over selectedHousehold (old flow)
+    const householdGuests: Array<Guest & { invitations: Guest['invitations'] }> =
+      confirmedHousehold
+        ? toGuests(confirmedHousehold, weddingId)
+        : (rsvpFormData.selectedHousehold?.guests as Array<Guest & { invitations: Guest['invitations'] }> ?? [])
+
     const newSteps: ReactNode[] =
       weddingData?.events?.reduce((acc: ReactNode[], event: Event) => {
         if (!event.collectRsvp) return acc
-        const invitedGuests = rsvpFormData.selectedHousehold?.guests.filter((guest) =>
-          guest.invitations.some(
-            (invite) =>
-              invite.eventId === event.id &&
-              ['Invited', 'Attending', 'Declined'].includes(invite.rsvp ?? '')
-          )
+
+        const invitedGuests = householdGuests.filter(
+          (guest) =>
+            !guest.isTagAlong &&
+            guest.invitations?.some(
+              (invite) =>
+                invite.eventId === event.id &&
+                ['Invited', 'Attending', 'Declined'].includes(invite.rsvp ?? '')
+            )
         )
 
-        if (invitedGuests !== undefined && invitedGuests.length > 0) {
+        if (invitedGuests.length > 0) {
           acc.push(<EventRsvpForm event={event} invitedGuests={invitedGuests} />)
-          // Only show question steps for guests who confirmed attendance.
-          // Fall back to all invited guests if responses haven't been recorded yet.
           const hasResponsesForEvent = rsvpFormData.rsvpResponses.some(
             (r) => r.eventId === event.id
           )
@@ -110,7 +190,7 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
 
     numSteps.current = newSteps.length + NUM_STATIC_STEPS
     return newSteps
-  }, [weddingData, rsvpFormData.selectedHousehold, rsvpFormData.rsvpResponses])
+  }, [weddingData, confirmedHousehold, weddingId, rsvpFormData.selectedHousehold, rsvpFormData.rsvpResponses])
 
   return (
     <div className='pb-20 font-serif'>
@@ -126,17 +206,16 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
           e.preventDefault()
           setSubmitError(null)
 
-          const token = new URLSearchParams(window.location.search).get('token')
-          const subUrl = weddingData.website?.subUrl
+          const rsvpToken = rsvpFormData.rsvpToken
 
-          if (!token || !subUrl) {
+          if (!rsvpToken || !subUrl) {
             setSubmitError('Invalid or expired RSVP link. Please request a new invitation link.')
             return
           }
 
           submitRsvpForm.mutate({
             subUrl,
-            token,
+            rsvpToken,
             rsvpResponses: rsvpFormData.rsvpResponses,
             answersToQuestions: rsvpFormData.answersToQuestions,
           })
@@ -146,6 +225,7 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
         <MultistepRsvpForm currentStep={currentStep} setCurrentStep={setCurrentStep}>
           <FindYourInvitationForm />
           <ConfirmNameForm />
+          <UpdateContactInfoForm />
           {...generateDynamicStepForms()}
           <SendRsvp isFetching={submitRsvpForm.isPending} />
           <RsvpConfirmation basePath={basePath} setCurrentStep={setCurrentStep} />
