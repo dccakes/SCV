@@ -138,12 +138,14 @@ export default async function Home() {
   })
 
   let isSignedIn = !!session
+  let activeWeddingId: string | null = null
   if (session?.user?.id) {
     const scope = await resolveWorkspaceScope({
       session,
       userId: session.user.id,
     })
 
+    activeWeddingId = scope.activeWeddingId
     const capabilities = readWorkspaceCapabilities(scope.activeOrganization?.role)
     if (!capabilities.canViewPlanning) {
       isSignedIn = false
@@ -157,7 +159,11 @@ export default async function Home() {
         // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD structured data requires dangerouslySetInnerHTML per Next.js convention
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      {!isSignedIn ? <NonAuthenticatedView /> : <AuthenticatedView />}
+      {!isSignedIn ? (
+        <NonAuthenticatedView />
+      ) : (
+        <AuthenticatedView activeWeddingId={activeWeddingId} />
+      )}
     </>
   )
 }
