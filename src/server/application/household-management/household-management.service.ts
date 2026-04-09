@@ -75,6 +75,7 @@ export class HouseholdManagementService {
           state: data.state,
           country: data.country,
           zipCode: data.zipCode,
+          likelihoodOfAttending: data.likelihoodOfAttending,
           notes: data.notes,
           gifts: {
             createMany: {
@@ -215,6 +216,7 @@ export class HouseholdManagementService {
           state: data.state ?? undefined,
           country: data.country ?? undefined,
           zipCode: data.zipCode ?? undefined,
+          likelihoodOfAttending: data.likelihoodOfAttending ?? undefined,
           notes: data.notes ?? undefined,
         },
       })

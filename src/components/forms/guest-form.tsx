@@ -4,7 +4,13 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { type Resolver, type SubmitHandler, useFieldArray, useForm } from 'react-hook-form'
+import {
+  Controller,
+  type Resolver,
+  type SubmitHandler,
+  useFieldArray,
+  useForm,
+} from 'react-hook-form'
 import { IoMdClose } from 'react-icons/io'
 import { toast } from 'sonner'
 import { getDirtyValues } from '~/app/utils/form-helpers'
@@ -39,6 +45,7 @@ import {
   AlertDialogTitle,
 } from '~/components/ui/alert-dialog'
 import { Label } from '~/components/ui/label'
+import { Slider } from '~/components/ui/slider'
 import { api } from '~/trpc/react'
 
 type GuestFormProps = {
@@ -322,6 +329,61 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
                   {errors.notes && (
                     <p className='text-destructive text-sm'>{errors.notes.message}</p>
                   )}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value='likelihood' className='border-b-0'>
+              <AccordionTrigger className='px-6 py-4 font-semibold text-lg hover:no-underline'>
+                Attendance Likelihood
+              </AccordionTrigger>
+              <AccordionContent className='px-6 pb-6'>
+                <div className='space-y-4'>
+                  <Label>How likely is this party to attend?</Label>
+                  <Controller
+                    name='likelihoodOfAttending'
+                    control={control}
+                    render={({ field }) => {
+                      const labels = [
+                        'Unlikely',
+                        'Not Sure',
+                        'Maybe',
+                        'Likely',
+                        'Very Likely',
+                      ] as const
+                      const currentValue = field.value ?? 3
+                      return (
+                        <div className='space-y-3'>
+                          <Slider
+                            min={1}
+                            max={5}
+                            step={1}
+                            value={[currentValue]}
+                            onValueChange={([val]) => field.onChange(val ?? null)}
+                          />
+                          <div className='flex justify-between'>
+                            {labels.map((label, i) => (
+                              <span
+                                key={label}
+                                className={`font-mono text-[0.56rem] uppercase tracking-wider ${
+                                  currentValue === i + 1
+                                    ? 'font-semibold text-primary'
+                                    : 'text-foreground/45'
+                                }`}
+                              >
+                                {label}
+                              </span>
+                            ))}
+                          </div>
+                          {field.value == null && (
+                            <p className='font-mono text-[0.55rem] text-foreground/45 uppercase tracking-wider'>
+                              Not yet assessed
+                            </p>
+                          )}
+                        </div>
+                      )
+                    }}
+                  />
                 </div>
               </AccordionContent>
             </AccordionItem>

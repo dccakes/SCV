@@ -245,6 +245,9 @@ model Household {
   zipCode        String?
   country        String?
 
+  // Likelihood of attending (1=Unlikely, 2=Not Sure, 3=Maybe, 4=Likely, 5=Very Likely)
+  likelihoodOfAttending Int?
+
   // General notes about the household
   notes          String?
 

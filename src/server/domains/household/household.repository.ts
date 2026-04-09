@@ -104,6 +104,7 @@ export class HouseholdRepository {
     state?: string | null
     country?: string | null
     zipCode?: string | null
+    likelihoodOfAttending?: number | null
     notes?: string | null
   }): Promise<Household> {
     return this.db.household.create({
@@ -115,6 +116,7 @@ export class HouseholdRepository {
         state: data.state,
         country: data.country,
         zipCode: data.zipCode,
+        likelihoodOfAttending: data.likelihoodOfAttending,
         notes: data.notes,
       },
     })
@@ -132,6 +134,7 @@ export class HouseholdRepository {
       state?: string | null
       country?: string | null
       zipCode?: string | null
+      likelihoodOfAttending?: number | null
       notes?: string | null
     },
     eventIds: string[]
@@ -145,6 +148,7 @@ export class HouseholdRepository {
         state: data.state,
         country: data.country,
         zipCode: data.zipCode,
+        likelihoodOfAttending: data.likelihoodOfAttending,
         notes: data.notes,
         gifts: {
           createMany: {
@@ -189,6 +193,7 @@ export class HouseholdRepository {
       state?: string | null
       country?: string | null
       zipCode?: string | null
+      likelihoodOfAttending?: number | null
       notes?: string | null
     }
   ): Promise<Household> {
@@ -201,6 +206,7 @@ export class HouseholdRepository {
         state: data.state ?? undefined,
         country: data.country ?? undefined,
         zipCode: data.zipCode ?? undefined,
+        likelihoodOfAttending: data.likelihoodOfAttending ?? undefined,
         notes: data.notes ?? undefined,
       },
     })
