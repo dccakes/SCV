@@ -58,6 +58,7 @@ describe('GiftService', () => {
   describe('updateGift', () => {
     it('should update a gift successfully', async () => {
       const updatedGift = { ...mockGift, thankyou: true, description: 'Updated description' }
+      mockFindByIdFn.mockResolvedValue(mockGift) // existing gift has thankyou: false
       mockUpdateFn.mockResolvedValue(updatedGift)
 
       const result = await giftService.updateGift(actorContext, 'wedding-123', {

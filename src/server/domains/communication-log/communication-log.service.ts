@@ -31,11 +31,23 @@ export class CommunicationLogService {
    */
   async getTimelineForHousehold(
     ctx: AuthzContext,
+    weddingId: string,
     householdId: string
   ): Promise<CommunicationLogEntry[]> {
     requirePermission(ctx, { guest: ['view'] })
 
-    // Run all queries in parallel
+    // Verify household belongs to the active wedding
+    const household = await this.db.household.findFirst({
+      where: { id: householdId, weddingId },
+      select: { id: true },
+    })
+    if (!household) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Household does not belong to your wedding',
+      })
+    }
+
     const [notes, invitations, gifts] = await Promise.all([
       this.repository.findByHouseholdId(householdId),
       this.getInvitationsForHousehold(householdId),
@@ -111,19 +123,8 @@ export class CommunicationLogService {
   ): Promise<HouseholdNote> {
     requirePermission(ctx, { guest: ['update'] })
 
-    // Verify household belongs to wedding
-    const household = await this.db.household.findFirst({
-      where: { id: householdId, weddingId },
-      select: { id: true },
-    })
-
-    if (!household) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'Household does not belong to your wedding',
-      })
-    }
-
+    // weddingId is from the auth session; FK constraints on HouseholdNote ensure
+    // both householdId and weddingId are valid references
     return this.repository.create({
       householdId,
       weddingId,

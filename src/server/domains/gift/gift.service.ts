@@ -36,10 +36,21 @@ export class GiftService {
       })
     }
 
+    // Only update thankYouSentAt on transitions: set on false→true, clear on true→false
+    let thankYouSentAt: Date | null | undefined
+    if (data.thankyou) {
+      const existing = await this.giftRepository.findById(data.householdId, data.eventId)
+      if (!existing?.thankyou) {
+        thankYouSentAt = new Date()
+      }
+    } else {
+      thankYouSentAt = null
+    }
+
     return this.giftRepository.update(data.householdId, data.eventId, {
       description: data.description,
       thankyou: data.thankyou,
-      thankYouSentAt: data.thankyou ? new Date() : null,
+      thankYouSentAt,
     })
   }
 
@@ -50,12 +61,23 @@ export class GiftService {
    * (e.g. HouseholdManagementService). Do NOT call from routers directly.
    */
   async upsertGift(data: UpsertGiftInput): Promise<Gift> {
+    // Only set thankYouSentAt on false→true transition, preserve existing timestamp
+    let thankYouSentAt: Date | null | undefined
+    if (data.thankyou) {
+      const existing = await this.giftRepository.findById(data.householdId, data.eventId)
+      if (!existing?.thankyou) {
+        thankYouSentAt = new Date()
+      }
+    } else {
+      thankYouSentAt = null
+    }
+
     return this.giftRepository.upsert({
       householdId: data.householdId,
       eventId: data.eventId,
       description: data.description,
       thankyou: data.thankyou,
-      thankYouSentAt: data.thankyou ? new Date() : null,
+      thankYouSentAt,
     })
   }
 

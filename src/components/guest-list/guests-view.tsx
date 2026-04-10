@@ -531,8 +531,10 @@ export default function GuestsView({
   )
 
   const addNoteMutation = api.communicationLog.addNote.useMutation({
-    onSuccess: () => {
-      void utils.communicationLog.getByHouseholdId.invalidate()
+    onSuccess: (_data, variables) => {
+      void utils.communicationLog.getByHouseholdId.invalidate({
+        householdId: variables.householdId,
+      })
     },
     onError: () => {
       toast.error('Failed to add note')
@@ -541,7 +543,11 @@ export default function GuestsView({
 
   const deleteNoteMutation = api.communicationLog.deleteNote.useMutation({
     onSuccess: () => {
-      void utils.communicationLog.getByHouseholdId.invalidate()
+      if (selectedHousehold) {
+        void utils.communicationLog.getByHouseholdId.invalidate({
+          householdId: selectedHousehold.id,
+        })
+      }
     },
     onError: () => {
       toast.error('Failed to delete note')

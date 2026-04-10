@@ -16,10 +16,11 @@ export class CommunicationLogRepository {
    * Find all notes for a household, newest first
    */
   async findByHouseholdId(householdId: string): Promise<HouseholdNote[]> {
-    return this.db.householdNote.findMany({
+    const rows = await this.db.householdNote.findMany({
       where: { householdId },
       orderBy: { createdAt: 'desc' },
     })
+    return rows as HouseholdNote[]
   }
 
   /**
@@ -29,9 +30,9 @@ export class CommunicationLogRepository {
     householdId: string
     weddingId: string
     message: string
-    actorType: string
+    actorType: 'couple' | 'etta'
   }): Promise<HouseholdNote> {
-    return this.db.householdNote.create({
+    const row = await this.db.householdNote.create({
       data: {
         householdId: data.householdId,
         weddingId: data.weddingId,
@@ -39,15 +40,17 @@ export class CommunicationLogRepository {
         actorType: data.actorType,
       },
     })
+    return row as HouseholdNote
   }
 
   /**
    * Delete a note by ID
    */
   async delete(id: string): Promise<HouseholdNote> {
-    return this.db.householdNote.delete({
+    const row = await this.db.householdNote.delete({
       where: { id },
     })
+    return row as HouseholdNote
   }
 
   /**

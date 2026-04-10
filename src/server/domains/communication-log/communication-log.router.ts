@@ -21,8 +21,12 @@ export const communicationLogRouter = createTRPCRouter({
   getByHouseholdId: protectedProcedure
     .input(getByHouseholdIdSchema)
     .query(async ({ ctx, input }) => {
-      requireActiveWeddingId(ctx.auth.activeWeddingId)
-      return communicationLogService.getTimelineForHousehold(ctx.authz, input.householdId)
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+      return communicationLogService.getTimelineForHousehold(
+        ctx.authz,
+        weddingId,
+        input.householdId
+      )
     }),
 
   /**

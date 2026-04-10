@@ -14,7 +14,7 @@ export type HouseholdNote = {
   householdId: string
   weddingId: string
   message: string
-  actorType: string
+  actorType: 'couple' | 'etta'
   createdAt: Date
 }
 
@@ -52,5 +52,5 @@ export type CommunicationLogEntry =
       message: string
       date: Date
       id: string
-      actorType: string
+      actorType: 'couple' | 'etta'
     }
