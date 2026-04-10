@@ -1,7 +1,7 @@
 'use client'
 
 import { Loader2, Search } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '~/components/ui/button'
@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '~/components/ui/dialog'
 import { Input } from '~/components/ui/input'
+import { RSVP_STATUS, type RsvpStatus } from '~/lib/constants/rsvp'
 import type { EventWithStats } from '~/server/domains/event/event.types'
 import { api } from '~/trpc/react'
 
@@ -26,12 +27,14 @@ type ManageEventGuestsDialogProps = Readonly<{
 
 type GuestInviteState = {
   guestId: number
-  eventId: string
   firstName: string
   lastName: string
-  currentRsvp: string
-  newRsvp: string
+  currentRsvp: RsvpStatus
+  newRsvp: RsvpStatus
 }
+
+const isRsvpLocked = (rsvp: RsvpStatus) =>
+  rsvp === RSVP_STATUS.ATTENDING || rsvp === RSVP_STATUS.DECLINED
 
 export function ManageEventGuestsDialog({
   event,
@@ -41,7 +44,6 @@ export function ManageEventGuestsDialog({
   const utils = api.useUtils()
   const [search, setSearch] = useState('')
   const [guestStates, setGuestStates] = useState<Map<number, GuestInviteState>>(new Map())
-  const [initialized, setInitialized] = useState(false)
 
   const { data: dashboardData, isLoading } = api.dashboard.getForActiveWorkspace.useQuery(
     undefined,
@@ -51,16 +53,16 @@ export function ManageEventGuestsDialog({
     }
   )
 
-  // Build guest states from dashboard data when it loads
-  if (dashboardData && !initialized) {
+  // Initialize guest states when dashboard data loads
+  useEffect(() => {
+    if (!dashboardData) return
     const states = new Map<number, GuestInviteState>()
     for (const household of dashboardData.households) {
       for (const guest of household.guests) {
         const invitation = guest.invitations?.find((inv) => inv.eventId === event.id)
-        const currentRsvp = invitation?.rsvp ?? 'Not Invited'
+        const currentRsvp = (invitation?.rsvp ?? RSVP_STATUS.NOT_INVITED) as RsvpStatus
         states.set(guest.id, {
           guestId: guest.id,
-          eventId: event.id,
           firstName: guest.firstName,
           lastName: guest.lastName,
           currentRsvp,
@@ -69,14 +71,12 @@ export function ManageEventGuestsDialog({
       }
     }
     setGuestStates(states)
-    setInitialized(true)
-  }
+  }, [dashboardData, event.id])
 
   // Reset when dialog closes
   const handleOpenChange = useCallback(
     (newOpen: boolean) => {
       if (!newOpen) {
-        setInitialized(false)
         setGuestStates(new Map())
         setSearch('')
       }
@@ -85,54 +85,46 @@ export function ManageEventGuestsDialog({
     [onOpenChange]
   )
 
+  const allGuests = useMemo(() => Array.from(guestStates.values()), [guestStates])
+
   const filteredGuests = useMemo(() => {
-    const guests = Array.from(guestStates.values())
-    if (!search) return guests
+    if (!search) return allGuests
     const lower = search.toLowerCase()
-    return guests.filter(
+    return allGuests.filter(
       (g) => g.firstName.toLowerCase().includes(lower) || g.lastName.toLowerCase().includes(lower)
     )
-  }, [guestStates, search])
+  }, [allGuests, search])
 
-  const changedInvitations = useMemo(() => {
-    return Array.from(guestStates.values()).filter((g) => g.newRsvp !== g.currentRsvp)
-  }, [guestStates])
+  const changedInvitations = useMemo(
+    () => allGuests.filter((g) => g.newRsvp !== g.currentRsvp),
+    [allGuests]
+  )
 
   const toggleGuest = useCallback((guestId: number) => {
     setGuestStates((prev) => {
+      const guest = prev.get(guestId)
+      if (!guest || isRsvpLocked(guest.currentRsvp)) return prev
       const next = new Map(prev)
-      const guest = next.get(guestId)
-      if (!guest) return prev
-      // Only toggle between "Not Invited" and "Invited"
-      // Don't change guests who are "Attending" or "Declined"
-      if (guest.currentRsvp === 'Attending' || guest.currentRsvp === 'Declined') return prev
       next.set(guestId, {
         ...guest,
-        newRsvp: guest.newRsvp === 'Not Invited' ? 'Invited' : 'Not Invited',
+        newRsvp:
+          guest.newRsvp === RSVP_STATUS.NOT_INVITED ? RSVP_STATUS.INVITED : RSVP_STATUS.NOT_INVITED,
       })
       return next
     })
   }, [])
 
-  const inviteAll = useCallback(() => {
+  const setAllRsvp = useCallback((targetRsvp: RsvpStatus) => {
     setGuestStates((prev) => {
+      let changed = false
       const next = new Map(prev)
       for (const [id, guest] of next) {
-        if (guest.currentRsvp === 'Attending' || guest.currentRsvp === 'Declined') continue
-        next.set(id, { ...guest, newRsvp: 'Invited' })
+        if (isRsvpLocked(guest.currentRsvp)) continue
+        if (guest.newRsvp === targetRsvp) continue
+        changed = true
+        next.set(id, { ...guest, newRsvp: targetRsvp })
       }
-      return next
-    })
-  }, [])
-
-  const uninviteAll = useCallback(() => {
-    setGuestStates((prev) => {
-      const next = new Map(prev)
-      for (const [id, guest] of next) {
-        if (guest.currentRsvp === 'Attending' || guest.currentRsvp === 'Declined') continue
-        next.set(id, { ...guest, newRsvp: 'Not Invited' })
-      }
-      return next
+      return changed ? next : prev
     })
   }, [])
 
@@ -160,18 +152,15 @@ export function ManageEventGuestsDialog({
     bulkUpdate.mutate({
       invitations: changedInvitations.map((g) => ({
         guestId: g.guestId,
-        eventId: g.eventId,
+        eventId: event.id,
         rsvp: g.newRsvp,
       })),
     })
   }
 
   const invitedCount = useMemo(
-    () =>
-      Array.from(guestStates.values()).filter(
-        (g) => g.newRsvp === 'Invited' || g.newRsvp === 'Attending' || g.newRsvp === 'Declined'
-      ).length,
-    [guestStates]
+    () => allGuests.filter((g) => g.newRsvp !== RSVP_STATUS.NOT_INVITED).length,
+    [allGuests]
   )
 
   return (
@@ -200,10 +189,20 @@ export function ManageEventGuestsDialog({
               {invitedCount} of {guestStates.size} guests invited
             </span>
             <div className='flex gap-2'>
-              <Button variant='outline' size='sm' className='text-xs' onClick={inviteAll}>
+              <Button
+                variant='outline'
+                size='sm'
+                className='text-xs'
+                onClick={() => setAllRsvp(RSVP_STATUS.INVITED)}
+              >
                 Invite All
               </Button>
-              <Button variant='outline' size='sm' className='text-xs' onClick={uninviteAll}>
+              <Button
+                variant='outline'
+                size='sm'
+                className='text-xs'
+                onClick={() => setAllRsvp(RSVP_STATUS.NOT_INVITED)}
+              >
                 Uninvite All
               </Button>
             </div>
@@ -220,11 +219,8 @@ export function ManageEventGuestsDialog({
               </p>
             ) : (
               filteredGuests.map((guest) => {
-                const locked = guest.currentRsvp === 'Attending' || guest.currentRsvp === 'Declined'
-                const invited =
-                  guest.newRsvp === 'Invited' ||
-                  guest.newRsvp === 'Attending' ||
-                  guest.newRsvp === 'Declined'
+                const locked = isRsvpLocked(guest.currentRsvp)
+                const invited = guest.newRsvp !== RSVP_STATUS.NOT_INVITED
                 const checkboxId = `guest-invite-${guest.guestId}`
                 return (
                   <label

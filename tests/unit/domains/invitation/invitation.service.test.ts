@@ -14,6 +14,7 @@ import { requirePermission } from 'server/authz/permission-checker'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   InvitationRepository,
+  mockAllBelongToWedding,
   mockBelongsToUser,
   mockBelongsToWedding,
   mockCreate,
@@ -45,6 +46,7 @@ const mockBelongsToWeddingFn = mockBelongsToWedding as jest.Mock
 const mockGuestBelongsToWeddingFn = mockGuestBelongsToWedding as jest.Mock
 const mockEventBelongsToWeddingFn = mockEventBelongsToWedding as jest.Mock
 const mockUpdateManyFn = mockUpdateMany as jest.Mock
+const mockAllBelongToWeddingFn = mockAllBelongToWedding as jest.Mock
 const mockRequirePermission = requirePermission as jest.Mock
 
 const actorContext = {
@@ -65,6 +67,7 @@ describe('InvitationService', () => {
     mockBelongsToUserFn.mockResolvedValue(true)
     mockGuestBelongsToWeddingFn.mockResolvedValue(true)
     mockEventBelongsToWeddingFn.mockResolvedValue(true)
+    mockAllBelongToWeddingFn.mockResolvedValue(true)
     const mockRepository = new InvitationRepository({})
     invitationService = new InvitationService(mockRepository)
   })
@@ -300,7 +303,7 @@ describe('InvitationService', () => {
     it('should update a single invitation successfully', async () => {
       const updatedInvitation = { ...mockInvitation, rsvp: 'Invited' }
       mockUpdateManyFn.mockResolvedValue([updatedInvitation])
-      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockAllBelongToWeddingFn.mockResolvedValue(true)
 
       const result = await invitationService.bulkUpdateInvitations(actorContext, 'wedding-123', {
         invitations: [{ guestId: 1, eventId: 'event-123', rsvp: 'Invited' }],
@@ -316,7 +319,7 @@ describe('InvitationService', () => {
       const updated1 = { ...mockInvitation, guestId: 1, rsvp: 'Invited' }
       const updated2 = { ...mockInvitation, guestId: 2, rsvp: 'Invited' }
       mockUpdateManyFn.mockResolvedValue([updated1, updated2])
-      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockAllBelongToWeddingFn.mockResolvedValue(true)
 
       const result = await invitationService.bulkUpdateInvitations(actorContext, 'wedding-123', {
         invitations: [
@@ -334,7 +337,7 @@ describe('InvitationService', () => {
 
     it('should check rsvp edit_response permission', async () => {
       mockUpdateManyFn.mockResolvedValue([mockInvitation])
-      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockAllBelongToWeddingFn.mockResolvedValue(true)
 
       await invitationService.bulkUpdateInvitations(actorContext, 'wedding-123', {
         invitations: [{ guestId: 1, eventId: 'event-123', rsvp: 'Invited' }],
@@ -360,7 +363,7 @@ describe('InvitationService', () => {
     })
 
     it('should reject when any invitation does not belong to wedding', async () => {
-      mockBelongsToWeddingFn.mockResolvedValueOnce(true).mockResolvedValueOnce(false)
+      mockAllBelongToWeddingFn.mockResolvedValue(false)
 
       await expect(
         invitationService.bulkUpdateInvitations(actorContext, 'wedding-123', {
@@ -372,6 +375,26 @@ describe('InvitationService', () => {
       ).rejects.toMatchObject({ code: 'FORBIDDEN' })
 
       expect(mockUpdateManyFn).not.toHaveBeenCalled()
+    })
+
+    it('should use single query for bulk ownership check', async () => {
+      mockUpdateManyFn.mockResolvedValue([mockInvitation])
+      mockAllBelongToWeddingFn.mockResolvedValue(true)
+
+      await invitationService.bulkUpdateInvitations(actorContext, 'wedding-123', {
+        invitations: [
+          { guestId: 1, eventId: 'event-123', rsvp: 'Invited' },
+          { guestId: 2, eventId: 'event-123', rsvp: 'Invited' },
+        ],
+      })
+
+      expect(mockAllBelongToWeddingFn).toHaveBeenCalledWith(
+        [
+          { guestId: 1, eventId: 'event-123' },
+          { guestId: 2, eventId: 'event-123' },
+        ],
+        'wedding-123'
+      )
     })
   })
 })

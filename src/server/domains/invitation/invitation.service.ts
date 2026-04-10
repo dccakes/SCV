@@ -127,13 +127,12 @@ export class InvitationService {
   ): Promise<Invitation[]> {
     this.requireRsvpPermission(ctx, 'edit_response')
 
-    const belongsChecks = await Promise.all(
-      data.invitations.map((inv) =>
-        this.invitationRepository.belongsToWedding(inv.guestId, inv.eventId, weddingId)
-      )
+    const allBelong = await this.invitationRepository.allBelongToWedding(
+      data.invitations.map((inv) => ({ guestId: inv.guestId, eventId: inv.eventId })),
+      weddingId
     )
 
-    if (belongsChecks.some((belongs) => !belongs)) {
+    if (!allBelong) {
       throw new TRPCError({ code: 'FORBIDDEN' })
     }
 
