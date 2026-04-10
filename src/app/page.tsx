@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { unstable_noStore as noStore } from 'next/cache'
 import { headers } from 'next/headers'
+import { redirect } from 'next/navigation'
 
 import AuthenticatedView from '~/components/home/authenticated-view'
 import NonAuthenticatedView from '~/components/home/non-authenticated-view'
@@ -138,17 +139,17 @@ export default async function Home() {
   })
 
   let isSignedIn = !!session
-  let activeWeddingId: string | null = null
   if (session?.user?.id) {
     const scope = await resolveWorkspaceScope({
       session,
       userId: session.user.id,
     })
 
-    activeWeddingId = scope.activeWeddingId
     const capabilities = readWorkspaceCapabilities(scope.activeOrganization?.role)
     if (!capabilities.canViewPlanning) {
       isSignedIn = false
+    } else if (scope.activeWeddingId) {
+      redirect('/dashboard')
     }
   }
 
@@ -159,11 +160,7 @@ export default async function Home() {
         // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD structured data requires dangerouslySetInnerHTML per Next.js convention
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      {!isSignedIn ? (
-        <NonAuthenticatedView />
-      ) : (
-        <AuthenticatedView activeWeddingId={activeWeddingId} />
-      )}
+      {!isSignedIn ? <NonAuthenticatedView /> : <AuthenticatedView />}
     </>
   )
 }
