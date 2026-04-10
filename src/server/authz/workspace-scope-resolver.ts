@@ -63,13 +63,13 @@ export function decideWorkspaceScope(input: {
       }
     }
 
-    if (candidateScopes.length === 1 && hasLinkedWedding(candidateScopes[0])) {
-      const onlyScope = candidateScopes[0]
+    const firstScope = candidateScopes.find(hasLinkedWedding)
+    if (firstScope) {
       return {
-        activeOrganization: toActiveOrganization(onlyScope),
-        activeWeddingId: onlyScope.weddingId,
+        activeOrganization: toActiveOrganization(firstScope),
+        activeWeddingId: firstScope.weddingId,
         clearSessionActiveOrganizationId: true,
-        persistActiveOrganizationId: onlyScope.organizationId,
+        persistActiveOrganizationId: firstScope.organizationId,
       }
     }
 
@@ -89,13 +89,13 @@ export function decideWorkspaceScope(input: {
     }
   }
 
-  if (candidateScopes.length === 1 && hasLinkedWedding(candidateScopes[0])) {
-    const onlyScope = candidateScopes[0]
+  const firstScope = candidateScopes.find(hasLinkedWedding)
+  if (firstScope) {
     return {
-      activeOrganization: toActiveOrganization(onlyScope),
-      activeWeddingId: onlyScope.weddingId,
+      activeOrganization: toActiveOrganization(firstScope),
+      activeWeddingId: firstScope.weddingId,
       clearSessionActiveOrganizationId: false,
-      persistActiveOrganizationId: onlyScope.organizationId,
+      persistActiveOrganizationId: firstScope.organizationId,
     }
   }
 
