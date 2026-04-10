@@ -27,6 +27,7 @@ import {
   mockInvitation,
   mockRsvpStats,
   mockUpdate,
+  mockUpdateMany,
   resetMocks,
 } from 'server/domains/invitation/invitation.repository'
 import { InvitationService } from 'server/domains/invitation/invitation.service'
@@ -43,6 +44,7 @@ const mockBelongsToUserFn = mockBelongsToUser as jest.Mock
 const mockBelongsToWeddingFn = mockBelongsToWedding as jest.Mock
 const mockGuestBelongsToWeddingFn = mockGuestBelongsToWedding as jest.Mock
 const mockEventBelongsToWeddingFn = mockEventBelongsToWedding as jest.Mock
+const mockUpdateManyFn = mockUpdateMany as jest.Mock
 const mockRequirePermission = requirePermission as jest.Mock
 
 const actorContext = {
@@ -291,6 +293,85 @@ describe('InvitationService', () => {
         { guestId: 2, eventId: 'event-2', rsvp: 'Not Invited', weddingId: 'wedding-123' },
         { guestId: 2, eventId: 'event-3', rsvp: 'Not Invited', weddingId: 'wedding-123' },
       ])
+    })
+  })
+
+  describe('bulkUpdateInvitations', () => {
+    it('should update a single invitation successfully', async () => {
+      const updatedInvitation = { ...mockInvitation, rsvp: 'Invited' }
+      mockUpdateManyFn.mockResolvedValue([updatedInvitation])
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+
+      const result = await invitationService.bulkUpdateInvitations(actorContext, 'wedding-123', {
+        invitations: [{ guestId: 1, eventId: 'event-123', rsvp: 'Invited' }],
+      })
+
+      expect(result).toEqual([updatedInvitation])
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, {
+        rsvp: ['edit_response'],
+      })
+    })
+
+    it('should update multiple invitations successfully', async () => {
+      const updated1 = { ...mockInvitation, guestId: 1, rsvp: 'Invited' }
+      const updated2 = { ...mockInvitation, guestId: 2, rsvp: 'Invited' }
+      mockUpdateManyFn.mockResolvedValue([updated1, updated2])
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+
+      const result = await invitationService.bulkUpdateInvitations(actorContext, 'wedding-123', {
+        invitations: [
+          { guestId: 1, eventId: 'event-123', rsvp: 'Invited' },
+          { guestId: 2, eventId: 'event-123', rsvp: 'Invited' },
+        ],
+      })
+
+      expect(result).toEqual([updated1, updated2])
+      expect(mockUpdateManyFn).toHaveBeenCalledWith([
+        { guestId: 1, eventId: 'event-123', rsvp: 'Invited' },
+        { guestId: 2, eventId: 'event-123', rsvp: 'Invited' },
+      ])
+    })
+
+    it('should check rsvp edit_response permission', async () => {
+      mockUpdateManyFn.mockResolvedValue([mockInvitation])
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+
+      await invitationService.bulkUpdateInvitations(actorContext, 'wedding-123', {
+        invitations: [{ guestId: 1, eventId: 'event-123', rsvp: 'Invited' }],
+      })
+
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, {
+        rsvp: ['edit_response'],
+      })
+    })
+
+    it('should reject when actor lacks permission', async () => {
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      })
+
+      await expect(
+        invitationService.bulkUpdateInvitations(actorContext, 'wedding-123', {
+          invitations: [{ guestId: 1, eventId: 'event-123', rsvp: 'Invited' }],
+        })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+
+      expect(mockUpdateManyFn).not.toHaveBeenCalled()
+    })
+
+    it('should reject when any invitation does not belong to wedding', async () => {
+      mockBelongsToWeddingFn.mockResolvedValueOnce(true).mockResolvedValueOnce(false)
+
+      await expect(
+        invitationService.bulkUpdateInvitations(actorContext, 'wedding-123', {
+          invitations: [
+            { guestId: 1, eventId: 'event-123', rsvp: 'Invited' },
+            { guestId: 2, eventId: 'event-123', rsvp: 'Invited' },
+          ],
+        })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+
+      expect(mockUpdateManyFn).not.toHaveBeenCalled()
     })
   })
 })

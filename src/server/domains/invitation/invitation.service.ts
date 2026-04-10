@@ -11,6 +11,7 @@ import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
 import type {
+  BulkUpdateInvitationsInput,
   CreateInvitationInput,
   Invitation,
   RsvpStats,
@@ -114,6 +115,35 @@ export class InvitationService {
    */
   async getStatsForEvent(eventId: string): Promise<RsvpStats> {
     return this.invitationRepository.getRsvpCountsByEventId(eventId)
+  }
+
+  /**
+   * Bulk update invitations (e.g., mark multiple guests as "Invited" for an event)
+   */
+  async bulkUpdateInvitations(
+    ctx: AuthzContext,
+    weddingId: string,
+    data: BulkUpdateInvitationsInput
+  ): Promise<Invitation[]> {
+    this.requireRsvpPermission(ctx, 'edit_response')
+
+    const belongsChecks = await Promise.all(
+      data.invitations.map((inv) =>
+        this.invitationRepository.belongsToWedding(inv.guestId, inv.eventId, weddingId)
+      )
+    )
+
+    if (belongsChecks.some((belongs) => !belongs)) {
+      throw new TRPCError({ code: 'FORBIDDEN' })
+    }
+
+    return this.invitationRepository.updateMany(
+      data.invitations.map((inv) => ({
+        guestId: inv.guestId,
+        eventId: inv.eventId,
+        rsvp: inv.rsvp,
+      }))
+    )
   }
 
   /**

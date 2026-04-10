@@ -3,6 +3,7 @@
  */
 
 import {
+  bulkUpdateInvitationsSchema,
   createInvitationSchema,
   invitationIdSchema,
   updateInvitationSchema,
@@ -86,6 +87,74 @@ describe('updateInvitationSchema', () => {
       })
       expect(result.success).toBe(true)
     })
+  })
+})
+
+describe('bulkUpdateInvitationsSchema', () => {
+  it('should validate a valid bulk update input', () => {
+    const validInput = {
+      invitations: [
+        { guestId: 1, eventId: 'event-123', rsvp: 'Invited' },
+        { guestId: 2, eventId: 'event-123', rsvp: 'Invited' },
+      ],
+    }
+
+    const result = bulkUpdateInvitationsSchema.safeParse(validInput)
+    expect(result.success).toBe(true)
+    expect(result.data).toEqual(validInput)
+  })
+
+  it('should validate a single invitation in array', () => {
+    const validInput = {
+      invitations: [{ guestId: 1, eventId: 'event-123', rsvp: 'Invited' }],
+    }
+
+    const result = bulkUpdateInvitationsSchema.safeParse(validInput)
+    expect(result.success).toBe(true)
+  })
+
+  it('should reject empty invitations array', () => {
+    const invalidInput = { invitations: [] }
+
+    const result = bulkUpdateInvitationsSchema.safeParse(invalidInput)
+    expect(result.success).toBe(false)
+  })
+
+  it('should reject missing invitations field', () => {
+    const invalidInput = {}
+
+    const result = bulkUpdateInvitationsSchema.safeParse(invalidInput)
+    expect(result.success).toBe(false)
+  })
+
+  it('should reject items with empty eventId', () => {
+    const invalidInput = {
+      invitations: [{ guestId: 1, eventId: '', rsvp: 'Invited' }],
+    }
+
+    const result = bulkUpdateInvitationsSchema.safeParse(invalidInput)
+    expect(result.success).toBe(false)
+  })
+
+  it('should reject items missing guestId', () => {
+    const invalidInput = {
+      invitations: [{ eventId: 'event-123', rsvp: 'Invited' }],
+    }
+
+    const result = bulkUpdateInvitationsSchema.safeParse(invalidInput)
+    expect(result.success).toBe(false)
+  })
+
+  it('should accept different RSVP values in bulk', () => {
+    const validInput = {
+      invitations: [
+        { guestId: 1, eventId: 'event-123', rsvp: 'Invited' },
+        { guestId: 2, eventId: 'event-123', rsvp: 'Not Invited' },
+      ],
+    }
+
+    const result = bulkUpdateInvitationsSchema.safeParse(validInput)
+    expect(result.success).toBe(true)
   })
 })
 

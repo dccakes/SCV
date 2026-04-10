@@ -1,7 +1,7 @@
 'use client'
 
 import { format } from 'date-fns'
-import { Calendar, MapPin } from 'lucide-react'
+import { Calendar, MapPin, Users } from 'lucide-react'
 import { memo } from 'react'
 
 import { Badge } from '~/components/ui/badge'
@@ -13,9 +13,10 @@ type EventCardProps = Readonly<{
   event: EventWithStats
   onEdit: (eventId: string) => void
   onDelete: (eventId: string) => void
+  onManageGuests: (eventId: string) => void
 }>
 
-function EventCardBase({ event, onEdit, onDelete }: EventCardProps) {
+function EventCardBase({ event, onEdit, onDelete, onManageGuests }: EventCardProps) {
   const { guestResponses } = event
   const totalGuests =
     guestResponses.attending +
@@ -91,6 +92,15 @@ function EventCardBase({ event, onEdit, onDelete }: EventCardProps) {
           )}
 
           <div className='flex gap-2 pt-2'>
+            <Button
+              variant='ghost'
+              size='sm'
+              className='text-xs md:text-sm'
+              onClick={() => onManageGuests(event.id)}
+            >
+              <Users className='mr-1 h-3.5 w-3.5' />
+              Manage Guests
+            </Button>
             <Button
               variant='ghost'
               size='sm'

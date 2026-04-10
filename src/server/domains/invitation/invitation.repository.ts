@@ -134,6 +134,29 @@ export class InvitationRepository {
   }
 
   /**
+   * Update multiple invitations at once
+   */
+  async updateMany(
+    data: Array<{ guestId: number; eventId: string; rsvp: string }>
+  ): Promise<Invitation[]> {
+    return Promise.all(
+      data.map((inv) =>
+        this.db.invitation.update({
+          where: {
+            guestId_eventId: {
+              guestId: inv.guestId,
+              eventId: inv.eventId,
+            },
+          },
+          data: {
+            rsvp: inv.rsvp,
+          },
+        })
+      )
+    )
+  }
+
+  /**
    * Delete an invitation
    */
   async delete(guestId: number, eventId: string): Promise<Invitation> {

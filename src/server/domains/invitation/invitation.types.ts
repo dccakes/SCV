@@ -41,6 +41,13 @@ export type UpdateInvitationInput = {
 }
 
 /**
+ * Input for bulk updating invitations
+ */
+export type BulkUpdateInvitationsInput = {
+  invitations: UpdateInvitationInput[]
+}
+
+/**
  * RSVP statistics for an event
  */
 export type RsvpStats = {
