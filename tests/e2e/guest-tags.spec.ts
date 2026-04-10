@@ -54,7 +54,7 @@ test.describe('Guest Tags - Persistence via Guest Form', () => {
     }
 
     // Submit the form
-    await page.getByRole('button', { name: /save.*party|add.*party/i }).click()
+    await page.getByRole('button', { name: 'Save & Close' }).click()
 
     // Wait for success toast
     await expect(page.getByText(/created successfully/i)).toBeVisible({ timeout: 10000 })
