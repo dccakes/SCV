@@ -48,6 +48,8 @@ import { Label } from '~/components/ui/label'
 import { Slider } from '~/components/ui/slider'
 import { api } from '~/trpc/react'
 
+const LIKELIHOOD_LABELS = ['Unlikely', 'Not Sure', 'Maybe', 'Likely', 'Very Likely'] as const
+
 type GuestFormProps = {
   events: Event[]
   prefillFormData: HouseholdFormData | undefined
@@ -344,13 +346,7 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
                     name='likelihoodOfAttending'
                     control={control}
                     render={({ field }) => {
-                      const labels = [
-                        'Unlikely',
-                        'Not Sure',
-                        'Maybe',
-                        'Likely',
-                        'Very Likely',
-                      ] as const
+                      const isUnset = field.value == null
                       const currentValue = field.value ?? 3
                       return (
                         <div className='space-y-3'>
@@ -362,11 +358,11 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
                             onValueChange={([val]) => field.onChange(val ?? null)}
                           />
                           <div className='flex justify-between'>
-                            {labels.map((label, i) => (
+                            {LIKELIHOOD_LABELS.map((label, i) => (
                               <span
                                 key={label}
                                 className={`font-mono text-[0.56rem] uppercase tracking-wider ${
-                                  currentValue === i + 1
+                                  !isUnset && currentValue === i + 1
                                     ? 'font-semibold text-primary'
                                     : 'text-foreground/45'
                                 }`}
@@ -375,9 +371,9 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
                               </span>
                             ))}
                           </div>
-                          {field.value == null && (
+                          {isUnset && (
                             <p className='font-mono text-[0.55rem] text-foreground/45 uppercase tracking-wider'>
-                              Not yet assessed
+                              Drag slider to set likelihood
                             </p>
                           )}
                         </div>
