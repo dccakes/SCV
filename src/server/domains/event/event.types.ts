@@ -43,6 +43,7 @@ export type EventWithStats = Event & {
     declined: number
     notInvited: number
   }
+  estimatedAttendance: number
 }
 
 /**

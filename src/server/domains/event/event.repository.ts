@@ -7,7 +7,7 @@
 
 import type { PrismaClient } from '@prisma/client'
 
-import { RSVP_STATUS } from '~/lib/constants'
+import { DEFAULT_LIKELIHOOD_WEIGHT, LIKELIHOOD_WEIGHTS, RSVP_STATUS } from '~/lib/constants'
 import type { Event, EventWithQuestions, EventWithStats } from '~/server/domains/event/event.types'
 
 export class EventRepository {
@@ -87,7 +87,12 @@ export class EventRepository {
         invitations: {
           select: {
             rsvp: true,
-            guest: { select: { isTagAlong: true } },
+            guest: {
+              select: {
+                isTagAlong: true,
+                household: { select: { likelihoodOfAttending: true } },
+              },
+            },
           },
         },
       },
@@ -109,9 +114,24 @@ export class EventRepository {
         notInvited: countedInvitations.filter((inv) => inv.rsvp === RSVP_STATUS.NOT_INVITED).length,
       }
 
+      // Estimate attendance using household likelihood weights
+      const estimatedAttendance = Math.round(
+        countedInvitations
+          .filter((inv) => inv.rsvp !== RSVP_STATUS.NOT_INVITED)
+          .reduce((sum, inv) => {
+            const likelihood = inv.guest.household.likelihoodOfAttending
+            const weight =
+              likelihood != null
+                ? (LIKELIHOOD_WEIGHTS[likelihood] ?? DEFAULT_LIKELIHOOD_WEIGHT)
+                : DEFAULT_LIKELIHOOD_WEIGHT
+            return sum + weight
+          }, 0)
+      )
+
       return {
         ...eventData,
         guestResponses,
+        estimatedAttendance,
       }
     })
   }

@@ -5,6 +5,10 @@
  */
 
 export {
+  DEFAULT_LIKELIHOOD_WEIGHT,
+  LIKELIHOOD_WEIGHTS,
+} from '~/lib/constants/attendance'
+export {
   AGE_GROUP_OPTIONS,
   MAX_TAGS_PER_GUEST,
   pickRandomTagColor,
