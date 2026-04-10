@@ -39,7 +39,7 @@ test.describe('Manage Event Guests', () => {
     await expect(dialog.getByText(/donkey/i).first()).toBeVisible()
 
     // Should show invite count
-    await expect(dialog.getByText(/guests invited/i)).toBeVisible()
+    await expect(dialog.getByText(/\d+ of \d+ invited/i)).toBeVisible()
 
     // Should have Invite All and Uninvite All buttons
     await expect(dialog.getByRole('button', { name: /invite all/i })).toBeVisible()
@@ -82,6 +82,9 @@ test.describe('Manage Event Guests', () => {
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
 
+    // Wait for guest list to load before searching
+    await expect(dialog.getByText(/\d+ of \d+ invited/i)).toBeVisible()
+
     // Search for Big Bad Wolf to isolate them
     await dialog.getByPlaceholder(/search guests/i).fill('Big Bad')
 
@@ -109,6 +112,9 @@ test.describe('Manage Event Guests', () => {
     // --- Now reopen and remove the guest ---
     await manageGuestsButton.click()
     await expect(dialog).toBeVisible()
+
+    // Wait for guest list to reload
+    await expect(dialog.getByText(/\d+ of \d+ invited/i)).toBeVisible()
 
     // Search for Big Bad Wolf again
     await dialog.getByPlaceholder(/search guests/i).fill('Big Bad')
@@ -146,8 +152,8 @@ test.describe('Manage Event Guests', () => {
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
 
-    // Note the initial invited count
-    const countText = dialog.getByText(/\d+ of \d+ guests invited/i)
+    // Wait for guest list to load
+    const countText = dialog.getByText(/\d+ of \d+ invited/i)
     await expect(countText).toBeVisible()
 
     // Click "Invite All"
@@ -164,6 +170,7 @@ test.describe('Manage Event Guests', () => {
     // Reopen dialog and click "Uninvite All" to restore state
     await manageGuestsButton.click()
     await expect(dialog).toBeVisible()
+    await expect(dialog.getByText(/\d+ of \d+ invited/i)).toBeVisible()
 
     await dialog.getByRole('button', { name: /uninvite all/i }).click()
 
