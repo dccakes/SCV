@@ -76,6 +76,7 @@ describe('GiftService', () => {
       expect(mockUpdateFn).toHaveBeenCalledWith('household-123', 'event-123', {
         description: 'Updated description',
         thankyou: true,
+        thankYouSentAt: expect.any(Date),
       })
     })
   })
@@ -97,6 +98,7 @@ describe('GiftService', () => {
         eventId: 'event-123',
         description: 'New gift',
         thankyou: false,
+        thankYouSentAt: null,
       })
     })
   })
@@ -154,6 +156,7 @@ describe('GiftService', () => {
       expect(result.thankyou).toBe(true)
       expect(mockUpdateFn).toHaveBeenCalledWith('household-123', 'event-123', {
         thankyou: true,
+        thankYouSentAt: expect.any(Date),
       })
     })
   })

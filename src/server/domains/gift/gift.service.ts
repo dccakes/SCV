@@ -39,6 +39,7 @@ export class GiftService {
     return this.giftRepository.update(data.householdId, data.eventId, {
       description: data.description,
       thankyou: data.thankyou,
+      thankYouSentAt: data.thankyou ? new Date() : null,
     })
   }
 
@@ -54,6 +55,7 @@ export class GiftService {
       eventId: data.eventId,
       description: data.description,
       thankyou: data.thankyou,
+      thankYouSentAt: data.thankyou ? new Date() : null,
     })
   }
 
@@ -87,6 +89,7 @@ export class GiftService {
   async markThankYouSent(householdId: string, eventId: string): Promise<Gift> {
     return this.giftRepository.update(householdId, eventId, {
       thankyou: true,
+      thankYouSentAt: new Date(),
     })
   }
 

@@ -75,7 +75,7 @@ export class RsvpSubmissionService {
                 eventId: response.eventId,
               },
             },
-            data: { rsvp: response.rsvp },
+            data: { rsvp: response.rsvp, submittedAt: new Date() },
           })
         })
       )

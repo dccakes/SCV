@@ -92,6 +92,7 @@ export const mockHouseholdWithGuestsAndGifts: HouseholdWithGuestsAndGifts = {
       eventId: 'event-123',
       description: 'Kitchen set',
       thankyou: false,
+      thankYouSentAt: null,
       createdAt: new Date('2024-01-01'),
       updatedAt: new Date('2024-01-01'),
       event: { name: 'Wedding Day' },

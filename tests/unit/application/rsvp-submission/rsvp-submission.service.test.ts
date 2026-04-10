@@ -167,11 +167,11 @@ describe('RsvpSubmissionService', () => {
       expect(txClient.invitation.update).toHaveBeenCalledTimes(2)
       expect(txClient.invitation.update).toHaveBeenCalledWith({
         where: { guestId_eventId: { guestId: 1, eventId: 'event-123' } },
-        data: { rsvp: 'Attending' },
+        data: { rsvp: 'Attending', submittedAt: expect.any(Date) },
       })
       expect(txClient.invitation.update).toHaveBeenCalledWith({
         where: { guestId_eventId: { guestId: 1, eventId: 'event-456' } },
-        data: { rsvp: 'Declined' },
+        data: { rsvp: 'Declined', submittedAt: expect.any(Date) },
       })
     })
 
