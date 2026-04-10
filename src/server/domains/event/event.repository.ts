@@ -114,11 +114,13 @@ export class EventRepository {
         notInvited: countedInvitations.filter((inv) => inv.rsvp === RSVP_STATUS.NOT_INVITED).length,
       }
 
-      // Estimate attendance using household likelihood weights
+      // Estimate attendance: confirmed RSVPs count as-is, pending use likelihood weights
       const estimatedAttendance = Math.round(
         countedInvitations
           .filter((inv) => inv.rsvp !== RSVP_STATUS.NOT_INVITED)
           .reduce((sum, inv) => {
+            if (inv.rsvp === RSVP_STATUS.ATTENDING) return sum + 1
+            if (inv.rsvp === RSVP_STATUS.DECLINED) return sum
             const likelihood = inv.guest.household.likelihoodOfAttending
             const weight =
               likelihood != null
