@@ -91,15 +91,16 @@ function EventCardBase({ event, onEdit, onDelete, onManageGuests }: EventCardPro
             </div>
           )}
 
-          <div className='flex gap-2 pt-2'>
+          <div className='flex flex-wrap gap-1 pt-2'>
             <Button
               variant='ghost'
               size='sm'
               className='text-xs md:text-sm'
               onClick={() => onManageGuests(event.id)}
             >
-              <Users className='mr-1 h-3.5 w-3.5' />
-              Manage Guests
+              <Users className='h-3.5 w-3.5 md:mr-1' />
+              <span className='hidden md:inline'>Manage Guests</span>
+              <span className='md:hidden'>Guests</span>
             </Button>
             <Button
               variant='ghost'

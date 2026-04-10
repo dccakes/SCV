@@ -184,15 +184,15 @@ export function ManageEventGuestsDialog({
             />
           </div>
 
-          <div className='flex items-center justify-between text-sm'>
-            <span className='text-muted-foreground'>
-              {invitedCount} of {guestStates.size} guests invited
+          <div className='flex flex-wrap items-center justify-between gap-2 text-sm'>
+            <span className='text-muted-foreground text-xs sm:text-sm'>
+              {invitedCount} of {guestStates.size} invited
             </span>
-            <div className='flex gap-2'>
+            <div className='flex gap-1.5'>
               <Button
                 variant='outline'
                 size='sm'
-                className='text-xs'
+                className='h-7 px-2 text-xs'
                 onClick={() => setAllRsvp(RSVP_STATUS.INVITED)}
               >
                 Invite All
@@ -200,7 +200,7 @@ export function ManageEventGuestsDialog({
               <Button
                 variant='outline'
                 size='sm'
-                className='text-xs'
+                className='h-7 px-2 text-xs'
                 onClick={() => setAllRsvp(RSVP_STATUS.NOT_INVITED)}
               >
                 Uninvite All
