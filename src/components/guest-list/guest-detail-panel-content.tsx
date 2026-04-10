@@ -11,9 +11,8 @@ import {
 } from '~/components/guest-list/v2/drawer/guest-detail-sections'
 import { Badge } from '~/components/ui/badge'
 import { Slider } from '~/components/ui/slider'
+import { LIKELIHOOD_LABELS } from '~/lib/constants'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
-
-const LIKELIHOOD_LABELS = ['Unlikely', 'Not Sure', 'Maybe', 'Likely', 'Very Likely'] as const
 
 export type DrawerDraft = {
   email: string

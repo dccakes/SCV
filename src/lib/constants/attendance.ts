@@ -21,3 +21,8 @@ export const LIKELIHOOD_WEIGHTS: Record<number, number> = {
  * Weight used when a household has no likelihood set (null).
  */
 export const DEFAULT_LIKELIHOOD_WEIGHT = 0.65
+
+/**
+ * Display labels for the 1-5 likelihoodOfAttending scale.
+ */
+export const LIKELIHOOD_LABELS = ['Unlikely', 'Not Sure', 'Maybe', 'Likely', 'Very Likely'] as const

@@ -6,6 +6,7 @@
 
 export {
   DEFAULT_LIKELIHOOD_WEIGHT,
+  LIKELIHOOD_LABELS,
   LIKELIHOOD_WEIGHTS,
 } from '~/lib/constants/attendance'
 export {
