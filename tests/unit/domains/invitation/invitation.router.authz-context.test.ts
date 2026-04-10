@@ -18,6 +18,7 @@ jest.mock('server/domains/invitation', () => ({
   invitationService: {
     createInvitation: jest.fn(),
     updateInvitation: jest.fn(),
+    bulkUpdateInvitations: jest.fn(),
   },
 }))
 
@@ -28,6 +29,7 @@ import { invitationRouter } from 'server/domains/invitation/invitation.router'
 const mockCreateInvitation = invitationService.createInvitation as jest.Mock
 const mockListInvitations = eventInsightsService.listInvitations as jest.Mock
 const mockUpdateInvitation = invitationService.updateInvitation as jest.Mock
+const mockBulkUpdateInvitations = invitationService.bulkUpdateInvitations as jest.Mock
 
 describe('invitationRouter authz context plumbing', () => {
   const activeOrganization = {
@@ -128,6 +130,56 @@ describe('invitationRouter authz context plumbing', () => {
     })
 
     await expect(unauthenticatedCaller.getAllByUserId()).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+    })
+  })
+
+  it('passes authz context to bulkUpdate mutation service call', async () => {
+    mockBulkUpdateInvitations.mockResolvedValue([{ id: 'inv-1' }, { id: 'inv-2' }])
+
+    await caller.bulkUpdate({
+      invitations: [
+        { eventId: 'event-1', guestId: 1, rsvp: 'Invited' },
+        { eventId: 'event-1', guestId: 2, rsvp: 'Invited' },
+      ],
+    })
+
+    expect(mockBulkUpdateInvitations).toHaveBeenCalledWith(
+      {
+        activeOrganization,
+        userId: 'user-123',
+      },
+      'wedding-123',
+      {
+        invitations: [
+          { eventId: 'event-1', guestId: 1, rsvp: 'Invited' },
+          { eventId: 'event-1', guestId: 2, rsvp: 'Invited' },
+        ],
+      }
+    )
+  })
+
+  it('rejects unauthenticated bulkUpdate with UNAUTHORIZED', async () => {
+    const unauthenticatedCaller = invitationRouter.createCaller({
+      auth: {
+        session: null,
+        activeOrganization: null,
+        activeWeddingId: 'wedding-123',
+        userId: null,
+      },
+      authz: {
+        userId: '',
+        activeOrganization: null,
+      },
+      db: {} as never,
+      headers: new Headers(),
+    })
+
+    await expect(
+      unauthenticatedCaller.bulkUpdate({
+        invitations: [{ eventId: 'event-1', guestId: 1, rsvp: 'Invited' }],
+      })
+    ).rejects.toMatchObject({
       code: 'UNAUTHORIZED',
     })
   })
