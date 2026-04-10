@@ -60,32 +60,32 @@ export function getGuestTools(ctx: EttaContext) {
       }) => {
         const authz = requirePlannerAuthz(ctx)
 
-        // Update core guest fields (name, email, phone)
-        const guest = await guestService.updateGuest(authz, ctx.weddingId, guestId, guestData)
+        const hasGuestUpdate = Object.values(guestData).some((v) => v !== undefined)
+        const guest = hasGuestUpdate
+          ? await guestService.updateGuest(authz, ctx.weddingId, guestId, guestData)
+          : await guestService.getById(guestId)
 
-        // Update household address if any address field provided
+        if (!guest) {
+          return { error: 'Guest not found' }
+        }
+
         const addressData = { address1, address2, city, state, zipCode, country }
         const hasAddressUpdate = Object.values(addressData).some((v) => v !== undefined)
         let household: Household | undefined
         if (hasAddressUpdate) {
-          const fullGuest = await guestService.getById(guestId)
-          if (!fullGuest) {
-            return { error: 'Guest not found' }
-          }
           household = await householdManagementService.updateHouseholdAddress(
             authz,
             ctx.weddingId,
-            fullGuest.householdId,
+            guest.householdId,
             addressData
           )
         }
 
-        // Update tags if provided
         if (tagIds !== undefined) {
           await guestService.updateGuestTags(authz, ctx.weddingId, guestId, tagIds)
         }
 
-        return { guest, household, tagsUpdated: tagIds !== undefined }
+        return { guest, household }
       },
     }),
 
