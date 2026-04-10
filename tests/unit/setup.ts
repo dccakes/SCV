@@ -12,6 +12,13 @@ global.TransformStream = TransformStream as unknown as typeof global.TransformSt
 global.ReadableStream = ReadableStream as unknown as typeof global.ReadableStream
 global.WritableStream = WritableStream as unknown as typeof global.WritableStream
 
+// Polyfill for Radix UI components that use ResizeObserver (e.g. Slider)
+global.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(() => ({

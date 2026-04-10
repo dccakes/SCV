@@ -33,6 +33,7 @@ export type CreateHouseholdWithGuestsInput = {
   state?: string | null
   country?: string | null
   zipCode?: string | null
+  likelihoodOfAttending?: number | null
   notes?: string | null
   guestParty: GuestPartyInput[]
 }
@@ -48,6 +49,7 @@ export type UpdateHouseholdWithGuestsInput = {
   state?: string | null
   country?: string | null
   zipCode?: string | null
+  likelihoodOfAttending?: number | null
   notes?: string | null
   guestParty: GuestPartyInput[]
   deletedGuests?: number[]
@@ -70,6 +72,7 @@ export type CreateHouseholdResult = {
     state: string | null
     country: string | null
     zipCode: string | null
+    likelihoodOfAttending: number | null
     notes: string | null
     gifts: Gift[]
   }
@@ -88,6 +91,7 @@ export type UpdateHouseholdResult = {
     state: string | null
     country: string | null
     zipCode: string | null
+    likelihoodOfAttending: number | null
     notes: string | null
   }
   guests: Array<{
