@@ -6,12 +6,37 @@ import { useEffect, useState } from 'react'
 import type { DashboardData, EventWithResponses } from '~/app/utils/shared-types'
 import { TaskListItem } from '~/components/dashboard/planning-overview/task-list-item'
 import { useTasksCardState } from '~/components/dashboard/planning-overview/use-tasks-card-state'
+import { Skeleton } from '~/components/ui/skeleton'
+import type { VendorCategory, VendorStatus } from '~/server/domains/vendor/vendor.types'
+import { api } from '~/trpc/react'
 
-interface PlanningOverviewProps {
-  dashboardData: DashboardData | null
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const VENDOR_STATUS_MAP: Record<VendorStatus, { label: string; className: string }> = {
+  SELECTED: { label: 'Confirmed', className: 'bg-success/12 text-success' },
+  IN_NEGOTIATION: { label: 'Negotiating', className: 'bg-accent/12 text-accent-foreground' },
+  PRE_SELECTED: { label: 'Shortlisted', className: 'bg-accent/12 text-accent-foreground' },
+  IN_REVIEW: { label: 'Reviewing', className: 'bg-foreground/8 text-foreground/70' },
+  DECLINED: { label: 'Declined', className: 'bg-foreground/8 text-foreground/50' },
+  NOT_AVAILABLE: { label: 'Unavailable', className: 'bg-foreground/8 text-foreground/50' },
 }
 
-// CardShell action link: uses text-foreground for accessible contrast on light card bg
+const VENDOR_CATEGORY_LABELS: Record<VendorCategory, string> = {
+  VENUE: 'Venue',
+  CATERING: 'Catering',
+  PHOTOGRAPHER: 'Photography',
+  VIDEOGRAPHER: 'Videography',
+  MUSIC: 'Music',
+  FLOWERS: 'Flowers',
+  OTHER: 'Other',
+}
+
+function useDashboardData() {
+  return api.dashboard.getForActiveWorkspace.useQuery()
+}
+
+// ─── CardShell ───────────────────────────────────────────────────────────────
+
 function CardShell({
   title,
   icon,
@@ -46,15 +71,10 @@ function CardShell({
   )
 }
 
-function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null }) {
-  const weddingData = dashboardData?.weddingData
-  const bride = weddingData?.brideFirstName ?? ''
-  const groom = weddingData?.groomFirstName ?? ''
-  const coupleName = bride && groom ? `${bride} & ${groom}` : bride || groom || 'Your Wedding'
-  const hasDate = weddingData?.daysRemaining != null && weddingData.daysRemaining >= 0
-  const days = hasDate ? weddingData.daysRemaining : null
-  const dateLabel = weddingData?.date?.standardFormat ?? ''
-  const location = weddingData?.location ?? ''
+// ─── CountdownHero ───────────────────────────────────────────────────────────
+
+function CountdownHero() {
+  const { data: dashboardData, isLoading } = useDashboardData()
 
   const [now, setNow] = useState(() => new Date())
   useEffect(() => {
@@ -64,8 +84,33 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
   const hours = now.getHours()
   const mins = now.getMinutes()
 
-  // Rough planning progress (placeholder — 67% until real task tracking exists)
-  const planningPct = 67
+  if (isLoading) {
+    return (
+      <div className='relative overflow-hidden rounded-lg bg-sidebar-ink px-6 py-5'>
+        <div className='relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+          <div>
+            <Skeleton className='mb-2 h-3 w-32 bg-sidebar-cream/10' />
+            <Skeleton className='mb-1 h-7 w-48 bg-sidebar-cream/10' />
+            <Skeleton className='h-3 w-56 bg-sidebar-cream/10' />
+          </div>
+          <div className='flex items-end gap-3'>
+            <Skeleton className='h-16 w-14 bg-sidebar-cream/10' />
+            <Skeleton className='h-16 w-14 bg-sidebar-cream/10' />
+            <Skeleton className='h-16 w-14 bg-sidebar-cream/10' />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const weddingData = dashboardData?.weddingData
+  const bride = weddingData?.brideFirstName ?? ''
+  const groom = weddingData?.groomFirstName ?? ''
+  const coupleName = bride && groom ? `${bride} & ${groom}` : bride || groom || 'Your Wedding'
+  const hasDate = weddingData?.daysRemaining != null && weddingData.daysRemaining >= 0
+  const days = hasDate ? weddingData.daysRemaining : null
+  const dateLabel = weddingData?.date?.standardFormat ?? ''
+  const location = weddingData?.location ?? ''
 
   return (
     <div className='relative overflow-hidden rounded-lg bg-sidebar-ink px-6 py-5'>
@@ -93,15 +138,6 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
               </Link>
             </p>
           )}
-          <div className='mt-3 h-[2px] w-full max-w-[200px] overflow-hidden rounded-full bg-white/[0.08]'>
-            <div
-              className='h-full rounded-full bg-gradient-to-r from-primary to-accent'
-              style={{ width: `${planningPct}%` }}
-            />
-          </div>
-          <p className='mt-1 font-mono text-[0.55rem] text-sidebar-cream/30 tracking-widest'>
-            {planningPct}% of planning complete
-          </p>
         </div>
 
         {hasDate ? (
@@ -148,7 +184,27 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
   )
 }
 
-function MiniStats({ dashboardData }: { dashboardData: DashboardData | null }) {
+// ─── MiniStats ───────────────────────────────────────────────────────────────
+
+function MiniStats() {
+  const { data: dashboardData, isLoading } = useDashboardData()
+
+  if (isLoading) {
+    return (
+      <div className='grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border/90 bg-border lg:grid-cols-4'>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className='flex items-center gap-3 bg-card/90 px-4 py-3'>
+            <Skeleton className='h-6 w-6 rounded-full' />
+            <div className='min-w-0'>
+              <Skeleton className='mb-1 h-5 w-10' />
+              <Skeleton className='h-2.5 w-16' />
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   const total = dashboardData?.totalGuests ?? 0
   const firstEvent = dashboardData?.events?.[0] as EventWithResponses | undefined
   const confirmed = firstEvent?.guestResponses?.attending ?? 0
@@ -187,11 +243,53 @@ function MiniStats({ dashboardData }: { dashboardData: DashboardData | null }) {
   )
 }
 
-function RsvpCard({ dashboardData }: { dashboardData: DashboardData | null }) {
+// ─── RsvpCard ────────────────────────────────────────────────────────────────
+
+function RsvpCard() {
+  const { data: dashboardData, isLoading } = useDashboardData()
+
+  if (isLoading) {
+    return (
+      <CardShell title='RSVP Status' icon='◉' action='View all →' actionHref='/guest-list'>
+        <div className='mb-3 grid grid-cols-4 divide-x divide-border'>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className='px-2 text-center first:pl-0 last:pr-0'>
+              <Skeleton className='mx-auto mb-1 h-8 w-10' />
+              <Skeleton className='mx-auto h-2.5 w-12' />
+            </div>
+          ))}
+        </div>
+        <Skeleton className='mb-2 h-1.5 w-full rounded-full' />
+        <Skeleton className='mb-3 h-3 w-48' />
+        <Skeleton className='h-10 w-32' />
+      </CardShell>
+    )
+  }
+
   const firstEvent = dashboardData?.events?.[0] as EventWithResponses | undefined
-  const attending = firstEvent?.guestResponses?.attending ?? 0
-  const pending = firstEvent?.guestResponses?.invited ?? 0
-  const declined = firstEvent?.guestResponses?.declined ?? 0
+
+  if (!firstEvent) {
+    return (
+      <CardShell title='RSVP Status' icon='◉'>
+        <div className='py-4 text-center'>
+          <p className='font-serif text-[0.95rem] text-foreground/70'>No events yet</p>
+          <p className='mt-1 font-mono text-[0.58rem] text-foreground/50 tracking-wider'>
+            Create an event to start tracking RSVPs
+          </p>
+          <Link
+            href='/events'
+            className='mt-3 inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+          >
+            Add event →
+          </Link>
+        </div>
+      </CardShell>
+    )
+  }
+
+  const attending = firstEvent.guestResponses?.attending ?? 0
+  const pending = firstEvent.guestResponses?.invited ?? 0
+  const declined = firstEvent.guestResponses?.declined ?? 0
   const total = attending + pending + declined
 
   const confirmedPct = total > 0 ? (attending / total) * 100 : 0
@@ -244,6 +342,8 @@ function RsvpCard({ dashboardData }: { dashboardData: DashboardData | null }) {
   )
 }
 
+// ─── TasksCard (unchanged — no backend) ──────────────────────────────────────
+
 function TasksCard() {
   const { tasks, toggleTask } = useTasksCardState()
 
@@ -260,6 +360,8 @@ function TasksCard() {
     </CardShell>
   )
 }
+
+// ─── BudgetCard (unchanged — no backend) ─────────────────────────────────────
 
 function BudgetCard() {
   const categories = [
@@ -302,100 +404,189 @@ function BudgetCard() {
   )
 }
 
-const PLACEHOLDER_VENDORS = [
-  {
-    initials: 'V1',
-    name: 'Ceremony Venue',
-    type: 'Venue',
-    status: 'Confirmed',
-    statusColor: 'bg-success/12 text-success',
-  },
-  {
-    initials: 'V2',
-    name: 'Photographer',
-    type: 'Photography',
-    status: 'Confirmed',
-    statusColor: 'bg-success/12 text-success',
-  },
-  {
-    initials: 'V3',
-    name: 'Caterer',
-    type: 'Catering',
-    status: 'Deposit due',
-    statusColor: 'bg-destructive/10 text-destructive',
-  },
-  {
-    initials: 'V4',
-    name: 'Florist',
-    type: 'Flowers',
-    status: 'Confirmed',
-    statusColor: 'bg-success/12 text-success',
-  },
-  {
-    initials: '—',
-    name: 'Hair & Makeup',
-    type: 'Beauty',
-    status: 'Searching',
-    statusColor: 'bg-accent/12 text-accent-foreground',
-  },
-]
+// ─── VendorsCard (real data) ─────────────────────────────────────────────────
 
 function VendorsCard() {
+  const { data: vendors, isLoading } = api.vendor.getAll.useQuery({})
+
+  if (isLoading) {
+    return (
+      <CardShell title='Vendors' icon='◐' action='Manage →' actionHref='/vendors'>
+        <div className='flex flex-col gap-1'>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className='flex items-center gap-2.5 px-2 py-2'>
+              <Skeleton className='h-7 w-7 rounded' />
+              <div className='min-w-0 flex-1'>
+                <Skeleton className='mb-1 h-4 w-24' />
+                <Skeleton className='h-2.5 w-14' />
+              </div>
+              <Skeleton className='h-5 w-16 rounded-full' />
+            </div>
+          ))}
+        </div>
+      </CardShell>
+    )
+  }
+
+  if (!vendors || vendors.length === 0) {
+    return (
+      <CardShell title='Vendors' icon='◐' action='Manage →' actionHref='/vendors'>
+        <div className='py-4 text-center'>
+          <p className='font-serif text-[0.95rem] text-foreground/70'>No vendors yet</p>
+          <p className='mt-1 font-mono text-[0.58rem] text-foreground/50 tracking-wider'>
+            Start tracking your wedding vendors
+          </p>
+          <Link
+            href='/vendors'
+            className='mt-3 inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+          >
+            Add vendor →
+          </Link>
+        </div>
+      </CardShell>
+    )
+  }
+
   return (
     <CardShell title='Vendors' icon='◐' action='Manage →' actionHref='/vendors'>
       <div className='flex flex-col gap-1'>
-        {PLACEHOLDER_VENDORS.map((v) => (
-          <Link
-            key={v.name}
-            href='/vendors'
-            className='flex min-h-[44px] items-center gap-2.5 rounded px-2 py-2 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
-          >
-            <span className='flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-muted font-medium font-mono text-[0.6rem] text-foreground/60 uppercase'>
-              {v.initials}
-            </span>
-            <div className='min-w-0 flex-1'>
-              <p className='truncate font-serif text-[0.88rem] text-foreground'>{v.name}</p>
-              <p className='font-mono text-[0.56rem] text-foreground/60 uppercase tracking-widest'>
-                {v.type}
-              </p>
-            </div>
-            <span
-              className={`flex-shrink-0 rounded-full px-2 py-0.5 font-mono text-[0.58rem] uppercase tracking-wider ${v.statusColor}`}
+        {vendors.slice(0, 5).map((v) => {
+          const statusInfo = VENDOR_STATUS_MAP[v.status]
+          const initials = v.name.slice(0, 2).toUpperCase()
+          const categoryLabel = VENDOR_CATEGORY_LABELS[v.category]
+
+          return (
+            <Link
+              key={v.id}
+              href='/vendors'
+              className='flex min-h-[44px] items-center gap-2.5 rounded px-2 py-2 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
             >
-              {v.status}
-            </span>
-          </Link>
-        ))}
+              <span className='flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-muted font-medium font-mono text-[0.6rem] text-foreground/60 uppercase'>
+                {initials}
+              </span>
+              <div className='min-w-0 flex-1'>
+                <p className='truncate font-serif text-[0.88rem] text-foreground'>{v.name}</p>
+                <p className='font-mono text-[0.56rem] text-foreground/60 uppercase tracking-widest'>
+                  {categoryLabel}
+                </p>
+              </div>
+              <span
+                className={`flex-shrink-0 rounded-full px-2 py-0.5 font-mono text-[0.58rem] uppercase tracking-wider ${statusInfo.className}`}
+              >
+                {statusInfo.label}
+              </span>
+            </Link>
+          )
+        })}
       </div>
-      <p className='mt-3 font-mono text-[0.56rem] text-foreground/50 tracking-wider'>
-        Showing placeholder data — manage real vendors →
-      </p>
+      {vendors.length > 5 && (
+        <p className='mt-3 font-mono text-[0.56rem] text-foreground/50 tracking-wider'>
+          +{vendors.length - 5} more — view all in{' '}
+          <Link href='/vendors' className='text-primary underline underline-offset-2'>
+            Vendors
+          </Link>
+        </p>
+      )}
     </CardShell>
   )
 }
 
-function MilestonesCard({ dashboardData }: { dashboardData: DashboardData | null }) {
-  const weddingDateLabel = dashboardData?.weddingData?.date?.standardFormat ?? ''
-  const events = dashboardData?.events ?? []
+// ─── MilestonesCard (real event data) ────────────────────────────────────────
 
-  const staticMilestones = [
-    { title: 'Venue booked', date: 'Jan 2026', status: 'done' as const },
-    { title: 'Invitations sent', date: 'Feb 2026', status: 'done' as const },
-    { title: 'RSVP deadline', date: 'Mar 2026', status: 'today' as const },
-    { title: 'Final headcount to caterer', date: 'Apr 2026', status: 'upcoming' as const },
-    { title: 'Seating plan finalised', date: 'Jan 2027', status: 'upcoming' as const },
-    { title: 'Rehearsal dinner', date: 'Day before', status: 'upcoming' as const },
-  ]
+function MilestonesCard() {
+  const { data: dashboardData, isLoading } = useDashboardData()
 
-  const weddingMilestone = {
-    title: events[0]?.name ?? 'The wedding',
-    date: weddingDateLabel,
-    status: 'upcoming' as const,
-    highlight: true,
+  if (isLoading) {
+    return (
+      <CardShell title='Milestones' icon='▷' action='Full timeline →' actionHref='/events'>
+        <div className='flex flex-col'>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className='relative flex gap-3 pb-3 last:pb-0'>
+              {i < 3 && <div className='absolute top-4 bottom-0 left-[5px] w-px bg-border' />}
+              <Skeleton className='mt-1 h-3 w-3 flex-shrink-0 rounded-full' />
+              <div>
+                <Skeleton className='mb-1 h-4 w-28' />
+                <Skeleton className='h-2.5 w-16' />
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardShell>
+    )
   }
 
-  const allMilestones = [...staticMilestones, weddingMilestone]
+  const events = dashboardData?.events ?? []
 
+  if (events.length === 0) {
+    return (
+      <CardShell title='Milestones' icon='▷'>
+        <div className='py-4 text-center'>
+          <p className='font-serif text-[0.95rem] text-foreground/70'>No events yet</p>
+          <p className='mt-1 font-mono text-[0.58rem] text-foreground/50 tracking-wider'>
+            Add events to see your timeline
+          </p>
+          <Link
+            href='/events'
+            className='mt-3 inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+          >
+            Add event →
+          </Link>
+        </div>
+      </CardShell>
+    )
+  }
+
+  const now = new Date()
+  const todayStr = now.toISOString().slice(0, 10)
+
+  const milestones = events
+    .filter((e) => e.date)
+    .sort((a, b) => new Date(a.date!).getTime() - new Date(b.date!).getTime())
+    .map((event, idx) => {
+      const eventDate = new Date(event.date!)
+      const eventDateStr = eventDate.toISOString().slice(0, 10)
+      const status: 'done' | 'today' | 'upcoming' =
+        eventDateStr < todayStr ? 'done' : eventDateStr === todayStr ? 'today' : 'upcoming'
+      const dateLabel = eventDate.toLocaleDateString('en-us', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+      return {
+        title: event.name,
+        date: dateLabel,
+        status,
+        highlight: idx === 0,
+      }
+    })
+
+  // If no events have dates, show events without dates
+  if (milestones.length === 0) {
+    const undatedMilestones = events.map((event, idx) => ({
+      title: event.name,
+      date: 'Date TBD',
+      status: 'upcoming' as const,
+      highlight: idx === 0,
+    }))
+    return (
+      <CardShell title='Milestones' icon='▷' action='Full timeline →' actionHref='/events'>
+        <MilestoneTimeline milestones={undatedMilestones} />
+      </CardShell>
+    )
+  }
+
+  return (
+    <CardShell title='Milestones' icon='▷' action='Full timeline →' actionHref='/events'>
+      <MilestoneTimeline milestones={milestones} />
+    </CardShell>
+  )
+}
+
+function MilestoneTimeline({
+  milestones,
+}: {
+  milestones: Array<{ title: string; date: string; status: 'done' | 'today' | 'upcoming'; highlight?: boolean }>
+}) {
   const dotClass = {
     done: 'bg-success border-success',
     today: 'bg-primary border-primary shadow-[0_0_0_3px_rgba(196,99,58,0.18)]',
@@ -403,54 +594,52 @@ function MilestonesCard({ dashboardData }: { dashboardData: DashboardData | null
   }
 
   return (
-    <CardShell title='Milestones' icon='▷' action='Full timeline →' actionHref='/dashboard'>
-      <div className='flex flex-col'>
-        {allMilestones.map((m, i) => (
-          <div key={m.title} className='relative flex gap-3 pb-3 last:pb-0'>
-            {i < allMilestones.length - 1 && (
-              <div className='absolute top-4 bottom-0 left-[5px] w-px bg-border' />
-            )}
-            <span
-              className={`relative z-10 mt-1 h-3 w-3 flex-shrink-0 rounded-full border-2 ${dotClass[m.status]}`}
-            />
-            <div>
-              <p
-                className={`font-serif text-[0.88rem] leading-tight ${
-                  'highlight' in m && m.highlight
-                    ? 'font-semibold text-foreground italic'
-                    : 'text-foreground'
-                }`}
-              >
-                {m.title}
-                {'highlight' in m && m.highlight ? ' ✦' : ''}
-              </p>
-              <p
-                className={`mt-0.5 font-mono text-[0.58rem] tracking-wider ${
-                  m.status === 'today' ? 'text-foreground/80' : 'text-foreground/60'
-                }`}
-              >
-                {m.date}
-              </p>
-            </div>
+    <div className='flex flex-col'>
+      {milestones.map((m, i) => (
+        <div key={m.title} className='relative flex gap-3 pb-3 last:pb-0'>
+          {i < milestones.length - 1 && (
+            <div className='absolute top-4 bottom-0 left-[5px] w-px bg-border' />
+          )}
+          <span
+            className={`relative z-10 mt-1 h-3 w-3 flex-shrink-0 rounded-full border-2 ${dotClass[m.status]}`}
+          />
+          <div>
+            <p
+              className={`font-serif text-[0.88rem] leading-tight ${
+                m.highlight ? 'font-semibold text-foreground italic' : 'text-foreground'
+              }`}
+            >
+              {m.title}
+              {m.highlight ? ' ✦' : ''}
+            </p>
+            <p
+              className={`mt-0.5 font-mono text-[0.58rem] tracking-wider ${
+                m.status === 'today' ? 'text-foreground/80' : 'text-foreground/60'
+              }`}
+            >
+              {m.date}
+            </p>
           </div>
-        ))}
-      </div>
-    </CardShell>
+        </div>
+      ))}
+    </div>
   )
 }
 
-export default function PlanningOverview({ dashboardData }: PlanningOverviewProps) {
+// ─── PlanningOverview ────────────────────────────────────────────────────────
+
+export default function PlanningOverview() {
   return (
     <div className='flex flex-col gap-5'>
       {/* Countdown hero */}
-      <CountdownHero dashboardData={dashboardData} />
+      <CountdownHero />
 
       {/* Mini stats */}
-      <MiniStats dashboardData={dashboardData} />
+      <MiniStats />
 
       {/* Row: RSVP + Tasks */}
       <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
-        <RsvpCard dashboardData={dashboardData} />
+        <RsvpCard />
         <TasksCard />
       </div>
 
@@ -458,7 +647,7 @@ export default function PlanningOverview({ dashboardData }: PlanningOverviewProp
       <div className='grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3'>
         <BudgetCard />
         <VendorsCard />
-        <MilestonesCard dashboardData={dashboardData} />
+        <MilestonesCard />
       </div>
     </div>
   )

@@ -69,7 +69,7 @@ export default function Dashboard({
       {/* Scrollable main content */}
       <div className='min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-6 lg:py-6'>
         {/* Planning overview hub */}
-        <PlanningOverview dashboardData={dashboardData} />
+        <PlanningOverview />
 
         {/* Website editor — anchored for sidebar "Website" link */}
         <div id='website-editor' className='mt-8 border-border border-t pt-8'>

@@ -9,7 +9,7 @@ jest.mock('~/components/dashboard/planning-overview', () => ({
 }))
 
 jest.mock('~/server/application/authenticated-route/authenticated-route-data', () => ({
-  getRequiredDashboardOverview: () => Promise.resolve({}),
+  getRequiredWedding: () => Promise.resolve({ id: 'wedding-1' }),
 }))
 
 import * as DashboardPageModule from '~/app/(authenicated)/dashboard/page'
