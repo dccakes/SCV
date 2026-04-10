@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { unstable_noStore as noStore } from 'next/cache'
 import { headers } from 'next/headers'
-import { redirect } from 'next/navigation'
 
 import AuthenticatedView from '~/components/home/authenticated-view'
 import NonAuthenticatedView from '~/components/home/non-authenticated-view'
@@ -148,8 +147,6 @@ export default async function Home() {
     const capabilities = readWorkspaceCapabilities(scope.activeOrganization?.role)
     if (!capabilities.canViewPlanning) {
       isSignedIn = false
-    } else if (scope.activeWeddingId) {
-      redirect('/dashboard')
     }
   }
 

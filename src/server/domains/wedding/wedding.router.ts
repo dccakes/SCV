@@ -113,10 +113,10 @@ export const weddingRouter = createTRPCRouter({
   }),
 
   /**
-   * Check if current user has a wedding
+   * Check if current user has a wedding (via active workspace scope)
    */
-  hasWedding: protectedProcedure.query(async ({ ctx }) => {
-    return weddingService.hasWedding(ctx.auth.userId)
+  hasWedding: protectedProcedure.query(({ ctx }) => {
+    return ctx.auth.activeWeddingId !== null
   }),
 
   /**
