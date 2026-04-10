@@ -35,15 +35,15 @@ test.describe('Manage Event Guests', () => {
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
 
+    // Wait for guest data to load (non-zero total means data is ready)
+    await expect(dialog.getByText(/of \d+[1-9]\d* invited/i)).toBeVisible()
+
     // Should show guest names from seed data
     await expect(dialog.getByText(/donkey/i).first()).toBeVisible()
 
-    // Should show invite count
-    await expect(dialog.getByText(/\d+ of \d+ invited/i)).toBeVisible()
-
-    // Should have Invite All and Uninvite All buttons
-    await expect(dialog.getByRole('button', { name: /invite all/i })).toBeVisible()
-    await expect(dialog.getByRole('button', { name: /uninvite all/i })).toBeVisible()
+    // Should have Invite All and Uninvite All buttons (use exact to avoid ambiguity)
+    await expect(dialog.getByRole('button', { name: 'Invite All' })).toBeVisible()
+    await expect(dialog.getByRole('button', { name: 'Uninvite All' })).toBeVisible()
   })
 
   test('should filter guests by search', async ({ page }) => {
@@ -57,6 +57,9 @@ test.describe('Manage Event Guests', () => {
 
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
+
+    // Wait for guests to load
+    await expect(dialog.locator('label').first()).toBeVisible()
 
     // Search for a specific guest
     await dialog.getByPlaceholder(/search guests/i).fill('Donkey')
@@ -82,8 +85,8 @@ test.describe('Manage Event Guests', () => {
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
 
-    // Wait for guest list to load before searching
-    await expect(dialog.getByText(/\d+ of \d+ invited/i)).toBeVisible()
+    // Wait for guest labels to render (not just the count text)
+    await expect(dialog.locator('label').first()).toBeVisible()
 
     // Search for Big Bad Wolf to isolate them
     await dialog.getByPlaceholder(/search guests/i).fill('Big Bad')
@@ -113,8 +116,8 @@ test.describe('Manage Event Guests', () => {
     await manageGuestsButton.click()
     await expect(dialog).toBeVisible()
 
-    // Wait for guest list to reload
-    await expect(dialog.getByText(/\d+ of \d+ invited/i)).toBeVisible()
+    // Wait for guest labels to render
+    await expect(dialog.locator('label').first()).toBeVisible()
 
     // Search for Big Bad Wolf again
     await dialog.getByPlaceholder(/search guests/i).fill('Big Bad')
@@ -152,12 +155,11 @@ test.describe('Manage Event Guests', () => {
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
 
-    // Wait for guest list to load
-    const countText = dialog.getByText(/\d+ of \d+ invited/i)
-    await expect(countText).toBeVisible()
+    // Wait for guest data to load
+    await expect(dialog.locator('label').first()).toBeVisible()
 
-    // Click "Invite All"
-    await dialog.getByRole('button', { name: /invite all/i }).click()
+    // Click "Invite All" (exact match to avoid matching "Uninvite All")
+    await dialog.getByRole('button', { name: 'Invite All' }).click()
 
     // Save changes
     const saveButton = dialog.getByRole('button', { name: /save/i }).last()
@@ -170,9 +172,9 @@ test.describe('Manage Event Guests', () => {
     // Reopen dialog and click "Uninvite All" to restore state
     await manageGuestsButton.click()
     await expect(dialog).toBeVisible()
-    await expect(dialog.getByText(/\d+ of \d+ invited/i)).toBeVisible()
+    await expect(dialog.locator('label').first()).toBeVisible()
 
-    await dialog.getByRole('button', { name: /uninvite all/i }).click()
+    await dialog.getByRole('button', { name: 'Uninvite All' }).click()
 
     const saveButton2 = dialog.getByRole('button', { name: /save/i }).last()
     await expect(saveButton2).toBeEnabled()
