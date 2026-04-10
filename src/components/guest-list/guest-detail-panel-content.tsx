@@ -209,6 +209,11 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
           </ul>
         </GuestDetailSection>
 
+        <AttendanceLikelihoodSection
+          value={drawerDraft.likelihoodOfAttending}
+          onChange={(val) => updateDraft('likelihoodOfAttending', val)}
+        />
+
         {selectedEventId === 'all' ? (
           <GuestDetailSection
             title='Seating & Event'
@@ -293,11 +298,6 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
           notes={selectedHousehold.notes}
           draftNotes={drawerDraft.notes}
           updateDraft={updateDraft}
-        />
-
-        <AttendanceLikelihoodSection
-          value={drawerDraft.likelihoodOfAttending}
-          onChange={(val) => updateDraft('likelihoodOfAttending', val)}
         />
 
         <GuestDetailSection title='Communication Log' contentClassName='space-y-2'>
