@@ -118,7 +118,10 @@ function SidebarNav({
               type='button'
               aria-label={ettaPanelOpen ? 'Hide Etta panel' : 'Show Etta panel'}
               aria-pressed={ettaPanelOpen}
-              onClick={onToggleEttaPanel}
+              onClick={() => {
+                onToggleEttaPanel?.()
+                onNavClick?.()
+              }}
               className={`flex h-11 items-center justify-center rounded-md text-sidebar-cream/55 transition-colors hover:bg-white/[0.08] hover:text-sidebar-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar-ink ${
                 isCollapsed ? 'w-11' : 'gap-1.5 px-2.5'
               }`}

@@ -1,7 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { EttaChat } from '~/components/etta/EttaChat'
 import SidebarNavFrame from '~/components/nav/sidebar-nav'
 
@@ -59,13 +59,27 @@ export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppSh
     setIsEttaPanelOpen(saved ? saved === 'true' : true)
   }, [showEttaPanel])
 
-  const toggleEttaPanel = () => {
+  const toggleEttaPanel = useCallback(() => {
     setIsEttaPanelOpen((prev) => {
       const next = !prev
       localStorage.setItem('etta-panel-open', String(next))
       return next
     })
-  }
+  }, [])
+
+  // Close mobile Etta overlay on Escape key
+  useEffect(() => {
+    if (!isEttaPanelOpen) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && window.matchMedia('(max-width: 1023px)').matches) {
+        toggleEttaPanel()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isEttaPanelOpen, toggleEttaPanel])
 
   return (
     <AuthenticatedSidebarContext.Provider value={{ openSidebar: () => setIsOpen(true) }}>
@@ -113,6 +127,42 @@ export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppSh
             </aside>
           )}
         </div>
+
+        {/* Mobile Etta overlay — full-screen drawer from right */}
+        {showEttaPanel && weddingId && isEttaPanelOpen && (
+          <div
+            className='fixed inset-0 z-50 lg:hidden'
+            role='dialog'
+            aria-modal='true'
+            aria-label='Etta AI assistant'
+          >
+            <div
+              className='absolute inset-0 bg-black/60'
+              onClick={toggleEttaPanel}
+              aria-hidden='true'
+            />
+            <aside className='relative ml-auto flex h-full w-full max-w-sm flex-col overflow-hidden'>
+              <button
+                type='button'
+                aria-label='Close Etta'
+                onClick={toggleEttaPanel}
+                className='absolute top-2 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-md text-sidebar-cream/50 transition-colors hover:bg-white/[0.06] hover:text-sidebar-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-etta-ink'
+              >
+                <svg
+                  aria-hidden='true'
+                  className='h-4 w-4'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                  strokeWidth={1.5}
+                >
+                  <path strokeLinecap='round' strokeLinejoin='round' d='M6 18L18 6M6 6l12 12' />
+                </svg>
+              </button>
+              <EttaChat weddingId={weddingId} persona='planner' isConfigured={isEttaConfigured} />
+            </aside>
+          </div>
+        )}
       </div>
     </AuthenticatedSidebarContext.Provider>
   )
