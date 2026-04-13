@@ -41,7 +41,7 @@ This project follows a standard contributor code of conduct. Be respectful, cons
 
 3. **Add the upstream remote**
    ```bash
-   git remote add upstream https://github.com/dccakes/oswp.git
+   git remote add upstream https://github.com/dccakes/SCV.git
    ```
 
 4. **Install dependencies**
@@ -271,8 +271,8 @@ prisma/
 
 ## Community
 
-- **Questions or ideas?** → [GitHub Discussions](https://github.com/dccakes/oswp/discussions)
-- **Found a bug?** → [Open an Issue](https://github.com/dccakes/oswp/issues)
+- **Questions or ideas?** → [GitHub Discussions](https://github.com/dccakes/SCV/discussions)
+- **Found a bug?** → [Open an Issue](https://github.com/dccakes/SCV/issues)
 - **Building something with OSWP?** → Share it in Discussions under Show & Tell
 
 We use GitHub Discussions as the default forum for everything that isn't a confirmed bug or active PR. If you're not sure whether something belongs in an issue, start a discussion.
