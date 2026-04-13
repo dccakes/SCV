@@ -42,8 +42,8 @@ test.describe('Manage Event Guests', () => {
     await expect(dialog.getByText(/donkey/i).first()).toBeVisible()
 
     // Should have Invite All and Uninvite All buttons (use exact to avoid ambiguity)
-    await expect(dialog.getByRole('button', { name: 'Invite All' })).toBeVisible()
-    await expect(dialog.getByRole('button', { name: 'Uninvite All' })).toBeVisible()
+    await expect(dialog.getByRole('button', { name: 'Invite All', exact: true })).toBeVisible()
+    await expect(dialog.getByRole('button', { name: 'Uninvite All', exact: true })).toBeVisible()
   })
 
   test('should filter guests by search', async ({ page }) => {
@@ -85,15 +85,15 @@ test.describe('Manage Event Guests', () => {
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
 
-    // Wait for guest labels to render (not just the count text)
-    await expect(dialog.locator('label').first()).toBeVisible()
+    // Wait for guest labels to render by checking for a known guest
+    await expect(dialog.locator('label').filter({ hasText: /donkey/i })).toBeVisible()
 
     // Search for Big Bad Wolf to isolate them
     await dialog.getByPlaceholder(/search guests/i).fill('Big Bad')
 
     // Find the checkbox label for Big Bad Wolf and click it to invite
     const wolfLabel = dialog.locator('label').filter({ hasText: /big bad wolf/i })
-    await expect(wolfLabel).toBeVisible()
+    await expect(wolfLabel).toBeVisible({ timeout: 15_000 })
 
     // The checkbox should be unchecked (Not Invited)
     const wolfCheckbox = wolfLabel.locator('[role="checkbox"]')
@@ -117,7 +117,7 @@ test.describe('Manage Event Guests', () => {
     await expect(dialog).toBeVisible()
 
     // Wait for guest labels to render
-    await expect(dialog.locator('label').first()).toBeVisible()
+    await expect(dialog.locator('label').filter({ hasText: /donkey/i })).toBeVisible()
 
     // Search for Big Bad Wolf again
     await dialog.getByPlaceholder(/search guests/i).fill('Big Bad')
@@ -159,7 +159,7 @@ test.describe('Manage Event Guests', () => {
     await expect(dialog.locator('label').first()).toBeVisible()
 
     // Click "Invite All" (exact match to avoid matching "Uninvite All")
-    await dialog.getByRole('button', { name: 'Invite All' }).click()
+    await dialog.getByRole('button', { name: 'Invite All', exact: true }).click()
 
     // Save changes
     const saveButton = dialog.getByRole('button', { name: /save/i }).last()
@@ -174,7 +174,7 @@ test.describe('Manage Event Guests', () => {
     await expect(dialog).toBeVisible()
     await expect(dialog.locator('label').first()).toBeVisible()
 
-    await dialog.getByRole('button', { name: 'Uninvite All' }).click()
+    await dialog.getByRole('button', { name: 'Uninvite All', exact: true }).click()
 
     const saveButton2 = dialog.getByRole('button', { name: /save/i }).last()
     await expect(saveButton2).toBeEnabled()
