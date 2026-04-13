@@ -206,6 +206,16 @@ Full schema in `prisma/schema.prisma`.
 
 ---
 
+## Community
+
+Questions, ideas, and show-and-tells live in [GitHub Discussions](https://github.com/dccakes/oswp/discussions):
+
+- **[Q&A](https://github.com/dccakes/oswp/discussions/categories/q-a)** — stuck on setup or a feature? Ask here.
+- **[Ideas](https://github.com/dccakes/oswp/discussions/categories/ideas)** — propose features before opening a PR.
+- **[Show and Tell](https://github.com/dccakes/oswp/discussions/categories/show-and-tell)** — share your OSWP deployment.
+
+---
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) to get set up and submit your first PR. All contributions — bug reports, feature proposals, and pull requests — are welcome.
