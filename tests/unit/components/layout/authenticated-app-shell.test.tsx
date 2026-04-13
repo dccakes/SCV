@@ -57,7 +57,7 @@ describe('AuthenticatedAppShell', () => {
       </AuthenticatedAppShell>
     )
 
-    expect(screen.getByTestId('etta-chat')).toBeInTheDocument()
+    expect(screen.getAllByTestId('etta-chat')).toHaveLength(2)
     expect(mockEttaChat).toHaveBeenCalledWith(
       expect.objectContaining({
         weddingId: 'wedding-1',
