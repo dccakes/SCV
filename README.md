@@ -126,11 +126,23 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## Deploy to Vercel
+## Self-hosting
 
-1. Push to GitHub
-2. Import the project in [Vercel](https://vercel.com/)
-3. Add your environment variables in the Vercel dashboard
+OSWP is built to run anywhere. Three paths are supported:
+
+| Path | Best for |
+|---|---|
+| **Vercel + Supabase** | Easiest setup, free tier, zero infrastructure |
+| **Docker Compose** | VPS or homelab |
+| **Fly.io** | Managed infrastructure, one-command deploys |
+
+→ **[Full self-hosting guide](docs/self-hosting.md)** — environment variables, reverse proxy setup, security checklist, and troubleshooting.
+
+### Quick deploy to Vercel
+
+1. Fork this repo
+2. Import at [vercel.com/new](https://vercel.com/new)
+3. Add your environment variables (see [docs/self-hosting.md](docs/self-hosting.md) for the full reference)
 4. Deploy
 
 Vercel runs `npm install`, generates the Prisma client, and builds automatically.
