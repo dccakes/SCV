@@ -10,6 +10,7 @@ OSWP is a comprehensive, open-source wedding planning application built with a *
 
 | Resource | Description |
 |----------|-------------|
+| [Self-Hosting Guide](./self-hosting.md) | Deploy to Vercel, Docker, or Fly.io |
 | [Architecture Overview](./api/architecture.md) | System architecture and design patterns |
 | [Domain Guide](./api/domains/README.md) | Business domain documentation |
 | [Application Services](./api/application-services/README.md) | Cross-domain orchestration services |
