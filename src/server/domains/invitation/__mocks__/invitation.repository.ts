@@ -37,6 +37,8 @@ export const mockCreate = jest.fn()
 export const mockCreateMany = jest.fn()
 export const mockUpdate = jest.fn()
 export const mockDelete = jest.fn()
+export const mockDeleteByGuest = jest.fn()
+export const mockDeleteByGuestExcludingEvents = jest.fn()
 export const mockExists = jest.fn()
 export const mockBelongsToWedding = jest.fn()
 export const mockBelongsToUser = jest.fn()
@@ -44,6 +46,7 @@ export const mockGuestBelongsToWedding = jest.fn()
 export const mockEventBelongsToWedding = jest.fn()
 export const mockUpdateMany = jest.fn()
 export const mockAllBelongToWedding = jest.fn()
+export const mockCountByWeddingAndGuestEventPairs = jest.fn()
 export const mockGetRsvpCountsByEventId = jest.fn()
 
 export const InvitationRepository = jest.fn().mockImplementation(() => ({
@@ -59,11 +62,14 @@ export const InvitationRepository = jest.fn().mockImplementation(() => ({
   updateMany: mockUpdateMany,
   allBelongToWedding: mockAllBelongToWedding,
   delete: mockDelete,
+  deleteByGuest: mockDeleteByGuest,
+  deleteByGuestExcludingEvents: mockDeleteByGuestExcludingEvents,
   exists: mockExists,
   belongsToWedding: mockBelongsToWedding,
   belongsToUser: mockBelongsToUser,
   guestBelongsToWedding: mockGuestBelongsToWedding,
   eventBelongsToWedding: mockEventBelongsToWedding,
+  countByWeddingAndGuestEventPairs: mockCountByWeddingAndGuestEventPairs,
   getRsvpCountsByEventId: mockGetRsvpCountsByEventId,
 }))
 
@@ -81,11 +87,14 @@ export const resetMocks = (): void => {
   mockUpdateMany.mockReset()
   mockAllBelongToWedding.mockReset()
   mockDelete.mockReset()
+  mockDeleteByGuest.mockReset()
+  mockDeleteByGuestExcludingEvents.mockReset()
   mockExists.mockReset()
   mockBelongsToWedding.mockReset()
   mockBelongsToUser.mockReset()
   mockGuestBelongsToWedding.mockReset()
   mockEventBelongsToWedding.mockReset()
+  mockCountByWeddingAndGuestEventPairs.mockReset()
   mockGetRsvpCountsByEventId.mockReset()
   InvitationRepository.mockClear()
 }

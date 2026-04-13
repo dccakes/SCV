@@ -5,12 +5,12 @@
  * This layer handles all direct database access for weddings.
  */
 
-import type { PrismaClient } from '@prisma/client'
+import type { Prisma, PrismaClient } from '@prisma/client'
 
 import type { Wedding } from '~/server/domains/wedding/wedding.types'
 
 export class WeddingRepository {
-  constructor(private db: PrismaClient) {}
+  constructor(private db: PrismaClient | Prisma.TransactionClient) {}
 
   /**
    * Find a wedding by ID
@@ -107,5 +107,27 @@ export class WeddingRepository {
       select: { id: true },
     })
     return userWedding !== null
+  }
+
+  /**
+   * Get wedding ID by valid RSVP token constrained to a specific website sub URL.
+   */
+  async findWeddingIdByValidTokenAndSubUrl(subUrl: string, token: string): Promise<string | null> {
+    const expiryDate = new Date()
+    expiryDate.setDate(expiryDate.getDate() - 90)
+
+    const wedding = await this.db.wedding.findFirst({
+      where: {
+        selfFillToken: token,
+        website: { is: { subUrl } },
+        OR: [
+          { selfFillTokenGeneratedAt: { equals: null } },
+          { selfFillTokenGeneratedAt: { gte: expiryDate } },
+        ],
+      },
+      select: { id: true },
+    })
+
+    return wedding?.id ?? null
   }
 }

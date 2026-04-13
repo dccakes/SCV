@@ -5,7 +5,7 @@
  * This layer handles all direct database access for households.
  */
 
-import type { PrismaClient } from '@prisma/client'
+import type { Prisma, PrismaClient } from '@prisma/client'
 
 import type {
   Household,
@@ -14,7 +14,7 @@ import type {
 } from '~/server/domains/household/household.types'
 
 export class HouseholdRepository {
-  constructor(private db: PrismaClient) {}
+  constructor(private db: PrismaClient | Prisma.TransactionClient) {}
 
   /**
    * Find a household by ID
@@ -309,5 +309,17 @@ export class HouseholdRepository {
       select: { id: true },
     })
     return household !== null
+  }
+
+  /**
+   * Count households by IDs constrained to a wedding scope.
+   */
+  async countByIdsInWedding(weddingId: string, householdIds: string[]): Promise<number> {
+    return this.db.household.count({
+      where: {
+        weddingId,
+        id: { in: householdIds },
+      },
+    })
   }
 }
