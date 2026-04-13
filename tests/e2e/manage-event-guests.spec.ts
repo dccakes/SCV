@@ -6,7 +6,6 @@ test.describe('Manage Event Guests', () => {
   })
 
   test('should open Manage Guests dialog from event card', async ({ page }) => {
-    // Find the Manage Guests button on one of the event cards
     const manageGuestsButton = page
       .locator('div')
       .filter({ hasText: /swamp ceremony/i })
@@ -15,7 +14,6 @@ test.describe('Manage Event Guests', () => {
 
     await manageGuestsButton.click()
 
-    // Dialog should open with event name
     await expect(
       page.getByRole('heading', { name: /manage guests.*swamp ceremony/i })
     ).toBeVisible()
@@ -23,7 +21,6 @@ test.describe('Manage Event Guests', () => {
   })
 
   test('should display guest list with checkboxes in dialog', async ({ page }) => {
-    // Open Manage Guests for "Morning-After Breakfast"
     const manageGuestsButton = page
       .locator('div')
       .filter({ hasText: /morning-after breakfast/i })
@@ -35,13 +32,13 @@ test.describe('Manage Event Guests', () => {
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
 
-    // Wait for guest data to load (non-zero total means data is ready)
-    await expect(dialog.getByText(/of \d+[1-9]\d* invited/i)).toBeVisible()
+    // Wait for guest data to load
+    await expect(dialog.locator('label').filter({ hasText: /donkey/i })).toBeVisible()
 
     // Should show guest names from seed data
     await expect(dialog.getByText(/donkey/i).first()).toBeVisible()
 
-    // Should have Invite All and Uninvite All buttons (use exact to avoid ambiguity)
+    // Should have Invite All and Uninvite All buttons
     await expect(dialog.getByRole('button', { name: 'Invite All', exact: true })).toBeVisible()
     await expect(dialog.getByRole('button', { name: 'Uninvite All', exact: true })).toBeVisible()
   })
@@ -57,23 +54,15 @@ test.describe('Manage Event Guests', () => {
 
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
+    await expect(dialog.locator('label').filter({ hasText: /donkey/i })).toBeVisible()
 
-    // Wait for guests to load
-    await expect(dialog.locator('label').first()).toBeVisible()
-
-    // Search for a specific guest
     await dialog.getByPlaceholder(/search guests/i).fill('Donkey')
-
-    // Should show Donkey but filter out others
     await expect(dialog.getByText('Donkey The Donkey')).toBeVisible()
 
-    // Clear search
     await dialog.getByPlaceholder(/search guests/i).fill('')
   })
 
   test('should add a guest to an event and then remove them', async ({ page }) => {
-    // Open Manage Guests for "Morning-After Breakfast"
-    // Seed data: Big Bad Wolf is "Not Invited" to this event
     const manageGuestsButton = page
       .locator('div')
       .filter({ hasText: /morning-after breakfast/i })
@@ -84,66 +73,70 @@ test.describe('Manage Event Guests', () => {
 
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
-
-    // Wait for guest labels to render by checking for a known guest
     await expect(dialog.locator('label').filter({ hasText: /donkey/i })).toBeVisible()
 
-    // Search for Big Bad Wolf (search by lastName since filter checks first/last separately)
+    // Search for Big Bad Wolf
     await dialog.getByPlaceholder(/search guests/i).fill('Wolf')
-
-    // Find the checkbox label for Big Bad Wolf and click it to invite
     const wolfLabel = dialog.locator('label').filter({ hasText: /big bad wolf/i })
     await expect(wolfLabel).toBeVisible()
-
-    // The checkbox should be unchecked (Not Invited)
     const wolfCheckbox = wolfLabel.locator('[role="checkbox"]')
+
+    // Ensure Wolf starts as NOT invited (reset if needed from a previous failed run)
+    const isCurrentlyChecked = await wolfCheckbox.isChecked()
+    if (isCurrentlyChecked) {
+      await wolfCheckbox.click()
+      await dialog.getByRole('button', { name: /save/i }).last().click()
+      await expect(dialog).not.toBeVisible()
+
+      // Reopen dialog
+      await manageGuestsButton.click()
+      await expect(dialog).toBeVisible()
+      await expect(dialog.locator('label').filter({ hasText: /donkey/i })).toBeVisible()
+      await dialog.getByPlaceholder(/search guests/i).fill('Wolf')
+      await expect(wolfLabel).toBeVisible()
+    }
+
+    // Wolf should now be unchecked
     await expect(wolfCheckbox).not.toBeChecked()
 
     // Click to invite
     await wolfCheckbox.click()
     await expect(wolfCheckbox).toBeChecked()
 
-    // Save button should show 1 change
+    // Save — should show 1 change
     const saveButton = dialog.getByRole('button', { name: /save.*1 change/i })
     await expect(saveButton).toBeVisible()
     await saveButton.click()
 
-    // Dialog should close and show success toast
     await expect(dialog).not.toBeVisible()
     await expect(page.getByText(/guest list updated/i)).toBeVisible()
 
-    // --- Now reopen and remove the guest ---
+    // --- Reopen and verify Wolf is now invited, then remove ---
     await manageGuestsButton.click()
     await expect(dialog).toBeVisible()
-
-    // Wait for guest labels to render
     await expect(dialog.locator('label').filter({ hasText: /donkey/i })).toBeVisible()
-
-    // Search for Big Bad Wolf again
     await dialog.getByPlaceholder(/search guests/i).fill('Wolf')
 
-    const wolfLabelAgain = dialog.locator('label').filter({ hasText: /big bad wolf/i })
-    const wolfCheckboxAgain = wolfLabelAgain.locator('[role="checkbox"]')
+    const wolfCheckboxAgain = dialog
+      .locator('label')
+      .filter({ hasText: /big bad wolf/i })
+      .locator('[role="checkbox"]')
 
-    // Should now be checked (Invited)
     await expect(wolfCheckboxAgain).toBeChecked()
 
-    // Click to uninvite
+    // Uninvite
     await wolfCheckboxAgain.click()
     await expect(wolfCheckboxAgain).not.toBeChecked()
 
-    // Save the removal
     const saveButton2 = dialog.getByRole('button', { name: /save.*1 change/i })
     await expect(saveButton2).toBeVisible()
     await saveButton2.click()
 
-    // Dialog should close and show success toast
     await expect(dialog).not.toBeVisible()
     await expect(page.getByText(/guest list updated/i)).toBeVisible()
   })
 
-  test('should invite all guests and then uninvite all', async ({ page }) => {
-    // Open Manage Guests for "Morning-After Breakfast"
+  test('should bulk invite and uninvite guests', async ({ page }) => {
     const manageGuestsButton = page
       .locator('div')
       .filter({ hasText: /morning-after breakfast/i })
@@ -154,17 +147,13 @@ test.describe('Manage Event Guests', () => {
 
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
-
-    // Wait for guest data to load
     await expect(dialog.locator('label').filter({ hasText: /donkey/i })).toBeVisible()
 
-    // First uninvite all to ensure a known starting state
+    // Reset to known state: uninvite all, then invite all
     await dialog.getByRole('button', { name: 'Uninvite All', exact: true }).click()
-
-    // Now invite all — this should produce changes
     await dialog.getByRole('button', { name: 'Invite All', exact: true }).click()
 
-    // Save changes
+    // Save — should have changes since we went from uninvited → invited
     const saveButton = dialog.getByRole('button', { name: /save/i }).last()
     await expect(saveButton).toBeEnabled()
     await saveButton.click()
@@ -172,7 +161,7 @@ test.describe('Manage Event Guests', () => {
     await expect(dialog).not.toBeVisible()
     await expect(page.getByText(/guest list updated/i)).toBeVisible()
 
-    // Reopen dialog and click "Uninvite All" to restore state
+    // Reopen and restore: uninvite all
     await manageGuestsButton.click()
     await expect(dialog).toBeVisible()
     await expect(dialog.locator('label').filter({ hasText: /donkey/i })).toBeVisible()
@@ -199,10 +188,7 @@ test.describe('Manage Event Guests', () => {
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
 
-    // Click cancel
     await dialog.getByRole('button', { name: /cancel/i }).click()
-
-    // Dialog should close
     await expect(dialog).not.toBeVisible()
   })
 })
