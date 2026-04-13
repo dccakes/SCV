@@ -100,7 +100,11 @@ function SidebarNav({
       {/* Header: logo + collapse toggle */}
       <div
         className={`flex items-center border-white/10 border-b py-4 ${
-          isCollapsed ? 'justify-center px-2' : 'justify-between px-4'
+          isCollapsed
+            ? 'justify-center px-2'
+            : showCollapseToggle
+              ? 'justify-between px-4'
+              : 'justify-between px-4 pr-14'
         }`}
       >
         {!isCollapsed && (
