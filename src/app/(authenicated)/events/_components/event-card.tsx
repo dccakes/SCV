@@ -96,6 +96,15 @@ function EventCardBase({ event, onEdit, onDelete, onManageGuests }: EventCardPro
                   </div>
                 </div>
               )}
+              {totalInvited > 0 && (
+                <div className='mt-1.5 flex items-center gap-1 border-t border-border/50 pt-1.5 text-xs'>
+                  <div className='h-2 w-2 rounded-full bg-blue-500' />
+                  <span className='font-medium'>~{event.estimatedAttendance}</span>
+                  <span className='text-muted-foreground'>
+                    of {totalInvited} estimated to attend
+                  </span>
+                </div>
+              )}
             </div>
           )}
 

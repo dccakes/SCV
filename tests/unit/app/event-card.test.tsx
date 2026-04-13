@@ -22,6 +22,7 @@ const mockEvent: EventWithStats = {
     declined: 2,
     notInvited: 3,
   },
+  estimatedAttendance: 12,
 }
 
 describe('EventCard', () => {

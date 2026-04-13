@@ -82,6 +82,7 @@ export default function GuestsView({
     zipCode: '',
     country: '',
     notes: '',
+    likelihoodOfAttending: null,
   })
   const [drawerBaseline, setDrawerBaseline] = useState<DrawerDraft>({
     email: '',
@@ -93,6 +94,7 @@ export default function GuestsView({
     zipCode: '',
     country: '',
     notes: '',
+    likelihoodOfAttending: null,
   })
   const initializedDrawerHouseholdIdRef = useRef<string | undefined>(undefined)
 
@@ -193,6 +195,7 @@ export default function GuestsView({
       zipCode: household.zipCode ?? '',
       country: household.country ?? '',
       notes: household.notes ?? '',
+      likelihoodOfAttending: household.likelihoodOfAttending ?? null,
     }
   }, [])
 
@@ -217,6 +220,7 @@ export default function GuestsView({
       'zipCode',
       'country',
       'notes',
+      'likelihoodOfAttending',
     ]
     return keys.some((key) => drawerDraft[key] !== drawerBaseline[key])
   }, [drawerBaseline, drawerDraft])
@@ -238,6 +242,7 @@ export default function GuestsView({
       zipCode: drawerDraft.zipCode,
       country: drawerDraft.country,
       notes: drawerDraft.notes,
+      likelihoodOfAttending: drawerDraft.likelihoodOfAttending,
     }
 
     const guestParty = selectedCanonicalHousehold.guests.map((guest) => {
@@ -270,6 +275,7 @@ export default function GuestsView({
         zipCode: draftSnapshot.zipCode || null,
         country: draftSnapshot.country || null,
         notes: draftSnapshot.notes || null,
+        likelihoodOfAttending: draftSnapshot.likelihoodOfAttending,
         guestParty,
         gifts: selectedCanonicalHousehold.gifts.map((gift) => ({
           eventId: gift.eventId,
@@ -292,6 +298,7 @@ export default function GuestsView({
                 zipCode: draftSnapshot.zipCode || null,
                 country: draftSnapshot.country || null,
                 notes: draftSnapshot.notes || null,
+                likelihoodOfAttending: draftSnapshot.likelihoodOfAttending,
                 guests: household.guests.map((guest) => {
                   if (!guest.isPrimaryContact) return guest
 

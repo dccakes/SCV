@@ -10,6 +10,8 @@ import {
   GuestDetailSections,
 } from '~/components/guest-list/v2/drawer/guest-detail-sections'
 import { Badge } from '~/components/ui/badge'
+import { Slider } from '~/components/ui/slider'
+import { LIKELIHOOD_LABELS } from '~/lib/constants'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 
 export type DrawerDraft = {
@@ -22,6 +24,7 @@ export type DrawerDraft = {
   zipCode: string
   country: string
   notes: string
+  likelihoodOfAttending: number | null
 }
 
 export type RsvpSummary = {
@@ -205,6 +208,11 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
             })}
           </ul>
         </GuestDetailSection>
+
+        <AttendanceLikelihoodSection
+          value={drawerDraft.likelihoodOfAttending}
+          onChange={(val) => updateDraft('likelihoodOfAttending', val)}
+        />
 
         {selectedEventId === 'all' ? (
           <GuestDetailSection
@@ -547,6 +555,50 @@ type NotesSectionProps = {
   notes: string | null | undefined
   draftNotes: string
   updateDraft: DraftUpdater
+}
+
+type AttendanceLikelihoodSectionProps = {
+  value: number | null
+  onChange: (value: number | null) => void
+}
+
+function AttendanceLikelihoodSection(props: Readonly<AttendanceLikelihoodSectionProps>) {
+  const { value, onChange } = props
+  const isUnset = value == null
+  const currentValue = value ?? 3
+
+  return (
+    <GuestDetailSection title='Attendance Likelihood'>
+      <div className='space-y-3'>
+        <Slider
+          min={1}
+          max={5}
+          step={1}
+          value={[currentValue]}
+          onValueChange={([val]) => onChange(val ?? null)}
+        />
+        <div className='flex justify-between'>
+          {LIKELIHOOD_LABELS.map((label, i) => (
+            <span
+              key={label}
+              className={`font-mono text-[0.56rem] uppercase tracking-wider ${
+                !isUnset && currentValue === i + 1
+                  ? 'font-semibold text-primary'
+                  : 'text-foreground/45'
+              }`}
+            >
+              {label}
+            </span>
+          ))}
+        </div>
+        {isUnset && (
+          <p className='font-mono text-[0.55rem] text-foreground/45 uppercase tracking-wider'>
+            Drag slider to set likelihood
+          </p>
+        )}
+      </div>
+    </GuestDetailSection>
+  )
 }
 
 function NotesSection(props: Readonly<NotesSectionProps>) {

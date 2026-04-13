@@ -105,6 +105,7 @@ const baseEvent: EventWithStats = {
     declined: 2,
     notInvited: 0,
   },
+  estimatedAttendance: 12,
 }
 
 describe('EventsPageClient', () => {

@@ -80,6 +80,7 @@ export const getDefaultHouseholdFormData = (events: Array<{ id: string }>): Hous
     phone: null,
     email: null,
     notes: null,
+    likelihoodOfAttending: null,
     deletedGuests: [],
     gifts,
     guestParty: [

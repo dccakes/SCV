@@ -21,6 +21,7 @@ export const mockHousehold: Household = {
   state: 'NY',
   zipCode: '10001',
   country: 'USA',
+  likelihoodOfAttending: null,
   notes: 'Family of the groom',
 }
 
