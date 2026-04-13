@@ -239,24 +239,30 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
                   <li key={event.id} className='border-border/50 border-b py-2 last:border-b-0'>
                     <p className='mb-1 font-medium text-foreground text-sm'>{event.name}</p>
                     <div className='flex flex-wrap gap-1.5 text-xs'>
-                      <Badge
-                        variant='outline'
-                        className='border-success/35 bg-success/12 text-success'
-                      >
-                        {rsvpSummary.attending} attending
-                      </Badge>
-                      <Badge
-                        variant='outline'
-                        className='border-foreground/20 bg-accent/12 text-foreground/80'
-                      >
-                        {rsvpSummary.invited} invited
-                      </Badge>
-                      <Badge
-                        variant='outline'
-                        className='border-destructive/30 bg-destructive/10 text-destructive'
-                      >
-                        {rsvpSummary.declined} declined
-                      </Badge>
+                      {rsvpSummary.attending > 0 && (
+                        <Badge
+                          variant='outline'
+                          className='border-success/35 bg-success/12 text-success'
+                        >
+                          {rsvpSummary.attending} attending
+                        </Badge>
+                      )}
+                      {rsvpSummary.invited > 0 && (
+                        <Badge
+                          variant='outline'
+                          className='border-foreground/20 bg-accent/12 text-foreground/80'
+                        >
+                          {rsvpSummary.invited} invited
+                        </Badge>
+                      )}
+                      {rsvpSummary.declined > 0 && (
+                        <Badge
+                          variant='outline'
+                          className='border-destructive/30 bg-destructive/10 text-destructive'
+                        >
+                          {rsvpSummary.declined} declined
+                        </Badge>
+                      )}
                     </div>
                   </li>
                 )

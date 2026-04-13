@@ -28,6 +28,11 @@ jest.mock('~/trpc/react', () => ({
           setData: (...args: unknown[]) => mockSetData(...args),
         },
       },
+      dashboard: {
+        getForActiveWorkspace: {
+          invalidate: jest.fn(),
+        },
+      },
     }),
     event: {
       getAllByUserIdWithStats: {
@@ -62,6 +67,22 @@ jest.mock('~/trpc/react', () => ({
         },
       },
     },
+    invitation: {
+      bulkUpdate: {
+        useMutation: () => ({
+          mutate: jest.fn(),
+          isPending: false,
+        }),
+      },
+    },
+    dashboard: {
+      getForActiveWorkspace: {
+        useQuery: () => ({
+          data: undefined,
+          isLoading: false,
+        }),
+      },
+    },
   },
 }))
 
@@ -84,6 +105,7 @@ const baseEvent: EventWithStats = {
     declined: 2,
     notInvited: 0,
   },
+  estimatedAttendance: 12,
 }
 
 describe('EventsPageClient', () => {
@@ -153,17 +175,10 @@ describe('EventsPageClient', () => {
     )
   })
 
-  it('renders edit form only after edit action is clicked', () => {
+  it('renders actions dropdown trigger for each event card', () => {
     render(<EventsPageClient initialEvents={[baseEvent]} />)
 
-    fireEvent.click(screen.getByRole('button', { name: /edit/i }))
-    expect(screen.getByTestId('edit-event-form')).toBeInTheDocument()
-    expect(mockModernEventForm).toHaveBeenCalledWith(
-      expect.objectContaining({
-        mode: 'edit',
-        event: baseEvent,
-      })
-    )
+    expect(screen.getByRole('button', { name: /event actions/i })).toBeInTheDocument()
   })
 
   it('shows RSVP context banner when arriving from guest drawer link', () => {

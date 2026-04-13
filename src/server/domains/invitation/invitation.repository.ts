@@ -134,6 +134,45 @@ export class InvitationRepository {
   }
 
   /**
+   * Update multiple invitations at once (atomic transaction)
+   */
+  async updateMany(
+    data: Array<{ guestId: number; eventId: string; rsvp: string }>
+  ): Promise<Invitation[]> {
+    return this.db.$transaction(
+      data.map((inv) =>
+        this.db.invitation.update({
+          where: {
+            guestId_eventId: {
+              guestId: inv.guestId,
+              eventId: inv.eventId,
+            },
+          },
+          data: {
+            rsvp: inv.rsvp,
+          },
+        })
+      )
+    )
+  }
+
+  /**
+   * Check if all given invitations belong to a wedding (single query)
+   */
+  async allBelongToWedding(
+    keys: Array<{ guestId: number; eventId: string }>,
+    weddingId: string
+  ): Promise<boolean> {
+    const count = await this.db.invitation.count({
+      where: {
+        weddingId,
+        OR: keys.map(({ guestId, eventId }) => ({ guestId, eventId })),
+      },
+    })
+    return count === keys.length
+  }
+
+  /**
    * Delete an invitation
    */
   async delete(guestId: number, eventId: string): Promise<Invitation> {
