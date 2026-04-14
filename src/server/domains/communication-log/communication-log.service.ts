@@ -119,7 +119,8 @@ export class CommunicationLogService {
     ctx: AuthzContext,
     weddingId: string,
     householdId: string,
-    message: string
+    message: string,
+    actorType: 'couple' | 'etta' = 'couple'
   ): Promise<HouseholdNote> {
     requirePermission(ctx, { guest: ['update'] })
 
@@ -129,7 +130,7 @@ export class CommunicationLogService {
       householdId,
       weddingId,
       message,
-      actorType: 'couple',
+      actorType,
     })
   }
 
