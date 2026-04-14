@@ -34,7 +34,7 @@ export class CommunicationLogService {
     weddingId: string,
     householdId: string
   ): Promise<CommunicationLogEntry[]> {
-    requirePermission(ctx, { guest: ['view'] })
+    requirePermission(ctx, { guest: ['read'] })
 
     // Verify household belongs to the active wedding
     const household = await this.db.household.findFirst({

@@ -182,7 +182,7 @@ describe('CommunicationLogService', () => {
 
       await service.getTimelineForHousehold(actorContext, 'wedding-1', 'household-1')
 
-      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { guest: ['view'] })
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { guest: ['read'] })
     })
   })
 
