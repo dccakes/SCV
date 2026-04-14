@@ -80,6 +80,44 @@ describe('GiftService', () => {
         thankYouSentAt: expect.any(Date),
       })
     })
+
+    it('should not overwrite thankYouSentAt when thankyou is already true', async () => {
+      const existingGift = { ...mockGift, thankyou: true, thankYouSentAt: new Date('2026-01-01') }
+      mockFindByIdFn.mockResolvedValue(existingGift)
+      mockUpdateFn.mockResolvedValue(existingGift)
+
+      await giftService.updateGift(actorContext, 'wedding-123', {
+        householdId: 'household-123',
+        eventId: 'event-123',
+        description: 'Updated description only',
+        thankyou: true,
+      })
+
+      // thankYouSentAt should be undefined (not passed), preserving the existing value
+      expect(mockUpdateFn).toHaveBeenCalledWith('household-123', 'event-123', {
+        description: 'Updated description only',
+        thankyou: true,
+        thankYouSentAt: undefined,
+      })
+    })
+
+    it('should clear thankYouSentAt when thankyou transitions to false', async () => {
+      const existingGift = { ...mockGift, thankyou: true, thankYouSentAt: new Date('2026-01-01') }
+      mockFindByIdFn.mockResolvedValue(existingGift)
+      mockUpdateFn.mockResolvedValue({ ...existingGift, thankyou: false, thankYouSentAt: null })
+
+      await giftService.updateGift(actorContext, 'wedding-123', {
+        householdId: 'household-123',
+        eventId: 'event-123',
+        thankyou: false,
+      })
+
+      expect(mockUpdateFn).toHaveBeenCalledWith('household-123', 'event-123', {
+        description: undefined,
+        thankyou: false,
+        thankYouSentAt: null,
+      })
+    })
   })
 
   describe('upsertGift', () => {
@@ -100,6 +138,47 @@ describe('GiftService', () => {
         description: 'New gift',
         thankyou: false,
         thankYouSentAt: null,
+      })
+    })
+
+    it('should not overwrite thankYouSentAt when gift already has thankyou true', async () => {
+      const existingGift = { ...mockGift, thankyou: true, thankYouSentAt: new Date('2026-01-01') }
+      mockFindByIdFn.mockResolvedValue(existingGift)
+      mockUpsertFn.mockResolvedValue(existingGift)
+
+      await giftService.upsertGift({
+        householdId: 'household-123',
+        eventId: 'event-123',
+        description: 'Updated description',
+        thankyou: true,
+      })
+
+      expect(mockUpsertFn).toHaveBeenCalledWith({
+        householdId: 'household-123',
+        eventId: 'event-123',
+        description: 'Updated description',
+        thankyou: true,
+        thankYouSentAt: undefined,
+      })
+    })
+
+    it('should set thankYouSentAt when upserting a new gift with thankyou true', async () => {
+      mockFindByIdFn.mockResolvedValue(null) // gift does not exist yet
+      mockUpsertFn.mockResolvedValue({ ...mockGift, thankyou: true })
+
+      await giftService.upsertGift({
+        householdId: 'household-123',
+        eventId: 'event-123',
+        description: 'New gift',
+        thankyou: true,
+      })
+
+      expect(mockUpsertFn).toHaveBeenCalledWith({
+        householdId: 'household-123',
+        eventId: 'event-123',
+        description: 'New gift',
+        thankyou: true,
+        thankYouSentAt: expect.any(Date),
       })
     })
   })
