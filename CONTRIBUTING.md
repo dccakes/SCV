@@ -1,39 +1,42 @@
-# Contributing to SCV
+# Contributing to OSWP
 
-First off, thank you for considering contributing to SCV! It's people like you that make SCV such a great tool.
+Thanks for your interest in contributing to The Open Source Wedding Project. Whether you're fixing a bug, proposing a feature, or improving the docs — every contribution helps couples plan their weddings without handing their data to a SaaS company.
 
 ## Table of Contents
 
 - [Code of Conduct](#code-of-conduct)
 - [Getting Started](#getting-started)
-- [Development Setup](#development-setup)
-- [How Can I Contribute?](#how-can-i-contribute)
+- [How to Contribute](#how-to-contribute)
 - [Style Guidelines](#style-guidelines)
 - [Commit Messages](#commit-messages)
 - [Pull Request Process](#pull-request-process)
 - [Community](#community)
 
+---
+
 ## Code of Conduct
 
-This project and everyone participating in it is governed by our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to the project maintainers.
+This project follows a standard contributor code of conduct. Be respectful, constructive, and welcoming to contributors of all backgrounds. Report unacceptable behavior to the project maintainers.
+
+---
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js v18 or higher
-- npm v10 or higher
-- PostgreSQL 14+ (or use Docker)
+- Node.js v18+
+- npm v10+
+- PostgreSQL 14+ (or Docker)
 - Git
 
-### Development Setup
+### Development setup
 
 1. **Fork the repository** on GitHub
 
-2. **Clone your fork locally**
+2. **Clone your fork**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/SCV.git
-   cd SCV
+   git clone https://github.com/YOUR_USERNAME/oswp.git
+   cd oswp
    ```
 
 3. **Add the upstream remote**
@@ -48,7 +51,7 @@ This project and everyone participating in it is governed by our [Code of Conduc
 
 5. **Set up the database**
 
-   Option A: Using Docker (recommended)
+   Option A: Docker (recommended)
    ```bash
    docker compose up -d
    ```
@@ -59,9 +62,9 @@ This project and everyone participating in it is governed by our [Code of Conduc
    ```bash
    cp .env.example .env
    ```
-   Edit `.env` with your database credentials:
+   Minimum required:
    ```
-   DATABASE_URL="postgresql://scv:scv_password@localhost:5432/scv_db"
+   DATABASE_URL="postgresql://oswp:oswp_password@localhost:5432/oswp_db"
    BETTER_AUTH_SECRET="your-secret-key"
    ```
 
@@ -76,210 +79,210 @@ This project and everyone participating in it is governed by our [Code of Conduc
    npm run dev
    ```
 
-9. **Open your browser** to [http://localhost:3000](http://localhost:3000)
+9. Open [http://localhost:3000](http://localhost:3000)
 
-## How Can I Contribute?
+---
 
-### Reporting Bugs
+## How to Contribute
 
-Before creating bug reports, please check the existing issues to avoid duplicates. When you create a bug report, include as many details as possible:
+### Reporting bugs
 
-- **Use a clear and descriptive title**
-- **Describe the exact steps to reproduce the problem**
-- **Provide specific examples** (code snippets, screenshots)
-- **Describe the behavior you observed and what you expected**
-- **Include your environment details** (OS, Node version, browser)
+Before opening a bug report, check existing issues to avoid duplicates. A good bug report includes:
 
-### Suggesting Enhancements
+- A clear, descriptive title
+- Exact steps to reproduce
+- What you expected vs. what happened
+- Your environment (OS, Node version, browser)
+- Screenshots or code snippets if relevant
 
-Enhancement suggestions are welcome! Please provide:
+### Suggesting features
 
-- **A clear and descriptive title**
-- **A detailed description** of the proposed enhancement
-- **Explain why this would be useful** to most users
-- **List any alternatives you've considered**
+Open a **GitHub Discussion** before filing a feature request as an issue. This lets us validate the idea with the community before anyone writes code. Good feature proposals include:
 
-### Your First Code Contribution
+- The problem you're trying to solve for couples (not just a technical ask)
+- Why existing behavior doesn't cover it
+- Any alternatives you've considered
 
-Unsure where to begin? Look for issues labeled:
+### Good first issues
 
-- `good first issue` - Simple issues for newcomers
-- `help wanted` - Issues that need community help
-- `documentation` - Documentation improvements
+Look for issues labeled:
 
-### Pull Requests
+- `good first issue` — straightforward entry points
+- `help wanted` — issues where community input is needed
+- `documentation` — docs improvements (no code required)
 
-1. **Create a branch** for your changes
+### Pull requests
+
+1. **Create a branch**
    ```bash
-   git checkout -b feature/your-feature-name
+   git checkout -b feat/your-feature-name
    ```
 
-2. **Make your changes** following our [style guidelines](#style-guidelines)
+2. **Write tests first** — OSWP follows TDD. Write the failing test before the implementation.
 
-3. **Write or update tests** as needed
+3. **Implement your changes** following the [style guidelines](#style-guidelines)
 
-4. **Run the test suite**
+4. **Run the test suite and linter**
    ```bash
    npm run test:unit
    npm run lint
    npm run prettier
    ```
 
-5. **Commit your changes** following our [commit message guidelines](#commit-messages)
+5. **Commit** following [Conventional Commits](#commit-messages)
 
 6. **Push to your fork**
    ```bash
-   git push origin feature/your-feature-name
+   git push origin feat/your-feature-name
    ```
 
-7. **Open a Pull Request** against the `main` branch
+7. **Open a PR** against the `main` branch
+
+---
 
 ## Style Guidelines
 
+### Architecture
+
+OSWP uses a domain-driven structure. Before writing code, read `CLAUDE.md` — it explains where logic goes (router vs. service vs. repository) and how tests should be written.
+
+| Layer | Responsibility |
+|---|---|
+| Router | Input validation, auth checks, delegate to service |
+| Service | Business logic, domain rules |
+| Repository | Database queries only (Prisma) |
+| Application | Cross-domain orchestration |
+
 ### TypeScript
 
-- Use TypeScript for all new code
-- Enable strict mode
-- Avoid `any` types - use proper typing
-- Use interfaces for object shapes
-- Prefer `const` over `let`
+- Strict mode — no `any`, use `unknown` if needed
+- No `@ts-ignore` or `eslint-disable` — fix the underlying issue
+- Mark component props `Readonly<Props>`
+- Use Zod schemas for all validation; derive TypeScript types with `z.infer`
 
-### Code Formatting
+### React
 
-We use Prettier for code formatting. Run before committing:
+- Server Components by default — `'use client'` only when necessary
+- Use `react-hook-form` + Zod for all forms
+- Mobile-first responsive design with Tailwind (`md:` and `lg:` breakpoints)
+
+### Formatting
 
 ```bash
 npm run prettier:fix
-```
-
-### Linting
-
-We use ESLint for code quality. Run:
-
-```bash
 npm run lint:fix
 ```
 
-### Testing
-
-- Write unit tests for new features
-- Maintain or improve code coverage
-- Tests should be in the `tests/` directory
-- Follow the existing test patterns
-
-```bash
-npm run test:unit
-npm run test:unit -- --coverage
-```
+---
 
 ## Commit Messages
 
-We follow [Conventional Commits](https://www.conventionalcommits.org/). Each commit message should be structured as:
+OSWP follows [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
 <type>(<scope>): <description>
 
 [optional body]
 
-[optional footer(s)]
+[optional footer]
 ```
 
 ### Types
 
-- `feat`: A new feature
-- `fix`: A bug fix
-- `docs`: Documentation only changes
-- `style`: Code style changes (formatting, semicolons, etc.)
-- `refactor`: Code changes that neither fix bugs nor add features
-- `perf`: Performance improvements
-- `test`: Adding or correcting tests
-- `build`: Changes to build system or dependencies
-- `ci`: Changes to CI configuration
-- `chore`: Other changes that don't modify src or test files
+| Type | When to use |
+|---|---|
+| `feat` | New feature |
+| `fix` | Bug fix |
+| `docs` | Documentation only |
+| `style` | Formatting, no logic change |
+| `refactor` | Code change that isn't a feature or fix |
+| `test` | Adding or fixing tests |
+| `chore` | Build tooling, dependencies |
 
 ### Examples
 
 ```
-feat(guest-list): add bulk import functionality
+feat(guests): add attendance likelihood slider
 
-fix(rsvp): correct validation for dietary restrictions
+fix(rsvp): correct dietary restriction validation for plus-ones
 
-docs: update installation instructions in README
+docs: update CONTRIBUTING.md with GitHub Discussions workflow
 
-refactor(api): simplify tRPC router structure
+refactor(event): move date validation from router to service
 ```
+
+---
 
 ## Pull Request Process
 
-1. **Ensure CI passes** - All tests and linting must pass
-2. **Update documentation** if needed
-3. **Add yourself to contributors** (if this is your first contribution)
-4. **Request a review** from maintainers
-5. **Address review feedback** promptly
-6. **Squash commits** if requested before merge
+1. **CI must pass** — all tests and lint checks are required
+2. **Keep scope tight** — one feature or fix per PR is easier to review
+3. **Update docs** if your change affects user-facing behavior
+4. **Respond to review feedback** promptly — stale PRs may be closed
+5. **Squash commits** if requested before merge
 
-### PR Title Format
+### PR title format
 
-PR titles should follow the same format as commit messages:
+Same as commit messages: `type(scope): description`
 
-```
-feat(scope): description of changes
-```
+### PR description template
 
-### PR Description
-
-Include in your PR description:
-
-- **What** changes were made
-- **Why** the changes were necessary
-- **How** to test the changes
+- **What** changed
+- **Why** it was needed
+- **How to test** it
 - **Screenshots** (if UI changes)
+
+---
 
 ## Development Commands
 
 | Command | Description |
-|---------|-------------|
+|---|---|
 | `npm run dev` | Start development server |
-| `npm run build` | Build for production |
+| `npm run build` | Production build |
 | `npm run test:unit` | Run unit tests |
-| `npm run lint` | Run ESLint |
-| `npm run lint:fix` | Fix ESLint errors |
+| `npm run test:unit -- --coverage` | Tests with coverage |
+| `npm run lint` | ESLint check |
+| `npm run lint:fix` | Fix lint errors |
 | `npm run prettier` | Check formatting |
 | `npm run prettier:fix` | Fix formatting |
-| `npm run db:push` | Push Prisma schema |
-| `npm run db:studio` | Open Prisma Studio |
+| `npx prisma db push` | Push schema to database |
+| `npx prisma studio` | Open database GUI |
+
+---
 
 ## Project Structure
 
 ```
-src/
-├── app/                 # Next.js App Router pages
-├── components/          # React components
-├── lib/                 # Utilities and helpers
-├── server/
-│   ├── api/            # tRPC API routers
-│   ├── domains/        # Domain-driven modules
-│   └── infrastructure/ # Database and external services
-├── styles/             # Global styles
-└── middleware.ts       # Next.js middleware
+server/
+├── domains/          # Business entities (Event, Guest, Household, etc.)
+├── application/      # Cross-domain orchestration
+└── infrastructure/   # Database, email, storage
 
-prisma/
-└── schema.prisma       # Database schema
-
+app/                  # Next.js App Router pages
+components/           # React components
 tests/
-└── unit/               # Jest unit tests
+└── unit/             # Jest unit tests
+prisma/
+└── schema.prisma     # Database schema
 ```
-
-## Community
-
-- **Questions?** Open a GitHub Discussion
-- **Found a bug?** Open an Issue
-- **Have an idea?** Start a Discussion first
-
-## License
-
-By contributing to SCV, you agree that your contributions will be licensed under the same [PolyForm Noncommercial License](LICENSE) that covers the project.
 
 ---
 
-Thank you for contributing! Every contribution, no matter how small, makes a difference.
+## Community
+
+- **Questions or ideas?** → [GitHub Discussions](https://github.com/dccakes/SCV/discussions)
+- **Found a bug?** → [Open an Issue](https://github.com/dccakes/SCV/issues)
+- **Building something with OSWP?** → Share it in Discussions under Show & Tell
+
+We use GitHub Discussions as the default forum for everything that isn't a confirmed bug or active PR. If you're not sure whether something belongs in an issue, start a discussion.
+
+---
+
+## License
+
+By contributing to OSWP, you agree that your contributions will be licensed under the same [PolyForm Noncommercial License](LICENSE) that covers the project.
+
+---
+
+Thank you for contributing. Every improvement — no matter how small — helps couples plan their wedding on their own terms.

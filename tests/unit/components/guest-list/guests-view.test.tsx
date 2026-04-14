@@ -1095,4 +1095,80 @@ describe('GuestsView', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sort by Name' }))
     expect(householdButtons()[0]).toContain('Alex Rivera')
   })
+
+  it('should display attendance likelihood section in the drawer', () => {
+    render(
+      <GuestsView
+        events={events}
+        households={households}
+        selectedEventId='all'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+
+    expect(screen.getByText('Attendance Likelihood')).toBeInTheDocument()
+    expect(screen.getByText('Drag slider to set likelihood')).toBeInTheDocument()
+  })
+
+  it('should include likelihoodOfAttending in save payload when slider is changed', async () => {
+    render(
+      <GuestsView
+        events={events}
+        households={households}
+        selectedEventId='all'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+
+    // Change the slider value — the Radix Slider renders a hidden input
+    const slider = screen.getByRole('slider')
+    // Simulate changing the slider by setting aria-valuenow via keyboard
+    fireEvent.keyDown(slider, { key: 'ArrowRight' })
+
+    // Drawer should now show save/discard buttons (dirty state)
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    await waitFor(() => {
+      expect(mockHouseholdUpdateMutate).toHaveBeenCalled()
+    })
+
+    const payload = mockHouseholdUpdateMutate.mock.calls[0]?.[0] as {
+      likelihoodOfAttending: number | null
+    }
+    expect(payload.likelihoodOfAttending).toEqual(expect.any(Number))
+  })
+
+  it('should initialize slider with household likelihoodOfAttending value', () => {
+    const householdsWithLikelihood: HouseholdWithGuests[] = [
+      { ...households[0], likelihoodOfAttending: 4 },
+    ]
+
+    render(
+      <GuestsView
+        events={events}
+        households={householdsWithLikelihood}
+        selectedEventId='all'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+
+    const slider = screen.getByRole('slider')
+    expect(slider).toHaveAttribute('aria-valuenow', '4')
+    // "Drag slider to set likelihood" should NOT be shown when value is set
+    expect(screen.queryByText('Drag slider to set likelihood')).not.toBeInTheDocument()
+  })
 })

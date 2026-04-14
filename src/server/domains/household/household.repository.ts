@@ -5,7 +5,7 @@
  * This layer handles all direct database access for households.
  */
 
-import type { PrismaClient } from '@prisma/client'
+import type { Prisma, PrismaClient } from '@prisma/client'
 
 import type {
   Household,
@@ -14,7 +14,7 @@ import type {
 } from '~/server/domains/household/household.types'
 
 export class HouseholdRepository {
-  constructor(private db: PrismaClient) {}
+  constructor(private db: PrismaClient | Prisma.TransactionClient) {}
 
   /**
    * Find a household by ID
@@ -104,6 +104,7 @@ export class HouseholdRepository {
     state?: string | null
     country?: string | null
     zipCode?: string | null
+    likelihoodOfAttending?: number | null
     notes?: string | null
   }): Promise<Household> {
     return this.db.household.create({
@@ -115,6 +116,7 @@ export class HouseholdRepository {
         state: data.state,
         country: data.country,
         zipCode: data.zipCode,
+        likelihoodOfAttending: data.likelihoodOfAttending,
         notes: data.notes,
       },
     })
@@ -132,6 +134,7 @@ export class HouseholdRepository {
       state?: string | null
       country?: string | null
       zipCode?: string | null
+      likelihoodOfAttending?: number | null
       notes?: string | null
     },
     eventIds: string[]
@@ -145,6 +148,7 @@ export class HouseholdRepository {
         state: data.state,
         country: data.country,
         zipCode: data.zipCode,
+        likelihoodOfAttending: data.likelihoodOfAttending,
         notes: data.notes,
         gifts: {
           createMany: {
@@ -189,6 +193,7 @@ export class HouseholdRepository {
       state?: string | null
       country?: string | null
       zipCode?: string | null
+      likelihoodOfAttending?: number | null
       notes?: string | null
     }
   ): Promise<Household> {
@@ -201,6 +206,7 @@ export class HouseholdRepository {
         state: data.state ?? undefined,
         country: data.country ?? undefined,
         zipCode: data.zipCode ?? undefined,
+        likelihoodOfAttending: data.likelihoodOfAttending ?? undefined,
         notes: data.notes ?? undefined,
       },
     })
@@ -303,5 +309,17 @@ export class HouseholdRepository {
       select: { id: true },
     })
     return household !== null
+  }
+
+  /**
+   * Count households by IDs constrained to a wedding scope.
+   */
+  async countByIdsInWedding(weddingId: string, householdIds: string[]): Promise<number> {
+    return this.db.household.count({
+      where: {
+        weddingId,
+        id: { in: householdIds },
+      },
+    })
   }
 }

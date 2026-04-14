@@ -10,6 +10,8 @@ import {
   GuestDetailSections,
 } from '~/components/guest-list/v2/drawer/guest-detail-sections'
 import { Badge } from '~/components/ui/badge'
+import { Slider } from '~/components/ui/slider'
+import { LIKELIHOOD_LABELS } from '~/lib/constants'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 import type { CommunicationLogEntry } from '~/server/domains/communication-log/communication-log.types'
 
@@ -23,6 +25,7 @@ export type DrawerDraft = {
   zipCode: string
   country: string
   notes: string
+  likelihoodOfAttending: number | null
 }
 
 export type RsvpSummary = {
@@ -205,6 +208,11 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
           </ul>
         </GuestDetailSection>
 
+        <AttendanceLikelihoodSection
+          value={drawerDraft.likelihoodOfAttending}
+          onChange={(val) => updateDraft('likelihoodOfAttending', val)}
+        />
+
         {selectedEventId === 'all' ? (
           <GuestDetailSection
             title='Seating & Event'
@@ -230,24 +238,30 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
                   <li key={event.id} className='border-border/50 border-b py-2 last:border-b-0'>
                     <p className='mb-1 font-medium text-foreground text-sm'>{event.name}</p>
                     <div className='flex flex-wrap gap-1.5 text-xs'>
-                      <Badge
-                        variant='outline'
-                        className='border-success/35 bg-success/12 text-success'
-                      >
-                        {rsvpSummary.attending} attending
-                      </Badge>
-                      <Badge
-                        variant='outline'
-                        className='border-foreground/20 bg-accent/12 text-foreground/80'
-                      >
-                        {rsvpSummary.invited} invited
-                      </Badge>
-                      <Badge
-                        variant='outline'
-                        className='border-destructive/30 bg-destructive/10 text-destructive'
-                      >
-                        {rsvpSummary.declined} declined
-                      </Badge>
+                      {rsvpSummary.attending > 0 && (
+                        <Badge
+                          variant='outline'
+                          className='border-success/35 bg-success/12 text-success'
+                        >
+                          {rsvpSummary.attending} attending
+                        </Badge>
+                      )}
+                      {rsvpSummary.invited > 0 && (
+                        <Badge
+                          variant='outline'
+                          className='border-foreground/20 bg-accent/12 text-foreground/80'
+                        >
+                          {rsvpSummary.invited} invited
+                        </Badge>
+                      )}
+                      {rsvpSummary.declined > 0 && (
+                        <Badge
+                          variant='outline'
+                          className='border-destructive/30 bg-destructive/10 text-destructive'
+                        >
+                          {rsvpSummary.declined} declined
+                        </Badge>
+                      )}
                     </div>
                   </li>
                 )
@@ -523,6 +537,50 @@ type NotesSectionProps = {
   notes: string | null | undefined
   draftNotes: string
   updateDraft: DraftUpdater
+}
+
+type AttendanceLikelihoodSectionProps = {
+  value: number | null
+  onChange: (value: number | null) => void
+}
+
+function AttendanceLikelihoodSection(props: Readonly<AttendanceLikelihoodSectionProps>) {
+  const { value, onChange } = props
+  const isUnset = value == null
+  const currentValue = value ?? 3
+
+  return (
+    <GuestDetailSection title='Attendance Likelihood'>
+      <div className='space-y-3'>
+        <Slider
+          min={1}
+          max={5}
+          step={1}
+          value={[currentValue]}
+          onValueChange={([val]) => onChange(val ?? null)}
+        />
+        <div className='flex justify-between'>
+          {LIKELIHOOD_LABELS.map((label, i) => (
+            <span
+              key={label}
+              className={`font-mono text-[0.56rem] uppercase tracking-wider ${
+                !isUnset && currentValue === i + 1
+                  ? 'font-semibold text-primary'
+                  : 'text-foreground/45'
+              }`}
+            >
+              {label}
+            </span>
+          ))}
+        </div>
+        {isUnset && (
+          <p className='font-mono text-[0.55rem] text-foreground/45 uppercase tracking-wider'>
+            Drag slider to set likelihood
+          </p>
+        )}
+      </div>
+    </GuestDetailSection>
+  )
 }
 
 function NotesSection(props: Readonly<NotesSectionProps>) {

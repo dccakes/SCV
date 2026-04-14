@@ -82,6 +82,7 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
 
   // Fetch tags for the current wedding
   const { data: tags = [] } = api.guestTag.getAll.useQuery()
+  const utils = api.useUtils()
 
   // Mutations directly in component
   const createMutation = api.household.create.useMutation({
@@ -91,6 +92,7 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
       if (shouldCloseAfterSave) {
         toggleGuestForm()
       }
+      void utils.dashboard.getForActiveWorkspace.invalidate()
       router.refresh()
     },
     onError: (err) => {
@@ -120,6 +122,7 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
         reset(data as unknown as HouseholdFormData)
       }
       toggleGuestForm()
+      void utils.dashboard.getForActiveWorkspace.invalidate()
       router.refresh()
     },
     onError: (err) => {
@@ -144,6 +147,7 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
     onSuccess: () => {
       toast.success('Party deleted successfully!')
       toggleGuestForm()
+      void utils.dashboard.getForActiveWorkspace.invalidate()
       router.refresh()
     },
     onError: () => {

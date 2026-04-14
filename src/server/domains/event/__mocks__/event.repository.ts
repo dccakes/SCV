@@ -30,6 +30,7 @@ export const mockEventWithStats: EventWithStats = {
     declined: 2,
     notInvited: 3,
   },
+  estimatedAttendance: 10,
 }
 
 export const mockGuests = [
