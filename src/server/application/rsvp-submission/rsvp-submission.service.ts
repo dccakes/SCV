@@ -64,7 +64,10 @@ export class RsvpSubmissionService {
 
       await Promise.all(
         data.rsvpResponses.map(async (response: RsvpResponse) => {
-          await txInvitationRepo.update(response.guestId, response.eventId, { rsvp: response.rsvp })
+          await txInvitationRepo.update(response.guestId, response.eventId, {
+            rsvp: response.rsvp,
+            submittedAt: new Date(),
+          })
         })
       )
 

@@ -118,6 +118,7 @@ export class InvitationRepository {
     eventId: string,
     data: {
       rsvp?: string
+      submittedAt?: Date
     }
   ): Promise<Invitation> {
     return this.db.invitation.update({
@@ -129,6 +130,7 @@ export class InvitationRepository {
       },
       data: {
         rsvp: data.rsvp,
+        submittedAt: data.submittedAt,
       },
     })
   }

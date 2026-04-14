@@ -13,6 +13,7 @@ import { Badge } from '~/components/ui/badge'
 import { Slider } from '~/components/ui/slider'
 import { LIKELIHOOD_LABELS } from '~/lib/constants'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
+import type { CommunicationLogEntry } from '~/server/domains/communication-log/communication-log.types'
 
 export type DrawerDraft = {
   email: string
@@ -37,12 +38,6 @@ type SelectedEventResponse = {
   id: number
   name: string
   rsvp: string
-}
-
-type CommunicationLogItem = {
-  type: 'sent'
-  text: string
-  date: Date
 }
 
 type DraftUpdater = <K extends keyof DrawerDraft>(key: K, value: DrawerDraft[K]) => void
@@ -80,7 +75,7 @@ type GuestDetailPanelContentProps = {
   selectedEventId: string
   events: Event[]
   selectedEventResponses?: SelectedEventResponse[]
-  communicationLog: CommunicationLogItem[]
+  communicationLog: CommunicationLogEntry[]
   allEventRsvpSummary: Map<string, RsvpSummary>
   editingSections: Set<'contactAddress' | 'notes'>
   toggleEditingSection: (section: 'contactAddress' | 'notes') => void
@@ -88,6 +83,8 @@ type GuestDetailPanelContentProps = {
   setDrawerDraft: Dispatch<SetStateAction<DrawerDraft>>
   rsvpManageHref: string
   onSaveMembers: (nextMembers: HouseholdMemberDraft[]) => Promise<boolean>
+  onAddNote?: (message: string) => void
+  onDeleteNote?: (noteId: string) => void
   onRequestDelete?: () => void
 }
 
@@ -105,6 +102,8 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
     setDrawerDraft,
     rsvpManageHref,
     onSaveMembers,
+    onAddNote,
+    onDeleteNote,
     onRequestDelete,
   } = props
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false)
@@ -306,28 +305,11 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
           updateDraft={updateDraft}
         />
 
-        <GuestDetailSection title='Communication Log' contentClassName='space-y-2'>
-          {communicationLog.length === 0 ? (
-            <p className='text-foreground/55'>No communication activity yet.</p>
-          ) : (
-            <ul className='space-y-2'>
-              {communicationLog.map((item) => (
-                <li
-                  key={`${item.type}-${item.text}-${item.date.toISOString()}`}
-                  className='flex gap-2 border-border/50 border-b py-2 last:border-b-0'
-                >
-                  <span className='mt-1 h-1.5 w-1.5 rounded-full bg-success' />
-                  <div>
-                    <p className='text-sm'>{item.text}</p>
-                    <p className='font-mono text-[0.55rem] text-foreground/55 uppercase tracking-wider'>
-                      {item.date.toLocaleDateString()}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </GuestDetailSection>
+        <CommunicationLogSection
+          entries={communicationLog}
+          onAddNote={onAddNote}
+          onDeleteNote={onDeleteNote}
+        />
       </GuestDetailSections>
 
       <HouseholdMembersModal
@@ -628,6 +610,102 @@ function NotesSection(props: Readonly<NotesSectionProps>) {
         />
       ) : (
         <p className='text-foreground/85 leading-relaxed'>{notes ?? 'No notes yet'}</p>
+      )}
+    </GuestDetailSection>
+  )
+}
+
+const LOG_ENTRY_STYLES: Record<CommunicationLogEntry['type'], string> = {
+  INVITATION_SENT: 'bg-success',
+  RSVP_RECEIVED: 'bg-primary',
+  THANK_YOU_SENT: 'bg-amber-500',
+  NOTE: 'bg-foreground/40',
+}
+
+function getLogEntryKey(entry: CommunicationLogEntry): string {
+  if (entry.type === 'NOTE') return entry.id
+  return `${entry.type}-${entry.message}-${entry.date.toISOString()}`
+}
+
+type CommunicationLogSectionProps = {
+  entries: CommunicationLogEntry[]
+  onAddNote?: (message: string) => void
+  onDeleteNote?: (noteId: string) => void
+}
+
+function CommunicationLogSection(props: Readonly<CommunicationLogSectionProps>) {
+  const { entries, onAddNote, onDeleteNote } = props
+  const [noteText, setNoteText] = useState('')
+
+  const handleSubmitNote = () => {
+    const trimmed = noteText.trim()
+    if (!trimmed || !onAddNote) return
+    onAddNote(trimmed)
+    setNoteText('')
+  }
+
+  return (
+    <GuestDetailSection title='Communication Log' contentClassName='space-y-2'>
+      {entries.length === 0 ? (
+        <p className='text-foreground/55'>No communication activity yet.</p>
+      ) : (
+        <ul className='space-y-2'>
+          {entries.map((entry) => (
+            <li
+              key={getLogEntryKey(entry)}
+              className='flex gap-2 border-border/50 border-b py-2 last:border-b-0'
+            >
+              <span
+                className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${LOG_ENTRY_STYLES[entry.type]}`}
+              />
+              <div className='min-w-0 flex-1'>
+                <p className='text-sm'>{entry.message}</p>
+                <div className='flex items-center gap-2'>
+                  <p className='font-mono text-[0.55rem] text-foreground/55 uppercase tracking-wider'>
+                    {entry.date.toLocaleDateString()}
+                  </p>
+                  {entry.type === 'NOTE' && (
+                    <span className='font-mono text-[0.55rem] text-foreground/40 uppercase tracking-wider'>
+                      {entry.actorType === 'etta' ? 'Etta' : 'You'}
+                    </span>
+                  )}
+                  {entry.type === 'NOTE' && onDeleteNote && (
+                    <button
+                      type='button'
+                      onClick={() => onDeleteNote(entry.id)}
+                      className='font-mono text-[0.5rem] text-destructive/60 uppercase tracking-wider hover:text-destructive'
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {onAddNote && (
+        <div className='flex gap-2 pt-1'>
+          <input
+            type='text'
+            value={noteText}
+            onChange={(e) => setNoteText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSubmitNote()
+            }}
+            placeholder='Add a note...'
+            className='h-8 min-w-0 flex-1 rounded-md border border-border/70 bg-background px-2.5 text-sm'
+          />
+          <button
+            type='button'
+            onClick={handleSubmitNote}
+            disabled={!noteText.trim()}
+            className='h-8 rounded-md bg-primary/10 px-3 font-mono text-[0.6rem] text-primary uppercase tracking-wider hover:bg-primary/20 disabled:opacity-40 disabled:hover:bg-primary/10'
+          >
+            Add
+          </button>
+        </div>
       )}
     </GuestDetailSection>
   )

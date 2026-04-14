@@ -146,7 +146,10 @@ describe('RsvpSubmissionService', () => {
 
     expect(result).toEqual({ success: true })
     expect(mockDb.$transaction).toHaveBeenCalledTimes(1)
-    expect(mockUpdate).toHaveBeenCalledWith(1, 'event-123', { rsvp: 'Attending' })
+    expect(mockUpdate).toHaveBeenCalledWith(1, 'event-123', {
+      rsvp: 'Attending',
+      submittedAt: expect.any(Date),
+    })
     expect(mockUpsertAnswer).toHaveBeenCalledWith({
       questionId: 'question-text',
       guestId: 1,

@@ -48,6 +48,7 @@ model Wedding {
   guestQuestions   GuestQuestion[]
   faqs             Faq[]
   notifications    Notification[]
+  householdNotes   HouseholdNote[]
 }
 
 // Join table: Allows multiple users per wedding (co-management)
@@ -256,6 +257,7 @@ model Household {
   gifts          Gift[]           @relation(name: "Household_Gifts")
   answers        Answer[]         @relation(name: "Household_Answers")
   optionReponses OptionResponse[] @relation(name: "Household_OptionResponses")
+  householdNotes HouseholdNote[]
 
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
@@ -270,9 +272,10 @@ model Gift {
   household   Household @relation(name: "Household_Gifts", fields: [householdId], references: [id], onDelete: Cascade)
   eventId     String
   event       Event     @relation(name: "Event_Gifts", fields: [eventId], references: [id], onDelete: Cascade)
-  description String?
-  thankyou    Boolean   @default(false)
-  createdAt   DateTime  @default(now())
+  description    String?
+  thankyou       Boolean   @default(false)
+  thankYouSentAt DateTime?
+  createdAt      DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   @@id(name: "GiftId", [householdId, eventId])
@@ -709,4 +712,21 @@ model Notification {
 
   @@map("notifications")
   @@index([weddingId, read])
+}
+
+// Communication log: manual notes/outreach entries per household
+// System events (invitation sent, RSVP received, etc.) are derived from existing tables at query time
+model HouseholdNote {
+  id          String    @id @default(uuid())
+  householdId String    @map("household_id")
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  weddingId   String    @map("wedding_id")
+  wedding     Wedding   @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  message     String
+  actorType   String    @default("couple") @map("actor_type") // 'couple' | 'etta'
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@map("household_notes")
+  @@index([householdId, createdAt(sort: Desc)])
+  @@index([weddingId])
 }

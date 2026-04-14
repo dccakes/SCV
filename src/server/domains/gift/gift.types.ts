@@ -13,6 +13,7 @@ export type Gift = {
   eventId: string
   description: string | null
   thankyou: boolean
+  thankYouSentAt: Date | null
   createdAt: Date
   updatedAt: Date
 }
