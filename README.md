@@ -10,6 +10,19 @@ OSWP is an AI-native, self-hostable wedding planning platform. It handles guest 
 
 ---
 
+## Try it live
+
+**[oswp.carvallo.io](https://oswp.carvallo.io)** — a live demo running on real infrastructure. Log in as Shrek & Fiona and explore the full app: guest list, RSVPs, vendor tracking, wedding website, and Etta AI assistant.
+
+| Account | Email | Password |
+|---|---|---|
+| Primary couple | shrek@swamp.wed | `password123` |
+| Second partner | fiona@swamp.wed | `password123` |
+
+> The demo runs on the same Vercel + PostgreSQL stack described in the self-hosting guide. What you see is what you get when you deploy your own instance.
+
+---
+
 ## What it does
 
 **Guest & RSVP management**
