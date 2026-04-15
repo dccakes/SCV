@@ -229,9 +229,17 @@ function RsvpCard({ dashboardData }: { dashboardData: DashboardData | null }) {
       </div>
 
       {pending > 0 && (
-        <p className='mb-3 font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
-          Still waiting on {pending} — check guest list for details
-        </p>
+        <div className='mb-3 space-y-2'>
+          <p className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
+            Still waiting on {pending} — check guest list for details
+          </p>
+          <Link
+            href='/settings'
+            className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+          >
+            Invite collaborators
+          </Link>
+        </div>
       )}
 
       <Link

@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertCircle, Loader2, MailPlus, RefreshCw } from 'lucide-react'
+import { AlertCircle, Loader2, MailPlus, RefreshCw, UserMinus, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -45,6 +45,7 @@ type OrganizationState = {
   isLoading: boolean
   members: Member[]
   organization: Organization | null
+  pendingInvitations: Invitation[]
 }
 
 type AuthFetchError = {
@@ -60,6 +61,14 @@ type FullOrganizationResponse = Organization & {
   members?: Member[]
 }
 
+type Invitation = {
+  email?: string | null
+  expiresAt?: string | Date | null
+  id: string
+  role?: string | null
+  status?: string | null
+}
+
 type HasPermissionResponse = {
   success: boolean
 }
@@ -71,6 +80,7 @@ const initialState: OrganizationState = {
   isLoading: true,
   members: [],
   organization: null,
+  pendingInvitations: [],
 }
 
 function getRoleLabel(role: string) {
@@ -153,11 +163,23 @@ async function fetchOrganizationState(): Promise<Omit<OrganizationState, 'error'
     ),
   ])
 
+  let pendingInvitations: Invitation[] = []
+  try {
+    const invitations = await authGet<Invitation[]>(
+      '/organization/list-invitations',
+      'Unable to load organization invitations.'
+    )
+    pendingInvitations = invitations.filter((invitation) => invitation.status === 'pending')
+  } catch {
+    pendingInvitations = []
+  }
+
   return {
     canInvite: !!invitePermissionResult.success,
     canUpdateMembers: !!updateMemberPermissionResult.success,
     members: organization.members ?? [],
     organization,
+    pendingInvitations,
   }
 }
 
@@ -193,6 +215,7 @@ export function OrganizationMembersSettingsCard() {
           isLoading: false,
           members: [],
           organization: null,
+          pendingInvitations: [],
         })
       })
 
@@ -248,9 +271,47 @@ export function OrganizationMembersSettingsCard() {
           {!state.isLoading && !state.error ? (
             <div className='space-y-3'>
               <OrganizationMembersList
+                canRemoveMembers={state.canUpdateMembers}
                 canUpdateMembers={state.canUpdateMembers}
                 members={state.members}
                 onEditRole={setRoleDialogMember}
+                onRemoveMember={async (member) => {
+                  if (!state.organization) return
+
+                  try {
+                    await authPost(
+                      '/organization/remove-member',
+                      {
+                        memberIdOrEmail: member.id,
+                        organizationId: state.organization.id,
+                      },
+                      'Unable to remove member.'
+                    )
+                    toast.success('Member removed')
+                    loadOrganizationState()
+                  } catch (error) {
+                    toast.error(error instanceof Error ? error.message : 'Unable to remove member.')
+                  }
+                }}
+              />
+              <PendingInvitationsList
+                canCancelInvitations={state.canInvite}
+                invitations={state.pendingInvitations}
+                onCancelInvitation={async (invitationId) => {
+                  try {
+                    await authPost(
+                      '/organization/cancel-invitation',
+                      { invitationId },
+                      'Unable to cancel invitation.'
+                    )
+                    toast.success('Invitation canceled')
+                    loadOrganizationState()
+                  } catch (error) {
+                    toast.error(
+                      error instanceof Error ? error.message : 'Unable to cancel invitation.'
+                    )
+                  }
+                }}
               />
               <OrganizationPermissionsHint
                 canInvite={state.canInvite}
@@ -322,14 +383,20 @@ function OrganizationMembersErrorState({ error, onRetry }: { error: string; onRe
 }
 
 function OrganizationMembersList({
+  canRemoveMembers,
   canUpdateMembers,
   members,
   onEditRole,
+  onRemoveMember,
 }: {
+  canRemoveMembers: boolean
   canUpdateMembers: boolean
   members: Member[]
   onEditRole: (member: Member) => void
+  onRemoveMember: (member: Member) => Promise<void>
 }) {
+  const [removingMemberId, setRemovingMemberId] = useState<string | null>(null)
+
   if (members.length === 0) {
     return (
       <div className='rounded-lg border border-border/70 border-dashed bg-background/40 p-4 text-foreground/65 text-sm'>
@@ -369,8 +436,107 @@ function OrganizationMembersList({
                 Edit Role
               </Button>
             ) : null}
+            {canRemoveMembers ? (
+              <Button
+                className='gap-2'
+                disabled={removingMemberId === member.id}
+                onClick={() => {
+                  setRemovingMemberId(member.id)
+                  void onRemoveMember(member).finally(() =>
+                    setRemovingMemberId((current) => (current === member.id ? null : current))
+                  )
+                }}
+                size='sm'
+                type='button'
+                variant='destructive'
+              >
+                {removingMemberId === member.id ? (
+                  <>
+                    <Loader2 className='h-4 w-4 animate-spin' />
+                    Removing...
+                  </>
+                ) : (
+                  <>
+                    <UserMinus className='h-4 w-4' />
+                    Remove Member
+                  </>
+                )}
+              </Button>
+            ) : null}
           </div>
         ))}
+    </div>
+  )
+}
+
+function PendingInvitationsList({
+  canCancelInvitations,
+  invitations,
+  onCancelInvitation,
+}: {
+  canCancelInvitations: boolean
+  invitations: Invitation[]
+  onCancelInvitation: (invitationId: string) => Promise<void>
+}) {
+  const [cancelingInvitationId, setCancelingInvitationId] = useState<string | null>(null)
+
+  if (invitations.length === 0) {
+    return null
+  }
+
+  return (
+    <div className='space-y-2 rounded-lg border border-border/70 bg-background/35 p-3'>
+      <p className='font-mono text-[0.62rem] text-foreground/60 uppercase tracking-wider'>
+        Pending Invitations
+      </p>
+      <div className='space-y-2'>
+        {invitations.map((invitation) => (
+          <div
+            className='flex items-center gap-3 rounded-md border border-border/60 bg-background/50 px-3 py-2'
+            key={invitation.id}
+          >
+            <div className='min-w-0 flex-1'>
+              <p className='truncate font-medium text-sm'>{invitation.email || 'Unknown email'}</p>
+              <p className='text-foreground/60 text-xs'>
+                Expires{' '}
+                {invitation.expiresAt
+                  ? new Date(invitation.expiresAt).toLocaleDateString()
+                  : 'soon'}
+              </p>
+            </div>
+            <Badge variant='outline'>{getRoleLabel(invitation.role || 'member')}</Badge>
+            {canCancelInvitations ? (
+              <Button
+                className='gap-2'
+                disabled={cancelingInvitationId === invitation.id}
+                onClick={() => {
+                  setCancelingInvitationId(invitation.id)
+                  void onCancelInvitation(invitation.id).finally(() =>
+                    setCancelingInvitationId((current) =>
+                      current === invitation.id ? null : current
+                    )
+                  )
+                }}
+                size='sm'
+                type='button'
+                variant='outline'
+              >
+                {cancelingInvitationId === invitation.id ? (
+                  <>
+                    <Loader2 className='h-4 w-4 animate-spin' />
+                    Canceling...
+                  </>
+                ) : (
+                  <>
+                    <X className='h-4 w-4' />
+                    Cancel Invite
+                  </>
+                )}
+              </Button>
+            ) : null}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

@@ -9,6 +9,7 @@ async function loginAsSeedUser(page: import('@playwright/test').Page, email: str
 
 test.describe('Permissions Matrix Smoke', () => {
   test('owner session can access protected management pages', async ({ page }) => {
+    test.setTimeout(60_000)
     await page.goto('/dashboard')
     await expect(page).toHaveURL('/dashboard')
 
@@ -20,6 +21,9 @@ test.describe('Permissions Matrix Smoke', () => {
 
     await page.goto('/vendors')
     await expect(page).toHaveURL('/vendors')
+
+    await page.goto('/settings', { waitUntil: 'domcontentloaded', timeout: 45_000 })
+    await expect(page).toHaveURL('/settings')
   })
 
   test('unauthenticated users are blocked from protected pages', async ({ browser }) => {
@@ -40,10 +44,14 @@ test.describe('Permissions Matrix Smoke', () => {
     await page.goto('/vendors')
     await expect(page).toHaveURL(/\/auth\/sign-in\?callbackUrl=%2Fvendors$/)
 
+    await page.goto('/settings')
+    await expect(page).toHaveURL(/\/auth\/sign-in\?callbackUrl=%2Fsettings$/)
+
     await context.close()
   })
 
   test('member session can still access planning pages', async ({ browser }) => {
+    test.setTimeout(60_000)
     const context = await browser.newContext({
       storageState: { cookies: [], origins: [] },
     })
@@ -62,10 +70,14 @@ test.describe('Permissions Matrix Smoke', () => {
     await page.goto('/vendors')
     await expect(page).toHaveURL('/vendors')
 
+    await page.goto('/settings', { waitUntil: 'domcontentloaded', timeout: 45_000 })
+    await expect(page).toHaveURL('/settings')
+
     await context.close()
   })
 
   test('viewer session is blocked from protected management pages', async ({ browser }) => {
+    test.setTimeout(60_000)
     const context = await browser.newContext({
       storageState: { cookies: [], origins: [] },
     })
@@ -87,6 +99,9 @@ test.describe('Permissions Matrix Smoke', () => {
     await page.goto('/vendors')
     await expect(page).toHaveURL('/')
 
+    await page.goto('/settings', { waitUntil: 'domcontentloaded', timeout: 45_000 })
+    await expect(page).toHaveURL('/')
+
     await context.close()
   })
 
@@ -100,5 +115,13 @@ test.describe('Permissions Matrix Smoke', () => {
     await expect(page.locator('body')).not.toContainText('Application error')
 
     await context.close()
+  })
+
+  test('dashboard renders invite collaborators CTA for planning follow-up', async ({ page }) => {
+    await page.goto('/dashboard')
+    await expect(page.getByRole('link', { name: 'Invite collaborators' })).toHaveAttribute(
+      'href',
+      '/settings'
+    )
   })
 })

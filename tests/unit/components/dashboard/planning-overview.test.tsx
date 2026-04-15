@@ -181,6 +181,15 @@ describe('PlanningOverview', () => {
     expect(screen.getByText(/Still waiting on 23/)).toBeInTheDocument()
   })
 
+  it('renders invite collaborators CTA linking to settings', () => {
+    render(<PlanningOverview dashboardData={mockDashboardData} />)
+
+    expect(screen.getByRole('link', { name: /invite collaborators/i })).toHaveAttribute(
+      'href',
+      '/settings'
+    )
+  })
+
   // ── Tasks Card ─────────────────────────────────────────────────────────────
 
   it('renders the Upcoming tasks card title', () => {

@@ -101,10 +101,12 @@ import {
   organizationRoles,
   type PermissionRequest,
 } from 'lib/auth-permissions'
+import { sendOrganizationInvitationEmail } from 'lib/email'
 
 const can = (role: OrganizationRole, permissions: PermissionRequest): boolean => {
   return organizationRoles[role].authorize(permissions).success
 }
+const mockSendOrganizationInvitationEmail = sendOrganizationInvitationEmail as jest.Mock
 
 describe('auth permission matrix', () => {
   it('defines separate resources for org membership and guest invitations', () => {
@@ -156,6 +158,10 @@ describe('auth permission matrix', () => {
 })
 
 describe('organization plugin wiring', () => {
+  beforeEach(() => {
+    mockSendOrganizationInvitationEmail.mockReset()
+  })
+
   it('exports the full organization role matrix', () => {
     expect(Object.keys(organizationRoles)).toEqual(['owner', 'admin', 'member', 'viewer'])
     expect(organizationRoles.owner.statements.invitation).toEqual(['create', 'cancel'])
@@ -215,5 +221,28 @@ describe('organization plugin wiring', () => {
     expect(
       resolveTrustedOrigins('https://preview.example.com/api/auth/sign-in/email')
     ).not.toContain('https://preview.example.com')
+  })
+
+  it('includes a dashboard redirect in organization invitation accept urls', async () => {
+    const organizationPlugin = authPlugins[0] as {
+      options: {
+        sendInvitationEmail: (payload: Record<string, unknown>) => Promise<void>
+      }
+    }
+
+    await organizationPlugin.options.sendInvitationEmail({
+      email: 'fiona@swamp.wed',
+      id: 'inv_123',
+      role: 'member',
+      organization: { name: 'Shrek & Fiona' },
+      inviter: { user: { name: 'Shrek' } },
+    })
+
+    expect(mockSendOrganizationInvitationEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inviteUrl:
+          'http://localhost:3000/auth/accept-invitation?invitationId=inv_123&redirectTo=%2Fdashboard',
+      })
+    )
   })
 })
