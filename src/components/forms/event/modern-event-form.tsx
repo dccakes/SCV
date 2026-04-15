@@ -10,6 +10,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { format } from 'date-fns'
 import { Calendar as CalendarIcon, Clock } from 'lucide-react'
+import Link from 'next/link'
 import { useEffect } from 'react'
 import { type Resolver, type SubmitHandler, useForm } from 'react-hook-form'
 
@@ -300,6 +301,22 @@ export function ModernEventForm({
               }}
               disabled={isSubmitting}
             />
+          </div>
+          <div className='rounded-lg border border-dashed p-3 text-muted-foreground text-xs md:text-sm'>
+            <p>
+              RSVP follow-up questions are managed in Website Editor → RSVP → Edit Form.
+              {isEditMode ? (
+                <>
+                  {' '}
+                  <Link href='/old_dashboard' className='font-medium text-primary hover:underline'>
+                    Open RSVP form settings
+                  </Link>
+                  .
+                </>
+              ) : (
+                ' Save this event first, then open RSVP form settings to add questions.'
+              )}
+            </p>
           </div>
 
           {/* Allow Tag-Alongs */}
