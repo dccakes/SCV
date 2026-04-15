@@ -648,10 +648,11 @@ export default function GuestsView({
           selectedEventId={selectedEventId}
         />
         <div className='flex gap-3'>
-          <Button variant='outline' onClick={onImportClick}>
+          <Button type='button' variant='outline' onClick={onImportClick}>
             Import Guests
           </Button>
           <Button
+            type='button'
             onClick={() => {
               setPrefillHousehold(undefined)
               toggleGuestForm()
