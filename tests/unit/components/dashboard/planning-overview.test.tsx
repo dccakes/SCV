@@ -46,6 +46,19 @@ const mockDashboardData = {
   ],
 } as unknown as DashboardData
 
+const mockDashboardDataWithoutPendingRsvps = {
+  ...mockDashboardData,
+  events: [
+    {
+      ...mockDashboardData.events[0],
+      guestResponses: {
+        ...mockDashboardData.events[0].guestResponses,
+        invited: 0,
+      },
+    },
+  ],
+} as unknown as DashboardData
+
 describe('PlanningOverview', () => {
   // ── Countdown Hero ─────────────────────────────────────────────────────────
 
@@ -188,6 +201,16 @@ describe('PlanningOverview', () => {
       'href',
       '/settings'
     )
+  })
+
+  it('keeps invite collaborators CTA visible even when pending RSVPs are zero', () => {
+    render(<PlanningOverview dashboardData={mockDashboardDataWithoutPendingRsvps} />)
+
+    expect(screen.getByRole('link', { name: /invite collaborators/i })).toHaveAttribute(
+      'href',
+      '/settings'
+    )
+    expect(screen.queryByText(/Still waiting on/)).not.toBeInTheDocument()
   })
 
   // ── Tasks Card ─────────────────────────────────────────────────────────────
