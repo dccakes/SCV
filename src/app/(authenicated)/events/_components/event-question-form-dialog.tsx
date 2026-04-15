@@ -29,7 +29,7 @@ type EventQuestionFormDialogProps = Readonly<{
   onOpenChange: (open: boolean) => void
   eventId: string
   initialQuestion?: Question
-  onSaved: () => void
+  onSaved: () => Promise<void> | void
 }>
 
 const normalizeOptions = (options?: Option[]): QuestionDraftOption[] => {
@@ -79,7 +79,7 @@ export function EventQuestionFormDialog({
   const upsertQuestion = api.question.upsert.useMutation({
     onSuccess: async () => {
       toast.success(isEditMode ? 'Question updated' : 'Question added')
-      onSaved()
+      await onSaved()
       onOpenChange(false)
     },
     onError: (error) => {
