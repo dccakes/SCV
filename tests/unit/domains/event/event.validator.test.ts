@@ -25,6 +25,7 @@ describe('createEventSchema', () => {
     expect(result.success).toBe(true)
     expect(result.data).toEqual({
       ...validInput,
+      collectRsvp: false,
       allowTagAlongs: false,
     })
   })
@@ -97,6 +98,27 @@ describe('createEventSchema', () => {
     const result = createEventSchema.safeParse(input)
     expect(result.success).toBe(false)
   })
+
+  it('should accept collectRsvp as true', () => {
+    const input = {
+      eventName: 'Ceremony',
+      collectRsvp: true,
+    }
+
+    const result = createEventSchema.safeParse(input)
+    expect(result.success).toBe(true)
+    expect(result.data?.collectRsvp).toBe(true)
+  })
+
+  it('should reject non-boolean collectRsvp', () => {
+    const input = {
+      eventName: 'Ceremony',
+      collectRsvp: 'yes',
+    }
+
+    const result = createEventSchema.safeParse(input)
+    expect(result.success).toBe(false)
+  })
 })
 
 describe('updateEventSchema', () => {
@@ -116,6 +138,7 @@ describe('updateEventSchema', () => {
     expect(result.success).toBe(true)
     expect(result.data).toEqual({
       ...validInput,
+      collectRsvp: false,
       allowTagAlongs: false,
     })
   })
@@ -146,6 +169,18 @@ describe('updateEventSchema', () => {
 
     const result = updateEventSchema.safeParse(invalidInput)
     expect(result.success).toBe(false)
+  })
+
+  it('should accept collectRsvp as true in update', () => {
+    const input = {
+      eventId: 'event-123',
+      eventName: 'Event',
+      collectRsvp: true,
+    }
+
+    const result = updateEventSchema.safeParse(input)
+    expect(result.success).toBe(true)
+    expect(result.data?.collectRsvp).toBe(true)
   })
 })
 
