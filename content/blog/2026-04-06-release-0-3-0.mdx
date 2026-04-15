@@ -1,0 +1,58 @@
+---
+title: "OSWP v0.3.0 — Etta AI, member invites, table view, and vendor files"
+description: "The 0.3.0 release ships Etta, the AI wedding assistant, plus member invitations, table view for the guest list, org-scoped permissions, and inline vendor file previews."
+publishedAt: "2026-04-06"
+author: "The OSWP Team"
+tags: ["changelog", "product"]
+draft: false
+---
+
+OSWP v0.3.0 is out. Here's what shipped.
+
+## Etta — AI wedding assistant
+
+Etta is a dual-persona AI chat interface built into the app. She helps couples work through planning decisions: drafting invitation wording, thinking through seating, and handling the logistics questions that are hard to Google.
+
+Etta is built on Claude. She's optional — set `ANTHROPIC_API_KEY` to enable her, skip it to run the rest of the app without AI features.
+
+## Member invitations
+
+You can now invite a partner, coordinator, or family member to co-manage your wedding. Organization-scoped permissions keep each couple's data separate. Members see only the weddings they've been invited to.
+
+## Table view for the guest list
+
+The guest list now has a table view mode alongside the card view. Useful for larger guest lists where you want to see more guests at a glance and sort by column.
+
+## Organization-scoped permissions and settings
+
+The members settings page shows who has access to your wedding. Permissions are scoped to the organization (wedding), not the user account — so a coordinator you invite to one wedding can't see another couple's data.
+
+## Email service integration
+
+Password reset, OTP, and email verification are now wired up. Couples can recover their accounts without needing direct database access.
+
+## Vendor file management improvements
+
+Vendor quotes now support flat fee vs. per-guest pricing. File previews for PDFs and images are available inline in the vendor drawer without leaving the app.
+
+## Guest list improvements
+
+- **CSV bulk import** with validation and preview
+- **Tag and country filtering** on the guest list
+- **Tag-along guest support** (guests who follow another guest's RSVP)
+- **Optional last name** for guests who go by one name
+- **Inline tag editing** in the household members modal
+
+## Wedding settings
+
+A new settings page lets you update wedding details and location. Location now appears on the dashboard.
+
+## Infrastructure
+
+- OpenTelemetry instrumentation and error logging
+- Centralized environment variable validation
+- CI: GitHub Actions for pull request tests
+
+---
+
+Full diff: [github.com/dccakes/SCV/compare/oswp-v0.2.0...oswp-v0.3.0](https://github.com/dccakes/SCV/compare/oswp-v0.2.0...oswp-v0.3.0)

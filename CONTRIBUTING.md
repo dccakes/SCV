@@ -41,7 +41,7 @@ This project follows a standard contributor code of conduct. Be respectful, cons
 
 3. **Add the upstream remote**
    ```bash
-   git remote add upstream https://github.com/dccakes/SCV.git
+   git remote add upstream https://github.com/dccakes/oswp.git
    ```
 
 4. **Install dependencies**
