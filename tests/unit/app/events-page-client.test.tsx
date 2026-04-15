@@ -161,6 +161,7 @@ describe('EventsPageClient', () => {
 
     expect(screen.queryByTestId('create-event-form')).not.toBeInTheDocument()
     expect(screen.queryByTestId('edit-event-form')).not.toBeInTheDocument()
+    expect(screen.queryByText('Delete Event?')).not.toBeInTheDocument()
   })
 
   it('renders create form only after create action is clicked', () => {
