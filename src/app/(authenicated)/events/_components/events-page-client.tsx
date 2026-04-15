@@ -45,9 +45,7 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
   const [managingGuestsEvent, setManagingGuestsEvent] = useState<EventWithStats | undefined>(
     undefined
   )
-  const [managingQuestionsEvent, setManagingQuestionsEvent] = useState<EventWithStats | undefined>(
-    undefined
-  )
+  const [managingQuestionsEventId, setManagingQuestionsEventId] = useState<string | null>(null)
   const [togglingRsvpEventId, setTogglingRsvpEventId] = useState<string | null>(null)
   const utils = api.useUtils()
 
@@ -187,14 +185,14 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
     [events]
   )
 
-  const handleManageQuestions = useCallback(
-    (eventId: string) => {
-      const eventToManage = events.find((event) => event.id === eventId)
-      if (!eventToManage) return
-      setManagingQuestionsEvent(eventToManage)
-    },
-    [events]
-  )
+  const handleManageQuestions = useCallback((eventId: string) => {
+    setManagingQuestionsEventId(eventId)
+  }, [])
+
+  const managingQuestionsEvent =
+    managingQuestionsEventId === null
+      ? undefined
+      : events.find((event) => event.id === managingQuestionsEventId)
 
   const handleToggleCollectRsvp = useCallback(
     (eventId: string, collectRsvp: boolean) => {
@@ -352,7 +350,7 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
         <ManageEventQuestionsDialog
           event={managingQuestionsEvent}
           open
-          onOpenChange={(open) => !open && setManagingQuestionsEvent(undefined)}
+          onOpenChange={(open) => !open && setManagingQuestionsEventId(null)}
         />
       ) : null}
     </>
