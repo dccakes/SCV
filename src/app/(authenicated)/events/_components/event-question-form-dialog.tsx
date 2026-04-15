@@ -57,6 +57,7 @@ export function EventQuestionFormDialog({
   const isEditMode = initialQuestion !== undefined
   const [questionText, setQuestionText] = useState('')
   const [questionType, setQuestionType] = useState<'Text' | 'Option'>('Text')
+  const [allowOther, setAllowOther] = useState(false)
   const [options, setOptions] = useState<QuestionDraftOption[]>(normalizeOptions())
   const [deletedOptionIds, setDeletedOptionIds] = useState<string[]>([])
 
@@ -65,6 +66,7 @@ export function EventQuestionFormDialog({
 
     setQuestionText(initialQuestion?.text ?? '')
     setQuestionType((initialQuestion?.type as 'Text' | 'Option' | undefined) ?? 'Text')
+    setAllowOther(initialQuestion?.allowOther ?? false)
     setOptions(normalizeOptions(initialQuestion?.options))
     setDeletedOptionIds([])
   }, [open, initialQuestion])
@@ -134,6 +136,7 @@ export function EventQuestionFormDialog({
       text: questionText.trim(),
       type: questionType,
       isRequired: questionType === 'Option',
+      allowOther: questionType === 'Option' ? allowOther : false,
       options:
         questionType === 'Option'
           ? options
@@ -208,9 +211,22 @@ export function EventQuestionFormDialog({
                 Guests must answer multiple-choice questions.
               </p>
               <p className='text-muted-foreground text-xs'>
-                An <strong>Other</strong> write-in option is automatically shown in the public RSVP
-                flow.
+                Enable <strong>Other</strong> when guests should be able to write in a custom answer
+                in public RSVP.
               </p>
+              <label
+                htmlFor='event-question-allow-other'
+                className='flex items-center gap-2 font-medium text-sm'
+              >
+                <input
+                  id='event-question-allow-other'
+                  type='checkbox'
+                  checked={allowOther}
+                  onChange={(event) => setAllowOther(event.target.checked)}
+                  disabled={upsertQuestion.isPending}
+                />
+                Allow Other write-in answer
+              </label>
               <div className='space-y-2'>
                 {options.map((option, index) => (
                   <div

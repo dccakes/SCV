@@ -106,7 +106,7 @@ export function ManageEventQuestionsDialog({
               </Button>
             </div>
             <p className='text-muted-foreground text-xs'>
-              Multiple-choice questions automatically include an <strong>Other</strong> write-in
+              Multiple-choice questions can optionally include an <strong>Other</strong> write-in
               answer in public RSVP.
             </p>
 
@@ -128,9 +128,14 @@ export function ManageEventQuestionsDialog({
                           {question.type === 'Option' ? 'Multiple choice' : 'Short answer'}
                         </Badge>
                         {question.type === 'Option' ? (
-                          <span className='text-muted-foreground text-xs'>
-                            {question.options?.length ?? 0} options
-                          </span>
+                          <>
+                            <span className='text-muted-foreground text-xs'>
+                              {question.options?.length ?? 0} options
+                            </span>
+                            {question.allowOther ? (
+                              <Badge variant='secondary'>Other enabled</Badge>
+                            ) : null}
+                          </>
                         ) : null}
                       </div>
                     </div>
@@ -140,6 +145,7 @@ export function ManageEventQuestionsDialog({
                         size='icon'
                         variant='ghost'
                         onClick={() => openEditForm(question)}
+                        aria-label={`Edit question ${question.text}`}
                       >
                         <Pencil className='h-4 w-4' />
                       </Button>
@@ -148,6 +154,7 @@ export function ManageEventQuestionsDialog({
                         size='icon'
                         variant='ghost'
                         onClick={() => setDeletingQuestion(question)}
+                        aria-label={`Delete question ${question.text}`}
                       >
                         <Trash2 className='h-4 w-4 text-destructive' />
                       </Button>

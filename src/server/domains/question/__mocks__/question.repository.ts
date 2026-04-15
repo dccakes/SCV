@@ -17,6 +17,7 @@ export const mockQuestion: Question = {
   text: 'What is your meal preference?',
   type: 'Option',
   isRequired: true,
+  allowOther: false,
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
 }
@@ -28,6 +29,7 @@ export const mockWebsiteQuestion: Question = {
   text: 'Any dietary restrictions?',
   type: 'Text',
   isRequired: false,
+  allowOther: false,
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
 }

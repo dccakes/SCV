@@ -34,12 +34,15 @@ export default function QuestionMultipleChoice({
   const existingAnswer = findExistingAnswer(rsvpFormData.answersToQuestions, answerTarget)
   const [selectedOptionId, setSelectedOptionId] = useState<string | undefined>(() => {
     if (!existingAnswer) return undefined
-    return existingAnswer.questionType === 'Text' ? OTHER_OPTION_ID : existingAnswer.response
+    if (existingAnswer.questionType === 'Text') {
+      return question.allowOther ? OTHER_OPTION_ID : undefined
+    }
+    return existingAnswer.response
   })
   const [otherResponse, setOtherResponse] = useState<string>(
     existingAnswer?.questionType === 'Text' ? existingAnswer.response : ''
   )
-  const isOtherSelected = selectedOptionId === OTHER_OPTION_ID
+  const isOtherSelected = question.allowOther === true && selectedOptionId === OTHER_OPTION_ID
   const canContinue =
     selectedOptionId !== undefined && (!isOtherSelected || otherResponse.trim().length > 0)
 
@@ -71,23 +74,25 @@ export default function QuestionMultipleChoice({
             </button>
           </li>
         ))}
-        <li>
-          <button
-            type='button'
-            onClick={() => setSelectedOptionId(OTHER_OPTION_ID)}
-            className={`relative mb-3 w-full cursor-pointer rounded-lg border border-gray-700 p-5 text-left hover:bg-gray-700 hover:text-white ${isOtherSelected && 'bg-gray-700 text-white'}`}
-          >
-            <div className='flex flex-col gap-3'>
-              <h3>Other</h3>
-              <p>Enter your own answer</p>
-            </div>
-            {isOtherSelected && (
-              <div className='absolute top-1/2 right-5 -translate-y-1/2'>
-                <IoIosCheckmarkCircleOutline size={20} />
+        {question.allowOther ? (
+          <li>
+            <button
+              type='button'
+              onClick={() => setSelectedOptionId(OTHER_OPTION_ID)}
+              className={`relative mb-3 w-full cursor-pointer rounded-lg border border-gray-700 p-5 text-left hover:bg-gray-700 hover:text-white ${isOtherSelected && 'bg-gray-700 text-white'}`}
+            >
+              <div className='flex flex-col gap-3'>
+                <h3>Other</h3>
+                <p>Enter your own answer</p>
               </div>
-            )}
-          </button>
-        </li>
+              {isOtherSelected && (
+                <div className='absolute top-1/2 right-5 -translate-y-1/2'>
+                  <IoIosCheckmarkCircleOutline size={20} />
+                </div>
+              )}
+            </button>
+          </li>
+        ) : null}
       </ul>
       {isOtherSelected && (
         <textarea
