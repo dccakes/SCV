@@ -1,3 +1,3 @@
 -- Store structured guest dietary restrictions payload as JSON string
-ALTER TABLE "guest"
+ALTER TABLE "Guest"
 ADD COLUMN "dietaryRestrictions" TEXT;
