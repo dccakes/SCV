@@ -40,7 +40,7 @@ export default function FindYourInvitationForm({ goNext }: StepFormProps) {
       </p>
       <input
         placeholder='Full Name'
-        className='border border-gray-400 p-3'
+        className='ph-no-capture border border-gray-400 p-3'
         onChange={(e) => {
           setShowError(false)
           setName(e.target.value)

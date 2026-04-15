@@ -2,6 +2,8 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { ReactNode } from 'react'
 import AuthenticatedAppShell from '@/components/layout/authenticated-app-shell'
+import { PostHogAuthIdentity } from '~/components/analytics/posthog-auth-identity'
+import { PostHogSessionRecording } from '~/components/analytics/posthog-session-recording'
 import { auth } from '~/lib/auth'
 import { getUserFirstName, getUserInitials } from '~/lib/user-display'
 import { resolveWorkspaceScope } from '~/server/application/workspace/workspace-scope'
@@ -60,31 +62,32 @@ export async function AuthenticatedLayoutFrame(props: Readonly<AuthenticatedLayo
   const isEttaConfigured = Boolean(process.env.AI_GATEWAY_API_KEY)
   const currentUserFirstName = getUserFirstName(session?.user?.name, session?.user?.email)
   const currentUserInitials = getUserInitials(session?.user?.name, session?.user?.email)
-
-  let weddingId: string | undefined
-  if (showEttaPanel) {
-    try {
-      const wedding = await api.wedding.getActive()
-      weddingId = wedding?.id
-    } catch (error) {
-      if (!isAccessError(error)) {
-        throw error
-      }
-    }
-  }
+  const weddingId = workspaceScope.activeWeddingId ?? undefined
+  const createdAt =
+    session?.user && 'createdAt' in session.user ? (session.user.createdAt as string | Date) : null
 
   return (
-    <AuthenticatedAppShell
-      coupleName={coupleName}
-      currentUserFirstName={currentUserFirstName}
-      currentUserInitials={currentUserInitials}
-      weddingDate={weddingDate}
-      weddingLocation={weddingLocation}
-      showEttaPanel={showEttaPanel}
-      weddingId={weddingId}
-      isEttaConfigured={isEttaConfigured}
-    >
-      {children}
-    </AuthenticatedAppShell>
+    <>
+      <PostHogSessionRecording enabled={false} />
+      <PostHogAuthIdentity
+        userId={session.user.id}
+        email={session.user.email ?? null}
+        name={session.user.name ?? null}
+        createdAt={createdAt}
+        weddingId={weddingId}
+      />
+      <AuthenticatedAppShell
+        coupleName={coupleName}
+        currentUserFirstName={currentUserFirstName}
+        currentUserInitials={currentUserInitials}
+        weddingDate={weddingDate}
+        weddingLocation={weddingLocation}
+        showEttaPanel={showEttaPanel}
+        weddingId={weddingId}
+        isEttaConfigured={isEttaConfigured}
+      >
+        {children}
+      </AuthenticatedAppShell>
+    </>
   )
 }

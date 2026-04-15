@@ -43,6 +43,8 @@ export const env = createEnv({
     OPENAI_API_KEY: z.string().min(1).optional(), // For embeddings (text-embedding-3-small)
     JWT_SECRET: z.string().min(1).optional(), // For guest concierge tokens
     ETTA_MODEL: z.string().min(1).optional(), // e.g. "anthropic/claude-haiku-4.5" or "openai/gpt-4o"
+    // Optional: PostHog server analytics
+    POSTHOG_API_KEY: z.string().min(1).optional(),
   },
 
   /**
@@ -61,6 +63,12 @@ export const env = createEnv({
           (process.env.VERCEL_BRANCH_URL ? `https://${process.env.VERCEL_BRANCH_URL}` : undefined)
       )
       .pipe(z.string().url().optional()),
+    NEXT_PUBLIC_POSTHOG_KEY: z.string().min(1).optional(),
+    NEXT_PUBLIC_POSTHOG_HOST: z.string().url().optional(),
+    NEXT_PUBLIC_POSTHOG_GROUP_ANALYTICS_ENABLED: z
+      .enum(['true', 'false'])
+      .optional()
+      .transform((value) => value === 'true'),
   },
 
   /**
@@ -92,6 +100,11 @@ export const env = createEnv({
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     JWT_SECRET: process.env.JWT_SECRET,
     ETTA_MODEL: process.env.ETTA_MODEL,
+    POSTHOG_API_KEY: process.env.POSTHOG_API_KEY,
+    NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+    NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+    NEXT_PUBLIC_POSTHOG_GROUP_ANALYTICS_ENABLED:
+      process.env.NEXT_PUBLIC_POSTHOG_GROUP_ANALYTICS_ENABLED,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

@@ -101,6 +101,12 @@ BLOB_READ_WRITE_TOKEN=""
 
 # Etta AI assistant
 ANTHROPIC_API_KEY=""
+
+# PostHog analytics (optional)
+NEXT_PUBLIC_POSTHOG_KEY=""
+NEXT_PUBLIC_POSTHOG_HOST="https://eu.i.posthog.com"
+POSTHOG_API_KEY=""
+NEXT_PUBLIC_POSTHOG_GROUP_ANALYTICS_ENABLED="false"
 ```
 
 ### 3. Set up the database
