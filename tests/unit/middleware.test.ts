@@ -67,6 +67,9 @@ describe('middleware', () => {
 
     const rootResponse = await middleware(createRequest('/'))
     const signInResponse = await middleware(createRequest('/auth/sign-in'))
+    const acceptInvitationResponse = await middleware(
+      createRequest('/auth/accept-invitation', undefined, '?invitationId=inv_test_123')
+    )
     const joinResponse = await middleware(createRequest('/join/sample-token'))
     const websiteResponse = await middleware(createRequest('/shrek-and-fiona'))
     const websiteRsvpResponse = await middleware(createRequest('/shrek-and-fiona/rsvp'))
@@ -75,6 +78,7 @@ describe('middleware', () => {
 
     expect(rootResponse.headers.get('location')).toBeNull()
     expect(signInResponse.headers.get('location')).toBeNull()
+    expect(acceptInvitationResponse.headers.get('location')).toBeNull()
     expect(joinResponse.headers.get('location')).toBeNull()
     expect(websiteResponse.headers.get('location')).toBeNull()
     expect(websiteRsvpResponse.headers.get('location')).toBeNull()
