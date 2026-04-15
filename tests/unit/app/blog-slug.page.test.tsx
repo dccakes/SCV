@@ -6,13 +6,19 @@ import BlogPostPage, { generateMetadata, generateStaticParams } from '~/app/blog
 const mockGetAllPublishedSlugs = jest.fn()
 const mockGetPostBySlug = jest.fn()
 const mockNotFound = jest.fn()
+const mockMdxRemote = jest.fn(({ source }: { source: string }) => <div>{source}</div>)
 
 jest.mock('next/navigation', () => ({
   notFound: () => mockNotFound(),
 }))
 
 jest.mock('next-mdx-remote/rsc', () => ({
-  MDXRemote: ({ source }: { source: string }) => <div>{source}</div>,
+  MDXRemote: (props: { source: string; options?: unknown }) => mockMdxRemote(props),
+}))
+
+jest.mock('remark-gfm', () => ({
+  __esModule: true,
+  default: () => null,
 }))
 
 jest.mock('~/lib/blog/posts', () => ({
@@ -25,6 +31,7 @@ describe('/blog/[slug] page', () => {
     mockGetAllPublishedSlugs.mockReset()
     mockGetPostBySlug.mockReset()
     mockNotFound.mockReset()
+    mockMdxRemote.mockClear()
 
     mockGetAllPublishedSlugs.mockReturnValue(['introducing-oswp'])
     mockGetPostBySlug.mockImplementation((slug: string) => {
@@ -80,6 +87,21 @@ describe('/blog/[slug] page', () => {
     expect(screen.getByRole('link', { name: /start planning with oswp/i })).toHaveAttribute(
       'href',
       '/auth/signin'
+    )
+  })
+
+  it('passes mdx options so gfm markdown features can be rendered', async () => {
+    const page = await BlogPostPage({ params: Promise.resolve({ slug: 'introducing-oswp' }) })
+    render(page)
+
+    expect(mockMdxRemote).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.objectContaining({
+          mdxOptions: expect.objectContaining({
+            remarkPlugins: expect.arrayContaining([expect.any(Function)]),
+          }),
+        }),
+      })
     )
   })
 })

@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "npx prisma generate && npx prisma migrate deploy && next build",
-    "build:ci": "SKIP_ENV_VALIDATION=true next build",
+    "build:ci": "BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-ci-build-only-secret-not-for-runtime} SKIP_ENV_VALIDATION=true next build",
     "build:analyze": "SKIP_ENV_VALIDATION=true next build --analyze",
     "build:turbo": "NODE_OPTIONS='--trace-uncaught' SKIP_ENV_VALIDATION=true next build --turbopack",
     "db:push": "prisma db push",
@@ -98,6 +98,7 @@
     "react-dropzone": "^14.3.8",
     "react-hook-form": "^7.62.0",
     "react-icons": "^5.5.0",
+    "remark-gfm": "^4.0.1",
     "resend": "^6.10.0",
     "server-only": "^0.0.1",
     "sharp": "^0.34.5",
