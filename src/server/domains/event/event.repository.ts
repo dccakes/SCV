@@ -84,6 +84,15 @@ export class EventRepository {
       where: { weddingId },
       orderBy: { createdAt: 'asc' },
       include: {
+        questions: {
+          orderBy: { createdAt: 'asc' },
+          include: {
+            options: true,
+            _count: {
+              select: { answers: true },
+            },
+          },
+        },
         invitations: {
           select: {
             rsvp: true,

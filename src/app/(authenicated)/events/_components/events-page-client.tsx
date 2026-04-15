@@ -12,6 +12,7 @@ import { useCallback, useState } from 'react'
 import { toast } from 'sonner'
 import { EventCard } from '@/app/(authenicated)/events/_components/event-card'
 import { ManageEventGuestsDialog } from '@/app/(authenicated)/events/_components/manage-event-guests-dialog'
+import { ManageEventQuestionsDialog } from '@/app/(authenicated)/events/_components/manage-event-questions-dialog'
 import {
   type EventFormData,
   transformToServerInput,
@@ -42,6 +43,9 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
   const [editingEvent, setEditingEvent] = useState<EventWithStats | undefined>(undefined)
   const [deletingEvent, setDeletingEvent] = useState<EventWithStats | undefined>(undefined)
   const [managingGuestsEvent, setManagingGuestsEvent] = useState<EventWithStats | undefined>(
+    undefined
+  )
+  const [managingQuestionsEvent, setManagingQuestionsEvent] = useState<EventWithStats | undefined>(
     undefined
   )
   const [togglingRsvpEventId, setTogglingRsvpEventId] = useState<string | null>(null)
@@ -183,6 +187,15 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
     [events]
   )
 
+  const handleManageQuestions = useCallback(
+    (eventId: string) => {
+      const eventToManage = events.find((event) => event.id === eventId)
+      if (!eventToManage) return
+      setManagingQuestionsEvent(eventToManage)
+    },
+    [events]
+  )
+
   const handleToggleCollectRsvp = useCallback(
     (eventId: string, collectRsvp: boolean) => {
       setTogglingRsvpEventId(eventId)
@@ -268,6 +281,7 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
             onEdit={handleEditEvent}
             onDelete={handleDeleteEvent}
             onManageGuests={handleManageGuests}
+            onManageQuestions={handleManageQuestions}
             onToggleCollectRsvp={handleToggleCollectRsvp}
             isTogglingCollectRsvp={togglingRsvpEventId === event.id}
           />
@@ -331,6 +345,14 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
           event={managingGuestsEvent}
           open
           onOpenChange={(open) => !open && setManagingGuestsEvent(undefined)}
+        />
+      ) : null}
+
+      {managingQuestionsEvent ? (
+        <ManageEventQuestionsDialog
+          event={managingQuestionsEvent}
+          open
+          onOpenChange={(open) => !open && setManagingQuestionsEvent(undefined)}
         />
       ) : null}
     </>

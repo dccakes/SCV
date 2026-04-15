@@ -37,6 +37,7 @@ export type EventWithQuestions = Event & {
  * Event with RSVP statistics
  */
 export type EventWithStats = Event & {
+  questions?: Question[]
   guestResponses: {
     attending: number
     invited: number

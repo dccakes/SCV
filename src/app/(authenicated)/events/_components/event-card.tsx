@@ -21,6 +21,7 @@ type EventCardProps = Readonly<{
   onEdit: (eventId: string) => void
   onDelete: (eventId: string) => void
   onManageGuests: (eventId: string) => void
+  onManageQuestions: (eventId: string) => void
   onToggleCollectRsvp: (eventId: string, collectRsvp: boolean) => void
   isTogglingCollectRsvp?: boolean
 }>
@@ -30,6 +31,7 @@ function EventCardBase({
   onEdit,
   onDelete,
   onManageGuests,
+  onManageQuestions,
   onToggleCollectRsvp,
   isTogglingCollectRsvp = false,
 }: EventCardProps) {
@@ -154,6 +156,10 @@ function EventCardBase({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align='end'>
+                <DropdownMenuItem onClick={() => onManageQuestions(event.id)}>
+                  <Pencil className='mr-2 h-3.5 w-3.5' />
+                  RSVP Questions
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onEdit(event.id)}>
                   <Pencil className='mr-2 h-3.5 w-3.5' />
                   Edit

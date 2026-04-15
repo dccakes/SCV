@@ -37,6 +37,7 @@ describe('EventCard', () => {
         onEdit={onEdit}
         onDelete={onDelete}
         onManageGuests={onManageGuests}
+        onManageQuestions={jest.fn()}
         onToggleCollectRsvp={jest.fn()}
       />
     )
@@ -60,6 +61,7 @@ describe('EventCard', () => {
         onEdit={jest.fn()}
         onDelete={jest.fn()}
         onManageGuests={jest.fn()}
+        onManageQuestions={jest.fn()}
         onToggleCollectRsvp={jest.fn()}
       />
     )
@@ -74,6 +76,7 @@ describe('EventCard', () => {
         onEdit={jest.fn()}
         onDelete={jest.fn()}
         onManageGuests={jest.fn()}
+        onManageQuestions={jest.fn()}
         onToggleCollectRsvp={jest.fn()}
       />
     )
@@ -90,6 +93,7 @@ describe('EventCard', () => {
         onEdit={jest.fn()}
         onDelete={jest.fn()}
         onManageGuests={jest.fn()}
+        onManageQuestions={jest.fn()}
         onToggleCollectRsvp={onToggleCollectRsvp}
       />
     )

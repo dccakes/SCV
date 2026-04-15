@@ -8,6 +8,8 @@ const mockCreateMutateAsync = jest.fn()
 const mockUpdateMutateAsync = jest.fn()
 const mockDeleteMutate = jest.fn()
 const mockUpdateCollectRsvpMutate = jest.fn()
+const mockQuestionDeleteMutate = jest.fn()
+const mockQuestionUpsertMutate = jest.fn()
 const mockInvalidate = jest.fn()
 const mockSetData = jest.fn()
 let mockUpdateOnSuccess: ((data?: EventWithStats) => Promise<void> | void) | undefined
@@ -82,6 +84,20 @@ jest.mock('~/trpc/react', () => ({
         }),
       },
     },
+    question: {
+      delete: {
+        useMutation: () => ({
+          mutate: (...args: unknown[]) => mockQuestionDeleteMutate(...args),
+          isPending: false,
+        }),
+      },
+      upsert: {
+        useMutation: () => ({
+          mutate: (...args: unknown[]) => mockQuestionUpsertMutate(...args),
+          isPending: false,
+        }),
+      },
+    },
     dashboard: {
       getForActiveWorkspace: {
         useQuery: () => ({
@@ -122,6 +138,8 @@ describe('EventsPageClient', () => {
     mockUpdateMutateAsync.mockReset()
     mockDeleteMutate.mockReset()
     mockUpdateCollectRsvpMutate.mockReset()
+    mockQuestionDeleteMutate.mockReset()
+    mockQuestionUpsertMutate.mockReset()
     mockInvalidate.mockReset()
     mockSetData.mockReset()
     mockModernEventForm.mockClear()
