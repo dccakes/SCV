@@ -84,6 +84,9 @@ export class EventRepository {
       where: { weddingId },
       orderBy: { createdAt: 'asc' },
       include: {
+        // TODO(OSW-65 follow-up): split question hydration from stats query to avoid over-fetching
+        // when only list analytics are needed. Keep coupled for now so /events question management
+        // can render without relying on public RSVP routes.
         questions: {
           orderBy: { createdAt: 'asc' },
           include: {

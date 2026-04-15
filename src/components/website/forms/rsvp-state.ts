@@ -1,7 +1,7 @@
 import type { Answer, RsvpFormResponse } from '~/app/utils/shared-types'
 
 export interface AnswerWithType extends Answer {
-  questionType: string
+  questionType: 'Text' | 'Option'
 }
 
 const getAnswerKey = (answer: Pick<Answer, 'questionId' | 'guestId' | 'householdId'>): string => {

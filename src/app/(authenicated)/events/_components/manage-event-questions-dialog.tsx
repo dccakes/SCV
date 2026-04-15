@@ -47,6 +47,8 @@ export function ManageEventQuestionsDialog({
   const questions = useMemo(() => event.questions ?? [], [event.questions])
 
   const handleSaved = async () => {
+    // TODO(OSW-65 follow-up): replace full invalidation with a scoped cache patch once
+    // question upsert returns enough payload for deterministic single-event updates.
     await utils.event.getAllByUserIdWithStats.invalidate()
   }
 
@@ -54,6 +56,8 @@ export function ManageEventQuestionsDialog({
     onSuccess: async () => {
       toast.success('Question deleted')
       setDeletingQuestion(undefined)
+      // TODO(OSW-65 follow-up): replace full invalidation with a scoped cache patch once
+      // question delete response includes enough context to update one event in cache.
       await utils.event.getAllByUserIdWithStats.invalidate()
     },
     onError: (error) => {

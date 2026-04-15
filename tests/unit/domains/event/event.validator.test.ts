@@ -136,11 +136,7 @@ describe('updateEventSchema', () => {
 
     const result = updateEventSchema.safeParse(validInput)
     expect(result.success).toBe(true)
-    expect(result.data).toEqual({
-      ...validInput,
-      collectRsvp: false,
-      allowTagAlongs: false,
-    })
+    expect(result.data).toEqual(validInput)
   })
 
   it('should require eventId', () => {
@@ -181,6 +177,18 @@ describe('updateEventSchema', () => {
     const result = updateEventSchema.safeParse(input)
     expect(result.success).toBe(true)
     expect(result.data?.collectRsvp).toBe(true)
+  })
+
+  it('should not default collectRsvp or allowTagAlongs when omitted in update', () => {
+    const input = {
+      eventId: 'event-123',
+      eventName: 'Event',
+    }
+
+    const result = updateEventSchema.safeParse(input)
+    expect(result.success).toBe(true)
+    expect(result.data?.collectRsvp).toBeUndefined()
+    expect(result.data?.allowTagAlongs).toBeUndefined()
   })
 })
 
