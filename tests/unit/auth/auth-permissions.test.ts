@@ -223,7 +223,7 @@ describe('organization plugin wiring', () => {
     ).not.toContain('https://preview.example.com')
   })
 
-  it('includes a dashboard redirect in organization invitation accept urls', async () => {
+  it('builds organization invitation accept urls without extra redirect params', async () => {
     const organizationPlugin = authPlugins[0] as {
       options: {
         sendInvitationEmail: (payload: Record<string, unknown>) => Promise<void>
@@ -240,8 +240,7 @@ describe('organization plugin wiring', () => {
 
     expect(mockSendOrganizationInvitationEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        inviteUrl:
-          'http://localhost:3000/auth/accept-invitation?invitationId=inv_123&redirectTo=%2Fdashboard',
+        inviteUrl: 'http://localhost:3000/auth/accept-invitation?invitationId=inv_123',
       })
     )
   })

@@ -44,7 +44,6 @@ export function resolveTrustedOrigins(requestUrl?: string): string[] {
 const getInvitationAcceptUrl = (invitationId: string): string => {
   const url = new URL('/auth/accept-invitation', appBaseUrl)
   url.searchParams.set('invitationId', invitationId)
-  url.searchParams.set('redirectTo', '/dashboard')
   return url.toString()
 }
 
