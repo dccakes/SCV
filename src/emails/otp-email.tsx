@@ -1,13 +1,4 @@
-import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Preview,
-  Section,
-  Text,
-} from '@react-email/components'
+import { Body, Container, Head, Heading, Preview, Section, Text } from '@react-email/components'
 
 import { emailStyles } from '~/emails/email-styles'
 
@@ -26,7 +17,7 @@ export function OtpEmail({ otp, type }: OtpEmailProps) {
   const subject = subjectMap[type]
 
   return (
-    <Html>
+    <html lang='en'>
       <Head />
       <Preview>
         {subject}: {otp}
@@ -62,6 +53,6 @@ export function OtpEmail({ otp, type }: OtpEmailProps) {
           </Text>
         </Container>
       </Body>
-    </Html>
+    </html>
   )
 }
