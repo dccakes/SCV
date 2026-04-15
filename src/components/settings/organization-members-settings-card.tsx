@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertCircle, Loader2, MailPlus, RefreshCw, UserMinus, X } from 'lucide-react'
+import { AlertCircle, Loader2, MailPlus, RefreshCw, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -11,6 +11,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '~/components/ui/dialog'
@@ -276,7 +277,7 @@ export function OrganizationMembersSettingsCard() {
                 members={state.members}
                 onEditRole={setRoleDialogMember}
                 onRemoveMember={async (member) => {
-                  if (!state.organization) return
+                  if (!state.organization) return false
 
                   try {
                     await authPost(
@@ -289,8 +290,10 @@ export function OrganizationMembersSettingsCard() {
                     )
                     toast.success('Member removed')
                     loadOrganizationState()
+                    return true
                   } catch (error) {
                     toast.error(error instanceof Error ? error.message : 'Unable to remove member.')
+                    return false
                   }
                 }}
               />
@@ -325,6 +328,7 @@ export function OrganizationMembersSettingsCard() {
         <InviteMemberDialog
           onInviteSent={() => {
             setInviteDialogOpen(false)
+            loadOrganizationState()
           }}
           open={inviteDialogOpen}
           onOpenChange={setInviteDialogOpen}
@@ -393,9 +397,13 @@ function OrganizationMembersList({
   canUpdateMembers: boolean
   members: Member[]
   onEditRole: (member: Member) => void
-  onRemoveMember: (member: Member) => Promise<void>
+  onRemoveMember: (member: Member) => Promise<boolean>
 }) {
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null)
+  const [memberPendingRemoval, setMemberPendingRemoval] = useState<Member | null>(null)
+  const [removalConfirmation, setRemovalConfirmation] = useState('')
+
+  const canConfirmRemoval = removalConfirmation.trim().toLowerCase() === 'delete'
 
   if (members.length === 0) {
     return (
@@ -438,33 +446,97 @@ function OrganizationMembersList({
             ) : null}
             {canRemoveMembers ? (
               <Button
-                className='gap-2'
+                aria-label={`Remove ${member.user?.name || member.user?.email || 'member'}`}
+                className='h-8 w-8'
                 disabled={removingMemberId === member.id}
                 onClick={() => {
-                  setRemovingMemberId(member.id)
-                  void onRemoveMember(member).finally(() =>
-                    setRemovingMemberId((current) => (current === member.id ? null : current))
-                  )
+                  setMemberPendingRemoval(member)
+                  setRemovalConfirmation('')
                 }}
-                size='sm'
+                size='icon'
                 type='button'
-                variant='destructive'
+                variant='outline'
               >
                 {removingMemberId === member.id ? (
-                  <>
-                    <Loader2 className='h-4 w-4 animate-spin' />
-                    Removing...
-                  </>
+                  <Loader2 className='h-4 w-4 animate-spin' />
                 ) : (
-                  <>
-                    <UserMinus className='h-4 w-4' />
-                    Remove Member
-                  </>
+                  <Trash2 className='h-4 w-4 text-destructive' />
                 )}
               </Button>
             ) : null}
           </div>
         ))}
+      <Dialog
+        onOpenChange={(open) => {
+          if (!open) {
+            setMemberPendingRemoval(null)
+            setRemovalConfirmation('')
+          }
+        }}
+        open={!!memberPendingRemoval}
+      >
+        <DialogContent className='sm:max-w-md'>
+          <DialogHeader>
+            <DialogTitle>Confirm Member Removal</DialogTitle>
+            <DialogDescription>
+              Type delete to confirm removing{' '}
+              {memberPendingRemoval?.user?.name ||
+                memberPendingRemoval?.user?.email ||
+                'this member'}
+              .
+            </DialogDescription>
+          </DialogHeader>
+          <div className='space-y-2'>
+            <label
+              className='font-medium text-foreground text-sm'
+              htmlFor='remove-member-confirmation'
+            >
+              Confirmation
+            </label>
+            <Input
+              id='remove-member-confirmation'
+              onChange={(event) => setRemovalConfirmation(event.target.value)}
+              placeholder='delete'
+              value={removalConfirmation}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                setMemberPendingRemoval(null)
+                setRemovalConfirmation('')
+              }}
+              type='button'
+              variant='outline'
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={!canConfirmRemoval || !memberPendingRemoval || !!removingMemberId}
+              onClick={() => {
+                if (!memberPendingRemoval) return
+                const targetMember = memberPendingRemoval
+
+                setRemovingMemberId(targetMember.id)
+                void onRemoveMember(targetMember)
+                  .then((wasRemoved) => {
+                    if (wasRemoved) {
+                      setMemberPendingRemoval(null)
+                      setRemovalConfirmation('')
+                    }
+                  })
+                  .finally(() =>
+                    setRemovingMemberId((current) => (current === targetMember.id ? null : current))
+                  )
+              }}
+              type='button'
+              variant='destructive'
+            >
+              Delete Member
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -262,7 +262,9 @@ describe('OrganizationMembersSettingsCard', () => {
     expect(screen.getAllByRole('button', { name: 'Retry' })).not.toHaveLength(0)
   })
 
-  it('loads pending invitations on initial render and sends invitation from dialog', async () => {
+  it('refreshes pending invitations after sending an invite', async () => {
+    let listInvitationsCallCount = 0
+
     mockFetch.mockImplementation(
       (path: string, options?: { body?: { permissions?: Record<string, unknown> } }) => {
         const body = options?.body
@@ -293,8 +295,21 @@ describe('OrganizationMembersSettingsCard', () => {
         }
 
         if (path === '/organization/list-invitations') {
+          listInvitationsCallCount += 1
+
           return Promise.resolve({
-            data: [],
+            data:
+              listInvitationsCallCount === 1
+                ? []
+                : [
+                    {
+                      id: 'invitation-1',
+                      email: 'donkey@swamp.wed',
+                      role: 'viewer',
+                      status: 'pending',
+                      expiresAt: new Date('2026-12-01T00:00:00.000Z').toISOString(),
+                    },
+                  ],
             error: null,
           })
         }
@@ -340,6 +355,11 @@ describe('OrganizationMembersSettingsCard', () => {
         })
       )
     })
+
+    await waitFor(() => {
+      expect(screen.getByText('Pending Invitations')).toBeInTheDocument()
+    })
+    expect(screen.getByText('donkey@swamp.wed')).toBeInTheDocument()
   })
 
   it('updates a member role only when member:update is granted', async () => {
@@ -481,7 +501,7 @@ describe('OrganizationMembersSettingsCard', () => {
     expect(screen.getByText('Viewer')).toBeInTheDocument()
   })
 
-  it('removes a member through organization/remove-member', async () => {
+  it('requires typing delete in a confirmation modal before removing a member', async () => {
     mockFetch.mockImplementation(
       (path: string, options?: { body?: { permissions?: Record<string, unknown> } }) => {
         const body = options?.body
@@ -538,10 +558,26 @@ describe('OrganizationMembersSettingsCard', () => {
     render(<OrganizationMembersSettingsCard />)
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Remove Member' })).toBeEnabled()
+      expect(screen.getByRole('button', { name: 'Remove Fiona Ogre' })).toBeEnabled()
     })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Remove Member' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Fiona Ogre' }))
+
+    expect(screen.getByText('Confirm Member Removal')).toBeInTheDocument()
+    expect(screen.getByText(/type delete to confirm/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Delete Member' })).toBeDisabled()
+
+    fireEvent.change(screen.getByLabelText('Confirmation'), {
+      target: { value: 'not-delete' },
+    })
+    expect(screen.getByRole('button', { name: 'Delete Member' })).toBeDisabled()
+
+    fireEvent.change(screen.getByLabelText('Confirmation'), {
+      target: { value: 'delete' },
+    })
+    expect(screen.getByRole('button', { name: 'Delete Member' })).toBeEnabled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Member' }))
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
