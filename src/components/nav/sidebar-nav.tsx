@@ -20,10 +20,7 @@ const SIDEBAR_SECTIONS: readonly SidebarSection[] = [
   },
   {
     title: 'Guests',
-    items: [
-      { label: 'Guest List', href: '/guest-list', icon: '☷' },
-      { label: 'Website', href: '/my-site', icon: '✦' },
-    ],
+    items: [{ label: 'Guest List', href: '/guest-list', icon: '☷' }],
   },
   {
     title: 'Settings',
