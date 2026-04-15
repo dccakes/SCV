@@ -5,12 +5,12 @@
  * This layer handles all direct database access for invitations.
  */
 
-import type { PrismaClient } from '@prisma/client'
+import type { Prisma, PrismaClient } from '@prisma/client'
 
 import type { Invitation } from '~/server/domains/invitation/invitation.types'
 
 export class InvitationRepository {
-  constructor(private db: PrismaClient) {}
+  constructor(private db: PrismaClient | Prisma.TransactionClient) {}
 
   /**
    * Find an invitation by compound ID (guestId + eventId)
@@ -118,6 +118,7 @@ export class InvitationRepository {
     eventId: string,
     data: {
       rsvp?: string
+      submittedAt?: Date
     }
   ): Promise<Invitation> {
     return this.db.invitation.update({
@@ -129,8 +130,48 @@ export class InvitationRepository {
       },
       data: {
         rsvp: data.rsvp,
+        submittedAt: data.submittedAt,
       },
     })
+  }
+
+  /**
+   * Update multiple invitations at once (atomic transaction)
+   */
+  async updateMany(
+    data: Array<{ guestId: number; eventId: string; rsvp: string }>
+  ): Promise<Invitation[]> {
+    return this.db.$transaction(
+      data.map((inv) =>
+        this.db.invitation.update({
+          where: {
+            guestId_eventId: {
+              guestId: inv.guestId,
+              eventId: inv.eventId,
+            },
+          },
+          data: {
+            rsvp: inv.rsvp,
+          },
+        })
+      )
+    )
+  }
+
+  /**
+   * Check if all given invitations belong to a wedding (single query)
+   */
+  async allBelongToWedding(
+    keys: Array<{ guestId: number; eventId: string }>,
+    weddingId: string
+  ): Promise<boolean> {
+    const count = await this.db.invitation.count({
+      where: {
+        weddingId,
+        OR: keys.map(({ guestId, eventId }) => ({ guestId, eventId })),
+      },
+    })
+    return count === keys.length
   }
 
   /**
@@ -143,6 +184,30 @@ export class InvitationRepository {
           guestId,
           eventId,
         },
+      },
+    })
+  }
+
+  /**
+   * Delete all invitations for a guest.
+   */
+  async deleteByGuest(guestId: number): Promise<{ count: number }> {
+    return this.db.invitation.deleteMany({
+      where: { guestId },
+    })
+  }
+
+  /**
+   * Delete invitations for a guest except for the allowed event IDs.
+   */
+  async deleteByGuestExcludingEvents(
+    guestId: number,
+    allowedEventIds: string[]
+  ): Promise<{ count: number }> {
+    return this.db.invitation.deleteMany({
+      where: {
+        guestId,
+        eventId: { notIn: allowedEventIds },
       },
     })
   }
@@ -227,6 +292,26 @@ export class InvitationRepository {
     })
 
     return event !== null
+  }
+
+  /**
+   * Count invitations in a wedding that match specific guest-event pairs.
+   */
+  async countByWeddingAndGuestEventPairs(
+    weddingId: string,
+    pairs: Array<{ guestId: number; eventId: string }>
+  ): Promise<number> {
+    if (pairs.length === 0) return 0
+
+    return this.db.invitation.count({
+      where: {
+        weddingId,
+        OR: pairs.map((pair) => ({
+          guestId: pair.guestId,
+          eventId: pair.eventId,
+        })),
+      },
+    })
   }
 
   /**

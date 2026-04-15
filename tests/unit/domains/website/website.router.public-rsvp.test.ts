@@ -10,7 +10,6 @@ jest.mock('~/server/db', () => ({ db: {} }))
 
 jest.mock('~/server/domains/website', () => ({
   websiteService: {
-    enableWebsite: jest.fn(),
     updateWebsite: jest.fn(),
     updateRsvpEnabled: jest.fn(),
     updateCoverPhoto: jest.fn(),
@@ -18,6 +17,13 @@ jest.mock('~/server/domains/website', () => ({
     getBySubUrl: jest.fn(),
     hasPasswordAccess: jest.fn(),
     verifyWebsitePassword: jest.fn(),
+    fetchWeddingData: jest.fn(),
+  },
+}))
+
+jest.mock('~/server/application/website-management', () => ({
+  websiteManagementService: {
+    enableWebsite: jest.fn(),
     fetchWeddingData: jest.fn(),
   },
 }))

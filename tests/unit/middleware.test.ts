@@ -67,6 +67,10 @@ describe('middleware', () => {
 
     const [
       rootResponse,
+      blogIndexResponse,
+      blogSlugResponse,
+      pricingResponse,
+      openSourceResponse,
       signInResponse,
       acceptInvitationResponse,
       joinResponse,
@@ -76,6 +80,10 @@ describe('middleware', () => {
       blobUploadResponse,
     ] = await Promise.all([
       middleware(createRequest('/')),
+      middleware(createRequest('/blog')),
+      middleware(createRequest('/blog/introducing-oswp')),
+      middleware(createRequest('/pricing')),
+      middleware(createRequest('/open-source')),
       middleware(createRequest('/auth/sign-in')),
       middleware(createRequest('/auth/accept-invitation', undefined, '?invitationId=inv_test_123')),
       middleware(createRequest('/join/sample-token')),
@@ -86,6 +94,10 @@ describe('middleware', () => {
     ])
 
     expect(rootResponse.headers.get('location')).toBeNull()
+    expect(blogIndexResponse.headers.get('location')).toBeNull()
+    expect(blogSlugResponse.headers.get('location')).toBeNull()
+    expect(pricingResponse.headers.get('location')).toBeNull()
+    expect(openSourceResponse.headers.get('location')).toBeNull()
     expect(signInResponse.headers.get('location')).toBeNull()
     expect(acceptInvitationResponse.headers.get('location')).toBeNull()
     expect(joinResponse.headers.get('location')).toBeNull()

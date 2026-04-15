@@ -1,4 +1,3 @@
-import { GuestAgeGroup } from '@prisma/client'
 import { useState } from 'react'
 import {
   type Control,
@@ -25,6 +24,13 @@ import {
   SelectValue,
 } from '~/components/ui/select'
 import { Switch } from '~/components/ui/switch'
+
+const GUEST_AGE_GROUP = {
+  INFANT: 'INFANT',
+  CHILD: 'CHILD',
+  TEEN: 'TEEN',
+  ADULT: 'ADULT',
+} as const
 
 type Tag = {
   id: string
@@ -235,10 +241,10 @@ export const GuestNameForm = ({
                   <SelectValue placeholder='Select age group' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={GuestAgeGroup.INFANT}>Infant (0-2 years)</SelectItem>
-                  <SelectItem value={GuestAgeGroup.CHILD}>Child (3-12 years)</SelectItem>
-                  <SelectItem value={GuestAgeGroup.TEEN}>Teen (13-17 years)</SelectItem>
-                  <SelectItem value={GuestAgeGroup.ADULT}>Adult (18+ years)</SelectItem>
+                  <SelectItem value={GUEST_AGE_GROUP.INFANT}>Infant (0-2 years)</SelectItem>
+                  <SelectItem value={GUEST_AGE_GROUP.CHILD}>Child (3-12 years)</SelectItem>
+                  <SelectItem value={GUEST_AGE_GROUP.TEEN}>Teen (13-17 years)</SelectItem>
+                  <SelectItem value={GUEST_AGE_GROUP.ADULT}>Adult (18+ years)</SelectItem>
                 </SelectContent>
               </Select>
             )}

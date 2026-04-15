@@ -68,12 +68,28 @@ jest.mock('~/trpc/react', () => ({
           invalidate: (...args: unknown[]) => mockDashboardInvalidate(...args),
         },
       },
+      communicationLog: {
+        getByHouseholdId: {
+          invalidate: jest.fn(),
+        },
+      },
     }),
     guestTag: {
       getAll: {
         useQuery: () => ({ data: mockTagsData, refetch: jest.fn() }),
       },
       create: {
+        useMutation: () => ({ mutate: jest.fn() }),
+      },
+    },
+    communicationLog: {
+      getByHouseholdId: {
+        useQuery: () => ({ data: [] }),
+      },
+      addNote: {
+        useMutation: () => ({ mutate: jest.fn() }),
+      },
+      deleteNote: {
         useMutation: () => ({ mutate: jest.fn() }),
       },
     },

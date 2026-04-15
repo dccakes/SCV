@@ -33,7 +33,6 @@ import {
 } from '~/lib/upload-config'
 import { cn } from '~/lib/utils'
 import type { VendorQuote, VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
-import { QuoteType } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
 
 type VendorDetailPanelProps = {
@@ -47,6 +46,9 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'short',
   day: 'numeric',
 })
+const QUOTE_TYPE = {
+  PER_GUEST: 'PER_GUEST',
+} as const
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
@@ -462,7 +464,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                                           {formatPrice(quote.price)}
                                         </p>
                                         <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-wider'>
-                                          {quote.quoteType === QuoteType.PER_GUEST
+                                          {quote.quoteType === QUOTE_TYPE.PER_GUEST
                                             ? '/ guest'
                                             : 'flat fee'}
                                         </span>

@@ -1,13 +1,4 @@
-import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Preview,
-  Text,
-} from '@react-email/components'
+import { Body, Button, Container, Head, Heading, Preview, Text } from '@react-email/components'
 
 import { emailStyles } from '~/emails/email-styles'
 
@@ -29,7 +20,7 @@ export function OrganizationInvitationEmail({
     : `You've been invited to collaborate on ${organizationName}.`
 
   return (
-    <Html>
+    <html lang='en'>
       <Head />
       <Preview>Join {organizationName} on OSWP</Preview>
       <Body style={emailStyles.body}>
@@ -58,6 +49,6 @@ export function OrganizationInvitationEmail({
           </Text>
         </Container>
       </Body>
-    </Html>
+    </html>
   )
 }

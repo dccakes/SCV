@@ -20,9 +20,20 @@ describe('NonAuthenticatedView mobile nav', () => {
 
     expect(within(menuDialog).getByRole('link', { name: 'Features' })).toBeInTheDocument()
     expect(within(menuDialog).getByRole('link', { name: 'Etta AI' })).toBeInTheDocument()
-    expect(within(menuDialog).getByRole('link', { name: 'Architecture' })).toBeInTheDocument()
+    expect(within(menuDialog).getByRole('link', { name: 'Blog' })).toHaveAttribute('href', '/blog')
     expect(within(menuDialog).getByRole('link', { name: 'Pricing' })).toBeInTheDocument()
     expect(within(menuDialog).getByRole('link', { name: /GitHub/i })).toBeInTheDocument()
+  })
+
+  it('includes footer blog and changelog links', () => {
+    render(<NonAuthenticatedView />)
+    const footer = screen.getByRole('contentinfo')
+
+    expect(within(footer).getByRole('link', { name: 'Blog' })).toHaveAttribute('href', '/blog')
+    expect(within(footer).getByRole('link', { name: 'Changelog' })).toHaveAttribute(
+      'href',
+      '/blog?tag=changelog'
+    )
   })
 
   it('supports keyboard close with focus return to trigger', () => {

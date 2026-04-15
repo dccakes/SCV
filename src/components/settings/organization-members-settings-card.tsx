@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertCircle, Loader2, MailPlus, RefreshCw } from 'lucide-react'
+import { AlertCircle, Loader2, MailPlus, RefreshCw, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -11,6 +11,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '~/components/ui/dialog'
@@ -45,6 +46,7 @@ type OrganizationState = {
   isLoading: boolean
   members: Member[]
   organization: Organization | null
+  pendingInvitations: Invitation[]
 }
 
 type AuthFetchError = {
@@ -60,6 +62,14 @@ type FullOrganizationResponse = Organization & {
   members?: Member[]
 }
 
+type Invitation = {
+  email?: string | null
+  expiresAt?: string | Date | null
+  id: string
+  role?: string | null
+  status?: string | null
+}
+
 type HasPermissionResponse = {
   success: boolean
 }
@@ -71,6 +81,7 @@ const initialState: OrganizationState = {
   isLoading: true,
   members: [],
   organization: null,
+  pendingInvitations: [],
 }
 
 function getRoleLabel(role: string) {
@@ -153,11 +164,23 @@ async function fetchOrganizationState(): Promise<Omit<OrganizationState, 'error'
     ),
   ])
 
+  let pendingInvitations: Invitation[] = []
+  try {
+    const invitations = await authGet<Invitation[]>(
+      '/organization/list-invitations',
+      'Unable to load organization invitations.'
+    )
+    pendingInvitations = invitations.filter((invitation) => invitation.status === 'pending')
+  } catch {
+    pendingInvitations = []
+  }
+
   return {
     canInvite: !!invitePermissionResult.success,
     canUpdateMembers: !!updateMemberPermissionResult.success,
     members: organization.members ?? [],
     organization,
+    pendingInvitations,
   }
 }
 
@@ -193,6 +216,7 @@ export function OrganizationMembersSettingsCard() {
           isLoading: false,
           members: [],
           organization: null,
+          pendingInvitations: [],
         })
       })
 
@@ -248,9 +272,49 @@ export function OrganizationMembersSettingsCard() {
           {!state.isLoading && !state.error ? (
             <div className='space-y-3'>
               <OrganizationMembersList
+                canRemoveMembers={state.canUpdateMembers}
                 canUpdateMembers={state.canUpdateMembers}
                 members={state.members}
                 onEditRole={setRoleDialogMember}
+                onRemoveMember={async (member) => {
+                  if (!state.organization) return false
+
+                  try {
+                    await authPost(
+                      '/organization/remove-member',
+                      {
+                        memberIdOrEmail: member.id,
+                        organizationId: state.organization.id,
+                      },
+                      'Unable to remove member.'
+                    )
+                    toast.success('Member removed')
+                    loadOrganizationState()
+                    return true
+                  } catch (error) {
+                    toast.error(error instanceof Error ? error.message : 'Unable to remove member.')
+                    return false
+                  }
+                }}
+              />
+              <PendingInvitationsList
+                canCancelInvitations={state.canInvite}
+                invitations={state.pendingInvitations}
+                onCancelInvitation={async (invitationId) => {
+                  try {
+                    await authPost(
+                      '/organization/cancel-invitation',
+                      { invitationId },
+                      'Unable to cancel invitation.'
+                    )
+                    toast.success('Invitation canceled')
+                    loadOrganizationState()
+                  } catch (error) {
+                    toast.error(
+                      error instanceof Error ? error.message : 'Unable to cancel invitation.'
+                    )
+                  }
+                }}
               />
               <OrganizationPermissionsHint
                 canInvite={state.canInvite}
@@ -264,6 +328,7 @@ export function OrganizationMembersSettingsCard() {
         <InviteMemberDialog
           onInviteSent={() => {
             setInviteDialogOpen(false)
+            loadOrganizationState()
           }}
           open={inviteDialogOpen}
           onOpenChange={setInviteDialogOpen}
@@ -322,14 +387,24 @@ function OrganizationMembersErrorState({ error, onRetry }: { error: string; onRe
 }
 
 function OrganizationMembersList({
+  canRemoveMembers,
   canUpdateMembers,
   members,
   onEditRole,
+  onRemoveMember,
 }: {
+  canRemoveMembers: boolean
   canUpdateMembers: boolean
   members: Member[]
   onEditRole: (member: Member) => void
+  onRemoveMember: (member: Member) => Promise<boolean>
 }) {
+  const [removingMemberId, setRemovingMemberId] = useState<string | null>(null)
+  const [memberPendingRemoval, setMemberPendingRemoval] = useState<Member | null>(null)
+  const [removalConfirmation, setRemovalConfirmation] = useState('')
+
+  const canConfirmRemoval = removalConfirmation.trim().toLowerCase() === 'delete'
+
   if (members.length === 0) {
     return (
       <div className='rounded-lg border border-border/70 border-dashed bg-background/40 p-4 text-foreground/65 text-sm'>
@@ -369,8 +444,171 @@ function OrganizationMembersList({
                 Edit Role
               </Button>
             ) : null}
+            {canRemoveMembers ? (
+              <Button
+                aria-label={`Remove ${member.user?.name || member.user?.email || 'member'}`}
+                className='h-8 w-8'
+                disabled={removingMemberId === member.id}
+                onClick={() => {
+                  setMemberPendingRemoval(member)
+                  setRemovalConfirmation('')
+                }}
+                size='icon'
+                type='button'
+                variant='outline'
+              >
+                {removingMemberId === member.id ? (
+                  <Loader2 className='h-4 w-4 animate-spin' />
+                ) : (
+                  <Trash2 className='h-4 w-4 text-destructive' />
+                )}
+              </Button>
+            ) : null}
           </div>
         ))}
+      <Dialog
+        onOpenChange={(open) => {
+          if (!open) {
+            setMemberPendingRemoval(null)
+            setRemovalConfirmation('')
+          }
+        }}
+        open={!!memberPendingRemoval}
+      >
+        <DialogContent className='sm:max-w-md'>
+          <DialogHeader>
+            <DialogTitle>Confirm Member Removal</DialogTitle>
+            <DialogDescription>
+              Type delete to confirm removing{' '}
+              {memberPendingRemoval?.user?.name ||
+                memberPendingRemoval?.user?.email ||
+                'this member'}
+              .
+            </DialogDescription>
+          </DialogHeader>
+          <div className='space-y-2'>
+            <label
+              className='font-medium text-foreground text-sm'
+              htmlFor='remove-member-confirmation'
+            >
+              Confirmation
+            </label>
+            <Input
+              id='remove-member-confirmation'
+              onChange={(event) => setRemovalConfirmation(event.target.value)}
+              placeholder='delete'
+              value={removalConfirmation}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                setMemberPendingRemoval(null)
+                setRemovalConfirmation('')
+              }}
+              type='button'
+              variant='outline'
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={!canConfirmRemoval || !memberPendingRemoval || !!removingMemberId}
+              onClick={() => {
+                if (!memberPendingRemoval) return
+                const targetMember = memberPendingRemoval
+
+                setRemovingMemberId(targetMember.id)
+                void onRemoveMember(targetMember)
+                  .then((wasRemoved) => {
+                    if (wasRemoved) {
+                      setMemberPendingRemoval(null)
+                      setRemovalConfirmation('')
+                    }
+                  })
+                  .finally(() =>
+                    setRemovingMemberId((current) => (current === targetMember.id ? null : current))
+                  )
+              }}
+              type='button'
+              variant='destructive'
+            >
+              Delete Member
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
+
+function PendingInvitationsList({
+  canCancelInvitations,
+  invitations,
+  onCancelInvitation,
+}: {
+  canCancelInvitations: boolean
+  invitations: Invitation[]
+  onCancelInvitation: (invitationId: string) => Promise<void>
+}) {
+  const [cancelingInvitationId, setCancelingInvitationId] = useState<string | null>(null)
+
+  if (invitations.length === 0) {
+    return null
+  }
+
+  return (
+    <div className='space-y-2 rounded-lg border border-border/70 bg-background/35 p-3'>
+      <p className='font-mono text-[0.62rem] text-foreground/60 uppercase tracking-wider'>
+        Pending Invitations
+      </p>
+      <div className='space-y-2'>
+        {invitations.map((invitation) => (
+          <div
+            className='flex items-center gap-3 rounded-md border border-border/60 bg-background/50 px-3 py-2'
+            key={invitation.id}
+          >
+            <div className='min-w-0 flex-1'>
+              <p className='truncate font-medium text-sm'>{invitation.email || 'Unknown email'}</p>
+              <p className='text-foreground/60 text-xs'>
+                Expires{' '}
+                {invitation.expiresAt
+                  ? new Date(invitation.expiresAt).toLocaleDateString()
+                  : 'soon'}
+              </p>
+            </div>
+            <Badge variant='outline'>{getRoleLabel(invitation.role || 'member')}</Badge>
+            {canCancelInvitations ? (
+              <Button
+                className='gap-2'
+                disabled={cancelingInvitationId === invitation.id}
+                onClick={() => {
+                  setCancelingInvitationId(invitation.id)
+                  void onCancelInvitation(invitation.id).finally(() =>
+                    setCancelingInvitationId((current) =>
+                      current === invitation.id ? null : current
+                    )
+                  )
+                }}
+                size='sm'
+                type='button'
+                variant='outline'
+              >
+                {cancelingInvitationId === invitation.id ? (
+                  <>
+                    <Loader2 className='h-4 w-4 animate-spin' />
+                    Canceling...
+                  </>
+                ) : (
+                  <>
+                    <X className='h-4 w-4' />
+                    Cancel Invite
+                  </>
+                )}
+              </Button>
+            ) : null}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

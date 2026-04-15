@@ -36,6 +36,7 @@ export const mockFindByUserId = jest.fn()
 export const mockCreate = jest.fn()
 export const mockUpdate = jest.fn()
 export const mockExistsForUser = jest.fn()
+export const mockFindWeddingIdByValidTokenAndSubUrl = jest.fn()
 
 export const WeddingRepository = jest.fn().mockImplementation(() => ({
   findById: mockFindById,
@@ -44,6 +45,7 @@ export const WeddingRepository = jest.fn().mockImplementation(() => ({
   create: mockCreate,
   update: mockUpdate,
   existsForUser: mockExistsForUser,
+  findWeddingIdByValidTokenAndSubUrl: mockFindWeddingIdByValidTokenAndSubUrl,
 }))
 
 // Helper to reset all mocks
@@ -54,5 +56,6 @@ export const resetMocks = (): void => {
   mockCreate.mockReset()
   mockUpdate.mockReset()
   mockExistsForUser.mockReset()
+  mockFindWeddingIdByValidTokenAndSubUrl.mockReset()
   WeddingRepository.mockClear()
 }

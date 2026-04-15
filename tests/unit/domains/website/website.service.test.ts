@@ -2,65 +2,35 @@
  * Tests for Website Domain Service
  */
 
-import { TRPCClientError } from '@trpc/client'
-import { TRPCError } from '@trpc/server'
-
 // Must mock before importing the service
 jest.mock('~/server/authz/permission-checker', () => ({
   requirePermission: jest.fn(),
 }))
 
 jest.mock('~/server/domains/website/website.repository')
-jest.mock('~/server/infrastructure/database/client')
 
 import { requirePermission } from '~/server/authz/permission-checker'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   mockBelongsToWedding,
-  mockCreate,
   mockFindBySubUrl,
-  mockFindBySubUrlWithQuestions,
   mockFindByWeddingId,
   mockUpdate,
   mockUpdateCoverPhoto,
   mockUpdateRsvpEnabled,
   mockWebsite,
-  mockWebsiteWithQuestions,
   resetMocks as resetWebsiteMocks,
   WebsiteRepository,
 } from '~/server/domains/website/website.repository'
 import { WebsiteService } from '~/server/domains/website/website.service'
-// @ts-expect-error - Importing mock functions from mocked module
-import {
-  db,
-  mockEventFindMany,
-  mockWeddingFindUnique,
-  resetMocks as resetDbMocks,
-} from '~/server/infrastructure/database/client'
 
-// Create typed aliases for mocked functions
-const mockCreateFn = mockCreate as jest.Mock
 const mockFindByWeddingIdFn = mockFindByWeddingId as jest.Mock
 const mockFindBySubUrlFn = mockFindBySubUrl as jest.Mock
-const mockFindBySubUrlWithQuestionsFn = mockFindBySubUrlWithQuestions as jest.Mock
 const mockUpdateFn = mockUpdate as jest.Mock
 const mockUpdateRsvpEnabledFn = mockUpdateRsvpEnabled as jest.Mock
 const mockUpdateCoverPhotoFn = mockUpdateCoverPhoto as jest.Mock
-const mockWeddingFindUniqueFn = mockWeddingFindUnique as jest.Mock
-const mockEventFindManyFn = mockEventFindMany as jest.Mock
 const mockRequirePermission = requirePermission as jest.Mock
 const mockBelongsToWeddingFn = mockBelongsToWedding as jest.Mock
-
-const mockWedding = {
-  id: 'wedding-123',
-  groomFirstName: 'John',
-  groomLastName: 'Doe',
-  brideFirstName: 'Jane',
-  brideLastName: 'Smith',
-  enabledAddOns: [],
-  createdAt: new Date('2024-01-01'),
-  updatedAt: new Date('2024-01-01'),
-}
 
 describe('WebsiteService', () => {
   let websiteService: WebsiteService
@@ -75,7 +45,6 @@ describe('WebsiteService', () => {
 
   beforeEach(() => {
     resetWebsiteMocks()
-    resetDbMocks()
     mockHashPassword.mockReset()
     mockVerifyPassword.mockReset()
     mockCreateAccessToken.mockReset()
@@ -90,96 +59,7 @@ describe('WebsiteService', () => {
       createAccessToken: mockCreateAccessToken,
       verifyAccessToken: mockVerifyAccessToken,
     }
-    websiteService = new WebsiteService(mockRepository, db, mockPasswordService as never)
-  })
-
-  describe('enableWebsite', () => {
-    it('should enable website add-on for existing wedding', async () => {
-      mockWeddingFindUniqueFn.mockResolvedValue(mockWedding)
-      mockFindBySubUrlFn.mockResolvedValue(null) // URL not taken
-      mockCreateFn.mockResolvedValue(mockWebsite)
-
-      const result = await websiteService.enableWebsite(actorContext, 'wedding-123', {
-        basePath: 'https://example.com',
-        email: 'john@example.com',
-      })
-
-      expect(result).toEqual(mockWebsite)
-      expect(mockWeddingFindUniqueFn).toHaveBeenCalledWith({
-        where: { id: 'wedding-123' },
-      })
-      expect(mockCreateFn).toHaveBeenCalledWith({
-        weddingId: 'wedding-123',
-        url: 'https://example.com/johndoeandjanesmith',
-        subUrl: 'johndoeandjanesmith',
-      })
-    })
-
-    it('should generate lowercase subUrl from wedding couple names', async () => {
-      const weddingWithCaps = {
-        ...mockWedding,
-        groomFirstName: 'JOHN',
-        groomLastName: 'DOE',
-        brideFirstName: 'JANE',
-        brideLastName: 'SMITH',
-      }
-      mockWeddingFindUniqueFn.mockResolvedValue(weddingWithCaps)
-      mockFindBySubUrlFn.mockResolvedValue(null)
-      mockCreateFn.mockResolvedValue(mockWebsite)
-
-      await websiteService.enableWebsite(actorContext, 'wedding-123', {
-        basePath: 'https://example.com',
-        email: 'john@example.com',
-      })
-
-      expect(mockCreateFn).toHaveBeenCalledWith(
-        expect.objectContaining({
-          subUrl: 'johndoeandjanesmith',
-          url: 'https://example.com/johndoeandjanesmith',
-        })
-      )
-    })
-
-    it('should throw error when wedding not found', async () => {
-      mockWeddingFindUniqueFn.mockResolvedValue(null)
-
-      await expect(
-        websiteService.enableWebsite(actorContext, 'wedding-123', {
-          basePath: 'https://example.com',
-          email: 'john@example.com',
-        })
-      ).rejects.toThrow(TRPCError)
-
-      await expect(
-        websiteService.enableWebsite(actorContext, 'wedding-123', {
-          basePath: 'https://example.com',
-          email: 'john@example.com',
-        })
-      ).rejects.toMatchObject({
-        code: 'NOT_FOUND',
-      })
-    })
-
-    it('should throw error when URL already taken', async () => {
-      mockWeddingFindUniqueFn.mockResolvedValue(mockWedding)
-      mockFindBySubUrlFn.mockResolvedValue(mockWebsite) // URL is taken
-
-      await expect(
-        websiteService.enableWebsite(actorContext, 'wedding-123', {
-          basePath: 'https://example.com',
-          email: 'john@example.com',
-        })
-      ).rejects.toThrow(TRPCError)
-
-      await expect(
-        websiteService.enableWebsite(actorContext, 'wedding-123', {
-          basePath: 'https://example.com',
-          email: 'john@example.com',
-        })
-      ).rejects.toMatchObject({
-        code: 'CONFLICT',
-      })
-    })
+    websiteService = new WebsiteService(mockRepository, mockPasswordService as never)
   })
 
   describe('updateWebsite', () => {
@@ -376,70 +256,6 @@ describe('WebsiteService', () => {
 
       expect(result).toBeNull()
       expect(mockCreateAccessToken).not.toHaveBeenCalled()
-    })
-  })
-
-  describe('fetchWeddingData', () => {
-    const mockEvents = [
-      {
-        id: 'event-123',
-        name: 'Wedding Day',
-        date: new Date('2026-06-15'),
-        startTime: '14:00',
-        endTime: '16:00',
-        venue: 'Beach Resort',
-        attire: 'Formal',
-        description: 'Our special day',
-        weddingId: 'wedding-123',
-        collectRsvp: true,
-        questions: [],
-      },
-    ]
-
-    it('should fetch complete wedding data', async () => {
-      mockFindBySubUrlWithQuestionsFn.mockResolvedValue(mockWebsiteWithQuestions)
-      mockWeddingFindUniqueFn.mockResolvedValue(mockWedding)
-      mockEventFindManyFn.mockResolvedValue(mockEvents)
-
-      const result = await websiteService.fetchWeddingData('johndoeandjanesmith', undefined)
-
-      expect(result).toMatchObject({
-        groomFirstName: 'John',
-        groomLastName: 'Doe',
-        brideFirstName: 'Jane',
-        brideLastName: 'Smith',
-        website: expect.objectContaining({
-          id: 'website-123',
-          subUrl: 'johndoeandjanesmith',
-          isPasswordEnabled: false,
-        }),
-        events: mockEvents,
-      })
-      expect(result.website).not.toHaveProperty('password')
-      expect(result.date).toBeDefined()
-      expect(result.daysRemaining).toBeGreaterThanOrEqual(0)
-    })
-
-    it('should throw error when website does not exist', async () => {
-      mockFindBySubUrlWithQuestionsFn.mockResolvedValue(null)
-
-      await expect(websiteService.fetchWeddingData('nonexistent', undefined)).rejects.toThrow(
-        TRPCClientError
-      )
-    })
-
-    it('should throw error when wedding does not exist', async () => {
-      mockFindBySubUrlWithQuestionsFn.mockResolvedValue(mockWebsiteWithQuestions)
-      mockWeddingFindUniqueFn.mockResolvedValue(null)
-
-      await expect(
-        websiteService.fetchWeddingData('johndoeandjanesmith', undefined)
-      ).rejects.toThrow(TRPCError)
-      await expect(
-        websiteService.fetchWeddingData('johndoeandjanesmith', undefined)
-      ).rejects.toMatchObject({
-        code: 'INTERNAL_SERVER_ERROR',
-      })
     })
   })
 })
