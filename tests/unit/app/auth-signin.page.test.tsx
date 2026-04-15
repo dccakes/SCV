@@ -32,4 +32,24 @@ describe('SignInPage (/auth/signin alias)', () => {
       '/auth/accept-invitation?invitationId=inv_test_123'
     )
   })
+
+  it('forwards only allowlisted auth handoff params', async () => {
+    await SignInPage({
+      searchParams: Promise.resolve({
+        callbackUrl: '/dashboard',
+        redirectTo: '/auth/accept-invitation?invitationId=inv_test_123',
+        unexpected: 'drop-me',
+      }),
+    })
+
+    const redirectArg = mockRedirect.mock.calls[0]?.[0]
+    const url = new URL(redirectArg, 'https://example.com')
+
+    expect(url.pathname).toBe('/auth/sign-in')
+    expect(url.searchParams.get('callbackUrl')).toBe('/dashboard')
+    expect(url.searchParams.get('redirectTo')).toBe(
+      '/auth/accept-invitation?invitationId=inv_test_123'
+    )
+    expect(url.searchParams.get('unexpected')).toBeNull()
+  })
 })

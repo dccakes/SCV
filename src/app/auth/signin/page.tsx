@@ -2,18 +2,8 @@ import { redirect } from 'next/navigation'
 
 type SearchParamValue = string | string[] | undefined
 
-const appendSearchParam = (params: URLSearchParams, key: string, value: SearchParamValue): void => {
-  if (typeof value === 'string') {
-    params.append(key, value)
-    return
-  }
-
-  if (Array.isArray(value)) {
-    value.forEach((item) => {
-      params.append(key, item)
-    })
-  }
-}
+const CANONICAL_SIGN_IN_PATH = '/auth/sign-in'
+const ALLOWED_HANDOFF_PARAMS = ['redirectTo', 'callbackUrl'] as const
 
 export default async function SignInPage({
   searchParams,
@@ -23,11 +13,20 @@ export default async function SignInPage({
   const resolvedSearchParams = (await searchParams) ?? {}
   const nextSearchParams = new URLSearchParams()
 
-  Object.entries(resolvedSearchParams).forEach(([key, value]) => {
-    appendSearchParam(nextSearchParams, key, value)
+  ALLOWED_HANDOFF_PARAMS.forEach((key) => {
+    const value = resolvedSearchParams[key]
+    if (typeof value === 'string') {
+      nextSearchParams.set(key, value)
+      return
+    }
+
+    if (Array.isArray(value) && value[0]) {
+      nextSearchParams.set(key, value[0])
+    }
   })
 
   const queryString = nextSearchParams.toString()
-  const destination = queryString.length > 0 ? `/auth/sign-in?${queryString}` : '/auth/sign-in'
+  const destination =
+    queryString.length > 0 ? `${CANONICAL_SIGN_IN_PATH}?${queryString}` : CANONICAL_SIGN_IN_PATH
   redirect(destination)
 }

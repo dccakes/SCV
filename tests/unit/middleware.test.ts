@@ -65,16 +65,25 @@ describe('middleware', () => {
   it('allows unauthenticated users on public routes', async () => {
     mockGetSessionCookie.mockReturnValue(null)
 
-    const rootResponse = await middleware(createRequest('/'))
-    const signInResponse = await middleware(createRequest('/auth/sign-in'))
-    const acceptInvitationResponse = await middleware(
-      createRequest('/auth/accept-invitation', undefined, '?invitationId=inv_test_123')
-    )
-    const joinResponse = await middleware(createRequest('/join/sample-token'))
-    const websiteResponse = await middleware(createRequest('/shrek-and-fiona'))
-    const websiteRsvpResponse = await middleware(createRequest('/shrek-and-fiona/rsvp'))
-    const authApiResponse = await middleware(createRequest('/api/auth/session'))
-    const blobUploadResponse = await middleware(createRequest('/api/blob/upload'))
+    const [
+      rootResponse,
+      signInResponse,
+      acceptInvitationResponse,
+      joinResponse,
+      websiteResponse,
+      websiteRsvpResponse,
+      authApiResponse,
+      blobUploadResponse,
+    ] = await Promise.all([
+      middleware(createRequest('/')),
+      middleware(createRequest('/auth/sign-in')),
+      middleware(createRequest('/auth/accept-invitation', undefined, '?invitationId=inv_test_123')),
+      middleware(createRequest('/join/sample-token')),
+      middleware(createRequest('/shrek-and-fiona')),
+      middleware(createRequest('/shrek-and-fiona/rsvp')),
+      middleware(createRequest('/api/auth/session')),
+      middleware(createRequest('/api/blob/upload')),
+    ])
 
     expect(rootResponse.headers.get('location')).toBeNull()
     expect(signInResponse.headers.get('location')).toBeNull()
