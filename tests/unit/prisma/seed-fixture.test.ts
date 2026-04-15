@@ -24,6 +24,9 @@ type SeedFixture = {
     website: Array<{ slug: string }>
   }
   responses: Array<{ questionSlug: string }>
+  website: {
+    coverPhotoUrl: string | null
+  }
 }
 
 const fixturePath = resolve(process.cwd(), 'prisma/seed-fixture.json')
@@ -101,5 +104,10 @@ describe('Shrek and Fiona seed fixture', () => {
 
     expect(names).toEqual(expect.arrayContaining(['Prince Charming', 'Captain Hook', 'Papa Bear']))
     expect(names).toEqual(expect.arrayContaining(['Mama Bear', 'Baby Bear']))
+  })
+
+  it('does not depend on external CDN assets for cover photo in local/CI fixtures', () => {
+    const fixture = readFixture()
+    expect(fixture.website.coverPhotoUrl).toBeNull()
   })
 })
