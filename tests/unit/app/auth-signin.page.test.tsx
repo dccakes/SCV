@@ -12,7 +12,7 @@ describe('SignInPage (/auth/signin alias)', () => {
   })
 
   it('redirects to canonical sign-in route', async () => {
-    await SignInPage()
+    await SignInPage({})
 
     expect(mockRedirect).toHaveBeenCalledWith('/auth/sign-in')
   })

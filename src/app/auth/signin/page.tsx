@@ -5,12 +5,10 @@ type SearchParamValue = string | string[] | undefined
 const CANONICAL_SIGN_IN_PATH = '/auth/sign-in'
 const ALLOWED_HANDOFF_PARAMS = ['redirectTo', 'callbackUrl'] as const
 
-export default async function SignInPage({
-  searchParams,
-}: {
+export default async function SignInPage(props: {
   searchParams?: Promise<Record<string, SearchParamValue>>
-} = {}) {
-  const resolvedSearchParams = (await searchParams) ?? {}
+}) {
+  const resolvedSearchParams = (await props.searchParams) ?? {}
   const nextSearchParams = new URLSearchParams()
 
   ALLOWED_HANDOFF_PARAMS.forEach((key) => {
