@@ -207,6 +207,10 @@ export function EventQuestionFormDialog({
               <p className='text-muted-foreground text-xs'>
                 Guests must answer multiple-choice questions.
               </p>
+              <p className='text-muted-foreground text-xs'>
+                An <strong>Other</strong> write-in option is automatically shown in the public RSVP
+                flow.
+              </p>
               <div className='space-y-2'>
                 {options.map((option, index) => (
                   <div

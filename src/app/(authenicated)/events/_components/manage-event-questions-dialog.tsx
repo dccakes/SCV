@@ -105,6 +105,10 @@ export function ManageEventQuestionsDialog({
                 Add question
               </Button>
             </div>
+            <p className='text-muted-foreground text-xs'>
+              Multiple-choice questions automatically include an <strong>Other</strong> write-in
+              answer in public RSVP.
+            </p>
 
             {questions.length === 0 ? (
               <div className='rounded-md border border-dashed p-6 text-center text-muted-foreground text-sm'>
