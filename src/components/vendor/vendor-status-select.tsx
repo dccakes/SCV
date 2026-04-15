@@ -1,7 +1,5 @@
 'use client'
 
-import { VendorStatus } from '@prisma/client'
-
 import {
   Select,
   SelectContent,
@@ -9,6 +7,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+import type { Vendor } from '~/server/domains/vendor/vendor.types'
+
+type VendorStatus = Vendor['status']
+
+const VENDOR_STATUSES = [
+  'NOT_AVAILABLE',
+  'DECLINED',
+  'IN_REVIEW',
+  'PRE_SELECTED',
+  'IN_NEGOTIATION',
+  'SELECTED',
+] satisfies VendorStatus[]
 
 const STATUS_LABELS: Record<VendorStatus, string> = {
   NOT_AVAILABLE: 'Not Available',
@@ -52,7 +62,7 @@ export function VendorStatusSelect({ value, onChange, disabled }: VendorStatusSe
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        {Object.values(VendorStatus).map((status) => (
+        {VENDOR_STATUSES.map((status) => (
           <SelectItem
             key={status}
             value={status}

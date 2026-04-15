@@ -3,7 +3,7 @@ import path from 'node:path'
 
 import matter from 'gray-matter'
 
-import type { BlogFrontmatter, BlogPost, BlogPostSummary } from '~/lib/blog/types'
+import type { BlogFrontmatter, BlogPost, BlogPostDetail, BlogPostSummary } from '~/lib/blog/types'
 
 const DEFAULT_OG_IMAGE = '/og-default.jpg'
 const BLOG_DIR = path.join(process.cwd(), 'content/blog')
@@ -125,16 +125,14 @@ export function getAllPublishedPosts(options?: {
 export function getPostBySlug(
   slug: string,
   options?: { contentDir?: string }
-): BlogPostSummary | null {
+): BlogPostDetail | null {
   const post = readPostsDirectory(options?.contentDir).find((entry) => entry.slug === slug)
   if (!post || post.draft) {
     return null
   }
 
-  const { publishedDate: _publishedDate, ...rest } = post
-
   return {
-    ...rest,
+    ...post,
     ogImageUrl: getOgImageUrl(post),
   }
 }

@@ -27,3 +27,7 @@ export type BlogPost = {
 export type BlogPostSummary = Omit<BlogPost, 'body' | 'publishedDate'> & {
   ogImageUrl: string
 }
+
+export type BlogPostDetail = BlogPost & {
+  ogImageUrl: string
+}

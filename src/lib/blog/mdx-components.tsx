@@ -17,7 +17,7 @@ export const mdxComponents = {
     <code className='rounded bg-muted px-1.5 py-0.5 font-mono text-sm' {...props} />
   ),
   img: ({ src, alt = '', width, height, ...props }: MdxImageProps) => {
-    if (!src) {
+    if (typeof src !== 'string' || src.length === 0) {
       return null
     }
 
