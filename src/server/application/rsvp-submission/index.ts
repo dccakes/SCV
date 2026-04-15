@@ -5,10 +5,27 @@
  */
 
 import { RsvpSubmissionService } from '~/server/application/rsvp-submission/rsvp-submission.service'
+import { GuestRepository } from '~/server/domains/guest/guest.repository'
+import { HouseholdRepository } from '~/server/domains/household/household.repository'
+import { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
+import { QuestionRepository } from '~/server/domains/question/question.repository'
+import { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
 import { db } from '~/server/infrastructure/database'
 
-// Create singleton instance
-export const rsvpSubmissionService = new RsvpSubmissionService(db)
+const invitationRepo = new InvitationRepository(db)
+const questionRepo = new QuestionRepository(db)
+const guestRepo = new GuestRepository(db)
+const householdRepo = new HouseholdRepository(db)
+const weddingRepo = new WeddingRepository(db)
+
+export const rsvpSubmissionService = new RsvpSubmissionService(
+  invitationRepo,
+  questionRepo,
+  guestRepo,
+  householdRepo,
+  weddingRepo,
+  db
+)
 
 // Export router
 export { rsvpSubmissionRouter } from '~/server/application/rsvp-submission/rsvp-submission.router'

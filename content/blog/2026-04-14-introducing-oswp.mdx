@@ -1,0 +1,79 @@
+---
+title: "Introducing OSWP: plan your wedding without handing your guest list to a SaaS company"
+description: "OSWP is an open-source, AI-native wedding planning platform you can self-host. Your data stays yours. Etta, the built-in AI assistant, helps with the hard parts."
+publishedAt: "2026-04-14"
+author: "The OSWP Team"
+tags: ["product", "open-source"]
+coverImage: "/blog/introducing-oswp-cover.jpg"
+ogImage: "/blog/introducing-oswp-cover.jpg"
+draft: false
+---
+
+Most wedding planning software wants two things from you: your email address and your guest list. Once you hand those over, you're locked into their pricing tiers, their design templates, and their definition of what your wedding should look like.
+
+We built OSWP because we think that's a bad trade.
+
+## What OSWP is
+
+OSWP is a wedding planning platform you can run yourself. It handles the parts of wedding planning that are genuinely annoying to manage in spreadsheets:
+
+- **Guest list and RSVPs** — organize guests into households, invite different subsets to different events (ceremony, rehearsal dinner, after-party), and collect RSVPs with custom questions
+- **Vendor tracking** — quotes, files, and notes in one place, with inline PDF and image previews
+- **Your wedding website** — a password-protected site with a unique URL for your guests, with RSVP collection built in
+- **Etta, your AI wedding assistant** — a built-in AI agent that helps couples think through decisions, draft communications, and work through the logistics that are hard to Google
+
+It's built on Next.js 15, PostgreSQL, and tRPC. The entire codebase is on GitHub.
+
+## Why we made it open source
+
+Wedding planning is a moment that matters. The data involved — who's coming, who's related to whom, who has dietary restrictions, who the couple trusts with plus-ones — is personal in a way that most SaaS data isn't.
+
+We made OSWP open source because we believe couples should be able to verify what happens to that data, and because self-hosting something for a wedding (a finite event with a clear end date) is actually a very reasonable option for technically-minded couples and their vendors.
+
+Open source also means the platform doesn't disappear if we stop maintaining it. Your wedding files don't get held hostage by a company going bankrupt six months before the big day.
+
+## What Etta actually does
+
+Etta is not a chatbot wrapper. Every Etta feature is designed around a specific wedding planning pain point.
+
+Right now, Etta helps couples:
+- Think through seating decisions when the family dynamics are complicated
+- Draft save-the-date and invitation wording in their own voice
+- Work through vendor trade-offs when the budget is tight and the options are unclear
+
+Etta is built on Claude (Anthropic). The AI features are optional — if you don't set an `ANTHROPIC_API_KEY`, the rest of the platform works fine.
+
+## Try the live demo
+
+We run a demo instance at **[oswp.carvallo.io](https://oswp.carvallo.io)** on real infrastructure. Log in as Shrek & Fiona and explore the full app — guest list, RSVPs, vendor tracking, the wedding website, and Etta.
+
+| Account | Email | Password |
+|---|---|---|
+| Primary couple | shrek@swamp.wed | password123 |
+| Second partner | fiona@swamp.wed | password123 |
+
+## Self-host in under 15 minutes
+
+OSWP runs anywhere you can run a Next.js app and a PostgreSQL database. Three paths:
+
+**Vercel + Supabase** (easiest): fork the repo, import it at vercel.com/new, add your environment variables, and deploy. Vercel handles the build; Supabase's free tier handles the database.
+
+**Docker Compose**: clone the repo and run `docker-compose up`. Works on any VPS or homelab.
+
+**Fly.io**: one-command deploys with managed infrastructure.
+
+The [full self-hosting guide](https://github.com/dccakes/SCV/blob/main/docs/self-hosting.md) covers every environment variable, reverse proxy setup, and security checklist.
+
+## For contributors
+
+The architecture is domain-driven: each entity (Event, Guest, Household, Invitation, etc.) lives in its own domain folder with its own repository, service, and router. The patterns are documented in the repo's `CLAUDE.md` and `CONTRIBUTING.md`.
+
+If you want to contribute, start with [GitHub Discussions](https://github.com/dccakes/SCV/discussions) — propose a feature before opening a PR and you'll save yourself the rework.
+
+The repo is at **[github.com/dccakes/SCV](https://github.com/dccakes/SCV)**.
+
+---
+
+We're still early. There are features missing. There are rough edges. But the core loop — manage your guests, collect RSVPs, track vendors, build a website — works, and it's yours to run.
+
+If you're planning a wedding and you'd rather not hand your guest list to another SaaS company, give OSWP a try.

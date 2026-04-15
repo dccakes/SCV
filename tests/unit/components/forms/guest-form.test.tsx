@@ -627,6 +627,109 @@ describe('GuestForm - Common Use Cases', () => {
       expect(data.guestParty[0]?.tagIds).toHaveLength(3)
     })
 
+    it('should preserve existing tagIds when only other fields change', () => {
+      const validTagIds = [
+        '123e4567-e89b-12d3-a456-426614174000',
+        '123e4567-e89b-12d3-a456-426614174001',
+      ]
+
+      const { result } = renderHook(() => {
+        const form = useForm<HouseholdFormData>({
+          mode: 'onChange',
+          defaultValues: {
+            householdId: 'household-123',
+            guestParty: [
+              {
+                guestId: 1,
+                firstName: 'John',
+                lastName: 'Doe',
+                isPrimaryContact: true,
+                email: null,
+                phone: null,
+                ageGroup: 'ADULT' as const,
+                isTagAlong: false,
+                tagIds: validTagIds,
+                invites: { 'event-1': 'Invited' },
+              },
+            ],
+            gifts: [],
+            deletedGuests: [],
+          },
+        })
+
+        // Access formState to subscribe to changes
+        void form.formState.isDirty
+
+        return form
+      })
+
+      // Change only the name (not tags)
+      act(() => {
+        result.current.setValue('guestParty.0.firstName', 'Jonathan', { shouldDirty: true })
+      })
+
+      // Tags should be untouched in the full form data
+      const data = result.current.getValues()
+      expect(data.guestParty[0]?.tagIds).toEqual(validTagIds)
+      expect(data.guestParty[0]?.firstName).toBe('Jonathan')
+
+      // Simulate what onSubmit does: send full guestParty array
+      const payload = {
+        householdId: data.householdId,
+        guestParty: data.guestParty,
+        gifts: data.gifts,
+      }
+
+      // The tagIds should still be in the payload
+      expect(payload.guestParty[0]?.tagIds).toEqual(validTagIds)
+    })
+
+    it('should mark form dirty when tagIds are updated via setValue', () => {
+      const { result } = renderHook(() => {
+        const form = useForm<HouseholdFormData>({
+          mode: 'onChange',
+          defaultValues: {
+            householdId: 'household-123',
+            guestParty: [
+              {
+                guestId: 1,
+                firstName: 'John',
+                lastName: 'Doe',
+                isPrimaryContact: true,
+                email: null,
+                phone: null,
+                ageGroup: 'ADULT' as const,
+                isTagAlong: false,
+                tagIds: [],
+                invites: { 'event-1': 'Invited' },
+              },
+            ],
+            gifts: [],
+            deletedGuests: [],
+          },
+        })
+
+        // Access formState to subscribe
+        void form.formState.isDirty
+
+        return form
+      })
+
+      expect(result.current.formState.isDirty).toBe(false)
+
+      // Set tags via setValue (same as handleTagsChange in guest-names.tsx)
+      act(() => {
+        result.current.setValue('guestParty.0.tagIds', ['123e4567-e89b-12d3-a456-426614174000'], {
+          shouldDirty: true,
+        })
+      })
+
+      expect(result.current.formState.isDirty).toBe(true)
+
+      const data = result.current.getValues()
+      expect(data.guestParty[0]?.tagIds).toEqual(['123e4567-e89b-12d3-a456-426614174000'])
+    })
+
     it('should accept guest with empty tags array', async () => {
       const { result } = renderHook(() =>
         useForm<HouseholdFormData>({

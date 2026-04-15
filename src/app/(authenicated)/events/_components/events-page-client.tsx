@@ -11,6 +11,7 @@ import { Calendar, Loader2, Plus } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { toast } from 'sonner'
 import { EventCard } from '@/app/(authenicated)/events/_components/event-card'
+import { ManageEventGuestsDialog } from '@/app/(authenicated)/events/_components/manage-event-guests-dialog'
 import {
   type EventFormData,
   transformToServerInput,
@@ -40,6 +41,9 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState<EventWithStats | undefined>(undefined)
   const [deletingEvent, setDeletingEvent] = useState<EventWithStats | undefined>(undefined)
+  const [managingGuestsEvent, setManagingGuestsEvent] = useState<EventWithStats | undefined>(
+    undefined
+  )
   const utils = api.useUtils()
 
   // Fetch events with RSVP statistics
@@ -144,6 +148,15 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
     [events]
   )
 
+  const handleManageGuests = useCallback(
+    (eventId: string) => {
+      const eventToManage = events.find((event) => event.id === eventId)
+      if (!eventToManage) return
+      setManagingGuestsEvent(eventToManage)
+    },
+    [events]
+  )
+
   // Show loading state
   if (isLoading && initialEvents.length === 0) {
     return (
@@ -217,6 +230,7 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
             event={event}
             onEdit={handleEditEvent}
             onDelete={handleDeleteEvent}
+            onManageGuests={handleManageGuests}
           />
         ))}
       </div>
@@ -272,6 +286,14 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {managingGuestsEvent ? (
+        <ManageEventGuestsDialog
+          event={managingGuestsEvent}
+          open
+          onOpenChange={(open) => !open && setManagingGuestsEvent(undefined)}
+        />
+      ) : null}
     </>
   )
 }

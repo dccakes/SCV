@@ -17,6 +17,7 @@ interface EttaChatProps {
   persona: 'planner' | 'concierge'
   guestToken?: string
   isConfigured?: boolean
+  onClose?: () => void
 }
 
 type Part = UIMessage['parts'][number]
@@ -110,7 +111,7 @@ function MessageParts({ parts }: { parts: Part[] }) {
 
 // ── Main chat component ──────────────────────────────────────────────────────
 
-export function EttaChat({ persona, guestToken, isConfigured = true }: EttaChatProps) {
+export function EttaChat({ persona, guestToken, isConfigured = true, onClose }: EttaChatProps) {
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -172,6 +173,25 @@ export function EttaChat({ persona, guestToken, isConfigured = true }: EttaChatP
           <span className={`h-1.5 w-1.5 rounded-full ${statusDotClassName}`} />
           {statusLabel}
         </span>
+        {onClose && (
+          <button
+            type='button'
+            aria-label='Close Etta'
+            onClick={onClose}
+            className='flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md text-sidebar-cream/50 transition-colors hover:bg-white/[0.06] hover:text-sidebar-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-etta-ink'
+          >
+            <svg
+              aria-hidden='true'
+              className='h-4 w-4'
+              fill='none'
+              stroke='currentColor'
+              viewBox='0 0 24 24'
+              strokeWidth={1.5}
+            >
+              <path strokeLinecap='round' strokeLinejoin='round' d='M6 18L18 6M6 6l12 12' />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Messages */}

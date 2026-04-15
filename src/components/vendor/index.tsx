@@ -1,6 +1,5 @@
 'use client'
 
-import { VendorCategory } from '@prisma/client'
 import { useState } from 'react'
 
 import { VendorCategorySection } from '~/components/vendor/vendor-category-section'
@@ -8,15 +7,17 @@ import { VendorDetailPanel } from '~/components/vendor/vendor-detail-panel'
 import type { VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
 
-const CATEGORY_ORDER: VendorCategory[] = [
-  VendorCategory.VENUE,
-  VendorCategory.CATERING,
-  VendorCategory.PHOTOGRAPHER,
-  VendorCategory.VIDEOGRAPHER,
-  VendorCategory.MUSIC,
-  VendorCategory.FLOWERS,
-  VendorCategory.OTHER,
-]
+type VendorCategory = VendorWithQuotes['category']
+
+const CATEGORY_ORDER = [
+  'VENUE',
+  'CATERING',
+  'PHOTOGRAPHER',
+  'VIDEOGRAPHER',
+  'MUSIC',
+  'FLOWERS',
+  'OTHER',
+] satisfies VendorCategory[]
 
 type VendorListProps = {
   initialVendors: VendorWithQuotes[]

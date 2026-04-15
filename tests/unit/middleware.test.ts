@@ -66,6 +66,10 @@ describe('middleware', () => {
     mockGetSessionCookie.mockReturnValue(null)
 
     const rootResponse = await middleware(createRequest('/'))
+    const blogIndexResponse = await middleware(createRequest('/blog'))
+    const blogSlugResponse = await middleware(createRequest('/blog/introducing-oswp'))
+    const pricingResponse = await middleware(createRequest('/pricing'))
+    const openSourceResponse = await middleware(createRequest('/open-source'))
     const signInResponse = await middleware(createRequest('/auth/sign-in'))
     const joinResponse = await middleware(createRequest('/join/sample-token'))
     const websiteResponse = await middleware(createRequest('/shrek-and-fiona'))
@@ -74,6 +78,10 @@ describe('middleware', () => {
     const blobUploadResponse = await middleware(createRequest('/api/blob/upload'))
 
     expect(rootResponse.headers.get('location')).toBeNull()
+    expect(blogIndexResponse.headers.get('location')).toBeNull()
+    expect(blogSlugResponse.headers.get('location')).toBeNull()
+    expect(pricingResponse.headers.get('location')).toBeNull()
+    expect(openSourceResponse.headers.get('location')).toBeNull()
     expect(signInResponse.headers.get('location')).toBeNull()
     expect(joinResponse.headers.get('location')).toBeNull()
     expect(websiteResponse.headers.get('location')).toBeNull()

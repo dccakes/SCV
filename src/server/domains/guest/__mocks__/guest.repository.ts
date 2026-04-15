@@ -52,9 +52,11 @@ export const mockUpdateTags = jest.fn()
 export const mockUpsert = jest.fn()
 export const mockDelete = jest.fn()
 export const mockDeleteMany = jest.fn()
+export const mockClearPrimaryContactsByHousehold = jest.fn()
 export const mockExists = jest.fn()
 export const mockBelongsToWedding = jest.fn()
 export const mockCountByWeddingId = jest.fn()
+export const mockCountByIdsInWedding = jest.fn()
 
 export const GuestRepository = jest.fn().mockImplementation(() => ({
   findById: mockFindById,
@@ -69,9 +71,11 @@ export const GuestRepository = jest.fn().mockImplementation(() => ({
   upsert: mockUpsert,
   delete: mockDelete,
   deleteMany: mockDeleteMany,
+  clearPrimaryContactsByHousehold: mockClearPrimaryContactsByHousehold,
   exists: mockExists,
   belongsToWedding: mockBelongsToWedding,
   countByWeddingId: mockCountByWeddingId,
+  countByIdsInWedding: mockCountByIdsInWedding,
 }))
 
 // Helper to reset all mocks
@@ -88,8 +92,10 @@ export const resetMocks = (): void => {
   mockUpsert.mockReset()
   mockDelete.mockReset()
   mockDeleteMany.mockReset()
+  mockClearPrimaryContactsByHousehold.mockReset()
   mockExists.mockReset()
   mockBelongsToWedding.mockReset()
   mockCountByWeddingId.mockReset()
+  mockCountByIdsInWedding.mockReset()
   GuestRepository.mockClear()
 }
