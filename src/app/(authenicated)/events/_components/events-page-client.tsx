@@ -44,6 +44,7 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
   const [managingGuestsEvent, setManagingGuestsEvent] = useState<EventWithStats | undefined>(
     undefined
   )
+  const [togglingRsvpEventId, setTogglingRsvpEventId] = useState<string | null>(null)
   const utils = api.useUtils()
 
   // Fetch events with RSVP statistics
@@ -118,6 +119,31 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
     },
   })
 
+  const updateCollectRsvp = api.event.updateCollectRsvp.useMutation({
+    onSuccess: async (updatedEvent) => {
+      setTogglingRsvpEventId(null)
+      utils.event.getAllByUserIdWithStats.setData(undefined, (previousEvents) => {
+        if (!previousEvents) return previousEvents
+
+        return previousEvents.map((event) => {
+          if (event.id !== updatedEvent.id) return event
+
+          return {
+            ...event,
+            collectRsvp: updatedEvent.collectRsvp,
+          }
+        })
+      })
+      toast.success('RSVP settings updated')
+    },
+    onError: (error) => {
+      setTogglingRsvpEventId(null)
+      toast.error('Error updating RSVP settings', {
+        description: error.message,
+      })
+    },
+  })
+
   const handleCreateEvent = async (data: EventFormData) => {
     await createEvent.mutateAsync(transformToServerInput(data))
   }
@@ -155,6 +181,17 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
       setManagingGuestsEvent(eventToManage)
     },
     [events]
+  )
+
+  const handleToggleCollectRsvp = useCallback(
+    (eventId: string, collectRsvp: boolean) => {
+      setTogglingRsvpEventId(eventId)
+      updateCollectRsvp.mutate({
+        eventId,
+        collectRsvp,
+      })
+    },
+    [updateCollectRsvp]
   )
 
   // Show loading state
@@ -231,6 +268,8 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
             onEdit={handleEditEvent}
             onDelete={handleDeleteEvent}
             onManageGuests={handleManageGuests}
+            onToggleCollectRsvp={handleToggleCollectRsvp}
+            isTogglingCollectRsvp={togglingRsvpEventId === event.id}
           />
         ))}
       </div>

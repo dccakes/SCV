@@ -8,7 +8,7 @@ type HouseholdSearchItem = HouseholdSearch[number]
 type GuestWithInvitations = HouseholdSearchItem['guests'][number]
 
 export default function ConfirmNameForm({ goNext, goBack }: StepFormProps) {
-  const { matchedHouseholds } = useRsvpForm()
+  const { matchedHouseholds, selectedHousehold: currentSelectedHousehold } = useRsvpForm()
   const updateRsvpForm = useUpdateRsvpForm()
   const [selectedHouseholdId, setSelectedHouseholdId] = useState<string>()
 
@@ -19,9 +19,18 @@ export default function ConfirmNameForm({ goNext, goBack }: StepFormProps) {
     const primaryContact = selectedHousehold?.guests?.find(
       (guest: GuestWithInvitations) => guest.isPrimaryContact
     )
-    updateRsvpForm({
-      selectedHousehold: Object.assign({ primaryContact }, selectedHousehold),
-    })
+    const householdDidChange = selectedHouseholdId !== currentSelectedHousehold?.id
+    updateRsvpForm(
+      householdDidChange
+        ? {
+            selectedHousehold: Object.assign({ primaryContact }, selectedHousehold),
+            rsvpResponses: [],
+            answersToQuestions: [],
+          }
+        : {
+            selectedHousehold: Object.assign({ primaryContact }, selectedHousehold),
+          }
+    )
     goNext?.()
   }
 

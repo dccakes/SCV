@@ -4,6 +4,12 @@ import { useState } from 'react'
 import { IoIosCheckmarkCircleOutline } from 'react-icons/io'
 import type { Guest, Question, StepFormProps } from '~/app/utils/shared-types'
 import { useRsvpForm, useUpdateRsvpForm } from '~/components/contexts/rsvp-form-context'
+import {
+  type AnswerWithType,
+  findExistingAnswer,
+  removeAnswer,
+  upsertAnswer,
+} from '~/components/website/forms/rsvp-state'
 
 interface QuestionMultipleChoiceProps extends StepFormProps {
   guest?: Guest
@@ -18,7 +24,16 @@ export default function QuestionMultipleChoice({
 }: QuestionMultipleChoiceProps) {
   const rsvpFormData = useRsvpForm()
   const updateRsvpForm = useUpdateRsvpForm()
-  const [selectedOptionId, setSelectedOptionId] = useState<string | undefined>()
+  const questionId = question.id ?? '-1'
+  const answerTarget = {
+    questionId,
+    guestId: guest?.id,
+    householdId: rsvpFormData.selectedHousehold?.id,
+  }
+  const existingAnswer = findExistingAnswer(rsvpFormData.answersToQuestions, answerTarget)
+  const [selectedOptionId, setSelectedOptionId] = useState<string | undefined>(
+    existingAnswer?.response
+  )
 
   return (
     <div className='flex flex-col gap-5'>
@@ -54,21 +69,17 @@ export default function QuestionMultipleChoice({
         type='button'
         disabled={selectedOptionId === undefined}
         onClick={() => {
+          const nextAnswer: AnswerWithType = {
+            ...answerTarget,
+            questionType: 'Option',
+            response: selectedOptionId ?? '',
+            guestFirstName:
+              guest?.firstName ?? rsvpFormData.selectedHousehold?.primaryContact?.firstName,
+            guestLastName:
+              guest?.lastName ?? rsvpFormData.selectedHousehold?.primaryContact?.lastName,
+          }
           updateRsvpForm({
-            answersToQuestions: [
-              ...rsvpFormData.answersToQuestions,
-              {
-                questionId: question.id ?? '-1',
-                questionType: 'Option',
-                response: selectedOptionId ?? '',
-                guestId: guest?.id,
-                householdId: rsvpFormData.selectedHousehold?.id,
-                guestFirstName:
-                  guest?.firstName ?? rsvpFormData.selectedHousehold?.primaryContact?.firstName,
-                guestLastName:
-                  guest?.lastName ?? rsvpFormData.selectedHousehold?.primaryContact?.lastName,
-              },
-            ],
+            answersToQuestions: upsertAnswer(rsvpFormData.answersToQuestions, nextAnswer),
           })
           goNext?.()
         }}
@@ -79,7 +90,12 @@ export default function QuestionMultipleChoice({
         <button
           className={`mt-3 bg-gray-700 py-3 text-white text-xl tracking-wide`}
           type='button'
-          onClick={() => goNext?.()}
+          onClick={() => {
+            updateRsvpForm({
+              answersToQuestions: removeAnswer(rsvpFormData.answersToQuestions, answerTarget),
+            })
+            goNext?.()
+          }}
         >
           SKIP
         </button>

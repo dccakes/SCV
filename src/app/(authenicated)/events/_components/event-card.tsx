@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu'
+import { Switch } from '~/components/ui/switch'
 import type { EventWithStats } from '~/server/domains/event/event.types'
 
 type EventCardProps = Readonly<{
@@ -20,9 +21,18 @@ type EventCardProps = Readonly<{
   onEdit: (eventId: string) => void
   onDelete: (eventId: string) => void
   onManageGuests: (eventId: string) => void
+  onToggleCollectRsvp: (eventId: string, collectRsvp: boolean) => void
+  isTogglingCollectRsvp?: boolean
 }>
 
-function EventCardBase({ event, onEdit, onDelete, onManageGuests }: EventCardProps) {
+function EventCardBase({
+  event,
+  onEdit,
+  onDelete,
+  onManageGuests,
+  onToggleCollectRsvp,
+  isTogglingCollectRsvp = false,
+}: EventCardProps) {
   const { guestResponses } = event
   const totalGuests =
     guestResponses.attending +
@@ -44,11 +54,28 @@ function EventCardBase({ event, onEdit, onDelete, onManageGuests }: EventCardPro
               </CardDescription>
             )}
           </div>
-          {event.collectRsvp && (
-            <Badge variant='secondary' className='shrink-0 text-xs'>
-              RSVPs
-            </Badge>
-          )}
+          <div className='flex items-center gap-2'>
+            {event.collectRsvp && (
+              <Badge variant='secondary' className='shrink-0 text-xs'>
+                RSVPs
+              </Badge>
+            )}
+            <div className='flex items-center gap-2'>
+              <label
+                htmlFor={`${event.id}-collect-rsvp-toggle`}
+                className='font-mono text-[0.6rem] text-muted-foreground uppercase tracking-widest'
+              >
+                Collect RSVPs
+              </label>
+              <Switch
+                id={`${event.id}-collect-rsvp-toggle`}
+                aria-label={`Toggle RSVP collection for ${event.name}`}
+                checked={event.collectRsvp}
+                onCheckedChange={(checked) => onToggleCollectRsvp(event.id, checked)}
+                disabled={isTogglingCollectRsvp}
+              />
+            </div>
+          </div>
         </div>
       </CardHeader>
       <CardContent className='pt-0'>
@@ -97,7 +124,7 @@ function EventCardBase({ event, onEdit, onDelete, onManageGuests }: EventCardPro
                 </div>
               )}
               {totalInvited > 0 && (
-                <div className='mt-1.5 flex items-center gap-1 border-t border-border/50 pt-1.5 text-xs'>
+                <div className='mt-1.5 flex items-center gap-1 border-border/50 border-t pt-1.5 text-xs'>
                   <div className='h-2 w-2 rounded-full bg-blue-500' />
                   <span className='font-medium'>~{event.estimatedAttendance}</span>
                   <span className='text-muted-foreground'>
