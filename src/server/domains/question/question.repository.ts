@@ -232,6 +232,20 @@ export class QuestionRepository {
     })
   }
 
+  async deleteOptionResponse(
+    questionId: string,
+    guestId: number,
+    householdId: string
+  ): Promise<void> {
+    await this.db.optionResponse.deleteMany({
+      where: {
+        questionId,
+        guestId,
+        householdId,
+      },
+    })
+  }
+
   /**
    * Create or update an option response.
    */
@@ -304,6 +318,16 @@ export class QuestionRepository {
         response: data.response,
         guestFirstName: data.guestFirstName,
         guestLastName: data.guestLastName,
+      },
+    })
+  }
+
+  async deleteAnswer(questionId: string, guestId: number, householdId: string): Promise<void> {
+    await this.db.answer.deleteMany({
+      where: {
+        questionId,
+        guestId,
+        householdId,
       },
     })
   }

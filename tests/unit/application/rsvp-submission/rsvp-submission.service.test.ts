@@ -34,6 +34,8 @@ import {
 } from '~/server/domains/invitation/invitation.repository'
 import {
   mockAdjustOptionResponseCount,
+  mockDeleteAnswer,
+  mockDeleteOptionResponse,
   mockFindOptionResponse,
   mockUpsertAnswer,
   mockUpsertOptionResponse,
@@ -166,6 +168,7 @@ describe('RsvpSubmissionService', () => {
       guestFirstName: undefined,
       guestLastName: undefined,
     })
+    expect(mockDeleteAnswer).toHaveBeenCalledWith('question-option', 1, 'household-123')
     expect(mockAdjustOptionResponseCount).toHaveBeenCalledWith('option-456', 1)
   })
 
@@ -247,6 +250,34 @@ describe('RsvpSubmissionService', () => {
     expect(mockFindOptionResponse).toHaveBeenCalledWith('question-123', -1, '-1')
     expect(mockUpsertOptionResponse).toHaveBeenCalledWith(
       expect.objectContaining({ guestId: -1, householdId: '-1' })
+    )
+  })
+
+  it('clears prior option response when saving a text answer for an option question', async () => {
+    mockFindOptionResponse.mockResolvedValue({
+      optionId: 'option-123',
+    })
+
+    await service.submitRsvp({
+      rsvpResponses: [],
+      answersToQuestions: [
+        {
+          questionId: 'question-123',
+          questionType: 'Text',
+          response: 'Other: pescatarian',
+          guestId: 1,
+          householdId: 'household-123',
+        },
+      ],
+    })
+
+    expect(mockDeleteOptionResponse).toHaveBeenCalledWith('question-123', 1, 'household-123')
+    expect(mockAdjustOptionResponseCount).toHaveBeenCalledWith('option-123', -1)
+    expect(mockUpsertAnswer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        questionId: 'question-123',
+        response: 'Other: pescatarian',
+      })
     )
   })
 
