@@ -32,6 +32,13 @@ export type AnswerToQuestion = {
 export type RsvpSubmissionInput = {
   rsvpResponses: RsvpResponse[]
   answersToQuestions: AnswerToQuestion[]
+  guestDietaryResponses?: Array<{
+    guestId: number
+    dietaryRestrictions: {
+      selections: string[]
+      notes: string
+    }
+  }>
 }
 
 /**

@@ -9,7 +9,15 @@ import { TRPCError } from '@trpc/server'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { GuestRepository } from '~/server/domains/guest/guest.repository'
-import type { Guest, GuestWithInvitations } from '~/server/domains/guest/guest.types'
+import type {
+  DietaryRestrictionsPayload,
+  Guest,
+  GuestWithInvitations,
+} from '~/server/domains/guest/guest.types'
+import {
+  type DietaryRestrictionsPayloadInput,
+  dietaryRestrictionsPayloadSchema,
+} from '~/server/domains/guest/guest.validator'
 
 export class GuestService {
   constructor(private guestRepository: GuestRepository) {}
@@ -185,6 +193,29 @@ export class GuestService {
     this.requireGuestPermission(ctx, 'delete')
     await Promise.all(guestIds.map((guestId) => this.assertGuestInWedding(guestId, weddingId)))
     return this.guestRepository.deleteMany(guestIds)
+  }
+
+  async updateDietaryRestrictions(
+    weddingId: string,
+    guestId: number,
+    payload: DietaryRestrictionsPayloadInput
+  ): Promise<Guest> {
+    await this.assertGuestInWedding(guestId, weddingId)
+    const parsed = dietaryRestrictionsPayloadSchema.parse(payload)
+    return this.guestRepository.updateDietaryRestrictions(guestId, JSON.stringify(parsed))
+  }
+
+  parseDietaryRestrictions(raw: string | null | undefined): DietaryRestrictionsPayload {
+    if (!raw) return { selections: [], notes: '' }
+
+    try {
+      const parsed = JSON.parse(raw)
+      const result = dietaryRestrictionsPayloadSchema.safeParse(parsed)
+      if (!result.success) return { selections: [], notes: '' }
+      return result.data
+    } catch {
+      return { selections: [], notes: '' }
+    }
   }
 
   private requireGuestPermission(

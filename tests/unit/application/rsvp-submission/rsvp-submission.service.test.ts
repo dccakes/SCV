@@ -19,6 +19,7 @@ import { requirePermission } from '~/server/authz/permission-checker'
 import {
   GuestRepository,
   mockCountByIdsInWedding as mockGuestCountByIdsInWedding,
+  mockUpdateDietaryRestrictions,
   resetMocks as resetGuestMocks,
 } from '~/server/domains/guest/guest.repository'
 import {
@@ -35,6 +36,8 @@ import {
 import {
   mockAdjustOptionResponseCount,
   mockFindOptionResponse,
+  mockFindRequiredQuestionsByEventIds,
+  mockOptionBelongsToQuestion,
   mockUpsertAnswer,
   mockUpsertOptionResponse,
   QuestionRepository,
@@ -82,6 +85,8 @@ describe('RsvpSubmissionService', () => {
     mockHouseholdCountByIdsInWedding.mockResolvedValue(1)
     mockFindWeddingIdByValidTokenAndSubUrl.mockResolvedValue('wedding-123')
     mockFindOptionResponse.mockResolvedValue(null)
+    mockFindRequiredQuestionsByEventIds.mockResolvedValue([])
+    mockOptionBelongsToQuestion.mockResolvedValue(true)
 
     const invitationRepo = new InvitationRepository({} as never)
     const questionRepo = new QuestionRepository({} as never)
@@ -306,5 +311,101 @@ describe('RsvpSubmissionService', () => {
         ],
       })
     ).rejects.toBeInstanceOf(TRPCError)
+  })
+
+  it('rejects when an attending guest is missing a required answer', async () => {
+    mockFindRequiredQuestionsByEventIds.mockResolvedValue([
+      {
+        id: 'required-q-1',
+        eventId: 'event-123',
+        websiteId: null,
+        text: 'Meal choice',
+        type: 'Option',
+        isRequired: true,
+        order: 0,
+        isMealChoiceQuestion: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        options: [],
+      },
+    ])
+
+    await expect(
+      service.submitRsvp({
+        rsvpResponses: [{ eventId: 'event-123', guestId: 1, rsvp: 'Attending' }],
+        answersToQuestions: [],
+      })
+    ).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      message: 'Missing required answer for question required-q-1',
+    })
+
+    expect(mockDb.$transaction).not.toHaveBeenCalled()
+  })
+
+  it('rejects option answers when option does not belong to question', async () => {
+    mockOptionBelongsToQuestion.mockResolvedValue(false)
+
+    await expect(
+      service.submitRsvp({
+        rsvpResponses: [{ eventId: 'event-123', guestId: 1, rsvp: 'Attending' }],
+        answersToQuestions: [
+          {
+            questionId: 'question-1',
+            questionType: 'Option',
+            response: 'option-outside',
+            guestId: 1,
+            householdId: 'household-123',
+          },
+        ],
+      })
+    ).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      message: 'Invalid option response for question question-1',
+    })
+
+    expect(mockDb.$transaction).not.toHaveBeenCalled()
+  })
+
+  it('stores guest dietary restrictions as serialized JSON', async () => {
+    await service.submitRsvp({
+      rsvpResponses: [{ eventId: 'event-123', guestId: 1, rsvp: 'Attending' }],
+      answersToQuestions: [],
+      guestDietaryResponses: [
+        {
+          guestId: 1,
+          dietaryRestrictions: {
+            selections: ['Vegetarian', 'Nut Allergy'],
+            notes: 'No peanuts',
+          },
+        },
+      ],
+    })
+
+    expect(mockUpdateDietaryRestrictions).toHaveBeenCalledWith(
+      1,
+      '{"selections":["Vegetarian","Nut Allergy"],"notes":"No peanuts"}'
+    )
+  })
+
+  it('rejects dietary updates for guests not included in RSVP responses', async () => {
+    await expect(
+      service.submitRsvp({
+        rsvpResponses: [{ eventId: 'event-123', guestId: 1, rsvp: 'Attending' }],
+        answersToQuestions: [],
+        guestDietaryResponses: [
+          {
+            guestId: 999,
+            dietaryRestrictions: {
+              selections: ['Vegetarian'],
+              notes: '',
+            },
+          },
+        ],
+      })
+    ).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      message: 'Dietary updates must reference guests included in RSVP responses',
+    })
   })
 })

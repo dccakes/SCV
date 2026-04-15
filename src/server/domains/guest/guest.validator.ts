@@ -7,6 +7,24 @@
 import { GuestAgeGroup } from '@prisma/client'
 import { z } from 'zod'
 
+export const dietaryRestrictionSelections = [
+  'Vegetarian',
+  'Vegan',
+  'Pescatarian',
+  'Gluten Free',
+  'Dairy Free',
+  'Nut Allergy',
+  'Shellfish Allergy',
+  'Halal',
+  'Kosher',
+  'Other',
+] as const
+
+export const dietaryRestrictionsPayloadSchema = z.object({
+  selections: z.array(z.enum(dietaryRestrictionSelections)).max(20).default([]),
+  notes: z.string().max(500).default(''),
+})
+
 /**
  * Schema for creating a guest
  */
@@ -19,6 +37,7 @@ export const createGuestSchema = z.object({
   isPrimaryContact: z.boolean().optional().default(false),
   ageGroup: z.enum(GuestAgeGroup).default(GuestAgeGroup.ADULT),
   isTagAlong: z.boolean().default(false),
+  dietaryRestrictions: dietaryRestrictionsPayloadSchema.optional(),
   tagIds: z.array(z.guid()).max(10, 'Maximum 10 tags allowed').optional().default([]),
 })
 
@@ -33,6 +52,7 @@ export const updateGuestSchema = z.object({
   phone: z.string().optional().nullable(),
   ageGroup: z.enum(GuestAgeGroup).optional(),
   isTagAlong: z.boolean().optional(),
+  dietaryRestrictions: dietaryRestrictionsPayloadSchema.optional(),
   tagIds: z.array(z.guid()).max(10, 'Maximum 10 tags allowed').optional(),
 })
 
@@ -70,6 +90,7 @@ export const guestPartySchema = z.object({
   isPrimaryContact: z.boolean().default(false),
   ageGroup: z.enum(GuestAgeGroup).default(GuestAgeGroup.ADULT),
   isTagAlong: z.boolean().default(false),
+  dietaryRestrictions: dietaryRestrictionsPayloadSchema.optional(),
   tagIds: z.array(z.guid()).max(10, 'Maximum 10 tags allowed').default([]),
   invites: z.record(z.string(), z.string()),
 })
@@ -81,3 +102,4 @@ export type GuestIdSchemaInput = z.infer<typeof guestIdSchema>
 export type GetByHouseholdSchemaInput = z.infer<typeof getByHouseholdSchema>
 export type GetByEventSchemaInput = z.infer<typeof getByEventSchema>
 export type GuestPartySchemaInput = z.infer<typeof guestPartySchema>
+export type DietaryRestrictionsPayloadInput = z.infer<typeof dietaryRestrictionsPayloadSchema>

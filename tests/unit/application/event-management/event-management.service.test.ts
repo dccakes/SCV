@@ -46,6 +46,10 @@ const createMockDb = () => {
     invitation: {
       createMany: jest.fn(),
     },
+    question: {
+      findFirst: jest.fn(),
+      create: jest.fn(),
+    },
   }
 
   return {
@@ -141,5 +145,72 @@ describe('EventManagementService', () => {
     ).rejects.toMatchObject({ code: 'FORBIDDEN' })
 
     expect(mockDb.$transaction).not.toHaveBeenCalled()
+  })
+
+  it('persists servesMeals and auto-creates a meal choice question on create', async () => {
+    mockDb._tx.event.create.mockResolvedValue({
+      ...mockEvent,
+      servesMeals: true,
+    })
+    mockDb._tx.guest.findMany.mockResolvedValue([])
+    mockDb._tx.question.findFirst.mockResolvedValue(null)
+    mockDb._tx.question.create.mockResolvedValue({ id: 'meal-question-1' })
+
+    await service.createEvent(actorContext, 'wedding-123', {
+      eventName: 'Reception',
+      servesMeals: true,
+    })
+
+    expect(mockDb._tx.event.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          servesMeals: true,
+        }),
+      })
+    )
+    expect(mockDb._tx.question.findFirst).toHaveBeenCalledWith({
+      where: {
+        eventId: 'event-123',
+        isMealChoiceQuestion: true,
+      },
+      select: { id: true },
+    })
+    expect(mockDb._tx.question.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          eventId: 'event-123',
+          type: 'Option',
+          isMealChoiceQuestion: true,
+        }),
+      })
+    )
+  })
+
+  it('does not create duplicate meal choice question when one already exists', async () => {
+    mockDb._tx.event.findUnique.mockResolvedValue({
+      id: 'event-123',
+      allowTagAlongs: false,
+      servesMeals: false,
+    })
+    mockDb._tx.event.update.mockResolvedValue({
+      ...mockEvent,
+      servesMeals: true,
+    })
+    mockDb._tx.question.findFirst.mockResolvedValue({ id: 'existing-meal-question' })
+
+    await service.updateEvent(actorContext, 'wedding-123', {
+      eventId: 'event-123',
+      eventName: 'Reception',
+      servesMeals: true,
+    })
+
+    expect(mockDb._tx.question.findFirst).toHaveBeenCalledWith({
+      where: {
+        eventId: 'event-123',
+        isMealChoiceQuestion: true,
+      },
+      select: { id: true },
+    })
+    expect(mockDb._tx.question.create).not.toHaveBeenCalled()
   })
 })

@@ -5,6 +5,7 @@
  */
 
 import { z } from 'zod'
+import { dietaryRestrictionsPayloadSchema } from '~/server/domains/guest/guest.validator'
 
 /**
  * Schema for RSVP response (guest/event combination)
@@ -23,7 +24,7 @@ export type RsvpResponseSchemaInput = z.infer<typeof rsvpResponseSchema>
 export const answerToQuestionSchema = z.object({
   questionId: z.string(),
   questionType: z.string(),
-  response: z.string(),
+  response: z.string().max(1000),
   guestId: z.number().nullish(),
   householdId: z.string().nullish(),
   selectedOptionId: z.string().optional(),
@@ -37,8 +38,18 @@ export type AnswerToQuestionSchemaInput = z.infer<typeof answerToQuestionSchema>
  * Schema for complete RSVP form submission
  */
 export const submitRsvpSchema = z.object({
-  rsvpResponses: z.array(rsvpResponseSchema),
-  answersToQuestions: z.array(answerToQuestionSchema),
+  rsvpResponses: z.array(rsvpResponseSchema).max(200),
+  answersToQuestions: z.array(answerToQuestionSchema).max(500),
+  guestDietaryResponses: z
+    .array(
+      z.object({
+        guestId: z.number(),
+        dietaryRestrictions: dietaryRestrictionsPayloadSchema,
+      })
+    )
+    .max(200)
+    .optional()
+    .default([]),
 })
 
 export type SubmitRsvpSchemaInput = z.infer<typeof submitRsvpSchema>

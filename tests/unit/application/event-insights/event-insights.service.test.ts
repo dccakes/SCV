@@ -42,6 +42,34 @@ describe('EventInsightsService', () => {
     expect(result).toEqual([{ id: 'event-1', guestResponses: {} }])
   })
 
+  it('returns stats payload with event-scoped RSVP questions/options', async () => {
+    eventService.getWeddingEventsWithStats.mockResolvedValue([
+      {
+        id: 'event-1',
+        guestResponses: {},
+        questions: [
+          {
+            id: 'q-1',
+            text: 'Meal choice',
+            type: 'Option',
+            options: [{ id: 'o-1', text: 'Fish' }],
+          },
+        ],
+      },
+    ])
+
+    const result = await service.listEventsWithStats(buildAuthz('admin'), 'wedding-1')
+    expect(result[0]).toMatchObject({
+      id: 'event-1',
+      questions: [
+        {
+          id: 'q-1',
+          options: [{ id: 'o-1', text: 'Fish' }],
+        },
+      ],
+    })
+  })
+
   it('lists invitations with guest_invitation.read permission', async () => {
     invitationService.getAllByWeddingId.mockResolvedValue([{ id: 'inv-1' }])
     const result = await service.listInvitations(buildAuthz('owner'), 'wedding-1')

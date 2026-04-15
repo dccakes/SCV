@@ -304,6 +304,7 @@ model Guest {
   // Guest classification
   ageGroup              GuestAgeGroup?          @default(ADULT)
   isTagAlong            Boolean                 @default(false) // Tags along with household but not formally invited
+  dietaryRestrictions   String?                 // JSON payload: {"selections": string[], "notes": string}
   guestTagAssignments   GuestTagAssignment[]    @relation(name: "Guest_GuestTagAssignments")
 
   // Relations
@@ -338,6 +339,7 @@ model Event {
   description String?
   collectRsvp                Boolean      @default(false)
   allowTagAlongs             Boolean      @default(false)
+  servesMeals                Boolean      @default(false)
 
   // Relations
   invitations Invitation[] @relation(name: "Event_Invitations")
@@ -377,6 +379,8 @@ model Question {
   //   type       String // idk what this is for yet tbh ['Custom', 'Kids', 'RSVPNote']
   type       String // ['Text', 'Option']
   isRequired Boolean  @default(false)
+  order      Int      @default(0)
+  isMealChoiceQuestion Boolean @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   options    Option[] @relation(name: "Question_Options")

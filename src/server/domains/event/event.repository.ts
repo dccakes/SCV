@@ -30,12 +30,9 @@ export class EventRepository {
       where: { id },
       include: {
         questions: {
-          orderBy: { createdAt: 'asc' },
+          orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
           include: {
             options: true,
-            _count: {
-              select: { answers: true },
-            },
           },
         },
       },
@@ -61,7 +58,7 @@ export class EventRepository {
       orderBy: { createdAt: 'asc' },
       include: {
         questions: {
-          orderBy: { createdAt: 'asc' },
+          orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
           include: {
             options: true,
             _count: {
@@ -84,6 +81,15 @@ export class EventRepository {
       where: { weddingId },
       orderBy: { createdAt: 'asc' },
       include: {
+        questions: {
+          orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+          include: {
+            options: true,
+            _count: {
+              select: { answers: true },
+            },
+          },
+        },
         invitations: {
           select: {
             rsvp: true,
@@ -152,6 +158,7 @@ export class EventRepository {
     description?: string
     collectRsvp?: boolean
     allowTagAlongs?: boolean
+    servesMeals?: boolean
   }): Promise<Event> {
     return this.db.event.create({
       data: {
@@ -165,6 +172,7 @@ export class EventRepository {
         description: data.description,
         collectRsvp: data.collectRsvp ?? false,
         allowTagAlongs: data.allowTagAlongs ?? false,
+        servesMeals: data.servesMeals ?? false,
       },
     })
   }
@@ -183,6 +191,7 @@ export class EventRepository {
       attire?: string
       description?: string
       allowTagAlongs?: boolean
+      servesMeals?: boolean
     }
   ): Promise<Event> {
     return this.db.event.update({
@@ -196,6 +205,7 @@ export class EventRepository {
         attire: data.attire,
         description: data.description,
         allowTagAlongs: data.allowTagAlongs,
+        servesMeals: data.servesMeals,
       },
     })
   }

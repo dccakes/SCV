@@ -22,6 +22,7 @@ export type Event = {
   weddingId: string
   collectRsvp: boolean
   allowTagAlongs: boolean
+  servesMeals?: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -37,6 +38,7 @@ export type EventWithQuestions = Event & {
  * Event with RSVP statistics
  */
 export type EventWithStats = Event & {
+  questions?: Question[]
   guestResponses: {
     attending: number
     invited: number

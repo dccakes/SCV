@@ -120,6 +120,7 @@ export class WebsiteManagementService {
         description: event.description,
         weddingId: event.weddingId,
         collectRsvp: event.collectRsvp,
+        servesMeals: event.servesMeals ?? false,
         questions: event.questions,
       })),
     }

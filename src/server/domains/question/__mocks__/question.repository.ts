@@ -17,6 +17,8 @@ export const mockQuestion: Question = {
   text: 'What is your meal preference?',
   type: 'Option',
   isRequired: true,
+  order: 0,
+  isMealChoiceQuestion: false,
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
 }
@@ -28,6 +30,8 @@ export const mockWebsiteQuestion: Question = {
   text: 'Any dietary restrictions?',
   type: 'Text',
   isRequired: false,
+  order: 0,
+  isMealChoiceQuestion: false,
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
 }
@@ -72,15 +76,19 @@ export const mockFindById = jest.fn()
 export const mockFindByIdWithOptions = jest.fn()
 export const mockFindByEventId = jest.fn()
 export const mockFindByWebsiteId = jest.fn()
+export const mockFindIdsByScope = jest.fn()
 export const mockDeleteOptionsForQuestion = jest.fn()
 export const mockUpsert = jest.fn()
+export const mockReorderByIds = jest.fn()
 export const mockDelete = jest.fn()
 export const mockExists = jest.fn()
 export const mockFindMostRecentAnswerByQuestionId = jest.fn()
 export const mockBelongsToWedding = jest.fn()
 export const mockEventBelongsToWedding = jest.fn()
 export const mockWebsiteBelongsToWedding = jest.fn()
+export const mockFindRequiredQuestionsByEventIds = jest.fn()
 export const mockFindOptionResponse = jest.fn()
+export const mockOptionBelongsToQuestion = jest.fn()
 export const mockUpsertOptionResponse = jest.fn()
 export const mockAdjustOptionResponseCount = jest.fn()
 export const mockUpsertAnswer = jest.fn()
@@ -90,15 +98,19 @@ export const QuestionRepository = jest.fn().mockImplementation(() => ({
   findByIdWithOptions: mockFindByIdWithOptions,
   findByEventId: mockFindByEventId,
   findByWebsiteId: mockFindByWebsiteId,
+  findIdsByScope: mockFindIdsByScope,
   deleteOptionsForQuestion: mockDeleteOptionsForQuestion,
   upsert: mockUpsert,
+  reorderByIds: mockReorderByIds,
   delete: mockDelete,
   exists: mockExists,
   findMostRecentAnswerByQuestionId: mockFindMostRecentAnswerByQuestionId,
   belongsToWedding: mockBelongsToWedding,
   eventBelongsToWedding: mockEventBelongsToWedding,
   websiteBelongsToWedding: mockWebsiteBelongsToWedding,
+  findRequiredQuestionsByEventIds: mockFindRequiredQuestionsByEventIds,
   findOptionResponse: mockFindOptionResponse,
+  optionBelongsToQuestion: mockOptionBelongsToQuestion,
   upsertOptionResponse: mockUpsertOptionResponse,
   adjustOptionResponseCount: mockAdjustOptionResponseCount,
   upsertAnswer: mockUpsertAnswer,
@@ -110,15 +122,19 @@ export const resetMocks = (): void => {
   mockFindByIdWithOptions.mockReset()
   mockFindByEventId.mockReset()
   mockFindByWebsiteId.mockReset()
+  mockFindIdsByScope.mockReset()
   mockDeleteOptionsForQuestion.mockReset()
   mockUpsert.mockReset()
+  mockReorderByIds.mockReset()
   mockDelete.mockReset()
   mockExists.mockReset()
   mockFindMostRecentAnswerByQuestionId.mockReset()
   mockBelongsToWedding.mockReset()
   mockEventBelongsToWedding.mockReset()
   mockWebsiteBelongsToWedding.mockReset()
+  mockFindRequiredQuestionsByEventIds.mockReset()
   mockFindOptionResponse.mockReset()
+  mockOptionBelongsToQuestion.mockReset()
   mockUpsertOptionResponse.mockReset()
   mockAdjustOptionResponseCount.mockReset()
   mockUpsertAnswer.mockReset()
