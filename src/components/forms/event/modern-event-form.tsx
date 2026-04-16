@@ -75,6 +75,7 @@ export function ModernEventForm({
           venue: event.venue ?? '',
           attire: event.attire ?? '',
           description: event.description ?? '',
+          collectRsvp: event.collectRsvp ?? false,
           allowTagAlongs: event.allowTagAlongs ?? false,
         }
       : getEventFormDefaults(),
@@ -104,6 +105,7 @@ export function ModernEventForm({
               venue: event.venue ?? '',
               attire: event.attire ?? '',
               description: event.description ?? '',
+              collectRsvp: event.collectRsvp ?? false,
               allowTagAlongs: event.allowTagAlongs ?? false,
             }
           : getEventFormDefaults()
@@ -280,6 +282,25 @@ export function ModernEventForm({
             )}
           </div>
 
+          {/* Collect RSVPs */}
+          <div className='flex items-center justify-between rounded-lg border bg-muted/50 p-4'>
+            <div className='space-y-0.5'>
+              <Label htmlFor='collectRsvp' className='text-sm md:text-base'>
+                Collect RSVPs
+              </Label>
+              <p className='text-muted-foreground text-xs'>
+                Turn this on to show this event in your public RSVP flow
+              </p>
+            </div>
+            <Switch
+              id='collectRsvp'
+              checked={watch('collectRsvp') ?? false}
+              onCheckedChange={(checked) => {
+                setValue('collectRsvp', checked, { shouldDirty: true })
+              }}
+              disabled={isSubmitting}
+            />
+          </div>
           {/* Allow Tag-Alongs */}
           <div className='flex items-center justify-between rounded-lg border bg-muted/50 p-4'>
             <div className='space-y-0.5'>

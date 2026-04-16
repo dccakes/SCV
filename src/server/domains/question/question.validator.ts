@@ -28,6 +28,7 @@ export const upsertQuestionSchema = z.object({
   type: z.string(),
   isRequired: z.boolean().default(false),
   order: z.number().int().min(0).optional(),
+  allowOther: z.boolean().default(false),
   options: z
     .array(optionInputSchema)
     .min(2, {

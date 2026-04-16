@@ -55,6 +55,7 @@ export default function QuestionForm({
     question.options && question.options.length > 1 ? question.options : defaultQuestionOptions
   )
   const [questionType, setQuestionType] = useState<string>(question.type ?? 'Text')
+  const [allowOther, setAllowOther] = useState<boolean>(question.allowOther ?? false)
   const [questionInput, setQuestionInput] = useState<string>(question.text ?? '')
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false)
   const [formError, setFormError] = useState<string | null>(null)
@@ -96,6 +97,7 @@ export default function QuestionForm({
       type: questionType,
       text: questionInput,
       isRequired: questionType === 'Option',
+      allowOther: questionType === 'Option' ? allowOther : false,
       eventId: question.eventId,
       websiteId: question.websiteId,
       questionId: question.id,
@@ -182,11 +184,25 @@ export default function QuestionForm({
           </div>
         </div>
         {questionType === 'Option' && (
-          <QuestionOptionsForm
-            questionOptions={questionOptions}
-            setQuestionOptions={setQuestionOptions}
-            setDeletedOptions={setDeletedOptions}
-          />
+          <>
+            <div className='px-5 pb-3'>
+              <label htmlFor='question-allow-other' className='flex items-center gap-2 text-sm'>
+                <input
+                  id='question-allow-other'
+                  type='checkbox'
+                  checked={allowOther}
+                  onChange={(event) => setAllowOther(event.target.checked)}
+                  className='h-4 w-4'
+                />
+                Allow Other write-in answer
+              </label>
+            </div>
+            <QuestionOptionsForm
+              questionOptions={questionOptions}
+              setQuestionOptions={setQuestionOptions}
+              setDeletedOptions={setDeletedOptions}
+            />
+          </>
         )}
         <Buttons
           isEditMode={isEditMode}

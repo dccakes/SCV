@@ -69,7 +69,7 @@ describe('eventRouter authz context plumbing', () => {
         userId: 'user-123',
       },
       'wedding-123',
-      { allowTagAlongs: false, eventName: 'Ceremony' }
+      { allowTagAlongs: false, collectRsvp: false, eventName: 'Ceremony' }
     )
   })
 
@@ -86,7 +86,7 @@ describe('eventRouter authz context plumbing', () => {
         userId: 'user-123',
       },
       'wedding-123',
-      { allowTagAlongs: false, eventId: 'event-1', eventName: 'Updated' }
+      { eventId: 'event-1', eventName: 'Updated' }
     )
 
     expect(mockDeleteEvent).toHaveBeenCalledWith(

@@ -7,6 +7,9 @@ const mockUseQuery = jest.fn()
 const mockCreateMutateAsync = jest.fn()
 const mockUpdateMutateAsync = jest.fn()
 const mockDeleteMutate = jest.fn()
+const mockUpdateCollectRsvpMutate = jest.fn()
+const mockQuestionDeleteMutate = jest.fn()
+const mockQuestionUpsertMutate = jest.fn()
 const mockInvalidate = jest.fn()
 const mockSetData = jest.fn()
 let mockUpdateOnSuccess: ((data?: EventWithStats) => Promise<void> | void) | undefined
@@ -66,11 +69,31 @@ jest.mock('~/trpc/react', () => ({
           }
         },
       },
+      updateCollectRsvp: {
+        useMutation: () => ({
+          mutate: (...args: unknown[]) => mockUpdateCollectRsvpMutate(...args),
+          isPending: false,
+        }),
+      },
     },
     invitation: {
       bulkUpdate: {
         useMutation: () => ({
           mutate: jest.fn(),
+          isPending: false,
+        }),
+      },
+    },
+    question: {
+      delete: {
+        useMutation: () => ({
+          mutate: (...args: unknown[]) => mockQuestionDeleteMutate(...args),
+          isPending: false,
+        }),
+      },
+      upsert: {
+        useMutation: () => ({
+          mutate: (...args: unknown[]) => mockQuestionUpsertMutate(...args),
           isPending: false,
         }),
       },
@@ -114,6 +137,9 @@ describe('EventsPageClient', () => {
     mockCreateMutateAsync.mockReset()
     mockUpdateMutateAsync.mockReset()
     mockDeleteMutate.mockReset()
+    mockUpdateCollectRsvpMutate.mockReset()
+    mockQuestionDeleteMutate.mockReset()
+    mockQuestionUpsertMutate.mockReset()
     mockInvalidate.mockReset()
     mockSetData.mockReset()
     mockModernEventForm.mockClear()
@@ -185,5 +211,16 @@ describe('EventsPageClient', () => {
     render(<EventsPageClient initialEvents={[baseEvent]} initialRsvpEventId='evt-1' />)
 
     expect(screen.getByText('RSVP management context: Ceremony')).toBeInTheDocument()
+  })
+
+  it('triggers collect RSVP mutation when event toggle is changed', () => {
+    render(<EventsPageClient initialEvents={[baseEvent]} />)
+
+    fireEvent.click(screen.getByRole('switch', { name: /toggle rsvp collection/i }))
+
+    expect(mockUpdateCollectRsvpMutate).toHaveBeenCalledWith({
+      eventId: 'evt-1',
+      collectRsvp: false,
+    })
   })
 })

@@ -19,6 +19,7 @@ export const mockQuestion: Question = {
   isRequired: true,
   order: 0,
   isMealChoiceQuestion: false,
+  allowOther: false,
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
 }
@@ -32,6 +33,7 @@ export const mockWebsiteQuestion: Question = {
   isRequired: false,
   order: 0,
   isMealChoiceQuestion: false,
+  allowOther: false,
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
 }
@@ -89,9 +91,11 @@ export const mockWebsiteBelongsToWedding = jest.fn()
 export const mockFindRequiredQuestionsByEventIds = jest.fn()
 export const mockFindOptionResponse = jest.fn()
 export const mockOptionBelongsToQuestion = jest.fn()
+export const mockDeleteOptionResponse = jest.fn()
 export const mockUpsertOptionResponse = jest.fn()
 export const mockAdjustOptionResponseCount = jest.fn()
 export const mockUpsertAnswer = jest.fn()
+export const mockDeleteAnswer = jest.fn()
 
 export const QuestionRepository = jest.fn().mockImplementation(() => ({
   findById: mockFindById,
@@ -111,9 +115,11 @@ export const QuestionRepository = jest.fn().mockImplementation(() => ({
   findRequiredQuestionsByEventIds: mockFindRequiredQuestionsByEventIds,
   findOptionResponse: mockFindOptionResponse,
   optionBelongsToQuestion: mockOptionBelongsToQuestion,
+  deleteOptionResponse: mockDeleteOptionResponse,
   upsertOptionResponse: mockUpsertOptionResponse,
   adjustOptionResponseCount: mockAdjustOptionResponseCount,
   upsertAnswer: mockUpsertAnswer,
+  deleteAnswer: mockDeleteAnswer,
 }))
 
 // Helper to reset all mocks
@@ -135,8 +141,10 @@ export const resetMocks = (): void => {
   mockFindRequiredQuestionsByEventIds.mockReset()
   mockFindOptionResponse.mockReset()
   mockOptionBelongsToQuestion.mockReset()
+  mockDeleteOptionResponse.mockReset()
   mockUpsertOptionResponse.mockReset()
   mockAdjustOptionResponseCount.mockReset()
   mockUpsertAnswer.mockReset()
+  mockDeleteAnswer.mockReset()
   QuestionRepository.mockClear()
 }

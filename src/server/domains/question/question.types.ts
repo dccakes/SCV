@@ -17,6 +17,7 @@ export type Question = {
   isRequired: boolean
   order?: number
   isMealChoiceQuestion?: boolean
+  allowOther: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -95,6 +96,7 @@ export type UpsertQuestionInput = {
   isRequired: boolean
   order?: number
   isMealChoiceQuestion?: boolean
+  allowOther?: boolean
   options?: OptionInput[]
   deletedOptions?: string[]
 }

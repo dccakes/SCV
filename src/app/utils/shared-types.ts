@@ -210,6 +210,7 @@ type Question = {
   text: string
   type: string
   isRequired: boolean
+  allowOther?: boolean
   options?: Option[]
   answers?: Answer[]
   recentAnswer?: Answer | null

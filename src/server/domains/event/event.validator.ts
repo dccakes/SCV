@@ -36,6 +36,7 @@ export const createEventSchema = z
     venue: z.string().optional(),
     attire: z.string().optional(),
     description: z.string().optional(),
+    collectRsvp: z.boolean().default(false),
     allowTagAlongs: z.boolean().default(false),
     servesMeals: z.boolean().optional(),
   })
@@ -60,7 +61,8 @@ export const updateEventSchema = z
     venue: z.string().optional(),
     attire: z.string().optional(),
     description: z.string().optional(),
-    allowTagAlongs: z.boolean().default(false),
+    collectRsvp: z.boolean().optional(),
+    allowTagAlongs: z.boolean().optional(),
     servesMeals: z.boolean().optional(),
   })
   .refine((data) => isTodayOrFutureDate(data.date), {

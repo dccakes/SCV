@@ -83,6 +83,7 @@ export class WeddingService {
         eventName: 'Ceremony',
         date: weddingDate ?? undefined,
         venue: weddingLocation ?? undefined,
+        collectRsvp: false,
         allowTagAlongs: false,
       })
     }

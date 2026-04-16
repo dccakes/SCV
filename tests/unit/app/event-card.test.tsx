@@ -37,6 +37,8 @@ describe('EventCard', () => {
         onEdit={onEdit}
         onDelete={onDelete}
         onManageGuests={onManageGuests}
+        onManageQuestions={jest.fn()}
+        onToggleCollectRsvp={jest.fn()}
       />
     )
 
@@ -59,6 +61,8 @@ describe('EventCard', () => {
         onEdit={jest.fn()}
         onDelete={jest.fn()}
         onManageGuests={jest.fn()}
+        onManageQuestions={jest.fn()}
+        onToggleCollectRsvp={jest.fn()}
       />
     )
 
@@ -72,9 +76,29 @@ describe('EventCard', () => {
         onEdit={jest.fn()}
         onDelete={jest.fn()}
         onManageGuests={jest.fn()}
+        onManageQuestions={jest.fn()}
+        onToggleCollectRsvp={jest.fn()}
       />
     )
 
     expect(screen.getByRole('button', { name: /event actions/i })).toBeInTheDocument()
+  })
+
+  it('calls RSVP toggle callback when collect RSVP switch is changed', () => {
+    const onToggleCollectRsvp = jest.fn()
+
+    render(
+      <EventCard
+        event={mockEvent}
+        onEdit={jest.fn()}
+        onDelete={jest.fn()}
+        onManageGuests={jest.fn()}
+        onManageQuestions={jest.fn()}
+        onToggleCollectRsvp={onToggleCollectRsvp}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('switch', { name: /toggle rsvp collection/i }))
+    expect(onToggleCollectRsvp).toHaveBeenCalledWith('evt-1', false)
   })
 })

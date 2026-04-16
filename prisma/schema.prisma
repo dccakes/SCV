@@ -381,6 +381,7 @@ model Question {
   isRequired Boolean  @default(false)
   order      Int      @default(0)
   isMealChoiceQuestion Boolean @default(false)
+  allowOther Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   options    Option[] @relation(name: "Question_Options")

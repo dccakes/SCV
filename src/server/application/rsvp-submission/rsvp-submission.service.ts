@@ -106,6 +106,8 @@ export class RsvpSubmissionService {
     const guestId = answer.guestId ?? -1
     const householdId = answer.householdId ?? '-1'
 
+    await questionRepo.deleteAnswer(answer.questionId, guestId, householdId)
+
     const existingResponse = await questionRepo.findOptionResponse(
       answer.questionId,
       guestId,
@@ -143,10 +145,23 @@ export class RsvpSubmissionService {
     questionRepo: QuestionRepository,
     answer: AnswerToQuestion
   ): Promise<void> {
+    const guestId = answer.guestId ?? -1
+    const householdId = answer.householdId ?? '-1'
+    const existingResponse = await questionRepo.findOptionResponse(
+      answer.questionId,
+      guestId,
+      householdId
+    )
+
+    if (existingResponse !== null) {
+      await questionRepo.deleteOptionResponse(answer.questionId, guestId, householdId)
+      await questionRepo.adjustOptionResponseCount(existingResponse.optionId, -1)
+    }
+
     await questionRepo.upsertAnswer({
       questionId: answer.questionId,
-      guestId: answer.guestId ?? -1,
-      householdId: answer.householdId ?? '-1',
+      guestId,
+      householdId,
       response: answer.response,
       guestFirstName: answer.guestFirstName,
       guestLastName: answer.guestLastName,

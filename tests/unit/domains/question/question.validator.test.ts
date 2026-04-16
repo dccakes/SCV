@@ -104,7 +104,22 @@ describe('upsertQuestionSchema', () => {
     }
 
     const result = upsertQuestionSchema.safeParse(validInput)
-    expect(result).toMatchObject({ success: true, data: { isRequired: false } })
+    expect(result).toMatchObject({ success: true, data: { isRequired: false, allowOther: false } })
+  })
+
+  it('should allow allowOther to be enabled for multiple-choice questions', () => {
+    const validInput = {
+      eventId: 'event-123',
+      text: 'Meal choice',
+      type: 'Option',
+      isRequired: true,
+      allowOther: true,
+      options: [{ text: 'Chicken' }, { text: 'Fish' }],
+    }
+
+    const result = upsertQuestionSchema.safeParse(validInput)
+    expect(result.success).toBe(true)
+    expect(result.data?.allowOther).toBe(true)
   })
 
   it('should allow deletedOptions array', () => {

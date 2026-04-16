@@ -5,7 +5,17 @@
  * Events represent wedding ceremonies, receptions, rehearsal dinners, etc.
  */
 
-import type { Question } from '~/app/utils/shared-types'
+import type { Prisma } from '@prisma/client'
+
+export type EventQuestion = Prisma.QuestionGetPayload<{
+  include: {
+    options: true
+  }
+}> & {
+  _count?: {
+    answers: number
+  }
+}
 
 /**
  * Core Event entity type
@@ -31,14 +41,14 @@ export type Event = {
  * Event with questions included
  */
 export type EventWithQuestions = Event & {
-  questions: Question[]
+  questions: EventQuestion[]
 }
 
 /**
  * Event with RSVP statistics
  */
 export type EventWithStats = Event & {
-  questions?: Question[]
+  questions?: EventQuestion[]
   guestResponses: {
     attending: number
     invited: number
