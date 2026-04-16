@@ -76,6 +76,7 @@ describe('QuestionService', () => {
           text: 'What is your meal preference?',
           type: 'Option',
           isRequired: true,
+          allowOther: true,
           options: [
             { text: 'Chicken', description: 'Grilled' },
             { text: 'Fish', description: 'Pan-seared' },
@@ -84,7 +85,7 @@ describe('QuestionService', () => {
       })
 
       expect(result).toEqual(mockQuestion)
-      expect(mockUpsertFn).toHaveBeenCalled()
+      expect(mockUpsertFn).toHaveBeenCalledWith(expect.objectContaining({ allowOther: true }))
       expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { event: ['update'] })
     })
 

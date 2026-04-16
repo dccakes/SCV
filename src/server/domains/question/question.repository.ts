@@ -97,6 +97,7 @@ export class QuestionRepository {
     text: string
     type: string
     isRequired: boolean
+    allowOther?: boolean
     options?: OptionInput[]
   }): Promise<Question> {
     // Build upsert options for Option type questions
@@ -139,6 +140,7 @@ export class QuestionRepository {
         text: data.text,
         type: data.type,
         isRequired: data.isRequired,
+        allowOther: data.type === 'Option' ? (data.allowOther ?? false) : false,
         options: upsertOptions,
       },
       create: {
@@ -147,6 +149,7 @@ export class QuestionRepository {
         text: data.text,
         type: data.type,
         isRequired: data.isRequired,
+        allowOther: data.type === 'Option' ? (data.allowOther ?? false) : false,
         options: createOptions,
       },
     })
@@ -232,6 +235,20 @@ export class QuestionRepository {
     })
   }
 
+  async deleteOptionResponse(
+    questionId: string,
+    guestId: number,
+    householdId: string
+  ): Promise<void> {
+    await this.db.optionResponse.deleteMany({
+      where: {
+        questionId,
+        guestId,
+        householdId,
+      },
+    })
+  }
+
   /**
    * Create or update an option response.
    */
@@ -304,6 +321,16 @@ export class QuestionRepository {
         response: data.response,
         guestFirstName: data.guestFirstName,
         guestLastName: data.guestLastName,
+      },
+    })
+  }
+
+  async deleteAnswer(questionId: string, guestId: number, householdId: string): Promise<void> {
+    await this.db.answer.deleteMany({
+      where: {
+        questionId,
+        guestId,
+        householdId,
       },
     })
   }
