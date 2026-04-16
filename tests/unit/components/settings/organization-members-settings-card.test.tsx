@@ -262,7 +262,9 @@ describe('OrganizationMembersSettingsCard', () => {
     expect(screen.getAllByRole('button', { name: 'Retry' })).not.toHaveLength(0)
   })
 
-  it('sends invitations only after the dialog is opened', async () => {
+  it('refreshes pending invitations after sending an invite', async () => {
+    let listInvitationsCallCount = 0
+
     mockFetch.mockImplementation(
       (path: string, options?: { body?: { permissions?: Record<string, unknown> } }) => {
         const body = options?.body
@@ -292,6 +294,26 @@ describe('OrganizationMembersSettingsCard', () => {
           })
         }
 
+        if (path === '/organization/list-invitations') {
+          listInvitationsCallCount += 1
+
+          return Promise.resolve({
+            data:
+              listInvitationsCallCount === 1
+                ? []
+                : [
+                    {
+                      id: 'invitation-1',
+                      email: 'donkey@swamp.wed',
+                      role: 'viewer',
+                      status: 'pending',
+                      expiresAt: new Date('2026-12-01T00:00:00.000Z').toISOString(),
+                    },
+                  ],
+            error: null,
+          })
+        }
+
         if (path === '/organization/invite-member') {
           return Promise.resolve({
             data: { id: 'invite-1' },
@@ -309,10 +331,7 @@ describe('OrganizationMembersSettingsCard', () => {
       expect(screen.getByRole('button', { name: 'Invite Member' })).toBeEnabled()
     })
 
-    expect(mockFetch).not.toHaveBeenCalledWith(
-      expect.stringContaining('/organization/list-invitations'),
-      expect.anything()
-    )
+    expect(mockFetch).toHaveBeenCalledWith('/organization/list-invitations')
 
     fireEvent.click(screen.getByRole('button', { name: 'Invite Member' }))
     fireEvent.change(screen.getByLabelText('Email'), {
@@ -336,6 +355,11 @@ describe('OrganizationMembersSettingsCard', () => {
         })
       )
     })
+
+    await waitFor(() => {
+      expect(screen.getByText('Pending Invitations')).toBeInTheDocument()
+    })
+    expect(screen.getByText('donkey@swamp.wed')).toBeInTheDocument()
   })
 
   it('updates a member role only when member:update is granted', async () => {
@@ -405,6 +429,163 @@ describe('OrganizationMembersSettingsCard', () => {
             memberId: 'member-fiona',
             organizationId: 'org-seed-shrek-fiona',
             role: 'admin',
+          }),
+          method: 'POST',
+        })
+      )
+    })
+  })
+
+  it('shows pending organization invitations in settings', async () => {
+    mockFetch.mockImplementation(
+      (path: string, options?: { body?: { permissions?: Record<string, unknown> } }) => {
+        const body = options?.body
+
+        if (path === '/organization/get-full-organization') {
+          return Promise.resolve({
+            data: {
+              id: 'org-seed-shrek-fiona',
+              members: [
+                {
+                  id: 'member-fiona',
+                  role: 'member',
+                  user: { email: 'fiona@swamp.wed', name: 'Fiona Ogre' },
+                },
+              ],
+              name: 'Couple',
+            },
+            error: null,
+          })
+        }
+
+        if (path === '/organization/has-permission' && body?.permissions?.invitation) {
+          return Promise.resolve({
+            data: { success: true },
+            error: null,
+          })
+        }
+
+        if (path === '/organization/has-permission' && body?.permissions?.member) {
+          return Promise.resolve({
+            data: { success: true },
+            error: null,
+          })
+        }
+
+        if (path === '/organization/list-invitations') {
+          return Promise.resolve({
+            data: [
+              {
+                id: 'invitation-1',
+                email: 'donkey@swamp.wed',
+                role: 'viewer',
+                status: 'pending',
+                expiresAt: new Date('2026-12-01T00:00:00.000Z').toISOString(),
+              },
+            ],
+            error: null,
+          })
+        }
+
+        throw new Error(`Unexpected fetch path: ${path}`)
+      }
+    )
+
+    render(<OrganizationMembersSettingsCard />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Pending Invitations')).toBeInTheDocument()
+    })
+
+    expect(screen.getByText('donkey@swamp.wed')).toBeInTheDocument()
+    expect(screen.getByText('Viewer')).toBeInTheDocument()
+  })
+
+  it('requires typing delete in a confirmation modal before removing a member', async () => {
+    mockFetch.mockImplementation(
+      (path: string, options?: { body?: { permissions?: Record<string, unknown> } }) => {
+        const body = options?.body
+
+        if (path === '/organization/get-full-organization') {
+          return Promise.resolve({
+            data: {
+              id: 'org-seed-shrek-fiona',
+              members: [
+                {
+                  id: 'member-fiona',
+                  role: 'member',
+                  user: { email: 'fiona@swamp.wed', name: 'Fiona Ogre' },
+                },
+              ],
+              name: 'Couple',
+            },
+            error: null,
+          })
+        }
+
+        if (path === '/organization/has-permission' && body?.permissions?.invitation) {
+          return Promise.resolve({
+            data: { success: true },
+            error: null,
+          })
+        }
+
+        if (path === '/organization/has-permission' && body?.permissions?.member) {
+          return Promise.resolve({
+            data: { success: true },
+            error: null,
+          })
+        }
+
+        if (path === '/organization/remove-member') {
+          return Promise.resolve({
+            data: {
+              member: {
+                id: 'member-fiona',
+                organizationId: 'org-seed-shrek-fiona',
+                role: 'member',
+                userId: 'user-fiona',
+              },
+            },
+            error: null,
+          })
+        }
+
+        throw new Error(`Unexpected fetch path: ${path}`)
+      }
+    )
+
+    render(<OrganizationMembersSettingsCard />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Remove Fiona Ogre' })).toBeEnabled()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Fiona Ogre' }))
+
+    expect(screen.getByText('Confirm Member Removal')).toBeInTheDocument()
+    expect(screen.getByText(/type delete to confirm/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Delete Member' })).toBeDisabled()
+
+    fireEvent.change(screen.getByLabelText('Confirmation'), {
+      target: { value: 'not-delete' },
+    })
+    expect(screen.getByRole('button', { name: 'Delete Member' })).toBeDisabled()
+
+    fireEvent.change(screen.getByLabelText('Confirmation'), {
+      target: { value: 'delete' },
+    })
+    expect(screen.getByRole('button', { name: 'Delete Member' })).toBeEnabled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Member' }))
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/organization/remove-member',
+        expect.objectContaining({
+          body: expect.objectContaining({
+            memberIdOrEmail: 'member-fiona',
+            organizationId: 'org-seed-shrek-fiona',
           }),
           method: 'POST',
         })

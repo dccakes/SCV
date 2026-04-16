@@ -246,4 +246,42 @@ describe('submitRsvpSchema', () => {
     const result = submitRsvpSchema.safeParse(invalidInput)
     expect(result.success).toBe(false)
   })
+
+  it('should reject duplicate rsvpResponses for the same event and guest', () => {
+    const invalidInput = {
+      rsvpResponses: [
+        { eventId: 'event-123', guestId: 1, rsvp: 'Attending' },
+        { eventId: 'event-123', guestId: 1, rsvp: 'Declined' },
+      ],
+      answersToQuestions: [],
+    }
+
+    const result = submitRsvpSchema.safeParse(invalidInput)
+    expect(result.success).toBe(false)
+  })
+
+  it('should reject duplicate answers for the same question and guest/household', () => {
+    const invalidInput = {
+      rsvpResponses: [],
+      answersToQuestions: [
+        {
+          questionId: 'question-123',
+          questionType: 'Text',
+          response: 'First',
+          guestId: 1,
+          householdId: 'household-1',
+        },
+        {
+          questionId: 'question-123',
+          questionType: 'Option',
+          response: 'option-1',
+          guestId: 1,
+          householdId: 'household-1',
+        },
+      ],
+    }
+
+    const result = submitRsvpSchema.safeParse(invalidInput)
+    expect(result.success).toBe(false)
+  })
 })

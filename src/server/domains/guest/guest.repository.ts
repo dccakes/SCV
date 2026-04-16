@@ -5,12 +5,12 @@
  * This layer handles all direct database access for guests.
  */
 
-import type { GuestAgeGroup, PrismaClient } from '@prisma/client'
+import type { GuestAgeGroup, Prisma, PrismaClient } from '@prisma/client'
 
 import type { Guest, GuestWithInvitations } from '~/server/domains/guest/guest.types'
 
 export class GuestRepository {
-  constructor(private db: PrismaClient) {}
+  constructor(private db: PrismaClient | Prisma.TransactionClient) {}
 
   /**
    * Find a guest by ID
@@ -253,6 +253,16 @@ export class GuestRepository {
   }
 
   /**
+   * Clear primary contact flag for all guests in a household
+   */
+  async clearPrimaryContactsByHousehold(householdId: string): Promise<{ count: number }> {
+    return this.db.guest.updateMany({
+      where: { householdId },
+      data: { isPrimaryContact: false },
+    })
+  }
+
+  /**
    * Check if a guest exists
    */
   async exists(id: number): Promise<boolean> {
@@ -304,6 +314,18 @@ export class GuestRepository {
   async countTagAlongsByWeddingId(weddingId: string): Promise<number> {
     return this.db.guest.count({
       where: { weddingId, isTagAlong: true },
+    })
+  }
+
+  /**
+   * Count guests by IDs constrained to a wedding scope
+   */
+  async countByIdsInWedding(weddingId: string, guestIds: number[]): Promise<number> {
+    return this.db.guest.count({
+      where: {
+        weddingId,
+        id: { in: guestIds },
+      },
     })
   }
 }

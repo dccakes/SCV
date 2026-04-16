@@ -33,6 +33,7 @@ export type Household = {
   state: string | null
   zipCode: string | null
   country: string | null
+  likelihoodOfAttending: number | null
   notes: string | null
 }
 

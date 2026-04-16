@@ -99,7 +99,7 @@ describe('workspace scope resolver', () => {
     expect(mockExecuteRaw).toHaveBeenCalled()
   })
 
-  it('does not guess when the user has multiple valid organization-wedding scopes and no active org', async () => {
+  it('picks first candidate when multiple non-primary scopes exist and no active org', async () => {
     mockQueryRaw.mockResolvedValueOnce([
       { isPrimaryWedding: false, organizationId: 'org-1', role: 'owner', weddingId: 'wedding-1' },
       { isPrimaryWedding: false, organizationId: 'org-2', role: 'admin', weddingId: 'wedding-2' },
@@ -111,9 +111,9 @@ describe('workspace scope resolver', () => {
     })
 
     expect(result).toEqual({
-      activeOrganization: null,
-      activeWeddingId: null,
+      activeOrganization: { organizationId: 'org-1', role: 'owner' },
+      activeWeddingId: 'wedding-1',
     })
-    expect(mockExecuteRaw).not.toHaveBeenCalled()
+    expect(mockExecuteRaw).toHaveBeenCalled()
   })
 })

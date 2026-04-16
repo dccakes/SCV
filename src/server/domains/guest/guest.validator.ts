@@ -4,8 +4,9 @@
  * Zod schemas for validating guest-related inputs.
  */
 
-import { GuestAgeGroup } from '@prisma/client'
 import { z } from 'zod'
+
+const GUEST_AGE_GROUP_VALUES = ['INFANT', 'CHILD', 'TEEN', 'ADULT'] as const
 
 /**
  * Schema for creating a guest
@@ -17,7 +18,7 @@ export const createGuestSchema = z.object({
   phone: z.string().optional().nullable(),
   householdId: z.string().min(1, 'Household ID is required'),
   isPrimaryContact: z.boolean().optional().default(false),
-  ageGroup: z.enum(GuestAgeGroup).default(GuestAgeGroup.ADULT),
+  ageGroup: z.enum(GUEST_AGE_GROUP_VALUES).default('ADULT'),
   isTagAlong: z.boolean().default(false),
   tagIds: z.array(z.guid()).max(10, 'Maximum 10 tags allowed').optional().default([]),
 })
@@ -31,7 +32,7 @@ export const updateGuestSchema = z.object({
   lastName: z.string().optional(),
   email: z.string().email('Valid email required').optional().nullable(),
   phone: z.string().optional().nullable(),
-  ageGroup: z.enum(GuestAgeGroup).optional(),
+  ageGroup: z.enum(GUEST_AGE_GROUP_VALUES).optional(),
   isTagAlong: z.boolean().optional(),
   tagIds: z.array(z.guid()).max(10, 'Maximum 10 tags allowed').optional(),
 })
@@ -68,7 +69,7 @@ export const guestPartySchema = z.object({
   email: z.string().email('Valid email required').optional().nullable(),
   phone: z.string().optional().nullable(),
   isPrimaryContact: z.boolean().default(false),
-  ageGroup: z.enum(GuestAgeGroup).default(GuestAgeGroup.ADULT),
+  ageGroup: z.enum(GUEST_AGE_GROUP_VALUES).default('ADULT'),
   isTagAlong: z.boolean().default(false),
   tagIds: z.array(z.guid()).max(10, 'Maximum 10 tags allowed').default([]),
   invites: z.record(z.string(), z.string()),

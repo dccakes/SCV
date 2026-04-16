@@ -10,7 +10,6 @@ jest.mock('~/server/db', () => ({ db: {} }))
 
 jest.mock('~/server/domains/website', () => ({
   websiteService: {
-    enableWebsite: jest.fn(),
     updateWebsite: jest.fn(),
     updateRsvpEnabled: jest.fn(),
     updateCoverPhoto: jest.fn(),
@@ -18,6 +17,13 @@ jest.mock('~/server/domains/website', () => ({
     getBySubUrl: jest.fn(),
     hasPasswordAccess: jest.fn(),
     verifyWebsitePassword: jest.fn(),
+    fetchWeddingData: jest.fn(),
+  },
+}))
+
+jest.mock('~/server/application/website-management', () => ({
+  websiteManagementService: {
+    enableWebsite: jest.fn(),
     fetchWeddingData: jest.fn(),
   },
 }))
@@ -39,9 +45,13 @@ jest.mock('~/server/application/rsvp-submission', () => {
 })
 
 // @ts-expect-error - mocked module
+import { websiteManagementService } from '~/server/application/website-management'
+// @ts-expect-error - mocked module
 import { websiteService } from '~/server/domains/website'
 import { websiteRouter } from '~/server/domains/website/website.router'
 
+const mockEnableWebsite = websiteManagementService.enableWebsite as jest.Mock
+const mockFetchWeddingData = websiteManagementService.fetchWeddingData as jest.Mock
 const mockGetByWeddingId = websiteService.getByWeddingId as jest.Mock
 
 function makeAuthCaller(
@@ -66,7 +76,29 @@ function makeAuthCaller(
 
 describe('websiteRouter', () => {
   beforeEach(() => {
+    mockEnableWebsite.mockReset()
+    mockFetchWeddingData.mockReset()
     mockGetByWeddingId.mockReset()
+  })
+
+  describe('create', () => {
+    it('forwards authz context and active wedding to website management service', async () => {
+      mockEnableWebsite.mockResolvedValue({ id: 'website-123', weddingId: 'wedding-123' })
+
+      const caller = makeAuthCaller()
+      const input = { basePath: 'https://example.com', email: 'john@example.com' }
+
+      await caller.create(input)
+
+      expect(mockEnableWebsite).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'user-123',
+          activeOrganization: { organizationId: 'org-123', role: 'owner' },
+        }),
+        'wedding-123',
+        input
+      )
+    })
   })
 
   describe('getByUserId', () => {
@@ -85,6 +117,23 @@ describe('websiteRouter', () => {
         weddingId: 'wedding-123',
       })
       expect(mockGetByWeddingId).toHaveBeenCalledWith('wedding-123')
+    })
+  })
+
+  describe('fetchWeddingData', () => {
+    it('forwards public input to website management service', async () => {
+      const payload = { website: { id: 'website-123', subUrl: 'johnandjane' }, events: [] }
+      mockFetchWeddingData.mockResolvedValue(payload)
+
+      const caller = websiteRouter.createCaller({
+        db: {} as never,
+        auth: { userId: null, session: null },
+        headers: new Headers(),
+      })
+
+      const input = { subUrl: 'johnandjane', accessToken: undefined }
+      await expect(caller.fetchWeddingData(input)).resolves.toEqual(payload)
+      expect(mockFetchWeddingData).toHaveBeenCalledWith('johnandjane', undefined)
     })
   })
 })

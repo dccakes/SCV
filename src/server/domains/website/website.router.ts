@@ -7,6 +7,7 @@
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
 import { rsvpSubmissionService, submitPublicRsvpSchema } from '~/server/application/rsvp-submission'
+import { websiteManagementService } from '~/server/application/website-management'
 import { requireActiveWeddingId } from '~/server/authz/active-wedding'
 import { requirePermission } from '~/server/authz/permission-checker'
 import { websiteService } from '~/server/domains/website'
@@ -28,7 +29,7 @@ export const websiteRouter = createTRPCRouter({
   create: protectedProcedure.input(createWebsiteSchema).mutation(async ({ ctx, input }) => {
     const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
 
-    return websiteService.enableWebsite(ctx.authz, weddingId, input)
+    return websiteManagementService.enableWebsite(ctx.authz, weddingId, input)
   }),
 
   /**
@@ -97,7 +98,7 @@ export const websiteRouter = createTRPCRouter({
    * Fetch complete wedding data for public website display
    */
   fetchWeddingData: publicProcedure.input(fetchWeddingDataSchema).query(async ({ input }) => {
-    return websiteService.fetchWeddingData(input.subUrl, input.accessToken)
+    return websiteManagementService.fetchWeddingData(input.subUrl, input.accessToken)
   }),
 
   /**

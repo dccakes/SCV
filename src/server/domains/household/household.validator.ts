@@ -37,6 +37,7 @@ export const baseHouseholdFields = z.object({
   phone: z.string().nullish().optional(),
   email: z.string().email({ message: 'Not a valid email' }).nullish().optional(),
   notes: z.string().nullish().optional(),
+  likelihoodOfAttending: z.number().int().min(1).max(5).nullish().optional(),
 })
 
 /**

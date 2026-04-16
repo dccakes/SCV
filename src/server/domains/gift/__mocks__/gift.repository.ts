@@ -11,6 +11,7 @@ export const mockGift: Gift = {
   eventId: 'event-123',
   description: 'Beautiful vase',
   thankyou: false,
+  thankYouSentAt: null,
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
 }

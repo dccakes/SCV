@@ -120,7 +120,7 @@ describe('decideWorkspaceScope', () => {
     })
   })
 
-  it('returns empty scope when multiple non-primary candidates exist', () => {
+  it('picks first candidate when multiple non-primary candidates exist', () => {
     const result = decideWorkspaceScope({
       sessionActiveOrganizationId: null,
       scopedSessionRow: undefined,
@@ -141,10 +141,13 @@ describe('decideWorkspaceScope', () => {
     })
 
     expect(result).toEqual({
-      activeOrganization: null,
-      activeWeddingId: null,
+      activeOrganization: {
+        organizationId: 'org-1',
+        role: 'owner',
+      },
+      activeWeddingId: 'wedding-1',
       clearSessionActiveOrganizationId: false,
-      persistActiveOrganizationId: null,
+      persistActiveOrganizationId: 'org-1',
     })
   })
 })

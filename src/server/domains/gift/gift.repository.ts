@@ -5,12 +5,12 @@
  * This layer handles all direct database access for gifts.
  */
 
-import type { PrismaClient } from '@prisma/client'
+import type { Prisma, PrismaClient } from '@prisma/client'
 
 import type { Gift } from '~/server/domains/gift/gift.types'
 
 export class GiftRepository {
-  constructor(private db: PrismaClient) {}
+  constructor(private db: PrismaClient | Prisma.TransactionClient) {}
 
   /**
    * Find a gift by compound ID (householdId + eventId)
@@ -93,6 +93,7 @@ export class GiftRepository {
     data: {
       description?: string
       thankyou?: boolean
+      thankYouSentAt?: Date | null
     }
   ): Promise<Gift> {
     return this.db.gift.update({
@@ -105,6 +106,7 @@ export class GiftRepository {
       data: {
         description: data.description,
         thankyou: data.thankyou,
+        thankYouSentAt: data.thankYouSentAt,
       },
     })
   }
@@ -117,6 +119,7 @@ export class GiftRepository {
     eventId: string
     description?: string | null
     thankyou: boolean
+    thankYouSentAt?: Date | null
   }): Promise<Gift> {
     return this.db.gift.upsert({
       where: {
@@ -128,12 +131,14 @@ export class GiftRepository {
       update: {
         description: data.description,
         thankyou: data.thankyou,
+        thankYouSentAt: data.thankYouSentAt,
       },
       create: {
         householdId: data.householdId,
         eventId: data.eventId,
         description: data.description,
         thankyou: data.thankyou,
+        thankYouSentAt: data.thankYouSentAt,
       },
     })
   }

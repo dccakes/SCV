@@ -15,6 +15,7 @@ export type Question = {
   text: string
   type: string // 'Text' | 'Option'
   isRequired: boolean
+  allowOther: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -91,6 +92,7 @@ export type UpsertQuestionInput = {
   text: string
   type: string
   isRequired: boolean
+  allowOther?: boolean
   options?: OptionInput[]
   deletedOptions?: string[]
 }

@@ -20,24 +20,85 @@ const mockEvent: EventWithStats = {
     attending: 10,
     invited: 5,
     declined: 2,
-    notInvited: 0,
+    notInvited: 3,
   },
+  estimatedAttendance: 12,
 }
 
 describe('EventCard', () => {
-  it('renders event info and calls callbacks with event id', () => {
+  it('renders event info and manage guests button', () => {
     const onEdit = jest.fn()
     const onDelete = jest.fn()
+    const onManageGuests = jest.fn()
 
-    render(<EventCard event={mockEvent} onEdit={onEdit} onDelete={onDelete} />)
+    render(
+      <EventCard
+        event={mockEvent}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onManageGuests={onManageGuests}
+        onManageQuestions={jest.fn()}
+        onToggleCollectRsvp={jest.fn()}
+      />
+    )
 
     expect(screen.getByText('Ceremony')).toBeInTheDocument()
     expect(screen.getByText('Main Hall')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: /edit/i }))
-    fireEvent.click(screen.getByRole('button', { name: /delete/i }))
+    fireEvent.click(screen.getByRole('button', { name: /manage guests|guests/i }))
+    expect(onManageGuests).toHaveBeenCalledWith('evt-1')
+  })
 
-    expect(onEdit).toHaveBeenCalledWith('evt-1')
-    expect(onDelete).toHaveBeenCalledWith('evt-1')
+  it('always shows guest count regardless of collectRsvp', () => {
+    const noRsvpEvent: EventWithStats = {
+      ...mockEvent,
+      collectRsvp: false,
+    }
+
+    render(
+      <EventCard
+        event={noRsvpEvent}
+        onEdit={jest.fn()}
+        onDelete={jest.fn()}
+        onManageGuests={jest.fn()}
+        onManageQuestions={jest.fn()}
+        onToggleCollectRsvp={jest.fn()}
+      />
+    )
+
+    expect(screen.getByText(/17 of 20 guests invited/)).toBeInTheDocument()
+  })
+
+  it('renders the actions dropdown trigger', () => {
+    render(
+      <EventCard
+        event={mockEvent}
+        onEdit={jest.fn()}
+        onDelete={jest.fn()}
+        onManageGuests={jest.fn()}
+        onManageQuestions={jest.fn()}
+        onToggleCollectRsvp={jest.fn()}
+      />
+    )
+
+    expect(screen.getByRole('button', { name: /event actions/i })).toBeInTheDocument()
+  })
+
+  it('calls RSVP toggle callback when collect RSVP switch is changed', () => {
+    const onToggleCollectRsvp = jest.fn()
+
+    render(
+      <EventCard
+        event={mockEvent}
+        onEdit={jest.fn()}
+        onDelete={jest.fn()}
+        onManageGuests={jest.fn()}
+        onManageQuestions={jest.fn()}
+        onToggleCollectRsvp={onToggleCollectRsvp}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('switch', { name: /toggle rsvp collection/i }))
+    expect(onToggleCollectRsvp).toHaveBeenCalledWith('evt-1', false)
   })
 })

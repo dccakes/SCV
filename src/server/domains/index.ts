@@ -5,6 +5,13 @@
  * Each domain contains its own types, validators, repository, service, and router.
  */
 
+// Communication Log Domain
+export {
+  type CommunicationLogEntry,
+  communicationLogRouter,
+  communicationLogService,
+  type HouseholdNote,
+} from '~/server/domains/communication-log'
 // Event Domain
 export {
   type CreateEventInput,

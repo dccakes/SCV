@@ -1,3 +1,4 @@
+import typography from '@tailwindcss/typography'
 import type { Config } from 'tailwindcss'
 import tailwindcssAnimate from 'tailwindcss-animate'
 
@@ -99,7 +100,7 @@ const config = {
       },
     },
   },
-  plugins: [tailwindcssAnimate],
+  plugins: [tailwindcssAnimate, typography],
   // Safelist for dynamically interpolated Tailwind classes (e.g. `text-${primaryColor}`)
   safelist: [
     'text-primary',

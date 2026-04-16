@@ -1,7 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { FiPlus, FiTag, FiX } from 'react-icons/fi'
 import { toast } from 'sonner'
@@ -75,6 +75,16 @@ export function TagsModal({
   const { register, handleSubmit, formState, reset, watch, setValue } = form
   const { errors, isSubmitting } = formState
   const selectedColor = watch('color')
+
+  // Re-sync local state from form state when modal opens,
+  // so cancelled edits don't persist across open/close cycles
+  useEffect(() => {
+    if (open) {
+      setLocalSelectedIds(selectedTagIds)
+      setIsCreating(false)
+      reset()
+    }
+  }, [open, selectedTagIds, reset])
 
   const handleToggleTag = (tagId: string) => {
     setLocalSelectedIds((prev) =>

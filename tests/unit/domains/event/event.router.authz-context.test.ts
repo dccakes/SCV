@@ -15,22 +15,21 @@ jest.mock('server/application/event-insights', () => ({
   },
 }))
 
-jest.mock('server/domains/event', () => ({
-  eventService: {
+jest.mock('server/application/event-management', () => ({
+  eventManagementService: {
     createEvent: jest.fn(),
-    deleteEvent: jest.fn(),
-    updateCollectRsvp: jest.fn(),
     updateEvent: jest.fn(),
+    deleteEvent: jest.fn(),
   },
 }))
 
 import { eventInsightsService } from 'server/application/event-insights'
-import { eventService } from 'server/domains/event'
+import { eventManagementService } from 'server/application/event-management'
 import { eventRouter } from 'server/domains/event/event.router'
 
-const mockCreateEvent = eventService.createEvent as jest.Mock
-const mockUpdateEvent = eventService.updateEvent as jest.Mock
-const mockDeleteEvent = eventService.deleteEvent as jest.Mock
+const mockCreateEvent = eventManagementService.createEvent as jest.Mock
+const mockUpdateEvent = eventManagementService.updateEvent as jest.Mock
+const mockDeleteEvent = eventManagementService.deleteEvent as jest.Mock
 const mockListEvents = eventInsightsService.listEvents as jest.Mock
 const mockListEventsWithStats = eventInsightsService.listEventsWithStats as jest.Mock
 
@@ -70,7 +69,7 @@ describe('eventRouter authz context plumbing', () => {
         userId: 'user-123',
       },
       'wedding-123',
-      { allowTagAlongs: false, eventName: 'Ceremony' }
+      { allowTagAlongs: false, collectRsvp: false, eventName: 'Ceremony' }
     )
   })
 
@@ -87,7 +86,7 @@ describe('eventRouter authz context plumbing', () => {
         userId: 'user-123',
       },
       'wedding-123',
-      { allowTagAlongs: false, eventId: 'event-1', eventName: 'Updated' }
+      { eventId: 'event-1', eventName: 'Updated' }
     )
 
     expect(mockDeleteEvent).toHaveBeenCalledWith(

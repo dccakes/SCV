@@ -7,6 +7,7 @@
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { eventInsightsService } from '~/server/application/event-insights'
+import { eventManagementService } from '~/server/application/event-management'
 import { requireActiveWeddingId } from '~/server/authz/active-wedding'
 import { eventService } from '~/server/domains/event'
 import {
@@ -23,7 +24,7 @@ export const eventRouter = createTRPCRouter({
    */
   create: protectedProcedure.input(createEventSchema).mutation(async ({ ctx, input }) => {
     const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
-    return eventService.createEvent(ctx.authz, weddingId, input)
+    return eventManagementService.createEvent(ctx.authz, weddingId, input)
   }),
 
   /**
@@ -47,7 +48,7 @@ export const eventRouter = createTRPCRouter({
    */
   update: protectedProcedure.input(updateEventSchema).mutation(async ({ ctx, input }) => {
     const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
-    return eventService.updateEvent(ctx.authz, weddingId, input)
+    return eventManagementService.updateEvent(ctx.authz, weddingId, input)
   }),
 
   /**
@@ -65,6 +66,6 @@ export const eventRouter = createTRPCRouter({
    */
   delete: protectedProcedure.input(deleteEventSchema).mutation(async ({ ctx, input }) => {
     const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
-    return eventService.deleteEvent(ctx.authz, weddingId, input.eventId)
+    return eventManagementService.deleteEvent(ctx.authz, weddingId, input.eventId)
   }),
 })
