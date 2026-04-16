@@ -23,11 +23,27 @@ jest.mock('~/server/application/guest-insights', () => ({
 jest.mock('~/server/domains/guest', () => ({
   guestService: {
     updateGuest: jest.fn(),
+    getById: jest.fn(),
+    updateGuestTags: jest.fn(),
   },
 }))
 
+jest.mock('~/server/application/household-management', () => ({
+  householdManagementService: {
+    updateHouseholdAddress: jest.fn(),
+  },
+}))
+
+import { householdManagementService } from '~/server/application/household-management'
+
 const mockGuestService = guestService as {
   updateGuest: jest.Mock
+  getById: jest.Mock
+  updateGuestTags: jest.Mock
+}
+
+const mockHouseholdManagementService = householdManagementService as {
+  updateHouseholdAddress: jest.Mock
 }
 
 const mockGuestInsightsService = guestInsightsService as {
@@ -106,6 +122,117 @@ describe('getGuestTools', () => {
         email: 'new@test.com',
       })
       expect(result).toEqual({ guest: updated })
+    })
+
+    it('skips updateGuest when only address fields provided', async () => {
+      const guest = { id: 1, firstName: 'Alice', householdId: 'household-456' }
+      mockGuestService.getById.mockResolvedValue(guest)
+      const updatedHousehold = {
+        id: 'household-456',
+        address1: '789 Elm St',
+        city: 'Portland',
+        state: 'OR',
+      }
+      mockHouseholdManagementService.updateHouseholdAddress.mockResolvedValue(updatedHousehold)
+
+      const params = { guestId: 1, address1: '789 Elm St', city: 'Portland', state: 'OR' }
+      const result = await tools.update_guest.execute(params, {
+        toolCallId: 'tc-addr',
+        messages: [],
+        abortSignal: undefined as never,
+      })
+
+      expect(mockGuestService.updateGuest).not.toHaveBeenCalled()
+      expect(mockGuestService.getById).toHaveBeenCalledWith(1)
+      expect(mockHouseholdManagementService.updateHouseholdAddress).toHaveBeenCalledWith(
+        mockCtx.authz,
+        'wedding-123',
+        'household-456',
+        { address1: '789 Elm St', city: 'Portland', state: 'OR' }
+      )
+      expect(result).toEqual({ guest, household: updatedHousehold })
+    })
+
+    it('skips updateGuest when only tags provided', async () => {
+      const guest = { id: 1, firstName: 'Alice', householdId: 'household-456' }
+      mockGuestService.getById.mockResolvedValue(guest)
+      mockGuestService.updateGuestTags.mockResolvedValue(undefined)
+
+      const params = { guestId: 1, tagIds: ['tag-1', 'tag-2'] }
+      const result = await tools.update_guest.execute(params, {
+        toolCallId: 'tc-tags',
+        messages: [],
+        abortSignal: undefined as never,
+      })
+
+      expect(mockGuestService.updateGuest).not.toHaveBeenCalled()
+      expect(mockGuestService.updateGuestTags).toHaveBeenCalledWith(
+        mockCtx.authz,
+        'wedding-123',
+        1,
+        ['tag-1', 'tag-2']
+      )
+      expect(result).toEqual({ guest })
+    })
+
+    it('uses updateGuest result for householdId when guest fields provided', async () => {
+      const updated = {
+        id: 1,
+        firstName: 'Alice',
+        lastName: 'Updated',
+        householdId: 'household-456',
+      }
+      mockGuestService.updateGuest.mockResolvedValue(updated)
+      const updatedHousehold = { id: 'household-456', address1: '123 Main St' }
+      mockHouseholdManagementService.updateHouseholdAddress.mockResolvedValue(updatedHousehold)
+      mockGuestService.updateGuestTags.mockResolvedValue(undefined)
+
+      const params = {
+        guestId: 1,
+        lastName: 'Updated',
+        address1: '123 Main St',
+        tagIds: ['tag-3'],
+      }
+      const result = await tools.update_guest.execute(params, {
+        toolCallId: 'tc-all',
+        messages: [],
+        abortSignal: undefined as never,
+      })
+
+      expect(mockGuestService.updateGuest).toHaveBeenCalledWith(mockCtx.authz, 'wedding-123', 1, {
+        lastName: 'Updated',
+      })
+      expect(mockGuestService.getById).not.toHaveBeenCalled()
+      expect(mockHouseholdManagementService.updateHouseholdAddress).toHaveBeenCalledWith(
+        mockCtx.authz,
+        'wedding-123',
+        'household-456',
+        { address1: '123 Main St' }
+      )
+      expect(mockGuestService.updateGuestTags).toHaveBeenCalledWith(
+        mockCtx.authz,
+        'wedding-123',
+        1,
+        ['tag-3']
+      )
+      expect(result).toEqual({
+        guest: updated,
+        household: updatedHousehold,
+      })
+    })
+
+    it('returns error when guest not found', async () => {
+      mockGuestService.getById.mockResolvedValue(null)
+
+      const params = { guestId: 99, address1: '123 Main St' }
+      const result = await tools.update_guest.execute(params, {
+        toolCallId: 'tc-notfound',
+        messages: [],
+        abortSignal: undefined as never,
+      })
+
+      expect(result).toEqual({ error: 'Guest not found' })
+      expect(mockHouseholdManagementService.updateHouseholdAddress).not.toHaveBeenCalled()
     })
   })
 

@@ -30,7 +30,13 @@ function buildPlannerPrompt(bride: string, groom: string, ctx: EttaContext) {
     }
   }
 
-  lines.push('', 'Be helpful, concise, and proactive. Suggest next steps when appropriate.')
+  lines.push(
+    '',
+    'You can read PDF documents using the read_pdf tool (pass the file URL from quote attachments).',
+    'When a vendor quote has attached PDF files, proactively offer to read and summarize them.',
+    '',
+    'Be helpful, concise, and proactive. Suggest next steps when appropriate.'
+  )
 
   return lines.join('\n')
 }
