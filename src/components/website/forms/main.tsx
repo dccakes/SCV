@@ -3,7 +3,13 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { IoMdClose } from 'react-icons/io'
 import { useSearchParams } from 'next/navigation'
-import type { Event, Guest, HouseholdRsvpData, Question, RsvpPageData } from '~/app/utils/shared-types'
+import type {
+  Event,
+  Guest,
+  HouseholdRsvpData,
+  Question,
+  RsvpPageData,
+} from '~/app/utils/shared-types'
 import { useRsvpForm, useUpdateRsvpForm } from '~/components/contexts/rsvp-form-context'
 import { useConfirmReloadPage } from '~/components/hooks'
 import { AsyncState } from '~/components/ui/async-state'
@@ -136,10 +142,11 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
 
   const generateDynamicStepForms = useCallback((): ReactNode[] => {
     // Prefer confirmedHousehold (new flow) over selectedHousehold (old flow)
-    const householdGuests: Array<Guest & { invitations: Guest['invitations'] }> =
-      confirmedHousehold
-        ? toGuests(confirmedHousehold, weddingId)
-        : (rsvpFormData.selectedHousehold?.guests as Array<Guest & { invitations: Guest['invitations'] }> ?? [])
+    const householdGuests: Array<Guest & { invitations: Guest['invitations'] }> = confirmedHousehold
+      ? toGuests(confirmedHousehold, weddingId)
+      : ((rsvpFormData.selectedHousehold?.guests as Array<
+          Guest & { invitations: Guest['invitations'] }
+        >) ?? [])
 
     const newSteps: ReactNode[] =
       weddingData?.events?.reduce((acc: ReactNode[], event: Event) => {
@@ -190,7 +197,13 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
 
     numSteps.current = newSteps.length + NUM_STATIC_STEPS
     return newSteps
-  }, [weddingData, confirmedHousehold, weddingId, rsvpFormData.selectedHousehold, rsvpFormData.rsvpResponses])
+  }, [
+    weddingData,
+    confirmedHousehold,
+    weddingId,
+    rsvpFormData.selectedHousehold,
+    rsvpFormData.rsvpResponses,
+  ])
 
   return (
     <div className='pb-20 font-serif'>

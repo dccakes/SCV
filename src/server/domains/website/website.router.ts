@@ -129,11 +129,9 @@ export const websiteRouter = createTRPCRouter({
   /**
    * Validate a household RSVP token and return household data
    */
-  validateRsvpToken: publicProcedure
-    .input(validateRsvpTokenSchema)
-    .query(async ({ input }) => {
-      return websiteService.validateRsvpToken(input.subUrl, input.rsvpToken)
-    }),
+  validateRsvpToken: publicProcedure.input(validateRsvpTokenSchema).query(async ({ input }) => {
+    return websiteService.validateRsvpToken(input.subUrl, input.rsvpToken)
+  }),
 
   /**
    * Confirm household identity via name lookup + email verification
