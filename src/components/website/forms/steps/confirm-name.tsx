@@ -138,9 +138,7 @@ export default function ConfirmNameForm({ goNext, goBack }: StepFormProps) {
               onChange={() => handleSelectHousehold(household)}
             />
             <label htmlFor={household.id} className='flex flex-col gap-1'>
-              <span>
-                {mainGuests.map((g) => `${g.firstName} ${g.lastName}`).join(', ')}
-              </span>
+              <span>{mainGuests.map((g) => `${g.firstName} ${g.lastName}`).join(', ')}</span>
               {tagAlongs.length > 0 && (
                 <span className='text-sm text-stone-500'>
                   + {tagAlongs.map((g) => g.firstName).join(', ')} (may be joining)

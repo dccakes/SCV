@@ -8,9 +8,9 @@
  * - Gift domain (gift tracking)
  */
 
+import { randomUUID } from 'node:crypto'
 // biome-ignore lint/style/noRestrictedImports: Application services use PrismaClient for cross-domain transactions
 import type { PrismaClient } from '@prisma/client'
-import { randomUUID } from 'crypto'
 import { TRPCError } from '@trpc/server'
 import type {
   CreateHouseholdResult,

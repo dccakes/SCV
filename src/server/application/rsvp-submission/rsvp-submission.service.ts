@@ -33,7 +33,7 @@ export class RsvpSubmissionService {
     _questionRepo: QuestionRepository,
     private guestRepo: GuestRepository,
     private householdRepo: HouseholdRepository,
-    private weddingRepo: WeddingRepository,
+    _weddingRepo: WeddingRepository,
     private db: PrismaClient
   ) {}
 

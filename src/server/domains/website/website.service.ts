@@ -5,9 +5,9 @@
  * Cross-domain orchestration lives in application services.
  */
 
+import { randomUUID } from 'node:crypto'
 // biome-ignore lint/style/noRestrictedImports: architectural violation, tracked in ARCHITECTURAL_VIOLATIONS.md
 import type { PrismaClient } from '@prisma/client'
-import { randomUUID } from 'crypto'
 import { TRPCError } from '@trpc/server'
 
 import type { AuthzContext } from '~/server/authz/authorization.types'
@@ -165,7 +165,8 @@ export class WebsiteService {
    * Look up households by guest name — public, returns no email addresses
    */
   async lookupHouseholdByName(subUrl: string, name: string) {
-    if (!this.db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB not available' })
+    if (!this.db)
+      throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB not available' })
     const website = await this.websiteRepository.findBySubUrl(subUrl)
     if (!website) {
       throw new TRPCError({ code: 'NOT_FOUND', message: 'Wedding website not found' })
@@ -225,7 +226,8 @@ export class WebsiteService {
    * Validate a household RSVP token and return household data
    */
   async validateRsvpToken(subUrl: string, rsvpToken: string) {
-    if (!this.db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB not available' })
+    if (!this.db)
+      throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB not available' })
     const household = await this.db.household.findFirst({
       where: {
         rsvpToken,
@@ -262,7 +264,8 @@ export class WebsiteService {
    * Confirm household identity by name + email; returns rsvpToken on match
    */
   async confirmHouseholdIdentity(subUrl: string, householdId: string, email: string) {
-    if (!this.db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB not available' })
+    if (!this.db)
+      throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB not available' })
     const household = await this.db.household.findFirst({
       where: {
         id: householdId,
@@ -294,8 +297,7 @@ export class WebsiteService {
     if (!primaryContact?.email) {
       throw new TRPCError({
         code: 'FORBIDDEN',
-        message:
-          'No email on file. Please contact the couple to receive your personal RSVP link.',
+        message: 'No email on file. Please contact the couple to receive your personal RSVP link.',
       })
     }
 
@@ -326,7 +328,8 @@ export class WebsiteService {
     rsvpToken: string,
     data: { email?: string; phone?: string }
   ) {
-    if (!this.db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB not available' })
+    if (!this.db)
+      throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB not available' })
     const household = await this.db.household.findFirst({
       where: {
         rsvpToken,
