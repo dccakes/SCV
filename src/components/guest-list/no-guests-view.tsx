@@ -24,10 +24,11 @@ export default function NoGuestsView({ setPrefillHousehold, onImportClick }: NoG
           </CardDescription>
         </CardHeader>
         <CardFooter className='gap-4'>
-          <Button variant='outline' onClick={onImportClick}>
+          <Button type='button' variant='outline' onClick={onImportClick}>
             Import Guests
           </Button>
           <Button
+            type='button'
             onClick={() => {
               setPrefillHousehold(undefined)
               toggleGuestForm()

@@ -2,16 +2,12 @@
 
 import { useRouter } from 'next/navigation'
 import { type Dispatch, type SetStateAction, useState } from 'react'
-import { AiOutlinePlusCircle } from 'react-icons/ai'
-import { BsPencil } from 'react-icons/bs'
 import { GoArrowLeft } from 'react-icons/go'
 import { TiEyeOutline } from 'react-icons/ti'
-import { sharedStyles } from '~/app/utils/shared-styles'
 import type { DashboardData, EventWithResponses, Question } from '~/app/utils/shared-types'
 import { useToggleEditRsvpSettingsForm } from '~/components/contexts/edit-rsvp-settings-form-context'
 import QuestionForm from '~/components/forms/question-form'
 import GeneralQuestionsSection from '~/components/forms/rsvp/general-questions-section'
-import NoQuestionsView from '~/components/forms/rsvp/no-questions.view'
 import NoRsvpView from '~/components/forms/rsvp/no-rsvp-view'
 import { useScrollToTop } from '~/components/hooks'
 import { LoadingSpinner } from '~/components/loaders'
@@ -67,13 +63,7 @@ export default function RsvpFormSettings({
             const numGuests = attending + invited + declined
             return (
               <section key={event.id} className='border-b py-12'>
-                <EventRsvpSection
-                  event={event}
-                  numGuests={numGuests}
-                  setUseEditMode={setUseEditMode}
-                  setPrefillQuestion={setPrefillQuestion}
-                  setShowQuestionForm={setShowQuestionForm}
-                />
+                <EventRsvpSection event={event} numGuests={numGuests} />
               </section>
             )
           })}
@@ -92,9 +82,6 @@ export default function RsvpFormSettings({
 type EventRsvpSectionProps = {
   event: EventWithResponses
   numGuests: number
-  setUseEditMode: Dispatch<SetStateAction<boolean>>
-  setPrefillQuestion: Dispatch<SetStateAction<Question | undefined>>
-  setShowQuestionForm: Dispatch<SetStateAction<boolean>>
 }
 
 const getMutationErrorMessage = (error: unknown, fallback: string): string => {
@@ -112,13 +99,7 @@ const getMutationErrorMessage = (error: unknown, fallback: string): string => {
   return fallback
 }
 
-const EventRsvpSection = ({
-  event,
-  numGuests,
-  setUseEditMode,
-  setPrefillQuestion,
-  setShowQuestionForm,
-}: EventRsvpSectionProps) => {
+const EventRsvpSection = ({ event, numGuests }: EventRsvpSectionProps) => {
   const router = useRouter()
   const [feedbackError, setFeedbackError] = useState<string | null>(null)
   const updateEventRsvpSetting = api.event.updateCollectRsvp.useMutation({
@@ -131,17 +112,6 @@ const EventRsvpSection = ({
     },
   })
 
-  const onAddQuestion = (eventId: string) => {
-    setUseEditMode(false)
-    setPrefillQuestion({
-      id: undefined,
-      eventId,
-      text: '',
-      type: 'Text',
-      isRequired: false,
-    })
-    setShowQuestionForm(true)
-  }
   return (
     <>
       <div className='flex items-center justify-between pb-4'>
@@ -168,7 +138,7 @@ const EventRsvpSection = ({
       {event.collectRsvp && (event.questions?.length ?? 0) > 0 ? (
         <>
           <p>
-            Questions will be asked to all of the {numGuests} guests on the{' '}
+            RSVP questions currently configured for {numGuests} guests on the{' '}
             <span className='font-semibold underline'>{event.name}</span> list who RSVP
             &apos;Yes&apos;
           </p>
@@ -185,35 +155,19 @@ const EventRsvpSection = ({
                         <span className='text-sm'>{question.options?.length} options</span>
                       </div>
                     )}
-                    <BsPencil
-                      size={20}
-                      color={sharedStyles.primaryColorHex}
-                      className='cursor-pointer'
-                      onClick={() => {
-                        setUseEditMode(true)
-                        setPrefillQuestion(question)
-                        setShowQuestionForm(true)
-                      }}
-                    />
                   </div>
                 </li>
               )
             })}
           </ul>
-          <button
-            type='button'
-            className='mt-5 flex w-fit cursor-pointer gap-2 decoration-pink-400 hover:underline'
-            onClick={() => {
-              setFeedbackError(null)
-              onAddQuestion(event.id)
-            }}
-          >
-            <AiOutlinePlusCircle size={25} color={sharedStyles.primaryColorHex} />
-            <span className={sharedStyles.primaryText}>Add a Follow-Up Question</span>
-          </button>
+          <p className='mt-5 text-muted-foreground text-sm'>
+            Event RSVP questions are now managed in the new <b>Events</b> page.
+          </p>
         </>
       ) : event.collectRsvp ? (
-        <NoQuestionsView event={event} onAddQuestion={onAddQuestion} />
+        <div className='rounded-md border border-dashed p-4 text-muted-foreground text-sm'>
+          No questions configured yet. Use the new <b>Events</b> page to add event RSVP questions.
+        </div>
       ) : (
         <NoRsvpView />
       )}

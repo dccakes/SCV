@@ -1,13 +1,4 @@
-import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Preview,
-  Text,
-} from '@react-email/components'
+import { Body, Button, Container, Head, Heading, Preview, Text } from '@react-email/components'
 
 import { emailStyles } from '~/emails/email-styles'
 
@@ -18,7 +9,7 @@ interface ResetPasswordEmailProps {
 
 export function ResetPasswordEmail({ url, userName }: ResetPasswordEmailProps) {
   return (
-    <Html>
+    <html lang='en'>
       <Head />
       <Preview>Reset your password</Preview>
       <Body style={emailStyles.body}>
@@ -46,6 +37,6 @@ export function ResetPasswordEmail({ url, userName }: ResetPasswordEmailProps) {
           </Text>
         </Container>
       </Body>
-    </Html>
+    </html>
   )
 }

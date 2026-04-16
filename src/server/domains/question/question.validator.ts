@@ -27,6 +27,7 @@ export const upsertQuestionSchema = z.object({
   text: z.string().min(1, { message: 'Question prompt should not be empty!' }),
   type: z.string(),
   isRequired: z.boolean().default(false),
+  allowOther: z.boolean().default(false),
   options: z
     .array(optionInputSchema)
     .min(2, {

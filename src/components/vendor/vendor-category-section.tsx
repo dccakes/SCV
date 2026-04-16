@@ -1,12 +1,13 @@
 'use client'
 
-import type { VendorCategory } from '@prisma/client'
 import { useState } from 'react'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 import { VendorCard } from '~/components/vendor/vendor-card'
 import { VendorForm } from '~/components/vendor/vendor-form'
 import type { VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
+
+type VendorCategory = VendorWithQuotes['category']
 
 const CATEGORY_LABELS: Record<VendorCategory, string> = {
   VENUE: 'Venue',

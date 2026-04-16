@@ -32,7 +32,15 @@ export const invitationIdSchema = z.object({
   eventId: z.string().min(1, 'Event ID is required'),
 })
 
+/**
+ * Schema for bulk updating invitations
+ */
+export const bulkUpdateInvitationsSchema = z.object({
+  invitations: z.array(updateInvitationSchema).min(1),
+})
+
 // Export inferred types
 export type CreateInvitationSchemaInput = z.infer<typeof createInvitationSchema>
 export type UpdateInvitationSchemaInput = z.infer<typeof updateInvitationSchema>
 export type InvitationIdSchemaInput = z.infer<typeof invitationIdSchema>
+export type BulkUpdateInvitationsSchemaInput = z.infer<typeof bulkUpdateInvitationsSchema>

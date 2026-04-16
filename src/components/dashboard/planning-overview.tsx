@@ -150,9 +150,19 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
 
 function MiniStats({ dashboardData }: { dashboardData: DashboardData | null }) {
   const total = dashboardData?.totalGuests ?? 0
-  const firstEvent = dashboardData?.events?.[0] as EventWithResponses | undefined
-  const confirmed = firstEvent?.guestResponses?.attending ?? 0
-  const pending = firstEvent?.guestResponses?.invited ?? 0
+  const rsvpSummary = (dashboardData?.events ?? []).reduce(
+    (acc, event) => {
+      const eventWithResponses = event as EventWithResponses
+      if (!eventWithResponses.collectRsvp) return acc
+      acc.confirmed += eventWithResponses.guestResponses?.attending ?? 0
+      acc.pending += eventWithResponses.guestResponses?.invited ?? 0
+      acc.declined += eventWithResponses.guestResponses?.declined ?? 0
+      return acc
+    },
+    { confirmed: 0, pending: 0, declined: 0 }
+  )
+  const confirmed = rsvpSummary.confirmed
+  const pending = rsvpSummary.pending
   const pct = total > 0 ? Math.round((confirmed / total) * 100) : 0
 
   const stats = [
@@ -188,10 +198,20 @@ function MiniStats({ dashboardData }: { dashboardData: DashboardData | null }) {
 }
 
 function RsvpCard({ dashboardData }: { dashboardData: DashboardData | null }) {
-  const firstEvent = dashboardData?.events?.[0] as EventWithResponses | undefined
-  const attending = firstEvent?.guestResponses?.attending ?? 0
-  const pending = firstEvent?.guestResponses?.invited ?? 0
-  const declined = firstEvent?.guestResponses?.declined ?? 0
+  const rsvpSummary = (dashboardData?.events ?? []).reduce(
+    (acc, event) => {
+      const eventWithResponses = event as EventWithResponses
+      if (!eventWithResponses.collectRsvp) return acc
+      acc.attending += eventWithResponses.guestResponses?.attending ?? 0
+      acc.pending += eventWithResponses.guestResponses?.invited ?? 0
+      acc.declined += eventWithResponses.guestResponses?.declined ?? 0
+      return acc
+    },
+    { attending: 0, pending: 0, declined: 0 }
+  )
+  const attending = rsvpSummary.attending
+  const pending = rsvpSummary.pending
+  const declined = rsvpSummary.declined
   const total = attending + pending + declined
 
   const confirmedPct = total > 0 ? (attending / total) * 100 : 0
@@ -228,11 +248,19 @@ function RsvpCard({ dashboardData }: { dashboardData: DashboardData | null }) {
         <div className='bg-foreground/30' style={{ width: `${declinedPct}%` }} />
       </div>
 
-      {pending > 0 && (
-        <p className='mb-3 font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
-          Still waiting on {pending} — check guest list for details
-        </p>
-      )}
+      <div className='mb-3 space-y-2'>
+        {pending > 0 ? (
+          <p className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
+            Still waiting on {pending} — check guest list for details
+          </p>
+        ) : null}
+        <Link
+          href='/settings'
+          className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+        >
+          Invite collaborators
+        </Link>
+      </div>
 
       <Link
         href='/guest-list'

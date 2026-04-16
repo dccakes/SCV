@@ -1,21 +1,40 @@
 'use client'
 
 import { format } from 'date-fns'
-import { Calendar, MapPin } from 'lucide-react'
+import { Calendar, MapPin, MoreHorizontal, Pencil, Trash2, Users } from 'lucide-react'
 import { memo } from 'react'
 
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '~/components/ui/dropdown-menu'
+import { Switch } from '~/components/ui/switch'
 import type { EventWithStats } from '~/server/domains/event/event.types'
 
 type EventCardProps = Readonly<{
   event: EventWithStats
   onEdit: (eventId: string) => void
   onDelete: (eventId: string) => void
+  onManageGuests: (eventId: string) => void
+  onManageQuestions: (eventId: string) => void
+  onToggleCollectRsvp: (eventId: string, collectRsvp: boolean) => void
+  isTogglingCollectRsvp?: boolean
 }>
 
-function EventCardBase({ event, onEdit, onDelete }: EventCardProps) {
+function EventCardBase({
+  event,
+  onEdit,
+  onDelete,
+  onManageGuests,
+  onManageQuestions,
+  onToggleCollectRsvp,
+  isTogglingCollectRsvp = false,
+}: EventCardProps) {
   const { guestResponses } = event
   const totalGuests =
     guestResponses.attending +
@@ -37,11 +56,28 @@ function EventCardBase({ event, onEdit, onDelete }: EventCardProps) {
               </CardDescription>
             )}
           </div>
-          {event.collectRsvp && (
-            <Badge variant='secondary' className='shrink-0 text-xs'>
-              RSVPs
-            </Badge>
-          )}
+          <div className='flex items-center gap-2'>
+            {event.collectRsvp && (
+              <Badge variant='secondary' className='shrink-0 text-xs'>
+                RSVPs
+              </Badge>
+            )}
+            <div className='flex items-center gap-2'>
+              <label
+                htmlFor={`${event.id}-collect-rsvp-toggle`}
+                className='font-mono text-[0.6rem] text-muted-foreground uppercase tracking-widest'
+              >
+                Collect RSVPs
+              </label>
+              <Switch
+                id={`${event.id}-collect-rsvp-toggle`}
+                aria-label={`Toggle RSVP collection for ${event.name}`}
+                checked={event.collectRsvp}
+                onCheckedChange={(checked) => onToggleCollectRsvp(event.id, checked)}
+                disabled={isTogglingCollectRsvp}
+              />
+            </div>
+          </div>
         </div>
       </CardHeader>
       <CardContent className='pt-0'>
@@ -65,30 +101,32 @@ function EventCardBase({ event, onEdit, onDelete }: EventCardProps) {
             </p>
           )}
 
-          {event.collectRsvp && totalGuests > 0 && (
+          {totalGuests > 0 && (
             <div className='rounded-md border bg-muted/50 p-2'>
               <div className='font-medium text-muted-foreground text-xs'>
-                RSVP Status {totalInvited > 0 && `(${totalInvited} invited)`}
+                {totalInvited} of {totalGuests} guests invited
               </div>
-              <div className='mt-1.5 flex gap-3 text-xs'>
-                <div className='flex items-center gap-1'>
-                  <div className='h-2 w-2 rounded-full bg-green-500' />
-                  <span className='font-medium'>{guestResponses.attending}</span>
-                  <span className='text-muted-foreground'>Attending</span>
+              {event.collectRsvp && totalInvited > 0 && (
+                <div className='mt-1.5 flex gap-3 text-xs'>
+                  <div className='flex items-center gap-1'>
+                    <div className='h-2 w-2 rounded-full bg-green-500' />
+                    <span className='font-medium'>{guestResponses.attending}</span>
+                    <span className='text-muted-foreground'>Attending</span>
+                  </div>
+                  <div className='flex items-center gap-1'>
+                    <div className='h-2 w-2 rounded-full bg-yellow-500' />
+                    <span className='font-medium'>{guestResponses.invited}</span>
+                    <span className='text-muted-foreground'>Pending</span>
+                  </div>
+                  <div className='flex items-center gap-1'>
+                    <div className='h-2 w-2 rounded-full bg-red-500' />
+                    <span className='font-medium'>{guestResponses.declined}</span>
+                    <span className='text-muted-foreground'>Declined</span>
+                  </div>
                 </div>
-                <div className='flex items-center gap-1'>
-                  <div className='h-2 w-2 rounded-full bg-yellow-500' />
-                  <span className='font-medium'>{guestResponses.invited}</span>
-                  <span className='text-muted-foreground'>Pending</span>
-                </div>
-                <div className='flex items-center gap-1'>
-                  <div className='h-2 w-2 rounded-full bg-red-500' />
-                  <span className='font-medium'>{guestResponses.declined}</span>
-                  <span className='text-muted-foreground'>Declined</span>
-                </div>
-              </div>
+              )}
               {totalInvited > 0 && (
-                <div className='mt-1.5 flex items-center gap-1 border-t border-border/50 pt-1.5 text-xs'>
+                <div className='mt-1.5 flex items-center gap-1 border-border/50 border-t pt-1.5 text-xs'>
                   <div className='h-2 w-2 rounded-full bg-blue-500' />
                   <span className='font-medium'>~{event.estimatedAttendance}</span>
                   <span className='text-muted-foreground'>
@@ -99,23 +137,47 @@ function EventCardBase({ event, onEdit, onDelete }: EventCardProps) {
             </div>
           )}
 
-          <div className='flex gap-2 pt-2'>
+          <div className='flex items-center justify-between pt-2'>
             <Button
               variant='ghost'
               size='sm'
               className='text-xs md:text-sm'
-              onClick={() => onEdit(event.id)}
+              onClick={() => onManageGuests(event.id)}
             >
-              Edit
+              <Users className='h-3.5 w-3.5 md:mr-1' />
+              <span className='hidden md:inline'>Manage Guests</span>
+              <span className='md:hidden'>Guests</span>
             </Button>
-            <Button
-              variant='ghost'
-              size='sm'
-              className='text-red-600 text-xs hover:text-red-700 md:text-sm'
-              onClick={() => onDelete(event.id)}
-            >
-              Delete
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  className='h-8 w-8 p-0'
+                  aria-label={`Event actions for ${event.name}`}
+                >
+                  <MoreHorizontal className='h-4 w-4' />
+                  <span className='sr-only'>Event actions</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <DropdownMenuItem onClick={() => onManageQuestions(event.id)}>
+                  <Pencil className='mr-2 h-3.5 w-3.5' />
+                  RSVP Questions
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onEdit(event.id)}>
+                  <Pencil className='mr-2 h-3.5 w-3.5' />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className='text-red-600 focus:text-red-600'
+                  onClick={() => onDelete(event.id)}
+                >
+                  <Trash2 className='mr-2 h-3.5 w-3.5' />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </CardContent>

@@ -23,8 +23,14 @@ import {
 } from '~/lib/upload-config'
 import { cn } from '~/lib/utils'
 import type { VendorQuote } from '~/server/domains/vendor/vendor.types'
-import { QuoteType } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
+
+type QuoteType = VendorQuote['quoteType']
+
+const QUOTE_TYPE = {
+  FLAT_FEE: 'FLAT_FEE',
+  PER_GUEST: 'PER_GUEST',
+} as const
 
 function getTodayString() {
   const d = new Date()
@@ -53,9 +59,7 @@ export function QuoteForm({
 }: QuoteFormProps) {
   const isEdit = mode === 'edit' && quote
   const [price, setPrice] = useState(isEdit ? String(quote.price) : '')
-  const [quoteType, setQuoteType] = useState<QuoteType>(
-    isEdit ? quote.quoteType : QuoteType.FLAT_FEE
-  )
+  const [quoteType, setQuoteType] = useState<QuoteType>(isEdit ? quote.quoteType : 'FLAT_FEE')
   const [quoteDate, setQuoteDate] = useState(
     isEdit ? toDateInputValue(quote.quoteDate) : getTodayString()
   )
@@ -201,8 +205,8 @@ export function QuoteForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={QuoteType.FLAT_FEE}>Flat Fee</SelectItem>
-              <SelectItem value={QuoteType.PER_GUEST}>Per Guest</SelectItem>
+              <SelectItem value={QUOTE_TYPE.FLAT_FEE}>Flat Fee</SelectItem>
+              <SelectItem value={QUOTE_TYPE.PER_GUEST}>Per Guest</SelectItem>
             </SelectContent>
           </Select>
         </div>

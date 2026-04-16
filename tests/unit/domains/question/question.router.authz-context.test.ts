@@ -58,6 +58,7 @@ describe('questionRouter authz context plumbing', () => {
       weddingId: 'wedding-123',
       organizationId: 'org-123',
       data: {
+        allowOther: false,
         eventId: 'event-123',
         isRequired: false,
         text: 'Meal?',

@@ -68,12 +68,28 @@ jest.mock('~/trpc/react', () => ({
           invalidate: (...args: unknown[]) => mockDashboardInvalidate(...args),
         },
       },
+      communicationLog: {
+        getByHouseholdId: {
+          invalidate: jest.fn(),
+        },
+      },
     }),
     guestTag: {
       getAll: {
         useQuery: () => ({ data: mockTagsData, refetch: jest.fn() }),
       },
       create: {
+        useMutation: () => ({ mutate: jest.fn() }),
+      },
+    },
+    communicationLog: {
+      getByHouseholdId: {
+        useQuery: () => ({ data: [] }),
+      },
+      addNote: {
+        useMutation: () => ({ mutate: jest.fn() }),
+      },
+      deleteNote: {
         useMutation: () => ({ mutate: jest.fn() }),
       },
     },
@@ -471,6 +487,35 @@ describe('GuestsView', () => {
     expect(
       screen.getByRole('button', { name: /select alex rivera household/i })
     ).toBeInTheDocument()
+  })
+
+  it('wires Add Guest and Import Guests toolbar buttons with non-submit button semantics', () => {
+    const onImportClick = jest.fn()
+    const setPrefillHousehold = jest.fn()
+    mockToggleGuestForm.mockClear()
+
+    render(
+      <GuestsView
+        events={events}
+        households={households}
+        selectedEventId='all'
+        setPrefillHousehold={setPrefillHousehold}
+        setPrefillEvent={jest.fn()}
+        onImportClick={onImportClick}
+      />
+    )
+
+    const importButton = screen.getByRole('button', { name: 'Import Guests' })
+    const addButton = screen.getByRole('button', { name: 'Add Guest' })
+
+    fireEvent.click(importButton)
+    fireEvent.click(addButton)
+
+    expect(importButton).toHaveAttribute('type', 'button')
+    expect(addButton).toHaveAttribute('type', 'button')
+    expect(onImportClick).toHaveBeenCalledTimes(1)
+    expect(setPrefillHousehold).toHaveBeenCalledWith(undefined)
+    expect(mockToggleGuestForm).toHaveBeenCalledTimes(1)
   })
 
   it('should show an empty async status when no households match', () => {

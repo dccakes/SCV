@@ -14,6 +14,8 @@ import type { PrismaClient } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 
 import { RSVP_STATUS } from '~/lib/constants'
+import type { AuthzContext } from '~/server/authz/authorization.types'
+import { requirePermission } from '~/server/authz/permission-checker'
 import type { EventRepository } from '~/server/domains/event/event.repository'
 import type { Event } from '~/server/domains/event/event.types'
 import type { CreateEventInput, UpdateEventInput } from '~/server/domains/event/event.validator'
@@ -31,7 +33,9 @@ export class EventManagementService {
    * - Auto-creates invitations for all existing guests with "Not Invited" status
    * - Tag-alongs only get invitations if the event allows them
    */
-  async createEvent(weddingId: string, data: CreateEventInput): Promise<Event> {
+  async createEvent(ctx: AuthzContext, weddingId: string, data: CreateEventInput): Promise<Event> {
+    this.requireEventPermission(ctx, 'create')
+
     const {
       eventName: name,
       date,
@@ -40,6 +44,7 @@ export class EventManagementService {
       venue,
       attire,
       description,
+      collectRsvp,
       allowTagAlongs,
     } = data
 
@@ -54,7 +59,7 @@ export class EventManagementService {
           venue,
           attire,
           description,
-          collectRsvp: false,
+          collectRsvp: collectRsvp ?? false,
           allowTagAlongs: allowTagAlongs ?? false,
         },
       })
@@ -85,7 +90,9 @@ export class EventManagementService {
    * - false -> true: Create invitations for tag-alongs that don't already have one
    * - true -> false: Preserve existing invitations (flag controls visibility)
    */
-  async updateEvent(weddingId: string, data: UpdateEventInput): Promise<Event> {
+  async updateEvent(ctx: AuthzContext, weddingId: string, data: UpdateEventInput): Promise<Event> {
+    this.requireEventPermission(ctx, 'update')
+
     const belongsToWedding = await this.eventRepo.belongsToWedding(data.eventId, weddingId)
     if (!belongsToWedding) {
       throw new TRPCError({
@@ -130,11 +137,38 @@ export class EventManagementService {
           venue: data.venue,
           attire: data.attire,
           description: data.description,
+          collectRsvp: data.collectRsvp,
           allowTagAlongs: data.allowTagAlongs,
         },
       })
 
       return updated as Event
+    })
+  }
+
+  /**
+   * Delete an event.
+   *
+   * Note: Cascades to invitations, gifts, and questions via database relations.
+   */
+  async deleteEvent(ctx: AuthzContext, weddingId: string, eventId: string): Promise<string> {
+    this.requireEventPermission(ctx, 'delete')
+
+    const belongsToWedding = await this.eventRepo.belongsToWedding(eventId, weddingId)
+    if (!belongsToWedding) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'You do not have permission to delete this event',
+      })
+    }
+
+    const deleted = await this.eventRepo.delete(eventId)
+    return deleted.id
+  }
+
+  private requireEventPermission(ctx: AuthzContext, action: 'create' | 'update' | 'delete'): void {
+    requirePermission(ctx, {
+      event: [action],
     })
   }
 }

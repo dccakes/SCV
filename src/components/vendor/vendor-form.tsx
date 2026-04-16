@@ -1,6 +1,5 @@
 'use client'
 
-import { VendorCategory } from '@prisma/client'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -15,6 +14,18 @@ import {
 } from '~/components/ui/select'
 import type { Vendor } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
+
+type VendorCategory = Vendor['category']
+
+const VENDOR_CATEGORIES = [
+  'VENUE',
+  'CATERING',
+  'PHOTOGRAPHER',
+  'VIDEOGRAPHER',
+  'MUSIC',
+  'FLOWERS',
+  'OTHER',
+] satisfies VendorCategory[]
 
 const CATEGORY_LABELS: Record<VendorCategory, string> = {
   VENUE: 'Venue',
@@ -51,7 +62,7 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
   const utils = api.useUtils()
 
   const [category, setCategory] = useState<VendorCategory>(
-    vendor?.category ?? defaultCategory ?? VendorCategory.OTHER
+    vendor?.category ?? defaultCategory ?? 'OTHER'
   )
   const [name, setName] = useState(vendor?.name ?? '')
   const [location, setLocation] = useState(vendor?.location ?? '')
@@ -114,7 +125,7 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {Object.values(VendorCategory).map((c) => (
+              {VENDOR_CATEGORIES.map((c) => (
                 <SelectItem key={c} value={c}>
                   {CATEGORY_LABELS[c]}
                 </SelectItem>
