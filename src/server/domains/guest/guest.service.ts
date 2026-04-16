@@ -187,6 +187,20 @@ export class GuestService {
     return this.guestRepository.deleteMany(guestIds)
   }
 
+  /**
+   * Update a guest's tag assignments
+   */
+  async updateGuestTags(
+    ctx: AuthzContext,
+    weddingId: string,
+    guestId: number,
+    tagIds: string[]
+  ): Promise<void> {
+    this.requireGuestPermission(ctx, 'update')
+    await this.assertGuestInWedding(guestId, weddingId)
+    await this.guestRepository.updateTags(guestId, tagIds)
+  }
+
   private requireGuestPermission(
     ctx: AuthzContext,
     action: 'create' | 'update' | 'delete' | 'import'

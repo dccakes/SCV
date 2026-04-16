@@ -22,7 +22,7 @@ import { requirePermission } from '~/server/authz/permission-checker'
 import { GiftRepository } from '~/server/domains/gift/gift.repository'
 import { GuestRepository } from '~/server/domains/guest/guest.repository'
 import { HouseholdRepository } from '~/server/domains/household/household.repository'
-import type { HouseholdSearchResult } from '~/server/domains/household/household.types'
+import type { Household, HouseholdSearchResult } from '~/server/domains/household/household.types'
 import { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
 
 export class HouseholdManagementService {
@@ -295,6 +295,27 @@ export class HouseholdManagementService {
   ): Promise<HouseholdSearchResult[]> {
     requirePermission(ctx, { guest: ['read'] })
     return this.householdRepo.search(searchText, weddingId)
+  }
+
+  /**
+   * Update only the mailing address fields of a household
+   */
+  async updateHouseholdAddress(
+    ctx: AuthzContext,
+    weddingId: string,
+    householdId: string,
+    data: {
+      address1?: string | null
+      address2?: string | null
+      city?: string | null
+      state?: string | null
+      country?: string | null
+      zipCode?: string | null
+    }
+  ): Promise<Household> {
+    requirePermission(ctx, { guest: ['update'] })
+    await this.assertHouseholdInWeddingScope(householdId, weddingId)
+    return this.householdRepo.update(householdId, data)
   }
 
   private async assertHouseholdInWeddingScope(
