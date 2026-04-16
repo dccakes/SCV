@@ -22,8 +22,10 @@ import {
   mockFindById,
   mockFindByIdWithOptions,
   mockFindByWebsiteId,
+  mockFindIdsByScope,
   mockQuestion,
   mockQuestionWithOptions,
+  mockReorderByIds,
   mockUpsert,
   mockWebsiteBelongsToWedding,
   mockWebsiteQuestion,
@@ -40,6 +42,8 @@ const mockFindByIdFn = mockFindById as jest.Mock
 const mockFindByIdWithOptionsFn = mockFindByIdWithOptions as jest.Mock
 const mockFindByEventIdFn = mockFindByEventId as jest.Mock
 const mockFindByWebsiteIdFn = mockFindByWebsiteId as jest.Mock
+const mockFindIdsByScopeFn = mockFindIdsByScope as jest.Mock
+const mockReorderByIdsFn = mockReorderByIds as jest.Mock
 const mockBelongsToWeddingFn = mockBelongsToWedding as jest.Mock
 const mockEventBelongsToWeddingFn = mockEventBelongsToWedding as jest.Mock
 const mockWebsiteBelongsToWeddingFn = mockWebsiteBelongsToWedding as jest.Mock
@@ -59,6 +63,8 @@ describe('QuestionService', () => {
     mockBelongsToWeddingFn.mockResolvedValue(true)
     mockEventBelongsToWeddingFn.mockResolvedValue(true)
     mockWebsiteBelongsToWeddingFn.mockResolvedValue(true)
+    mockFindIdsByScopeFn.mockResolvedValue([])
+    mockReorderByIdsFn.mockResolvedValue(undefined)
     const mockRepository = new QuestionRepository({})
     questionService = new QuestionService(mockRepository)
   })
@@ -475,6 +481,52 @@ describe('QuestionService', () => {
 
       expect(result).toEqual([websiteQuestionWithOptions])
       expect(mockFindByWebsiteIdFn).toHaveBeenCalledWith('website-123')
+    })
+  })
+
+  describe('reorderQuestions', () => {
+    it('reorders event-scoped questions when all ids belong to scope', async () => {
+      mockFindIdsByScopeFn.mockResolvedValue(['q-1', 'q-2', 'q-3'])
+
+      await questionService.reorderQuestions({
+        ctx: actorContext,
+        weddingId: 'wedding-123',
+        organizationId: 'org-1',
+        data: {
+          eventId: 'event-123',
+          questionIds: ['q-1', 'q-2', 'q-3'],
+        },
+      })
+
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { event: ['update'] })
+      expect(mockFindIdsByScopeFn).toHaveBeenCalledWith({
+        eventId: 'event-123',
+        questionIds: ['q-1', 'q-2', 'q-3'],
+      })
+      expect(mockReorderByIdsFn).toHaveBeenCalledWith({
+        eventId: 'event-123',
+        questionIds: ['q-1', 'q-2', 'q-3'],
+      })
+    })
+
+    it('rejects reorder when any question id is outside the provided scope', async () => {
+      mockFindIdsByScopeFn.mockResolvedValue(['q-1', 'q-2'])
+
+      await expect(
+        questionService.reorderQuestions({
+          ctx: actorContext,
+          weddingId: 'wedding-123',
+          organizationId: 'org-1',
+          data: {
+            eventId: 'event-123',
+            questionIds: ['q-1', 'q-2', 'q-3'],
+          },
+        })
+      ).rejects.toMatchObject({
+        code: 'FORBIDDEN',
+      })
+
+      expect(mockReorderByIdsFn).not.toHaveBeenCalled()
     })
   })
 })

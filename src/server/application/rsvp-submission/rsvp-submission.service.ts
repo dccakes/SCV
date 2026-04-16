@@ -17,7 +17,7 @@ import type {
 } from '~/server/application/rsvp-submission/rsvp-submission.validator'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
-import type { GuestRepository } from '~/server/domains/guest/guest.repository'
+import { GuestRepository } from '~/server/domains/guest/guest.repository'
 import type { HouseholdRepository } from '~/server/domains/household/household.repository'
 import { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
 import { QuestionRepository } from '~/server/domains/question/question.repository'
@@ -26,11 +26,12 @@ import type { WeddingRepository } from '~/server/domains/wedding/wedding.reposit
 // Re-use types from validator for internal use
 type RsvpResponse = SubmitRsvpSchemaInput['rsvpResponses'][number]
 type AnswerToQuestion = SubmitRsvpSchemaInput['answersToQuestions'][number]
+type GuestDietaryResponse = NonNullable<SubmitRsvpSchemaInput['guestDietaryResponses']>[number]
 
 export class RsvpSubmissionService {
   constructor(
     private invitationRepo: InvitationRepository,
-    _questionRepo: QuestionRepository,
+    private questionRepo: QuestionRepository,
     private guestRepo: GuestRepository,
     private householdRepo: HouseholdRepository,
     private weddingRepo: WeddingRepository,
@@ -54,13 +55,17 @@ export class RsvpSubmissionService {
     return this.submitRsvp({
       rsvpResponses: data.rsvpResponses,
       answersToQuestions: data.answersToQuestions,
+      guestDietaryResponses: data.guestDietaryResponses,
     })
   }
 
   async submitRsvp(data: SubmitRsvpSchemaInput): Promise<{ success: boolean }> {
+    await this.preValidateSubmission(data)
+
     await this.db.$transaction(async (tx) => {
       const txInvitationRepo = new InvitationRepository(tx)
       const txQuestionRepo = new QuestionRepository(tx)
+      const txGuestRepo = new GuestRepository(tx)
 
       await Promise.all(
         data.rsvpResponses.map(async (response: RsvpResponse) => {
@@ -78,6 +83,15 @@ export class RsvpSubmissionService {
           } else {
             await this.processTextAnswer(txQuestionRepo, answer)
           }
+        })
+      )
+
+      await Promise.all(
+        (data.guestDietaryResponses ?? []).map(async (dietaryResponse: GuestDietaryResponse) => {
+          await txGuestRepo.updateDietaryRestrictions(
+            dietaryResponse.guestId,
+            JSON.stringify(dietaryResponse.dietaryRestrictions)
+          )
         })
       )
     })
@@ -169,7 +183,10 @@ export class RsvpSubmissionService {
 
   private async ensureSubmissionBelongsToWedding(
     weddingId: string,
-    data: Pick<SubmitRsvpSchemaInput, 'rsvpResponses' | 'answersToQuestions'>
+    data: Pick<
+      SubmitRsvpSchemaInput,
+      'rsvpResponses' | 'answersToQuestions' | 'guestDietaryResponses'
+    >
   ): Promise<void> {
     if (data.rsvpResponses.length > 0) {
       const invitationCount = await this.invitationRepo.countByWeddingAndGuestEventPairs(
@@ -205,6 +222,10 @@ export class RsvpSubmissionService {
       }
     }
 
+    for (const dietaryResponse of data.guestDietaryResponses ?? []) {
+      guestIds.add(dietaryResponse.guestId)
+    }
+
     if (guestIds.size > 0) {
       const guestCount = await this.guestRepo.countByIdsInWedding(weddingId, Array.from(guestIds))
 
@@ -227,6 +248,93 @@ export class RsvpSubmissionService {
           code: 'FORBIDDEN',
           message: 'Invalid RSVP submission scope for token',
         })
+      }
+    }
+  }
+
+  private async preValidateSubmission(data: SubmitRsvpSchemaInput): Promise<void> {
+    this.validateDietaryGuestScope(data)
+    await this.validateOptionAnswers(data.answersToQuestions)
+    await this.validateRequiredAnswers(data.rsvpResponses, data.answersToQuestions)
+  }
+
+  private validateDietaryGuestScope(data: SubmitRsvpSchemaInput): void {
+    const rsvpGuestIds = new Set(data.rsvpResponses.map((response) => response.guestId))
+    for (const dietaryResponse of data.guestDietaryResponses ?? []) {
+      if (!rsvpGuestIds.has(dietaryResponse.guestId)) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Dietary updates must reference guests included in RSVP responses',
+        })
+      }
+    }
+  }
+
+  private async validateOptionAnswers(answers: AnswerToQuestion[]): Promise<void> {
+    const optionAnswers = answers.filter((answer) => answer.questionType === 'Option')
+    const uniquePairs = new Map<string, { questionId: string; optionId: string }>()
+
+    for (const answer of optionAnswers) {
+      uniquePairs.set(`${answer.questionId}:${answer.response}`, {
+        questionId: answer.questionId,
+        optionId: answer.response,
+      })
+    }
+
+    const validations = await Promise.all(
+      Array.from(uniquePairs.values()).map(async (pair) => {
+        const optionBelongs = await this.questionRepo.optionBelongsToQuestion(
+          pair.optionId,
+          pair.questionId
+        )
+        return { pair, optionBelongs }
+      })
+    )
+
+    for (const validation of validations) {
+      if (!validation.optionBelongs) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `Invalid option response for question ${validation.pair.questionId}`,
+        })
+      }
+    }
+  }
+
+  private async validateRequiredAnswers(
+    rsvpResponses: RsvpResponse[],
+    answers: AnswerToQuestion[]
+  ): Promise<void> {
+    const attendingResponses = rsvpResponses.filter((response) => response.rsvp === 'Attending')
+    if (attendingResponses.length === 0) return
+
+    const requiredQuestions = await this.questionRepo.findRequiredQuestionsByEventIds([
+      ...new Set(attendingResponses.map((response) => response.eventId)),
+    ])
+    const requiredByEvent = new Map<string, string[]>()
+    for (const question of requiredQuestions) {
+      if (!question.eventId) continue
+      const current = requiredByEvent.get(question.eventId) ?? []
+      current.push(question.id)
+      requiredByEvent.set(question.eventId, current)
+    }
+
+    const answerKeys = new Set(
+      answers
+        .filter((answer) => typeof answer.guestId === 'number' && answer.response.trim() !== '')
+        .map((answer) => `${answer.questionId}:${answer.guestId}`)
+    )
+
+    for (const response of attendingResponses) {
+      const eventQuestionIds = requiredByEvent.get(response.eventId) ?? []
+
+      for (const questionId of eventQuestionIds) {
+        if (!answerKeys.has(`${questionId}:${response.guestId}`)) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: `Missing required answer for question ${questionId}`,
+          })
+        }
       }
     }
   }

@@ -31,6 +31,7 @@ export const getEventFormDefaults = (): Partial<EventFormData> => {
     description: '',
     collectRsvp: false,
     allowTagAlongs: false,
+    servesMeals: false,
   }
 }
 
@@ -51,5 +52,6 @@ export const transformToServerInput = (data: EventFormData): z.infer<typeof crea
     description: data.description || undefined,
     collectRsvp: data.collectRsvp ?? false,
     allowTagAlongs: data.allowTagAlongs ?? false,
+    servesMeals: data.servesMeals ?? false,
   }
 }

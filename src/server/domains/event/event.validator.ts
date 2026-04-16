@@ -38,6 +38,7 @@ export const createEventSchema = z
     description: z.string().optional(),
     collectRsvp: z.boolean().default(false),
     allowTagAlongs: z.boolean().default(false),
+    servesMeals: z.boolean().optional(),
   })
   .refine((data) => isTodayOrFutureDate(data.date), {
     message: 'Event date cannot be in the past',
@@ -62,6 +63,7 @@ export const updateEventSchema = z
     description: z.string().optional(),
     collectRsvp: z.boolean().optional(),
     allowTagAlongs: z.boolean().optional(),
+    servesMeals: z.boolean().optional(),
   })
   .refine((data) => isTodayOrFutureDate(data.date), {
     message: 'Event date cannot be in the past',

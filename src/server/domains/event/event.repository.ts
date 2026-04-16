@@ -30,12 +30,9 @@ export class EventRepository {
       where: { id },
       include: {
         questions: {
-          orderBy: { createdAt: 'asc' },
+          orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
           include: {
             options: true,
-            _count: {
-              select: { answers: true },
-            },
           },
         },
       },
@@ -61,7 +58,7 @@ export class EventRepository {
       orderBy: { createdAt: 'asc' },
       include: {
         questions: {
-          orderBy: { createdAt: 'asc' },
+          orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
           include: {
             options: true,
             _count: {
@@ -84,11 +81,8 @@ export class EventRepository {
       where: { weddingId },
       orderBy: { createdAt: 'asc' },
       include: {
-        // TODO(OSW-65 follow-up): split question hydration from stats query to avoid over-fetching
-        // when only list analytics are needed. Keep coupled for now so /events question management
-        // can render without relying on public RSVP routes.
         questions: {
-          orderBy: { createdAt: 'asc' },
+          orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
           include: {
             options: true,
             _count: {
@@ -164,6 +158,7 @@ export class EventRepository {
     description?: string
     collectRsvp?: boolean
     allowTagAlongs?: boolean
+    servesMeals?: boolean
   }): Promise<Event> {
     return this.db.event.create({
       data: {
@@ -177,6 +172,7 @@ export class EventRepository {
         description: data.description,
         collectRsvp: data.collectRsvp ?? false,
         allowTagAlongs: data.allowTagAlongs ?? false,
+        servesMeals: data.servesMeals ?? false,
       },
     })
   }
@@ -195,6 +191,7 @@ export class EventRepository {
       attire?: string
       description?: string
       allowTagAlongs?: boolean
+      servesMeals?: boolean
     }
   ): Promise<Event> {
     return this.db.event.update({
@@ -208,6 +205,7 @@ export class EventRepository {
         attire: data.attire,
         description: data.description,
         allowTagAlongs: data.allowTagAlongs,
+        servesMeals: data.servesMeals,
       },
     })
   }

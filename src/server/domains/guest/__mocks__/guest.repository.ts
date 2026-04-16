@@ -17,6 +17,7 @@ export const mockGuest: Guest = {
   isPrimaryContact: true,
   isTagAlong: false,
   ageGroup: 'ADULT',
+  dietaryRestrictions: null,
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
 }
@@ -57,6 +58,7 @@ export const mockExists = jest.fn()
 export const mockBelongsToWedding = jest.fn()
 export const mockCountByWeddingId = jest.fn()
 export const mockCountByIdsInWedding = jest.fn()
+export const mockUpdateDietaryRestrictions = jest.fn()
 
 export const GuestRepository = jest.fn().mockImplementation(() => ({
   findById: mockFindById,
@@ -76,6 +78,7 @@ export const GuestRepository = jest.fn().mockImplementation(() => ({
   belongsToWedding: mockBelongsToWedding,
   countByWeddingId: mockCountByWeddingId,
   countByIdsInWedding: mockCountByIdsInWedding,
+  updateDietaryRestrictions: mockUpdateDietaryRestrictions,
 }))
 
 // Helper to reset all mocks
@@ -97,5 +100,6 @@ export const resetMocks = (): void => {
   mockBelongsToWedding.mockReset()
   mockCountByWeddingId.mockReset()
   mockCountByIdsInWedding.mockReset()
+  mockUpdateDietaryRestrictions.mockReset()
   GuestRepository.mockClear()
 }

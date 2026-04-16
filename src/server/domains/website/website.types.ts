@@ -99,6 +99,7 @@ export type WeddingPageData = {
     description: string | null
     weddingId: string
     collectRsvp: boolean
+    servesMeals: boolean
     questions: Question[]
   }>
 }

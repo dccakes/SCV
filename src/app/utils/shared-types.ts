@@ -16,6 +16,7 @@ type Event = Omit<ServerEvent, 'createdAt' | 'updatedAt' | 'collectRsvp' | 'allo
   questions: Question[]
   collectRsvp?: boolean
   allowTagAlongs?: boolean
+  servesMeals?: boolean
 }
 
 interface EventWithResponses extends Event {
@@ -75,6 +76,7 @@ type Guest = {
   householdId: string
   ageGroup: 'INFANT' | 'CHILD' | 'TEEN' | 'ADULT' | null
   isTagAlong: boolean
+  dietaryRestrictions?: string | null
   createdAt: Date
   updatedAt: Date
   invitations?: Invitation[]

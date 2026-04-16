@@ -10,11 +10,12 @@ import type { Prisma } from '@prisma/client'
 export type EventQuestion = Prisma.QuestionGetPayload<{
   include: {
     options: true
-    _count: {
-      select: { answers: true }
-    }
   }
-}>
+}> & {
+  _count?: {
+    answers: number
+  }
+}
 
 /**
  * Core Event entity type
@@ -31,6 +32,7 @@ export type Event = {
   weddingId: string
   collectRsvp: boolean
   allowTagAlongs: boolean
+  servesMeals?: boolean
   createdAt: Date
   updatedAt: Date
 }

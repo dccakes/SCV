@@ -15,6 +15,8 @@ export type Question = {
   text: string
   type: string // 'Text' | 'Option'
   isRequired: boolean
+  order?: number
+  isMealChoiceQuestion?: boolean
   allowOther: boolean
   createdAt: Date
   updatedAt: Date
@@ -92,9 +94,17 @@ export type UpsertQuestionInput = {
   text: string
   type: string
   isRequired: boolean
+  order?: number
+  isMealChoiceQuestion?: boolean
   allowOther?: boolean
   options?: OptionInput[]
   deletedOptions?: string[]
+}
+
+export type ReorderQuestionsInput = {
+  eventId?: string | null
+  websiteId?: string | null
+  questionIds: string[]
 }
 
 /**

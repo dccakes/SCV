@@ -31,9 +31,15 @@ export type Guest = {
   isPrimaryContact: boolean
   ageGroup: GuestAgeGroup | null
   isTagAlong: boolean
+  dietaryRestrictions?: string | null
   guestTags?: Array<{ tagId: string }>
   createdAt: Date
   updatedAt: Date
+}
+
+export type DietaryRestrictionsPayload = {
+  selections: string[]
+  notes: string
 }
 
 /**

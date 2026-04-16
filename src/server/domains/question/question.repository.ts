@@ -47,7 +47,7 @@ export class QuestionRepository {
   async findByEventId(eventId: string): Promise<QuestionWithOptions[]> {
     return this.db.question.findMany({
       where: { eventId },
-      orderBy: { createdAt: 'asc' },
+      orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
       include: {
         options: true,
         _count: {
@@ -63,7 +63,7 @@ export class QuestionRepository {
   async findByWebsiteId(websiteId: string): Promise<QuestionWithOptions[]> {
     return this.db.question.findMany({
       where: { websiteId },
-      orderBy: { createdAt: 'asc' },
+      orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
       include: {
         options: true,
         _count: {
@@ -97,6 +97,8 @@ export class QuestionRepository {
     text: string
     type: string
     isRequired: boolean
+    order?: number
+    isMealChoiceQuestion?: boolean
     allowOther?: boolean
     options?: OptionInput[]
   }): Promise<Question> {
@@ -140,6 +142,8 @@ export class QuestionRepository {
         text: data.text,
         type: data.type,
         isRequired: data.isRequired,
+        order: data.order,
+        isMealChoiceQuestion: data.isMealChoiceQuestion,
         allowOther: data.type === 'Option' ? (data.allowOther ?? false) : false,
         options: upsertOptions,
       },
@@ -149,10 +153,53 @@ export class QuestionRepository {
         text: data.text,
         type: data.type,
         isRequired: data.isRequired,
+        order: data.order ?? 0,
+        isMealChoiceQuestion: data.isMealChoiceQuestion ?? false,
         allowOther: data.type === 'Option' ? (data.allowOther ?? false) : false,
         options: createOptions,
       },
     })
+  }
+
+  async findIdsByScope(input: {
+    eventId?: string
+    websiteId?: string
+    questionIds: string[]
+  }): Promise<string[]> {
+    const questions = await this.db.question.findMany({
+      where: {
+        id: { in: input.questionIds },
+        ...(input.eventId ? { eventId: input.eventId } : {}),
+        ...(input.websiteId ? { websiteId: input.websiteId } : {}),
+      },
+      select: { id: true },
+    })
+
+    return questions.map((question) => question.id)
+  }
+
+  async reorderByIds(input: {
+    eventId?: string
+    websiteId?: string
+    questionIds: string[]
+  }): Promise<void> {
+    const updates = input.questionIds.map((questionId, index) =>
+      this.db.question.updateMany({
+        where: {
+          id: questionId,
+          ...(input.eventId ? { eventId: input.eventId } : {}),
+          ...(input.websiteId ? { websiteId: input.websiteId } : {}),
+        },
+        data: { order: index },
+      })
+    )
+
+    if ('$transaction' in this.db && typeof this.db.$transaction === 'function') {
+      await this.db.$transaction(updates)
+      return
+    }
+
+    await Promise.all(updates)
   }
 
   /**
@@ -215,6 +262,18 @@ export class QuestionRepository {
     return website !== null
   }
 
+  async findRequiredQuestionsByEventIds(eventIds: string[]): Promise<Question[]> {
+    if (eventIds.length === 0) return []
+
+    return this.db.question.findMany({
+      where: {
+        eventId: { in: eventIds },
+        isRequired: true,
+      },
+      orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+    })
+  }
+
   /**
    * Find a single option response by question + guest/household composite key.
    */
@@ -233,6 +292,18 @@ export class QuestionRepository {
       },
       select: { optionId: true },
     })
+  }
+
+  async optionBelongsToQuestion(optionId: string, questionId: string): Promise<boolean> {
+    const option = await this.db.option.findFirst({
+      where: {
+        id: optionId,
+        questionId,
+      },
+      select: { id: true },
+    })
+
+    return option !== null
   }
 
   async deleteOptionResponse(

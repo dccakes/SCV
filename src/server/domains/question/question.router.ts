@@ -11,6 +11,7 @@ import { requireActiveWeddingId } from '~/server/authz/active-wedding'
 import { questionService } from '~/server/domains/question'
 import {
   deleteQuestionSchema,
+  reorderQuestionsSchema,
   upsertQuestionSchema,
 } from '~/server/domains/question/question.validator'
 
@@ -36,6 +37,17 @@ export const questionRouter = createTRPCRouter({
     const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
 
     return questionService.deleteQuestion({
+      ctx: ctx.authz,
+      weddingId,
+      organizationId: ctx.auth.activeOrganization?.organizationId ?? null,
+      data: input,
+    })
+  }),
+
+  reorder: protectedProcedure.input(reorderQuestionsSchema).mutation(async ({ ctx, input }) => {
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+
+    return questionService.reorderQuestions({
       ctx: ctx.authz,
       weddingId,
       organizationId: ctx.auth.activeOrganization?.organizationId ?? null,

@@ -47,7 +47,7 @@ export class WebsiteRepository {
       where: { subUrl },
       include: {
         generalQuestions: {
-          orderBy: { createdAt: 'asc' },
+          orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
           include: {
             options: true,
             _count: {
@@ -67,7 +67,7 @@ export class WebsiteRepository {
       where: { weddingId },
       include: {
         generalQuestions: {
-          orderBy: { createdAt: 'asc' },
+          orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
           include: {
             options: true,
             _count: {

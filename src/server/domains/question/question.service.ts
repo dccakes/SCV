@@ -17,6 +17,7 @@ import type {
   DeleteQuestionInput,
   Question,
   QuestionWithOptions,
+  ReorderQuestionsInput,
   UpsertQuestionInput,
 } from '~/server/domains/question/question.types'
 
@@ -144,9 +145,56 @@ export class QuestionService {
       text: data.text,
       type: data.type,
       isRequired: data.isRequired,
+      order: data.order,
       allowOther: data.allowOther,
       options: data.options,
     })
+  }
+
+  async reorderQuestions(input: {
+    ctx: AuthzContext
+    weddingId: string
+    organizationId: string | null
+    data: ReorderQuestionsInput
+  }): Promise<{ success: true }> {
+    const { ctx, weddingId, organizationId, data } = input
+
+    if (!organizationId) {
+      throw new TRPCError({
+        code: 'PRECONDITION_FAILED',
+        message: 'Wedding must be linked to an organization before question updates are allowed',
+      })
+    }
+
+    this.validateContext(data.eventId, data.websiteId)
+    const permissionScope = data.eventId ? 'event' : 'website'
+    this.requireQuestionPermission(ctx, permissionScope)
+
+    if (permissionScope === 'event' && data.eventId) {
+      await this.assertEventInWeddingScope(data.eventId, weddingId)
+    }
+
+    if (permissionScope === 'website' && data.websiteId) {
+      await this.assertWebsiteInWeddingScope(data.websiteId, weddingId)
+    }
+
+    const scopedIds = await this.questionRepository.findIdsByScope({
+      eventId: data.eventId ?? undefined,
+      websiteId: data.websiteId ?? undefined,
+      questionIds: data.questionIds,
+    })
+
+    if (scopedIds.length !== data.questionIds.length) {
+      throw new TRPCError({ code: 'FORBIDDEN' })
+    }
+
+    await this.questionRepository.reorderByIds({
+      eventId: data.eventId ?? undefined,
+      websiteId: data.websiteId ?? undefined,
+      questionIds: data.questionIds,
+    })
+
+    return { success: true }
   }
 
   /**

@@ -10,7 +10,7 @@
  */
 
 // biome-ignore lint/style/noRestrictedImports: Application services use PrismaClient for cross-domain transactions
-import type { PrismaClient } from '@prisma/client'
+import type { Prisma, PrismaClient } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 
 import { RSVP_STATUS } from '~/lib/constants'
@@ -46,6 +46,7 @@ export class EventManagementService {
       description,
       collectRsvp,
       allowTagAlongs,
+      servesMeals,
     } = data
 
     return this.db.$transaction(async (tx) => {
@@ -61,6 +62,7 @@ export class EventManagementService {
           description,
           collectRsvp: collectRsvp ?? false,
           allowTagAlongs: allowTagAlongs ?? false,
+          servesMeals: servesMeals ?? false,
         },
       })
 
@@ -77,6 +79,10 @@ export class EventManagementService {
             rsvp: RSVP_STATUS.NOT_INVITED,
           })),
         })
+      }
+
+      if (servesMeals) {
+        await this.ensureMealChoiceQuestion(tx, newEvent.id)
       }
 
       return newEvent as Event
@@ -105,6 +111,8 @@ export class EventManagementService {
       const currentEvent = await tx.event.findUnique({ where: { id: data.eventId } })
       const wasAllowed = currentEvent?.allowTagAlongs ?? false
       const nowAllowed = data.allowTagAlongs ?? false
+      const wasServingMeals = currentEvent?.servesMeals ?? false
+      const nowServingMeals = data.servesMeals ?? false
 
       if (!wasAllowed && nowAllowed) {
         const tagAlongGuests = await tx.guest.findMany({
@@ -127,6 +135,10 @@ export class EventManagementService {
         }
       }
 
+      if (!wasServingMeals && nowServingMeals) {
+        await this.ensureMealChoiceQuestion(tx, data.eventId)
+      }
+
       const updated = await tx.event.update({
         where: { id: data.eventId },
         data: {
@@ -139,6 +151,7 @@ export class EventManagementService {
           description: data.description,
           collectRsvp: data.collectRsvp,
           allowTagAlongs: data.allowTagAlongs,
+          servesMeals: data.servesMeals,
         },
       })
 
@@ -170,5 +183,53 @@ export class EventManagementService {
     requirePermission(ctx, {
       event: [action],
     })
+  }
+
+  private async ensureMealChoiceQuestion(
+    tx: Prisma.TransactionClient,
+    eventId: string
+  ): Promise<void> {
+    const existing = await tx.question.findFirst({
+      where: {
+        eventId,
+        isMealChoiceQuestion: true,
+      },
+      select: { id: true },
+    })
+
+    if (existing) return
+
+    try {
+      await tx.question.create({
+        data: {
+          eventId,
+          text: 'Meal choice',
+          type: 'Option',
+          isRequired: false,
+          isMealChoiceQuestion: true,
+          options: {
+            create: [
+              { text: 'Beef', description: '' },
+              { text: 'Chicken', description: '' },
+              { text: 'Fish', description: '' },
+              { text: 'Lamb', description: '' },
+              { text: 'Vegetarian', description: '' },
+              { text: 'Child Meal', description: '' },
+            ],
+          },
+        },
+      })
+    } catch (error: unknown) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        (error as { code?: string }).code === 'P2002'
+      ) {
+        return
+      }
+
+      throw error
+    }
   }
 }

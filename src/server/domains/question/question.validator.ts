@@ -27,6 +27,7 @@ export const upsertQuestionSchema = z.object({
   text: z.string().min(1, { message: 'Question prompt should not be empty!' }),
   type: z.string(),
   isRequired: z.boolean().default(false),
+  order: z.number().int().min(0).optional(),
   allowOther: z.boolean().default(false),
   options: z
     .array(optionInputSchema)
@@ -48,6 +49,33 @@ export const deleteQuestionSchema = z.object({
   questionId: z.string().min(1, 'Question ID is required'),
 })
 
+export const reorderQuestionsSchema = z
+  .object({
+    eventId: z.string().optional().nullish(),
+    websiteId: z.string().optional().nullish(),
+    questionIds: z.array(z.string().min(1)).min(1, 'At least one question is required'),
+  })
+  .superRefine((value, ctx) => {
+    const hasEvent = Boolean(value.eventId)
+    const hasWebsite = Boolean(value.websiteId)
+
+    if (!hasEvent && !hasWebsite) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Provide either eventId or websiteId',
+        path: ['eventId'],
+      })
+    }
+
+    if (hasEvent && hasWebsite) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Questions can only be reordered within one scope',
+        path: ['questionIds'],
+      })
+    }
+  })
+
 /**
  * Schema for question ID parameter
  */
@@ -60,3 +88,4 @@ export type OptionInputSchemaInput = z.infer<typeof optionInputSchema>
 export type UpsertQuestionSchemaInput = z.infer<typeof upsertQuestionSchema>
 export type DeleteQuestionSchemaInput = z.infer<typeof deleteQuestionSchema>
 export type QuestionIdSchemaInput = z.infer<typeof questionIdSchema>
+export type ReorderQuestionsSchemaInput = z.infer<typeof reorderQuestionsSchema>
