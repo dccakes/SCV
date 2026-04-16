@@ -150,7 +150,12 @@ function EventCardBase({
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant='ghost' size='sm' className='h-8 w-8 p-0'>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  className='h-8 w-8 p-0'
+                  aria-label={`Event actions for ${event.name}`}
+                >
                   <MoreHorizontal className='h-4 w-4' />
                   <span className='sr-only'>Event actions</span>
                 </Button>
