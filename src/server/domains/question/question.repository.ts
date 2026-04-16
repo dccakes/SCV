@@ -5,7 +5,7 @@
  * This layer handles all direct database access for questions, options, and answers.
  */
 
-import type { PrismaClient } from '@prisma/client'
+import type { Prisma, PrismaClient } from '@prisma/client'
 
 import type {
   Answer,
@@ -15,7 +15,7 @@ import type {
 } from '~/server/domains/question/question.types'
 
 export class QuestionRepository {
-  constructor(private db: PrismaClient) {}
+  constructor(private db: PrismaClient | Prisma.TransactionClient) {}
 
   /**
    * Find a question by ID
@@ -97,6 +97,7 @@ export class QuestionRepository {
     text: string
     type: string
     isRequired: boolean
+    allowOther?: boolean
     options?: OptionInput[]
   }): Promise<Question> {
     // Build upsert options for Option type questions
@@ -139,6 +140,7 @@ export class QuestionRepository {
         text: data.text,
         type: data.type,
         isRequired: data.isRequired,
+        allowOther: data.type === 'Option' ? (data.allowOther ?? false) : false,
         options: upsertOptions,
       },
       create: {
@@ -147,6 +149,7 @@ export class QuestionRepository {
         text: data.text,
         type: data.type,
         isRequired: data.isRequired,
+        allowOther: data.type === 'Option' ? (data.allowOther ?? false) : false,
         options: createOptions,
       },
     })
@@ -210,5 +213,125 @@ export class QuestionRepository {
     })
 
     return website !== null
+  }
+
+  /**
+   * Find a single option response by question + guest/household composite key.
+   */
+  async findOptionResponse(
+    questionId: string,
+    guestId: number,
+    householdId: string
+  ): Promise<{ optionId: string } | null> {
+    return this.db.optionResponse.findUnique({
+      where: {
+        optionResponseId: {
+          questionId,
+          guestId,
+          householdId,
+        },
+      },
+      select: { optionId: true },
+    })
+  }
+
+  async deleteOptionResponse(
+    questionId: string,
+    guestId: number,
+    householdId: string
+  ): Promise<void> {
+    await this.db.optionResponse.deleteMany({
+      where: {
+        questionId,
+        guestId,
+        householdId,
+      },
+    })
+  }
+
+  /**
+   * Create or update an option response.
+   */
+  async upsertOptionResponse(data: {
+    questionId: string
+    optionId: string
+    guestId: number
+    householdId: string
+    guestFirstName?: string | null
+    guestLastName?: string | null
+  }): Promise<void> {
+    await this.db.optionResponse.upsert({
+      where: {
+        optionResponseId: {
+          questionId: data.questionId,
+          guestId: data.guestId,
+          householdId: data.householdId,
+        },
+      },
+      update: { optionId: data.optionId },
+      create: {
+        questionId: data.questionId,
+        optionId: data.optionId,
+        guestId: data.guestId,
+        householdId: data.householdId,
+        guestFirstName: data.guestFirstName,
+        guestLastName: data.guestLastName,
+      },
+    })
+  }
+
+  /**
+   * Adjust an option response count using increment/decrement semantics.
+   */
+  async adjustOptionResponseCount(optionId: string, delta: number): Promise<void> {
+    if (delta === 0) return
+
+    await this.db.option.update({
+      where: { id: optionId },
+      data: {
+        responseCount: delta > 0 ? { increment: delta } : { decrement: Math.abs(delta) },
+      },
+    })
+  }
+
+  /**
+   * Create or update text answer response.
+   */
+  async upsertAnswer(data: {
+    questionId: string
+    guestId: number
+    householdId: string
+    response: string
+    guestFirstName?: string | null
+    guestLastName?: string | null
+  }): Promise<void> {
+    await this.db.answer.upsert({
+      where: {
+        answerId: {
+          questionId: data.questionId,
+          guestId: data.guestId,
+          householdId: data.householdId,
+        },
+      },
+      update: { response: data.response },
+      create: {
+        questionId: data.questionId,
+        guestId: data.guestId,
+        householdId: data.householdId,
+        response: data.response,
+        guestFirstName: data.guestFirstName,
+        guestLastName: data.guestLastName,
+      },
+    })
+  }
+
+  async deleteAnswer(questionId: string, guestId: number, householdId: string): Promise<void> {
+    await this.db.answer.deleteMany({
+      where: {
+        questionId,
+        guestId,
+        householdId,
+      },
+    })
   }
 }

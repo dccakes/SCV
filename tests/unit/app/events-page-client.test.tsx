@@ -7,6 +7,9 @@ const mockUseQuery = jest.fn()
 const mockCreateMutateAsync = jest.fn()
 const mockUpdateMutateAsync = jest.fn()
 const mockDeleteMutate = jest.fn()
+const mockUpdateCollectRsvpMutate = jest.fn()
+const mockQuestionDeleteMutate = jest.fn()
+const mockQuestionUpsertMutate = jest.fn()
 const mockInvalidate = jest.fn()
 const mockSetData = jest.fn()
 let mockUpdateOnSuccess: ((data?: EventWithStats) => Promise<void> | void) | undefined
@@ -26,6 +29,11 @@ jest.mock('~/trpc/react', () => ({
         getAllByUserIdWithStats: {
           invalidate: (...args: unknown[]) => mockInvalidate(...args),
           setData: (...args: unknown[]) => mockSetData(...args),
+        },
+      },
+      dashboard: {
+        getForActiveWorkspace: {
+          invalidate: jest.fn(),
         },
       },
     }),
@@ -61,6 +69,42 @@ jest.mock('~/trpc/react', () => ({
           }
         },
       },
+      updateCollectRsvp: {
+        useMutation: () => ({
+          mutate: (...args: unknown[]) => mockUpdateCollectRsvpMutate(...args),
+          isPending: false,
+        }),
+      },
+    },
+    invitation: {
+      bulkUpdate: {
+        useMutation: () => ({
+          mutate: jest.fn(),
+          isPending: false,
+        }),
+      },
+    },
+    question: {
+      delete: {
+        useMutation: () => ({
+          mutate: (...args: unknown[]) => mockQuestionDeleteMutate(...args),
+          isPending: false,
+        }),
+      },
+      upsert: {
+        useMutation: () => ({
+          mutate: (...args: unknown[]) => mockQuestionUpsertMutate(...args),
+          isPending: false,
+        }),
+      },
+    },
+    dashboard: {
+      getForActiveWorkspace: {
+        useQuery: () => ({
+          data: undefined,
+          isLoading: false,
+        }),
+      },
     },
   },
 }))
@@ -84,6 +128,7 @@ const baseEvent: EventWithStats = {
     declined: 2,
     notInvited: 0,
   },
+  estimatedAttendance: 12,
 }
 
 describe('EventsPageClient', () => {
@@ -92,6 +137,9 @@ describe('EventsPageClient', () => {
     mockCreateMutateAsync.mockReset()
     mockUpdateMutateAsync.mockReset()
     mockDeleteMutate.mockReset()
+    mockUpdateCollectRsvpMutate.mockReset()
+    mockQuestionDeleteMutate.mockReset()
+    mockQuestionUpsertMutate.mockReset()
     mockInvalidate.mockReset()
     mockSetData.mockReset()
     mockModernEventForm.mockClear()
@@ -153,22 +201,26 @@ describe('EventsPageClient', () => {
     )
   })
 
-  it('renders edit form only after edit action is clicked', () => {
+  it('renders actions dropdown trigger for each event card', () => {
     render(<EventsPageClient initialEvents={[baseEvent]} />)
 
-    fireEvent.click(screen.getByRole('button', { name: /edit/i }))
-    expect(screen.getByTestId('edit-event-form')).toBeInTheDocument()
-    expect(mockModernEventForm).toHaveBeenCalledWith(
-      expect.objectContaining({
-        mode: 'edit',
-        event: baseEvent,
-      })
-    )
+    expect(screen.getByRole('button', { name: /event actions/i })).toBeInTheDocument()
   })
 
   it('shows RSVP context banner when arriving from guest drawer link', () => {
     render(<EventsPageClient initialEvents={[baseEvent]} initialRsvpEventId='evt-1' />)
 
     expect(screen.getByText('RSVP management context: Ceremony')).toBeInTheDocument()
+  })
+
+  it('triggers collect RSVP mutation when event toggle is changed', () => {
+    render(<EventsPageClient initialEvents={[baseEvent]} />)
+
+    fireEvent.click(screen.getByRole('switch', { name: /toggle rsvp collection/i }))
+
+    expect(mockUpdateCollectRsvpMutate).toHaveBeenCalledWith({
+      eventId: 'evt-1',
+      collectRsvp: false,
+    })
   })
 })

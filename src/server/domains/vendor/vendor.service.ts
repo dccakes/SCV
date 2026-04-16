@@ -131,7 +131,8 @@ export class VendorService {
   ): Promise<Vendor> {
     this.requireVendorPermission(ctx, 'update')
     await this.assertVendorOwnership(vendorId, weddingId)
-    return this.vendorRepository.update(vendorId, data)
+    const { vendorId: _, ...updateData } = data
+    return this.vendorRepository.update(vendorId, updateData)
   }
 
   /**

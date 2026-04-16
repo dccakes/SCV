@@ -1,11 +1,12 @@
 'use client'
 
-import { type Dispatch, type SetStateAction, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { AiOutlineCalendar } from 'react-icons/ai'
 import { IoIosCheckmarkCircleOutline } from 'react-icons/io'
 import { formatDateStandard } from '~/app/utils/helpers'
 import type { Event, Guest, RsvpFormResponse, StepFormProps } from '~/app/utils/shared-types'
 import { useRsvpForm, useUpdateRsvpForm } from '~/components/contexts/rsvp-form-context'
+import { upsertRsvpResponses } from '~/components/website/forms/rsvp-state'
 
 interface EventRsvpFormProps extends StepFormProps {
   event: Event
@@ -20,25 +21,36 @@ export default function EventRsvpForm({
 }: EventRsvpFormProps) {
   const rsvpFormData = useRsvpForm()
   const updateRsvpForm = useUpdateRsvpForm()
-
-  // Pre-populate from confirmedHousehold invitation status
-  const getInitialRsvp = (guestId: number): 'Attending' | 'Declined' | undefined => {
-    const guest = rsvpFormData.confirmedHousehold?.guests.find((g) => g.id === guestId)
-    const invitation = guest?.invitations.find((i) => i.eventId === event.id)
-    if (invitation?.rsvp === 'Attending' || invitation?.rsvp === 'Declined') {
-      return invitation.rsvp
+  const existingResponsesForEvent = useMemo(() => {
+    return rsvpFormData.rsvpResponses.filter((response) => response.eventId === event.id)
+  }, [rsvpFormData.rsvpResponses, event.id])
+  const [rsvpResponsesByGuestId, setRsvpResponsesByGuestId] = useState<
+    Record<number, RsvpFormResponse>
+  >(() => {
+    // Pre-populate from confirmedHousehold (prior RSVP data), then overlay any already-entered form responses
+    const fromHousehold: Record<number, RsvpFormResponse> = {}
+    if (rsvpFormData.confirmedHousehold) {
+      for (const guest of rsvpFormData.confirmedHousehold.guests) {
+        const invitation = guest.invitations.find((i) => i.eventId === event.id)
+        if (invitation?.rsvp === 'Attending' || invitation?.rsvp === 'Declined') {
+          fromHousehold[guest.id] = {
+            eventId: event.id,
+            guestId: guest.id,
+            guestName: `${guest.firstName} ${guest.lastName}`,
+            rsvp: invitation.rsvp,
+          }
+        }
+      }
     }
-    return undefined
-  }
-
-  const buildInitialResponses = (): RsvpFormResponse[] =>
-    invitedGuests.flatMap((guest) => {
-      const initial = getInitialRsvp(guest.id)
-      if (!initial) return []
-      return [{ eventId: event.id, guestId: guest.id, rsvp: initial, guestName: `${guest.firstName} ${guest.lastName}` }]
-    })
-
-  const [rsvpResponses, setRsvpResponses] = useState<RsvpFormResponse[]>(buildInitialResponses)
+    return existingResponsesForEvent.reduce<Record<number, RsvpFormResponse>>((acc, response) => {
+      acc[response.guestId] = response
+      return acc
+    }, fromHousehold)
+  })
+  const eventResponses = invitedGuests
+    .map((guest) => rsvpResponsesByGuestId[guest.id])
+    .filter((response): response is RsvpFormResponse => response !== undefined)
+  const hasAnsweredAllGuests = eventResponses.length === invitedGuests.length
 
   return (
     <div className='flex flex-col gap-5'>
@@ -63,9 +75,14 @@ export default function EventRsvpForm({
                 <RsvpSelection
                   eventId={event.id}
                   guestId={guest.id}
-                  initialRsvp={getInitialRsvp(guest.id)}
-                  setRsvpResponses={setRsvpResponses}
                   guestName={`${guest.firstName} ${guest.lastName}`}
+                  response={rsvpResponsesByGuestId[guest.id]}
+                  onSelect={(response) => {
+                    setRsvpResponsesByGuestId((prev) => ({
+                      ...prev,
+                      [response.guestId]: response,
+                    }))
+                  }}
                 />
               </div>
             </li>
@@ -73,12 +90,12 @@ export default function EventRsvpForm({
         })}
       </ul>
       <button
-        className={`mt-3 py-3 text-white text-xl tracking-wide ${rsvpResponses.length < invitedGuests.length ? 'cursor-not-allowed bg-stone-400' : 'bg-stone-700'}`}
-        disabled={rsvpResponses.length < invitedGuests.length}
+        className={`mt-3 py-3 text-white text-xl tracking-wide ${!hasAnsweredAllGuests ? 'cursor-not-allowed bg-stone-400' : 'bg-stone-700'}`}
+        disabled={!hasAnsweredAllGuests}
         type='button'
         onClick={() => {
           updateRsvpForm({
-            rsvpResponses: [...rsvpFormData.rsvpResponses, ...rsvpResponses],
+            rsvpResponses: upsertRsvpResponses(rsvpFormData.rsvpResponses, eventResponses),
           })
           goNext?.()
         }}
@@ -99,50 +116,40 @@ export default function EventRsvpForm({
 type RsvpSelectionProps = {
   eventId: string
   guestId: number
-  initialRsvp?: 'Attending' | 'Declined'
-  setRsvpResponses: Dispatch<SetStateAction<RsvpFormResponse[]>>
   guestName: string
+  response?: RsvpFormResponse
+  onSelect: (response: RsvpFormResponse) => void
 }
 
-function RsvpSelection({
-  eventId,
-  guestId,
-  initialRsvp,
-  setRsvpResponses,
-  guestName,
-}: RsvpSelectionProps) {
-  const [rsvpSelection, setRsvpSelection] = useState<'Attending' | 'Declined' | undefined>(
-    initialRsvp
-  )
-  const handleOnSelect = (selection: 'Attending' | 'Declined', currentGuestId: number) => {
-    setRsvpSelection(selection)
-    setRsvpResponses((prev) => {
-      const existing = prev.find((r) => r.guestId === currentGuestId)
-      if (existing === undefined) {
-        return [...prev, { eventId, guestId, rsvp: selection, guestName }]
-      }
-      return prev.map((r) =>
-        r.guestId === currentGuestId ? { ...r, rsvp: selection } : r
-      )
+function RsvpSelection({ eventId, guestId, guestName, response, onSelect }: RsvpSelectionProps) {
+  const selectedRsvp = response?.rsvp
+
+  const handleOnSelect = (selection: 'Attending' | 'Declined') => {
+    onSelect({
+      eventId,
+      guestId,
+      guestName,
+      rsvp: selection,
     })
   }
+
   return (
     <div className='flex gap-3'>
       <button
         type='button'
-        className={`flex w-32 cursor-pointer items-center justify-center gap-1 border border-stone-400 py-2 ${rsvpSelection === 'Attending' ? 'bg-stone-700 text-white' : 'text-stone-400'}`}
-        onClick={() => handleOnSelect('Attending', guestId)}
+        className={`flex w-32 cursor-pointer items-center justify-center gap-1 border border-stone-400 py-2 ${selectedRsvp === 'Attending' ? 'bg-stone-700 text-white' : 'text-stone-400'}`}
+        onClick={() => handleOnSelect('Attending')}
       >
-        {rsvpSelection === 'Attending' && <IoIosCheckmarkCircleOutline size={20} />}
-        Accept{rsvpSelection === 'Attending' && 'ed'}
+        {selectedRsvp === 'Attending' && <IoIosCheckmarkCircleOutline size={20} />}
+        Accept{selectedRsvp === 'Attending' && 'ed'}
       </button>
       <button
         type='button'
-        className={`flex w-32 cursor-pointer items-center justify-center gap-1 border border-stone-400 py-2 ${rsvpSelection === 'Declined' ? 'bg-stone-700 text-white' : 'text-stone-400'}`}
-        onClick={() => handleOnSelect('Declined', guestId)}
+        className={`flex w-32 cursor-pointer items-center justify-center gap-1 border border-stone-400 py-2 ${selectedRsvp === 'Declined' ? 'bg-stone-700 text-white' : 'text-stone-400'}`}
+        onClick={() => handleOnSelect('Declined')}
       >
-        {rsvpSelection === 'Declined' && <IoIosCheckmarkCircleOutline size={20} />}
-        Decline{rsvpSelection === 'Declined' && 'd'}
+        {selectedRsvp === 'Declined' && <IoIosCheckmarkCircleOutline size={20} />}
+        Decline{selectedRsvp === 'Declined' && 'd'}
       </button>
     </div>
   )

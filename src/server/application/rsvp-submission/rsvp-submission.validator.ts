@@ -36,10 +36,40 @@ export type AnswerToQuestionSchemaInput = z.infer<typeof answerToQuestionSchema>
 /**
  * Schema for complete RSVP form submission
  */
-export const submitRsvpSchema = z.object({
-  rsvpResponses: z.array(rsvpResponseSchema),
-  answersToQuestions: z.array(answerToQuestionSchema),
-})
+export const submitRsvpSchema = z
+  .object({
+    rsvpResponses: z.array(rsvpResponseSchema),
+    answersToQuestions: z.array(answerToQuestionSchema),
+  })
+  .superRefine((data, ctx) => {
+    const rsvpKeys = new Set<string>()
+    data.rsvpResponses.forEach((response, index) => {
+      const key = `${response.eventId}:${response.guestId}`
+      if (rsvpKeys.has(key)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Duplicate RSVP response for the same guest and event',
+          path: ['rsvpResponses', index],
+        })
+        return
+      }
+      rsvpKeys.add(key)
+    })
+
+    const answerKeys = new Set<string>()
+    data.answersToQuestions.forEach((answer, index) => {
+      const key = `${answer.questionId}:${answer.guestId ?? -1}:${answer.householdId ?? '-1'}`
+      if (answerKeys.has(key)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Duplicate question answer for the same question and guest/household',
+          path: ['answersToQuestions', index],
+        })
+        return
+      }
+      answerKeys.add(key)
+    })
+  })
 
 export type SubmitRsvpSchemaInput = z.infer<typeof submitRsvpSchema>
 

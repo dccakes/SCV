@@ -63,7 +63,7 @@ describe('WorkspaceScopeService', () => {
     })
   })
 
-  it('returns empty scope and no writes when ambiguous and no session org', async () => {
+  it('picks first candidate and persists it when multiple non-primary candidates exist', async () => {
     const repository = makeRepository()
     repository.findCandidateScopes.mockResolvedValue([
       {
@@ -88,10 +88,10 @@ describe('WorkspaceScopeService', () => {
       sessionActiveOrganizationId: null,
     })
 
-    expect(repository.setActiveOrganizationId).not.toHaveBeenCalled()
+    expect(repository.setActiveOrganizationId).toHaveBeenCalledWith('tok-1', 'org-1')
     expect(result).toEqual({
-      activeOrganization: null,
-      activeWeddingId: null,
+      activeOrganization: { organizationId: 'org-1', role: 'owner' },
+      activeWeddingId: 'wedding-1',
     })
   })
 })

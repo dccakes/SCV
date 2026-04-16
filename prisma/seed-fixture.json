@@ -50,7 +50,7 @@
     "subUrl": "shrek-fiona",
     "isPasswordEnabled": false,
     "isRsvpEnabled": true,
-    "coverPhotoUrl": "https://cdn.swamp.wed/covers/shrek-fiona.jpg"
+    "coverPhotoUrl": null
   },
   "events": [
     {

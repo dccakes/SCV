@@ -2,7 +2,7 @@
 
 ## Overview
 
-OSWP is a comprehensive, open-source wedding planning application built with a **domain-driven architecture**. It helps couples manage their wedding events, guest lists, RSVPs, and wedding website with a clean, maintainable codebase.
+OSWP is an AI-native, self-hostable wedding planning platform. It handles guest management, RSVP collection, vendor tracking, and your wedding website — with Etta, an AI wedding assistant built in. You own your data, your schema, and your deployment.
 
 ---
 
@@ -10,6 +10,7 @@ OSWP is a comprehensive, open-source wedding planning application built with a *
 
 | Resource | Description |
 |----------|-------------|
+| [Self-Hosting Guide](./self-hosting.md) | Deploy to Vercel, Docker, or Fly.io |
 | [Architecture Overview](./api/architecture.md) | System architecture and design patterns |
 | [Domain Guide](./api/domains/README.md) | Business domain documentation |
 | [Application Services](./api/application-services/README.md) | Cross-domain orchestration services |
@@ -21,10 +22,11 @@ OSWP is a comprehensive, open-source wedding planning application built with a *
 
 | Layer | Technology |
 |-------|------------|
-| **Frontend** | Next.js 14 (App Router), React, TypeScript |
+| **Frontend** | Next.js 15 + React 19 (App Router, Server Components), TypeScript |
 | **API** | tRPC v11, Zod validation |
 | **Database** | PostgreSQL, Prisma ORM |
-| **Authentication** | Better Auth |
+| **Authentication** | Better Auth (self-hosted, open source) |
+| **AI** | Claude (Anthropic) via Etta — AI wedding assistant |
 | **Styling** | Tailwind CSS, shadcn/ui |
 | **Testing** | Jest, React Testing Library |
 
@@ -191,7 +193,7 @@ src/
 
 ```bash
 # Clone the repository
-git clone https://github.com/dccakes/oswp.git
+git clone https://github.com/dccakes/SCV.git
 
 # Install dependencies
 npm install

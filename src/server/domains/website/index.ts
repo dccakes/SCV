@@ -12,7 +12,7 @@ import { db } from '~/server/infrastructure/database'
 // Create singleton instances
 const websiteRepository = new WebsiteRepository(db)
 const websitePasswordService = new WebsitePasswordService()
-export const websiteService = new WebsiteService(websiteRepository, db, websitePasswordService)
+export const websiteService = new WebsiteService(websiteRepository, websitePasswordService, db)
 
 // Export classes for testing/DI
 export { WebsiteRepository } from '~/server/domains/website/website.repository'

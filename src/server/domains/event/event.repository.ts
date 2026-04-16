@@ -7,7 +7,7 @@
 
 import type { PrismaClient } from '@prisma/client'
 
-import { RSVP_STATUS } from '~/lib/constants'
+import { DEFAULT_LIKELIHOOD_WEIGHT, LIKELIHOOD_WEIGHTS, RSVP_STATUS } from '~/lib/constants'
 import type { Event, EventWithQuestions, EventWithStats } from '~/server/domains/event/event.types'
 
 export class EventRepository {
@@ -84,10 +84,27 @@ export class EventRepository {
       where: { weddingId },
       orderBy: { createdAt: 'asc' },
       include: {
+        // TODO(OSW-65 follow-up): split question hydration from stats query to avoid over-fetching
+        // when only list analytics are needed. Keep coupled for now so /events question management
+        // can render without relying on public RSVP routes.
+        questions: {
+          orderBy: { createdAt: 'asc' },
+          include: {
+            options: true,
+            _count: {
+              select: { answers: true },
+            },
+          },
+        },
         invitations: {
           select: {
             rsvp: true,
-            guest: { select: { isTagAlong: true } },
+            guest: {
+              select: {
+                isTagAlong: true,
+                household: { select: { likelihoodOfAttending: true } },
+              },
+            },
           },
         },
       },
@@ -109,9 +126,26 @@ export class EventRepository {
         notInvited: countedInvitations.filter((inv) => inv.rsvp === RSVP_STATUS.NOT_INVITED).length,
       }
 
+      // Estimate attendance: confirmed RSVPs count as-is, pending use likelihood weights
+      const estimatedAttendance = Math.round(
+        countedInvitations
+          .filter((inv) => inv.rsvp !== RSVP_STATUS.NOT_INVITED)
+          .reduce((sum, inv) => {
+            if (inv.rsvp === RSVP_STATUS.ATTENDING) return sum + 1
+            if (inv.rsvp === RSVP_STATUS.DECLINED) return sum
+            const likelihood = inv.guest.household.likelihoodOfAttending
+            const weight =
+              likelihood != null
+                ? (LIKELIHOOD_WEIGHTS[likelihood] ?? DEFAULT_LIKELIHOOD_WEIGHT)
+                : DEFAULT_LIKELIHOOD_WEIGHT
+            return sum + weight
+          }, 0)
+      )
+
       return {
         ...eventData,
         guestResponses,
+        estimatedAttendance,
       }
     })
   }

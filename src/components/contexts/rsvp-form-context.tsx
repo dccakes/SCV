@@ -3,7 +3,6 @@
 import { createContext, type ReactNode, useContext, useState } from 'react'
 
 import type {
-  Answer,
   Guest,
   HouseholdRsvpData,
   HouseholdRsvpLookup,
@@ -12,10 +11,7 @@ import type {
   RsvpFormResponse,
   RsvpPageData,
 } from '~/app/utils/shared-types'
-
-interface AnswerWithType extends Answer {
-  questionType: string
-}
+import type { AnswerWithType } from '~/components/website/forms/rsvp-state'
 
 type H = HouseholdSearch[0]
 interface SelectedHousehold extends H {

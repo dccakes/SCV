@@ -82,6 +82,7 @@ export default function GuestsView({
     zipCode: '',
     country: '',
     notes: '',
+    likelihoodOfAttending: null,
   })
   const [drawerBaseline, setDrawerBaseline] = useState<DrawerDraft>({
     email: '',
@@ -93,6 +94,7 @@ export default function GuestsView({
     zipCode: '',
     country: '',
     notes: '',
+    likelihoodOfAttending: null,
   })
   const initializedDrawerHouseholdIdRef = useRef<string | undefined>(undefined)
 
@@ -177,10 +179,6 @@ export default function GuestsView({
     setEditingSections(new Set())
   }, [isDrawerOpen, selectedCanonicalHousehold, selectedHousehold, selectedHouseholdId])
 
-  const eventNameById = useMemo(() => {
-    return new Map(events.map((event) => [event.id, event.name]))
-  }, [events])
-
   const createDrawerDraft = useCallback((household: HouseholdWithGuests): DrawerDraft => {
     const primary = household.guests.find((guest) => guest.isPrimaryContact)
     return {
@@ -193,6 +191,7 @@ export default function GuestsView({
       zipCode: household.zipCode ?? '',
       country: household.country ?? '',
       notes: household.notes ?? '',
+      likelihoodOfAttending: household.likelihoodOfAttending ?? null,
     }
   }, [])
 
@@ -217,6 +216,7 @@ export default function GuestsView({
       'zipCode',
       'country',
       'notes',
+      'likelihoodOfAttending',
     ]
     return keys.some((key) => drawerDraft[key] !== drawerBaseline[key])
   }, [drawerBaseline, drawerDraft])
@@ -238,6 +238,7 @@ export default function GuestsView({
       zipCode: drawerDraft.zipCode,
       country: drawerDraft.country,
       notes: drawerDraft.notes,
+      likelihoodOfAttending: drawerDraft.likelihoodOfAttending,
     }
 
     const guestParty = selectedCanonicalHousehold.guests.map((guest) => {
@@ -270,6 +271,7 @@ export default function GuestsView({
         zipCode: draftSnapshot.zipCode || null,
         country: draftSnapshot.country || null,
         notes: draftSnapshot.notes || null,
+        likelihoodOfAttending: draftSnapshot.likelihoodOfAttending,
         guestParty,
         gifts: selectedCanonicalHousehold.gifts.map((gift) => ({
           eventId: gift.eventId,
@@ -292,6 +294,7 @@ export default function GuestsView({
                 zipCode: draftSnapshot.zipCode || null,
                 country: draftSnapshot.country || null,
                 notes: draftSnapshot.notes || null,
+                likelihoodOfAttending: draftSnapshot.likelihoodOfAttending,
                 guests: household.guests.map((guest) => {
                   if (!guest.isPrimaryContact) return guest
 
@@ -529,30 +532,36 @@ export default function GuestsView({
     )
   }, [deleteHouseholdMutation, selectedCanonicalHousehold, utils])
 
-  const communicationLog = useMemo(() => {
-    if (!selectedHousehold) return []
+  const { data: communicationLog = [] } = api.communicationLog.getByHouseholdId.useQuery(
+    { householdId: selectedHousehold?.id ?? '' },
+    { enabled: !!selectedHousehold }
+  )
 
-    type CommunicationItem = {
-      type: 'sent'
-      text: string
-      date: Date
-    }
+  const addNoteMutation = api.communicationLog.addNote.useMutation({
+    onSuccess: (_data, variables) => {
+      toast.success('Note added')
+      void utils.communicationLog.getByHouseholdId.invalidate({
+        householdId: variables.householdId,
+      })
+    },
+    onError: () => {
+      toast.error('Failed to add note')
+    },
+  })
 
-    const timestamps = selectedHousehold.guests.flatMap((guest) =>
-      guest.invitations
-        .map((invitation) => {
-          if (!invitation.invitedAt) return null
-          return {
-            type: 'sent' as const,
-            text: `Invitation sent for ${eventNameById.get(invitation.eventId) ?? 'event'}`,
-            date: invitation.invitedAt,
-          }
+  const deleteNoteMutation = api.communicationLog.deleteNote.useMutation({
+    onSuccess: () => {
+      toast.success('Note removed')
+      if (selectedHousehold) {
+        void utils.communicationLog.getByHouseholdId.invalidate({
+          householdId: selectedHousehold.id,
         })
-        .filter((item): item is CommunicationItem => item !== null)
-    )
-
-    return timestamps.sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 4)
-  }, [eventNameById, selectedHousehold])
+      }
+    },
+    onError: () => {
+      toast.error('Failed to delete note')
+    },
+  })
 
   const allEventRsvpSummary = useMemo(() => {
     if (!selectedHousehold || selectedEventId !== 'all') return new Map<string, RsvpSummary>()
@@ -639,10 +648,11 @@ export default function GuestsView({
           selectedEventId={selectedEventId}
         />
         <div className='flex gap-3'>
-          <Button variant='outline' onClick={onImportClick}>
+          <Button type='button' variant='outline' onClick={onImportClick}>
             Import Guests
           </Button>
           <Button
+            type='button'
             onClick={() => {
               setPrefillHousehold(undefined)
               toggleGuestForm()
@@ -739,6 +749,14 @@ export default function GuestsView({
             setDrawerDraft={setDrawerDraft}
             rsvpManageHref={rsvpManageHref}
             onSaveMembers={saveMembersChanges}
+            onAddNote={(message) => {
+              if (selectedHousehold) {
+                addNoteMutation.mutate({ householdId: selectedHousehold.id, message })
+              }
+            }}
+            onDeleteNote={(noteId) => {
+              deleteNoteMutation.mutate({ noteId })
+            }}
             onRequestDelete={() => setShowDeleteHouseholdDialog(true)}
           />
         ) : null}

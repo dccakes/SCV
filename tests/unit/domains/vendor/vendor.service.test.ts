@@ -219,6 +219,11 @@ describe('VendorService', () => {
       })
 
       expect(result.name).toBe('Bob Photos')
+      // vendorId must never be passed into the Prisma data payload
+      expect(mockUpdateFn).toHaveBeenCalledWith(
+        'vendor-123',
+        expect.not.objectContaining({ vendorId: expect.anything() })
+      )
     })
 
     it('should throw FORBIDDEN when vendor does not belong to the wedding', async () => {

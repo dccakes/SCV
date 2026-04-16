@@ -126,4 +126,10 @@ describe('SidebarNavFrame', () => {
     expect(screen.queryByText('Dashboard')).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument()
   })
+
+  it('does not render website navigation until feature is built', () => {
+    render(<SidebarNavFrame isOpen={false} setIsOpen={jest.fn()} />)
+
+    expect(screen.queryByRole('link', { name: 'Website' })).not.toBeInTheDocument()
+  })
 })
