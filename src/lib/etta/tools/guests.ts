@@ -71,15 +71,14 @@ export function getGuestTools(ctx: EttaContext) {
 
         const addressData = { address1, address2, city, state, zipCode, country }
         const hasAddressUpdate = Object.values(addressData).some((v) => v !== undefined)
-        let household: Household | undefined
-        if (hasAddressUpdate) {
-          household = await householdManagementService.updateHouseholdAddress(
-            authz,
-            ctx.weddingId,
-            guest.householdId,
-            addressData
-          )
-        }
+        const household = hasAddressUpdate
+          ? await householdManagementService.updateHouseholdAddress(
+              authz,
+              ctx.weddingId,
+              guest.householdId,
+              addressData
+            )
+          : undefined
 
         if (tagIds !== undefined) {
           await guestService.updateGuestTags(authz, ctx.weddingId, guestId, tagIds)
