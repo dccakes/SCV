@@ -134,19 +134,34 @@ test.describe('Vendor CRUD', () => {
   test('should edit vendor details', async ({ page }) => {
     await page.goto('/vendors')
 
-    // Open detail panel for a seeded vendor
-    await page.getByLabel(/view.*banquet hall.*details/i).click()
+    // Create a dedicated vendor so we don't permanently mutate seed data
+    const otherSection = page.locator('section').filter({ hasText: /^other/i })
+    await otherSection.getByRole('button', { name: /add vendor/i }).click()
+    const createDialog = page.getByRole('dialog')
+    await createDialog.getByLabel(/name/i).first().fill('Details Edit Test')
+    await createDialog.getByRole('button', { name: /add vendor/i }).click()
+    await expect(page.locator('body')).toContainText('Details Edit Test')
+
+    // Open detail panel for the new vendor
+    await page.getByLabel(/view.*details edit test.*details/i).click()
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
 
     // Click "Edit" in the details section to open inline edit form
-    await dialog
-      .getByRole('button', { name: /^edit$/i })
-      .first()
-      .click()
+    await dialog.getByRole('button', { name: /^edit$/i }).first().click()
 
-    // Verify the edit form is shown with existing values
-    await expect(dialog.getByLabel(/name/i).first()).toBeVisible()
+    // Change the name and add a location
+    const nameInput = dialog.getByLabel(/name/i).first()
+    await nameInput.clear()
+    await nameInput.fill('Details Edit Test — Updated')
+    await dialog.getByLabel(/location/i).fill('Edited City, Edited State')
+
+    // Submit the form
+    await dialog.getByRole('button', { name: /save changes/i }).click()
+
+    // Updated name and location should appear in the panel
+    await expect(dialog).toContainText('Details Edit Test — Updated')
+    await expect(dialog).toContainText('Edited City, Edited State')
   })
 })
 
@@ -325,6 +340,25 @@ test.describe('Vendor Status', () => {
 
     // Status selector should be visible (shows current status "Selected")
     await expect(dialog).toContainText(/selected/i)
+  })
+
+  test('should update vendor status', async ({ page }) => {
+    await page.goto('/vendors')
+
+    // Open Swampview Lodge — seeded as IN_REVIEW, not used by other status assertions
+    await page.getByLabel(/view.*swampview.*details/i).click()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+
+    // Confirm starting status is "In Review"
+    await expect(dialog.getByRole('combobox')).toContainText(/in review/i)
+
+    // Change status to "In Negotiation"
+    await dialog.getByRole('combobox').click()
+    await page.getByRole('option', { name: 'In Negotiation' }).click()
+
+    // Status selector should reflect the saved change
+    await expect(dialog.getByRole('combobox')).toContainText(/in negotiation/i)
   })
 })
 
