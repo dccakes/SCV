@@ -50,10 +50,23 @@ import {
 
 const mockRequirePermission = requirePermission as jest.Mock
 
+const VALID_RSVP_TOKEN = '00000000-0000-0000-0000-000000000001'
+const MOCK_HOUSEHOLD_ID = 'household-123'
+const MOCK_WEDDING_ID = 'wedding-123'
+
 const createMockDb = () => ({
   $transaction: jest.fn().mockImplementation(async (fn: (tx: unknown) => unknown) => {
     return fn({ __tx: true })
   }),
+  household: {
+    findFirst: jest.fn().mockResolvedValue({ id: MOCK_HOUSEHOLD_ID, weddingId: MOCK_WEDDING_ID }),
+  },
+  invitation: {
+    count: jest.fn().mockResolvedValue(1),
+  },
+  guest: {
+    count: jest.fn().mockResolvedValue(1),
+  },
 })
 
 describe('RsvpSubmissionService', () => {
@@ -281,28 +294,29 @@ describe('RsvpSubmissionService', () => {
     )
   })
 
-  it('accepts valid public token and submits rsvp', async () => {
+  it('accepts valid household rsvp token and submits rsvp', async () => {
     const result = await service.submitPublicRsvp({
       subUrl: 'ash-and-jamie',
-      token: 'a'.repeat(32),
+      rsvpToken: VALID_RSVP_TOKEN,
       rsvpResponses: [{ eventId: 'event-123', guestId: 1, rsvp: 'Attending' }],
       answersToQuestions: [],
     })
 
     expect(result).toEqual({ success: true })
-    expect(mockFindWeddingIdByValidTokenAndSubUrl).toHaveBeenCalledWith(
-      'ash-and-jamie',
-      'a'.repeat(32)
+    expect(mockDb.household.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ rsvpToken: VALID_RSVP_TOKEN }),
+      })
     )
   })
 
-  it('rejects invalid or expired token', async () => {
-    mockFindWeddingIdByValidTokenAndSubUrl.mockResolvedValue(null)
+  it('rejects invalid or expired household rsvp token', async () => {
+    mockDb.household.findFirst.mockResolvedValue(null)
 
     await expect(
       service.submitPublicRsvp({
         subUrl: 'ash-and-jamie',
-        token: 'a'.repeat(32),
+        rsvpToken: VALID_RSVP_TOKEN,
         rsvpResponses: [],
         answersToQuestions: [],
       })

@@ -9,6 +9,9 @@ jest.mock('~/components/contexts/rsvp-form-context', () => ({
   useRsvpForm: () => ({
     selectedHousehold: undefined,
     rsvpResponses: [],
+    rsvpToken: undefined,
+    confirmedHousehold: undefined,
+    weddingData: { events: [], website: { subUrl: '', generalQuestions: [] } },
   }),
   useUpdateRsvpForm: () => jest.fn(),
 }))
@@ -65,9 +68,18 @@ jest.mock('~/components/website/rsvp-confirmation', () => {
   }
 })
 
+jest.mock('~/components/website/forms/steps/update-contact-info', () => {
+  return function MockUpdateContactInfoForm() {
+    return <div>Update contact info</div>
+  }
+})
+
 jest.mock('~/trpc/react', () => ({
   api: {
     website: {
+      validateRsvpToken: {
+        useQuery: () => ({ data: undefined, isLoading: false }),
+      },
       submitPublicRsvpForm: {
         useMutation: (options: { onError?: (error: unknown) => void }) => {
           capturedOnError = options.onError
