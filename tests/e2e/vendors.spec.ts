@@ -148,7 +148,10 @@ test.describe('Vendor CRUD', () => {
     await expect(dialog).toBeVisible()
 
     // Click "Edit" in the details section to open inline edit form
-    await dialog.getByRole('button', { name: /^edit$/i }).first().click()
+    await dialog
+      .getByRole('button', { name: /^edit$/i })
+      .first()
+      .click()
 
     // Change the name and add a location
     const nameInput = dialog.getByLabel(/name/i).first()
