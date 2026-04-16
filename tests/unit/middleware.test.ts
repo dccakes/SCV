@@ -65,17 +65,33 @@ describe('middleware', () => {
   it('allows unauthenticated users on public routes', async () => {
     mockGetSessionCookie.mockReturnValue(null)
 
-    const rootResponse = await middleware(createRequest('/'))
-    const blogIndexResponse = await middleware(createRequest('/blog'))
-    const blogSlugResponse = await middleware(createRequest('/blog/introducing-oswp'))
-    const pricingResponse = await middleware(createRequest('/pricing'))
-    const openSourceResponse = await middleware(createRequest('/open-source'))
-    const signInResponse = await middleware(createRequest('/auth/sign-in'))
-    const joinResponse = await middleware(createRequest('/join/sample-token'))
-    const websiteResponse = await middleware(createRequest('/shrek-and-fiona'))
-    const websiteRsvpResponse = await middleware(createRequest('/shrek-and-fiona/rsvp'))
-    const authApiResponse = await middleware(createRequest('/api/auth/session'))
-    const blobUploadResponse = await middleware(createRequest('/api/blob/upload'))
+    const [
+      rootResponse,
+      blogIndexResponse,
+      blogSlugResponse,
+      pricingResponse,
+      openSourceResponse,
+      signInResponse,
+      acceptInvitationResponse,
+      joinResponse,
+      websiteResponse,
+      websiteRsvpResponse,
+      authApiResponse,
+      blobUploadResponse,
+    ] = await Promise.all([
+      middleware(createRequest('/')),
+      middleware(createRequest('/blog')),
+      middleware(createRequest('/blog/introducing-oswp')),
+      middleware(createRequest('/pricing')),
+      middleware(createRequest('/open-source')),
+      middleware(createRequest('/auth/sign-in')),
+      middleware(createRequest('/auth/accept-invitation', undefined, '?invitationId=inv_test_123')),
+      middleware(createRequest('/join/sample-token')),
+      middleware(createRequest('/shrek-and-fiona')),
+      middleware(createRequest('/shrek-and-fiona/rsvp')),
+      middleware(createRequest('/api/auth/session')),
+      middleware(createRequest('/api/blob/upload')),
+    ])
 
     expect(rootResponse.headers.get('location')).toBeNull()
     expect(blogIndexResponse.headers.get('location')).toBeNull()
@@ -83,6 +99,7 @@ describe('middleware', () => {
     expect(pricingResponse.headers.get('location')).toBeNull()
     expect(openSourceResponse.headers.get('location')).toBeNull()
     expect(signInResponse.headers.get('location')).toBeNull()
+    expect(acceptInvitationResponse.headers.get('location')).toBeNull()
     expect(joinResponse.headers.get('location')).toBeNull()
     expect(websiteResponse.headers.get('location')).toBeNull()
     expect(websiteRsvpResponse.headers.get('location')).toBeNull()
