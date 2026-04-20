@@ -32,6 +32,7 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         storageState: 'tests/e2e/.auth/user.json',
       },
+      testIgnore: /.*\.public\.spec\.ts/,
       dependencies: ['setup'],
     },
     // Tests that run without authentication (public pages)
