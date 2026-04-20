@@ -72,7 +72,7 @@ export default async function AcceptInvitationPage({ searchParams }: AcceptInvit
       <Shell>
         <Header
           title='You were invited to join a wedding workspace'
-          description='Sign in or create an account to continue with this invitation. We will bring you right back to accept it.'
+          description='Sign in or create an account to continue with this invitation. Your created account email must match the invite email. We will bring you right back to accept it.'
         />
 
         <div className='space-y-3'>
