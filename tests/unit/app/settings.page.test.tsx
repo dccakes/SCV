@@ -15,6 +15,9 @@ const mockWeddingSettingsForm = jest.fn((_props: { initialData: Record<string, u
 const mockOrganizationMembersSettingsCard = jest.fn(() => (
   <div data-testid='organization-members-settings-card'>Members card</div>
 ))
+const mockTelegramConnectCard = jest.fn(() => (
+  <div data-testid='telegram-connect-card'>Telegram card</div>
+))
 
 jest.mock('~/trpc/server', () => ({
   api: {
@@ -44,6 +47,11 @@ jest.mock('~/components/settings/organization-members-settings-card', () => ({
   OrganizationMembersSettingsCard: () => mockOrganizationMembersSettingsCard(),
 }))
 
+jest.mock('~/components/settings/telegram-connect-card', () => ({
+  __esModule: true,
+  TelegramConnectCard: () => mockTelegramConnectCard(),
+}))
+
 describe('SettingsPage', () => {
   beforeEach(() => {
     mockGetDetails.mockReset()
@@ -52,6 +60,7 @@ describe('SettingsPage', () => {
     mockDashboardTopbar.mockClear()
     mockWeddingSettingsForm.mockClear()
     mockOrganizationMembersSettingsCard.mockClear()
+    mockTelegramConnectCard.mockClear()
   })
 
   it('renders wedding settings and organization members section when details exist', async () => {

@@ -12,6 +12,7 @@ import { guestRouter } from '~/server/domains/guest/guest.router'
 import { guestTagRouter } from '~/server/domains/guest-tag/guest-tag.router'
 import { householdRouter } from '~/server/domains/household/household.router'
 import { invitationRouter } from '~/server/domains/invitation/invitation.router'
+import { messagingRouter } from '~/server/domains/messaging/messaging.router'
 import { questionRouter } from '~/server/domains/question/question.router'
 import { createSelfFillRouter } from '~/server/domains/self-fill'
 import { userRouter } from '~/server/domains/user/user.router'
@@ -59,6 +60,9 @@ export const appRouter = createTRPCRouter({
 
   // Communication log (household outreach timeline)
   communicationLog: communicationLogRouter,
+
+  // Messaging (Telegram couple-bot)
+  messaging: messagingRouter,
 })
 
 // export type definition of API

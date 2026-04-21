@@ -3,9 +3,11 @@ import type { AuthzContext } from '~/server/authz/authorization.types'
 
 // ── Actor Types ──────────────────────────────────────────────────────────────
 
-export type EttaActorType = 'couple' | 'guest'
+export type EttaActorType = 'couple' | 'guest' | 'couple-bot'
 
 export type EttaPersona = 'planner' | 'concierge'
+
+export type EttaToolsetMode = 'full' | 'memory-only'
 
 // ── Request / Context ────────────────────────────────────────────────────────
 
@@ -15,6 +17,7 @@ export interface EttaRequest {
   guestId?: number
   authz?: AuthzContext
   messages: ModelMessage[]
+  toolsetMode?: EttaToolsetMode
 }
 
 export interface EttaContext {
@@ -77,7 +80,7 @@ export interface EttaSuggestionView {
 export interface AuditEntry {
   weddingId: string
   actorId: string
-  actorType: 'etta' | 'couple' | 'guest'
+  actorType: 'etta' | 'couple' | 'guest' | 'couple-bot'
   action: string
   resourceType: string
   resourceId?: string
