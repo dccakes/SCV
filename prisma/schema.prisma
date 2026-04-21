@@ -782,6 +782,7 @@ model ChatMessage {
   id                String            @id @default(uuid())
   identityId        String            @map("identity_id")
   identity          MessagingIdentity @relation(fields: [identityId], references: [id], onDelete: Cascade)
+  // Denormalized from identity.weddingId for efficient cascade deletes and wedding-wide queries.
   weddingId         String            @map("wedding_id")
   wedding           Wedding           @relation(fields: [weddingId], references: [id], onDelete: Cascade)
   role              String // 'user' | 'assistant'

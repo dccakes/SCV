@@ -49,9 +49,7 @@ export const mockChatMessage: ChatMessage = {
 }
 
 export const mockCreatePairingToken = jest.fn()
-export const mockFindPairingToken = jest.fn()
-export const mockConsumePairingToken = jest.fn()
-export const mockUpsertIdentity = jest.fn()
+export const mockFindIdentityById = jest.fn()
 export const mockFindIdentityByChat = jest.fn()
 export const mockFindIdentitiesForWedding = jest.fn()
 export const mockRevokeIdentity = jest.fn()
@@ -66,9 +64,7 @@ export const mockConsumeAndUpsert = jest.fn()
 
 export const MessagingRepository = jest.fn().mockImplementation(() => ({
   createPairingToken: mockCreatePairingToken,
-  findPairingToken: mockFindPairingToken,
-  consumePairingToken: mockConsumePairingToken,
-  upsertIdentity: mockUpsertIdentity,
+  findIdentityById: mockFindIdentityById,
   findIdentityByChat: mockFindIdentityByChat,
   findIdentitiesForWedding: mockFindIdentitiesForWedding,
   revokeIdentity: mockRevokeIdentity,
@@ -84,9 +80,7 @@ export const MessagingRepository = jest.fn().mockImplementation(() => ({
 
 export const resetMocks = (): void => {
   mockCreatePairingToken.mockReset()
-  mockFindPairingToken.mockReset()
-  mockConsumePairingToken.mockReset()
-  mockUpsertIdentity.mockReset()
+  mockFindIdentityById.mockReset()
   mockFindIdentityByChat.mockReset()
   mockFindIdentitiesForWedding.mockReset()
   mockRevokeIdentity.mockReset()

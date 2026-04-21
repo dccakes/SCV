@@ -81,7 +81,7 @@ export async function runEttaAgent(req: EttaRequest) {
       ? (authz?.userId ?? `guest:${guestId}`)
       : actor === 'couple-bot'
         ? (authz?.userId ?? 'couple-bot:unknown')
-        : (authz?.userId ?? `guest:${guestId}`)
+        : (authz?.userId ?? 'couple:unknown')
   await logAudit({
     weddingId,
     actorId: chatRequestActorId,

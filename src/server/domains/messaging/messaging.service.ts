@@ -194,8 +194,12 @@ export class MessagingService {
     return this.repo.findIdentitiesWithUnsummarized(olderThanMs, maxIdentities)
   }
 
-  async revokeIdentity(ctx: AuthzContext, identityId: string): Promise<void> {
+  async revokeIdentity(ctx: AuthzContext, identityId: string, weddingId: string): Promise<void> {
     requirePermission(ctx, { wedding: ['update'] })
+    const identity = await this.repo.findIdentityById(identityId)
+    if (!identity || identity.weddingId !== weddingId) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Identity not found' })
+    }
     await this.repo.revokeIdentity(identityId)
   }
 

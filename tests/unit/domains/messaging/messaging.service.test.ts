@@ -33,6 +33,7 @@ import {
   mockCreatePairingToken,
   mockFindIdentitiesForWedding,
   mockFindIdentityByChat,
+  mockFindIdentityById,
   mockFindRecentMessages,
   mockFindUnsummarizedMessages,
   mockGetPendingInvokeSeq,
@@ -49,6 +50,7 @@ const mockCreatePairingTokenFn = mockCreatePairingToken as jest.Mock
 const mockConsumeAndUpsertFn = mockConsumeAndUpsert as jest.Mock
 const mockFindIdentityByChatFn = mockFindIdentityByChat as jest.Mock
 const mockFindIdentitiesForWeddingFn = mockFindIdentitiesForWedding as jest.Mock
+const mockFindIdentityByIdFn = mockFindIdentityById as jest.Mock
 const mockRevokeIdentityFn = mockRevokeIdentity as jest.Mock
 const mockAppendMessageFn = mockAppendMessage as jest.Mock
 const mockFindRecentMessagesFn = mockFindRecentMessages as jest.Mock
@@ -364,12 +366,32 @@ describe('MessagingService', () => {
 
   describe('revokeIdentity', () => {
     it('calls permission check and repo method', async () => {
+      mockFindIdentityByIdFn.mockResolvedValue({ ...mockIdentity, weddingId: 'wedding-123' })
       mockRevokeIdentityFn.mockResolvedValue(undefined)
 
-      await service.revokeIdentity(ctx, 'identity-1')
+      await service.revokeIdentity(ctx, 'identity-1', 'wedding-123')
 
       expect(mockRequirePermission).toHaveBeenCalledWith(ctx, { wedding: ['update'] })
+      expect(mockFindIdentityByIdFn).toHaveBeenCalledWith('identity-1')
       expect(mockRevokeIdentityFn).toHaveBeenCalledWith('identity-1')
+    })
+
+    it('throws NOT_FOUND when identity belongs to a different wedding', async () => {
+      mockFindIdentityByIdFn.mockResolvedValue({ ...mockIdentity, weddingId: 'other-wedding' })
+
+      await expect(service.revokeIdentity(ctx, 'identity-1', 'wedding-123')).rejects.toMatchObject({
+        code: 'NOT_FOUND',
+      })
+      expect(mockRevokeIdentityFn).not.toHaveBeenCalled()
+    })
+
+    it('throws NOT_FOUND when identity does not exist', async () => {
+      mockFindIdentityByIdFn.mockResolvedValue(null)
+
+      await expect(service.revokeIdentity(ctx, 'identity-1', 'wedding-123')).rejects.toMatchObject({
+        code: 'NOT_FOUND',
+      })
+      expect(mockRevokeIdentityFn).not.toHaveBeenCalled()
     })
   })
 

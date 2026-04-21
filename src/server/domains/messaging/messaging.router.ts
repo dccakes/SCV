@@ -26,6 +26,7 @@ export const messagingRouter = createTRPCRouter({
   revokeIdentity: protectedProcedure
     .input(revokeIdentitySchema)
     .mutation(async ({ ctx, input }) => {
-      return messagingService.revokeIdentity(ctx.authz, input.identityId)
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+      return messagingService.revokeIdentity(ctx.authz, input.identityId, weddingId)
     }),
 })

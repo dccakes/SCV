@@ -24,51 +24,17 @@ export class MessagingRepository {
     return this.db.messagingPairingToken.create({ data })
   }
 
-  async findPairingToken(token: string): Promise<MessagingPairingToken | null> {
-    return this.db.messagingPairingToken.findUnique({ where: { token } })
-  }
-
-  async consumePairingToken(token: string, externalChatId: string): Promise<number> {
-    const result = await this.db.messagingPairingToken.updateMany({
-      where: { token, consumedAt: null, expiresAt: { gt: new Date() } },
-      data: { consumedAt: new Date(), consumedChatId: externalChatId },
-    })
-    return result.count
-  }
-
-  async upsertIdentity(data: {
-    weddingId: string
-    channel: string
-    externalChatId: string
-    externalUserId?: string
-    displayName?: string
-    linkedByUserId: string
-  }): Promise<MessagingIdentity> {
-    return this.db.messagingIdentity.upsert({
-      where: {
-        channel_externalChatId: {
-          channel: data.channel,
-          externalChatId: data.externalChatId,
-        },
-      },
-      create: data,
-      update: {
-        linkedByUserId: data.linkedByUserId,
-        externalUserId: data.externalUserId,
-        displayName: data.displayName,
-        revokedAt: null,
-      },
-    })
-  }
-
   async findIdentityByChat(
     channel: string,
     externalChatId: string
   ): Promise<MessagingIdentity | null> {
     return this.db.messagingIdentity.findFirst({
       where: { channel, externalChatId, revokedAt: null },
-      include: { wedding: true },
     })
+  }
+
+  async findIdentityById(id: string): Promise<MessagingIdentity | null> {
+    return this.db.messagingIdentity.findUnique({ where: { id } })
   }
 
   async findIdentitiesForWedding(weddingId: string): Promise<MessagingIdentity[]> {
