@@ -115,6 +115,23 @@ export class MessagingRepository {
     return row?.pendingInvokeSeq ?? null
   }
 
+  async resolveOrgMembership(
+    userId: string,
+    weddingId: string
+  ): Promise<{ organizationId: string; role: string } | null> {
+    const wedding = await this.db.wedding.findUnique({
+      where: { id: weddingId },
+      select: { organizationId: true },
+    })
+    if (!wedding?.organizationId) return null
+    const member = await this.db.member.findFirst({
+      where: { userId, organizationId: wedding.organizationId },
+      select: { role: true, organizationId: true },
+    })
+    if (!member) return null
+    return { organizationId: member.organizationId, role: member.role }
+  }
+
   async findIdentitiesWithUnsummarized(
     olderThanMs: number,
     limitIdentities: number

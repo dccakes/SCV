@@ -45,6 +45,10 @@ function buildHandler(
     findOrphanBlocks: jest.fn().mockResolvedValue([]),
     bumpPendingInvokeSeq: jest.fn(),
     getPendingInvokeSeq: jest.fn(),
+    resolveAuthzForIdentity: jest.fn().mockResolvedValue({
+      userId: 'user-1',
+      activeOrganization: { organizationId: 'org-1', role: 'owner' },
+    }),
   }
   const tg = {
     sendMessage: jest.fn().mockResolvedValue(undefined),
@@ -163,7 +167,10 @@ describe('TelegramHandler', () => {
         expect.objectContaining({
           actor: 'couple-bot',
           weddingId: 'wedding-123',
-          authz: { userId: 'user-1', activeOrganization: null },
+          authz: {
+            userId: 'user-1',
+            activeOrganization: { organizationId: 'org-1', role: 'owner' },
+          },
           messages: [{ role: 'user', content: 'how many guests?' }],
         })
       )

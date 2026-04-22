@@ -203,12 +203,10 @@ export class TelegramHandler {
   private async summarizeOrphans(identity: MessagingIdentity, weddingId: string): Promise<void> {
     const groups = await this.messaging.findOrphanBlocks(identity.id)
     if (groups.length === 0) return
+    const authz = await this.messaging.resolveAuthzForIdentity(identity)
     for (const group of groups) {
       try {
-        await this.summarizer.summarizeSession(group, {
-          weddingId,
-          authz: { userId: identity.linkedByUserId, activeOrganization: null },
-        })
+        await this.summarizer.summarizeSession(group, { weddingId, authz })
       } catch {
         // swallow — cron backstop will retry
       }
@@ -227,10 +225,11 @@ export class TelegramHandler {
     }))
     if (messages.length === 0) return
 
+    const authz = await this.messaging.resolveAuthzForIdentity(identity)
     const result = await this.runEtta({
       actor: 'couple-bot',
       weddingId,
-      authz: { userId: identity.linkedByUserId, activeOrganization: null },
+      authz,
       messages,
     })
     const text = await result.text

@@ -61,6 +61,7 @@ export const mockBumpPendingInvokeSeq = jest.fn()
 export const mockGetPendingInvokeSeq = jest.fn()
 export const mockFindIdentitiesWithUnsummarized = jest.fn()
 export const mockConsumeAndUpsert = jest.fn()
+export const mockResolveOrgMembership = jest.fn()
 
 export const MessagingRepository = jest.fn().mockImplementation(() => ({
   createPairingToken: mockCreatePairingToken,
@@ -76,6 +77,7 @@ export const MessagingRepository = jest.fn().mockImplementation(() => ({
   getPendingInvokeSeq: mockGetPendingInvokeSeq,
   findIdentitiesWithUnsummarized: mockFindIdentitiesWithUnsummarized,
   consumeAndUpsert: mockConsumeAndUpsert,
+  resolveOrgMembership: mockResolveOrgMembership,
 }))
 
 export const resetMocks = (): void => {
@@ -92,5 +94,6 @@ export const resetMocks = (): void => {
   mockGetPendingInvokeSeq.mockReset()
   mockFindIdentitiesWithUnsummarized.mockReset()
   mockConsumeAndUpsert.mockReset()
+  mockResolveOrgMembership.mockReset()
   MessagingRepository.mockClear()
 }

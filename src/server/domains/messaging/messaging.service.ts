@@ -194,6 +194,19 @@ export class MessagingService {
     return this.repo.findIdentitiesWithUnsummarized(olderThanMs, maxIdentities)
   }
 
+  async resolveAuthzForIdentity(identity: MessagingIdentity): Promise<AuthzContext> {
+    const membership = await this.repo.resolveOrgMembership(
+      identity.linkedByUserId,
+      identity.weddingId
+    )
+    return {
+      userId: identity.linkedByUserId,
+      activeOrganization: membership
+        ? { organizationId: membership.organizationId, role: membership.role }
+        : null,
+    }
+  }
+
   async revokeIdentity(ctx: AuthzContext, identityId: string, weddingId: string): Promise<void> {
     requirePermission(ctx, { wedding: ['update'] })
     const identity = await this.repo.findIdentityById(identityId)
