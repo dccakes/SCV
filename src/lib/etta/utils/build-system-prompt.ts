@@ -1,13 +1,41 @@
-import type { EttaContext } from '~/lib/etta/types'
+import type { EttaContext, EttaToolsetMode } from '~/lib/etta/types'
 
-export function buildSystemPrompt(ctx: EttaContext): string {
-  const { brideFirstName: bride, groomFirstName: groom } = ctx.wedding
+const SUMMARISER_PROMPT = [
+  'You are reviewing a concluded wedding-planning conversation.',
+  'Extract durable facts the couple will want remembered later — decisions made, vendor preferences, guest preferences, deadlines, names, interpersonal context.',
+  'Call `memory_write` for each distinct fact.',
+  'Skip small talk, greetings, or questions that were already answered.',
+  'Do NOT reply to the user; only write memories and then stop.',
+].join(' ')
 
-  if (ctx.actor === 'couple') {
-    return buildPlannerPrompt(bride, groom, ctx)
+const TELEGRAM_SUFFIX = [
+  '',
+  'You are chatting over Telegram. Keep replies under 3 short paragraphs.',
+  'Use plain text — no markdown tables, code fences, or complex formatting.',
+  'If you create a pending suggestion, tell the user to approve it at /etta/pending.',
+].join('\n')
+
+export function buildSystemPrompt(
+  ctx: EttaContext,
+  opts?: { toolsetMode?: EttaToolsetMode }
+): string {
+  if (opts?.toolsetMode === 'memory-only') {
+    return SUMMARISER_PROMPT
   }
 
-  return buildConciergePrompt(bride, groom)
+  const { brideFirstName: bride, groomFirstName: groom } = ctx.wedding
+
+  if (ctx.actor === 'guest') {
+    return buildConciergePrompt(bride, groom)
+  }
+
+  const plannerPrompt = buildPlannerPrompt(bride, groom, ctx)
+
+  if (ctx.actor === 'couple-bot') {
+    return plannerPrompt + TELEGRAM_SUFFIX
+  }
+
+  return plannerPrompt
 }
 
 function buildPlannerPrompt(bride: string, groom: string, ctx: EttaContext) {

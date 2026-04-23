@@ -43,6 +43,16 @@ export const env = createEnv({
     OPENAI_API_KEY: z.string().min(1).optional(), // For embeddings (text-embedding-3-small)
     JWT_SECRET: z.string().min(1).optional(), // For guest concierge tokens
     ETTA_MODEL: z.string().min(1).optional(), // e.g. "anthropic/claude-haiku-4.5" or "openai/gpt-4o"
+    // Telegram bot (couple-bot channel)
+    TELEGRAM_BOT_TOKEN: z.string().min(1).optional(),
+    TELEGRAM_BOT_USERNAME: z.string().min(1).optional(),
+    TELEGRAM_WEBHOOK_SECRET: z.string().min(1).optional(),
+    TELEGRAM_DEBOUNCE_MS: z.coerce.number().int().positive().optional(),
+    TELEGRAM_SESSION_GAP_MS: z.coerce.number().int().positive().optional(),
+    TELEGRAM_SESSION_MAX_MESSAGES: z.coerce.number().int().positive().optional(),
+    TELEGRAM_SESSION_MAX_CHARS: z.coerce.number().int().positive().optional(),
+    // Vercel Cron shared secret (protects /api/cron/* routes)
+    CRON_SECRET: z.string().min(1).optional(),
   },
 
   /**
@@ -92,6 +102,14 @@ export const env = createEnv({
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     JWT_SECRET: process.env.JWT_SECRET,
     ETTA_MODEL: process.env.ETTA_MODEL,
+    TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
+    TELEGRAM_BOT_USERNAME: process.env.TELEGRAM_BOT_USERNAME,
+    TELEGRAM_WEBHOOK_SECRET: process.env.TELEGRAM_WEBHOOK_SECRET,
+    TELEGRAM_DEBOUNCE_MS: process.env.TELEGRAM_DEBOUNCE_MS,
+    TELEGRAM_SESSION_GAP_MS: process.env.TELEGRAM_SESSION_GAP_MS,
+    TELEGRAM_SESSION_MAX_MESSAGES: process.env.TELEGRAM_SESSION_MAX_MESSAGES,
+    TELEGRAM_SESSION_MAX_CHARS: process.env.TELEGRAM_SESSION_MAX_CHARS,
+    CRON_SECRET: process.env.CRON_SECRET,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

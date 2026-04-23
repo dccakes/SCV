@@ -10,7 +10,7 @@ export async function resolveEttaContext(params: {
   authz?: AuthzContext
 }): Promise<EttaContext> {
   const { actor, weddingId, guestId, authz } = params
-  const isPlanner = actor === 'couple'
+  const isPlanner = actor !== 'guest'
 
   // Single parallel batch — concierge skips planner-only queries
   const [

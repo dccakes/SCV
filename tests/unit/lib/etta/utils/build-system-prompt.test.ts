@@ -84,3 +84,56 @@ describe('buildSystemPrompt — guest (concierge)', () => {
     expect(prompt).toContain('RSVP')
   })
 })
+
+// ── Telegram planner prompt (couple-bot) ────────────────────────────────────
+
+describe('buildSystemPrompt — couple-bot (Telegram planner)', () => {
+  it('includes the standard planner content (counts, tiers)', () => {
+    const prompt = buildSystemPrompt(makeContext({ actor: 'couple-bot' }))
+
+    expect(prompt).toContain('25 guests')
+    expect(prompt).toContain('T0')
+    expect(prompt).toContain('T1')
+  })
+
+  it('appends the Telegram-specific guidance', () => {
+    const prompt = buildSystemPrompt(makeContext({ actor: 'couple-bot' }))
+
+    expect(prompt).toContain('Telegram')
+    expect(prompt).toContain('/etta/pending')
+  })
+})
+
+// ── Summariser mode (memory-only) ───────────────────────────────────────────
+
+describe('buildSystemPrompt — toolsetMode: memory-only', () => {
+  it('returns the summariser prompt for the couple actor', () => {
+    const prompt = buildSystemPrompt(makeContext({ actor: 'couple' }), {
+      toolsetMode: 'memory-only',
+    })
+
+    expect(prompt).toContain('memory_write')
+    expect(prompt).toContain('durable facts')
+    expect(prompt).not.toContain('T0')
+  })
+
+  it('takes precedence over the couple-bot actor prompt', () => {
+    const prompt = buildSystemPrompt(makeContext({ actor: 'couple-bot' }), {
+      toolsetMode: 'memory-only',
+    })
+
+    expect(prompt).toContain('memory_write')
+    // Telegram-specific content must NOT leak into the summariser prompt.
+    expect(prompt).not.toContain('Telegram')
+    expect(prompt).not.toContain('/etta/pending')
+  })
+
+  it('ignores the mode when full is explicitly passed', () => {
+    const prompt = buildSystemPrompt(makeContext({ actor: 'couple' }), {
+      toolsetMode: 'full',
+    })
+
+    expect(prompt).toContain('T0')
+    expect(prompt).not.toContain('memory_write')
+  })
+})

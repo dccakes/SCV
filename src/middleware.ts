@@ -2,7 +2,7 @@ import { getSessionCookie } from 'better-auth/cookies'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
-const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/join', '/blog']
+const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/join', '/blog', '/api/webhooks', '/api/cron']
 const PUBLIC_EXACT_PATHS = ['/', '/api/blob/upload', '/pricing', '/open-source']
 const RESERVED_ROOT_SEGMENTS = new Set([
   '',
