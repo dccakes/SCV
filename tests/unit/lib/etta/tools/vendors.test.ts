@@ -25,6 +25,7 @@ jest.mock('~/server/application/vendor-insights', () => ({
 jest.mock('~/server/domains/vendor', () => ({
   vendorService: {
     updateQuote: jest.fn(),
+    createVendor: jest.fn(),
   },
 }))
 
@@ -38,6 +39,7 @@ jest.mock('~/server/db', () => ({
 
 const mockVendorService = vendorService as {
   updateQuote: jest.Mock
+  createVendor: jest.Mock
 }
 
 const mockRequirePermission = requirePermission as jest.Mock
@@ -186,6 +188,84 @@ describe('getVendorTools', () => {
           { toolCallId: 'tc4b', messages: [], abortSignal: undefined as never }
         )
       ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+  })
+
+  describe('create_vendor', () => {
+    it('creates a vendor directly via the vendor service', async () => {
+      const vendor = {
+        id: 'vendor-new',
+        weddingId: 'wedding-123',
+        category: 'PHOTOGRAPHER',
+        name: 'Snap Studio',
+        location: 'Napa',
+        website: 'https://snap.example.com',
+        instagram: '@snapstudio',
+        contactName: 'Alex',
+        contactEmail: 'alex@snap.example.com',
+        contactPhone: '555-0100',
+        status: 'IN_REVIEW',
+        createdAt: new Date('2026-04-23'),
+        updatedAt: new Date('2026-04-23'),
+      }
+      mockVendorService.createVendor.mockResolvedValue(vendor)
+
+      const params = {
+        name: 'Snap Studio',
+        category: 'PHOTOGRAPHER' as const,
+        location: 'Napa',
+        website: 'https://snap.example.com',
+        instagram: '@snapstudio',
+        contactName: 'Alex',
+        contactEmail: 'alex@snap.example.com',
+        contactPhone: '555-0100',
+      }
+
+      const result = await tools.create_vendor.execute(params, {
+        toolCallId: 'tc-create-1',
+        messages: [],
+        abortSignal: undefined as never,
+      })
+
+      expect(mockVendorService.createVendor).toHaveBeenCalledWith(
+        mockCtx.authz,
+        'wedding-123',
+        params
+      )
+      expect(result).toEqual({ vendor })
+    })
+
+    it('creates a vendor with only required fields', async () => {
+      const vendor = {
+        id: 'vendor-min',
+        weddingId: 'wedding-123',
+        category: 'MUSIC',
+        name: 'DJ Cool',
+        status: 'IN_REVIEW',
+      }
+      mockVendorService.createVendor.mockResolvedValue(vendor)
+
+      const result = await tools.create_vendor.execute(
+        { name: 'DJ Cool', category: 'MUSIC' as const },
+        { toolCallId: 'tc-create-2', messages: [], abortSignal: undefined as never }
+      )
+
+      expect(mockVendorService.createVendor).toHaveBeenCalledWith(mockCtx.authz, 'wedding-123', {
+        name: 'DJ Cool',
+        category: 'MUSIC',
+      })
+      expect(result).toEqual({ vendor })
+    })
+
+    it('requires authz context', async () => {
+      const toolsWithoutAuthz = getVendorTools({ ...mockCtx, authz: undefined })
+
+      await expect(
+        toolsWithoutAuthz.create_vendor.execute(
+          { name: 'No Auth Vendor', category: 'VENUE' as const },
+          { toolCallId: 'tc-create-3', messages: [], abortSignal: undefined as never }
+        )
+      ).rejects.toThrow('Authorization context required')
     })
   })
 

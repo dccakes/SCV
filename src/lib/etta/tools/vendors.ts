@@ -60,6 +60,28 @@ export function getVendorTools(ctx: EttaContext) {
       },
     }),
 
+    create_vendor: tool({
+      description:
+        'Create a new vendor from scratch with name, category, and optional contact and web details. Creates the vendor directly in IN_REVIEW status.',
+      inputSchema: zodSchema(
+        z.object({
+          name: z.string().min(1).max(100),
+          category: vendorCategory,
+          location: z.string().max(200).optional(),
+          website: z.string().max(500).url().optional().or(z.literal('')),
+          instagram: z.string().max(100).optional(),
+          contactName: z.string().max(100).optional(),
+          contactEmail: z.string().max(254).email().optional().or(z.literal('')),
+          contactPhone: z.string().max(30).optional(),
+        })
+      ),
+      execute: async (params) => {
+        const authz = requirePlannerAuthz(ctx)
+        const vendor = await vendorService.createVendor(authz, ctx.weddingId, params)
+        return { vendor }
+      },
+    }),
+
     get_vendor_quote: tool({
       description: 'Get a specific vendor quote, including any attached documents',
       inputSchema: zodSchema(
