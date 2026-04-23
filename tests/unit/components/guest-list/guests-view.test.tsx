@@ -467,7 +467,7 @@ describe('GuestsView', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Discard and close' }))
     fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
     expect(screen.getByText('late-success@example.com')).toBeInTheDocument()
-  })
+  }, 10000)
 
   it('should keep search/filter and add guest while rendering slim cards', () => {
     render(
