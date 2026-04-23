@@ -511,8 +511,8 @@ describe('GuestsView', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Person Audit' }))
 
-    expect(screen.getByRole('columnheader', { name: 'First Name' })).toBeInTheDocument()
-    expect(screen.getByRole('columnheader', { name: 'Last Name' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Person' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Household' })).toBeInTheDocument()
   })
 
   it('should show and clear active search state via the Clear control', () => {

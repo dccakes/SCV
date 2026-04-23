@@ -31,12 +31,13 @@ export const GuestIndividualTable = memo(function GuestIndividualTable({
       <table className='w-full text-sm'>
         <thead>
           <tr className='border-border border-b bg-muted/40'>
-            <th className={thClass}>First Name</th>
-            <th className={thClass}>Last Name</th>
-            <th className={thClass}>Email</th>
-            <th className={thClass}>Phone</th>
-            <th className={thClass}>Tags</th>
+            <th className={thClass}>Person</th>
             <th className={thClass}>Household</th>
+            <th className={thClass}>Email</th>
+            <th className={thClass}>Tags</th>
+            <th className={thClass}>RSVP</th>
+            <th className={thClass}>Contact Complete</th>
+            <th className={thClass}>Location Complete</th>
           </tr>
         </thead>
         <tbody>
@@ -84,6 +85,17 @@ const GuestTableRow = memo(function GuestTableRow({
     onSelectHousehold(household)
   }, [household, onSelectHousehold])
 
+  const guestName = `${guest.firstName} ${guest.lastName}`.trim()
+  const contactComplete = Boolean(guest.email && guest.phone)
+  const locationComplete = Boolean(household.city && household.state && household.country)
+  const rsvpSummary = guest.invitations.some((invitation) => invitation.rsvp === 'Attending')
+    ? 'Attending'
+    : guest.invitations.some((invitation) => invitation.rsvp === 'Declined')
+      ? 'Declined'
+      : guest.invitations.some((invitation) => invitation.rsvp === 'Invited')
+        ? 'Invited'
+        : 'Not Invited'
+
   return (
     <tr
       onClick={handleClick}
@@ -91,13 +103,12 @@ const GuestTableRow = memo(function GuestTableRow({
         isSelected ? 'bg-primary/5' : ''
       }`}
     >
-      <td className='px-4 py-3 font-medium text-foreground'>{guest.firstName}</td>
-      <td className='px-4 py-3 text-foreground/80'>{guest.lastName}</td>
-      <td className='px-4 py-3 text-foreground/70'>
-        {guest.email ?? <span className='text-foreground/35'>—</span>}
+      <td className='px-4 py-3 font-medium text-foreground'>{guestName}</td>
+      <td className='px-4 py-3'>
+        <span className='font-mono text-foreground/60 text-xs'>#{householdNumber}</span>
       </td>
       <td className='px-4 py-3 text-foreground/70'>
-        {guest.phone ?? <span className='text-foreground/35'>—</span>}
+        {guest.email ?? <span className='text-foreground/35'>—</span>}
       </td>
       <td className='px-4 py-3'>
         {guestTags.length > 0 ? (
@@ -117,7 +128,21 @@ const GuestTableRow = memo(function GuestTableRow({
         )}
       </td>
       <td className='px-4 py-3'>
-        <span className='font-mono text-foreground/60 text-xs'>#{householdNumber}</span>
+        <Badge variant='outline'>{rsvpSummary}</Badge>
+      </td>
+      <td className='px-4 py-3'>
+        <span
+          className={contactComplete ? 'font-medium text-success' : 'font-medium text-destructive'}
+        >
+          {contactComplete ? 'Complete' : 'Missing'}
+        </span>
+      </td>
+      <td className='px-4 py-3'>
+        <span
+          className={locationComplete ? 'font-medium text-success' : 'font-medium text-destructive'}
+        >
+          {locationComplete ? 'Complete' : 'Missing'}
+        </span>
       </td>
     </tr>
   )
