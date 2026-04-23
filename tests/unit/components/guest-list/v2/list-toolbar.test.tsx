@@ -29,4 +29,18 @@ describe('ListToolbar', () => {
     expect(onSortByName).toHaveBeenCalledTimes(1)
     expect(onSortByPartySize).toHaveBeenCalledTimes(1)
   })
+
+  it('shows cards as the default active view state', () => {
+    render(<ListToolbar totalHouseholds={3} onViewModeChange={jest.fn()} />)
+
+    expect(screen.getByRole('button', { name: 'Card view' })).toHaveClass('bg-primary')
+    expect(screen.getByRole('button', { name: 'Table view' })).not.toHaveClass('bg-primary')
+  })
+
+  it('shows table as the active view state when requested', () => {
+    render(<ListToolbar totalHouseholds={3} viewMode='table' onViewModeChange={jest.fn()} />)
+
+    expect(screen.getByRole('button', { name: 'Table view' })).toHaveClass('bg-primary')
+    expect(screen.getByRole('button', { name: 'Card view' })).not.toHaveClass('bg-primary')
+  })
 })

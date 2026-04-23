@@ -5,6 +5,22 @@ test.describe('Guest List Drawer - Viewing Details', () => {
     await page.goto('/guest-list')
   })
 
+  test('captures baseline time to open a household drawer', async ({ page }) => {
+    const startedAt = Date.now()
+
+    await page.getByRole('button', { name: /select donkey.*household/i }).click()
+    await expect(page.getByRole('heading', { name: /donkey the donkey/i })).toBeVisible()
+
+    const elapsedMs = Date.now() - startedAt
+    test.info().annotations.push({
+      type: 'baseline-timing',
+      description: `guest-list-open-drawer-ms=${elapsedMs}`,
+    })
+
+    // Guardrail: this should remain comfortably interactive.
+    expect(elapsedMs).toBeLessThan(15000)
+  })
+
   test('should open the guest detail drawer when clicking a household card', async ({ page }) => {
     // Click the Donkey household card (primary contact: Donkey The Donkey)
     await page.getByRole('button', { name: /select donkey.*household/i }).click()
