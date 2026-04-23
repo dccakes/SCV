@@ -50,12 +50,19 @@ export default function GuestSearchFilter({
   }, [households])
 
   useEffect(() => {
-    // Reset filters when event changes - intentionally setting state in effect for state synchronization
+    void selectedEventId
+    // Reset filters when event context changes so state never carries hidden stale constraints.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedRsvpFilter(null)
-
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSelectedTagFilter(null)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSelectedCountryFilter(null)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFilteredHouseholds(households)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearchInput('')
-  }, [])
+  }, [selectedEventId, households, setFilteredHouseholds])
 
   const eventsToMap =
     selectedEventId === 'all' ? events : [events.find((event) => event.id === selectedEventId)]
@@ -130,162 +137,219 @@ export default function GuestSearchFilter({
   }
 
   const selectedTagName = allTags.find((t) => t.id === selectedTagFilter)?.name
+  const selectedEventName =
+    selectedRsvpFilter === null
+      ? null
+      : events.find((event) => event.id === selectedRsvpFilter.eventId)?.name
 
   return (
-    <div className='flex flex-wrap items-center gap-3'>
-      <div className='relative flex items-center'>
-        <Input
-          id='search-guests-input'
-          className='w-64 pr-12 font-sans text-sm'
-          placeholder='Find guests'
-          value={searchInput}
-          onChange={(e) => filterHouseholdsBySearch(e.target.value)}
-        />
-        <div className='absolute right-0 flex h-full w-12 items-center justify-center rounded-r-md bg-primary'>
-          <FaMagnifyingGlass className='text-primary-foreground' size={18} />
+    <div className='flex flex-col gap-2'>
+      <div className='flex flex-wrap items-center gap-3'>
+        <div className='relative flex items-center'>
+          <Input
+            id='search-guests-input'
+            className='w-64 pr-12 font-sans text-sm'
+            placeholder='Find guests'
+            value={searchInput}
+            onChange={(e) => filterHouseholdsBySearch(e.target.value)}
+          />
+          <div className='absolute right-0 flex h-full w-12 items-center justify-center rounded-r-md bg-primary'>
+            <FaMagnifyingGlass className='text-primary-foreground' size={18} />
+          </div>
         </div>
-      </div>
 
-      <div ref={invitationFilterRef}>
-        <div className='relative'>
-          <Button
-            variant='outline'
-            onClick={() => setShowInvitationDropdown((prev) => !prev)}
-            className='w-48 justify-between font-sans text-sm normal-case tracking-normal'
-          >
-            {selectedRsvpFilter === null ? (
-              <span>Filter By</span>
-            ) : (
-              <div className='flex items-center gap-1.5'>
-                <span
-                  className={`h-1.5 w-1.5 rounded-full ${sharedStyles.getRSVPcolor(
-                    selectedRsvpFilter.rsvpValue
-                  )}`}
-                />
-                <span>{selectedRsvpFilter.rsvpValue}</span>
+        <div ref={invitationFilterRef}>
+          <div className='relative'>
+            <Button
+              variant='outline'
+              onClick={() => setShowInvitationDropdown((prev) => !prev)}
+              className='w-48 justify-between font-sans text-sm normal-case tracking-normal'
+            >
+              {selectedRsvpFilter === null ? (
+                <span>RSVP Status</span>
+              ) : (
+                <div className='flex items-center gap-1.5'>
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${sharedStyles.getRSVPcolor(
+                      selectedRsvpFilter.rsvpValue
+                    )}`}
+                  />
+                  <span className='truncate'>{selectedRsvpFilter.rsvpValue}</span>
+                </div>
+              )}
+              <IoIosArrowDown size={16} />
+            </Button>
+            {showInvitationDropdown && (
+              <div className='absolute top-full left-0 z-10 mt-1 max-h-64 w-48 overflow-auto rounded-md border bg-popover p-3 shadow-md'>
+                {eventsToMap?.map(
+                  (event) =>
+                    event && (
+                      <div
+                        key={event.id}
+                        className='mb-4 flex flex-col border-b pb-2 last:mb-0 last:border-0'
+                      >
+                        <h5 className='mb-2 font-medium text-muted-foreground text-xs uppercase'>
+                          {event.name}
+                        </h5>
+                        {['Not Invited', 'Invited', 'Attending', 'Declined'].map((rsvp) => (
+                          <InvitationOption
+                            key={rsvp}
+                            rsvpValue={rsvp}
+                            eventId={event.id}
+                            filterHouseholdsByInvitation={filterHouseholdsByInvitation}
+                            setSelectedRsvpFilter={setSelectedRsvpFilter}
+                            isSelected={
+                              event.id === selectedRsvpFilter?.eventId &&
+                              rsvp === selectedRsvpFilter?.rsvpValue
+                            }
+                          />
+                        ))}
+                      </div>
+                    )
+                )}
               </div>
             )}
-            <IoIosArrowDown size={16} />
-          </Button>
-          {showInvitationDropdown && (
-            <div className='absolute top-full left-0 z-10 mt-1 max-h-64 w-48 overflow-auto rounded-md border bg-popover p-3 shadow-md'>
-              {eventsToMap?.map(
-                (event) =>
-                  event && (
-                    <div
-                      key={event.id}
-                      className='mb-4 flex flex-col border-b pb-2 last:mb-0 last:border-0'
+          </div>
+        </div>
+
+        <div ref={tagFilterRef}>
+          <div className='relative'>
+            <Button
+              variant='outline'
+              onClick={() => setShowTagDropdown((prev) => !prev)}
+              className='w-40 justify-between font-sans text-sm normal-case tracking-normal'
+            >
+              {selectedTagFilter === null ? (
+                <span>Guest Tag</span>
+              ) : (
+                <span className='truncate'>{selectedTagName ?? selectedTagFilter}</span>
+              )}
+              <IoIosArrowDown size={16} />
+            </Button>
+            {showTagDropdown && (
+              <div className='absolute top-full left-0 z-10 mt-1 max-h-64 w-40 overflow-auto rounded-md border bg-popover p-1 shadow-md'>
+                {allTags.length === 0 ? (
+                  <p className='px-2 py-1.5 text-muted-foreground text-sm'>No tags found</p>
+                ) : (
+                  allTags.map((tag) => (
+                    <button
+                      key={tag.id}
+                      type='button'
+                      className='flex w-full cursor-pointer items-center justify-between rounded-sm p-2 text-sm transition-colors hover:bg-accent'
+                      onClick={() => filterHouseholdsByTag(tag.id)}
                     >
-                      <h5 className='mb-2 font-medium text-muted-foreground text-xs uppercase'>
-                        {event.name}
-                      </h5>
-                      {['Not Invited', 'Invited', 'Attending', 'Declined'].map((rsvp) => (
-                        <InvitationOption
-                          key={rsvp}
-                          rsvpValue={rsvp}
-                          eventId={event.id}
-                          filterHouseholdsByInvitation={filterHouseholdsByInvitation}
-                          setSelectedRsvpFilter={setSelectedRsvpFilter}
-                          isSelected={
-                            event.id === selectedRsvpFilter?.eventId &&
-                            rsvp === selectedRsvpFilter?.rsvpValue
-                          }
-                        />
-                      ))}
-                    </div>
-                  )
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div ref={tagFilterRef}>
-        <div className='relative'>
-          <Button
-            variant='outline'
-            onClick={() => setShowTagDropdown((prev) => !prev)}
-            className='w-40 justify-between font-sans text-sm normal-case tracking-normal'
-          >
-            {selectedTagFilter === null ? (
-              <span>Guest Tag</span>
-            ) : (
-              <span className='truncate'>{selectedTagName ?? selectedTagFilter}</span>
+                      <span>{tag.name}</span>
+                      {selectedTagFilter === tag.id && (
+                        <IoMdCheckmark size={16} className='text-primary' />
+                      )}
+                    </button>
+                  ))
+                )}
+              </div>
             )}
-            <IoIosArrowDown size={16} />
-          </Button>
-          {showTagDropdown && (
-            <div className='absolute top-full left-0 z-10 mt-1 max-h-64 w-40 overflow-auto rounded-md border bg-popover p-1 shadow-md'>
-              {allTags.length === 0 ? (
-                <p className='px-2 py-1.5 text-muted-foreground text-sm'>No tags found</p>
-              ) : (
-                allTags.map((tag) => (
-                  <button
-                    key={tag.id}
-                    type='button'
-                    className='flex w-full cursor-pointer items-center justify-between rounded-sm p-2 text-sm transition-colors hover:bg-accent'
-                    onClick={() => filterHouseholdsByTag(tag.id)}
-                  >
-                    <span>{tag.name}</span>
-                    {selectedTagFilter === tag.id && (
-                      <IoMdCheckmark size={16} className='text-primary' />
-                    )}
-                  </button>
-                ))
-              )}
-            </div>
-          )}
+          </div>
         </div>
-      </div>
 
-      <div ref={countryFilterRef}>
-        <div className='relative'>
-          <Button
-            variant='outline'
-            onClick={() => setShowCountryDropdown((prev) => !prev)}
-            className='w-40 justify-between font-sans text-sm normal-case tracking-normal'
-          >
-            {selectedCountryFilter === null ? (
-              <span>Country</span>
-            ) : (
-              <span className='truncate'>{selectedCountryFilter}</span>
+        <div ref={countryFilterRef}>
+          <div className='relative'>
+            <Button
+              variant='outline'
+              onClick={() => setShowCountryDropdown((prev) => !prev)}
+              className='w-40 justify-between font-sans text-sm normal-case tracking-normal'
+            >
+              {selectedCountryFilter === null ? (
+                <span>Country</span>
+              ) : (
+                <span className='truncate'>{selectedCountryFilter}</span>
+              )}
+              <IoIosArrowDown size={16} />
+            </Button>
+            {showCountryDropdown && (
+              <div className='absolute top-full left-0 z-10 mt-1 max-h-64 w-40 overflow-auto rounded-md border bg-popover p-1 shadow-md'>
+                {availableCountries.length === 0 ? (
+                  <p className='px-2 py-1.5 text-muted-foreground text-sm'>No countries found</p>
+                ) : (
+                  availableCountries.map((country) => (
+                    <button
+                      key={country}
+                      type='button'
+                      className='flex w-full cursor-pointer items-center justify-between rounded-sm p-2 text-sm transition-colors hover:bg-accent'
+                      onClick={() => filterHouseholdsByCountry(country)}
+                    >
+                      <span>{country}</span>
+                      {selectedCountryFilter === country && (
+                        <IoMdCheckmark size={16} className='text-primary' />
+                      )}
+                    </button>
+                  ))
+                )}
+              </div>
             )}
-            <IoIosArrowDown size={16} />
-          </Button>
-          {showCountryDropdown && (
-            <div className='absolute top-full left-0 z-10 mt-1 max-h-64 w-40 overflow-auto rounded-md border bg-popover p-1 shadow-md'>
-              {availableCountries.length === 0 ? (
-                <p className='px-2 py-1.5 text-muted-foreground text-sm'>No countries found</p>
-              ) : (
-                availableCountries.map((country) => (
-                  <button
-                    key={country}
-                    type='button'
-                    className='flex w-full cursor-pointer items-center justify-between rounded-sm p-2 text-sm transition-colors hover:bg-accent'
-                    onClick={() => filterHouseholdsByCountry(country)}
-                  >
-                    <span>{country}</span>
-                    {selectedCountryFilter === country && (
-                      <IoMdCheckmark size={16} className='text-primary' />
-                    )}
-                  </button>
-                ))
-              )}
-            </div>
-          )}
+          </div>
         </div>
+
+        {hasActiveFilters && (
+          <Button
+            variant='ghost'
+            size='sm'
+            className='font-sans text-primary text-sm normal-case tracking-normal'
+            onClick={clearAllFilters}
+          >
+            Clear
+          </Button>
+        )}
       </div>
 
-      {hasActiveFilters && (
-        <Button
-          variant='ghost'
-          size='sm'
-          className='font-sans text-primary text-sm normal-case tracking-normal'
-          onClick={clearAllFilters}
-        >
-          Clear
-        </Button>
-      )}
+      {hasActiveFilters ? (
+        <div className='flex flex-wrap items-center gap-2'>
+          {searchInput ? (
+            <button
+              type='button'
+              className='rounded-full border border-border bg-muted px-2.5 py-1 text-xs'
+              onClick={() => filterHouseholdsBySearch('')}
+            >
+              Search: {searchInput} ×
+            </button>
+          ) : null}
+          {selectedRsvpFilter ? (
+            <button
+              type='button'
+              className='rounded-full border border-border bg-muted px-2.5 py-1 text-xs'
+              onClick={() => {
+                setSelectedRsvpFilter(null)
+                filterHouseholds(searchInput, null, selectedTagFilter, selectedCountryFilter)
+              }}
+            >
+              RSVP: {selectedRsvpFilter.rsvpValue}
+              {selectedEventName ? ` (${selectedEventName})` : ''} ×
+            </button>
+          ) : null}
+          {selectedTagFilter ? (
+            <button
+              type='button'
+              className='rounded-full border border-border bg-muted px-2.5 py-1 text-xs'
+              onClick={() => {
+                setSelectedTagFilter(null)
+                filterHouseholds(searchInput, selectedRsvpFilter, null, selectedCountryFilter)
+              }}
+            >
+              Tag: {selectedTagName ?? selectedTagFilter} ×
+            </button>
+          ) : null}
+          {selectedCountryFilter ? (
+            <button
+              type='button'
+              className='rounded-full border border-border bg-muted px-2.5 py-1 text-xs'
+              onClick={() => {
+                setSelectedCountryFilter(null)
+                filterHouseholds(searchInput, selectedRsvpFilter, selectedTagFilter, null)
+              }}
+            >
+              Country: {selectedCountryFilter} ×
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   )
 }

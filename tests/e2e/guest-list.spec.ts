@@ -39,7 +39,7 @@ test.describe('Guest List', () => {
     await page.goto('/guest-list')
 
     await expect(page.getByPlaceholder('Find guests')).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Filter By' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'RSVP Status' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Guest Tag' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Country' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Sort by Name' })).toBeVisible()

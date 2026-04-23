@@ -43,4 +43,24 @@ describe('ListToolbar', () => {
     expect(screen.getByRole('button', { name: 'Table view' })).toHaveClass('bg-primary')
     expect(screen.getByRole('button', { name: 'Card view' })).not.toHaveClass('bg-primary')
   })
+
+  it('shows workflow mode controls and calls mode change handler', () => {
+    const onWorkflowModeChange = jest.fn()
+
+    render(
+      <ListToolbar
+        totalHouseholds={3}
+        workflowMode='households'
+        onWorkflowModeChange={onWorkflowModeChange}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Person Audit' }))
+    expect(onWorkflowModeChange).toHaveBeenCalledWith('personAudit')
+  })
+
+  it('renders active sort state text when provided', () => {
+    render(<ListToolbar totalHouseholds={3} sortStateLabel='Name (A-Z)' />)
+    expect(screen.getByText('Sorted by Name (A-Z)')).toBeInTheDocument()
+  })
 })

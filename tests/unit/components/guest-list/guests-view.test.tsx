@@ -482,9 +482,11 @@ describe('GuestsView', () => {
     )
 
     expect(screen.getByPlaceholderText('Find guests')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Filter By' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'RSVP Status' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Guest Tag' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Country' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Households' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Person Audit' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Sort by Name' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Sort by Party Size' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Card view' })).toBeInTheDocument()
@@ -493,6 +495,24 @@ describe('GuestsView', () => {
     expect(
       screen.getByRole('button', { name: /select alex rivera household/i })
     ).toBeInTheDocument()
+  })
+
+  it('should switch to person audit mode and show table headings', () => {
+    render(
+      <GuestsView
+        events={events}
+        households={householdsWithSecondFamily}
+        selectedEventId='all'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Person Audit' }))
+
+    expect(screen.getByRole('columnheader', { name: 'First Name' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Last Name' })).toBeInTheDocument()
   })
 
   it('should show and clear active search state via the Clear control', () => {
