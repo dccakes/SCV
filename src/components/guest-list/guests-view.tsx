@@ -717,6 +717,14 @@ export default function GuestsView({
         subtitle={selectedEventId === 'all' ? 'Across all events' : selectedEvent?.name}
         headerMeta={
           <div className='flex flex-wrap gap-1.5'>
+            {isDrawerDirty ? (
+              <Badge
+                variant='outline'
+                className='border-amber-500/40 bg-amber-500/10 text-[0.58rem] text-amber-700 uppercase tracking-wider'
+              >
+                Unsaved changes
+              </Badge>
+            ) : null}
             {selectedHouseholdTags.map((tag) => (
               <Badge
                 key={tag.id}

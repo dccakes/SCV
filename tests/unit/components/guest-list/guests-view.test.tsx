@@ -816,6 +816,7 @@ describe('GuestsView', () => {
     const emailInput = screen.getByRole('textbox', { name: 'Email' })
     fireEvent.change(emailInput, { target: { value: 'updated@example.com' } })
 
+    expect(screen.getByText('Unsaved changes')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Discard changes' })).toBeInTheDocument()
 
@@ -828,6 +829,7 @@ describe('GuestsView', () => {
 
     expect(screen.queryByRole('textbox', { name: 'Email' })).not.toBeInTheDocument()
     expect(screen.getByText('updated@example.com')).toBeInTheDocument()
+    expect(screen.queryByText('Unsaved changes')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Save changes' })).not.toBeInTheDocument()
   })
 
