@@ -33,7 +33,7 @@ test.describe('Guest List Drawer - Viewing Details', () => {
     await page.getByRole('button', { name: /select donkey.*household/i }).click()
 
     // Donkey is "Attending" for all events, so we should see RSVP status
-    await expect(page.getByText('RSVP Status')).toBeVisible()
+    await expect(page.getByRole('dialog').getByText('RSVP Status', { exact: true })).toBeVisible()
   })
 
   test('should display contact information for Donkey household', async ({ page }) => {
