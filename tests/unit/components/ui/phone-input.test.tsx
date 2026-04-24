@@ -3,19 +3,25 @@ import { createRef } from 'react'
 
 import { PhoneInput } from '~/components/ui/phone-input'
 
-jest.mock('react-phone-number-input', () => {
+jest.mock('react-phone-number-input', () => ({
+  __esModule: true,
+  getCountries: () => ['US', 'GB'],
+  getCountryCallingCode: (country: string) => {
+    if (country === 'GB') return '44'
+    return '1'
+  },
+}))
+
+jest.mock('react-phone-number-input/input', () => {
   const React = require('react')
 
   type MockProps = {
     value?: string
     onChange?: (value?: string) => void
     disabled?: boolean
-    className?: string
     inputComponent?: React.ElementType
-    numberInputProps?: {
-      forwardedRef?: React.Ref<HTMLInputElement>
-      [key: string]: unknown
-    }
+    international?: boolean
+    hasError?: boolean
     [key: string]: unknown
   }
 
@@ -24,32 +30,23 @@ jest.mock('react-phone-number-input', () => {
       value,
       onChange,
       disabled,
-      className,
       inputComponent: InputComponent,
-      numberInputProps,
+      international: _international,
       ...rest
     } = props
     const Input = InputComponent ?? 'input'
-    const mergedRef = numberInputProps?.forwardedRef ?? ref
 
     return (
-      <div>
-        <button type='button' aria-label='Select country'>
-          +1
-        </button>
-        <Input
-          {...rest}
-          {...numberInputProps}
-          ref={mergedRef}
-          type='tel'
-          disabled={disabled}
-          className={className}
-          value={value ?? ''}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-            onChange?.(event.target.value || undefined)
-          }
-        />
-      </div>
+      <Input
+        {...rest}
+        ref={ref}
+        type='tel'
+        disabled={disabled}
+        value={value ?? ''}
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+          onChange?.(event.target.value || undefined)
+        }
+      />
     )
   })
 
@@ -68,6 +65,12 @@ describe('PhoneInput', () => {
     expect(screen.getByRole('textbox')).toBeInTheDocument()
   })
 
+  it('shows the selected country calling code in the trigger', () => {
+    render(<PhoneInput value={undefined} onChange={jest.fn()} defaultCountry='GB' />)
+
+    expect(screen.getByRole('button', { name: 'Select country' })).toHaveTextContent('+44')
+  })
+
   it('applies destructive border class when error=true', () => {
     render(<PhoneInput value={undefined} onChange={jest.fn()} error />)
 
@@ -78,6 +81,7 @@ describe('PhoneInput', () => {
     render(<PhoneInput value={undefined} onChange={jest.fn()} disabled />)
 
     expect(screen.getByRole('textbox')).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Select country' })).toBeDisabled()
   })
 
   it('calls onChange with E.164 values', () => {
@@ -105,15 +109,15 @@ describe('PhoneInput', () => {
     expect(ref.current).toBeInstanceOf(HTMLInputElement)
   })
 
-  it('renders country selector button', () => {
-    render(<PhoneInput value={undefined} onChange={jest.fn()} />)
-
-    expect(screen.getByRole('button', { name: 'Select country' })).toBeInTheDocument()
-  })
-
   it('forwards name attribute to the input', () => {
     render(<PhoneInput value={undefined} onChange={jest.fn()} name='phone' />)
 
     expect(screen.getByRole('textbox')).toHaveAttribute('name', 'phone')
+  })
+
+  it('does not leak numberInputProps to the DOM', () => {
+    render(<PhoneInput value={undefined} onChange={jest.fn()} />)
+
+    expect(screen.getByRole('textbox')).not.toHaveAttribute('numberinputprops')
   })
 })

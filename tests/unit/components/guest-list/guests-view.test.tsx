@@ -187,7 +187,7 @@ const households: HouseholdWithGuests[] = [
         firstName: 'Alex',
         lastName: 'Rivera',
         email: 'alex@example.com',
-        phone: '555-1111',
+        phone: '+12025550111',
         householdId: 'household-1',
         weddingId: 'wedding-1',
         isPrimaryContact: true,
@@ -978,7 +978,7 @@ describe('GuestsView', () => {
 
     expect(screen.getByText('Contact & Address')).toBeInTheDocument()
     expect(screen.getByText('alex@example.com')).toBeInTheDocument()
-    expect(screen.getByText('555-1111')).toBeInTheDocument()
+    expect(screen.getByText('+12025550111')).toBeInTheDocument()
     expect(screen.getByText('123 Main St, Austin, TX, 73301, US')).toBeInTheDocument()
   })
 
