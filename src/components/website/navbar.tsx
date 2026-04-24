@@ -52,22 +52,19 @@ const getNavLinks = (isRsvpEnabled: boolean) => {
 
 export default function Navbar({ path, isRsvpEnabled }: { path: string; isRsvpEnabled: boolean }) {
   return (
-    <div className='mt-10 mb-5 w-full'>
-      <ul className='flex w-full justify-center'>
-        <div className='flex w-full flex-col justify-center first:border-t sm:flex-row sm:gap-7 sm:border-none'>
-          {getNavLinks(isRsvpEnabled).map((link) => {
-            return (
-              link.isVisible && (
-                <li className='border-b py-3 sm:border-transparent sm:border-b-2 sm:py-1 sm:hover:border-gray-600'>
-                  <Link className='' href={`${path}/${link.subPath}`}>
-                    {link.title}
-                  </Link>
-                </li>
-              )
-            )
-          })}
-        </div>
+    <nav aria-label='Wedding website' className='mt-10 mb-5 w-full'>
+      <ul className='flex w-full flex-col justify-center first:border-t sm:flex-row sm:gap-7 sm:border-none'>
+        {getNavLinks(isRsvpEnabled)
+          .filter((link) => link.isVisible)
+          .map((link) => (
+            <li
+              key={link.subPath}
+              className='border-b py-3 sm:border-transparent sm:border-b-2 sm:py-1 sm:hover:border-gray-600'
+            >
+              <Link href={`${path}${link.subPath === '/' ? '' : link.subPath}`}>{link.title}</Link>
+            </li>
+          ))}
       </ul>
-    </div>
+    </nav>
   )
 }

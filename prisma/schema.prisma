@@ -83,17 +83,37 @@ model Website {
   id                String     @id @default(uuid())
   weddingId         String     @unique
   wedding           Wedding    @relation(fields: [weddingId], references: [id], onDelete: Cascade)
-  url               String     @unique
   subUrl            String     @unique
+  templateId        String?
   isPasswordEnabled Boolean    @default(false)
   password          String?
   isRsvpEnabled     Boolean    @default(true)
   coverPhotoUrl     String?
   generalQuestions  Question[] @relation(name: "Website_Questions")
+  websiteSections   WebsiteSection[]
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 
   @@index([weddingId])
+}
+
+enum WebsiteSectionType {
+  HOME
+}
+
+model WebsiteSection {
+  id        String             @id @default(uuid())
+  websiteId String
+  website   Website            @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  type      WebsiteSectionType
+  isEnabled Boolean            @default(true)
+  position  Int
+  content   Json
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@unique([websiteId, type])
+  @@index([websiteId, position])
 }
 
 // model StoryItem {

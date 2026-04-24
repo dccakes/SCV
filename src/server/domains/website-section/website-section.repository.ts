@@ -1,0 +1,67 @@
+import type { PrismaClient } from '@prisma/client'
+
+import type {
+  HomeSectionContent,
+  WebsiteSection,
+} from '~/server/domains/website-section/website-section.types'
+import type { CreateWebsiteSectionInput } from '~/server/domains/website-section/website-section.validator'
+
+export class WebsiteSectionRepository {
+  constructor(private db: PrismaClient) {}
+
+  async create(data: CreateWebsiteSectionInput): Promise<WebsiteSection> {
+    const section = await this.db.websiteSection.create({
+      data,
+    })
+
+    return this.toWebsiteSection(section)
+  }
+
+  async findByWebsiteId(websiteId: string): Promise<WebsiteSection[]> {
+    const sections = await this.db.websiteSection.findMany({
+      where: { websiteId },
+      orderBy: { position: 'asc' },
+    })
+
+    return sections.map((section) => this.toWebsiteSection(section))
+  }
+
+  async findByWebsiteIdAndType(
+    websiteId: string,
+    type: WebsiteSection['type']
+  ): Promise<WebsiteSection | null> {
+    const section = await this.db.websiteSection.findFirst({
+      where: { websiteId, type },
+    })
+
+    return section ? this.toWebsiteSection(section) : null
+  }
+
+  async update(
+    id: string,
+    data: { content?: WebsiteSection['content']; isEnabled?: boolean; position?: number }
+  ): Promise<WebsiteSection> {
+    const section = await this.db.websiteSection.update({
+      where: { id },
+      data,
+    })
+
+    return this.toWebsiteSection(section)
+  }
+
+  private toWebsiteSection(section: {
+    id: string
+    websiteId: string
+    type: WebsiteSection['type']
+    isEnabled: boolean
+    position: number
+    content: unknown
+    createdAt: Date
+    updatedAt: Date
+  }): WebsiteSection {
+    return {
+      ...section,
+      content: section.content as HomeSectionContent,
+    }
+  }
+}

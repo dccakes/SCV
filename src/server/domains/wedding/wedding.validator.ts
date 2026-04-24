@@ -42,6 +42,11 @@ export const updateWeddingDetailsSchema = z.object({
   brideLastName: z.string().min(1, 'Bride last name is required'),
 })
 
+export const toggleWeddingAddOnSchema = z.object({
+  addOn: z.enum(['website_builder']),
+  enabled: z.boolean(),
+})
+
 /**
  * Schema for fetching wedding by userId
  */
@@ -53,5 +58,6 @@ export const getByUserIdSchema = z
 
 // Export inferred types
 export type CreateWeddingSchemaInput = z.infer<typeof createWeddingSchema>
+export type ToggleWeddingAddOnInput = z.infer<typeof toggleWeddingAddOnSchema>
 export type UpdateWeddingSchemaInput = z.infer<typeof updateWeddingSchema>
 export type UpdateWeddingDetailsInput = z.infer<typeof updateWeddingDetailsSchema>

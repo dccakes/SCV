@@ -13,53 +13,20 @@ import {
 } from '~/server/domains/website/website.validator'
 
 describe('createWebsiteSchema', () => {
-  it('should validate a valid website creation input', () => {
-    const validInput = {
-      basePath: 'https://example.com',
-      email: 'john@example.com',
-    }
-
-    const result = createWebsiteSchema.safeParse(validInput)
+  it('should validate an empty website creation input', () => {
+    const result = createWebsiteSchema.safeParse({})
     expect(result.success).toBe(true)
-    expect(result.data).toEqual(validInput)
+    expect(result.data).toEqual({})
   })
 
-  it('should require basePath', () => {
-    const invalidInput = {
-      email: 'john@example.com',
-    }
-
-    const result = createWebsiteSchema.safeParse(invalidInput)
-    expect(result.success).toBe(false)
-  })
-
-  it('should require email', () => {
-    const invalidInput = {
+  it('should strip unknown fields from website creation input', () => {
+    const result = createWebsiteSchema.safeParse({
       basePath: 'https://example.com',
-    }
-
-    const result = createWebsiteSchema.safeParse(invalidInput)
-    expect(result.success).toBe(false)
-  })
-
-  it('should require valid email format', () => {
-    const invalidInput = {
-      basePath: 'https://example.com',
-      email: 'invalid-email',
-    }
-
-    const result = createWebsiteSchema.safeParse(invalidInput)
-    expect(result.success).toBe(false)
-  })
-
-  it('should reject empty basePath', () => {
-    const invalidInput = {
-      basePath: '',
       email: 'john@example.com',
-    }
+    })
 
-    const result = createWebsiteSchema.safeParse(invalidInput)
-    expect(result.success).toBe(false)
+    expect(result.success).toBe(true)
+    expect(result.data).toEqual({})
   })
 })
 
@@ -78,6 +45,24 @@ describe('updateWebsiteSchema', () => {
   it('should reject subUrl with special characters', () => {
     const invalidInput = {
       subUrl: 'john-and-jane!',
+    }
+
+    const result = updateWebsiteSchema.safeParse(invalidInput)
+    expect(result.success).toBe(false)
+  })
+
+  it('should reject reserved subUrl values like website', () => {
+    const invalidInput = {
+      subUrl: 'website',
+    }
+
+    const result = updateWebsiteSchema.safeParse(invalidInput)
+    expect(result.success).toBe(false)
+  })
+
+  it('should reject reserved subUrl values like w', () => {
+    const invalidInput = {
+      subUrl: 'w',
     }
 
     const result = updateWebsiteSchema.safeParse(invalidInput)

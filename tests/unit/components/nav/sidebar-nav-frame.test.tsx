@@ -127,9 +127,12 @@ describe('SidebarNavFrame', () => {
     expect(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument()
   })
 
-  it('does not render website navigation until feature is built', () => {
+  it('renders the wedding website navigation item', () => {
     render(<SidebarNavFrame isOpen={false} setIsOpen={jest.fn()} />)
 
-    expect(screen.queryByRole('link', { name: 'Website' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Wedding Website' })).toHaveAttribute(
+      'href',
+      '/website'
+    )
   })
 })

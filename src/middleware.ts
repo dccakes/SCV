@@ -1,46 +1,30 @@
 import { getSessionCookie } from 'better-auth/cookies'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
+import { reservedWebsiteRootSegmentsSet } from '~/lib/website/reserved-root-segments'
 
 const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/join', '/blog', '/api/webhooks', '/api/cron']
 const PUBLIC_EXACT_PATHS = ['/', '/api/blob/upload', '/pricing', '/open-source']
-const RESERVED_ROOT_SEGMENTS = new Set([
-  '',
-  'api',
-  'auth',
-  'dashboard',
-  'design-system',
-  'events',
-  'guest-list',
-  'join',
-  'old_dashboard',
-  'settings',
-  'vendors',
-])
 
 const isPublicWebsitePath = (pathname: string): boolean => {
   const segments = pathname.split('/').filter(Boolean)
-  if (segments.length === 0) {
+  if (segments.length < 2) {
     return false
   }
-  if (segments.length > 2 || (segments.length === 2 && segments[1] !== 'rsvp')) {
+  if (segments[0] !== 'w') {
     return false
   }
+  if (segments.length > 3 || (segments.length === 3 && segments[2] !== 'rsvp')) {
+    return false
+  }
+  const slug = segments[1]
+  if (!slug) return false
 
-  const [rootSegment] = segments
-  if (!rootSegment) {
-    return false
-  }
-
-  if (
-    RESERVED_ROOT_SEGMENTS.has(rootSegment) ||
-    rootSegment.startsWith('auth') ||
-    rootSegment.startsWith('join')
-  ) {
-    return false
-  }
-
-  return true
+  return (
+    !reservedWebsiteRootSegmentsSet.has(slug) &&
+    !slug.startsWith('auth') &&
+    !slug.startsWith('join')
+  )
 }
 
 const isPublicPath = (pathname: string): boolean =>
@@ -48,11 +32,33 @@ const isPublicPath = (pathname: string): boolean =>
   PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)) ||
   isPublicWebsitePath(pathname)
 
+const getLegacyWebsiteRedirect = (req: NextRequest): URL | null => {
+  const segments = req.nextUrl.pathname.split('/').filter(Boolean)
+  if (segments.length !== 1) return null
+
+  const [slug] = segments
+  if (!slug) return null
+  if (
+    reservedWebsiteRootSegmentsSet.has(slug) ||
+    slug.startsWith('auth') ||
+    slug.startsWith('join')
+  ) {
+    return null
+  }
+
+  return new URL(`/w/${slug}${req.nextUrl.search}`, req.url)
+}
+
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname
 
   if (isPublicPath(pathname)) {
     return NextResponse.next()
+  }
+
+  const legacyWebsiteRedirect = getLegacyWebsiteRedirect(req)
+  if (legacyWebsiteRedirect) {
+    return NextResponse.redirect(legacyWebsiteRedirect, 302)
   }
 
   // Check for session token using Better Auth's utility (handles cookie prefixes)

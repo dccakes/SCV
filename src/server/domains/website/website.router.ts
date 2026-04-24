@@ -26,10 +26,10 @@ export const websiteRouter = createTRPCRouter({
    * Enable website add-on for wedding
    * Note: Wedding must already exist before enabling website add-on
    */
-  create: protectedProcedure.input(createWebsiteSchema).mutation(async ({ ctx, input }) => {
+  create: protectedProcedure.input(createWebsiteSchema).mutation(async ({ ctx }) => {
     const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
 
-    return websiteManagementService.enableWebsite(ctx.authz, weddingId, input)
+    return websiteManagementService.enableWebsite(ctx.authz, weddingId)
   }),
 
   /**

@@ -5,7 +5,6 @@ import { calculateDaysRemaining, formatDateNumber } from '~/app/utils/helpers'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { EventRepository } from '~/server/domains/event/event.repository'
-import type { CreateWebsiteInput } from '~/server/domains/website'
 import type { WebsiteRepository } from '~/server/domains/website/website.repository'
 import type {
   PublicWebsiteWithQuestions,
@@ -13,7 +12,10 @@ import type {
   WebsiteWithQuestions,
   WeddingPageData,
 } from '~/server/domains/website/website.types'
+import { computeWebsiteUrl } from '~/server/domains/website/website.utils'
 import type { WebsitePasswordService } from '~/server/domains/website/website-password.service'
+import type { WebsiteSectionRepository } from '~/server/domains/website-section/website-section.repository'
+import { WebsiteSectionType } from '~/server/domains/website-section/website-section.types'
 import type { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
 
 export class WebsiteManagementService {
@@ -21,15 +23,20 @@ export class WebsiteManagementService {
     private websiteRepository: WebsiteRepository,
     private weddingRepository: WeddingRepository,
     private eventRepository: EventRepository,
-    private websitePasswordService: Pick<WebsitePasswordService, 'verifyAccessToken'>
+    private websitePasswordService: Pick<WebsitePasswordService, 'verifyAccessToken'>,
+    private websiteSectionRepository?: Pick<
+      WebsiteSectionRepository,
+      'create' | 'findByWebsiteIdAndType'
+    >
   ) {}
 
-  async enableWebsite(
-    ctx: AuthzContext,
-    weddingId: string,
-    data: CreateWebsiteInput
-  ): Promise<Website> {
+  async enableWebsite(ctx: AuthzContext, weddingId: string): Promise<Website> {
     requirePermission(ctx, { website: ['publish'] })
+
+    const existingWebsite = await this.websiteRepository.findByWeddingId(weddingId)
+    if (existingWebsite) {
+      return existingWebsite
+    }
 
     const wedding = await this.weddingRepository.findById(weddingId)
     if (!wedding) {
@@ -41,21 +48,20 @@ export class WebsiteManagementService {
 
     const subUrl =
       `${wedding.groomFirstName}${wedding.groomLastName}and${wedding.brideFirstName}${wedding.brideLastName}`.toLowerCase()
-    const url = `${data.basePath}/${subUrl}`
-
-    const existingWebsite = await this.websiteRepository.findBySubUrl(subUrl)
-    if (existingWebsite) {
+    const existingSubUrlWebsite = await this.websiteRepository.findBySubUrl(subUrl)
+    if (existingSubUrlWebsite) {
       throw new TRPCError({
         code: 'CONFLICT',
         message: 'This URL is already taken',
       })
     }
 
-    return this.websiteRepository.create({
+    const website = await this.websiteRepository.create({
       weddingId,
-      url,
       subUrl,
     })
+
+    return website
   }
 
   async fetchWeddingData(
@@ -82,16 +88,19 @@ export class WebsiteManagementService {
       }
     }
 
-    const wedding = await this.weddingRepository.findById(website.weddingId)
+    const [wedding, events, homeSection] = await Promise.all([
+      this.weddingRepository.findById(website.weddingId),
+      this.eventRepository.findByWeddingIdWithQuestions(website.weddingId),
+      this.websiteSectionRepository?.findByWebsiteIdAndType(website.id, WebsiteSectionType.HOME),
+    ])
     if (!wedding) {
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
         message: 'Failed to fetch wedding data.',
       })
     }
-
-    const events = await this.eventRepository.findByWeddingIdWithQuestions(website.weddingId)
     const weddingDate = events.find((event) => event.name === 'Wedding Day')?.date
+    const introText = homeSection?.isEnabled ? homeSection.content.introText : ''
 
     return {
       groomFirstName: wedding.groomFirstName,
@@ -107,7 +116,8 @@ export class WebsiteManagementService {
         }),
         numberFormat: formatDateNumber(weddingDate),
       },
-      website: this.toPublicWebsiteWithQuestions(website),
+      websiteBuilderEnabled: wedding.enabledAddOns.includes('website_builder'),
+      website: this.toPublicWebsiteWithQuestions(website, introText),
       daysRemaining: calculateDaysRemaining(weddingDate) ?? -1,
       events: events.map((event) => ({
         id: event.id,
@@ -125,8 +135,15 @@ export class WebsiteManagementService {
     }
   }
 
-  private toPublicWebsiteWithQuestions(website: WebsiteWithQuestions): PublicWebsiteWithQuestions {
+  private toPublicWebsiteWithQuestions(
+    website: WebsiteWithQuestions,
+    introText: string
+  ): PublicWebsiteWithQuestions & { introText: string } {
     const { password: _password, ...publicWebsite } = website
-    return publicWebsite
+    return {
+      ...publicWebsite,
+      url: computeWebsiteUrl(website.subUrl),
+      introText,
+    }
   }
 }

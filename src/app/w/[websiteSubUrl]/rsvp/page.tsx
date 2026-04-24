@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 
-import { loadWeddingBySubUrl } from '~/app/[websiteSubUrl]/_lib/load-wedding-by-suburl'
+import { loadWeddingBySubUrl } from '~/app/w/[websiteSubUrl]/_lib/load-wedding-by-suburl'
 import { RsvpFormProvider } from '~/components/contexts/rsvp-form-context'
 import MainRsvpForm from '~/components/website/forms/main'
 
@@ -37,7 +37,7 @@ export default async function RsvpPage({ params }: RsvpPageProps) {
 
   return (
     <RsvpFormProvider>
-      <MainRsvpForm weddingData={weddingData} basePath={`/${websiteSubUrl ?? ''}`} />
+      <MainRsvpForm weddingData={weddingData} basePath={`/w/${websiteSubUrl ?? ''}`} />
     </RsvpFormProvider>
   )
 }

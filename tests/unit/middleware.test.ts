@@ -1,7 +1,8 @@
 import type { NextRequest } from 'next/server'
 
-const mockRedirect = jest.fn((url: URL) => ({
+const mockRedirect = jest.fn((url: URL, init?: number | ResponseInit) => ({
   headers: new Headers({ location: url.toString() }),
+  status: typeof init === 'number' ? init : (init?.status ?? 307),
 }))
 
 const mockNext = jest.fn(() => ({
@@ -10,7 +11,7 @@ const mockNext = jest.fn(() => ({
 
 jest.mock('next/server', () => ({
   NextResponse: {
-    redirect: (url: URL) => mockRedirect(url),
+    redirect: (url: URL, init?: number | ResponseInit) => mockRedirect(url, init),
     next: () => mockNext(),
   },
 }))
@@ -87,8 +88,8 @@ describe('middleware', () => {
       middleware(createRequest('/auth/sign-in')),
       middleware(createRequest('/auth/accept-invitation', undefined, '?invitationId=inv_test_123')),
       middleware(createRequest('/join/sample-token')),
-      middleware(createRequest('/shrek-and-fiona')),
-      middleware(createRequest('/shrek-and-fiona/rsvp')),
+      middleware(createRequest('/w/shrek-and-fiona')),
+      middleware(createRequest('/w/shrek-and-fiona/rsvp')),
       middleware(createRequest('/api/auth/session')),
       middleware(createRequest('/api/blob/upload')),
     ])
@@ -106,6 +107,26 @@ describe('middleware', () => {
     expect(authApiResponse.headers.get('location')).toBeNull()
     expect(blobUploadResponse.headers.get('location')).toBeNull()
     expect(mockGetSessionCookie).not.toHaveBeenCalled()
+  })
+
+  it('redirects legacy root website URLs to /w/[slug]', async () => {
+    mockGetSessionCookie.mockReturnValue(null)
+
+    const response = await middleware(createRequest('/shrek-and-fiona'))
+
+    expect(response.headers.get('location')).toBe('https://example.com/w/shrek-and-fiona')
+    expect(response.status).toBe(302)
+    expect(mockGetSessionCookie).not.toHaveBeenCalled()
+  })
+
+  it('does not redirect reserved root segments like /website', async () => {
+    mockGetSessionCookie.mockReturnValue(null)
+
+    const response = await middleware(createRequest('/website'))
+
+    expect(response.headers.get('location')).toBe(
+      'https://example.com/auth/sign-in?callbackUrl=%2Fwebsite'
+    )
   })
 
   it('allows authenticated users to access protected routes', async () => {

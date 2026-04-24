@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react'
 
-import RootRouteHandler from '~/app/[websiteSubUrl]/page'
+import RootRouteHandler from '~/app/w/[websiteSubUrl]/page'
 
+const mockFetchWeddingData = jest.fn()
 const mockGetBySubUrl = jest.fn()
-const mockHasPasswordAccess = jest.fn()
 const mockVerifyWebsitePassword = jest.fn()
 const mockCookieGet = jest.fn()
 const mockCookieSet = jest.fn()
@@ -21,12 +21,10 @@ const mockPasswordPage = jest.fn(
 
 jest.mock('~/trpc/server', () => ({
   api: {
-    user: {
-      get: jest.fn(),
-    },
     website: {
+      fetchWeddingData: (input: { subUrl: string; accessToken?: string }) =>
+        mockFetchWeddingData(input),
       getBySubUrl: () => mockGetBySubUrl(),
-      hasPasswordAccess: () => mockHasPasswordAccess(),
       verifyWebsitePassword: (input: { subUrl: string; password: string }) =>
         mockVerifyWebsitePassword(input),
     },
@@ -54,8 +52,8 @@ jest.mock('~/components/website/wedding', () => ({
 
 describe('Website password flow', () => {
   beforeEach(() => {
+    mockFetchWeddingData.mockReset()
     mockGetBySubUrl.mockReset()
-    mockHasPasswordAccess.mockReset()
     mockVerifyWebsitePassword.mockReset()
     mockCookieGet.mockReset()
     mockCookieSet.mockReset()
@@ -74,7 +72,7 @@ describe('Website password flow', () => {
       updatedAt: new Date('2025-01-01'),
       coverPhotoUrl: null,
     })
-    mockHasPasswordAccess.mockResolvedValue(false)
+    mockFetchWeddingData.mockRejectedValue(new Error('Password required'))
     mockCookieGet.mockReturnValue(undefined)
 
     const page = await RootRouteHandler({
@@ -100,7 +98,7 @@ describe('Website password flow', () => {
       updatedAt: new Date('2025-01-01'),
       coverPhotoUrl: null,
     })
-    mockHasPasswordAccess.mockResolvedValue(false)
+    mockFetchWeddingData.mockRejectedValue(new Error('Password required'))
     mockCookieGet.mockReturnValue(undefined)
     mockVerifyWebsitePassword.mockResolvedValue('signed-token')
 
@@ -126,6 +124,7 @@ describe('Website password flow', () => {
       expect.objectContaining({
         httpOnly: true,
         sameSite: 'lax',
+        path: '/w/johnandjane',
       })
     )
   })

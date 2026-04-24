@@ -68,7 +68,6 @@ export default function EditUrlView({ setShowEditUrlView, websiteUrl }: EditUrlV
           })}`}
           onClick={() =>
             updateWebsite.mutate({
-              basePath: window.location.host,
               subUrl: urlInput,
             })
           }

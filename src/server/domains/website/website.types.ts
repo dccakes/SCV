@@ -5,7 +5,8 @@
  * Represents the public wedding website configuration.
  */
 
-import type { Question } from '~/app/utils/shared-types'
+import type { Question, QuestionWithOptions } from '~/server/domains/question'
+import type { WebsiteSection } from '~/server/domains/website-section/website-section.types'
 
 /**
  * Core Website entity type
@@ -15,32 +16,40 @@ export type Website = {
   createdAt: Date
   updatedAt: Date
   weddingId: string
-  url: string
   subUrl: string
+  templateId: string | null
   isPasswordEnabled: boolean
   password: string | null
   isRsvpEnabled: boolean
   coverPhotoUrl: string | null
 }
 
-export type PublicWebsite = Omit<Website, 'password'>
+export type PublicWebsite = Omit<Website, 'password'> & {
+  url: string
+}
+
+export type WebsiteWithComputedUrl = Website & {
+  url: string
+}
 
 /**
  * Website with general questions included
  */
 export type WebsiteWithQuestions = Website & {
-  generalQuestions: Question[]
+  generalQuestions: QuestionWithOptions[]
+  websiteSections?: WebsiteSection[]
 }
 
-export type PublicWebsiteWithQuestions = Omit<WebsiteWithQuestions, 'password'>
+export type PublicWebsiteWithQuestions = Omit<WebsiteWithQuestions, 'password'> & {
+  url: string
+}
 
 /**
  * Input for enabling website add-on
  * Note: weddingId comes from authenticated user's wedding
  */
 export type CreateWebsiteInput = {
-  basePath: string
-  email: string
+  [key: string]: never
 }
 
 /**
@@ -49,7 +58,6 @@ export type CreateWebsiteInput = {
 export type UpdateWebsiteInput = {
   isPasswordEnabled?: boolean
   password?: string
-  basePath?: string
   subUrl?: string
 }
 
@@ -86,7 +94,10 @@ export type WeddingPageData = {
   brideFirstName: string | null
   brideLastName: string | null
   date: WeddingDate
-  website: PublicWebsiteWithQuestions
+  websiteBuilderEnabled: boolean
+  website: PublicWebsiteWithQuestions & {
+    introText: string
+  }
   daysRemaining: number
   events: Array<{
     id: string

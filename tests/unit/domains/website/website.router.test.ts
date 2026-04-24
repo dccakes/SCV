@@ -86,7 +86,7 @@ describe('websiteRouter', () => {
       mockEnableWebsite.mockResolvedValue({ id: 'website-123', weddingId: 'wedding-123' })
 
       const caller = makeAuthCaller()
-      const input = { basePath: 'https://example.com', email: 'john@example.com' }
+      const input = {}
 
       await caller.create(input)
 
@@ -95,8 +95,7 @@ describe('websiteRouter', () => {
           userId: 'user-123',
           activeOrganization: { organizationId: 'org-123', role: 'owner' },
         }),
-        'wedding-123',
-        input
+        'wedding-123'
       )
     })
   })

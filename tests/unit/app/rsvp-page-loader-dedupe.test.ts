@@ -1,6 +1,6 @@
 import { createElement, type ReactNode } from 'react'
 
-import RsvpPage, { generateMetadata } from '~/app/[websiteSubUrl]/rsvp/page'
+import RsvpPage, { generateMetadata } from '~/app/w/[websiteSubUrl]/rsvp/page'
 
 const mockFetchWeddingData = jest.fn()
 const mockCookiesGet = jest.fn()
@@ -33,7 +33,7 @@ jest.mock('next/headers', () => ({
   })),
 }))
 
-describe('rsvp page loader dedupe', () => {
+describe('rsvp page loader', () => {
   beforeEach(() => {
     mockFetchWeddingData.mockReset()
     mockCookiesGet.mockReset()
@@ -41,7 +41,7 @@ describe('rsvp page loader dedupe', () => {
     mockNotFound.mockReset()
   })
 
-  it('dedupes metadata and page loading for the same suburl', async () => {
+  it('loads the same suburl for metadata and page rendering', async () => {
     mockFetchWeddingData.mockResolvedValue({
       groomFirstName: 'John',
       groomLastName: 'Doe',
@@ -63,8 +63,12 @@ describe('rsvp page loader dedupe', () => {
       RsvpPage as (props: { params: Promise<{ websiteSubUrl: string }> }) => Promise<ReactNode>
     )({ params })
 
-    expect(mockFetchWeddingData).toHaveBeenCalledTimes(1)
-    expect(mockFetchWeddingData).toHaveBeenCalledWith({
+    expect(mockFetchWeddingData).toHaveBeenCalledTimes(2)
+    expect(mockFetchWeddingData).toHaveBeenNthCalledWith(1, {
+      subUrl: 'john-and-jane',
+      accessToken: undefined,
+    })
+    expect(mockFetchWeddingData).toHaveBeenNthCalledWith(2, {
       subUrl: 'john-and-jane',
       accessToken: undefined,
     })

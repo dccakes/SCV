@@ -34,6 +34,7 @@ const mockBelongsToWeddingFn = mockBelongsToWedding as jest.Mock
 
 describe('WebsiteService', () => {
   let websiteService: WebsiteService
+  const originalAppUrl = process.env.NEXT_PUBLIC_APP_URL
   const actorContext = {
     userId: 'actor-1',
     activeOrganization: null,
@@ -44,6 +45,7 @@ describe('WebsiteService', () => {
   const mockVerifyAccessToken = jest.fn()
 
   beforeEach(() => {
+    process.env.NEXT_PUBLIC_APP_URL = 'https://oswp.example'
     resetWebsiteMocks()
     mockHashPassword.mockReset()
     mockVerifyPassword.mockReset()
@@ -62,13 +64,16 @@ describe('WebsiteService', () => {
     websiteService = new WebsiteService(mockRepository, mockPasswordService as never)
   })
 
+  afterAll(() => {
+    process.env.NEXT_PUBLIC_APP_URL = originalAppUrl
+  })
+
   describe('updateWebsite', () => {
     it('should update website settings', async () => {
       const updatedWebsite = { ...mockWebsite, subUrl: 'newsuburl' }
       mockUpdateFn.mockResolvedValue(updatedWebsite)
 
       const result = await websiteService.updateWebsite(actorContext, 'wedding-123', {
-        basePath: 'https://example.com',
         subUrl: 'newsuburl',
       })
 
@@ -77,7 +82,6 @@ describe('WebsiteService', () => {
         isPasswordEnabled: undefined,
         password: undefined,
         subUrl: 'newsuburl',
-        url: 'https://example.com/newsuburl',
       })
     })
 
@@ -95,7 +99,6 @@ describe('WebsiteService', () => {
         isPasswordEnabled: true,
         password: 'salt:hashed-password',
         subUrl: undefined,
-        url: undefined,
       })
       expect(mockHashPassword).toHaveBeenCalledWith('secret123')
     })
@@ -170,7 +173,10 @@ describe('WebsiteService', () => {
 
       const result = await websiteService.getByWeddingId('wedding-123')
 
-      expect(result).toEqual(mockWebsite)
+      expect(result).toEqual({
+        ...mockWebsite,
+        url: 'https://oswp.example/w/johndoeandjanesmith',
+      })
       expect(mockFindByWeddingIdFn).toHaveBeenCalledWith('wedding-123')
     })
 
@@ -201,11 +207,12 @@ describe('WebsiteService', () => {
         createdAt: mockWebsite.createdAt,
         updatedAt: mockWebsite.updatedAt,
         weddingId: mockWebsite.weddingId,
-        url: mockWebsite.url,
+        templateId: mockWebsite.templateId,
         subUrl: mockWebsite.subUrl,
         isPasswordEnabled: mockWebsite.isPasswordEnabled,
         isRsvpEnabled: mockWebsite.isRsvpEnabled,
         coverPhotoUrl: mockWebsite.coverPhotoUrl,
+        url: 'https://oswp.example/w/johndoeandjanesmith',
       })
       expect(result).not.toHaveProperty('password')
       expect(mockFindBySubUrlFn).toHaveBeenCalledWith('johndoeandjanesmith')
