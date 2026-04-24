@@ -47,6 +47,12 @@ const countryOptions: CountryOption[] = getCountries().map((code) => ({
   label: countryDisplayNames?.of(code) ?? code,
 }))
 
+const buildCountryOption = (code: Country): CountryOption => ({
+  code,
+  callingCode: `+${getCountryCallingCode(code)}`,
+  label: countryDisplayNames?.of(code) ?? code,
+})
+
 const getFlagEmoji = (country: Country) =>
   String.fromCodePoint(...country.split('').map((character) => 127397 + character.charCodeAt(0)))
 
@@ -103,7 +109,8 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
     }, [defaultCountry, inferredCountry])
 
     const selectedCountryOption =
-      countryOptions.find((option) => option.code === selectedCountry) ?? countryOptions[0]
+      countryOptions.find((option) => option.code === selectedCountry) ??
+      buildCountryOption(selectedCountry)
 
     const handleCountryChange = (nextCountry: Country) => {
       setSelectedCountry(nextCountry)
