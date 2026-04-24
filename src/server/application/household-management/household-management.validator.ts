@@ -6,6 +6,8 @@
 
 import { z } from 'zod'
 
+import { optionalPhoneSchema } from '~/lib/phone/phone-validator'
+
 /**
  * Guest party input schema for household creation/update
  */
@@ -14,7 +16,7 @@ export const guestPartyInputSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().optional().default(''),
   email: z.string().email().nullish().or(z.literal('')),
-  phone: z.string().nullish(),
+  phone: optionalPhoneSchema,
   isPrimaryContact: z.boolean().optional(),
   ageGroup: z.enum(['INFANT', 'CHILD', 'TEEN', 'ADULT']).default('ADULT'),
   tagIds: z.array(z.guid()).max(10, 'Maximum 10 tags allowed').default([]),
@@ -44,7 +46,7 @@ export const createHouseholdWithGuestsSchema = z.object({
   state: z.string().nullish(),
   country: z.string().nullish(),
   zipCode: z.string().nullish(),
-  phone: z.string().nullish(),
+  phone: optionalPhoneSchema,
   email: z.string().email().nullish().or(z.literal('')),
   notes: z.string().nullish(),
   guestParty: z.array(guestPartyInputSchema).min(1, 'At least one guest is required'),
@@ -63,7 +65,7 @@ export const updateHouseholdWithGuestsSchema = z.object({
   state: z.string().nullish(),
   country: z.string().nullish(),
   zipCode: z.string().nullish(),
-  phone: z.string().nullish(),
+  phone: optionalPhoneSchema,
   email: z.string().email().nullish().or(z.literal('')),
   notes: z.string().nullish(),
   guestParty: z.array(guestPartyInputSchema).min(1, 'At least one guest is required'),

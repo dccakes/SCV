@@ -137,7 +137,7 @@ describe('createHouseholdWithGuestsSchema', () => {
       state: 'NY',
       country: 'USA',
       zipCode: '10001',
-      phone: '555-1234',
+      phone: '+12025550123',
       email: 'family@example.com',
       notes: 'Special dietary requirements',
       guestParty: [
@@ -360,5 +360,65 @@ describe('deleteHouseholdSchema', () => {
     const result = deleteHouseholdSchema.safeParse(inputWithEmpty)
     // Schema allows empty string, business logic would handle
     expect(result.success).toBe(true)
+  })
+})
+
+describe('phone validation in household-management schemas', () => {
+  const baseGuestParty = [
+    {
+      firstName: 'John',
+      lastName: 'Doe',
+      invites: {},
+    },
+  ]
+
+  it('accepts valid E.164 phone numbers in root and guest fields', () => {
+    expect(
+      createHouseholdWithGuestsSchema.safeParse({
+        guestParty: [{ ...baseGuestParty[0], phone: '+12025550123' }],
+        phone: '+447911123456',
+      }).success
+    ).toBe(true)
+
+    expect(
+      updateHouseholdWithGuestsSchema.safeParse({
+        householdId: 'household-123',
+        guestParty: [{ ...baseGuestParty[0], phone: '+5511987654321' }],
+        gifts: [],
+        phone: '+12025550123',
+      }).success
+    ).toBe(true)
+  })
+
+  it('rejects invalid phone values with a clear message', () => {
+    const result = createHouseholdWithGuestsSchema.safeParse({
+      guestParty: [{ ...baseGuestParty[0], phone: '2025550123' }],
+      phone: '2025550123',
+    })
+    expect(result.success).toBe(false)
+    expect(
+      result.error?.issues.some((issue) => issue.message === 'Please enter a valid phone number')
+    ).toBe(true)
+  })
+
+  it('accepts undefined and null, and transforms empty string', () => {
+    expect(
+      createHouseholdWithGuestsSchema.safeParse({
+        guestParty: [{ ...baseGuestParty[0], phone: undefined }],
+        phone: null,
+      }).success
+    ).toBe(true)
+
+    const result = updateHouseholdWithGuestsSchema.safeParse({
+      householdId: 'household-123',
+      guestParty: [{ ...baseGuestParty[0], phone: '' }],
+      gifts: [],
+      phone: '',
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.phone).toBeNull()
+      expect(result.data.guestParty[0]?.phone).toBeNull()
+    }
   })
 })

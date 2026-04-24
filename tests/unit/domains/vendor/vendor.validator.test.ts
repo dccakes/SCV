@@ -29,7 +29,7 @@ describe('createVendorSchema', () => {
       instagram: '@grandhall',
       contactName: 'Jane Smith',
       contactEmail: 'jane@grandhall.com',
-      contactPhone: '+1234567890',
+      contactPhone: '+12025550123',
     }
     const result = createVendorSchema.safeParse(input)
     expect(result.success).toBe(true)
@@ -583,5 +583,74 @@ describe('deleteQuoteFileSchema', () => {
       vendorId: 'vendor-123',
     })
     expect(result.success).toBe(false)
+  })
+})
+
+describe('phone validation in vendor schemas', () => {
+  it('accepts valid E.164 contactPhone', () => {
+    expect(
+      createVendorSchema.safeParse({
+        category: 'VENUE',
+        name: 'Test',
+        contactPhone: '+12025550123',
+      }).success
+    ).toBe(true)
+
+    expect(
+      updateVendorSchema.safeParse({
+        vendorId: 'vendor-123',
+        contactPhone: '+447911123456',
+      }).success
+    ).toBe(true)
+  })
+
+  it('rejects invalid contactPhone', () => {
+    const result = createVendorSchema.safeParse({
+      category: 'VENUE',
+      name: 'Test',
+      contactPhone: '2025550123',
+    })
+    expect(result.success).toBe(false)
+    expect(
+      result.error?.issues.some((issue) => issue.message === 'Please enter a valid phone number')
+    ).toBe(true)
+  })
+
+  it('accepts undefined, rejects null', () => {
+    expect(
+      createVendorSchema.safeParse({
+        category: 'VENUE',
+        name: 'Test',
+        contactPhone: undefined,
+      }).success
+    ).toBe(true)
+
+    expect(
+      updateVendorSchema.safeParse({
+        vendorId: 'vendor-123',
+        contactPhone: null,
+      }).success
+    ).toBe(false)
+  })
+
+  it('transforms empty string to undefined', () => {
+    const createResult = createVendorSchema.safeParse({
+      category: 'VENUE',
+      name: 'Test',
+      contactPhone: '',
+    })
+    expect(createResult.success).toBe(true)
+    if (createResult.success) {
+      expect(createResult.data.contactPhone).toBeUndefined()
+    }
+
+    const updateResult = updateVendorSchema.safeParse({
+      vendorId: 'vendor-123',
+      contactPhone: '',
+    })
+    expect(updateResult.success).toBe(true)
+    if (updateResult.success) {
+      expect(updateResult.data.contactPhone).toBeUndefined()
+    }
   })
 })

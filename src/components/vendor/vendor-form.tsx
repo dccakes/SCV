@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
+import { PhoneInput } from '~/components/ui/phone-input'
 import {
   Select,
   SelectContent,
@@ -223,10 +224,10 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
               <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
                 Phone
               </span>
-              <Input
+              <PhoneInput
                 id='vendor-contact-phone'
-                value={contactPhone}
-                onChange={(e) => setContactPhone(e.target.value)}
+                value={contactPhone || undefined}
+                onChange={(nextValue) => setContactPhone(nextValue ?? '')}
                 placeholder='+1 (555) 000-0000'
               />
             </label>
