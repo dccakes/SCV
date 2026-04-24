@@ -7,7 +7,6 @@ import { requirePlannerAuthz } from '~/lib/etta/utils/authorization'
 import { guestInsightsService } from '~/server/application/guest-insights'
 import { householdManagementService } from '~/server/application/household-management'
 import { guestService } from '~/server/domains/guest'
-import type { Household } from '~/server/domains/household/household.types'
 
 const rsvpFilterSchema = z.enum([
   RSVP_STATUS.ATTENDING,
