@@ -286,7 +286,7 @@ const MemberRow = memo(function MemberRow(props: Readonly<MemberRowProps>) {
           </Button>
           <Button
             type='button'
-            variant='outline'
+            variant='destructive'
             size='sm'
             onClick={() => onRemove(index)}
             disabled={removeDisabled}
