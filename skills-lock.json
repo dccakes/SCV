@@ -26,6 +26,21 @@
       "sourceType": "github",
       "computedHash": "515ba75178bd44875812d9a560bdf14651f86709f89cf1d4f209638e879807f3"
     },
+    "product-designer": {
+      "source": "borghei/claude-skills",
+      "sourceType": "github",
+      "computedHash": "4519eef7ed0593077e08c092701fb0e8d65d0b3b527421bc0cb6e9e6448869a4"
+    },
+    "ui-design-patterns": {
+      "source": "manutej/luxor-claude-marketplace",
+      "sourceType": "github",
+      "computedHash": "b1a5307c8f66157028428b09e047b418c75b42ed96e97f58ea099817d946fbdb"
+    },
+    "ux-heuristics": {
+      "source": "wondelai/skills",
+      "sourceType": "github",
+      "computedHash": "470afca937ee2410fdd3423d6784b60d08a33f30022840a86b00f87a3ca9ad5f"
+    },
     "vercel-composition-patterns": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",
