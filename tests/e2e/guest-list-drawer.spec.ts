@@ -23,10 +23,10 @@ test.describe('Guest List Drawer - Viewing Details', () => {
   test('should display contact information for Donkey household', async ({ page }) => {
     await page.getByRole('button', { name: /select donkey.*household/i }).click()
 
-    // Seed data: donkey@swamp.wed, +1-555-0101
+    // Seed data: donkey@swamp.wed, +12025550101
     await expect(page.getByText('Contact & Address')).toBeVisible()
     await expect(page.getByText('donkey@swamp.wed')).toBeVisible()
-    await expect(page.getByText('+1-555-0101')).toBeVisible()
+    await expect(page.getByText('+12025550101')).toBeVisible()
     // Address: 1 Mud Lane, Swampside, FFA, 10001, Far Far Away
     await expect(page.getByText(/1 Mud Lane/)).toBeVisible()
   })
@@ -141,7 +141,7 @@ test.describe('Guest List Drawer - Editing Contact & Address', () => {
 
     // Verify existing data is pre-filled
     await expect(page.locator('input[name="email"]')).toHaveValue('donkey@swamp.wed')
-    await expect(page.locator('input[name="phone"]')).toHaveValue('+1-555-0101')
+    await expect(page.locator('input[name="phone"]')).toHaveValue(/\+1\D*202\D*555\D*0101/)
     await expect(page.locator('input[name="address1"]')).toHaveValue('1 Mud Lane')
     await expect(page.locator('input[name="city"]')).toHaveValue('Swampside')
     await expect(page.locator('input[name="state"]')).toHaveValue('FFA')

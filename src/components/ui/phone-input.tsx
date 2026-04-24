@@ -78,13 +78,13 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
         value={value ?? undefined}
         onChange={onChange}
         defaultCountry={defaultCountry}
+        id={id}
+        name={name}
         international
         countryCallingCodeEditable={false}
         disabled={disabled}
         inputComponent={PhoneNumberInputField}
         numberInputProps={{
-          id,
-          name,
           placeholder,
           'aria-describedby': ariaDescribedBy,
           'aria-label': ariaLabel,

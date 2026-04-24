@@ -110,4 +110,10 @@ describe('PhoneInput', () => {
 
     expect(screen.getByRole('button', { name: 'Select country' })).toBeInTheDocument()
   })
+
+  it('forwards name attribute to the input', () => {
+    render(<PhoneInput value={undefined} onChange={jest.fn()} name='phone' />)
+
+    expect(screen.getByRole('textbox')).toHaveAttribute('name', 'phone')
+  })
 })
