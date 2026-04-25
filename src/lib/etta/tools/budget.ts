@@ -45,6 +45,7 @@ export function getBudgetTools(ctx: EttaContext) {
           data: {
             weddingId: ctx.weddingId,
             actorId: ctx.ettaActorId,
+            domain: 'budget',
             actionType: 'upsert_budget_item',
             tier: 'T1',
             payload: params,

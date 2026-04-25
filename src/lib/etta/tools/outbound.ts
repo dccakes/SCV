@@ -21,6 +21,7 @@ export function getOutboundTools(ctx: EttaContext) {
           data: {
             weddingId: ctx.weddingId,
             actorId: ctx.ettaActorId,
+            domain: 'guests',
             actionType: 'send_whatsapp_blast',
             tier: 'T2',
             summary: 'Send WhatsApp blast to guests',
@@ -51,6 +52,7 @@ export function getOutboundTools(ctx: EttaContext) {
           data: {
             weddingId: ctx.weddingId,
             actorId: ctx.ettaActorId,
+            domain: 'vendors',
             actionType: 'draft_vendor_email',
             tier: 'T2',
             summary: `Draft email to vendor: ${subject}`,

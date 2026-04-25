@@ -152,6 +152,105 @@ describe('runEttaAgent', () => {
     })
   })
 
+  describe('couple-background actor', () => {
+    beforeEach(() => {
+      process.env.AI_GATEWAY_API_KEY = 'test-key'
+      mockResolveEttaContext.mockResolvedValue({
+        weddingId: 'wedding-1',
+        ettaActorId: 'etta-1',
+        actor: 'couple-background',
+        wedding: {
+          groomFirstName: 'Shrek',
+          groomLastName: 'Ogre',
+          brideFirstName: 'Fiona',
+          brideLastName: 'Ogre',
+        },
+        guestCount: 14,
+        eventCount: 3,
+        vendorCount: 5,
+        pendingSuggestionCount: 0,
+        recentMemories: [],
+      })
+      mockStreamText.mockReturnValue({ toUIMessageStreamResponse: jest.fn() })
+    })
+
+    it('uses planner tools and records background execution as etta audit activity', async () => {
+      await runEttaAgent({
+        actor: 'couple-background' as never,
+        weddingId: 'wedding-1',
+        authz: { userId: 'user-42', activeOrganization: null },
+        messages: [{ role: 'user', content: 'execute this suggestion' }],
+        toolsetMode: 'background-execution',
+        approvedSuggestionActionType: 'add_vendor',
+      })
+
+      expect(mockGetPlannerTools).toHaveBeenCalledTimes(1)
+      expect(mockGetConciergeTools).not.toHaveBeenCalled()
+
+      const chatRequestCall = mockLogAudit.mock.calls.find(
+        ([entry]) => (entry as { action: string }).action === 'chat_request'
+      )
+      expect(chatRequestCall?.[0]).toMatchObject({
+        actorType: 'etta',
+        actorId: 'etta-1',
+      })
+    })
+
+    it('restricts background execution to the execution-safe tool subset', async () => {
+      mockGetPlannerTools.mockReturnValue({
+        get_guest_list: { kind: 'guest-read' },
+        add_vendor: { kind: 'vendor-write' },
+        send_whatsapp_blast: { kind: 'outbound' },
+        create_suggestion: { kind: 'suggestion-write' },
+        memory_write: { kind: 'memory' },
+        web_search: { kind: 'research' },
+      })
+
+      await runEttaAgent({
+        actor: 'couple-background' as never,
+        weddingId: 'wedding-1',
+        authz: { userId: 'user-42', activeOrganization: null },
+        messages: [{ role: 'user', content: 'execute this suggestion' }],
+        toolsetMode: 'background-execution',
+        approvedSuggestionActionType: 'send_whatsapp_blast',
+      })
+
+      expect(mockStreamText).toHaveBeenCalledTimes(1)
+      const [[args]] = mockStreamText.mock.calls
+      const tools = (args as { tools: Record<string, unknown> }).tools
+
+      expect(Object.keys(tools).sort()).toEqual(['get_guest_list', 'send_whatsapp_blast'])
+      expect(tools).not.toHaveProperty('create_suggestion')
+      expect(tools).not.toHaveProperty('add_vendor')
+      expect(tools).not.toHaveProperty('memory_write')
+      expect(tools).not.toHaveProperty('web_search')
+      expect(mockBuildSystemPrompt).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ toolsetMode: 'background-execution' })
+      )
+    })
+
+    it('defaults to no background tools when no approved action type is provided', async () => {
+      mockGetPlannerTools.mockReturnValue({
+        add_vendor: { kind: 'vendor-write' },
+        send_whatsapp_blast: { kind: 'outbound' },
+      })
+
+      await runEttaAgent({
+        actor: 'couple-background' as never,
+        weddingId: 'wedding-1',
+        authz: { userId: 'user-42', activeOrganization: null },
+        messages: [{ role: 'user', content: 'execute this suggestion' }],
+        toolsetMode: 'background-execution',
+      })
+
+      const [[args]] = mockStreamText.mock.calls
+      const tools = (args as { tools: Record<string, unknown> }).tools
+
+      expect(tools).toEqual({})
+    })
+  })
+
   describe('toolsetMode: memory-only', () => {
     beforeEach(() => {
       process.env.AI_GATEWAY_API_KEY = 'test-key'

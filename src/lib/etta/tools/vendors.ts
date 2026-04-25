@@ -44,6 +44,7 @@ export function getVendorTools(ctx: EttaContext) {
           data: {
             weddingId: ctx.weddingId,
             actorId: ctx.ettaActorId,
+            domain: 'vendors',
             actionType: 'add_vendor',
             tier: 'T1',
             payload: params,

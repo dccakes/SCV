@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 
 import SidebarNavFrame from '~/components/nav/sidebar-nav'
 import { signOut } from '~/lib/auth-client'
@@ -131,5 +131,30 @@ describe('SidebarNavFrame', () => {
     render(<SidebarNavFrame isOpen={false} setIsOpen={jest.fn()} />)
 
     expect(screen.queryByRole('link', { name: 'Website' })).not.toBeInTheDocument()
+  })
+
+  it('renders pending badges for domain pages and the Etta inbox entry', () => {
+    render(
+      <SidebarNavFrame
+        isOpen={false}
+        setIsOpen={jest.fn()}
+        pendingSuggestionCounts={{
+          guests: 3,
+          events: 2,
+          rsvp: 0,
+          vendors: 4,
+          budget: 0,
+          tasks: 0,
+          other: 1,
+        }}
+      />
+    )
+
+    expect(within(screen.getByRole('link', { name: 'Vendors' })).getByText('4')).toBeInTheDocument()
+    expect(
+      within(screen.getByRole('link', { name: 'Guest List' })).getByText('3')
+    ).toBeInTheDocument()
+    expect(within(screen.getByRole('link', { name: 'Events' })).getByText('2')).toBeInTheDocument()
+    expect(within(screen.getByRole('link', { name: 'Etta' })).getByText('10')).toBeInTheDocument()
   })
 })

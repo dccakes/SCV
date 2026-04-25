@@ -13,6 +13,7 @@ import { formatDateStandard } from '~/app/utils/helpers'
 import type { Event, EventFormData, FormInvites } from '~/app/utils/shared-types'
 import { useToggleEventForm } from '~/components/contexts/event-form-context'
 import { useToggleGuestForm } from '~/components/contexts/guest-form-context'
+import { useDomainSuggestions } from '~/components/etta/use-domain-suggestions'
 import type { HouseholdFormData } from '~/components/forms/guest-form.schema'
 import {
   type DrawerDraft,
@@ -42,6 +43,7 @@ import {
 import { AsyncState } from '~/components/ui/async-state'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
+import type { EttaSuggestionView } from '~/lib/etta/types'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 import { api } from '~/trpc/react'
 
@@ -49,6 +51,7 @@ type GuestsViewProps = {
   events: Event[]
   households: HouseholdWithGuests[]
   allHouseholds?: HouseholdWithGuests[]
+  initialSuggestions?: EttaSuggestionView[]
   selectedEventId: string
   setPrefillHousehold: Dispatch<SetStateAction<HouseholdFormData | undefined>>
   setPrefillEvent: Dispatch<SetStateAction<EventFormData | undefined>>
@@ -59,6 +62,7 @@ export default function GuestsView({
   events,
   households,
   allHouseholds = households,
+  initialSuggestions = [],
   selectedEventId,
   setPrefillHousehold,
   setPrefillEvent,
@@ -66,6 +70,7 @@ export default function GuestsView({
 }: GuestsViewProps) {
   const utils = api.useUtils()
   const { data: allTags = [] } = api.guestTag.getAll.useQuery()
+  const suggestions = useDomainSuggestions('guests', initialSuggestions)
   const toggleGuestForm = useToggleGuestForm()
   const [filteredHouseholds, setFilteredHouseholds] = useState(households)
   const [nameSort, setNameSort] = useState<'none' | 'ascending' | 'descending'>('none')
@@ -695,6 +700,7 @@ export default function GuestsView({
             selectedHouseholdId={selectedHouseholdId}
             onSelectHousehold={handleSelectHousehold}
             allTags={allTags}
+            suggestions={suggestions}
           />
         ) : (
           <GuestCardsList
@@ -702,6 +708,7 @@ export default function GuestsView({
             selectedHouseholdId={selectedHouseholdId}
             onSelectHousehold={handleSelectHousehold}
             allTags={allTags}
+            suggestions={suggestions}
           />
         )}
       </div>

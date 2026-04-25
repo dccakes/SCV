@@ -66,6 +66,7 @@ describe('getOutboundTools', () => {
         data: {
           weddingId: 'wedding-123',
           actorId: 'actor-123',
+          domain: 'guests',
           actionType: 'send_whatsapp_blast',
           tier: 'T2',
           summary: 'Send WhatsApp blast to guests',
@@ -121,6 +122,7 @@ describe('getOutboundTools', () => {
         data: {
           weddingId: 'wedding-123',
           actorId: 'actor-123',
+          domain: 'vendors',
           actionType: 'draft_vendor_email',
           tier: 'T2',
           summary: 'Draft email to vendor: Menu options',

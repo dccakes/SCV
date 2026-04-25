@@ -7,6 +7,7 @@ import SidebarUserAvatarButton from '~/components/nav/sidebar-user-avatar-button
 import WeddingChipCard from '~/components/nav/wedding-chip-card'
 import { useWorkspace } from '~/hooks/use-workspace'
 import { signOut } from '~/lib/auth-client'
+import type { Domain } from '~/lib/etta/types'
 
 const SIDEBAR_SECTIONS: readonly SidebarSection[] = [
   {
@@ -14,19 +15,25 @@ const SIDEBAR_SECTIONS: readonly SidebarSection[] = [
     items: [
       { label: 'Dashboard', href: '/dashboard', icon: '◈' },
       { label: 'RSVPs', href: '/guest-list', icon: '◉' },
-      { label: 'Events', href: '/events', icon: '☷' },
-      { label: 'Vendors', href: '/vendors', icon: '◐' },
+      { label: 'Events', href: '/events', icon: '☷', suggestionDomain: 'events' },
+      { label: 'Vendors', href: '/vendors', icon: '◐', suggestionDomain: 'vendors' },
     ],
   },
   {
     title: 'Guests',
-    items: [{ label: 'Guest List', href: '/guest-list', icon: '☷' }],
+    items: [{ label: 'Guest List', href: '/guest-list', icon: '☷', suggestionDomain: 'guests' }],
+  },
+  {
+    title: 'Assistant',
+    items: [{ label: 'Etta', href: '/etta/pending', icon: '✦', suggestionDomain: 'all' }],
   },
   {
     title: 'Settings',
     items: [{ label: 'Settings', href: '/settings', icon: '⚙' }],
   },
 ]
+
+type PendingSuggestionCounts = Record<Domain, number>
 
 type WorkspaceSnapshot = {
   role: string | null
@@ -47,6 +54,33 @@ function getSidebarSections(workspace: WorkspaceSnapshot): readonly SidebarSecti
   return SIDEBAR_SECTIONS
 }
 
+function getTotalPendingSuggestionCount(counts: PendingSuggestionCounts | undefined): number {
+  if (!counts) return 0
+  return Object.values(counts).reduce((total, count) => total + count, 0)
+}
+
+function applyPendingSuggestionCounts(
+  sections: readonly SidebarSection[],
+  pendingSuggestionCounts: PendingSuggestionCounts | undefined
+): readonly SidebarSection[] {
+  const totalPendingCount = getTotalPendingSuggestionCount(pendingSuggestionCounts)
+
+  return sections.map((section) => ({
+    ...section,
+    items: section.items.map((item) => {
+      if (!pendingSuggestionCounts) return item
+
+      if (item.suggestionDomain === 'all') {
+        return { ...item, badgeCount: totalPendingCount }
+      }
+
+      if (!item.suggestionDomain) return item
+
+      return { ...item, badgeCount: pendingSuggestionCounts[item.suggestionDomain] }
+    }),
+  }))
+}
+
 export type SidebarNavFrameProps = Readonly<{
   ettaPanelOpen?: boolean
   isOpen: boolean
@@ -57,6 +91,7 @@ export type SidebarNavFrameProps = Readonly<{
   userInitials?: string
   weddingDate?: string
   weddingLocation?: string
+  pendingSuggestionCounts?: PendingSuggestionCounts
 }>
 
 type SidebarNavProps = Readonly<{
@@ -209,15 +244,19 @@ export default function SidebarNavFrame(props: SidebarNavFrameProps) {
     userInitials,
     weddingDate,
     weddingLocation,
+    pendingSuggestionCounts,
   } = props
   const pathname = usePathname()
   const { workspace } = useWorkspace()
-  const sidebarSections = getSidebarSections({
-    role: workspace.role,
-    capabilities: {
-      canViewPlanning: workspace.capabilities.canViewPlanning,
-    },
-  })
+  const sidebarSections = applyPendingSuggestionCounts(
+    getSidebarSections({
+      role: workspace.role,
+      capabilities: {
+        canViewPlanning: workspace.capabilities.canViewPlanning,
+      },
+    }),
+    pendingSuggestionCounts
+  )
   // Start collapsed=false for SSR safety; sync from localStorage on client after mount
   const [isCollapsed, setIsCollapsed] = useState(false)
   const drawerRef = useRef<HTMLDivElement>(null)

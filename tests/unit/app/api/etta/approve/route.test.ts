@@ -2,6 +2,8 @@
  * @jest-environment node
  */
 
+import { TRPCError } from '@trpc/server'
+import { runApprovedSuggestion } from '~/lib/etta/execution/run-approved-suggestion'
 import { logAudit } from '~/lib/etta/utils/audit'
 import { EttaAuthError, validateCoupleSession } from '~/lib/etta/utils/auth'
 import { db } from '~/server/db'
@@ -20,19 +22,28 @@ jest.mock('~/lib/etta/utils/auth', () => ({
 jest.mock('~/lib/etta/utils/audit', () => ({
   logAudit: jest.fn(),
 }))
+jest.mock('~/lib/etta/execution/run-approved-suggestion', () => ({
+  runApprovedSuggestion: jest.fn(),
+}))
+const mockRequireSuggestionReviewPermission = jest.fn()
+jest.mock('~/server/domains/etta-suggestion/etta-suggestion.auth', () => ({
+  requireSuggestionReviewPermission: (...args: unknown[]) =>
+    mockRequireSuggestionReviewPermission(...args),
+}))
 jest.mock('~/server/db', () => ({
   db: {
     ettaSuggestion: {
       findUnique: jest.fn(),
-      update: jest.fn(),
+      updateMany: jest.fn(),
     },
   },
 }))
 
 const mockValidateSession = validateCoupleSession as jest.Mock
 const mockLogAudit = logAudit as jest.Mock
+const mockRunApprovedSuggestion = runApprovedSuggestion as jest.Mock
 const mockFindUnique = db.ettaSuggestion.findUnique as jest.Mock
-const mockUpdate = db.ettaSuggestion.update as jest.Mock
+const mockUpdateMany = db.ettaSuggestion.updateMany as jest.Mock
 
 import { PATCH } from '~/app/api/etta/approve/[suggestionId]/route'
 
@@ -68,14 +79,19 @@ function pendingSuggestion(overrides: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   jest.clearAllMocks()
-  mockValidateSession.mockResolvedValue({ weddingId: WEDDING_ID, userId: USER_ID })
+  mockRequireSuggestionReviewPermission.mockReturnValue(undefined)
+  mockValidateSession.mockResolvedValue({
+    weddingId: WEDDING_ID,
+    userId: USER_ID,
+    authz: {
+      userId: USER_ID,
+      activeOrganization: { organizationId: 'org-1', role: 'owner' },
+    },
+  })
   mockFindUnique.mockResolvedValue(pendingSuggestion())
-  mockUpdate.mockImplementation(async ({ data, where }) => ({
-    ...pendingSuggestion(),
-    ...data,
-    id: where.id,
-  }))
+  mockUpdateMany.mockResolvedValue({ count: 1 })
   mockLogAudit.mockResolvedValue(undefined)
+  mockRunApprovedSuggestion.mockResolvedValue(undefined)
 })
 
 // ── Approve ─────────────────────────────────────────────────────────────────
@@ -88,6 +104,17 @@ describe('PATCH /api/etta/approve/[suggestionId]', () => {
     expect(res.status).toBe(200)
     expect(body.status).toBe('approved')
     expect(body.message).toBe('Suggestion approved')
+    expect(mockRunApprovedSuggestion).toHaveBeenCalledWith({
+      authz: {
+        userId: USER_ID,
+        activeOrganization: { organizationId: 'org-1', role: 'owner' },
+      },
+      suggestion: expect.objectContaining({
+        id: SUGGESTION_ID,
+        weddingId: WEDDING_ID,
+        status: 'approved',
+      }),
+    })
   })
 
   it('dismisses a pending suggestion and returns 200', async () => {
@@ -157,15 +184,70 @@ describe('PATCH /api/etta/approve/[suggestionId]', () => {
     expect((await res.json()).error).toBe('Suggestion not found')
   })
 
-  // ── Conflict ────────────────────────────────────────────────────────────
-
-  it('returns 409 when suggestion is already resolved', async () => {
-    mockFindUnique.mockResolvedValue(pendingSuggestion({ status: 'approved' }))
+  it('returns 403 when the current member cannot review suggestions', async () => {
+    mockRequireSuggestionReviewPermission.mockImplementation(() => {
+      throw new TRPCError({ code: 'FORBIDDEN' })
+    })
 
     const res = await PATCH(makeRequest({ action: 'approve' }), makeParams())
 
-    expect(res.status).toBe(409)
-    expect((await res.json()).error).toBe('Suggestion already approved')
+    expect(res.status).toBe(403)
+    expect(mockFindUnique).not.toHaveBeenCalled()
+    expect(mockRunApprovedSuggestion).not.toHaveBeenCalled()
+  })
+
+  // ── Conflict ────────────────────────────────────────────────────────────
+
+  it('retries a failed suggestion by resetting it to approved', async () => {
+    mockFindUnique.mockResolvedValue(
+      pendingSuggestion({
+        status: 'failed',
+        failureReason: 'Vendor payload missing category',
+      })
+    )
+
+    const res = await PATCH(makeRequest({ action: 'approve' }), makeParams())
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(body.status).toBe('approved')
+    expect(body.message).toBe('Suggestion approved')
+    expect(mockUpdateMany).toHaveBeenCalledWith({
+      where: {
+        id: SUGGESTION_ID,
+        weddingId: WEDDING_ID,
+        status: 'failed',
+      },
+      data: expect.objectContaining({
+        status: 'approved',
+        failureReason: null,
+        executedAt: null,
+      }),
+    })
+    expect(mockRunApprovedSuggestion).toHaveBeenCalledWith({
+      authz: {
+        userId: USER_ID,
+        activeOrganization: { organizationId: 'org-1', role: 'owner' },
+      },
+      suggestion: expect.objectContaining({
+        id: SUGGESTION_ID,
+        weddingId: WEDDING_ID,
+        status: 'approved',
+      }),
+    })
+  })
+
+  it('treats re-approving an in-flight suggestion as an idempotent no-op', async () => {
+    mockFindUnique.mockResolvedValue(pendingSuggestion({ status: 'approved' }))
+
+    const res = await PATCH(makeRequest({ action: 'approve' }), makeParams())
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(body.status).toBe('approved')
+    expect(body.message).toBe('Suggestion already approved')
+    expect(mockUpdateMany).not.toHaveBeenCalled()
+    expect(mockRunApprovedSuggestion).not.toHaveBeenCalled()
   })
 
   // ── Audit logging ──────────────────────────────────────────────────────
@@ -192,8 +274,8 @@ describe('PATCH /api/etta/approve/[suggestionId]', () => {
     await PATCH(makeRequest({ action: 'approve' }), makeParams())
     const after = new Date()
 
-    expect(mockUpdate).toHaveBeenCalledTimes(1)
-    const { data } = mockUpdate.mock.calls[0][0]
+    expect(mockUpdateMany).toHaveBeenCalledTimes(1)
+    const { data } = mockUpdateMany.mock.calls[0][0]
 
     expect(data.resolvedBy).toBe(USER_ID)
     expect(data.status).toBe('approved')

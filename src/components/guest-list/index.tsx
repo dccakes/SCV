@@ -14,6 +14,7 @@ import EventsTabs from '~/components/guest-list/event-tabs'
 import GuestsView from '~/components/guest-list/guests-view'
 import { InviteLinkPanel } from '~/components/guest-list/invite-link-panel'
 import NoGuestsView from '~/components/guest-list/no-guests-view'
+import type { EttaSuggestionView } from '~/lib/etta/types'
 
 const CsvUploadDialog = dynamic(
   () =>
@@ -23,7 +24,13 @@ const CsvUploadDialog = dynamic(
   { ssr: false }
 )
 
-export default function GuestList({ dashboardData }: { dashboardData: DashboardData }) {
+export default function GuestList({
+  dashboardData,
+  initialSuggestions,
+}: {
+  dashboardData: DashboardData
+  initialSuggestions?: EttaSuggestionView[]
+}) {
   const isEventFormOpen = useEventForm()
   const isGuestFormOpen = useGuestForm()
   const searchParams = useSearchParams()
@@ -93,6 +100,7 @@ export default function GuestList({ dashboardData }: { dashboardData: DashboardD
           events={dashboardData.events}
           households={filteredHouseholdsByEvent}
           allHouseholds={dashboardData.households}
+          initialSuggestions={initialSuggestions ?? []}
           selectedEventId={selectedEventId}
           setPrefillHousehold={setPrefillHousehold}
           setPrefillEvent={setPrefillEvent}

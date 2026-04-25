@@ -1,9 +1,12 @@
 import NavItem from '~/components/nav/sidebar-nav-item'
+import type { Domain } from '~/lib/etta/types'
 
 export type SidebarNavItem = {
   label: string
   href: string
   icon: string
+  badgeCount?: number
+  suggestionDomain?: Domain | 'all'
 }
 
 export type SidebarSection = {

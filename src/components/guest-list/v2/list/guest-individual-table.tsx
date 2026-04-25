@@ -1,7 +1,9 @@
 'use client'
 
 import { memo, useCallback, useMemo } from 'react'
+import { SuggestionGhostItem } from '~/components/etta/SuggestionGhostItem'
 import { Badge } from '~/components/ui/badge'
+import type { EttaSuggestionView } from '~/lib/etta/types'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 
 type TagMap = Map<string, { id: string; name: string; color?: string | null }>
@@ -12,6 +14,7 @@ type GuestIndividualTableProps = {
   onSelectHousehold: (household: HouseholdWithGuests) => void
   selectedHouseholdId?: string
   allTags?: Array<{ id: string; name: string; color?: string | null }>
+  suggestions?: EttaSuggestionView[]
 }
 
 const thClass =
@@ -23,6 +26,7 @@ export const GuestIndividualTable = memo(function GuestIndividualTable({
   onSelectHousehold,
   selectedHouseholdId,
   allTags = [],
+  suggestions = [],
 }: Readonly<GuestIndividualTableProps>) {
   const tagMap: TagMap = useMemo(() => new Map(allTags.map((t) => [t.id, t])), [allTags])
 
@@ -54,6 +58,13 @@ export const GuestIndividualTable = memo(function GuestIndividualTable({
               />
             ))
           )}
+          {suggestions.map((suggestion) => (
+            <tr key={suggestion.id} className='border-border border-b last:border-0'>
+              <td className='px-4 py-3' colSpan={7}>
+                <SuggestionGhostItem suggestion={suggestion} />
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

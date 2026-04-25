@@ -3,6 +3,12 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { GuestCardsList } from '~/components/guest-list/v2/list/guest-cards-list'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 
+jest.mock('~/components/etta/SuggestionGhostItem', () => ({
+  SuggestionGhostItem: ({ suggestion }: { suggestion: { summary: string } }) => (
+    <div data-testid='suggestion-ghost-item'>{suggestion.summary}</div>
+  ),
+}))
+
 const buildHousehold = (
   id: string,
   firstName: string,
@@ -82,5 +88,32 @@ describe('GuestCardsList', () => {
     render(<GuestCardsList households={[]} onSelectHousehold={jest.fn()} />)
 
     expect(screen.getByText('No households yet')).toBeInTheDocument()
+  })
+
+  it('renders ghost suggestions alongside real households', () => {
+    const households = [buildHousehold('household-1', 'Alex', 'Rivera', 'Attending')]
+
+    render(
+      <GuestCardsList
+        households={households}
+        suggestions={[
+          {
+            id: 'suggestion-1',
+            summary: 'Follow up with the Martins',
+            tier: 'T1',
+            domain: 'guests',
+            actionType: 'guest_followup',
+            status: 'pending',
+            createdAt: '2026-04-24T00:00:00.000Z',
+            payload: { message: 'Need transport details' },
+          },
+        ]}
+        onSelectHousehold={jest.fn()}
+      />
+    )
+
+    expect(screen.getByTestId('suggestion-ghost-item')).toHaveTextContent(
+      'Follow up with the Martins'
+    )
   })
 })

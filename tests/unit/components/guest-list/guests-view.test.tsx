@@ -138,6 +138,11 @@ jest.mock('~/trpc/react', () => ({
         }),
       },
     },
+    etta: {
+      getPendingByDomain: {
+        useQuery: () => ({ data: [] }),
+      },
+    },
   },
 }))
 

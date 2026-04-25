@@ -3,6 +3,7 @@ import { Suspense } from 'react'
 import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
 import GuestList from '~/components/guest-list'
 import { getRequiredDashboardOverview } from '~/server/application/authenticated-route/authenticated-route-data'
+import { api } from '~/trpc/server'
 
 export const metadata: Metadata = {
   title: 'Guest List | Your Wedding Website',
@@ -11,14 +12,17 @@ export const metadata: Metadata = {
 }
 
 export default async function DashboardPage() {
-  const dashboardData = await getRequiredDashboardOverview()
+  const [dashboardData, initialSuggestions] = await Promise.all([
+    getRequiredDashboardOverview(),
+    api.etta.getPendingByDomain({ domain: 'guests' }),
+  ])
 
   return (
     <>
       <DashboardTopbar title='Guest List' showManagementActions={false} />
       <main className='min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-6 lg:py-6'>
         <Suspense fallback={<div>Loading guest list…</div>}>
-          <GuestList dashboardData={dashboardData} />
+          <GuestList dashboardData={dashboardData} initialSuggestions={initialSuggestions} />
         </Suspense>
       </main>
     </>

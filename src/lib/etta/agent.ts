@@ -16,7 +16,7 @@ import { gateway } from '@ai-sdk/gateway'
 import { stepCountIs, streamText } from 'ai'
 import { getConciergeTools } from '~/lib/etta/personas/concierge'
 import { getPlannerTools } from '~/lib/etta/personas/planner'
-import type { EttaRequest } from '~/lib/etta/types'
+import type { ActionType, EttaRequest } from '~/lib/etta/types'
 import { logAudit } from '~/lib/etta/utils/audit'
 import { buildSystemPrompt } from '~/lib/etta/utils/build-system-prompt'
 import { resolveEttaContext } from '~/lib/etta/utils/resolve-context'
@@ -50,24 +50,52 @@ function getAnthropicThinkingOptions(modelId: string) {
 }
 
 const MEMORY_TOOL_NAMES = ['memory_read', 'memory_write'] as const
+const BACKGROUND_TOOL_NAMES_BY_ACTION_TYPE: Record<ActionType, readonly string[]> = {
+  add_vendor: ['get_vendor_list', 'add_vendor'],
+  upsert_budget_item: ['get_budget_summary', 'upsert_budget_item'],
+  send_whatsapp_blast: ['get_guest_list', 'get_rsvp_summary', 'send_whatsapp_blast'],
+  draft_vendor_email: ['get_vendor_list', 'get_vendor_quote', 'draft_vendor_email'],
+  suggest_venue_visit: ['get_milestones', 'complete_milestone'],
+  guest_followup: ['get_guest_list', 'get_guest_event_attendance', 'add_household_note'],
+  other: [],
+}
+
+function pickTools(
+  tools: Record<string, unknown>,
+  allowedNames: readonly string[]
+): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(tools).filter(([name]) => allowedNames.includes(name)))
+}
 
 export async function runEttaAgent(req: EttaRequest) {
   assertEttaRuntimeConfig()
 
-  const { actor, weddingId, guestId, authz, messages, toolsetMode = 'full' } = req
+  const {
+    actor,
+    weddingId,
+    guestId,
+    authz,
+    messages,
+    toolsetMode = 'full',
+    approvedSuggestionActionType,
+  } = req
   const startTime = Date.now()
+  const isBackgroundExecution = actor === 'couple-background'
 
   const ctx = await resolveEttaContext({ actor, weddingId, guestId, authz })
 
   const fullTools = actor !== 'guest' ? getPlannerTools(ctx) : getConciergeTools(ctx)
   const tools =
     toolsetMode === 'memory-only'
-      ? Object.fromEntries(
-          Object.entries(fullTools).filter(([name]) =>
-            (MEMORY_TOOL_NAMES as readonly string[]).includes(name)
+      ? pickTools(fullTools, MEMORY_TOOL_NAMES)
+      : toolsetMode === 'background-execution'
+        ? pickTools(
+            fullTools,
+            approvedSuggestionActionType
+              ? BACKGROUND_TOOL_NAMES_BY_ACTION_TYPE[approvedSuggestionActionType]
+              : []
           )
-        )
-      : fullTools
+        : fullTools
   const system = buildSystemPrompt(ctx, { toolsetMode })
 
   const modelId = process.env.ETTA_MODEL || DEFAULT_MODEL
@@ -81,11 +109,20 @@ export async function runEttaAgent(req: EttaRequest) {
       ? (authz?.userId ?? `guest:${guestId}`)
       : actor === 'couple-bot'
         ? (authz?.userId ?? 'couple-bot:unknown')
-        : (authz?.userId ?? 'couple:unknown')
+        : isBackgroundExecution
+          ? ctx.ettaActorId
+          : (authz?.userId ?? 'couple:unknown')
   await logAudit({
     weddingId,
     actorId: chatRequestActorId,
-    actorType: actor === 'guest' ? 'guest' : actor === 'couple-bot' ? 'couple-bot' : 'couple',
+    actorType:
+      actor === 'guest'
+        ? 'guest'
+        : actor === 'couple-bot'
+          ? 'couple-bot'
+          : isBackgroundExecution
+            ? 'etta'
+            : 'couple',
     action: 'chat_request',
     resourceType: 'conversation',
     payload: {

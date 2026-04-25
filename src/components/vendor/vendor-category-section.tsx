@@ -1,10 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { SuggestionGhostItem } from '~/components/etta/SuggestionGhostItem'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 import { VendorCard } from '~/components/vendor/vendor-card'
 import { VendorForm } from '~/components/vendor/vendor-form'
+import type { EttaSuggestionView } from '~/lib/etta/types'
 import type { VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
 
 type VendorCategory = VendorWithQuotes['category']
@@ -21,6 +23,7 @@ const CATEGORY_LABELS: Record<VendorCategory, string> = {
 
 type VendorCategorySectionProps = {
   category: VendorCategory
+  suggestions?: EttaSuggestionView[]
   vendors: VendorWithQuotes[]
   onViewDetails: (vendorId: string) => void
   onRefresh: () => void
@@ -28,6 +31,7 @@ type VendorCategorySectionProps = {
 
 export function VendorCategorySection({
   category,
+  suggestions = [],
   vendors,
   onViewDetails,
   onRefresh,
@@ -52,7 +56,7 @@ export function VendorCategorySection({
         </Button>
       </div>
 
-      {vendors.length === 0 && (
+      {vendors.length === 0 && suggestions.length === 0 && (
         <p className='py-4 text-center font-mono text-[0.72rem] text-muted-foreground uppercase tracking-wider'>
           No vendors added yet
         </p>
@@ -67,6 +71,9 @@ export function VendorCategorySection({
             onViewDetails={onViewDetails}
             onDeleted={onRefresh}
           />
+        ))}
+        {suggestions.map((suggestion) => (
+          <SuggestionGhostItem key={suggestion.id} suggestion={suggestion} />
         ))}
       </div>
 

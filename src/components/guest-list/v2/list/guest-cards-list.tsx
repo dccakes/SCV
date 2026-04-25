@@ -1,7 +1,9 @@
 import { memo } from 'react'
 
+import { SuggestionGhostItem } from '~/components/etta/SuggestionGhostItem'
 import { GuestCard } from '~/components/guest-list/v2/list/guest-card'
 import { Card, CardContent } from '~/components/ui/card'
+import type { EttaSuggestionView } from '~/lib/etta/types'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 
 type GuestCardsListProps = {
@@ -10,6 +12,7 @@ type GuestCardsListProps = {
   selectedHouseholdId?: string
   emptyMessage?: string
   allTags?: Array<{ id: string; name: string; color?: string | null }>
+  suggestions?: EttaSuggestionView[]
 }
 
 function GuestCardsListComponent({
@@ -18,8 +21,9 @@ function GuestCardsListComponent({
   selectedHouseholdId,
   emptyMessage = 'No households yet',
   allTags = [],
+  suggestions = [],
 }: Readonly<GuestCardsListProps>) {
-  if (households.length === 0) {
+  if (households.length === 0 && suggestions.length === 0) {
     return (
       <Card>
         <CardContent className='p-4'>
@@ -39,6 +43,9 @@ function GuestCardsListComponent({
           isSelected={selectedHouseholdId === household.id}
           allTags={allTags}
         />
+      ))}
+      {suggestions.map((suggestion) => (
+        <SuggestionGhostItem key={suggestion.id} suggestion={suggestion} />
       ))}
     </div>
   )

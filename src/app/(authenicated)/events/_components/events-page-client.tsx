@@ -13,6 +13,8 @@ import { toast } from 'sonner'
 import { EventCard } from '@/app/(authenicated)/events/_components/event-card'
 import { ManageEventGuestsDialog } from '@/app/(authenicated)/events/_components/manage-event-guests-dialog'
 import { ManageEventQuestionsDialog } from '@/app/(authenicated)/events/_components/manage-event-questions-dialog'
+import { SuggestionGhostItem } from '~/components/etta/SuggestionGhostItem'
+import { useDomainSuggestions } from '~/components/etta/use-domain-suggestions'
 import {
   type EventFormData,
   transformToServerInput,
@@ -30,15 +32,21 @@ import {
 } from '~/components/ui/alert-dialog'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent } from '~/components/ui/card'
+import type { EttaSuggestionView } from '~/lib/etta/types'
 import type { Event, EventWithStats } from '~/server/domains/event/event.types'
 import { api } from '~/trpc/react'
 
 type EventsPageClientProps = Readonly<{
   initialEvents: EventWithStats[]
+  initialSuggestions?: EttaSuggestionView[]
   initialRsvpEventId?: string
 }>
 
-export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPageClientProps) {
+export function EventsPageClient({
+  initialEvents,
+  initialSuggestions = [],
+  initialRsvpEventId,
+}: EventsPageClientProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState<EventWithStats | undefined>(undefined)
   const [deletingEvent, setDeletingEvent] = useState<EventWithStats | undefined>(undefined)
@@ -57,6 +65,7 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
       staleTime: 30_000,
     }
   )
+  const suggestions = useDomainSuggestions('events', initialSuggestions)
 
   const createEvent = api.event.create.useMutation({
     onSuccess: async () => {
@@ -209,7 +218,7 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
   if (isLoading && initialEvents.length === 0) {
     return (
       <div className='flex items-center justify-center py-12'>
-        <p className='text-muted-foreground text-sm'>Loading events...</p>
+        <p className='text-muted-foreground text-sm'>Loading events…</p>
       </div>
     )
   }
@@ -220,7 +229,10 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
         <Card>
           <CardContent className='flex flex-col items-center justify-center py-8 text-center md:py-12'>
             <div className='mb-4 rounded-full bg-muted p-4 md:p-6'>
-              <Calendar className='h-10 w-10 text-muted-foreground md:h-12 md:w-12' />
+              <Calendar
+                aria-hidden='true'
+                className='h-10 w-10 text-muted-foreground md:h-12 md:w-12'
+              />
             </div>
             <h2 className='mb-2 font-semibold text-xl md:text-2xl'>No events yet</h2>
             <p className='mb-6 max-w-md px-4 text-muted-foreground text-sm md:text-base'>
@@ -228,7 +240,7 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
               rehearsal dinners, and more.
             </p>
             <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className='mr-2 h-4 w-4' />
+              <Plus aria-hidden='true' className='mr-2 h-4 w-4' />
               Create Event
             </Button>
           </CardContent>
@@ -266,7 +278,7 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
           {events.length} {events.length === 1 ? 'event' : 'events'}
         </p>
         <Button onClick={() => setIsCreateDialogOpen(true)} size='sm'>
-          <Plus className='mr-2 h-4 w-4' />
+          <Plus aria-hidden='true' className='mr-2 h-4 w-4' />
           Create Event
         </Button>
       </div>
@@ -283,6 +295,9 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
             onToggleCollectRsvp={handleToggleCollectRsvp}
             isTogglingCollectRsvp={togglingRsvpEventId === event.id}
           />
+        ))}
+        {suggestions.map((suggestion) => (
+          <SuggestionGhostItem key={suggestion.id} suggestion={suggestion} />
         ))}
       </div>
 
@@ -331,8 +346,10 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
               disabled={deleteEvent.isPending}
               className='flex items-center gap-2 bg-red-600 hover:bg-red-700'
             >
-              {deleteEvent.isPending && <Loader2 className='h-4 w-4 animate-spin' />}
-              {deleteEvent.isPending ? 'Deleting...' : 'Delete Event'}
+              {deleteEvent.isPending ? (
+                <Loader2 aria-hidden='true' className='h-4 w-4 animate-spin' />
+              ) : null}
+              {deleteEvent.isPending ? 'Deleting…' : 'Delete Event'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

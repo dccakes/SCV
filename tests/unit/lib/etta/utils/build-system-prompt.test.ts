@@ -48,6 +48,13 @@ describe('buildSystemPrompt — couple (planner)', () => {
     expect(prompt).toContain('T2')
   })
 
+  it('instructs Etta to include a domain when creating suggestions', () => {
+    const prompt = buildSystemPrompt(makeContext())
+
+    expect(prompt).toContain('always provide a domain value')
+    expect(prompt).toContain('guests | events | rsvp | vendors | budget | tasks | other')
+  })
+
   it('includes memories when present', () => {
     const ctx = makeContext({
       recentMemories: ['Bride prefers peonies', 'Budget is $30k'],
@@ -101,6 +108,7 @@ describe('buildSystemPrompt — couple-bot (Telegram planner)', () => {
 
     expect(prompt).toContain('Telegram')
     expect(prompt).toContain('/etta/pending')
+    expect(prompt).toContain('review inbox')
   })
 })
 
@@ -135,5 +143,17 @@ describe('buildSystemPrompt — toolsetMode: memory-only', () => {
 
     expect(prompt).toContain('T0')
     expect(prompt).not.toContain('memory_write')
+  })
+})
+
+describe('buildSystemPrompt — toolsetMode: background-execution', () => {
+  it('adds explicit background execution constraints', () => {
+    const prompt = buildSystemPrompt(makeContext({ actor: 'couple-background' }), {
+      toolsetMode: 'background-execution',
+    })
+
+    expect(prompt).toContain('already-approved suggestion')
+    expect(prompt).toContain('Carry out only the approved action')
+    expect(prompt).toContain('Do not browse the web')
   })
 })

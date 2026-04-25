@@ -3,11 +3,14 @@ import { render, screen } from '@testing-library/react'
 import VendorsPage from '~/app/(authenicated)/vendors/page'
 
 const mockGetVendors = jest.fn()
+const mockGetPendingByDomain = jest.fn()
 const mockGetRequiredWedding = jest.fn()
 const mockRedirect = jest.fn()
-const mockVendorList = jest.fn((_props: { initialVendors: unknown[] }) => (
-  <div data-testid='vendor-list'>Vendor list</div>
-))
+const mockVendorList = jest.fn(
+  (_props: { initialSuggestions: unknown[]; initialVendors: unknown[] }) => (
+    <div data-testid='vendor-list'>Vendor list</div>
+  )
+)
 const mockDashboardTopbar = jest.fn(
   (_props: { title?: string; showManagementActions?: boolean }) => (
     <header data-testid='dashboard-topbar'>Topbar</header>
@@ -23,6 +26,9 @@ jest.mock('~/trpc/server', () => ({
     vendor: {
       getAll: () => mockGetVendors(),
     },
+    etta: {
+      getPendingByDomain: (...args: unknown[]) => mockGetPendingByDomain(...args),
+    },
   },
 }))
 
@@ -32,8 +38,8 @@ jest.mock('~/server/application/authenticated-route/authenticated-route-data', (
 
 jest.mock('~/components/vendor', () => ({
   __esModule: true,
-  default: ({ initialVendors }: { initialVendors: unknown[] }) =>
-    mockVendorList({ initialVendors }),
+  default: (props: { initialSuggestions: unknown[]; initialVendors: unknown[] }) =>
+    mockVendorList(props),
 }))
 
 jest.mock('~/components/dashboard/dashboard-topbar', () => ({
@@ -45,6 +51,8 @@ jest.mock('~/components/dashboard/dashboard-topbar', () => ({
 describe('VendorsPage', () => {
   beforeEach(() => {
     mockGetVendors.mockReset()
+    mockGetPendingByDomain.mockReset()
+    mockGetPendingByDomain.mockResolvedValue([])
     mockGetRequiredWedding.mockReset()
     mockGetRequiredWedding.mockResolvedValue({ id: 'wedding-123' })
     mockRedirect.mockReset()
@@ -54,13 +62,19 @@ describe('VendorsPage', () => {
 
   it('fetches vendors on server and passes initialVendors to VendorList', async () => {
     const vendors = [{ id: 1, name: 'Photographer' }]
+    const suggestions = [{ id: 'suggestion-1', summary: 'Add Sunset Florals' }]
     mockGetVendors.mockResolvedValue(vendors)
+    mockGetPendingByDomain.mockResolvedValue(suggestions)
 
     const page = await VendorsPage()
     render(page)
 
     expect(mockGetVendors).toHaveBeenCalledTimes(1)
-    expect(mockVendorList).toHaveBeenCalledWith({ initialVendors: vendors })
+    expect(mockGetPendingByDomain).toHaveBeenCalledWith({ domain: 'vendors' })
+    expect(mockVendorList).toHaveBeenCalledWith({
+      initialVendors: vendors,
+      initialSuggestions: suggestions,
+    })
     expect(screen.getByTestId('vendor-list')).toBeInTheDocument()
   })
 

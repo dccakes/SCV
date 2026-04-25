@@ -150,6 +150,7 @@ describe('getVendorTools', () => {
         data: {
           weddingId: 'wedding-123',
           actorId: 'actor-123',
+          domain: 'vendors',
           actionType: 'add_vendor',
           tier: 'T1',
           payload: params,

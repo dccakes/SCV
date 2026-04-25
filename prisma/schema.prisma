@@ -627,17 +627,21 @@ model EttaSuggestion {
   wedding       Wedding   @relation(fields: [weddingId], references: [id], onDelete: Cascade)
   actorId       String    @map("actor_id")
   actor         EttaActor @relation(fields: [actorId], references: [id])
+  domain        String
   actionType    String    @map("action_type")
   tier          String // 'T1' | 'T2'
   payload       Json
   summary       String
-  status        String    @default("pending") // pending | approved | dismissed | executed
+  status        String    @default("pending") // pending | approved | dismissed | actioned | failed
   chatMessageId String?   @map("chat_message_id")
   createdAt     DateTime  @default(now()) @map("created_at")
+  executedAt    DateTime? @map("executed_at")
+  failureReason String?   @map("failure_reason")
   resolvedAt    DateTime? @map("resolved_at")
   resolvedBy    String?   @map("resolved_by")
 
   @@index([weddingId, status])
+  @@index([weddingId, domain, status])
   @@index([createdAt(sort: Desc)])
   @@map("etta_suggestions")
 }

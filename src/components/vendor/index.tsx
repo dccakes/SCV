@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-
+import { useMemo, useState } from 'react'
+import { useDomainSuggestions } from '~/components/etta/use-domain-suggestions'
 import { VendorCategorySection } from '~/components/vendor/vendor-category-section'
 import { VendorDetailPanel } from '~/components/vendor/vendor-detail-panel'
+import type { EttaSuggestionView } from '~/lib/etta/types'
 import type { VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
 
@@ -20,13 +21,15 @@ const CATEGORY_ORDER = [
 ] satisfies VendorCategory[]
 
 type VendorListProps = {
+  initialSuggestions: EttaSuggestionView[]
   initialVendors: VendorWithQuotes[]
 }
 
-export default function VendorList({ initialVendors }: VendorListProps) {
+export default function VendorList({ initialSuggestions, initialVendors }: VendorListProps) {
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null)
 
   const { data: vendors, refetch } = api.vendor.getAll.useQuery({}, { initialData: initialVendors })
+  const suggestions = useDomainSuggestions('vendors', initialSuggestions)
 
   const detailVendor = selectedVendorId
     ? ((vendors ?? []).find((v) => v.id === selectedVendorId) ?? null)
@@ -40,8 +43,41 @@ export default function VendorList({ initialVendors }: VendorListProps) {
     setSelectedVendorId(null)
   }
 
-  const vendorsByCategory = (category: VendorCategory): VendorWithQuotes[] =>
-    (vendors ?? []).filter((v) => v.category === category)
+  const vendorsByCategory = useMemo(() => {
+    const grouped = new Map<VendorCategory, VendorWithQuotes[]>()
+
+    for (const vendor of vendors ?? []) {
+      const current = grouped.get(vendor.category) ?? []
+      current.push(vendor)
+      grouped.set(vendor.category, current)
+    }
+
+    return grouped
+  }, [vendors])
+
+  const suggestionsByCategory = useMemo(() => {
+    const grouped = new Map<VendorCategory, EttaSuggestionView[]>()
+
+    for (const suggestion of suggestions) {
+      const payloadCategory =
+        typeof suggestion.payload === 'object' &&
+        suggestion.payload !== null &&
+        'category' in suggestion.payload
+          ? suggestion.payload.category
+          : undefined
+
+      if (!payloadCategory) {
+        continue
+      }
+
+      const category = payloadCategory as VendorCategory
+      const current = grouped.get(category) ?? []
+      current.push(suggestion)
+      grouped.set(category, current)
+    }
+
+    return grouped
+  }, [suggestions])
 
   return (
     <div>
@@ -53,7 +89,8 @@ export default function VendorList({ initialVendors }: VendorListProps) {
         <VendorCategorySection
           key={category}
           category={category}
-          vendors={vendorsByCategory(category)}
+          suggestions={suggestionsByCategory.get(category) ?? []}
+          vendors={vendorsByCategory.get(category) ?? []}
           onViewDetails={handleViewDetails}
           onRefresh={() => refetch()}
         />

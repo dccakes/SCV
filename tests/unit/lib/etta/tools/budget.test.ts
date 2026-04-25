@@ -91,6 +91,7 @@ describe('getBudgetTools', () => {
         data: {
           weddingId: 'wedding-123',
           actorId: 'actor-123',
+          domain: 'budget',
           actionType: 'upsert_budget_item',
           tier: 'T1',
           payload: params,

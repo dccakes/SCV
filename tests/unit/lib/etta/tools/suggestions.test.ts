@@ -58,14 +58,22 @@ describe('getSuggestionTools', () => {
           id: 'sug-1',
           summary: 'Add vendor',
           tier: 'T1',
+          domain: 'vendors',
           actionType: 'add_vendor',
+          status: 'pending',
+          executedAt: null,
+          failureReason: null,
           createdAt: new Date(),
         },
         {
           id: 'sug-2',
           summary: 'Send blast',
           tier: 'T2',
+          domain: 'vendors',
           actionType: 'send_whatsapp_blast',
+          status: 'failed',
+          executedAt: new Date('2026-04-24T12:00:00.000Z'),
+          failureReason: 'Twilio unavailable',
           createdAt: new Date(),
         },
       ]
@@ -76,7 +84,17 @@ describe('getSuggestionTools', () => {
       expect(mockDb.ettaSuggestion.findMany).toHaveBeenCalledWith({
         where: { weddingId: 'wedding-123', status: 'pending' },
         orderBy: { createdAt: 'desc' },
-        select: { id: true, summary: true, tier: true, actionType: true, createdAt: true },
+        select: {
+          id: true,
+          summary: true,
+          tier: true,
+          domain: true,
+          actionType: true,
+          status: true,
+          executedAt: true,
+          failureReason: true,
+          createdAt: true,
+        },
       })
       expect(result).toEqual(suggestions)
     })
@@ -87,6 +105,7 @@ describe('getSuggestionTools', () => {
       mockDb.ettaSuggestion.create.mockResolvedValue({ id: 'sug-new' })
 
       const params = {
+        domain: 'vendors' as const,
         actionType: 'add_vendor',
         tier: 'T1' as const,
         summary: 'Add a photographer',
@@ -99,6 +118,7 @@ describe('getSuggestionTools', () => {
         data: {
           weddingId: 'wedding-123',
           actorId: 'actor-123',
+          domain: 'vendors',
           actionType: 'add_vendor',
           tier: 'T1',
           summary: 'Add a photographer',
@@ -111,6 +131,15 @@ describe('getSuggestionTools', () => {
         status: 'pending',
         message: 'Suggestion created for review',
       })
+    })
+
+    it('describes the supported domains and action types', () => {
+      expect(tools.create_suggestion.description).toContain(
+        'guests, events, rsvp, vendors, budget, tasks, other'
+      )
+      expect(tools.create_suggestion.description).toContain(
+        'add_vendor, upsert_budget_item, send_whatsapp_blast, draft_vendor_email, suggest_venue_visit, guest_followup, other'
+      )
     })
   })
 })

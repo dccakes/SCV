@@ -6,6 +6,7 @@ import { dashboardRouter } from '~/server/application/dashboard/dashboard.router
 import { rsvpSubmissionRouter } from '~/server/application/rsvp-submission/rsvp-submission.router'
 import { selfFillRegistrationService } from '~/server/application/self-fill-registration'
 import { communicationLogRouter } from '~/server/domains/communication-log/communication-log.router'
+import { ettaSuggestionRouter } from '~/server/domains/etta-suggestion'
 import { eventRouter } from '~/server/domains/event/event.router'
 import { giftRouter } from '~/server/domains/gift/gift.router'
 import { guestRouter } from '~/server/domains/guest/guest.router'
@@ -63,6 +64,9 @@ export const appRouter = createTRPCRouter({
 
   // Messaging (Telegram couple-bot)
   messaging: messagingRouter,
+
+  // Etta suggestions
+  etta: ettaSuggestionRouter,
 })
 
 // export type definition of API

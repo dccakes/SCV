@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { EttaChat } from '~/components/etta/EttaChat'
 import SidebarNavFrame from '~/components/nav/sidebar-nav'
+import { api } from '~/trpc/react'
 
 type AuthenticatedSidebarContextValue = {
   openSidebar: () => void
@@ -43,6 +44,9 @@ export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppSh
   } = props
   const [isOpen, setIsOpen] = useState(false)
   const [isEttaPanelOpen, setIsEttaPanelOpen] = useState(showEttaPanel)
+  const { data: pendingSuggestionCounts } = api.etta.getPendingCounts.useQuery(undefined, {
+    staleTime: 30_000,
+  })
 
   useEffect(() => {
     document.body.classList.add('overflow-hidden')
@@ -94,6 +98,7 @@ export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppSh
           userInitials={currentUserInitials}
           weddingDate={weddingDate}
           weddingLocation={weddingLocation}
+          pendingSuggestionCounts={pendingSuggestionCounts}
         />
         <div className='flex min-h-0 flex-1 overflow-hidden'>
           <div className='flex min-h-0 flex-1 flex-col overflow-hidden'>{children}</div>

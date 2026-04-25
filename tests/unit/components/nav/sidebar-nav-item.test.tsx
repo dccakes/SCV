@@ -31,4 +31,19 @@ describe('SidebarNavItem', () => {
     fireEvent.click(screen.getByRole('link', { name: 'Vendors' }))
     expect(onClick).toHaveBeenCalledTimes(1)
   })
+
+  it('renders a badge count when one is provided', () => {
+    render(
+      <SidebarNavItem
+        label='Etta'
+        href='/etta/pending'
+        icon='✦'
+        isActive={false}
+        isCollapsed={false}
+        badgeCount={4}
+      />
+    )
+
+    expect(screen.getByText('4')).toBeInTheDocument()
+  })
 })

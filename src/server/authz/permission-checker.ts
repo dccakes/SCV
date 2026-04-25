@@ -7,6 +7,23 @@ import type {
   PermissionInput,
 } from '~/server/authz/authorization.types'
 
+type AuthorizeCallable = { authorize: (permissions: PermissionInput) => { success: boolean } }
+
+export const hasPermission = (ctx: AuthzContext, permissions: PermissionInput): boolean => {
+  if (!ctx.activeOrganization) {
+    return false
+  }
+
+  const { role } = ctx.activeOrganization
+  const roleKey = role as keyof typeof organizationRoles
+
+  if (!role || !(roleKey in organizationRoles)) {
+    return false
+  }
+
+  return (organizationRoles[roleKey] as unknown as AuthorizeCallable).authorize(permissions).success
+}
+
 export const requirePermission = (
   ctx: AuthzContext,
   permissions: PermissionInput
@@ -27,7 +44,6 @@ export const requirePermission = (
 
   // Cast required: better-auth generates role-specific authorize overloads that are
   // incompatible when accessed via a dynamic key. The cast to unknown is intentional.
-  type AuthorizeCallable = { authorize: (permissions: PermissionInput) => { success: boolean } }
   const result = (organizationRoles[roleKey] as unknown as AuthorizeCallable).authorize(permissions)
 
   if (!result.success) {

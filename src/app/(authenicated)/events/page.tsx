@@ -28,14 +28,18 @@ export default async function EventsPage(props: {
 }) {
   const searchParams = (await props.searchParams) ?? {}
   await getRequiredWedding()
-  const initialEvents = (await api.event.getAllByUserIdWithStats()) ?? []
+  const [initialEvents, initialSuggestions] = await Promise.all([
+    api.event.getAllByUserIdWithStats(),
+    api.etta.getPendingByDomain({ domain: 'events' }),
+  ])
 
   return (
     <>
       <DashboardTopbar title='Events' showManagementActions={false} />
       <main className='min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-6 lg:py-6'>
         <EventsPageClient
-          initialEvents={initialEvents}
+          initialEvents={initialEvents ?? []}
+          initialSuggestions={initialSuggestions}
           initialRsvpEventId={searchParams.tab === 'rsvps' ? searchParams.eventId : undefined}
         />
       </main>
