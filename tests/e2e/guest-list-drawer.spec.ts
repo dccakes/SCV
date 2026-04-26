@@ -141,7 +141,8 @@ test.describe('Guest List Drawer - Editing Contact & Address', () => {
 
     // Verify existing data is pre-filled
     await expect(page.locator('input[name="email"]')).toHaveValue('donkey@swamp.wed')
-    await expect(page.locator('input[name="phone"]')).toHaveValue(/\+1\D*202\D*555\D*0101/)
+    await expect(page.getByRole('button', { name: 'Select country' })).toContainText('+1')
+    await expect(page.locator('input[name="phone"]')).toHaveValue(/202\D*555\D*0101/)
     await expect(page.locator('input[name="address1"]')).toHaveValue('1 Mud Lane')
     await expect(page.locator('input[name="city"]')).toHaveValue('Swampside')
     await expect(page.locator('input[name="state"]')).toHaveValue('FFA')
