@@ -64,6 +64,8 @@ export const mockVendorCategoryConfig: VendorCategoryConfig = {
   weddingId: null,
   category: VendorCategory.VENUE,
   fieldDefinitions: mockFieldDefinitions,
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-01-01'),
 }
 
 export const mockQuoteFile: VendorQuoteFile = {
