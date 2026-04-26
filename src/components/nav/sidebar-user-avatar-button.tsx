@@ -14,9 +14,9 @@ export default function SidebarUserAvatarButton(props: Readonly<SidebarUserAvata
   const roleLabel = getOrganizationRoleLabel(workspace.role ?? 'member')
 
   return (
-    <div className='flex flex-col gap-1.5 border-border border-t p-3'>
+    <div className='flex flex-col gap-1.5 border-white/6 border-t p-3'>
       <div
-        className={`flex items-center gap-2 rounded-md px-2 py-1.5 font-mono text-foreground/65 text-xs ${
+        className={`flex items-center gap-2 rounded-md px-2 py-1.5 ${
           isCollapsed ? 'justify-center' : ''
         }`}
       >
@@ -25,8 +25,10 @@ export default function SidebarUserAvatarButton(props: Readonly<SidebarUserAvata
         </span>
         {!isCollapsed && (
           <div>
-            <div className='font-serif text-foreground/65 text-xs leading-tight'>{firstName}</div>
-            <div className='text-foreground/50 text-xs uppercase tracking-wider'>{roleLabel}</div>
+            <div className='font-sans text-sidebar-cream/80 text-xs leading-tight'>{firstName}</div>
+            <div className='font-mono text-sidebar-cream/35 text-xs uppercase tracking-wider'>
+              {roleLabel}
+            </div>
           </div>
         )}
       </div>
@@ -34,13 +36,15 @@ export default function SidebarUserAvatarButton(props: Readonly<SidebarUserAvata
       <button
         type='button'
         onClick={onSignOut}
-        className={`flex items-center gap-2 rounded-sm border border-border px-2 py-1.5 font-mono text-[0.58rem] text-foreground/55 uppercase tracking-widest transition-all hover:border-foreground/20 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/40 ${
+        className={`flex items-center gap-2 rounded-sm border border-white/15 px-2 py-1.5 font-mono text-[0.58rem] text-sidebar-cream/55 uppercase tracking-widest transition-colors hover:border-accent/60 hover:bg-white/[0.04] hover:text-sidebar-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar-ink ${
           isCollapsed ? 'justify-center' : ''
         }`}
         title='Sign out'
         aria-label='Sign out'
       >
-        <span className='text-[0.7rem]'>↪</span>
+        <span aria-hidden='true' className='text-[0.7rem]'>
+          ↪
+        </span>
         {!isCollapsed && 'Sign out'}
       </button>
     </div>

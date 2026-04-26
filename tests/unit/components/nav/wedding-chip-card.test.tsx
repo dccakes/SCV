@@ -15,6 +15,9 @@ describe('WeddingChipCard', () => {
     expect(screen.getByText('Holly & Diego')).toBeInTheDocument()
     expect(screen.getByText('17 May 2027')).toBeInTheDocument()
     expect(screen.getByText('Oaxaca, Mexico')).toBeInTheDocument()
+    expect(screen.getByText('Holly & Diego')).toHaveClass('text-sidebar-cream')
+    expect(screen.getByText('17 May 2027')).toHaveClass('text-accent')
+    expect(screen.getByText('Oaxaca, Mexico')).toHaveClass('text-sidebar-cream/45')
   })
 
   it('should only render values that are present', () => {

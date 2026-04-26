@@ -27,7 +27,7 @@ export default function SidebarNavContent(props: Readonly<SidebarNavContentProps
         <div key={section.title}>
           {!isCollapsed && (
             <p
-              className={`font-mono text-muted-foreground text-xs uppercase tracking-[0.18em] ${
+              className={`font-mono text-[0.6rem] text-sidebar-cream/25 uppercase tracking-[0.18em] ${
                 sectionIndex === 0 ? 'px-4 pt-2 pb-1' : 'mt-2 px-4 pt-2 pb-1'
               }`}
             >
