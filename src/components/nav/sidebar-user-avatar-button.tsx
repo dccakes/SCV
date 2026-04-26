@@ -14,9 +14,9 @@ export default function SidebarUserAvatarButton(props: Readonly<SidebarUserAvata
   const roleLabel = getOrganizationRoleLabel(workspace.role ?? 'member')
 
   return (
-    <div className='flex flex-col gap-1.5 border-white/10 border-t p-3'>
+    <div className='flex flex-col gap-1.5 border-border border-t p-3'>
       <div
-        className={`flex items-center gap-2 rounded-md px-2 py-1.5 font-mono text-sidebar-cream/70 text-xs ${
+        className={`flex items-center gap-2 rounded-md px-2 py-1.5 font-mono text-foreground/65 text-xs ${
           isCollapsed ? 'justify-center' : ''
         }`}
       >
@@ -25,12 +25,8 @@ export default function SidebarUserAvatarButton(props: Readonly<SidebarUserAvata
         </span>
         {!isCollapsed && (
           <div>
-            <div className='font-serif text-[0.75rem] text-muted-foreground leading-tight'>
-              {firstName}
-            </div>
-            <div className='text-[0.55rem] text-muted-foreground uppercase tracking-wider'>
-              {roleLabel}
-            </div>
+            <div className='font-serif text-foreground/65 text-xs leading-tight'>{firstName}</div>
+            <div className='text-foreground/50 text-xs uppercase tracking-wider'>{roleLabel}</div>
           </div>
         )}
       </div>
@@ -38,7 +34,7 @@ export default function SidebarUserAvatarButton(props: Readonly<SidebarUserAvata
       <button
         type='button'
         onClick={onSignOut}
-        className={`flex items-center gap-2 rounded-sm border border-white/25 px-2 py-1.5 font-mono text-[0.58rem] text-muted-foreground uppercase tracking-widest transition-all hover:border-white/20 hover:text-sidebar-cream/75 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sidebar-cream/40 ${
+        className={`flex items-center gap-2 rounded-sm border border-border px-2 py-1.5 font-mono text-[0.58rem] text-foreground/55 uppercase tracking-widest transition-all hover:border-foreground/20 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/40 ${
           isCollapsed ? 'justify-center' : ''
         }`}
         title='Sign out'

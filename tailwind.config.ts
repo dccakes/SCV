@@ -42,6 +42,7 @@ const themeColorTokens = {
     DEFAULT: oklchToken('--card'),
     foreground: oklchToken('--card-foreground'),
   },
+  sidebar: oklchToken('--sidebar'),
   'sidebar-ink': oklchToken('--sidebar-ink'),
   'sidebar-cream': oklchToken('--sidebar-cream'),
   'etta-ink': oklchToken('--etta-ink'),

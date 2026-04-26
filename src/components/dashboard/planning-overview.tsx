@@ -74,19 +74,19 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
 
       <div className='relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div>
-          <p className='mb-1 font-mono text-[0.6rem] text-sidebar-cream/40 uppercase tracking-[0.18em]'>
+          <p className='mb-1 font-mono text-[0.6rem] text-sidebar-cream/60 uppercase tracking-[0.18em]'>
             {hasDate ? 'Days until the big day' : 'Your wedding'}
           </p>
           <p className='font-serif text-2xl text-sidebar-cream italic leading-tight'>
             {coupleName}
           </p>
           {(dateLabel || location) && (
-            <p className='mt-0.5 font-mono text-[0.62rem] text-sidebar-cream/40 tracking-wider'>
+            <p className='mt-0.5 font-mono text-[0.62rem] text-sidebar-cream/60 tracking-wider'>
               {[dateLabel, location].filter(Boolean).join(' · ')}
             </p>
           )}
           {!hasDate && !location && (
-            <p className='mt-0.5 font-mono text-[0.62rem] text-sidebar-cream/30 tracking-wider'>
+            <p className='mt-0.5 font-mono text-[0.62rem] text-sidebar-cream/50 tracking-wider'>
               Set your date & location in{' '}
               <Link href='/settings' className='text-primary underline underline-offset-2'>
                 Settings
@@ -99,7 +99,7 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
               style={{ width: `${planningPct}%` }}
             />
           </div>
-          <p className='mt-1 font-mono text-[0.55rem] text-sidebar-cream/30 tracking-widest'>
+          <p className='mt-1 font-mono text-[0.55rem] text-sidebar-cream/50 tracking-widest'>
             {planningPct}% of planning complete
           </p>
         </div>
@@ -110,35 +110,35 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
               <span className='block font-serif text-5xl text-sidebar-cream leading-none'>
                 {days}
               </span>
-              <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
+              <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/50 uppercase tracking-[0.14em]'>
                 Days
               </span>
             </div>
-            <span className='pb-1 font-serif text-3xl text-sidebar-cream/15'>:</span>
+            <span className='pb-1 font-serif text-3xl text-sidebar-cream/30'>:</span>
             <div className='text-center'>
               <span className='block font-serif text-5xl text-sidebar-cream leading-none'>
                 {String(hours).padStart(2, '0')}
               </span>
-              <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
+              <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/50 uppercase tracking-[0.14em]'>
                 Hours
               </span>
             </div>
-            <span className='pb-1 font-serif text-3xl text-sidebar-cream/15'>:</span>
+            <span className='pb-1 font-serif text-3xl text-sidebar-cream/30'>:</span>
             <div className='text-center'>
               <span className='block font-serif text-5xl text-sidebar-cream leading-none'>
                 {String(mins).padStart(2, '0')}
               </span>
-              <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
+              <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/50 uppercase tracking-[0.14em]'>
                 Mins
               </span>
             </div>
           </div>
         ) : (
           <div className='text-center'>
-            <span className='block font-serif text-3xl text-sidebar-cream/30 leading-none'>
+            <span className='block font-serif text-3xl text-sidebar-cream/50 leading-none'>
               --:--:--
             </span>
-            <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
+            <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/50 uppercase tracking-[0.14em]'>
               No date set
             </span>
           </div>

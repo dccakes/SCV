@@ -10,7 +10,8 @@ describe('SidebarNavItem', () => {
 
     const link = screen.getByRole('link', { name: 'Dashboard' })
     expect(link).toHaveClass('border-primary')
-    expect(link).toHaveClass('bg-primary/25')
+    expect(link).toHaveClass('bg-primary/10')
+    expect(link).toHaveClass('text-primary')
   })
 
   it('should hide label text when collapsed and call click handler', () => {

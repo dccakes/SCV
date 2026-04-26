@@ -28,6 +28,9 @@ const SIDEBAR_SECTIONS: readonly SidebarSection[] = [
   },
 ]
 
+const SIDEBAR_ICON_BUTTON_CHROME_CLASS_NAME =
+  'rounded-md text-foreground/55 transition-colors hover:bg-primary/8 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar'
+
 type WorkspaceSnapshot = {
   role: string | null
   capabilities: {
@@ -93,10 +96,10 @@ function SidebarNav({
   userInitials,
 }: SidebarNavProps) {
   return (
-    <div className='flex h-full min-h-0 flex-col overflow-hidden bg-sidebar-ink'>
+    <div className='flex h-full min-h-0 flex-col overflow-hidden bg-sidebar'>
       {/* Header: logo + collapse toggle */}
       <div
-        className={`flex items-center border-white/10 border-b py-4 ${
+        className={`flex items-center border-border border-b py-4 ${
           isCollapsed
             ? 'justify-center px-2'
             : showCollapseToggle
@@ -106,7 +109,7 @@ function SidebarNav({
       >
         {!isCollapsed && (
           <div className='flex items-center gap-2'>
-            <span className='font-medium font-mono text-sidebar-cream text-xs uppercase tracking-[0.2em]'>
+            <span className='font-medium font-mono text-foreground/70 text-xs uppercase tracking-[0.2em]'>
               OSWP
             </span>
             <span className='mt-[-6px] h-1.5 w-1.5 rounded-full bg-primary' />
@@ -123,7 +126,7 @@ function SidebarNav({
                 onToggleEttaPanel?.()
                 onNavClick?.()
               }}
-              className={`flex h-11 items-center justify-center rounded-md text-sidebar-cream/55 transition-colors hover:bg-white/[0.08] hover:text-sidebar-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar-ink ${
+              className={`flex h-11 items-center justify-center ${SIDEBAR_ICON_BUTTON_CHROME_CLASS_NAME} ${
                 isCollapsed ? 'w-11' : 'gap-1.5 px-2.5'
               }`}
               title={ettaPanelOpen ? 'Hide Etta panel' : 'Show Etta panel'}
@@ -143,7 +146,7 @@ function SidebarNav({
               aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               aria-expanded={!isCollapsed}
               onClick={onToggleCollapse}
-              className='flex h-11 w-11 items-center justify-center rounded-md text-sidebar-cream/55 transition-colors hover:bg-white/[0.08] hover:text-sidebar-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar-ink'
+              className={`flex h-11 w-11 items-center justify-center ${SIDEBAR_ICON_BUTTON_CHROME_CLASS_NAME}`}
             >
               <svg
                 aria-hidden='true'
@@ -354,7 +357,7 @@ export default function SidebarNavFrame(props: SidebarNavFrameProps) {
               type='button'
               aria-label='Close menu'
               onClick={() => setIsOpen(false)}
-              className='absolute top-2 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-md text-sidebar-cream/50 transition-colors hover:bg-white/[0.06] hover:text-sidebar-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar-ink'
+              className={`absolute top-2 right-3 z-10 flex h-9 w-9 items-center justify-center ${SIDEBAR_ICON_BUTTON_CHROME_CLASS_NAME}`}
             >
               <svg
                 aria-hidden='true'
