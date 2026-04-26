@@ -19,7 +19,7 @@ describe('LIKELIHOOD_WEIGHTS', () => {
 
   it('should have weights that increase with scale value', () => {
     for (let i = 1; i < 5; i++) {
-      expect(LIKELIHOOD_WEIGHTS[i + 1]).toBeGreaterThan(LIKELIHOOD_WEIGHTS[i]!)
+      expect(LIKELIHOOD_WEIGHTS[i + 1]).toBeGreaterThan(LIKELIHOOD_WEIGHTS[i] ?? 0)
     }
   })
 
@@ -37,8 +37,8 @@ describe('DEFAULT_LIKELIHOOD_WEIGHT', () => {
   })
 
   it('should fall between the Maybe and Likely weights', () => {
-    expect(DEFAULT_LIKELIHOOD_WEIGHT).toBeGreaterThan(LIKELIHOOD_WEIGHTS[3]!)
-    expect(DEFAULT_LIKELIHOOD_WEIGHT).toBeLessThan(LIKELIHOOD_WEIGHTS[4]!)
+    expect(DEFAULT_LIKELIHOOD_WEIGHT).toBeGreaterThan(LIKELIHOOD_WEIGHTS[3] ?? 0)
+    expect(DEFAULT_LIKELIHOOD_WEIGHT).toBeLessThan(LIKELIHOOD_WEIGHTS[4] ?? 1)
   })
 })
 
