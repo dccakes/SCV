@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+import { normalizePhoneToE164 } from '~/lib/phone/phone-validator'
 import type { Vendor } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
 
@@ -71,7 +72,7 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
   const [instagram, setInstagram] = useState(vendor?.instagram ?? '')
   const [contactName, setContactName] = useState(vendor?.contactName ?? '')
   const [contactEmail, setContactEmail] = useState(vendor?.contactEmail ?? '')
-  const [contactPhone, setContactPhone] = useState(vendor?.contactPhone ?? '')
+  const [contactPhone, setContactPhone] = useState(normalizePhoneToE164(vendor?.contactPhone) ?? '')
 
   const invalidateVendors = () => utils.vendor.getAll.invalidate()
 
@@ -104,7 +105,7 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
       instagram: instagram || undefined,
       contactName: contactName || undefined,
       contactEmail: contactEmail || undefined,
-      contactPhone: contactPhone || undefined,
+      contactPhone: normalizePhoneToE164(contactPhone),
     }
     if (isEditing) {
       updateVendor.mutate({ vendorId: props.vendor.id, ...common })

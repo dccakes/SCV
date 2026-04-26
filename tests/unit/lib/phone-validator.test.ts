@@ -1,5 +1,6 @@
 import {
   isValidE164Phone,
+  normalizePhoneToE164,
   optionalPhoneSchema,
   optionalPhoneSchemaNotNull,
 } from '~/lib/phone/phone-validator'
@@ -62,5 +63,19 @@ describe('optionalPhoneSchemaNotNull', () => {
     const invalidResult = optionalPhoneSchemaNotNull.safeParse('2025550123')
     expect(invalidResult.success).toBe(false)
     expect(invalidResult.error?.issues[0]?.message).toBe('Please enter a valid phone number')
+  })
+})
+
+describe('normalizePhoneToE164', () => {
+  it('returns valid E.164 values unchanged', () => {
+    expect(normalizePhoneToE164('+12025550123')).toBe('+12025550123')
+  })
+
+  it('normalizes formatted valid numbers to strict E.164', () => {
+    expect(normalizePhoneToE164('+1 (202) 555-0123')).toBe('+12025550123')
+  })
+
+  it('returns undefined for legacy invalid numbers that cannot be normalized', () => {
+    expect(normalizePhoneToE164('+1-555-0101')).toBeUndefined()
   })
 })

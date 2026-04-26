@@ -828,6 +828,54 @@ describe('GuestsView', () => {
     expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument()
   })
 
+  it('clears invalid legacy phone values from the contact editor and save payload', async () => {
+    const householdsWithLegacyPhones: HouseholdWithGuests[] = [
+      {
+        ...households[0],
+        guests: households[0].guests.map((guest) => ({
+          ...guest,
+          phone: guest.isPrimaryContact ? '+1-555-0101' : '+1-555-0102',
+        })),
+      },
+    ]
+
+    render(
+      <GuestsView
+        events={events}
+        households={householdsWithLegacyPhones}
+        selectedEventId='event-1'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Contact & Address' }))
+
+    expect(document.querySelector('input[name="phone"]')).toHaveValue('')
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Email' }), {
+      target: { value: 'legacy-fixed@example.com' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    await waitFor(() => {
+      expect(mockHouseholdUpdateMutate).toHaveBeenCalled()
+    })
+
+    const payload = mockHouseholdUpdateMutate.mock.calls[0]?.[0] as {
+      guestParty: Array<{ guestId: number; phone: string | null }>
+    }
+
+    expect(payload.guestParty).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ guestId: 1, phone: null }),
+        expect.objectContaining({ guestId: 2, phone: null }),
+      ])
+    )
+  })
+
   it('should guard closing when there are unsaved changes', () => {
     render(
       <GuestsView
