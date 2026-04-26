@@ -1,10 +1,9 @@
 import { tool, zodSchema } from 'ai'
 import { z } from 'zod'
 
+import { readPdfDocument } from '~/lib/etta/document-reader'
 import type { EttaContext } from '~/lib/etta/types'
 import { requirePlannerAuthz } from '~/lib/etta/utils/authorization'
-
-const MAX_CONTENT_CHARS = 12_000
 
 export function getDocumentTools(ctx: EttaContext) {
   return {
@@ -25,35 +24,7 @@ export function getDocumentTools(ctx: EttaContext) {
       ),
       execute: async ({ fileUrl, fileName }) => {
         requirePlannerAuthz(ctx)
-        const response = await fetch(fileUrl)
-        if (!response.ok) {
-          return { error: `Failed to fetch file: HTTP ${response.status}` }
-        }
-
-        const contentType = response.headers.get('content-type') ?? ''
-        if (!contentType.includes('pdf') && !fileUrl.toLowerCase().endsWith('.pdf')) {
-          return { error: 'URL does not appear to be a PDF file' }
-        }
-
-        const buffer = await response.arrayBuffer()
-
-        const { extractText } = await import('unpdf')
-        const { text, totalPages } = await extractText(new Uint8Array(buffer), {
-          mergePages: true,
-        })
-
-        const truncated = text.length > MAX_CONTENT_CHARS
-
-        return {
-          fileName: fileName ?? 'document.pdf',
-          totalPages,
-          totalCharacters: text.length,
-          truncated,
-          content: truncated ? text.slice(0, MAX_CONTENT_CHARS) : text,
-          ...(truncated && {
-            note: `Showing first ${MAX_CONTENT_CHARS.toLocaleString()} of ${text.length.toLocaleString()} characters across ${totalPages} pages. Ask the user if they want to focus on a specific section.`,
-          }),
-        }
+        return readPdfDocument({ fileUrl, fileName })
       },
     }),
   }

@@ -58,6 +58,15 @@ describe('buildSystemPrompt — couple (planner)', () => {
     expect(prompt).toContain('Bride prefers peonies')
     expect(prompt).toContain('Budget is $30k')
   })
+
+  it('includes PDF failure guidance', () => {
+    const prompt = buildSystemPrompt(makeContext())
+
+    expect(prompt).toContain('read_pdf')
+    expect(prompt).toContain('status `parse_error`')
+    expect(prompt).toContain('status `no_text`')
+    expect(prompt).toContain('share the key details manually')
+  })
 })
 
 // ── Concierge prompt (guest) ────────────────────────────────────────────────
