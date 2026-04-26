@@ -4,7 +4,7 @@ const EMPTY_TEXT_NOTE =
 const PDF_READ_FAILURE_DETAIL = 'read_failed'
 
 type PromiseWithTry = PromiseConstructor & {
-  try?: <T>(fn: () => T | Promise<T>) => Promise<T>
+  try?: <T>(fn: () => T | PromiseLike<T>) => Promise<Awaited<T>>
 }
 
 type ExtractTextFn = typeof import('unpdf')['extractText']
@@ -31,10 +31,10 @@ function ensurePromiseTryPolyfill() {
 
   // `unpdf@1.6.0` currently expects `Promise.try` in our Node runtime path.
   // Install the narrowest compatibility shim we can before loading it.
-  promiseWithTry.try = <T>(fn: () => T | Promise<T>) =>
-    new Promise((resolve, reject) => {
+  promiseWithTry.try = <T>(fn: () => T | PromiseLike<T>) =>
+    new Promise<Awaited<T>>((resolve, reject) => {
       try {
-        resolve(fn())
+        Promise.resolve(fn()).then(resolve, reject)
       } catch (error) {
         reject(error)
       }

@@ -16,7 +16,7 @@ import { getDocumentTools } from '~/lib/etta/tools/documents'
 import type { EttaContext } from '~/lib/etta/types'
 
 type PromiseWithTry = PromiseConstructor & {
-  try?: <T>(fn: () => T | Promise<T>) => Promise<T>
+  try?: <T>(fn: () => T | PromiseLike<T>) => Promise<Awaited<T>>
 }
 
 const promiseWithTry = Promise as PromiseWithTry
