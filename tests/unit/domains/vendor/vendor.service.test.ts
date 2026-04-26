@@ -24,21 +24,29 @@ import {
   mockCreate,
   mockCreateQuote,
   mockCreateQuoteFiles,
+  mockCreateVendorNote,
   mockDelete,
   mockDeleteQuote,
   mockDeleteQuoteFile,
+  mockFieldDefinitions,
   mockFileBelongsToQuote,
   mockFindAllByWeddingId,
   mockFindAllFileUrlsByQuoteId,
   mockFindAllFileUrlsByVendorId,
   mockFindByIdWithQuotes,
+  mockFindCategoryConfig,
+  mockFindCustomFieldsById,
+  mockFindNotesByVendorId,
   mockQuote,
   mockQuoteBelongsToVendor,
   mockQuoteFile,
   mockUpdate,
   mockUpdateQuote,
   mockUpdateStatus,
+  mockUpsertCategoryConfig,
   mockVendor,
+  mockVendorCategoryConfig,
+  mockVendorNote,
   mockVendorWithQuotes,
   resetMocks,
   VendorRepository,
@@ -47,6 +55,7 @@ import { VendorService } from '~/server/domains/vendor/vendor.service'
 
 const mockFindAllByWeddingIdFn = mockFindAllByWeddingId as jest.Mock
 const mockFindByIdWithQuotesFn = mockFindByIdWithQuotes as jest.Mock
+const mockFindCustomFieldsByIdFn = mockFindCustomFieldsById as jest.Mock
 const mockCreateFn = mockCreate as jest.Mock
 const mockUpdateFn = mockUpdate as jest.Mock
 const mockUpdateStatusFn = mockUpdateStatus as jest.Mock
@@ -63,6 +72,10 @@ const mockRequirePermission = requirePermission as jest.Mock
 const mockFindAllFileUrlsByVendorIdFn = mockFindAllFileUrlsByVendorId as jest.Mock
 const mockFindAllFileUrlsByQuoteIdFn = mockFindAllFileUrlsByQuoteId as jest.Mock
 const mockCountFilesByQuoteIdFn = mockCountFilesByQuoteId as jest.Mock
+const mockFindNotesByVendorIdFn = mockFindNotesByVendorId as jest.Mock
+const mockCreateVendorNoteFn = mockCreateVendorNote as jest.Mock
+const mockFindCategoryConfigFn = mockFindCategoryConfig as jest.Mock
+const mockUpsertCategoryConfigFn = mockUpsertCategoryConfig as jest.Mock
 const mockDel = del as jest.Mock
 
 describe('VendorService', () => {
@@ -235,6 +248,130 @@ describe('VendorService', () => {
           name: 'Test',
         })
       ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+
+    it('normalizes empty-string notes to null and shallow-merges custom fields', async () => {
+      const updated = {
+        ...mockVendor,
+        contacted: true,
+        notes: null,
+        customFields: {
+          capacity: '250',
+          outdoor: 'false',
+          deposit: '20%',
+        },
+      }
+
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockFindCustomFieldsByIdFn.mockResolvedValue({
+        capacity: '250',
+        outdoor: 'true',
+      })
+      mockUpdateFn.mockResolvedValue(updated)
+
+      const result = await vendorService.updateVendor(actorContext, 'vendor-123', 'wedding-123', {
+        vendorId: 'vendor-123',
+        contacted: true,
+        notes: '',
+        customFields: {
+          outdoor: 'false',
+          deposit: '20%',
+        },
+      })
+
+      expect(result).toEqual(updated)
+      expect(mockUpdateFn).toHaveBeenCalledWith('vendor-123', {
+        contacted: true,
+        notes: null,
+        customFields: {
+          capacity: '250',
+          outdoor: 'false',
+          deposit: '20%',
+        },
+      })
+    })
+  })
+
+  describe('vendor notes', () => {
+    it('returns notes for an owned vendor', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockFindNotesByVendorIdFn.mockResolvedValue([mockVendorNote])
+
+      const result = await vendorService.getNotes(actorContext, 'vendor-123', 'wedding-123')
+
+      expect(result).toEqual([mockVendorNote])
+      expect(mockFindNotesByVendorIdFn).toHaveBeenCalledWith('vendor-123')
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { vendor: ['read'] })
+    })
+
+    it('adds a couple-authored note for an owned vendor', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockCreateVendorNoteFn.mockResolvedValue(mockVendorNote)
+
+      const result = await vendorService.addVendorNote(
+        actorContext,
+        'vendor-123',
+        'wedding-123',
+        'Sent first outreach email'
+      )
+
+      expect(result).toEqual(mockVendorNote)
+      expect(mockCreateVendorNoteFn).toHaveBeenCalledWith({
+        vendorId: 'vendor-123',
+        weddingId: 'wedding-123',
+        message: 'Sent first outreach email',
+        actorType: 'couple',
+      })
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { vendor: ['update'] })
+    })
+
+    it('rejects adding a note when the vendor is outside the wedding scope', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(false)
+
+      await expect(
+        vendorService.addVendorNote(
+          actorContext,
+          'vendor-123',
+          'other-wedding',
+          'Sent first outreach email'
+        )
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+  })
+
+  describe('category config', () => {
+    it('returns the category config for the active wedding scope', async () => {
+      mockFindCategoryConfigFn.mockResolvedValue(mockVendorCategoryConfig)
+
+      const result = await vendorService.getCategoryConfig(
+        actorContext,
+        'wedding-123',
+        VendorCategory.VENUE
+      )
+
+      expect(result).toEqual(mockVendorCategoryConfig)
+      expect(mockFindCategoryConfigFn).toHaveBeenCalledWith('wedding-123', VendorCategory.VENUE)
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { vendor: ['read'] })
+    })
+
+    it('upserts a wedding-specific category config', async () => {
+      const weddingConfig = { ...mockVendorCategoryConfig, weddingId: 'wedding-123' }
+      mockUpsertCategoryConfigFn.mockResolvedValue(weddingConfig)
+
+      const result = await vendorService.upsertCategoryConfig(
+        actorContext,
+        'wedding-123',
+        VendorCategory.VENUE,
+        mockFieldDefinitions
+      )
+
+      expect(result).toEqual(weddingConfig)
+      expect(mockUpsertCategoryConfigFn).toHaveBeenCalledWith({
+        weddingId: 'wedding-123',
+        category: VendorCategory.VENUE,
+        fieldDefinitions: mockFieldDefinitions,
+      })
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { vendor: ['update'] })
     })
   })
 
@@ -462,7 +599,12 @@ describe('VendorService', () => {
       mockFindAllFileUrlsByQuoteIdFn.mockResolvedValue([])
       mockDeleteQuoteFn.mockResolvedValue(mockQuote)
 
-      const result = await vendorService.deleteQuote('quote-123', 'vendor-123', 'wedding-123')
+      const result = await vendorService.deleteQuote(
+        actorContext,
+        'quote-123',
+        'vendor-123',
+        'wedding-123'
+      )
 
       expect(result).toBe('quote-123')
     })
@@ -474,7 +616,7 @@ describe('VendorService', () => {
       mockFindAllFileUrlsByQuoteIdFn.mockResolvedValue(urls)
       mockDeleteQuoteFn.mockResolvedValue(mockQuote)
 
-      await vendorService.deleteQuote('quote-123', 'vendor-123', 'wedding-123')
+      await vendorService.deleteQuote(actorContext, 'quote-123', 'vendor-123', 'wedding-123')
 
       expect(mockDel).toHaveBeenCalledWith(urls)
     })

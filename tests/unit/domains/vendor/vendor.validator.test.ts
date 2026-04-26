@@ -3,15 +3,19 @@
  */
 
 import {
+  addVendorNoteSchema,
   createQuoteSchema,
   createVendorSchema,
   deleteQuoteFileSchema,
   deleteQuoteSchema,
   deleteVendorSchema,
+  getCategoryConfigSchema,
+  getNotesSchema,
   saveQuoteFilesSchema,
   updateQuoteSchema,
   updateVendorSchema,
   updateVendorStatusSchema,
+  upsertCategoryConfigSchema,
 } from '~/server/domains/vendor/vendor.validator'
 
 describe('createVendorSchema', () => {
@@ -170,6 +174,74 @@ describe('updateVendorSchema', () => {
 
   it('should reject empty vendorId', () => {
     const result = updateVendorSchema.safeParse({ vendorId: '', name: 'Test' })
+    expect(result.success).toBe(false)
+  })
+
+  it('should validate enrichment fields', () => {
+    const result = updateVendorSchema.safeParse({
+      vendorId: 'vendor-123',
+      contacted: true,
+      notes: '',
+      customFields: {
+        capacity: '250',
+        outdoor: 'true',
+      },
+    })
+
+    expect(result.success).toBe(true)
+  })
+})
+
+describe('vendor note and category config schemas', () => {
+  it('should validate addVendorNote input', () => {
+    const result = addVendorNoteSchema.safeParse({
+      vendorId: 'vendor-123',
+      message: 'Left voicemail for pricing',
+    })
+
+    expect(result.success).toBe(true)
+  })
+
+  it('should reject whitespace-only vendor notes', () => {
+    const result = addVendorNoteSchema.safeParse({
+      vendorId: 'vendor-123',
+      message: '   ',
+    })
+
+    expect(result.success).toBe(false)
+  })
+
+  it('should validate getNotes input', () => {
+    const result = getNotesSchema.safeParse({ vendorId: 'vendor-123' })
+    expect(result.success).toBe(true)
+  })
+
+  it('should validate getCategoryConfig input', () => {
+    const result = getCategoryConfigSchema.safeParse({ category: 'VENUE' })
+    expect(result.success).toBe(true)
+  })
+
+  it('should validate a category config payload with unique field keys', () => {
+    const result = upsertCategoryConfigSchema.safeParse({
+      category: 'VENUE',
+      fieldDefinitions: [
+        { key: 'capacity', label: 'Capacity', type: 'number', displayOrder: 1 },
+        { key: 'outdoor', label: 'Outdoor option', type: 'boolean', displayOrder: 2 },
+      ],
+    })
+
+    expect(result.success).toBe(true)
+  })
+
+  it('should reject duplicate field keys in a category config payload', () => {
+    const result = upsertCategoryConfigSchema.safeParse({
+      category: 'VENUE',
+      fieldDefinitions: [
+        { key: 'capacity', label: 'Capacity', type: 'number', displayOrder: 1 },
+        { key: 'capacity', label: 'Max Guests', type: 'text', displayOrder: 2 },
+      ],
+    })
+
     expect(result.success).toBe(false)
   })
 })
