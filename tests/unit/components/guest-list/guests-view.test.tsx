@@ -677,9 +677,12 @@ describe('GuestsView', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save members' }))
 
     await waitFor(() => {
-      expect(screen.getAllByText('Taylor Rivera').length).toBeGreaterThan(0)
+      expect(
+        screen.queryByRole('dialog', { name: 'Manage Household Members' })
+      ).not.toBeInTheDocument()
     })
 
+    expect(screen.getAllByText('Taylor Rivera').length).toBeGreaterThan(0)
     expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: 'Email' })).toHaveValue('draft-only@example.com')
   })
