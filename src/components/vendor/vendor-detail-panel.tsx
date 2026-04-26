@@ -451,7 +451,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
             </header>
 
             <div className='flex min-h-0 flex-1 flex-col'>
-              <div className='flex-1 overflow-y-auto overscroll-y-contain px-5 py-4 md:px-6'>
+              <div className='flex-1 overflow-y-auto overscroll-y-contain px-5 py-4 pb-20 md:px-6 md:pb-20'>
                 {showEditForm ? (
                   <VendorForm
                     mode='edit'
