@@ -9,7 +9,7 @@
     "agent-browser": {
       "source": "vercel-labs/agent-browser",
       "sourceType": "github",
-      "computedHash": "57bfa07d34f966bccf791d49c9b6ce507fbba08f7dbf9e2ad15809e2dd29041e"
+      "computedHash": "c19a532a3777698b80b35270939a1dc559da451381971b3e1e78174d1ab54863"
     },
     "audit-website": {
       "source": "squirrelscan/skills",
@@ -30,6 +30,11 @@
       "source": "borghei/claude-skills",
       "sourceType": "github",
       "computedHash": "4519eef7ed0593077e08c092701fb0e8d65d0b3b527421bc0cb6e9e6448869a4"
+    },
+    "subagent-driven-development": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "computedHash": "a197f8e5fba5ea59013e1adbaa90dd42db35de8f074feca200c8038de584a83b"
     },
     "ui-design-patterns": {
       "source": "manutej/luxor-claude-marketplace",
