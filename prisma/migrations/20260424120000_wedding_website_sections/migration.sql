@@ -30,6 +30,31 @@ ALTER TABLE "WebsiteSection"
   ADD CONSTRAINT "WebsiteSection_websiteId_fkey"
   FOREIGN KEY ("websiteId") REFERENCES "Website"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
+INSERT INTO "WebsiteSection" (
+  "id",
+  "websiteId",
+  "type",
+  "isEnabled",
+  "position",
+  "content",
+  "createdAt",
+  "updatedAt"
+)
+SELECT
+  gen_random_uuid()::TEXT,
+  w."id",
+  'HOME'::"WebsiteSectionType",
+  true,
+  0,
+  '{"introText": ""}'::JSONB,
+  CURRENT_TIMESTAMP,
+  CURRENT_TIMESTAMP
+FROM "Website" w
+LEFT JOIN "WebsiteSection" ws
+  ON ws."websiteId" = w."id"
+ AND ws."type" = 'HOME'::"WebsiteSectionType"
+WHERE ws."id" IS NULL;
+
 UPDATE "Wedding"
 SET "enabledAddOns" = array_append("enabledAddOns", 'website_builder')
 WHERE 'website' = ANY("enabledAddOns")

@@ -4,8 +4,6 @@ import { createElement } from 'react'
 import WeddingWebsite from '~/components/website/wedding'
 
 const mockHeadersGet = jest.fn()
-const mockLoadWeddingBySubUrl = jest.fn()
-const mockNotFound = jest.fn()
 const mockWeddingPage = jest.fn(({ path, introText }: { path: string; introText?: string }) =>
   createElement('div', { 'data-testid': 'full-page' }, `${path}|${introText ?? ''}`)
 )
@@ -25,11 +23,7 @@ jest.mock('next/headers', () => ({
 }))
 
 jest.mock('next/navigation', () => ({
-  notFound: () => mockNotFound(),
-}))
-
-jest.mock('~/app/w/[websiteSubUrl]/_lib/load-wedding-by-suburl', () => ({
-  loadWeddingBySubUrl: (...args: unknown[]) => mockLoadWeddingBySubUrl(...args),
+  notFound: jest.fn(),
 }))
 
 jest.mock('~/components/website/wedding-page', () => ({
@@ -74,8 +68,6 @@ const createWeddingData = (overrides: Record<string, unknown> = {}) => ({
 describe('WeddingWebsite', () => {
   beforeEach(() => {
     mockHeadersGet.mockReset()
-    mockLoadWeddingBySubUrl.mockReset()
-    mockNotFound.mockReset()
     mockWeddingPage.mockClear()
     mockWeddingPageMobile.mockClear()
     mockWebsiteMinimalPage.mockClear()
@@ -83,9 +75,9 @@ describe('WeddingWebsite', () => {
   })
 
   it('renders the minimal public page when website_builder is disabled', async () => {
-    mockLoadWeddingBySubUrl.mockResolvedValue(createWeddingData())
-
-    render(await WeddingWebsite({ websiteSubUrl: 'shrek-and-fiona' }))
+    render(
+      await WeddingWebsite({ websiteSubUrl: 'shrek-and-fiona', weddingData: createWeddingData() })
+    )
 
     expect(screen.getByTestId('minimal-page')).toHaveTextContent('/w/shrek-and-fiona|true')
     expect(mockWeddingPage).not.toHaveBeenCalled()
@@ -93,17 +85,18 @@ describe('WeddingWebsite', () => {
   })
 
   it('renders the full public page on desktop when website_builder is enabled', async () => {
-    mockLoadWeddingBySubUrl.mockResolvedValue(
-      createWeddingData({
-        websiteBuilderEnabled: true,
-        website: {
-          ...createWeddingData().website,
-          introText: 'Welcome to our wedding weekend.',
-        },
+    render(
+      await WeddingWebsite({
+        websiteSubUrl: 'shrek-and-fiona',
+        weddingData: createWeddingData({
+          websiteBuilderEnabled: true,
+          website: {
+            ...createWeddingData().website,
+            introText: 'Welcome to our wedding weekend.',
+          },
+        }),
       })
     )
-
-    render(await WeddingWebsite({ websiteSubUrl: 'shrek-and-fiona' }))
 
     expect(screen.getByTestId('full-page')).toHaveTextContent(
       '/w/shrek-and-fiona|Welcome to our wedding weekend.'
@@ -113,13 +106,14 @@ describe('WeddingWebsite', () => {
 
   it('renders the mobile page variant when website_builder is enabled on mobile', async () => {
     mockHeadersGet.mockReturnValue('?1')
-    mockLoadWeddingBySubUrl.mockResolvedValue(
-      createWeddingData({
-        websiteBuilderEnabled: true,
+    render(
+      await WeddingWebsite({
+        websiteSubUrl: 'shrek-and-fiona',
+        weddingData: createWeddingData({
+          websiteBuilderEnabled: true,
+        }),
       })
     )
-
-    render(await WeddingWebsite({ websiteSubUrl: 'shrek-and-fiona' }))
 
     expect(screen.getByTestId('mobile-page')).toHaveTextContent('/w/shrek-and-fiona')
     expect(mockWeddingPage).not.toHaveBeenCalled()

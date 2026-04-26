@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/react'
 import RootRouteHandler from '~/app/w/[websiteSubUrl]/page'
 
 const mockFetchWeddingData = jest.fn()
-const mockGetBySubUrl = jest.fn()
 const mockVerifyWebsitePassword = jest.fn()
 const mockCookieGet = jest.fn()
 const mockCookieSet = jest.fn()
@@ -24,7 +23,6 @@ jest.mock('~/trpc/server', () => ({
     website: {
       fetchWeddingData: (input: { subUrl: string; accessToken?: string }) =>
         mockFetchWeddingData(input),
-      getBySubUrl: () => mockGetBySubUrl(),
       verifyWebsitePassword: (input: { subUrl: string; password: string }) =>
         mockVerifyWebsitePassword(input),
     },
@@ -53,7 +51,6 @@ jest.mock('~/components/website/wedding', () => ({
 describe('Website password flow', () => {
   beforeEach(() => {
     mockFetchWeddingData.mockReset()
-    mockGetBySubUrl.mockReset()
     mockVerifyWebsitePassword.mockReset()
     mockCookieGet.mockReset()
     mockCookieSet.mockReset()
@@ -61,18 +58,7 @@ describe('Website password flow', () => {
   })
 
   it('does not send website password to PasswordPage props', async () => {
-    mockGetBySubUrl.mockResolvedValue({
-      id: 'website-123',
-      weddingId: 'wedding-123',
-      url: 'https://example.com/johnandjane',
-      subUrl: 'johnandjane',
-      isPasswordEnabled: true,
-      isRsvpEnabled: true,
-      createdAt: new Date('2025-01-01'),
-      updatedAt: new Date('2025-01-01'),
-      coverPhotoUrl: null,
-    })
-    mockFetchWeddingData.mockRejectedValue(new Error('Password required'))
+    mockFetchWeddingData.mockRejectedValue({ code: 'FORBIDDEN' })
     mockCookieGet.mockReturnValue(undefined)
 
     const page = await RootRouteHandler({
@@ -87,18 +73,7 @@ describe('Website password flow', () => {
   })
 
   it('verifies password on server action and sets secure httpOnly access cookie', async () => {
-    mockGetBySubUrl.mockResolvedValue({
-      id: 'website-123',
-      weddingId: 'wedding-123',
-      url: 'https://example.com/johnandjane',
-      subUrl: 'johnandjane',
-      isPasswordEnabled: true,
-      isRsvpEnabled: true,
-      createdAt: new Date('2025-01-01'),
-      updatedAt: new Date('2025-01-01'),
-      coverPhotoUrl: null,
-    })
-    mockFetchWeddingData.mockRejectedValue(new Error('Password required'))
+    mockFetchWeddingData.mockRejectedValue({ code: 'FORBIDDEN' })
     mockCookieGet.mockReturnValue(undefined)
     mockVerifyWebsitePassword.mockResolvedValue('signed-token')
 

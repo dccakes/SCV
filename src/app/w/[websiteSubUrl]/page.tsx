@@ -18,16 +18,16 @@ export async function generateMetadata({ params }: RootRouteHandlerProps): Promi
   const cookieStore = await cookies()
   const accessCookieName = `wws_access_${websiteSubUrl}`
   const accessToken = cookieStore.get(accessCookieName)?.value
-  const weddingData = await loadWeddingBySubUrl(websiteSubUrl, accessToken)
+  const loadResult = await loadWeddingBySubUrl(websiteSubUrl, accessToken)
 
-  if (!weddingData) {
+  if (loadResult.status !== 'ready') {
     return {
       title: 'Wedding Website',
     }
   }
 
   return {
-    title: `${weddingData.groomFirstName} ${weddingData.groomLastName} and ${weddingData.brideFirstName} ${weddingData.brideLastName}'s Wedding Website`,
+    title: `${loadResult.weddingData.groomFirstName} ${loadResult.weddingData.groomLastName} and ${loadResult.weddingData.brideFirstName} ${loadResult.weddingData.brideLastName}'s Wedding Website`,
   }
 }
 
@@ -36,14 +36,7 @@ export default async function RootRouteHandler({ params }: RootRouteHandlerProps
   const cookieStore = await cookies()
   const accessCookieName = `wws_access_${websiteSubUrl}`
   const accessToken = cookieStore.get(accessCookieName)?.value
-  const weddingData = await loadWeddingBySubUrl(websiteSubUrl, accessToken)
-
-  if (!weddingData) {
-    const website = await api.website.getBySubUrl({
-      subUrl: websiteSubUrl,
-    })
-    if (website === null) return notFound()
-  }
+  const loadResult = await loadWeddingBySubUrl(websiteSubUrl, accessToken)
 
   const verifyWebsitePassword = async (passwordInput: string) => {
     'use server'
@@ -69,12 +62,14 @@ export default async function RootRouteHandler({ params }: RootRouteHandlerProps
     return true
   }
 
+  if (loadResult.status === 'not-found') return notFound()
+
   return (
     <main>
-      {weddingData ? (
-        <WeddingWebsite websiteSubUrl={websiteSubUrl} weddingData={weddingData} />
-      ) : (
+      {loadResult.status === 'password-required' ? (
         <PasswordPage verifyWebsitePassword={verifyWebsitePassword} />
+      ) : (
+        <WeddingWebsite websiteSubUrl={websiteSubUrl} weddingData={loadResult.weddingData} />
       )}
     </main>
   )

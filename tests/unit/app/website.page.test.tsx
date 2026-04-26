@@ -4,11 +4,13 @@ import WebsitePage from '~/app/(authenicated)/website/page'
 
 const mockGetRequiredWedding = jest.fn()
 const mockGetWebsiteByUserId = jest.fn()
-const mockCreateWebsite = jest.fn()
 const mockGetHomeSection = jest.fn()
 const mockDashboardTopbar = jest.fn(() => <header data-testid='dashboard-topbar'>Topbar</header>)
 const mockWebsiteDisabledCallout = jest.fn(() => (
   <div data-testid='website-disabled-callout'>Disabled callout</div>
+))
+const mockWebsiteSetupCallout = jest.fn(() => (
+  <div data-testid='website-setup-callout'>Setup callout</div>
 ))
 const mockWebsiteEditor = jest.fn(
   (_props: { publicUrl: string; websiteId: string; initialIntroText: string }) => (
@@ -20,7 +22,6 @@ jest.mock('~/trpc/server', () => ({
   api: {
     website: {
       getByUserId: () => mockGetWebsiteByUserId(),
-      create: (input: Record<string, never>) => mockCreateWebsite(input),
     },
     websiteSection: {
       getHomeSection: () => mockGetHomeSection(),
@@ -42,6 +43,11 @@ jest.mock('~/app/_components/website/website-disabled-callout', () => ({
   WebsiteDisabledCallout: () => mockWebsiteDisabledCallout(),
 }))
 
+jest.mock('~/app/_components/website/website-setup-callout', () => ({
+  __esModule: true,
+  WebsiteSetupCallout: () => mockWebsiteSetupCallout(),
+}))
+
 jest.mock('~/app/_components/website/website-editor', () => ({
   __esModule: true,
   WebsiteEditor: (props: { publicUrl: string; websiteId: string; initialIntroText: string }) =>
@@ -52,10 +58,10 @@ describe('WebsitePage', () => {
   beforeEach(() => {
     mockGetRequiredWedding.mockReset()
     mockGetWebsiteByUserId.mockReset()
-    mockCreateWebsite.mockReset()
     mockGetHomeSection.mockReset()
     mockDashboardTopbar.mockClear()
     mockWebsiteDisabledCallout.mockClear()
+    mockWebsiteSetupCallout.mockClear()
     mockWebsiteEditor.mockClear()
     mockGetHomeSection.mockResolvedValue(null)
 
@@ -77,30 +83,20 @@ describe('WebsitePage', () => {
     expect(screen.getByTestId('dashboard-topbar')).toBeInTheDocument()
     expect(screen.getByTestId('website-disabled-callout')).toBeInTheDocument()
     expect(mockWebsiteEditor).not.toHaveBeenCalled()
-    expect(mockCreateWebsite).not.toHaveBeenCalled()
   })
 
-  it('auto-creates a website and renders the editor when the plugin is enabled', async () => {
+  it('renders the setup callout when the plugin is enabled but no website exists yet', async () => {
     mockGetRequiredWedding.mockResolvedValue({
       id: 'wedding-123',
       enabledAddOns: ['website_builder'],
     })
     mockGetWebsiteByUserId.mockResolvedValue(null)
-    mockCreateWebsite.mockResolvedValue({
-      id: 'website-123',
-      subUrl: 'janeandjohn',
-    })
 
     const page = await WebsitePage()
     render(page)
 
-    expect(mockCreateWebsite).toHaveBeenCalledWith({})
-    expect(screen.getByTestId('website-editor')).toBeInTheDocument()
-    expect(mockWebsiteEditor).toHaveBeenCalledWith({
-      publicUrl: 'http://localhost:3000/w/janeandjohn',
-      websiteId: 'website-123',
-      initialIntroText: '',
-    })
+    expect(screen.getByTestId('website-setup-callout')).toBeInTheDocument()
+    expect(mockWebsiteEditor).not.toHaveBeenCalled()
   })
 
   it('reuses the existing website when one already exists', async () => {
@@ -116,7 +112,6 @@ describe('WebsitePage', () => {
     const page = await WebsitePage()
     render(page)
 
-    expect(mockCreateWebsite).not.toHaveBeenCalled()
     expect(mockWebsiteEditor).toHaveBeenCalledWith({
       publicUrl: 'http://localhost:3000/w/existing-site',
       websiteId: 'website-789',

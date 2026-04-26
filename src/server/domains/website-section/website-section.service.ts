@@ -38,21 +38,6 @@ export class WebsiteSectionService {
       })
     }
 
-    const content = parsed.data
-    const existingSection = await this.websiteSectionRepository.findByWebsiteIdAndType(
-      websiteId,
-      WebsiteSectionType.HOME
-    )
-
-    if (!existingSection) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'HOME section not found',
-      })
-    }
-
-    return this.websiteSectionRepository.update(existingSection.id, {
-      content,
-    })
+    return this.websiteSectionRepository.upsertHomeSection(websiteId, parsed.data)
   }
 }

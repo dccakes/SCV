@@ -7,8 +7,7 @@ jest.mock('~/server/domains/website-section/website-section.repository', () =>
 import {
   mockCreate,
   mockFindByWebsiteId,
-  mockFindByWebsiteIdAndType,
-  mockUpdate,
+  mockUpsertHomeSection,
   mockWebsiteSection,
   resetMocks,
   WebsiteSectionRepository,
@@ -58,16 +57,15 @@ describe('WebsiteSectionService', () => {
         ...mockWebsiteSection,
         content: { introText: 'Welcome to our wedding website.' },
       }
-      mockFindByWebsiteIdAndType.mockResolvedValue(mockWebsiteSection)
-      mockUpdate.mockResolvedValue(updatedSection)
+      mockUpsertHomeSection.mockResolvedValue(updatedSection)
 
       const result = await service.updateHomeSection('website-123', {
         introText: 'Welcome to our wedding website.',
       })
 
       expect(result).toEqual(updatedSection)
-      expect(mockUpdate).toHaveBeenCalledWith(mockWebsiteSection.id, {
-        content: { introText: 'Welcome to our wedding website.' },
+      expect(mockUpsertHomeSection).toHaveBeenCalledWith('website-123', {
+        introText: 'Welcome to our wedding website.',
       })
     })
 
@@ -78,22 +76,7 @@ describe('WebsiteSectionService', () => {
         })
       ).rejects.toThrow(TRPCError)
 
-      expect(mockFindByWebsiteIdAndType).not.toHaveBeenCalled()
-      expect(mockUpdate).not.toHaveBeenCalled()
-    })
-
-    it('should fail when a HOME section does not exist', async () => {
-      mockFindByWebsiteIdAndType.mockResolvedValue(null)
-
-      await expect(
-        service.updateHomeSection('website-123', {
-          introText: 'Hello',
-        })
-      ).rejects.toMatchObject({
-        code: 'NOT_FOUND',
-      })
-
-      expect(mockUpdate).not.toHaveBeenCalled()
+      expect(mockUpsertHomeSection).not.toHaveBeenCalled()
     })
   })
 })

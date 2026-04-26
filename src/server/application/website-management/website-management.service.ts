@@ -16,6 +16,7 @@ import { computeWebsiteUrl } from '~/server/domains/website/website.utils'
 import type { WebsitePasswordService } from '~/server/domains/website/website-password.service'
 import type { WebsiteSectionRepository } from '~/server/domains/website-section/website-section.repository'
 import { WebsiteSectionType } from '~/server/domains/website-section/website-section.types'
+import { updateHomeSectionSchema } from '~/server/domains/website-section/website-section.validator'
 import type { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
 
 export class WebsiteManagementService {
@@ -24,19 +25,14 @@ export class WebsiteManagementService {
     private weddingRepository: WeddingRepository,
     private eventRepository: EventRepository,
     private websitePasswordService: Pick<WebsitePasswordService, 'verifyAccessToken'>,
-    private websiteSectionRepository?: Pick<
+    private websiteSectionRepository: Pick<
       WebsiteSectionRepository,
-      'create' | 'findByWebsiteIdAndType'
+      'findByWebsiteIdAndType' | 'upsertHomeSection'
     >
   ) {}
 
   async enableWebsite(ctx: AuthzContext, weddingId: string): Promise<Website> {
     requirePermission(ctx, { website: ['publish'] })
-
-    const existingWebsite = await this.websiteRepository.findByWeddingId(weddingId)
-    if (existingWebsite) {
-      return existingWebsite
-    }
 
     const wedding = await this.weddingRepository.findById(weddingId)
     if (!wedding) {
@@ -49,19 +45,68 @@ export class WebsiteManagementService {
     const subUrl =
       `${wedding.groomFirstName}${wedding.groomLastName}and${wedding.brideFirstName}${wedding.brideLastName}`.toLowerCase()
     const existingSubUrlWebsite = await this.websiteRepository.findBySubUrl(subUrl)
-    if (existingSubUrlWebsite) {
+    if (existingSubUrlWebsite && existingSubUrlWebsite.weddingId !== weddingId) {
       throw new TRPCError({
         code: 'CONFLICT',
         message: 'This URL is already taken',
       })
     }
 
-    const website = await this.websiteRepository.create({
-      weddingId,
-      subUrl,
-    })
+    if (existingSubUrlWebsite) {
+      return existingSubUrlWebsite
+    }
 
-    return website
+    try {
+      return await this.websiteRepository.upsertByWeddingId({
+        weddingId,
+        subUrl,
+      })
+    } catch (error) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === 'P2002'
+      ) {
+        const website = await this.websiteRepository.findByWeddingId(weddingId)
+        if (website) {
+          return website
+        }
+
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: 'This URL is already taken',
+        })
+      }
+
+      throw error
+    }
+  }
+
+  async getHomeSection(ctx: AuthzContext, weddingId: string) {
+    requirePermission(ctx, { website: ['read'] })
+
+    const website = await this.websiteRepository.findByWeddingId(weddingId)
+    if (!website) {
+      return null
+    }
+
+    return this.websiteSectionRepository.findByWebsiteIdAndType(website.id, WebsiteSectionType.HOME)
+  }
+
+  async updateHomeSection(ctx: AuthzContext, weddingId: string, input: { introText: string }) {
+    requirePermission(ctx, { website: ['update'] })
+
+    const website = await this.websiteRepository.findByWeddingId(weddingId)
+    if (!website) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Website not found',
+      })
+    }
+
+    const content = updateHomeSectionSchema.parse(input)
+    return this.websiteSectionRepository.upsertHomeSection(website.id, content)
   }
 
   async fetchWeddingData(
@@ -91,7 +136,7 @@ export class WebsiteManagementService {
     const [wedding, events, homeSection] = await Promise.all([
       this.weddingRepository.findById(website.weddingId),
       this.eventRepository.findByWeddingIdWithQuestions(website.weddingId),
-      this.websiteSectionRepository?.findByWebsiteIdAndType(website.id, WebsiteSectionType.HOME),
+      this.websiteSectionRepository.findByWebsiteIdAndType(website.id, WebsiteSectionType.HOME),
     ])
     if (!wedding) {
       throw new TRPCError({

@@ -19,10 +19,10 @@ import {
   resetMocks as resetEventRepoMocks,
 } from '~/server/domains/event/event.repository'
 import {
-  mockCreate,
   mockFindBySubUrl,
   mockFindBySubUrlWithQuestions,
   mockFindByWeddingId,
+  mockUpsertByWeddingId,
   mockWebsite,
   mockWebsiteWithQuestions,
   resetMocks as resetWebsiteRepoMocks,
@@ -30,6 +30,7 @@ import {
 } from '~/server/domains/website/website.repository'
 import {
   mockFindByWebsiteIdAndType,
+  mockUpsertHomeSection,
   resetMocks as resetWebsiteSectionRepoMocks,
   WebsiteSectionRepository,
 } from '~/server/domains/website-section/website-section.repository'
@@ -41,13 +42,14 @@ import {
 } from '~/server/domains/wedding/wedding.repository'
 
 const mockRequirePermission = requirePermission as jest.Mock
-const mockCreateFn = mockCreate as jest.Mock
 const mockFindWebsiteByWeddingIdFn = mockFindByWeddingId as jest.Mock
 const mockFindBySubUrlFn = mockFindBySubUrl as jest.Mock
 const mockFindBySubUrlWithQuestionsFn = mockFindBySubUrlWithQuestions as jest.Mock
+const mockUpsertWebsiteByWeddingIdFn = mockUpsertByWeddingId as jest.Mock
 const mockFindWeddingByIdFn = mockFindWeddingById as jest.Mock
 const mockFindByWeddingIdWithQuestionsFn = mockFindByWeddingIdWithQuestions as jest.Mock
 const mockFindWebsiteSectionByTypeFn = mockFindByWebsiteIdAndType as jest.Mock
+const mockUpsertHomeSectionFn = mockUpsertHomeSection as jest.Mock
 
 const actorContext = {
   userId: 'actor-1',
@@ -91,53 +93,109 @@ describe('WebsiteManagementService', () => {
 
   describe('enableWebsite', () => {
     it('creates website from wedding data', async () => {
-      mockFindWebsiteByWeddingIdFn.mockResolvedValue(null)
       mockFindWeddingByIdFn.mockResolvedValue(mockWedding)
       mockFindBySubUrlFn.mockResolvedValue(null)
-      mockCreateFn.mockResolvedValue(mockWebsite)
+      mockUpsertWebsiteByWeddingIdFn.mockResolvedValue(mockWebsite)
 
       const result = await service.enableWebsite(actorContext, 'wedding-123')
 
       expect(result).toEqual(mockWebsite)
       expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { website: ['publish'] })
-      expect(mockCreateFn).toHaveBeenCalledWith({
+      expect(mockUpsertWebsiteByWeddingIdFn).toHaveBeenCalledWith({
         weddingId: 'wedding-123',
         subUrl: 'johndoeandjanesmith',
       })
     })
 
-    it('returns the existing website when one already exists for the wedding', async () => {
+    it('returns the existing website when a concurrent upsert already created it', async () => {
+      mockFindWeddingByIdFn.mockResolvedValue(mockWedding)
+      mockFindBySubUrlFn.mockResolvedValue(null)
+      mockUpsertWebsiteByWeddingIdFn.mockRejectedValue({ code: 'P2002' })
       mockFindWebsiteByWeddingIdFn.mockResolvedValue(mockWebsite)
 
       const result = await service.enableWebsite(actorContext, 'wedding-123')
 
       expect(result).toEqual(mockWebsite)
-      expect(mockFindWeddingByIdFn).not.toHaveBeenCalled()
-      expect(mockFindBySubUrlFn).not.toHaveBeenCalled()
-      expect(mockCreateFn).not.toHaveBeenCalled()
+      expect(mockFindWebsiteByWeddingIdFn).toHaveBeenCalledWith('wedding-123')
     })
 
     it('fails when wedding does not exist', async () => {
-      mockFindWebsiteByWeddingIdFn.mockResolvedValue(null)
       mockFindWeddingByIdFn.mockResolvedValue(null)
 
       await expect(service.enableWebsite(actorContext, 'wedding-123')).rejects.toMatchObject({
         code: 'NOT_FOUND',
       })
 
-      expect(mockCreateFn).not.toHaveBeenCalled()
+      expect(mockUpsertWebsiteByWeddingIdFn).not.toHaveBeenCalled()
     })
 
     it('fails when generated url is already taken', async () => {
-      mockFindWebsiteByWeddingIdFn.mockResolvedValue(null)
       mockFindWeddingByIdFn.mockResolvedValue(mockWedding)
-      mockFindBySubUrlFn.mockResolvedValue(mockWebsite)
+      mockFindBySubUrlFn.mockResolvedValue({
+        ...mockWebsite,
+        weddingId: 'different-wedding',
+      })
 
       await expect(service.enableWebsite(actorContext, 'wedding-123')).rejects.toMatchObject({
         code: 'CONFLICT',
       })
 
-      expect(mockCreateFn).not.toHaveBeenCalled()
+      expect(mockUpsertWebsiteByWeddingIdFn).not.toHaveBeenCalled()
+    })
+
+    it('surfaces a conflict when a concurrent create collides on subUrl for another wedding', async () => {
+      mockFindWeddingByIdFn.mockResolvedValue(mockWedding)
+      mockFindBySubUrlFn.mockResolvedValue(null)
+      mockUpsertWebsiteByWeddingIdFn.mockRejectedValue({ code: 'P2002' })
+      mockFindWebsiteByWeddingIdFn.mockResolvedValue(null)
+
+      await expect(service.enableWebsite(actorContext, 'wedding-123')).rejects.toMatchObject({
+        code: 'CONFLICT',
+      })
+    })
+  })
+
+  describe('home section access', () => {
+    it('returns the HOME section for the active wedding website', async () => {
+      mockFindWebsiteByWeddingIdFn.mockResolvedValue(mockWebsite)
+      mockFindWebsiteSectionByTypeFn.mockResolvedValue({
+        id: 'section-123',
+        websiteId: 'website-123',
+        type: 'HOME',
+        isEnabled: true,
+        position: 0,
+        content: { introText: 'Welcome' },
+      })
+
+      const result = await service.getHomeSection(actorContext, 'wedding-123')
+
+      expect(result).toMatchObject({
+        id: 'section-123',
+        content: { introText: 'Welcome' },
+      })
+    })
+
+    it('upserts the HOME section content for the active wedding website', async () => {
+      mockFindWebsiteByWeddingIdFn.mockResolvedValue(mockWebsite)
+      mockUpsertHomeSectionFn.mockResolvedValue({
+        id: 'section-123',
+        websiteId: 'website-123',
+        type: 'HOME',
+        isEnabled: true,
+        position: 0,
+        content: { introText: 'Updated intro' },
+      })
+
+      const result = await service.updateHomeSection(actorContext, 'wedding-123', {
+        introText: 'Updated intro',
+      })
+
+      expect(result).toMatchObject({
+        content: { introText: 'Updated intro' },
+      })
+      expect(mockUpsertHomeSectionFn).toHaveBeenCalledWith('website-123', {
+        introText: 'Updated intro',
+      })
     })
   })
 

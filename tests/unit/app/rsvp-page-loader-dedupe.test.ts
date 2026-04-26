@@ -1,3 +1,4 @@
+import { render, screen } from '@testing-library/react'
 import { createElement, type ReactNode } from 'react'
 
 import RsvpPage, { generateMetadata } from '~/app/w/[websiteSubUrl]/rsvp/page'
@@ -14,6 +15,7 @@ jest.mock('~/trpc/server', () => ({
   api: {
     website: {
       fetchWeddingData: (input: { subUrl: string }) => mockFetchWeddingData(input),
+      verifyWebsitePassword: jest.fn(),
     },
   },
 }))
@@ -25,6 +27,11 @@ jest.mock('~/components/contexts/rsvp-form-context', () => ({
 jest.mock('~/components/website/forms/main', () => ({
   __esModule: true,
   default: () => createElement('div', null, 'Form'),
+}))
+
+jest.mock('~/components/website/password-page', () => ({
+  __esModule: true,
+  default: () => createElement('div', null, 'Password'),
 }))
 
 jest.mock('next/headers', () => ({
@@ -72,5 +79,19 @@ describe('rsvp page loader', () => {
       subUrl: 'john-and-jane',
       accessToken: undefined,
     })
+  })
+
+  it('renders the password page when RSVP access requires a website password', async () => {
+    mockFetchWeddingData.mockRejectedValue({ code: 'FORBIDDEN' })
+
+    const page = await (
+      RsvpPage as (props: { params: Promise<{ websiteSubUrl: string }> }) => Promise<ReactNode>
+    )({
+      params: Promise.resolve({ websiteSubUrl: 'john-and-jane' }),
+    })
+
+    render(page)
+
+    expect(screen.getByText('Password')).toBeInTheDocument()
   })
 })

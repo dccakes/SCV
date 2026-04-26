@@ -5,7 +5,6 @@ import RootRouteHandler, { generateMetadata } from '~/app/w/[websiteSubUrl]/page
 
 const mockLoadWeddingBySubUrl = jest.fn()
 const mockCookiesGet = jest.fn()
-const mockGetBySubUrl = jest.fn()
 const mockWeddingWebsite = jest.fn(
   ({ websiteSubUrl }: { websiteSubUrl: string; weddingData?: unknown }) =>
     createElement('div', null, websiteSubUrl)
@@ -18,7 +17,6 @@ jest.mock('~/app/w/[websiteSubUrl]/_lib/load-wedding-by-suburl', () => ({
 jest.mock('~/trpc/server', () => ({
   api: {
     website: {
-      getBySubUrl: (input: { subUrl: string }) => mockGetBySubUrl(input),
       verifyWebsitePassword: jest.fn(),
     },
   },
@@ -45,16 +43,18 @@ describe('website suburl metadata + page wiring', () => {
     mockLoadWeddingBySubUrl.mockReset()
     mockCookiesGet.mockReset()
     mockCookiesGet.mockReturnValue(undefined)
-    mockGetBySubUrl.mockReset()
     mockWeddingWebsite.mockClear()
   })
 
   it('uses params.websiteSubUrl to build metadata title', async () => {
     mockLoadWeddingBySubUrl.mockResolvedValue({
-      groomFirstName: 'John',
-      groomLastName: 'Doe',
-      brideFirstName: 'Jane',
-      brideLastName: 'Smith',
+      status: 'ready',
+      weddingData: {
+        groomFirstName: 'John',
+        groomLastName: 'Doe',
+        brideFirstName: 'Jane',
+        brideLastName: 'Smith',
+      },
     })
 
     const metadata = await (
@@ -79,7 +79,10 @@ describe('website suburl metadata + page wiring', () => {
       website: { id: 'website-1', subUrl: 'john-and-jane', introText: '' },
       events: [],
     }
-    mockLoadWeddingBySubUrl.mockResolvedValue(weddingData)
+    mockLoadWeddingBySubUrl.mockResolvedValue({
+      status: 'ready',
+      weddingData,
+    })
 
     const page = await RootRouteHandler({
       params: Promise.resolve({ websiteSubUrl: 'john-and-jane' }),

@@ -1,6 +1,7 @@
 import DashboardTopbar from '@/components/dashboard/dashboard-topbar'
 import { WebsiteDisabledCallout } from '~/app/_components/website/website-disabled-callout'
 import { WebsiteEditor } from '~/app/_components/website/website-editor'
+import { WebsiteSetupCallout } from '~/app/_components/website/website-setup-callout'
 import { computePublicWebsiteUrl } from '~/lib/website/public-url'
 import { getRequiredWedding } from '~/server/application/authenticated-route/authenticated-route-data'
 import { api } from '~/trpc/server'
@@ -12,15 +13,8 @@ export default async function WebsitePage() {
   const isWebsiteBuilderEnabled = wedding.enabledAddOns.includes('website_builder')
 
   const existingWebsite = await api.website.getByUserId()
-  let websiteId = existingWebsite?.id ?? null
-  let websiteSubUrl = existingWebsite?.subUrl ?? null
-
-  if (isWebsiteBuilderEnabled && !websiteId) {
-    const createdWebsite = await api.website.create({})
-
-    websiteId = createdWebsite.id
-    websiteSubUrl = createdWebsite.subUrl
-  }
+  const websiteId = existingWebsite?.id ?? null
+  const websiteSubUrl = existingWebsite?.subUrl ?? null
 
   const homeSection =
     isWebsiteBuilderEnabled && websiteId ? await api.websiteSection.getHomeSection() : null
@@ -36,6 +30,8 @@ export default async function WebsitePage() {
               publicUrl={computePublicWebsiteUrl(websiteSubUrl)}
               websiteId={websiteId}
             />
+          ) : isWebsiteBuilderEnabled ? (
+            <WebsiteSetupCallout />
           ) : (
             <WebsiteDisabledCallout />
           )}

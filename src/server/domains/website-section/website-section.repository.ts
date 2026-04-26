@@ -4,6 +4,7 @@ import type {
   HomeSectionContent,
   WebsiteSection,
 } from '~/server/domains/website-section/website-section.types'
+import { WebsiteSectionType } from '~/server/domains/website-section/website-section.types'
 import type { CreateWebsiteSectionInput } from '~/server/domains/website-section/website-section.validator'
 
 export class WebsiteSectionRepository {
@@ -44,6 +45,30 @@ export class WebsiteSectionRepository {
     const section = await this.db.websiteSection.update({
       where: { id },
       data,
+    })
+
+    return this.toWebsiteSection(section)
+  }
+
+  async upsertHomeSection(websiteId: string, content: HomeSectionContent): Promise<WebsiteSection> {
+    const section = await this.db.websiteSection.upsert({
+      where: {
+        websiteId_type: {
+          websiteId,
+          type: WebsiteSectionType.HOME,
+        },
+      },
+      update: {
+        content,
+        isEnabled: true,
+      },
+      create: {
+        websiteId,
+        type: WebsiteSectionType.HOME,
+        isEnabled: true,
+        position: 0,
+        content,
+      },
     })
 
     return this.toWebsiteSection(section)

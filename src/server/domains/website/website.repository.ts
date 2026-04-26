@@ -130,6 +130,44 @@ export class WebsiteRepository {
     })
   }
 
+  async upsertByWeddingId(data: {
+    weddingId: string
+    subUrl: string
+    templateId?: string | null
+  }): Promise<Website> {
+    return this.db.website.upsert({
+      where: { weddingId: data.weddingId },
+      update: {},
+      create: {
+        weddingId: data.weddingId,
+        subUrl: data.subUrl,
+        templateId: data.templateId,
+        generalQuestions: {
+          create: [
+            {
+              text: 'Will you be bringing any children under the age of 10?',
+              type: 'Text',
+            },
+            {
+              text: 'Send a note to the couple?',
+              type: 'Text',
+            },
+          ],
+        },
+        websiteSections: {
+          create: [
+            {
+              type: WebsiteSectionType.HOME,
+              isEnabled: true,
+              position: 0,
+              content: { introText: '' },
+            },
+          ],
+        },
+      },
+    })
+  }
+
   /**
    * Update website settings
    */
