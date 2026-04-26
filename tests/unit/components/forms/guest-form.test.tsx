@@ -16,12 +16,27 @@ import {
   type HouseholdFormData,
   HouseholdFormSchema,
 } from '~/components/forms/guest-form.schema'
+import { shouldShowUnsavedCloseConfirm } from '~/components/forms/guest-form.utils'
 
 // Mock events for form initialization
 const mockEvents = [
   { id: 'event-1', name: 'Wedding Ceremony' },
   { id: 'event-2', name: 'Reception' },
 ]
+
+describe('GuestForm - Close Confirmation Rules', () => {
+  it('requires confirmation when form is dirty and not loading', () => {
+    expect(shouldShowUnsavedCloseConfirm(true, false)).toBe(true)
+  })
+
+  it('does not require confirmation when form is pristine', () => {
+    expect(shouldShowUnsavedCloseConfirm(false, false)).toBe(false)
+  })
+
+  it('does not require confirmation while loading', () => {
+    expect(shouldShowUnsavedCloseConfirm(true, true)).toBe(false)
+  })
+})
 
 describe('GuestForm - Deleted Guests Tracking', () => {
   describe('handleRemoveGuest behavior', () => {

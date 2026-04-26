@@ -47,6 +47,33 @@ export const mockWeddingUpdate = jest.fn()
 
 export const mockMemberQueryRaw = jest.fn()
 
+export const mockVendorFindMany = jest.fn()
+export const mockVendorFindUnique = jest.fn()
+export const mockVendorFindFirst = jest.fn()
+export const mockVendorCreate = jest.fn()
+export const mockVendorUpdate = jest.fn()
+export const mockVendorDelete = jest.fn()
+export const mockVendorCount = jest.fn()
+
+export const mockVendorQuoteFindMany = jest.fn()
+export const mockVendorQuoteFindFirst = jest.fn()
+export const mockVendorQuoteCreate = jest.fn()
+export const mockVendorQuoteUpdate = jest.fn()
+export const mockVendorQuoteDelete = jest.fn()
+
+export const mockVendorQuoteFileFindMany = jest.fn()
+export const mockVendorQuoteFileFindFirst = jest.fn()
+export const mockVendorQuoteFileCreateMany = jest.fn()
+export const mockVendorQuoteFileDelete = jest.fn()
+export const mockVendorQuoteFileCount = jest.fn()
+
+export const mockVendorNoteFindMany = jest.fn()
+export const mockVendorNoteCreate = jest.fn()
+
+export const mockVendorCategoryConfigFindFirst = jest.fn()
+export const mockVendorCategoryConfigFindUnique = jest.fn()
+export const mockVendorCategoryConfigUpsert = jest.fn()
+
 const dbModels = {
   user: {
     findUnique: mockUserFindUnique,
@@ -94,6 +121,38 @@ const dbModels = {
     findFirst: mockWeddingFindFirst,
     create: mockWeddingCreate,
     update: mockWeddingUpdate,
+  },
+  vendor: {
+    findMany: mockVendorFindMany,
+    findUnique: mockVendorFindUnique,
+    findFirst: mockVendorFindFirst,
+    create: mockVendorCreate,
+    update: mockVendorUpdate,
+    delete: mockVendorDelete,
+    count: mockVendorCount,
+  },
+  vendorQuote: {
+    findMany: mockVendorQuoteFindMany,
+    findFirst: mockVendorQuoteFindFirst,
+    create: mockVendorQuoteCreate,
+    update: mockVendorQuoteUpdate,
+    delete: mockVendorQuoteDelete,
+  },
+  vendorQuoteFile: {
+    findMany: mockVendorQuoteFileFindMany,
+    findFirst: mockVendorQuoteFileFindFirst,
+    createMany: mockVendorQuoteFileCreateMany,
+    delete: mockVendorQuoteFileDelete,
+    count: mockVendorQuoteFileCount,
+  },
+  vendorNote: {
+    findMany: mockVendorNoteFindMany,
+    create: mockVendorNoteCreate,
+  },
+  vendorCategoryConfig: {
+    findFirst: mockVendorCategoryConfigFindFirst,
+    findUnique: mockVendorCategoryConfigFindUnique,
+    upsert: mockVendorCategoryConfigUpsert,
   },
 }
 
@@ -144,6 +203,28 @@ export const resetMocks = (): void => {
   mockWeddingFindFirst.mockReset()
   mockWeddingCreate.mockReset()
   mockWeddingUpdate.mockReset()
+  mockVendorFindMany.mockReset()
+  mockVendorFindUnique.mockReset()
+  mockVendorFindFirst.mockReset()
+  mockVendorCreate.mockReset()
+  mockVendorUpdate.mockReset()
+  mockVendorDelete.mockReset()
+  mockVendorCount.mockReset()
+  mockVendorQuoteFindMany.mockReset()
+  mockVendorQuoteFindFirst.mockReset()
+  mockVendorQuoteCreate.mockReset()
+  mockVendorQuoteUpdate.mockReset()
+  mockVendorQuoteDelete.mockReset()
+  mockVendorQuoteFileFindMany.mockReset()
+  mockVendorQuoteFileFindFirst.mockReset()
+  mockVendorQuoteFileCreateMany.mockReset()
+  mockVendorQuoteFileDelete.mockReset()
+  mockVendorQuoteFileCount.mockReset()
+  mockVendorNoteFindMany.mockReset()
+  mockVendorNoteCreate.mockReset()
+  mockVendorCategoryConfigFindFirst.mockReset()
+  mockVendorCategoryConfigFindUnique.mockReset()
+  mockVendorCategoryConfigUpsert.mockReset()
   mockMemberQueryRaw.mockReset()
   mock$transaction.mockClear()
   // Re-implement $transaction after clear

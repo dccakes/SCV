@@ -20,6 +20,7 @@ import {
   type HouseholdFormData,
   HouseholdFormSchema,
 } from '~/components/forms/guest-form.schema'
+import { shouldShowUnsavedCloseConfirm } from '~/components/forms/guest-form.utils'
 import SidePaneWrapper from '~/components/forms/wrapper'
 import { SelfInviteLinkManager } from '~/components/guest-list/self-invite-link-manager'
 import {
@@ -51,6 +52,7 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
   const router = useRouter()
   const toggleGuestForm = useToggleGuestForm()
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false)
+  const [showCloseConfirmation, setShowCloseConfirmation] = useState<boolean>(false)
   const [shouldCloseAfterSave, setShouldCloseAfterSave] = useState<boolean>(true)
 
   // Initialize react-hook-form
@@ -230,6 +232,13 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
 
   // Combined loading state from mutations
   const isLoading = isSubmitting || createMutation.isPending || updateMutation.isPending
+  const handleRequestClose = () => {
+    if (shouldShowUnsavedCloseConfirm(isDirty, isLoading)) {
+      setShowCloseConfirmation(true)
+      return
+    }
+    toggleGuestForm()
+  }
 
   return (
     <SidePaneWrapper>
@@ -239,7 +248,7 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
           <h1 className='mr-4 truncate font-bold text-2xl'>{getTitle()}</h1>
           <button
             type='button'
-            onClick={() => toggleGuestForm()}
+            onClick={handleRequestClose}
             aria-label='Close guest form'
             className='text-muted-foreground transition-colors hover:text-foreground'
           >
@@ -383,6 +392,30 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
             >
               {deleteMutation.isPending && <Loader2 className='h-4 w-4 animate-spin' />}
               {deleteMutation.isPending ? 'Deleting...' : 'Delete Party'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showCloseConfirmation} onOpenChange={setShowCloseConfirmation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved edits in this form. If you close now, your changes will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoading}>Keep editing</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault()
+                setShowCloseConfirmation(false)
+                toggleGuestForm()
+              }}
+              disabled={isLoading}
+            >
+              Discard and close
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

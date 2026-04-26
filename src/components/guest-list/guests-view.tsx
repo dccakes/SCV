@@ -24,7 +24,11 @@ import type { HouseholdMemberDraft } from '~/components/guest-list/household-mem
 import { GuestDetailDrawer } from '~/components/guest-list/v2/drawer/guest-detail-drawer'
 import { GuestCardsList } from '~/components/guest-list/v2/list/guest-cards-list'
 import { GuestIndividualTable } from '~/components/guest-list/v2/list/guest-individual-table'
-import { ListToolbar, type ViewMode } from '~/components/guest-list/v2/list/list-toolbar'
+import {
+  ListToolbar,
+  type ViewMode,
+  type WorkflowMode,
+} from '~/components/guest-list/v2/list/list-toolbar'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -70,6 +74,7 @@ export default function GuestsView({
   const [selectedHouseholdId, setSelectedHouseholdId] = useState<string | undefined>()
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('cards')
+  const [workflowMode, setWorkflowMode] = useState<WorkflowMode>('households')
   const [showDiscardDialog, setShowDiscardDialog] = useState(false)
   const [showDeleteHouseholdDialog, setShowDeleteHouseholdDialog] = useState(false)
   const [editingSections, setEditingSections] = useState<Set<'contactAddress' | 'notes'>>(new Set())
@@ -610,6 +615,14 @@ export default function GuestsView({
     return `/events?eventId=${selectedEventId}&tab=rsvps`
   }, [selectedEventId])
 
+  const sortStateLabel = useMemo(() => {
+    if (nameSort === 'ascending') return 'Name (A-Z)'
+    if (nameSort === 'descending') return 'Name (Z-A)'
+    if (partySort === 'ascending') return 'Party Size (Low-High)'
+    if (partySort === 'descending') return 'Party Size (High-Low)'
+    return undefined
+  }, [nameSort, partySort])
+
   const handleDrawerOpenChange = useCallback(
     (open: boolean) => {
       if (!open && isDrawerDirty) {
@@ -672,10 +685,13 @@ export default function GuestsView({
           onSortByPartySize={sortByParty}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
+          workflowMode={workflowMode}
+          onWorkflowModeChange={setWorkflowMode}
+          sortStateLabel={sortStateLabel}
         />
         {sortedHouseholds.length === 0 ? (
           <AsyncState isEmpty emptyText='No households yet' />
-        ) : viewMode === 'table' ? (
+        ) : workflowMode === 'personAudit' || viewMode === 'table' ? (
           <GuestIndividualTable
             households={sortedHouseholds}
             householdNumberMap={householdNumberMap}
@@ -704,6 +720,14 @@ export default function GuestsView({
         subtitle={selectedEventId === 'all' ? 'Across all events' : selectedEvent?.name}
         headerMeta={
           <div className='flex flex-wrap gap-1.5'>
+            {isDrawerDirty ? (
+              <Badge
+                variant='outline'
+                className='border-amber-500/40 bg-amber-500/10 text-[0.58rem] text-amber-700 uppercase tracking-wider'
+              >
+                Unsaved changes
+              </Badge>
+            ) : null}
             {selectedHouseholdTags.map((tag) => (
               <Badge
                 key={tag.id}

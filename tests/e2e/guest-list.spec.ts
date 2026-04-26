@@ -34,4 +34,19 @@ test.describe('Guest List', () => {
     // Look for numeric indicators that guests are loaded
     await expect(body).toContainText(/\d+/)
   })
+
+  test('should show primary guest list controls', async ({ page }) => {
+    await page.goto('/guest-list')
+
+    await expect(page.getByPlaceholder('Find guests')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'RSVP Status' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Guest Tag' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Country' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Sort by Name' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Sort by Party Size' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Card view' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Table view' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Import Guests' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Add Guest' })).toBeVisible()
+  })
 })

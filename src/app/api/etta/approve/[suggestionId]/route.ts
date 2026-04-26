@@ -5,16 +5,41 @@
  * and updates status to approved/dismissed.
  */
 
+import { VendorCategory } from '@prisma/client'
 import { z } from 'zod'
 import { logAudit } from '~/lib/etta/utils/audit'
 import { EttaAuthError, validateCoupleSession } from '~/lib/etta/utils/auth'
 import { db } from '~/server/db'
+import { fieldDefinitionSchema, vendorService } from '~/server/domains/vendor'
 
 const bodySchema = z.object({
   action: z.enum(['approve', 'dismiss']),
 })
 
+const suggestVendorFieldPayloadSchema = z.object({
+  category: z.enum(VendorCategory),
+  key: z.string().min(1),
+  label: z.string().min(1),
+  type: z.enum(['text', 'number', 'boolean']),
+  reason: z.string().min(1),
+})
+
+class ApprovalRouteError extends Error {
+  constructor(
+    message: string,
+    readonly status: number
+  ) {
+    super(message)
+    this.name = 'ApprovalRouteError'
+  }
+}
+
+type SuggestionRecord = Awaited<ReturnType<typeof db.ettaSuggestion.findUnique>>
+
 const inferAuthStatus = (error: unknown, message: string): number => {
+  if (error instanceof ApprovalRouteError) {
+    return error.status
+  }
   if (error instanceof EttaAuthError) {
     return error.status
   }
@@ -27,12 +52,49 @@ const inferAuthStatus = (error: unknown, message: string): number => {
   return 500
 }
 
+async function executeApprovalAction(
+  suggestion: NonNullable<SuggestionRecord>,
+  authz: Awaited<ReturnType<typeof validateCoupleSession>>['authz'],
+  weddingId: string
+) {
+  if (suggestion.actionType !== 'SUGGEST_VENDOR_FIELD') {
+    return
+  }
+
+  const parsedPayload = suggestVendorFieldPayloadSchema.safeParse(suggestion.payload)
+  if (!parsedPayload.success) {
+    throw new ApprovalRouteError('Invalid suggestion payload for SUGGEST_VENDOR_FIELD', 400)
+  }
+
+  const { category, key, label, type } = parsedPayload.data
+  const config = await vendorService.getCategoryConfig(authz, weddingId, category)
+  const fieldDefinitions = z.array(fieldDefinitionSchema).parse(config.fieldDefinitions)
+
+  if (fieldDefinitions.some((field) => field.key === key)) {
+    return
+  }
+
+  const nextDisplayOrder =
+    fieldDefinitions.reduce((maxOrder, field) => Math.max(maxOrder, field.displayOrder), -1) + 1
+  // TODO(review-implementation): make approval-side config mutation and suggestion resolution atomic
+  // in a transaction-owned domain flow to avoid read-modify-write races across concurrent approvals.
+  await vendorService.upsertCategoryConfig(authz, weddingId, category, [
+    ...fieldDefinitions,
+    {
+      key,
+      label,
+      type,
+      displayOrder: nextDisplayOrder,
+    },
+  ])
+}
+
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ suggestionId: string }> }
 ) {
   try {
-    const { weddingId, userId } = await validateCoupleSession(req.headers)
+    const { weddingId, userId, authz } = await validateCoupleSession(req.headers)
     const { suggestionId } = await params
 
     const parsed = bodySchema.safeParse(await req.json())
@@ -54,6 +116,10 @@ export async function PATCH(
 
     if (suggestion.status !== 'pending') {
       return Response.json({ error: `Suggestion already ${suggestion.status}` }, { status: 409 })
+    }
+
+    if (action === 'approve') {
+      await executeApprovalAction(suggestion, authz, weddingId)
     }
 
     const newStatus = action === 'approve' ? 'approved' : 'dismissed'

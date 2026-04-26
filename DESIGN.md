@@ -53,14 +53,31 @@ All colours are defined as OKLCH CSS custom properties. Tailwind consumes them v
 | `--muted-foreground` | `0.5534 0.0116 58.0708` | De-emphasised text |
 | `--accent` | `0.6997 0.0882 84.38` | Highlights, hover states — warm olive/gold |
 | `--accent-foreground` | `0.3353 0.0132 2.7676` | Text on accent backgrounds |
-| `--destructive` | *(danger red)* | Destructive actions — delete, remove |
+| `--destructive` | `0.602 0.214 27.11` | Destructive actions — delete, remove |
 | `--success` | `0.768 0.161 151.95` | Confirmations, completion states |
-| `--border` | *(warm neutral)* | Dividers, input borders |
-| `--ring` | *(primary-adjacent)* | Focus rings |
+| `--border` | `0.892 0.015 63.2` | Dividers, input borders |
+| `--ring` | `0.726 0.146 36.2` | Focus rings |
 
 #### Dark Mode
 
 Dark mode mirrors the token names but shifts to deeper, desaturated values. Background uses deep warm charcoal rather than pure black to maintain the warm character.
+
+| Token | OKLCH Value | Intended Use |
+|-------|-------------|--------------|
+| `--background` | `0.212 0.015 42.1` | Page background — deep warm charcoal |
+| `--foreground` | `0.938 0.012 82.5` | Body text on dark surfaces |
+| `--primary` | `0.778 0.145 35.3` | Primary actions, key CTAs |
+| `--primary-foreground` | `0.225 0.02 35.4` | Text on primary backgrounds |
+| `--secondary` | `0.284 0.018 39.8` | Secondary surfaces |
+| `--secondary-foreground` | `0.894 0.014 72.4` | Text on secondary surfaces |
+| `--muted` | `0.262 0.012 48.2` | Muted backgrounds and disabled states |
+| `--muted-foreground` | `0.734 0.017 68.5` | De-emphasised text |
+| `--accent` | `0.741 0.095 92.2` | Highlights and selected contexts |
+| `--accent-foreground` | `0.224 0.018 42.3` | Text on accent backgrounds |
+| `--destructive` | `0.674 0.182 27.6` | Destructive actions |
+| `--success` | `0.791 0.145 150.1` | Success states |
+| `--border` | `0.356 0.012 46.8` | Dividers and borders |
+| `--ring` | `0.783 0.127 38.7` | Focus rings |
 
 ### 3.3 Usage Rules
 
@@ -69,6 +86,25 @@ Dark mode mirrors the token names but shifts to deeper, desaturated values. Back
 3. **Muted = information hierarchy.** Secondary labels, helper text, metadata.
 4. **Destructive = last resort.** Always paired with a confirmation step. Never used for warnings — use `--accent` or a dedicated warning token.
 5. **Success = completion.** RSVP confirmed, vendor saved, website published. One clear moment per flow.
+
+### 3.4 Foundation Tokens Beyond Colour
+
+These tokens are required to keep spacing, depth, and layering consistent across dashboard and guest-facing surfaces.
+
+| Token | Value | Use |
+|-------|-------|-----|
+| `--radius-sm` | `0.375rem` (6px) | Inputs, chips, small badges |
+| `--radius-md` | `0.5rem` (8px) | Buttons, cards, list rows |
+| `--radius-lg` | `0.75rem` (12px) | Modals, popovers, feature panels |
+| `--radius-xl` | `1rem` (16px) | Hero cards, large media surfaces |
+| `--shadow-sm` | `0 1px 2px oklch(0 0 0 / 0.06)` | Inputs, low-elevation surfaces |
+| `--shadow-md` | `0 6px 18px oklch(0 0 0 / 0.10)` | Cards, dropdowns |
+| `--shadow-lg` | `0 12px 30px oklch(0 0 0 / 0.14)` | Modals and dialogs |
+| `--z-dropdown` | `40` | Menus, combobox lists |
+| `--z-sticky` | `50` | Sticky headers, pinned actions |
+| `--z-modal` | `70` | Dialogs and drawers |
+| `--z-toast` | `80` | Toast notifications |
+| `--z-tooltip` | `90` | Tooltips only |
 
 ---
 
@@ -153,7 +189,7 @@ Mobile is a **first-class citizen**, not a responsive afterthought. This means:
 
 ### 6.1 Buttons
 
-Four primary variants. Choose the minimum necessary emphasis for the context.
+Six button variants. Choose the minimum necessary emphasis for the context.
 
 | Variant | Use | Notes |
 |---------|-----|-------|
@@ -257,6 +293,36 @@ A **partial state** is when data exists but is incomplete — a guest with no RS
 | Website preview | No cover photo | Template-defined gradient placeholder with "Add cover photo" overlay |
 | Event | No attire specified | "Attire not set" in muted text + edit link |
 | Guest site password gate | Site being built | Friendly holding page, not a 404 |
+
+### 6.8 Core Primitive Components
+
+These primitives are required baseline components in the design system and should be implemented once, then reused.
+
+| Component | Required States | Notes |
+|----------|------------------|-------|
+| Text Input / Textarea | default, focus, filled, error, disabled, readonly | Label and helper/error text required |
+| Select / Combobox | default, open, selected, searching, empty, disabled, error | Keyboard navigable and screen-reader labelled |
+| Checkbox / Radio / Switch | unchecked, checked, indeterminate (checkbox), disabled, error | 44x44 tap target with visible focus |
+| Table | default, sortable, empty, loading, error | Sticky headers optional, mobile fallback to cards required |
+| Tabs | default, active, hover/focus, disabled | Must support keyboard arrow navigation |
+| Dropdown Menu | closed, open, focus, danger action, disabled item | Esc closes; click-away closes |
+| Toast | info, success, warning, error | Auto-dismiss plus manual dismiss |
+| Tooltip | hidden, visible | Never the only way to access required information |
+| Pagination | default, active page, disabled edge | Always paired with total count and page size |
+| Avatar / Badge | with image/icon, fallback initials/text | Fallback is mandatory, never broken image |
+
+### 6.9 Error, Permission, and Offline States
+
+Every data surface must define these states in addition to empty/loading/partial.
+
+| State Type | Required UX Treatment | CTA |
+|-----------|------------------------|-----|
+| Error (`5xx` / unknown failure) | Human-readable failure copy, preserve already-loaded data | Retry |
+| Validation error (`4xx`) | Inline field error with clear fix path | Resolve field + submit |
+| Permission denied | Explain why access is blocked and who can grant it | Request access / switch account |
+| Offline / network lost | Persistent banner and optimistic queue where possible | Reconnect / retry |
+| Rate limited | Clear cooldown messaging with remaining wait time if available | Try again later |
+| Not found (`404`) | Friendly redirect path, never dead end | Go to Dashboard |
 
 ---
 
@@ -385,7 +451,8 @@ Additional templates can be added in future milestones; the template selector UI
 - **Desktop**: Persistent left sidebar with icon + label
 - **Mobile**: Bottom navigation bar (max 5 items) + hamburger for overflow
 - Active state: `--primary` background, high contrast label
-- Navigation items: Dashboard, Guests, Events, Vendors, Website, Settings
+- Navigation items in bottom bar: Dashboard, Guests, Events, Vendors, Website
+- Overflow (`More`) menu item on mobile: Settings (and future secondary routes)
 
 ### 9.2 Settings Navigation
 
@@ -434,7 +501,35 @@ Email templates (via Resend) follow the same brand tokens where possible. Rules:
 
 ---
 
-## 13. Open Questions & Future Decisions
+## 13. Design Governance
+
+This document is only authoritative if there is an explicit enforcement loop.
+
+### 13.1 Definition of Done (Design)
+
+A feature is not design-complete until all items below are true:
+1. Uses semantic tokens only (no hardcoded colour values in product UI)
+2. Implements empty/loading/error/partial states for all major data surfaces
+3. Verifies keyboard flow and visible focus for every interactive control
+4. Includes mobile validation at 375px and at least one desktop breakpoint
+5. Includes at least one screenshot or recording in PR showing the intended final state
+
+### 13.2 Review Workflow
+
+1. Designer or feature owner maps new UI to the relevant sections in `DESIGN.md`
+2. Reviewer checks token usage, state coverage, and component convention adherence
+3. Exceptions require a short `Design Exception` note in PR description with expiry date
+4. Expired exceptions must be removed or explicitly renewed
+
+### 13.3 Versioning and Change Log
+
+- Any change that affects token values, component behaviour, or accessibility requirements must update the `Last updated` date
+- Significant design system changes must include a short `What changed` note in the PR
+- Deprecated patterns must be marked as `Deprecated` with a replacement and removal target milestone
+
+---
+
+## 14. Open Questions & Future Decisions
 
 These are design decisions intentionally deferred pending user research or roadmap prioritisation:
 
@@ -446,5 +541,4 @@ These are design decisions intentionally deferred pending user research or roadm
 
 ---
 
-*Last updated: 2026-04-13 | Maintained by Head of Product*
-
+*Last updated: 2026-04-23 | Maintained by Head of Product*

@@ -5,6 +5,7 @@
 import { logAudit } from '~/lib/etta/utils/audit'
 import { EttaAuthError, validateCoupleSession } from '~/lib/etta/utils/auth'
 import { db } from '~/server/db'
+import { vendorService } from '~/server/domains/vendor'
 
 jest.mock('~/lib/etta/utils/auth', () => ({
   EttaAuthError: class EttaAuthError extends Error {
@@ -28,11 +29,25 @@ jest.mock('~/server/db', () => ({
     },
   },
 }))
+jest.mock('~/server/domains/vendor', () => {
+  const validators = jest.requireActual('~/server/domains/vendor/vendor.validator')
+  return {
+    fieldDefinitionSchema: validators.fieldDefinitionSchema,
+    vendorService: {
+      getCategoryConfig: jest.fn(),
+      upsertCategoryConfig: jest.fn(),
+    },
+  }
+})
 
 const mockValidateSession = validateCoupleSession as jest.Mock
 const mockLogAudit = logAudit as jest.Mock
 const mockFindUnique = db.ettaSuggestion.findUnique as jest.Mock
 const mockUpdate = db.ettaSuggestion.update as jest.Mock
+const mockVendorService = vendorService as {
+  getCategoryConfig: jest.Mock
+  upsertCategoryConfig: jest.Mock
+}
 
 import { PATCH } from '~/app/api/etta/approve/[suggestionId]/route'
 
@@ -68,13 +83,21 @@ function pendingSuggestion(overrides: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   jest.clearAllMocks()
-  mockValidateSession.mockResolvedValue({ weddingId: WEDDING_ID, userId: USER_ID })
+  mockValidateSession.mockResolvedValue({
+    weddingId: WEDDING_ID,
+    userId: USER_ID,
+    authz: { userId: USER_ID, activeOrganization: null },
+  })
   mockFindUnique.mockResolvedValue(pendingSuggestion())
   mockUpdate.mockImplementation(async ({ data, where }) => ({
     ...pendingSuggestion(),
     ...data,
     id: where.id,
   }))
+  mockVendorService.getCategoryConfig.mockResolvedValue({
+    fieldDefinitions: [{ key: 'budget', label: 'Budget', type: 'number', displayOrder: 0 }],
+  })
+  mockVendorService.upsertCategoryConfig.mockResolvedValue(undefined)
   mockLogAudit.mockResolvedValue(undefined)
 })
 
@@ -199,5 +222,101 @@ describe('PATCH /api/etta/approve/[suggestionId]', () => {
     expect(data.status).toBe('approved')
     expect(new Date(data.resolvedAt).getTime()).toBeGreaterThanOrEqual(before.getTime())
     expect(new Date(data.resolvedAt).getTime()).toBeLessThanOrEqual(after.getTime())
+  })
+
+  describe('SUGGEST_VENDOR_FIELD approvals', () => {
+    it('appends the suggested field to the category config using authz from the session', async () => {
+      mockFindUnique.mockResolvedValue(
+        pendingSuggestion({
+          actionType: 'SUGGEST_VENDOR_FIELD',
+          summary: 'Add venue field: ceremony_site_fee',
+          payload: {
+            category: 'VENUE',
+            key: 'ceremony_site_fee',
+            label: 'Ceremony Site Fee',
+            type: 'number',
+            reason: 'Track separate ceremony pricing',
+          },
+        })
+      )
+
+      const res = await PATCH(makeRequest({ action: 'approve' }), makeParams())
+      const body = await res.json()
+
+      expect(res.status).toBe(200)
+      expect(body.status).toBe('approved')
+      expect(mockVendorService.getCategoryConfig).toHaveBeenCalledWith(
+        { userId: USER_ID, activeOrganization: null },
+        WEDDING_ID,
+        'VENUE'
+      )
+      expect(mockVendorService.upsertCategoryConfig).toHaveBeenCalledWith(
+        { userId: USER_ID, activeOrganization: null },
+        WEDDING_ID,
+        'VENUE',
+        [
+          { key: 'budget', label: 'Budget', type: 'number', displayOrder: 0 },
+          {
+            key: 'ceremony_site_fee',
+            label: 'Ceremony Site Fee',
+            type: 'number',
+            displayOrder: 1,
+          },
+        ]
+      )
+      expect(mockUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: SUGGESTION_ID },
+          data: expect.objectContaining({ status: 'approved', resolvedBy: USER_ID }),
+        })
+      )
+    })
+
+    it('does not upsert when the suggested key already exists', async () => {
+      mockFindUnique.mockResolvedValue(
+        pendingSuggestion({
+          actionType: 'SUGGEST_VENDOR_FIELD',
+          payload: {
+            category: 'VENUE',
+            key: 'budget',
+            label: 'Budget',
+            type: 'number',
+            reason: 'Already tracked',
+          },
+        })
+      )
+
+      const res = await PATCH(makeRequest({ action: 'approve' }), makeParams())
+
+      expect(res.status).toBe(200)
+      expect(mockVendorService.getCategoryConfig).toHaveBeenCalledTimes(1)
+      expect(mockVendorService.upsertCategoryConfig).not.toHaveBeenCalled()
+      expect(mockUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ status: 'approved' }),
+        })
+      )
+    })
+
+    it('returns 400 when the suggestion payload is invalid', async () => {
+      mockFindUnique.mockResolvedValue(
+        pendingSuggestion({
+          actionType: 'SUGGEST_VENDOR_FIELD',
+          payload: {
+            category: 'VENUE',
+            key: 'missing_label',
+            reason: 'Incomplete payload',
+          },
+        })
+      )
+
+      const res = await PATCH(makeRequest({ action: 'approve' }), makeParams())
+
+      expect(res.status).toBe(400)
+      expect((await res.json()).error).toBe('Invalid suggestion payload for SUGGEST_VENDOR_FIELD')
+      expect(mockVendorService.getCategoryConfig).not.toHaveBeenCalled()
+      expect(mockVendorService.upsertCategoryConfig).not.toHaveBeenCalled()
+      expect(mockUpdate).not.toHaveBeenCalled()
+    })
   })
 })
