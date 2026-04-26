@@ -1,4 +1,4 @@
-import { QuoteType, VendorCategory } from '@prisma/client'
+import { VendorCategory } from '@prisma/client'
 import { tool, zodSchema } from 'ai'
 import { z } from 'zod'
 
@@ -6,10 +6,15 @@ import type { EttaContext } from '~/lib/etta/types'
 import { requireEttaPermission, requirePlannerAuthz } from '~/lib/etta/utils/authorization'
 import { vendorInsightsService } from '~/server/application/vendor-insights'
 import { db } from '~/server/db'
-import { vendorService } from '~/server/domains/vendor'
+import {
+  addVendorNoteSchema,
+  getCategoryConfigSchema,
+  updateQuoteSchema,
+  updateVendorSchema,
+  vendorService,
+} from '~/server/domains/vendor'
 
 const vendorCategory = z.enum(VendorCategory)
-const quoteType = z.enum(QuoteType)
 
 export function getVendorTools(ctx: EttaContext) {
   return {
@@ -24,6 +29,17 @@ export function getVendorTools(ctx: EttaContext) {
         const authz = requirePlannerAuthz(ctx)
         const vendors = await vendorInsightsService.listVendors(authz, ctx.weddingId, category)
         return { vendors }
+      },
+    }),
+
+    get_category_config: tool({
+      description:
+        'Get the active custom field definitions for a vendor category, including wedding-specific overrides when present',
+      inputSchema: zodSchema(getCategoryConfigSchema),
+      execute: async ({ category }) => {
+        const authz = requirePlannerAuthz(ctx)
+        const config = await vendorService.getCategoryConfig(authz, ctx.weddingId, category)
+        return { fieldDefinitions: config.fieldDefinitions }
       },
     }),
 
@@ -60,6 +76,20 @@ export function getVendorTools(ctx: EttaContext) {
       },
     }),
 
+    update_vendor: tool({
+      description:
+        'Update vendor details directly, including contact information, scratchpad notes, contacted state, and custom field values',
+      inputSchema: zodSchema(updateVendorSchema),
+      execute: async ({ vendorId, ...data }) => {
+        const authz = requirePlannerAuthz(ctx)
+        const vendor = await vendorService.updateVendor(authz, vendorId, ctx.weddingId, {
+          vendorId,
+          ...data,
+        })
+        return { vendor }
+      },
+    }),
+
     get_vendor_quote: tool({
       description: 'Get a specific vendor quote, including any attached documents',
       inputSchema: zodSchema(
@@ -77,19 +107,7 @@ export function getVendorTools(ctx: EttaContext) {
 
     update_vendor_quote: tool({
       description: 'Update a specific vendor quote, including its amount, type, date, or notes',
-      inputSchema: zodSchema(
-        z.object({
-          vendorId: z.string().min(1),
-          quoteId: z.string().min(1),
-          price: z.number().positive().max(10_000_000).optional(),
-          quoteType: quoteType.optional(),
-          quoteDate: z
-            .string()
-            .regex(/^\d{4}-\d{2}-\d{2}$/)
-            .optional(),
-          notes: z.string().max(5000).optional(),
-        })
-      ),
+      inputSchema: zodSchema(updateQuoteSchema),
       execute: async ({ vendorId, quoteId, ...data }) => {
         const authz = requirePlannerAuthz(ctx)
         const quote = await vendorService.updateQuote(authz, quoteId, vendorId, ctx.weddingId, {
@@ -98,6 +116,23 @@ export function getVendorTools(ctx: EttaContext) {
           ...data,
         })
         return { quote }
+      },
+    }),
+
+    add_vendor_note: tool({
+      description:
+        "Add a note to a vendor's interaction log to record outreach, follow-ups, or context discovered during planning",
+      inputSchema: zodSchema(addVendorNoteSchema),
+      execute: async ({ vendorId, message }) => {
+        const authz = requirePlannerAuthz(ctx)
+        const note = await vendorService.addVendorNote(
+          authz,
+          vendorId,
+          ctx.weddingId,
+          message,
+          'etta'
+        )
+        return { noteId: note.id, message: 'Note added to vendor interaction log' }
       },
     }),
   }

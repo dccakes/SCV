@@ -16,12 +16,17 @@ import type { VendorRepository } from '~/server/domains/vendor/vendor.repository
 import type {
   Vendor,
   VendorCategory,
+  VendorCategoryConfig,
+  VendorFieldDefinition,
+  VendorNote,
+  VendorNoteActorType,
   VendorQuote,
   VendorQuoteFile,
   VendorStatus,
   VendorWithQuotes,
 } from '~/server/domains/vendor/vendor.types'
 import type {
+  AddVendorNoteInput,
   CreateQuoteInput,
   CreateVendorInput,
   DeleteQuoteFileInput,
@@ -29,6 +34,7 @@ import type {
   UpdateQuoteInput,
   UpdateVendorInput,
 } from '~/server/domains/vendor/vendor.validator'
+import { upsertCategoryConfigSchema } from '~/server/domains/vendor/vendor.validator'
 
 export class VendorService {
   constructor(private vendorRepository: VendorRepository) {}
@@ -131,8 +137,24 @@ export class VendorService {
   ): Promise<Vendor> {
     this.requireVendorPermission(ctx, 'update')
     await this.assertVendorOwnership(vendorId, weddingId)
-    const { vendorId: _, ...updateData } = data
-    return this.vendorRepository.update(vendorId, updateData)
+
+    const { vendorId: _, customFields, notes, ...updateData } = data
+    const normalizedNotes = notes === undefined ? undefined : notes?.trim() ? notes : null
+    const mergedCustomFields =
+      customFields === undefined
+        ? undefined
+        : customFields === null
+          ? null
+          : {
+              ...(await this.vendorRepository.findCustomFieldsById(vendorId)),
+              ...customFields,
+            }
+
+    return this.vendorRepository.update(vendorId, {
+      ...updateData,
+      ...(normalizedNotes !== undefined ? { notes: normalizedNotes } : {}),
+      ...(mergedCustomFields !== undefined ? { customFields: mergedCustomFields } : {}),
+    })
   }
 
   /**
@@ -147,6 +169,74 @@ export class VendorService {
     this.requireVendorPermission(ctx, 'update')
     await this.assertVendorOwnership(vendorId, weddingId)
     return this.vendorRepository.updateStatus(vendorId, status)
+  }
+
+  async addVendorNote(
+    ctx: AuthzContext,
+    vendorId: string,
+    weddingId: string,
+    message: AddVendorNoteInput['message'],
+    actorType: VendorNoteActorType = 'couple'
+  ): Promise<VendorNote> {
+    this.requireVendorPermission(ctx, 'update')
+    await this.assertVendorOwnership(vendorId, weddingId)
+
+    const trimmedMessage = message.trim()
+    if (trimmedMessage.length === 0) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Message is required',
+      })
+    }
+
+    return this.vendorRepository.createVendorNote({
+      vendorId,
+      weddingId,
+      message: trimmedMessage,
+      actorType,
+    })
+  }
+
+  async getNotes(ctx: AuthzContext, vendorId: string, weddingId: string): Promise<VendorNote[]> {
+    this.requireVendorPermission(ctx, 'read')
+    await this.assertVendorOwnership(vendorId, weddingId)
+    return this.vendorRepository.findNotesByVendorId(vendorId)
+  }
+
+  async getCategoryConfig(
+    ctx: AuthzContext,
+    weddingId: string,
+    category: VendorCategory
+  ): Promise<VendorCategoryConfig> {
+    this.requireVendorPermission(ctx, 'read')
+
+    const categoryConfig = await this.vendorRepository.findCategoryConfig(weddingId, category)
+    if (!categoryConfig) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Vendor category config not found',
+      })
+    }
+
+    return categoryConfig
+  }
+
+  async upsertCategoryConfig(
+    ctx: AuthzContext,
+    weddingId: string,
+    category: VendorCategory,
+    fieldDefinitions: VendorFieldDefinition[]
+  ): Promise<VendorCategoryConfig> {
+    this.requireVendorPermission(ctx, 'update')
+    upsertCategoryConfigSchema.parse({
+      category,
+      fieldDefinitions,
+    })
+    return this.vendorRepository.upsertCategoryConfig({
+      weddingId,
+      category,
+      fieldDefinitions,
+    })
   }
 
   /**
