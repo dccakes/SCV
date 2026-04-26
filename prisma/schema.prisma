@@ -47,6 +47,8 @@ model Wedding {
   faqs            Faq[]
   notifications   Notification[]
   householdNotes  HouseholdNote[]
+  vendorNotes     VendorNote[]
+  vendorCategoryConfigs VendorCategoryConfig[]
 
   // Messaging (Telegram bot, future: WhatsApp)
   messagingIdentities    MessagingIdentity[]
@@ -556,8 +558,12 @@ model Vendor {
   contactName  String?
   contactEmail String?
   contactPhone String?
+  notes        String?
+  contacted    Boolean @default(false)
+  customFields Json?
 
-  quotes VendorQuote[]
+  quotes      VendorQuote[]
+  vendorNotes VendorNote[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -584,6 +590,36 @@ model VendorQuote {
   updatedAt DateTime @updatedAt
 
   @@index([vendorId])
+}
+
+model VendorNote {
+  id        String   @id @default(uuid())
+  vendorId  String   @map("vendor_id")
+  vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  weddingId String   @map("wedding_id")
+  wedding   Wedding  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  message   String
+  actorType String   @default("couple") @map("actor_type")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([vendorId, createdAt(sort: Desc)])
+  @@index([weddingId])
+  @@map("vendor_notes")
+}
+
+model VendorCategoryConfig {
+  id               String         @id @default(uuid())
+  weddingId        String?        @map("wedding_id")
+  wedding          Wedding?       @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  category         VendorCategory
+  fieldDefinitions Json           @map("field_definitions")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  @@unique([weddingId, category])
+  @@index([category])
+  @@index([weddingId])
+  @@map("vendor_category_configs")
 }
 
 // Files attached to a vendor quote (stored via Vercel Blob)

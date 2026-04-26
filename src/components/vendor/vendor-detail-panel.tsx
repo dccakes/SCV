@@ -2,7 +2,7 @@
 
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { toast } from 'sonner'
 
@@ -20,9 +20,20 @@ import {
   DialogPortal,
   DialogTitle,
 } from '~/components/ui/dialog'
+import { Label } from '~/components/ui/label'
+import { Switch } from '~/components/ui/switch'
+import { Textarea } from '~/components/ui/textarea'
 import { FileViewerDrawer, getViewableFileType } from '~/components/vendor/file-viewer-drawer'
 import { QuoteForm } from '~/components/vendor/quote-form'
+import { VendorCustomFields } from '~/components/vendor/vendor-custom-fields'
+import type {
+  EnrichedVendor,
+  VendorCategoryConfig,
+  VendorCustomFieldValues,
+  VendorNote,
+} from '~/components/vendor/vendor-enrichment-types'
 import { VendorForm } from '~/components/vendor/vendor-form'
+import { VendorNoteTimeline } from '~/components/vendor/vendor-note-timeline'
 import { VendorStatusSelect } from '~/components/vendor/vendor-status-select'
 import { uploadFiles } from '~/lib/blob'
 import {
@@ -32,12 +43,51 @@ import {
   MAX_FILES_PER_QUOTE,
 } from '~/lib/upload-config'
 import { cn } from '~/lib/utils'
-import type { VendorQuote, VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
+import type {
+  VendorCategory,
+  VendorQuote,
+  VendorWithQuotes,
+} from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
 
 type VendorDetailPanelProps = {
   vendor: VendorWithQuotes | null
   onClose: () => void
+}
+
+type VendorApiWithEnrichment = typeof api.vendor & {
+  update: {
+    useMutation: (options?: { onSuccess?: () => void | Promise<void>; onError?: () => void }) => {
+      mutate: (
+        input: {
+          vendorId: string
+          contacted?: boolean
+          notes?: string | null
+          customFields?: VendorCustomFieldValues
+        },
+        options?: unknown
+      ) => void
+      isPending: boolean
+    }
+  }
+  getNotes: {
+    useQuery: (
+      input: { vendorId: string },
+      options?: { enabled?: boolean }
+    ) => { data?: VendorNote[]; refetch: () => Promise<unknown> }
+  }
+  addNote: {
+    useMutation: (options?: { onSuccess?: () => void | Promise<void>; onError?: () => void }) => {
+      mutate: (input: { vendorId: string; message: string }, options?: unknown) => void
+      isPending: boolean
+    }
+  }
+  getCategoryConfig: {
+    useQuery: (
+      input: { category: VendorCategory },
+      options?: { enabled?: boolean }
+    ) => { data?: VendorCategoryConfig | null }
+  }
 }
 
 const priceFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
@@ -56,7 +106,6 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-/** Hairline-rule section label matching OSWP drawer pattern */
 function SectionLabel({
   children,
   action,
@@ -75,7 +124,6 @@ function SectionLabel({
   )
 }
 
-/** Detail grid label */
 function DetailLabel({ children }: { children: React.ReactNode }) {
   return (
     <dt className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
@@ -95,10 +143,9 @@ function QuoteFileUploader({
 }) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
 
   const saveFiles = api.vendor.saveQuoteFiles.useMutation()
-
-  const [isUploading, setIsUploading] = useState(false)
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setSelectedFiles((prev) => {
@@ -117,9 +164,9 @@ function QuoteFileUploader({
     accept: DROPZONE_ACCEPT,
     onDropRejected: (rejections) => {
       const errors = rejections[0]?.errors
-      if (errors?.some((e) => e.code === 'file-too-large')) {
+      if (errors?.some((error) => error.code === 'file-too-large')) {
         toast.error('File exceeds 8 MB limit')
-      } else if (errors?.some((e) => e.code === 'file-invalid-type')) {
+      } else if (errors?.some((error) => error.code === 'file-invalid-type')) {
         toast.error(`Unsupported file type. Accepted: ${ACCEPTED_TYPES_LABEL}`)
       } else {
         toast.error(errors?.[0]?.message ?? 'File not accepted')
@@ -128,24 +175,26 @@ function QuoteFileUploader({
   })
 
   const removeFile = (index: number) => {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index))
+    setSelectedFiles((prev) => prev.filter((_, currentIndex) => currentIndex !== index))
   }
 
   const handleUpload = async () => {
     if (selectedFiles.length === 0) return
+
     setIsSubmitting(true)
     setIsUploading(true)
+
     try {
       const uploadResults = await uploadFiles(selectedFiles)
       if (uploadResults.length > 0) {
         await saveFiles.mutateAsync({
           quoteId,
           vendorId,
-          files: uploadResults.map((r) => ({
-            name: r.name,
-            url: r.url,
-            key: r.pathname,
-            size: r.size,
+          files: uploadResults.map((result) => ({
+            name: result.name,
+            url: result.url,
+            key: result.pathname,
+            size: result.size,
           })),
         })
       }
@@ -184,16 +233,16 @@ function QuoteFileUploader({
               Drag & drop or click to attach
             </p>
             <p className='font-mono text-[0.5rem] text-muted-foreground/70 tracking-wider'>
-              {ACCEPTED_TYPES_LABEL} — max 8 MB each
+              {ACCEPTED_TYPES_LABEL} - max 8 MB each
             </p>
           </div>
         )}
       </div>
 
-      {selectedFiles.length > 0 && (
+      {selectedFiles.length > 0 ? (
         <>
           <ul className='space-y-1'>
-            {selectedFiles.map((file, i) => (
+            {selectedFiles.map((file, index) => (
               <li
                 key={`${file.name}-${file.size}-${file.lastModified}`}
                 className='flex items-center justify-between rounded bg-muted px-2.5 py-1.5 font-sans text-[0.85rem]'
@@ -202,7 +251,7 @@ function QuoteFileUploader({
                 <button
                   type='button'
                   aria-label={`Remove ${file.name}`}
-                  onClick={() => removeFile(i)}
+                  onClick={() => removeFile(index)}
                   className='ml-2 shrink-0 text-muted-foreground hover:text-destructive'
                 >
                   ✕
@@ -216,7 +265,7 @@ function QuoteFileUploader({
               : `Upload ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''}`}
           </Button>
         </>
-      )}
+      ) : null}
     </div>
   )
 }
@@ -227,11 +276,24 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
   const [editingQuoteId, setEditingQuoteId] = useState<string | null>(null)
   const [attachingQuoteId, setAttachingQuoteId] = useState<string | null>(null)
   const [viewingPdf, setViewingPdf] = useState<{ name: string; url: string } | null>(null)
+  const [scratchpad, setScratchpad] = useState('')
+  const [newNote, setNewNote] = useState('')
   const utils = api.useUtils()
+  const vendorApi = api.vendor as VendorApiWithEnrichment
 
   const { data: vendorData, refetch } = api.vendor.getById.useQuery(
     { vendorId: vendor?.id ?? '' },
     { enabled: !!vendor?.id, initialData: vendor ?? undefined }
+  )
+  const enrichedVendor = vendorData as EnrichedVendor | undefined
+
+  const { data: noteTimeline = [], refetch: refetchNotes } = vendorApi.getNotes.useQuery(
+    { vendorId: vendor?.id ?? '' },
+    { enabled: !!vendor?.id }
+  )
+  const { data: categoryConfig } = vendorApi.getCategoryConfig.useQuery(
+    { category: (enrichedVendor?.category ?? vendor?.category ?? 'OTHER') as VendorCategory },
+    { enabled: !!enrichedVendor?.category }
   )
 
   const updateStatus = api.vendor.updateStatus.useMutation({
@@ -239,6 +301,14 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
       await Promise.all([refetch(), utils.vendor.getAll.invalidate()])
     },
     onError: () => toast.error('Failed to update status'),
+  })
+
+  const updateVendor = vendorApi.update.useMutation({
+    onError: () => toast.error('Failed to update vendor'),
+  })
+
+  const addNote = vendorApi.addNote.useMutation({
+    onError: () => toast.error('Failed to add note'),
   })
 
   const deleteQuote = api.vendor.deleteQuote.useMutation({
@@ -257,10 +327,71 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
     onError: () => toast.error('Failed to delete file'),
   })
 
-  if (!vendor || !vendorData) return null
+  useEffect(() => {
+    setScratchpad(enrichedVendor?.notes ?? '')
+  }, [enrichedVendor?.notes])
+
+  if (!vendor || !vendorData || !enrichedVendor) return null
 
   const formatPrice = (price: number) => priceFormatter.format(price)
   const formatDate = (date: Date | string) => dateFormatter.format(new Date(date))
+
+  const persistVendorUpdate = (
+    input: {
+      vendorId: string
+      contacted?: boolean
+      notes?: string | null
+      customFields?: VendorCustomFieldValues
+    },
+    successMessage: string
+  ) => {
+    updateVendor.mutate(input, {
+      onSuccess: async () => {
+        await Promise.all([refetch(), utils.vendor.getAll.invalidate()])
+        toast.success(successMessage)
+      },
+    })
+  }
+
+  const handleSaveScratchpad = () => {
+    const normalized = scratchpad.trim()
+    persistVendorUpdate(
+      {
+        vendorId: enrichedVendor.id,
+        notes: normalized ? scratchpad : null,
+      },
+      'Scratchpad saved'
+    )
+  }
+
+  const handleAddNote = () => {
+    const normalized = newNote.trim()
+    if (!normalized) return
+
+    addNote.mutate(
+      {
+        vendorId: enrichedVendor.id,
+        message: normalized,
+      },
+      {
+        onSuccess: async () => {
+          setNewNote('')
+          await Promise.all([refetchNotes(), refetch(), utils.vendor.getAll.invalidate()])
+          toast.success('Note added')
+        },
+      }
+    )
+  }
+
+  const handleCustomFieldSave = (customFields: VendorCustomFieldValues) => {
+    persistVendorUpdate(
+      {
+        vendorId: enrichedVendor.id,
+        customFields,
+      },
+      'Custom fields saved'
+    )
+  }
 
   return (
     <>
@@ -280,28 +411,51 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
               <X className='h-4 w-4' aria-hidden='true' />
             </DialogClose>
 
-            {/* Header */}
             <header className='border-border/80 border-b px-5 py-5 pr-14 md:px-6'>
               <DialogTitle className='font-display text-2xl text-foreground italic leading-tight'>
-                {vendorData.name}
+                {enrichedVendor.name}
               </DialogTitle>
               <DialogDescription className='sr-only'>Vendor details panel</DialogDescription>
-              <div className='mt-2'>
+              <div className='mt-2 flex flex-wrap items-center gap-3'>
                 <VendorStatusSelect
-                  value={vendorData.status}
-                  onChange={(status) => updateStatus.mutate({ vendorId: vendorData.id, status })}
+                  value={enrichedVendor.status}
+                  onChange={(status) =>
+                    updateStatus.mutate({ vendorId: enrichedVendor.id, status })
+                  }
                   disabled={updateStatus.isPending}
                 />
+                <div className='flex items-center gap-2'>
+                  <Label
+                    htmlFor='vendor-contacted'
+                    className='font-mono text-[0.58rem] text-muted-foreground uppercase tracking-wider'
+                  >
+                    Contacted
+                  </Label>
+                  <Switch
+                    id='vendor-contacted'
+                    aria-label='Mark vendor as contacted'
+                    checked={enrichedVendor.contacted === true}
+                    onCheckedChange={(checked) =>
+                      persistVendorUpdate(
+                        {
+                          vendorId: enrichedVendor.id,
+                          contacted: checked,
+                        },
+                        checked ? 'Marked as contacted' : 'Marked as not contacted'
+                      )
+                    }
+                    disabled={updateVendor.isPending}
+                  />
+                </div>
               </div>
             </header>
 
-            {/* Scrollable body */}
             <div className='flex min-h-0 flex-1 flex-col'>
               <div className='flex-1 overflow-y-auto overscroll-y-contain px-5 py-4 md:px-6'>
                 {showEditForm ? (
                   <VendorForm
                     mode='edit'
-                    vendor={vendorData}
+                    vendor={enrichedVendor}
                     onSuccess={async () => {
                       await Promise.all([refetch(), utils.vendor.getAll.invalidate()])
                       setShowEditForm(false)
@@ -310,7 +464,6 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                   />
                 ) : (
                   <div className='space-y-5'>
-                    {/* Details section */}
                     <section>
                       <SectionLabel
                         action={
@@ -326,81 +479,143 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                         Details
                       </SectionLabel>
                       <dl className='grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2'>
-                        {vendorData.location && (
+                        {enrichedVendor.location ? (
                           <div>
                             <DetailLabel>Location</DetailLabel>
                             <dd className='font-sans text-[0.92rem] text-foreground'>
-                              {vendorData.location}
+                              {enrichedVendor.location}
                             </dd>
                           </div>
-                        )}
-                        {vendorData.website && (
+                        ) : null}
+                        {enrichedVendor.website ? (
                           <div>
                             <DetailLabel>Website</DetailLabel>
                             <dd>
                               <a
-                                href={vendorData.website}
+                                href={enrichedVendor.website}
                                 target='_blank'
                                 rel='noreferrer'
                                 className='truncate font-sans text-[0.92rem] text-primary hover:underline'
                               >
-                                {vendorData.website}
+                                {enrichedVendor.website}
                               </a>
                             </dd>
                           </div>
-                        )}
-                        {vendorData.instagram && (
+                        ) : null}
+                        {enrichedVendor.instagram ? (
                           <div>
                             <DetailLabel>Instagram</DetailLabel>
                             <dd className='font-sans text-[0.92rem] text-foreground'>
-                              {vendorData.instagram}
+                              {enrichedVendor.instagram}
                             </dd>
                           </div>
-                        )}
+                        ) : null}
                       </dl>
                     </section>
 
-                    {/* Contact section */}
-                    {(vendorData.contactName ||
-                      vendorData.contactEmail ||
-                      vendorData.contactPhone) && (
+                    {enrichedVendor.contactName ||
+                    enrichedVendor.contactEmail ||
+                    enrichedVendor.contactPhone ? (
                       <section>
                         <SectionLabel>Contact</SectionLabel>
                         <dl className='grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2'>
-                          {vendorData.contactName && (
+                          {enrichedVendor.contactName ? (
                             <div>
                               <DetailLabel>Name</DetailLabel>
                               <dd className='font-sans text-[0.92rem] text-foreground'>
-                                {vendorData.contactName}
+                                {enrichedVendor.contactName}
                               </dd>
                             </div>
-                          )}
-                          {vendorData.contactEmail && (
+                          ) : null}
+                          {enrichedVendor.contactEmail ? (
                             <div>
                               <DetailLabel>Email</DetailLabel>
                               <dd>
                                 <a
-                                  href={`mailto:${vendorData.contactEmail}`}
+                                  href={`mailto:${enrichedVendor.contactEmail}`}
                                   className='font-sans text-[0.92rem] text-primary hover:underline'
                                 >
-                                  {vendorData.contactEmail}
+                                  {enrichedVendor.contactEmail}
                                 </a>
                               </dd>
                             </div>
-                          )}
-                          {vendorData.contactPhone && (
+                          ) : null}
+                          {enrichedVendor.contactPhone ? (
                             <div>
                               <DetailLabel>Phone</DetailLabel>
                               <dd className='font-sans text-[0.92rem] text-foreground'>
-                                {vendorData.contactPhone}
+                                {enrichedVendor.contactPhone}
                               </dd>
                             </div>
-                          )}
+                          ) : null}
                         </dl>
                       </section>
-                    )}
+                    ) : null}
 
-                    {/* Quotes section */}
+                    <section>
+                      <SectionLabel>Scratchpad</SectionLabel>
+                      <div className='space-y-3'>
+                        <div className='space-y-1.5'>
+                          <Label htmlFor='vendor-scratchpad' className='font-sans text-sm'>
+                            Scratchpad Notes
+                          </Label>
+                          <Textarea
+                            id='vendor-scratchpad'
+                            aria-label='Scratchpad notes'
+                            value={scratchpad}
+                            onChange={(event) => setScratchpad(event.target.value)}
+                            className='min-h-28 font-serif'
+                            placeholder='Capture impressions, constraints, and reminders.'
+                          />
+                        </div>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          onClick={handleSaveScratchpad}
+                          disabled={updateVendor.isPending}
+                        >
+                          {updateVendor.isPending ? 'Saving...' : 'Save Scratchpad'}
+                        </Button>
+                      </div>
+                    </section>
+
+                    <section>
+                      <SectionLabel>Interaction Log</SectionLabel>
+                      <div className='space-y-3'>
+                        <div className='space-y-1.5'>
+                          <Label htmlFor='vendor-note-composer' className='font-sans text-sm'>
+                            Add Interaction Note
+                          </Label>
+                          <Textarea
+                            id='vendor-note-composer'
+                            aria-label='Add interaction note'
+                            value={newNote}
+                            onChange={(event) => setNewNote(event.target.value)}
+                            className='min-h-24 font-serif'
+                            placeholder='Log outreach, follow-ups, and decisions.'
+                          />
+                        </div>
+                        <Button
+                          type='button'
+                          onClick={handleAddNote}
+                          disabled={addNote.isPending || newNote.trim().length === 0}
+                        >
+                          {addNote.isPending ? 'Adding...' : 'Add Note'}
+                        </Button>
+                        <VendorNoteTimeline notes={noteTimeline} />
+                      </div>
+                    </section>
+
+                    <section>
+                      <SectionLabel>Custom Fields</SectionLabel>
+                      <VendorCustomFields
+                        definitions={categoryConfig?.fieldDefinitions ?? []}
+                        values={enrichedVendor.customFields}
+                        onSave={handleCustomFieldSave}
+                        isSaving={updateVendor.isPending}
+                      />
+                    </section>
+
                     <section>
                       <SectionLabel
                         action={
@@ -415,13 +630,13 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                           ) : null
                         }
                       >
-                        Quotes ({vendorData.quotes.length})
+                        Quotes ({enrichedVendor.quotes.length})
                       </SectionLabel>
 
-                      {showQuoteForm && (
+                      {showQuoteForm ? (
                         <div className='mb-3'>
                           <QuoteForm
-                            vendorId={vendorData.id}
+                            vendorId={enrichedVendor.id}
                             onSuccess={async () => {
                               await refetch()
                               setShowQuoteForm(false)
@@ -429,24 +644,24 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                             onCancel={() => setShowQuoteForm(false)}
                           />
                         </div>
-                      )}
+                      ) : null}
 
-                      {vendorData.quotes.length === 0 && !showQuoteForm && (
+                      {enrichedVendor.quotes.length === 0 && !showQuoteForm ? (
                         <p className='font-mono text-[0.72rem] text-muted-foreground uppercase tracking-wider'>
                           No quotes yet
                         </p>
-                      )}
+                      ) : null}
 
-                      {vendorData.quotes.length > 0 && (
+                      {enrichedVendor.quotes.length > 0 ? (
                         <div className='space-y-2'>
-                          {vendorData.quotes.map((quote: VendorQuote) => (
+                          {enrichedVendor.quotes.map((quote: VendorQuote) => (
                             <div
                               key={quote.id}
                               className='rounded-lg border border-border/90 bg-card/60 px-4 py-3'
                             >
                               {editingQuoteId === quote.id ? (
                                 <QuoteForm
-                                  vendorId={vendorData.id}
+                                  vendorId={enrichedVendor.id}
                                   mode='edit'
                                   quote={quote}
                                   onSuccess={async () => {
@@ -472,11 +687,11 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                                       <p className='font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
                                         {formatDate(quote.quoteDate)}
                                       </p>
-                                      {quote.notes && (
+                                      {quote.notes ? (
                                         <p className='mt-1.5 font-sans text-[0.88rem] text-foreground/75 leading-relaxed'>
                                           {quote.notes}
                                         </p>
-                                      )}
+                                      ) : null}
                                     </div>
                                     <div className='ml-4 flex items-center gap-2'>
                                       <button
@@ -497,7 +712,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                                           ) {
                                             deleteQuote.mutate({
                                               quoteId: quote.id,
-                                              vendorId: vendorData.id,
+                                              vendorId: enrichedVendor.id,
                                             })
                                           }
                                         }}
@@ -508,11 +723,11 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                                     </div>
                                   </div>
 
-                                  {/* Attached files */}
-                                  {quote.files.length > 0 && (
+                                  {quote.files.length > 0 ? (
                                     <div className='mt-2.5 space-y-1'>
                                       {quote.files.map((file) => {
                                         const viewableType = getViewableFileType(file.name)
+
                                         return (
                                           <div
                                             key={file.id}
@@ -549,7 +764,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                                                   deleteFile.mutate({
                                                     fileId: file.id,
                                                     quoteId: quote.id,
-                                                    vendorId: vendorData.id,
+                                                    vendorId: enrichedVendor.id,
                                                   })
                                                 }
                                               }}
@@ -562,13 +777,12 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                                         )
                                       })}
                                     </div>
-                                  )}
+                                  ) : null}
 
-                                  {/* Attach more files */}
                                   {attachingQuoteId === quote.id ? (
                                     <QuoteFileUploader
                                       quoteId={quote.id}
-                                      vendorId={vendorData.id}
+                                      vendorId={enrichedVendor.id}
                                       onUploaded={async () => {
                                         await refetch()
                                         setAttachingQuoteId(null)
@@ -588,13 +802,12 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                             </div>
                           ))}
                         </div>
-                      )}
+                      ) : null}
                     </section>
                   </div>
                 )}
               </div>
 
-              {/* Footer */}
               <footer className='flex gap-3 border-border/80 border-t px-5 py-4 md:px-6'>
                 <Button variant='outline' className='flex-1' onClick={() => setShowEditForm(true)}>
                   Edit Details

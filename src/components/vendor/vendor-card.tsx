@@ -15,6 +15,8 @@ type VendorCardProps = {
 
 export function VendorCard({ vendor, quotePrices, onViewDetails, onDeleted }: VendorCardProps) {
   const utils = api.useUtils()
+  const isMuted = vendor.status === 'DECLINED' || vendor.status === 'NOT_AVAILABLE'
+  const isContacted = 'contacted' in vendor && vendor.contacted === true
 
   const deleteVendor = api.vendor.delete.useMutation({
     onSuccess: async () => {
@@ -51,7 +53,12 @@ export function VendorCard({ vendor, quotePrices, onViewDetails, onDeleted }: Ve
   }
 
   return (
-    <div className='group relative flex cursor-pointer flex-col gap-2 rounded-lg border border-border/90 bg-card/60 px-4 py-3 transition-all hover:bg-card hover:shadow-sm sm:flex-row sm:items-center sm:justify-between'>
+    <div
+      data-testid='vendor-card-root'
+      className={`group relative flex cursor-pointer flex-col gap-2 rounded-lg border border-border/90 bg-card/60 px-4 py-3 transition-all hover:bg-card hover:shadow-sm sm:flex-row sm:items-center sm:justify-between ${
+        isMuted ? 'opacity-60 grayscale' : ''
+      }`}
+    >
       <button
         type='button'
         className='absolute inset-0 rounded-lg'
@@ -68,9 +75,17 @@ export function VendorCard({ vendor, quotePrices, onViewDetails, onDeleted }: Ve
               {vendor.location}
             </span>
           )}
-          {quoteCount > 0 && (
+          {isContacted && (
             <>
               {vendor.location && <span className='text-border'>·</span>}
+              <span className='rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[0.52rem] text-primary uppercase tracking-wider'>
+                Contacted
+              </span>
+            </>
+          )}
+          {quoteCount > 0 && (
+            <>
+              {(vendor.location || isContacted) && <span className='text-border'>·</span>}
               <span className='font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
                 {quoteCount} {quoteCount === 1 ? 'quote' : 'quotes'}
               </span>
