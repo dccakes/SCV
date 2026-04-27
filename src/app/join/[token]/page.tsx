@@ -4,20 +4,22 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { CheckCircle2, Loader2 } from 'lucide-react'
 import { useParams } from 'next/navigation'
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
+import { PhoneInput } from '~/components/ui/phone-input'
+import { optionalPhoneSchema } from '~/lib/phone/phone-validator'
 import { api } from '~/trpc/react'
 
 const selfFillFormSchema = z.object({
   firstName: z.string().min(1, 'First name is required').max(100),
   lastName: z.string().min(1, 'Last name is required').max(100),
   email: z.string().trim().min(1, 'Email is required').email('Please enter a valid email'),
-  phone: z.string().max(20).optional(),
+  phone: optionalPhoneSchema,
   address1: z.string().trim().max(200).optional(),
   address2: z.string().trim().max(200).optional(),
   city: z.string().trim().max(100).optional(),
@@ -61,6 +63,7 @@ export default function SelfFillPage() {
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<SelfFillFormData>({
@@ -197,14 +200,25 @@ export default function SelfFillPage() {
 
             <div className='space-y-2'>
               <Label htmlFor='phone'>Phone (optional)</Label>
-              <Input
-                id='phone'
-                type='tel'
-                placeholder='+1 234 567 8900'
-                {...register('phone')}
-                className={errors.phone ? 'border-red-500' : ''}
+              <Controller
+                name='phone'
+                control={control}
+                render={({ field }) => (
+                  <PhoneInput
+                    id='phone'
+                    value={field.value}
+                    onChange={(nextValue) => field.onChange(nextValue ?? null)}
+                    placeholder='+1 234 567 8900'
+                    error={Boolean(errors.phone)}
+                    aria-describedby={errors.phone ? 'phone-error' : undefined}
+                  />
+                )}
               />
-              {errors.phone && <p className='text-red-500 text-sm'>{errors.phone.message}</p>}
+              {errors.phone && (
+                <p id='phone-error' className='text-red-500 text-sm'>
+                  {errors.phone.message}
+                </p>
+              )}
             </div>
 
             {/* Mailing Address */}

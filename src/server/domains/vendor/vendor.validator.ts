@@ -8,6 +8,7 @@
 import { QuoteType, VendorCategory, VendorStatus } from '@prisma/client'
 import { z } from 'zod'
 
+import { optionalPhoneSchemaNotNull } from '~/lib/phone/phone-validator'
 import { BLOB_URL_PATTERN, MAX_FILES_PER_QUOTE, sanitizeFilename } from '~/lib/upload-config'
 
 export const MAX_VENDOR_SCRATCHPAD_LENGTH = 5000
@@ -48,7 +49,7 @@ export const createVendorSchema = z.object({
   instagram: z.string().max(100, 'Instagram handle must be 100 characters or less').optional(),
   contactName: z.string().max(100, 'Contact name must be 100 characters or less').optional(),
   contactEmail: z.string().max(254).email('Must be a valid email').optional().or(z.literal('')),
-  contactPhone: z.string().max(30, 'Phone must be 30 characters or less').optional(),
+  contactPhone: optionalPhoneSchemaNotNull,
 })
 
 export const updateVendorSchema = z.object({
@@ -59,7 +60,7 @@ export const updateVendorSchema = z.object({
   instagram: z.string().max(100).optional(),
   contactName: z.string().max(100).optional(),
   contactEmail: z.string().max(254).email('Must be a valid email').optional().or(z.literal('')),
-  contactPhone: z.string().max(30).optional(),
+  contactPhone: optionalPhoneSchemaNotNull,
   notes: z.string().max(MAX_VENDOR_SCRATCHPAD_LENGTH).nullable().optional(),
   contacted: z.boolean().optional(),
   customFields: vendorCustomFieldsSchema.nullable().optional(),

@@ -71,7 +71,7 @@ const households: HouseholdWithGuests[] = [
         firstName: 'Alex',
         lastName: 'Rivera',
         email: 'alex@example.com',
-        phone: '555-1111',
+        phone: '+12025550111',
         householdId: 'household-1',
         weddingId: 'wedding-1',
         isPrimaryContact: true,

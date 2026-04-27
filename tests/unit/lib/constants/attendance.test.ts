@@ -19,7 +19,17 @@ describe('LIKELIHOOD_WEIGHTS', () => {
 
   it('should have weights that increase with scale value', () => {
     for (let i = 1; i < 5; i++) {
-      expect(LIKELIHOOD_WEIGHTS[i + 1]).toBeGreaterThan(LIKELIHOOD_WEIGHTS[i] ?? 0)
+      const currentWeight = LIKELIHOOD_WEIGHTS[i]
+      const nextWeight = LIKELIHOOD_WEIGHTS[i + 1]
+
+      expect(currentWeight).toBeDefined()
+      expect(nextWeight).toBeDefined()
+
+      if (currentWeight === undefined || nextWeight === undefined) {
+        throw new Error(`Expected weights for scale values ${i} and ${i + 1}`)
+      }
+
+      expect(nextWeight).toBeGreaterThan(currentWeight)
     }
   })
 
@@ -37,8 +47,18 @@ describe('DEFAULT_LIKELIHOOD_WEIGHT', () => {
   })
 
   it('should fall between the Maybe and Likely weights', () => {
-    expect(DEFAULT_LIKELIHOOD_WEIGHT).toBeGreaterThan(LIKELIHOOD_WEIGHTS[3] ?? 0)
-    expect(DEFAULT_LIKELIHOOD_WEIGHT).toBeLessThan(LIKELIHOOD_WEIGHTS[4] ?? 1)
+    const maybeWeight = LIKELIHOOD_WEIGHTS[3]
+    const likelyWeight = LIKELIHOOD_WEIGHTS[4]
+
+    expect(maybeWeight).toBeDefined()
+    expect(likelyWeight).toBeDefined()
+
+    if (maybeWeight === undefined || likelyWeight === undefined) {
+      throw new Error('Expected Maybe and Likely weights to be defined')
+    }
+
+    expect(DEFAULT_LIKELIHOOD_WEIGHT).toBeGreaterThan(maybeWeight)
+    expect(DEFAULT_LIKELIHOOD_WEIGHT).toBeLessThan(likelyWeight)
   })
 })
 

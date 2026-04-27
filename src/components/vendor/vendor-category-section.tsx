@@ -106,7 +106,7 @@ export function VendorCategorySection({
       </div>
 
       <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
-        <DialogContent className='max-w-lg'>
+        <DialogContent className='max-h-[85vh] overflow-y-auto sm:max-w-lg'>
           <DialogHeader>
             <DialogTitle className='font-display text-xl italic'>
               Add {CATEGORY_LABELS[category]}

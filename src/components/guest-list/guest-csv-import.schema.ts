@@ -8,6 +8,8 @@
 import Papa from 'papaparse'
 import { z } from 'zod'
 
+import { optionalPhoneSchemaNotNull } from '~/lib/phone/phone-validator'
+
 // ---------------------------------------------------------------------------
 // Schema
 // ---------------------------------------------------------------------------
@@ -23,7 +25,7 @@ export const guestCsvRowSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   email: optionalString.pipe(z.string().email('Invalid email').optional()),
-  phone: optionalString,
+  phone: optionalString.pipe(optionalPhoneSchemaNotNull),
   ageGroup: z
     .string()
     .optional()
@@ -74,7 +76,7 @@ const TEMPLATE_HEADERS = [
 
 const TEMPLATE_CSV =
   TEMPLATE_HEADERS.join(',') +
-  '\nJohn,Smith,john@example.com,555-1234,ADULT,123 Main St,,New York,NY,10001,USA,\nJane,Doe,,,,,,,,,,\n'
+  '\nJohn,Smith,john@example.com,+12025550123,ADULT,123 Main St,,New York,NY,10001,USA,\nJane,Doe,,,,,,,,,,\n'
 
 export function downloadGuestCsvTemplate() {
   const blob = new Blob([TEMPLATE_CSV], { type: 'text/csv' })

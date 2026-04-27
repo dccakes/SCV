@@ -227,14 +227,15 @@ describe('MessagingService', () => {
       })
 
       expect(result).toHaveLength(10)
-      const oldestMessage = result[0]
       const newestMessage = result.at(-1)
-      expect(oldestMessage).toBeDefined()
       expect(newestMessage).toBeDefined()
+      if (!newestMessage) {
+        throw new Error('Expected newest message to be present')
+      }
       // oldest first
-      expect(oldestMessage?.createdAt.getTime()).toBeLessThan(newestMessage?.createdAt.getTime())
+      expect(result[0]?.createdAt.getTime()).toBeLessThan(newestMessage.createdAt.getTime())
       // newest message is the first element of the input (most recent)
-      expect(newestMessage?.id).toBe('m-0')
+      expect(newestMessage.id).toBe('m-0')
     })
 
     it('respects maxChars cap', async () => {
@@ -283,10 +284,16 @@ describe('MessagingService', () => {
       for (let i = 1; i < result.length; i++) {
         const currentMessage = result[i]
         const previousMessage = result[i - 1]
+
         expect(currentMessage).toBeDefined()
         expect(previousMessage).toBeDefined()
-        expect(currentMessage?.createdAt.getTime()).toBeGreaterThanOrEqual(
-          previousMessage?.createdAt.getTime()
+
+        if (!currentMessage || !previousMessage) {
+          throw new Error(`Expected messages at indexes ${i - 1} and ${i}`)
+        }
+
+        expect(currentMessage.createdAt.getTime()).toBeGreaterThanOrEqual(
+          previousMessage.createdAt.getTime()
         )
       }
     })

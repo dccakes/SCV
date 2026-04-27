@@ -6,6 +6,7 @@
 
 import { z } from 'zod'
 
+import { optionalPhoneSchema } from '~/lib/phone/phone-validator'
 import { guestPartySchema } from '~/server/domains/guest/guest.validator'
 
 /**
@@ -34,7 +35,7 @@ export const baseHouseholdFields = z.object({
   state: z.string().nullish().optional(),
   country: z.string().nullish().optional(),
   zipCode: z.string().nullish().optional(),
-  phone: z.string().nullish().optional(),
+  phone: optionalPhoneSchema,
   email: z.string().email({ message: 'Not a valid email' }).nullish().optional(),
   notes: z.string().nullish().optional(),
   likelihoodOfAttending: z.number().int().min(1).max(5).nullish().optional(),

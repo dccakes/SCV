@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
+import { PhoneInput } from '~/components/ui/phone-input'
 import {
   Select,
   SelectContent,
@@ -12,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+import { normalizePhoneToE164 } from '~/lib/phone/phone-validator'
 import type { Vendor } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
 
@@ -70,7 +72,7 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
   const [instagram, setInstagram] = useState(vendor?.instagram ?? '')
   const [contactName, setContactName] = useState(vendor?.contactName ?? '')
   const [contactEmail, setContactEmail] = useState(vendor?.contactEmail ?? '')
-  const [contactPhone, setContactPhone] = useState(vendor?.contactPhone ?? '')
+  const [contactPhone, setContactPhone] = useState(normalizePhoneToE164(vendor?.contactPhone) ?? '')
 
   const invalidateVendors = () => utils.vendor.getAll.invalidate()
 
@@ -103,7 +105,7 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
       instagram: instagram || undefined,
       contactName: contactName || undefined,
       contactEmail: contactEmail || undefined,
-      contactPhone: contactPhone || undefined,
+      contactPhone: normalizePhoneToE164(contactPhone),
     }
     if (isEditing) {
       updateVendor.mutate({ vendorId: props.vendor.id, ...common })
@@ -223,10 +225,10 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
               <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
                 Phone
               </span>
-              <Input
+              <PhoneInput
                 id='vendor-contact-phone'
-                value={contactPhone}
-                onChange={(e) => setContactPhone(e.target.value)}
+                value={contactPhone || undefined}
+                onChange={(nextValue) => setContactPhone(nextValue ?? '')}
                 placeholder='+1 (555) 000-0000'
               />
             </label>
