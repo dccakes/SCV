@@ -144,11 +144,19 @@ async function seed() {
       data: {
         id: fixture.website.id,
         weddingId: fixture.wedding.id,
-        url: fixture.website.url,
         subUrl: fixture.website.subUrl,
         isPasswordEnabled: fixture.website.isPasswordEnabled,
         isRsvpEnabled: fixture.website.isRsvpEnabled,
         coverPhotoUrl: fixture.website.coverPhotoUrl,
+        websiteSections: {
+          create: {
+            id: `website-section-home-${fixture.website.id}`,
+            type: 'HOME',
+            isEnabled: true,
+            position: 0,
+            content: { introText: '' },
+          },
+        },
       },
     })
 
