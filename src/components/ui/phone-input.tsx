@@ -151,8 +151,16 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
               <ChevronDown className='h-3.5 w-3.5 text-muted-foreground' />
             </button>
           </PopoverTrigger>
-          <PopoverContent align='start' className='w-[22rem] p-1'>
-            <div className='max-h-72 overflow-y-auto'>
+          <PopoverContent
+            align='start'
+            collisionPadding={12}
+            className='w-[22rem] max-w-[calc(100vw-24px)] p-1'
+          >
+            <div
+              role='listbox'
+              aria-label='Country codes'
+              className='max-h-72 touch-pan-y overflow-y-auto overscroll-contain'
+            >
               {countryOptions.map((option) => {
                 const isSelected = option.code === selectedCountry
 
@@ -160,6 +168,8 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
                   <button
                     key={option.code}
                     type='button'
+                    role='option'
+                    aria-selected={isSelected}
                     onClick={() => handleCountryChange(option.code)}
                     className={cn(
                       'flex w-full items-center gap-3 rounded-[6px] px-2.5 py-2 text-left font-sans text-sm transition-colors hover:bg-accent hover:text-accent-foreground',

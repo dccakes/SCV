@@ -120,4 +120,16 @@ describe('PhoneInput', () => {
 
     expect(screen.getByRole('textbox')).not.toHaveAttribute('numberinputprops')
   })
+
+  it('renders a scrollable, viewport-safe country list', () => {
+    render(<PhoneInput value={undefined} onChange={jest.fn()} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select country' }))
+
+    const countryList = screen.getByRole('listbox', { name: 'Country codes' })
+    expect(countryList.className).toContain('overflow-y-auto')
+    expect(countryList.className).toContain('overscroll-contain')
+    expect(countryList.className).toContain('touch-pan-y')
+    expect(countryList.parentElement?.className).toContain('max-w-[calc(100vw-24px)]')
+  })
 })

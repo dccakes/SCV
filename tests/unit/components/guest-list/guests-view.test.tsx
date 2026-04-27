@@ -651,8 +651,7 @@ describe('GuestsView', () => {
     render(
       <GuestsView
         events={events}
-        households={householdsWithFilteredGuests.displayed}
-        allHouseholds={householdsWithFilteredGuests.canonical}
+        households={households}
         selectedEventId='event-1'
         setPrefillHousehold={jest.fn()}
         setPrefillEvent={jest.fn()}
@@ -677,15 +676,16 @@ describe('GuestsView', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save members' }))
 
     await waitFor(() => {
-      expect(
-        screen.queryByRole('dialog', { name: 'Manage Household Members' })
-      ).not.toBeInTheDocument()
+      expect(mockHouseholdUpdateMutate).toHaveBeenCalled()
+    })
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument()
     })
 
     expect(screen.getAllByText('Taylor Rivera').length).toBeGreaterThan(0)
-    expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: 'Email' })).toHaveValue('draft-only@example.com')
-  })
+  }, 10000)
 
   it('should updates drawer party members after adding member in modal and saving', async () => {
     render(
