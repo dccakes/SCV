@@ -132,4 +132,70 @@ describe('PhoneInput', () => {
     expect(countryList.className).toContain('touch-pan-y')
     expect(countryList.parentElement?.className).toContain('max-w-[calc(100vw-24px)]')
   })
+
+  describe('country search', () => {
+    it('shows a search input when the country list is open', () => {
+      render(<PhoneInput value={undefined} onChange={jest.fn()} />)
+
+      fireEvent.click(screen.getByRole('button', { name: 'Select country' }))
+
+      expect(screen.getByPlaceholderText('Search countries...')).toBeInTheDocument()
+    })
+
+    it('filters countries by name when typing in the search input', () => {
+      render(<PhoneInput value={undefined} onChange={jest.fn()} />)
+      fireEvent.click(screen.getByRole('button', { name: 'Select country' }))
+
+      fireEvent.change(screen.getByPlaceholderText('Search countries...'), {
+        target: { value: 'Kingdom' },
+      })
+
+      const options = screen.getAllByRole('option')
+      expect(options).toHaveLength(1)
+      expect(options[0]).toHaveTextContent('United Kingdom')
+    })
+
+    it('shows "No countries found" when search matches nothing', () => {
+      render(<PhoneInput value={undefined} onChange={jest.fn()} />)
+      fireEvent.click(screen.getByRole('button', { name: 'Select country' }))
+
+      fireEvent.change(screen.getByPlaceholderText('Search countries...'), {
+        target: { value: 'xyzxyz' },
+      })
+
+      expect(screen.getByText('No countries found')).toBeInTheDocument()
+      expect(screen.queryAllByRole('option')).toHaveLength(0)
+    })
+
+    it('filters countries by calling code when typing +44', () => {
+      render(<PhoneInput value={undefined} onChange={jest.fn()} />)
+      fireEvent.click(screen.getByRole('button', { name: 'Select country' }))
+
+      fireEvent.change(screen.getByPlaceholderText('Search countries...'), {
+        target: { value: '+44' },
+      })
+
+      const options = screen.getAllByRole('option')
+      expect(options).toHaveLength(1)
+      expect(options[0]).toHaveTextContent('United Kingdom')
+    })
+
+    it('resets the search when the popover reopens', () => {
+      render(<PhoneInput value={undefined} onChange={jest.fn()} />)
+      fireEvent.click(screen.getByRole('button', { name: 'Select country' }))
+
+      fireEvent.change(screen.getByPlaceholderText('Search countries...'), {
+        target: { value: 'Kingdom' },
+      })
+      expect(screen.getAllByRole('option')).toHaveLength(1)
+
+      // Close popover by clicking trigger again
+      fireEvent.click(screen.getByRole('button', { name: 'Select country' }))
+      // Reopen
+      fireEvent.click(screen.getByRole('button', { name: 'Select country' }))
+
+      expect(screen.getAllByRole('option')).toHaveLength(2)
+      expect(screen.getByPlaceholderText('Search countries...')).toHaveValue('')
+    })
+  })
 })
