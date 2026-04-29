@@ -1,7 +1,7 @@
 'use client'
 
 import { parsePhoneNumberFromString } from 'libphonenumber-js'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Search } from 'lucide-react'
 import * as React from 'react'
 import { type Country, getCountries, getCountryCallingCode } from 'react-phone-number-input'
 import ReactPhoneNumberInput from 'react-phone-number-input/input'
@@ -99,6 +99,8 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
     ref
   ) => {
     const [isCountryListOpen, setIsCountryListOpen] = React.useState(false)
+    const [searchQuery, setSearchQuery] = React.useState('')
+    const searchInputRef = React.useRef<HTMLInputElement>(null)
     const inferredCountry = getCountryFromValue(value)
     const [selectedCountry, setSelectedCountry] = React.useState<Country>(
       inferredCountry ?? defaultCountry
@@ -112,9 +114,26 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
       countryOptions.find((option) => option.code === selectedCountry) ??
       buildCountryOption(selectedCountry)
 
+    const trimmedQuery = searchQuery.trim()
+    const lowerQuery = trimmedQuery.toLowerCase()
+    const filteredCountries = trimmedQuery
+      ? countryOptions.filter(
+          (option) =>
+            option.label.toLowerCase().includes(lowerQuery) ||
+            option.callingCode.includes(trimmedQuery) ||
+            option.code.toLowerCase().includes(lowerQuery)
+        )
+      : countryOptions
+
+    const handleOpenChange = (open: boolean) => {
+      setIsCountryListOpen(open)
+      if (!open) setSearchQuery('')
+    }
+
     const handleCountryChange = (nextCountry: Country) => {
       setSelectedCountry(nextCountry)
       setIsCountryListOpen(false)
+      setSearchQuery('')
 
       if (!value) return
 
@@ -133,7 +152,7 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
           className
         )}
       >
-        <Popover open={isCountryListOpen} onOpenChange={setIsCountryListOpen}>
+        <Popover open={isCountryListOpen} onOpenChange={handleOpenChange}>
           <PopoverTrigger asChild>
             <button
               type='button'
@@ -155,40 +174,59 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
             align='start'
             collisionPadding={12}
             className='w-[22rem] max-w-[calc(100vw-24px)] p-1'
+            onOpenAutoFocus={(e) => {
+              e.preventDefault()
+              searchInputRef.current?.focus()
+            }}
           >
+            <div className='relative mb-1 px-0.5'>
+              <Search className='pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground' />
+              <input
+                ref={searchInputRef}
+                type='text'
+                placeholder='Search countries...'
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className='w-full rounded-[4px] border border-input bg-background py-1.5 pr-3 pl-8 text-sm outline-none placeholder:text-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring'
+              />
+            </div>
             <div
               role='listbox'
               aria-label='Country codes'
               className='max-h-72 touch-pan-y overflow-y-auto overscroll-contain'
             >
-              {countryOptions.map((option) => {
-                const isSelected = option.code === selectedCountry
+              {filteredCountries.length === 0 ? (
+                <p className='py-4 text-center text-muted-foreground text-sm'>No countries found</p>
+              ) : (
+                filteredCountries.map((option) => {
+                  const isSelected = option.code === selectedCountry
 
-                return (
-                  <button
-                    key={option.code}
-                    type='button'
-                    role='option'
-                    aria-selected={isSelected}
-                    onClick={() => handleCountryChange(option.code)}
-                    className={cn(
-                      'flex w-full items-center gap-3 rounded-[6px] px-2.5 py-2 text-left font-sans text-sm transition-colors hover:bg-accent hover:text-accent-foreground',
-                      isSelected && 'bg-accent/60 text-accent-foreground'
-                    )}
-                  >
-                    <span
-                      aria-hidden='true'
-                      className='flex h-5 w-5 items-center justify-center overflow-hidden rounded-full text-base leading-none'
+                  return (
+                    <button
+                      key={option.code}
+                      type='button'
+                      role='option'
+                      aria-selected={isSelected}
+                      onClick={() => handleCountryChange(option.code)}
+                      className={cn(
+                        'flex w-full items-center gap-3 rounded-[6px] px-2.5 py-2 text-left font-sans text-sm transition-colors hover:bg-accent hover:text-accent-foreground',
+                        isSelected && 'bg-accent/60 text-accent-foreground'
+                      )}
                     >
-                      {getFlagEmoji(option.code)}
-                    </span>
-                    <span className='min-w-0 flex-1 truncate'>{option.label}</span>
-                    <span className='shrink-0 text-foreground/65 tabular-nums'>
-                      {option.callingCode}
-                    </span>
-                  </button>
-                )
-              })}
+                      <span
+                        aria-hidden='true'
+                        className='flex h-5 w-5 items-center justify-center overflow-hidden rounded-full text-base leading-none'
+                      >
+                        {getFlagEmoji(option.code)}
+                      </span>
+                      <span className='min-w-0 flex-1 truncate'>{option.label}</span>
+                      <span className='shrink-0 text-foreground/65 tabular-nums'>
+                        {option.callingCode}
+                      </span>
+                    </button>
+                  )
+                })
+              )}
             </div>
           </PopoverContent>
         </Popover>
