@@ -1,4 +1,3 @@
-import { TRPCClientError } from '@trpc/client'
 import { TRPCError } from '@trpc/server'
 
 import { calculateDaysRemaining, formatDateNumber } from '~/app/utils/helpers'
@@ -16,7 +15,6 @@ import { computeWebsiteUrl } from '~/server/domains/website/website.utils'
 import type { WebsitePasswordService } from '~/server/domains/website/website-password.service'
 import type { WebsiteSectionRepository } from '~/server/domains/website-section/website-section.repository'
 import { WebsiteSectionType } from '~/server/domains/website-section/website-section.types'
-import { updateHomeSectionSchema } from '~/server/domains/website-section/website-section.validator'
 import type { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
 
 export class WebsiteManagementService {
@@ -105,8 +103,7 @@ export class WebsiteManagementService {
       })
     }
 
-    const content = updateHomeSectionSchema.parse(input)
-    return this.websiteSectionRepository.upsertHomeSection(website.id, content)
+    return this.websiteSectionRepository.upsertHomeSection(website.id, input)
   }
 
   async fetchWeddingData(
@@ -115,7 +112,10 @@ export class WebsiteManagementService {
   ): Promise<WeddingPageData> {
     const website = await this.websiteRepository.findBySubUrlWithQuestions(subUrl)
     if (!website) {
-      throw new TRPCClientError('This website does not exist.')
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'This website does not exist.',
+      })
     }
 
     if (website.isPasswordEnabled) {

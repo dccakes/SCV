@@ -1,4 +1,3 @@
-import { TRPCClientError } from '@trpc/client'
 import { TRPCError } from '@trpc/server'
 
 jest.mock('~/server/authz/permission-checker', () => ({
@@ -230,9 +229,7 @@ describe('WebsiteManagementService', () => {
     it('throws when website does not exist', async () => {
       mockFindBySubUrlWithQuestionsFn.mockResolvedValue(null)
 
-      await expect(service.fetchWeddingData('missing-site', undefined)).rejects.toThrow(
-        TRPCClientError
-      )
+      await expect(service.fetchWeddingData('missing-site', undefined)).rejects.toThrow(TRPCError)
     })
 
     it('throws forbidden when protected website access token is invalid', async () => {

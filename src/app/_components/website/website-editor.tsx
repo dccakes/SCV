@@ -12,11 +12,10 @@ import { api } from '~/trpc/react'
 
 type WebsiteEditorProps = Readonly<{
   publicUrl: string
-  websiteId: string
   initialIntroText: string
 }>
 
-export function WebsiteEditor({ initialIntroText, publicUrl, websiteId }: WebsiteEditorProps) {
+export function WebsiteEditor({ initialIntroText, publicUrl }: WebsiteEditorProps) {
   const router = useRouter()
   const [introText, setIntroText] = useState(initialIntroText)
   const [copied, setCopied] = useState(false)
@@ -78,7 +77,7 @@ export function WebsiteEditor({ initialIntroText, publicUrl, websiteId }: Websit
   }
 
   return (
-    <div className='space-y-6' data-website-id={websiteId}>
+    <div className='space-y-6'>
       <Card className='border-border/80 bg-card/80'>
         <CardHeader className='flex flex-col gap-4 md:flex-row md:items-start md:justify-between'>
           <div className='space-y-3'>

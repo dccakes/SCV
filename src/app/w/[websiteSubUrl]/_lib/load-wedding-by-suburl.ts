@@ -1,4 +1,3 @@
-import { TRPCClientError } from '@trpc/client'
 import { cache } from 'react'
 
 import type { WeddingPageData } from '~/server/domains/website/website.types'
@@ -17,11 +16,7 @@ const isPasswordRequiredError = (error: unknown): boolean => {
 
 const isWebsiteNotFoundError = (error: unknown): boolean => {
   return (
-    error instanceof TRPCClientError ||
-    (typeof error === 'object' &&
-      error !== null &&
-      'message' in error &&
-      error.message === 'This website does not exist.')
+    typeof error === 'object' && error !== null && 'code' in error && error.code === 'NOT_FOUND'
   )
 }
 

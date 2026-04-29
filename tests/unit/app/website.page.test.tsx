@@ -12,11 +12,9 @@ const mockWebsiteDisabledCallout = jest.fn(() => (
 const mockWebsiteSetupCallout = jest.fn(() => (
   <div data-testid='website-setup-callout'>Setup callout</div>
 ))
-const mockWebsiteEditor = jest.fn(
-  (_props: { publicUrl: string; websiteId: string; initialIntroText: string }) => (
-    <div data-testid='website-editor'>Editor</div>
-  )
-)
+const mockWebsiteEditor = jest.fn((_props: { publicUrl: string; initialIntroText: string }) => (
+  <div data-testid='website-editor'>Editor</div>
+))
 
 jest.mock('~/trpc/server', () => ({
   api: {
@@ -50,7 +48,7 @@ jest.mock('~/app/_components/website/website-setup-callout', () => ({
 
 jest.mock('~/app/_components/website/website-editor', () => ({
   __esModule: true,
-  WebsiteEditor: (props: { publicUrl: string; websiteId: string; initialIntroText: string }) =>
+  WebsiteEditor: (props: { publicUrl: string; initialIntroText: string }) =>
     mockWebsiteEditor(props),
 }))
 
@@ -114,7 +112,7 @@ describe('WebsitePage', () => {
 
     expect(mockWebsiteEditor).toHaveBeenCalledWith({
       publicUrl: 'http://localhost:3000/w/existing-site',
-      websiteId: 'website-789',
+
       initialIntroText: '',
     })
   })
@@ -140,7 +138,7 @@ describe('WebsitePage', () => {
 
     expect(mockWebsiteEditor).toHaveBeenCalledWith({
       publicUrl: 'http://localhost:3000/w/existing-site',
-      websiteId: 'website-789',
+
       initialIntroText: 'Welcome to our wedding weekend.',
     })
   })

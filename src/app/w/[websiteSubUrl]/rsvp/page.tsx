@@ -68,7 +68,7 @@ export default async function RsvpPage({ params }: RsvpPageProps) {
 
   return (
     <RsvpFormProvider>
-      <MainRsvpForm weddingData={loadResult.weddingData} basePath={`/w/${websiteSubUrl ?? ''}`} />
+      <MainRsvpForm weddingData={loadResult.weddingData} basePath={`/w/${websiteSubUrl}`} />
     </RsvpFormProvider>
   )
 }

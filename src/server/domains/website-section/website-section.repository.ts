@@ -1,11 +1,11 @@
 import type { PrismaClient } from '@prisma/client'
 
-import type {
-  HomeSectionContent,
-  WebsiteSection,
-} from '~/server/domains/website-section/website-section.types'
+import type { WebsiteSection } from '~/server/domains/website-section/website-section.types'
 import { WebsiteSectionType } from '~/server/domains/website-section/website-section.types'
-import type { CreateWebsiteSectionInput } from '~/server/domains/website-section/website-section.validator'
+import {
+  type CreateWebsiteSectionInput,
+  homeSectionContentSchema,
+} from '~/server/domains/website-section/website-section.validator'
 
 export class WebsiteSectionRepository {
   constructor(private db: PrismaClient) {}
@@ -50,7 +50,10 @@ export class WebsiteSectionRepository {
     return this.toWebsiteSection(section)
   }
 
-  async upsertHomeSection(websiteId: string, content: HomeSectionContent): Promise<WebsiteSection> {
+  async upsertHomeSection(
+    websiteId: string,
+    content: WebsiteSection['content']
+  ): Promise<WebsiteSection> {
     const section = await this.db.websiteSection.upsert({
       where: {
         websiteId_type: {
@@ -86,7 +89,7 @@ export class WebsiteSectionRepository {
   }): WebsiteSection {
     return {
       ...section,
-      content: section.content as HomeSectionContent,
+      content: homeSectionContentSchema.parse(section.content),
     }
   }
 }

@@ -9,10 +9,12 @@ import { api } from '~/trpc/server'
 export const dynamic = 'force-dynamic'
 
 export default async function WebsitePage() {
-  const wedding = await getRequiredWedding()
+  const [wedding, existingWebsite] = await Promise.all([
+    getRequiredWedding(),
+    api.website.getByUserId(),
+  ])
   const isWebsiteBuilderEnabled = wedding.enabledAddOns.includes('website_builder')
 
-  const existingWebsite = await api.website.getByUserId()
   const websiteId = existingWebsite?.id ?? null
   const websiteSubUrl = existingWebsite?.subUrl ?? null
 
@@ -28,7 +30,6 @@ export default async function WebsitePage() {
             <WebsiteEditor
               initialIntroText={homeSection?.content.introText ?? ''}
               publicUrl={computePublicWebsiteUrl(websiteSubUrl)}
-              websiteId={websiteId}
             />
           ) : isWebsiteBuilderEnabled ? (
             <WebsiteSetupCallout />
