@@ -82,7 +82,17 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
       toast.success('Vendor added')
       onSuccess()
     },
-    onError: () => toast.error('Failed to add vendor'),
+    onError: (err) => {
+      const fieldErrors = err.data?.zodError?.fieldErrors
+      if (fieldErrors) {
+        const firstField = Object.keys(fieldErrors)[0]
+        const firstMsg = firstField ? (fieldErrors[firstField]?.[0] ?? 'Invalid value') : null
+        const label = firstField ? ` (${firstField}: ${firstMsg})` : ''
+        toast.error(`Failed to add vendor${label}`)
+      } else {
+        toast.error('Failed to add vendor')
+      }
+    },
   })
 
   const updateVendor = api.vendor.update.useMutation({
@@ -98,10 +108,15 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    const normalizeWebsite = (url: string): string | undefined => {
+      if (!url) return undefined
+      if (/^https?:\/\//i.test(url)) return url
+      return `https://${url}`
+    }
     const common = {
       name,
       location: location || undefined,
-      website: website || undefined,
+      website: normalizeWebsite(website),
       instagram: instagram || undefined,
       contactName: contactName || undefined,
       contactEmail: contactEmail || undefined,
