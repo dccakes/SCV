@@ -16,6 +16,7 @@ const CATEGORY_ORDER = [
   'VIDEOGRAPHER',
   'MUSIC',
   'FLOWERS',
+  'ACCOMMODATION',
   'OTHER',
 ] satisfies VendorCategory[]
 
