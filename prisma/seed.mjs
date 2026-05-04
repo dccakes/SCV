@@ -78,9 +78,10 @@ const DEFAULT_VENDOR_CATEGORY_CONFIGS = {
   ],
   ACCOMMODATION: [
     { key: 'room_block_size', label: 'Room Block Size', type: 'number', displayOrder: 0 },
-    { key: 'room_type', label: 'Room Type', type: 'text', displayOrder: 1 },
-    { key: 'shuttle_included', label: 'Shuttle Included', type: 'boolean', displayOrder: 2 },
-    { key: 'booking_deadline', label: 'Booking Deadline', type: 'text', displayOrder: 3 },
+    { key: 'total_rooms', label: 'Total Rooms', type: 'number', displayOrder: 1 },
+    { key: 'room_type', label: 'Room Type', type: 'text', displayOrder: 2 },
+    { key: 'shuttle_included', label: 'Shuttle Included', type: 'boolean', displayOrder: 3 },
+    { key: 'booking_deadline', label: 'Booking Deadline', type: 'text', displayOrder: 4 },
   ],
   OTHER: [
     { key: 'service_scope', label: 'Service Scope', type: 'text', displayOrder: 0 },
