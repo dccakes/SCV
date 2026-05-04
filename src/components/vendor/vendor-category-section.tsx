@@ -17,6 +17,7 @@ const CATEGORY_LABELS: Record<VendorCategory, string> = {
   VIDEOGRAPHER: 'Videographer',
   MUSIC: 'Music',
   FLOWERS: 'Flowers',
+  ACCOMMODATION: 'Accommodation',
   OTHER: 'Other',
 }
 

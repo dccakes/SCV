@@ -523,6 +523,7 @@ enum VendorCategory {
   VIDEOGRAPHER
   MUSIC
   FLOWERS
+  ACCOMMODATION
   OTHER
 }
 
