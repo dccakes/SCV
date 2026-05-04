@@ -331,7 +331,14 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
     setScratchpad(enrichedVendor?.notes ?? '')
   }, [enrichedVendor?.notes])
 
-  if (!vendor || !vendorData || !enrichedVendor) return null
+  if (!vendor || !vendorData || !enrichedVendor) {
+    return (
+      <>
+        <Dialog open={false} onOpenChange={(open) => !open && onClose()} />
+        <FileViewerDrawer file={null} onClose={() => setViewingPdf(null)} />
+      </>
+    )
+  }
 
   const formatPrice = (price: number) => priceFormatter.format(price)
   const formatDate = (date: Date | string) => dateFormatter.format(new Date(date))
