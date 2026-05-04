@@ -252,6 +252,13 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
       ? undefined
       : events.find((event) => event.id === initialRsvpEventId)
 
+  const sortedEvents = [...events].sort((a, b) => {
+    if (a.date === null && b.date === null) return 0
+    if (a.date === null) return 1
+    if (b.date === null) return -1
+    return new Date(a.date).getTime() - new Date(b.date).getTime()
+  })
+
   return (
     <>
       {initialRsvpEventId !== undefined ? (
@@ -272,7 +279,7 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
       </div>
 
       <div className='grid gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3'>
-        {events.map((event) => (
+        {sortedEvents.map((event) => (
           <EventCard
             key={event.id}
             event={event}
