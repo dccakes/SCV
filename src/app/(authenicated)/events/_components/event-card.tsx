@@ -46,7 +46,7 @@ function EventCardBase({
   return (
     <Card className='transition-shadow hover:shadow-md'>
       <CardHeader className='pb-3'>
-        <div className='flex items-start justify-between gap-2'>
+        <div className='flex flex-wrap items-start justify-between gap-x-2 gap-y-2'>
           <div className='min-w-0 flex-1'>
             <CardTitle className='text-lg md:text-xl'>{event.name}</CardTitle>
             {event.date && (
@@ -56,7 +56,7 @@ function EventCardBase({
               </CardDescription>
             )}
           </div>
-          <div className='flex items-center gap-2'>
+          <div className='flex shrink-0 items-center gap-2'>
             {event.collectRsvp && (
               <Badge variant='secondary' className='shrink-0 text-xs'>
                 RSVPs
