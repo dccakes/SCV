@@ -9,7 +9,12 @@ import { QuoteType, VendorCategory, VendorStatus } from '@prisma/client'
 import { z } from 'zod'
 
 import { optionalPhoneSchemaNotNull } from '~/lib/phone/phone-validator'
-import { BLOB_URL_PATTERN, MAX_FILES_PER_QUOTE, sanitizeFilename } from '~/lib/upload-config'
+import {
+  BLOB_URL_PATTERN,
+  MAX_FILES_PER_QUOTE,
+  MAX_IMAGES_PER_VENDOR,
+  sanitizeFilename,
+} from '~/lib/upload-config'
 
 export const MAX_VENDOR_SCRATCHPAD_LENGTH = 5000
 export const MAX_VENDOR_CUSTOM_FIELD_COUNT = 20
@@ -195,6 +200,46 @@ export const deleteQuoteFileSchema = z.object({
   vendorId: z.string().min(1, 'Vendor ID is required'),
 })
 
+// ─── Vendor image schemas ────────────────────────────────────────────────────
+
+const vendorImageFileSchema = z.object({
+  name: z
+    .string()
+    .min(1, 'File name is required')
+    .max(255, 'File name must be 255 characters or less')
+    .transform(sanitizeFilename)
+    .refine((v) => v.length > 0, 'File name is invalid'),
+  url: z
+    .string()
+    .url('Must be a valid URL')
+    .refine((v) => BLOB_URL_PATTERN.test(v), 'URL must be a Vercel Blob storage URL'),
+  key: z.string().min(1, 'File key is required'),
+  size: z.number().int().positive('File size must be positive'),
+  source: z.enum(['manual', 'website']).default('manual'),
+})
+
+export const saveVendorImagesSchema = z.object({
+  vendorId: z.string().min(1, 'Vendor ID is required'),
+  images: z
+    .array(vendorImageFileSchema)
+    .min(1, 'At least one image is required')
+    .max(MAX_IMAGES_PER_VENDOR),
+})
+
+export const deleteVendorImageSchema = z.object({
+  imageId: z.string().min(1, 'Image ID is required'),
+  vendorId: z.string().min(1, 'Vendor ID is required'),
+})
+
+export const setCoverImageSchema = z.object({
+  vendorId: z.string().min(1, 'Vendor ID is required'),
+  imageId: z.string().min(1, 'Image ID is required'),
+})
+
+export const fetchWebsiteImagesSchema = z.object({
+  vendorId: z.string().min(1, 'Vendor ID is required'),
+})
+
 // ─── Inferred types ───────────────────────────────────────────────────────────
 
 export type CreateVendorInput = z.infer<typeof createVendorSchema>
@@ -212,3 +257,7 @@ export type SaveQuoteFilesInput = z.infer<typeof saveQuoteFilesSchema>
 export type DeleteQuoteFileInput = z.infer<typeof deleteQuoteFileSchema>
 export type FieldDefinitionInput = z.infer<typeof fieldDefinitionSchema>
 export type UpsertCategoryConfigInput = z.infer<typeof upsertCategoryConfigSchema>
+export type SaveVendorImagesInput = z.infer<typeof saveVendorImagesSchema>
+export type DeleteVendorImageInput = z.infer<typeof deleteVendorImageSchema>
+export type SetCoverImageInput = z.infer<typeof setCoverImageSchema>
+export type FetchWebsiteImagesInput = z.infer<typeof fetchWebsiteImagesSchema>

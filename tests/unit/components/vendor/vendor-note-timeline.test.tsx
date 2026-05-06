@@ -25,7 +25,7 @@ describe('VendorNoteTimeline', () => {
       />
     )
 
-    expect(screen.getByText('Couple')).toBeInTheDocument()
+    expect(screen.getByText('you')).toBeInTheDocument()
     expect(screen.getByText('Etta')).toBeInTheDocument()
     expect(screen.getByText('Sent first inquiry')).toBeInTheDocument()
     expect(screen.getByText('Suggested comparing guest minimums')).toBeInTheDocument()

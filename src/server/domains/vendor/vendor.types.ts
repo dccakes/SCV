@@ -52,6 +52,20 @@ export type VendorNote = {
   createdAt: Date
 }
 
+export type VendorImage = {
+  id: string
+  vendorId: string
+  url: string
+  key: string
+  size: number
+  name: string
+  isPrimary: boolean
+  order: number
+  source: 'manual' | 'website'
+  createdAt: Date
+  updatedAt: Date
+}
+
 export type VendorCategoryConfig = {
   id: string
   weddingId: string | null
@@ -85,4 +99,5 @@ export type VendorQuote = {
 
 export type VendorWithQuotes = Vendor & {
   quotes: VendorQuote[]
+  images: VendorImage[]
 }

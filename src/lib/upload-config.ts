@@ -11,6 +11,9 @@ export const MAX_FILE_SIZE = 8 * 1024 * 1024
 /** Maximum number of files per quote */
 export const MAX_FILES_PER_QUOTE = 10
 
+/** Maximum number of images per vendor */
+export const MAX_IMAGES_PER_VENDOR = 5
+
 /** MIME types allowed for upload */
 export const ALLOWED_CONTENT_TYPES = [
   'application/pdf',

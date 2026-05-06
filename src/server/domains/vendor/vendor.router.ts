@@ -15,12 +15,16 @@ import {
   createVendorSchema,
   deleteQuoteFileSchema,
   deleteQuoteSchema,
+  deleteVendorImageSchema,
   deleteVendorSchema,
+  fetchWebsiteImagesSchema,
   getCategoryConfigSchema,
   getNotesSchema,
   getVendorSchema,
   getVendorsByCategorySchema,
   saveQuoteFilesSchema,
+  saveVendorImagesSchema,
+  setCoverImageSchema,
   updateQuoteSchema,
   updateVendorSchema,
   updateVendorStatusSchema,
@@ -150,5 +154,41 @@ export const vendorRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
       return vendorService.deleteQuoteFile(ctx.authz, input.vendorId, weddingId, input)
+    }),
+
+  /**
+   * Save vendor images (uploaded to Blob storage)
+   */
+  saveImages: protectedProcedure.input(saveVendorImagesSchema).mutation(async ({ ctx, input }) => {
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+    return vendorService.saveImages(ctx.authz, input.vendorId, weddingId, input)
+  }),
+
+  /**
+   * Delete a vendor image
+   */
+  deleteImage: protectedProcedure
+    .input(deleteVendorImageSchema)
+    .mutation(async ({ ctx, input }) => {
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+      return vendorService.deleteImage(ctx.authz, input.vendorId, weddingId, input.imageId)
+    }),
+
+  /**
+   * Set the cover image for a vendor
+   */
+  setCoverImage: protectedProcedure.input(setCoverImageSchema).mutation(async ({ ctx, input }) => {
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+    return vendorService.setCoverImage(ctx.authz, input.vendorId, weddingId, input.imageId)
+  }),
+
+  /**
+   * Fetch images from a vendor's website
+   */
+  fetchWebsiteImages: protectedProcedure
+    .input(fetchWebsiteImagesSchema)
+    .mutation(async ({ ctx, input }) => {
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+      return vendorService.fetchVendorWebsiteImages(ctx.authz, input.vendorId, weddingId)
     }),
 })

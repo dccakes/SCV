@@ -45,6 +45,8 @@ type TestVendor = {
   createdAt: Date
   updatedAt: Date
   contacted: boolean
+  images: []
+  quotes: []
 }
 
 function makeVendor(overrides: Partial<TestVendor>): TestVendor {
@@ -63,6 +65,8 @@ function makeVendor(overrides: Partial<TestVendor>): TestVendor {
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
     contacted: false,
+    images: [],
+    quotes: [],
     ...overrides,
   }
 }
