@@ -87,6 +87,11 @@ export const getVendorsByCategorySchema = z.object({
   category: z.enum(VendorCategory).optional(),
 })
 
+export const setVendorRatingSchema = z.object({
+  vendorId: z.string().min(1, 'Vendor ID is required'),
+  stars: z.number().int().min(1).max(5),
+})
+
 export const addVendorNoteSchema = z.object({
   vendorId: z.string().min(1, 'Vendor ID is required'),
   message: z
@@ -132,7 +137,6 @@ export const upsertCategoryConfigSchema = z
       seenKeys.add(fieldDefinition.key)
     }
   })
-
 // ─── Quote schemas ────────────────────────────────────────────────────────────
 
 const quoteDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')
@@ -203,6 +207,7 @@ export type UpdateVendorStatusInput = z.infer<typeof updateVendorStatusSchema>
 export type DeleteVendorInput = z.infer<typeof deleteVendorSchema>
 export type GetNotesInput = z.infer<typeof getNotesSchema>
 export type GetVendorsByCategoryInput = z.infer<typeof getVendorsByCategorySchema>
+export type SetVendorRatingInput = z.infer<typeof setVendorRatingSchema>
 export type AddVendorNoteInput = z.infer<typeof addVendorNoteSchema>
 export type GetCategoryConfigInput = z.infer<typeof getCategoryConfigSchema>
 export type CreateQuoteInput = z.infer<typeof createQuoteSchema>

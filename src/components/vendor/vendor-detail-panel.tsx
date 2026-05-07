@@ -326,6 +326,13 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
     },
     onError: () => toast.error('Failed to delete file'),
   })
+  const setRating = api.vendor.setRating.useMutation({
+    onSuccess: async () => {
+      await Promise.all([refetch(), utils.vendor.getAll.invalidate()])
+      toast.success('Rating updated')
+    },
+    onError: () => toast.error('Failed to save rating'),
+  })
 
   useEffect(() => {
     setScratchpad(enrichedVendor?.notes ?? '')
@@ -423,7 +430,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                 {enrichedVendor.name}
               </DialogTitle>
               <DialogDescription className='sr-only'>Vendor details panel</DialogDescription>
-              <div className='mt-2 flex flex-wrap items-center gap-3'>
+              <div className='mt-2 flex flex-wrap items-center gap-x-4 gap-y-2'>
                 <VendorStatusSelect
                   value={enrichedVendor.status}
                   onChange={(status) =>
@@ -431,6 +438,25 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                   }
                   disabled={updateStatus.isPending}
                 />
+                <div className='flex shrink-0 items-center gap-2'>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type='button'
+                      className='text-base leading-none'
+                      aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
+                      onClick={() => setRating.mutate({ vendorId: vendorData.id, stars: star })}
+                      disabled={setRating.isPending}
+                    >
+                      {star <= (vendorData.ratingSummary.currentUserRating ?? 0) ? '★' : '☆'}
+                    </button>
+                  ))}
+                  {vendorData.ratingSummary.currentUserRating === null && (
+                    <span className='font-mono text-[0.58rem] text-muted-foreground uppercase tracking-wider'>
+                      Unrated
+                    </span>
+                  )}
+                </div>
                 <div className='flex items-center gap-2'>
                   <Label
                     htmlFor='vendor-contacted'

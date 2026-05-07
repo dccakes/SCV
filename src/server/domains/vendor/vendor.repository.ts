@@ -27,6 +27,7 @@ import type {
   VendorNoteActorType,
   VendorQuote,
   VendorQuoteFile,
+  VendorRatingRecord,
   VendorWithQuotes,
 } from '~/server/domains/vendor/vendor.types'
 
@@ -42,7 +43,15 @@ export class VendorRepository {
   ): Promise<VendorWithQuotes[]> {
     const rows = await this.db.vendor.findMany({
       where: { weddingId, ...(category ? { category } : {}) },
-      include: { quotes: { include: { files: true }, orderBy: { quoteDate: 'desc' } } },
+      include: {
+        quotes: { include: { files: true }, orderBy: { quoteDate: 'desc' } },
+        ratings: {
+          include: {
+            user: { select: { name: true, email: true } },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
       orderBy: [{ category: 'asc' }, { createdAt: 'asc' }],
     })
     return rows.map(this.serializeVendorWithQuotes)
@@ -57,7 +66,15 @@ export class VendorRepository {
         wedding: { userWeddings: { some: { userId } } },
         ...(category ? { category } : {}),
       },
-      include: { quotes: { include: { files: true }, orderBy: { quoteDate: 'desc' } } },
+      include: {
+        quotes: { include: { files: true }, orderBy: { quoteDate: 'desc' } },
+        ratings: {
+          include: {
+            user: { select: { name: true, email: true } },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
       orderBy: [{ category: 'asc' }, { createdAt: 'asc' }],
     })
     return rows.map(this.serializeVendorWithQuotes)
@@ -69,7 +86,15 @@ export class VendorRepository {
   async findByIdWithQuotes(id: string): Promise<VendorWithQuotes | null> {
     const row = await this.db.vendor.findUnique({
       where: { id },
-      include: { quotes: { include: { files: true }, orderBy: { quoteDate: 'desc' } } },
+      include: {
+        quotes: { include: { files: true }, orderBy: { quoteDate: 'desc' } },
+        ratings: {
+          include: {
+            user: { select: { name: true, email: true } },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
     })
     if (!row) return null
     return this.serializeVendorWithQuotes(row)
@@ -361,6 +386,21 @@ export class VendorRepository {
     return file !== null
   }
 
+  async setRatingForUser(
+    vendorId: string,
+    userId: string,
+    stars: number
+  ): Promise<VendorRatingRecord> {
+    return this.db.vendorRating.upsert({
+      where: {
+        vendorId_userId: { vendorId, userId },
+      },
+      update: { stars },
+      create: { vendorId, userId, stars },
+      select: { id: true, vendorId: true, userId: true, stars: true },
+    })
+  }
+
   // ─── Private serializers ────────────────────────────────────────────────────
 
   private serializeQuote(row: PrismaVendorQuote & { files: PrismaVendorQuoteFile[] }): VendorQuote {
@@ -389,11 +429,32 @@ export class VendorRepository {
   }
 
   private serializeVendorWithQuotes = (
-    row: PrismaVendor & { quotes: (PrismaVendorQuote & { files: PrismaVendorQuoteFile[] })[] }
+    row: PrismaVendor & {
+      quotes: (PrismaVendorQuote & { files: PrismaVendorQuoteFile[] })[]
+      ratings: { userId: string; stars: number; user: { name: string | null; email: string } }[]
+    }
   ): VendorWithQuotes => {
+    const { quotes, ratings: rawRatings, ...vendorRow } = row
+    const ratings = rawRatings.map((rating) => ({
+      userId: rating.userId,
+      userLabel: rating.user.name ?? rating.user.email,
+      stars: rating.stars,
+    }))
+    const average =
+      ratings.length > 0
+        ? Number(
+            (ratings.reduce((acc, rating) => acc + rating.stars, 0) / ratings.length).toFixed(2)
+          )
+        : null
+
     return {
-      ...this.serializeVendor(row),
-      quotes: row.quotes.map((q) => this.serializeQuote(q)),
+      ...this.serializeVendor(vendorRow),
+      quotes: quotes.map((q) => this.serializeQuote(q)),
+      ratingSummary: {
+        average,
+        ratings,
+        currentUserRating: null,
+      },
     }
   }
 

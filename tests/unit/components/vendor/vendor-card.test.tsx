@@ -1,7 +1,8 @@
 import { VendorCategory, VendorStatus } from '@prisma/client'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 
 import { VendorCard } from '~/components/vendor/vendor-card'
+import type { VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
 
 jest.mock('sonner', () => ({
   toast: {
@@ -26,28 +27,17 @@ jest.mock('~/trpc/react', () => ({
           isPending: false,
         }),
       },
+      setRating: {
+        useMutation: () => ({
+          mutate: jest.fn(),
+          isPending: false,
+        }),
+      },
     },
   },
 }))
 
-type TestVendor = {
-  id: string
-  weddingId: string
-  category: VendorCategory
-  name: string
-  location: string | null
-  website: string | null
-  instagram: string | null
-  status: VendorStatus
-  contactName: string | null
-  contactEmail: string | null
-  contactPhone: string | null
-  createdAt: Date
-  updatedAt: Date
-  contacted: boolean
-}
-
-function makeVendor(overrides: Partial<TestVendor>): TestVendor {
+function makeVendor(overrides: Partial<VendorWithQuotes>): VendorWithQuotes {
   return {
     id: 'vendor-1',
     weddingId: 'wedding-1',
@@ -60,9 +50,17 @@ function makeVendor(overrides: Partial<TestVendor>): TestVendor {
     contactName: null,
     contactEmail: null,
     contactPhone: null,
+    notes: null,
+    contacted: false,
+    customFields: null,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
-    contacted: false,
+    quotes: [],
+    ratingSummary: {
+      average: null,
+      ratings: [],
+      currentUserRating: null,
+    },
     ...overrides,
   }
 }
@@ -71,7 +69,7 @@ describe('VendorCard', () => {
   it('shows a contacted indicator when outreach has happened', () => {
     render(
       <VendorCard
-        vendor={makeVendor({ contacted: true }) as never}
+        vendor={makeVendor({ contacted: true })}
         quotePrices={[4200]}
         onViewDetails={jest.fn()}
         onDeleted={jest.fn()}
@@ -84,7 +82,7 @@ describe('VendorCard', () => {
   it('renders declined vendors with muted styling', () => {
     render(
       <VendorCard
-        vendor={makeVendor({ status: VendorStatus.DECLINED }) as never}
+        vendor={makeVendor({ status: VendorStatus.DECLINED })}
         quotePrices={[]}
         onViewDetails={jest.fn()}
         onDeleted={jest.fn()}
@@ -98,7 +96,7 @@ describe('VendorCard', () => {
   it('keeps active vendors at full strength', () => {
     render(
       <VendorCard
-        vendor={makeVendor({ status: VendorStatus.SELECTED }) as never}
+        vendor={makeVendor({ status: VendorStatus.SELECTED })}
         quotePrices={[]}
         onViewDetails={jest.fn()}
         onDeleted={jest.fn()}
@@ -107,5 +105,46 @@ describe('VendorCard', () => {
 
     expect(screen.getByTestId('vendor-card-root')).not.toHaveClass('opacity-60')
     expect(screen.getByTestId('vendor-card-root')).not.toHaveClass('grayscale')
+  })
+
+  it('hides average when no ratings exist', () => {
+    render(
+      <VendorCard
+        vendor={makeVendor()}
+        quotePrices={[]}
+        onViewDetails={jest.fn()}
+        onDeleted={jest.fn()}
+      />
+    )
+
+    expect(screen.queryByText(/avg/i)).not.toBeInTheDocument()
+  })
+
+  it('renders average and reveals breakdown via touch-safe control', () => {
+    render(
+      <VendorCard
+        vendor={makeVendor({
+          ratingSummary: {
+            average: 4.5,
+            currentUserRating: 5,
+            ratings: [
+              { userId: 'user-1', userLabel: 'Alex', stars: 5 },
+              { userId: 'user-2', userLabel: 'Taylor', stars: 4 },
+            ],
+          },
+        })}
+        quotePrices={[]}
+        onViewDetails={jest.fn()}
+        onDeleted={jest.fn()}
+      />
+    )
+
+    expect(screen.getByText('4.5 avg')).toBeInTheDocument()
+    const toggleButton = screen.getByRole('button', { name: /toggle ratings breakdown/i })
+    expect(toggleButton).toHaveAttribute('aria-expanded', 'false')
+    fireEvent.click(toggleButton)
+    expect(toggleButton).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getAllByText('Alex: 5 stars').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Taylor: 4 stars').length).toBeGreaterThan(0)
   })
 })

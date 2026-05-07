@@ -85,4 +85,24 @@ export type VendorQuote = {
 
 export type VendorWithQuotes = Vendor & {
   quotes: VendorQuote[]
+  ratingSummary: VendorRatingSummary
+}
+
+export type VendorRatingEntry = {
+  userId: string
+  userLabel: string
+  stars: number
+}
+
+export type VendorRatingSummary = {
+  average: number | null
+  ratings: VendorRatingEntry[]
+  currentUserRating: number | null
+}
+
+export type VendorRatingRecord = {
+  id: string
+  vendorId: string
+  userId: string
+  stars: number
 }

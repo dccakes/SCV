@@ -2,6 +2,7 @@ import { VendorCategory, VendorStatus } from '@prisma/client'
 import { fireEvent, render, screen } from '@testing-library/react'
 
 import { VendorDetailPanel } from '~/components/vendor/vendor-detail-panel'
+import type { VendorRatingSummary } from '~/server/domains/vendor/vendor.types'
 
 const mockUpdateMutate = jest.fn()
 const mockAddNoteMutate = jest.fn()
@@ -101,6 +102,12 @@ jest.mock('~/trpc/react', () => ({
           isPending: false,
         }),
       },
+      setRating: {
+        useMutation: () => ({
+          mutate: jest.fn(),
+          isPending: false,
+        }),
+      },
       getCategoryConfig: {
         useQuery: () => ({
           data: {
@@ -137,6 +144,7 @@ type TestVendor = {
   createdAt: Date
   updatedAt: Date
   quotes: []
+  ratingSummary: VendorRatingSummary
   contacted: boolean
   notes: string | null
   customFields: Record<string, string> | null
@@ -157,6 +165,11 @@ const vendor: TestVendor = {
   createdAt: new Date('2026-01-01T00:00:00.000Z'),
   updatedAt: new Date('2026-01-02T00:00:00.000Z'),
   quotes: [],
+  ratingSummary: {
+    average: null,
+    ratings: [],
+    currentUserRating: null,
+  },
   contacted: false,
   notes: 'Strong tasting menu.',
   customFields: {
@@ -175,7 +188,7 @@ describe('VendorDetailPanel', () => {
   })
 
   it('persists contacted, scratchpad notes, interaction notes, and custom field updates', () => {
-    render(<VendorDetailPanel vendor={vendor as never} onClose={jest.fn()} />)
+    render(<VendorDetailPanel vendor={vendor} onClose={jest.fn()} />)
 
     fireEvent.click(screen.getByRole('switch', { name: /mark vendor as contacted/i }))
     expect(mockUpdateMutate).toHaveBeenCalledWith(

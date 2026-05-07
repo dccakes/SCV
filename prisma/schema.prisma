@@ -141,6 +141,7 @@ model User {
   userWeddings                UserWedding[]
   members                     Member[]
   sentOrganizationInvitations OrganizationInvitation[] @relation("OrganizationInvitationInviter")
+  vendorRatings  VendorRating[]
 }
 
 model Session {
@@ -564,6 +565,7 @@ model Vendor {
   customFields Json?
 
   quotes      VendorQuote[]
+  ratings     VendorRating[]
   vendorNotes VendorNote[]
 
   createdAt DateTime @default(now())
@@ -572,6 +574,25 @@ model Vendor {
   @@index([weddingId])
   @@index([weddingId, category])
   @@index([weddingId, category, createdAt])
+}
+
+// Per-user star rating for a vendor (nullable presence: missing row == unrated)
+model VendorRating {
+  id        String   @id @default(uuid())
+  vendorId  String
+  vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Star value: integer 1-5 enforced via DB CHECK constraint and app validators
+  stars     Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([vendorId, userId])
+  @@index([vendorId])
+  @@index([userId])
 }
 
 // Quotes submitted by a vendor for a wedding
