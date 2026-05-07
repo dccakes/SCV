@@ -4,6 +4,8 @@ import { createContext, type ReactNode, useContext, useState } from 'react'
 
 import type {
   Guest,
+  HouseholdRsvpData,
+  HouseholdRsvpLookup,
   HouseholdSearch,
   Invitation,
   RsvpFormResponse,
@@ -20,7 +22,13 @@ interface SelectedHousehold extends H {
 
 type RsvpFormState = {
   matchedHouseholds?: HouseholdSearch
+  /** Households from the new public lookup endpoint (no email exposed) */
+  matchedHouseholdsPublic?: HouseholdRsvpLookup
+  /** Confirmed household data after token or email verification */
+  confirmedHousehold?: HouseholdRsvpData
   selectedHousehold?: SelectedHousehold
+  /** Per-household RSVP token used to scope submissions */
+  rsvpToken?: string
   rsvpResponses: RsvpFormResponse[]
   answersToQuestions: AnswerWithType[]
   weddingData: Partial<RsvpPageData>

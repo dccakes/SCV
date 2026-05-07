@@ -136,6 +136,7 @@ export class HouseholdRepository {
       zipCode?: string | null
       likelihoodOfAttending?: number | null
       notes?: string | null
+      rsvpToken?: string | null
     },
     eventIds: string[]
   ): Promise<HouseholdWithGuestsAndGifts> {
@@ -150,6 +151,7 @@ export class HouseholdRepository {
         zipCode: data.zipCode,
         likelihoodOfAttending: data.likelihoodOfAttending,
         notes: data.notes,
+        rsvpToken: data.rsvpToken,
         gifts: {
           createMany: {
             data: eventIds.map((eventId) => ({

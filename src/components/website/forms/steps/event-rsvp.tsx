@@ -27,10 +27,25 @@ export default function EventRsvpForm({
   const [rsvpResponsesByGuestId, setRsvpResponsesByGuestId] = useState<
     Record<number, RsvpFormResponse>
   >(() => {
+    // Pre-populate from confirmedHousehold (prior RSVP data), then overlay any already-entered form responses
+    const fromHousehold: Record<number, RsvpFormResponse> = {}
+    if (rsvpFormData.confirmedHousehold) {
+      for (const guest of rsvpFormData.confirmedHousehold.guests) {
+        const invitation = guest.invitations.find((i) => i.eventId === event.id)
+        if (invitation?.rsvp === 'Attending' || invitation?.rsvp === 'Declined') {
+          fromHousehold[guest.id] = {
+            eventId: event.id,
+            guestId: guest.id,
+            guestName: `${guest.firstName} ${guest.lastName}`,
+            rsvp: invitation.rsvp,
+          }
+        }
+      }
+    }
     return existingResponsesForEvent.reduce<Record<number, RsvpFormResponse>>((acc, response) => {
       acc[response.guestId] = response
       return acc
-    }, {})
+    }, fromHousehold)
   })
   const eventResponses = invitedGuests
     .map((guest) => rsvpResponsesByGuestId[guest.id])
@@ -88,7 +103,7 @@ export default function EventRsvpForm({
         CONTINUE
       </button>
       <button
-        className={`mt-3 bg-gray-700 py-3 text-white text-xl tracking-wide`}
+        className='mt-3 bg-gray-700 py-3 text-white text-xl tracking-wide'
         type='submit'
         onClick={() => goBack?.()}
       >

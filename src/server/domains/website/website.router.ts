@@ -12,13 +12,17 @@ import { requireActiveWeddingId } from '~/server/authz/active-wedding'
 import { requirePermission } from '~/server/authz/permission-checker'
 import { websiteService } from '~/server/domains/website'
 import {
+  confirmHouseholdIdentitySchema,
   createWebsiteSchema,
   fetchWeddingDataSchema,
   getBySubUrlSchema,
   hasPasswordAccessSchema,
+  lookupHouseholdByNameSchema,
   updateCoverPhotoSchema,
+  updateGuestContactInfoSchema,
   updateRsvpEnabledSchema,
   updateWebsiteSchema,
+  validateRsvpTokenSchema,
   verifyWebsitePasswordSchema,
 } from '~/server/domains/website/website.validator'
 export const websiteRouter = createTRPCRouter({
@@ -111,5 +115,42 @@ export const websiteRouter = createTRPCRouter({
     .input(submitPublicRsvpSchema)
     .mutation(async ({ input }) => {
       return rsvpSubmissionService.submitPublicRsvp(input)
+    }),
+
+  /**
+   * Look up households by guest name — public, no email exposed
+   */
+  lookupHouseholdByName: publicProcedure
+    .input(lookupHouseholdByNameSchema)
+    .query(async ({ input }) => {
+      return websiteService.lookupHouseholdByName(input.subUrl, input.name)
+    }),
+
+  /**
+   * Validate a household RSVP token and return household data
+   */
+  validateRsvpToken: publicProcedure.input(validateRsvpTokenSchema).query(async ({ input }) => {
+    return websiteService.validateRsvpToken(input.subUrl, input.rsvpToken)
+  }),
+
+  /**
+   * Confirm household identity via name lookup + email verification
+   */
+  confirmHouseholdIdentity: publicProcedure
+    .input(confirmHouseholdIdentitySchema)
+    .mutation(async ({ input }) => {
+      return websiteService.confirmHouseholdIdentity(input.subUrl, input.householdId, input.email)
+    }),
+
+  /**
+   * Update primary contact's email/phone after RSVP token auth
+   */
+  updateGuestContactInfo: publicProcedure
+    .input(updateGuestContactInfoSchema)
+    .mutation(async ({ input }) => {
+      return websiteService.updateGuestContactInfo(input.subUrl, input.rsvpToken, {
+        email: input.email,
+        phone: input.phone,
+      })
     }),
 })

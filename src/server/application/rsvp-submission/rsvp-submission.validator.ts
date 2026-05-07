@@ -75,7 +75,7 @@ export type SubmitRsvpSchemaInput = z.infer<typeof submitRsvpSchema>
 
 export const submitPublicRsvpSchema = submitRsvpSchema.extend({
   subUrl: z.string().min(1, 'Sub URL is required'),
-  token: z.string().regex(/^[a-f0-9]{32}$/, 'Invalid RSVP token format'),
+  rsvpToken: z.string().uuid('Invalid RSVP token format'),
 })
 
 export type SubmitPublicRsvpSchemaInput = z.infer<typeof submitPublicRsvpSchema>

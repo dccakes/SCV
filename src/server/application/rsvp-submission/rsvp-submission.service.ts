@@ -33,7 +33,7 @@ export class RsvpSubmissionService {
     _questionRepo: QuestionRepository,
     private guestRepo: GuestRepository,
     private householdRepo: HouseholdRepository,
-    private weddingRepo: WeddingRepository,
+    _weddingRepo: WeddingRepository,
     private db: PrismaClient
   ) {}
 
@@ -48,8 +48,11 @@ export class RsvpSubmissionService {
   }
 
   async submitPublicRsvp(data: SubmitPublicRsvpSchemaInput): Promise<{ success: boolean }> {
-    const weddingId = await this.getWeddingIdFromValidToken(data.subUrl, data.token)
-    await this.ensureSubmissionBelongsToWedding(weddingId, data)
+    const { householdId, weddingId } = await this.getHouseholdFromRsvpToken(
+      data.subUrl,
+      data.rsvpToken
+    )
+    await this.ensureSubmissionBelongsToHousehold(householdId, weddingId, data)
 
     return this.submitRsvp({
       rsvpResponses: data.rsvpResponses,
@@ -154,19 +157,6 @@ export class RsvpSubmissionService {
     })
   }
 
-  private async getWeddingIdFromValidToken(subUrl: string, token: string): Promise<string> {
-    const weddingId = await this.weddingRepo.findWeddingIdByValidTokenAndSubUrl(subUrl, token)
-
-    if (!weddingId) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'Invalid or expired RSVP token',
-      })
-    }
-
-    return weddingId
-  }
-
   private async ensureSubmissionBelongsToWedding(
     weddingId: string,
     data: Pick<SubmitRsvpSchemaInput, 'rsvpResponses' | 'answersToQuestions'>
@@ -179,6 +169,95 @@ export class RsvpSubmissionService {
           eventId: response.eventId,
         }))
       )
+
+      if (invitationCount !== data.rsvpResponses.length) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Invalid RSVP submission scope',
+        })
+      }
+    }
+
+    const guestIds = new Set<number>()
+    const householdIds = new Set<string>()
+
+    for (const response of data.rsvpResponses) {
+      guestIds.add(response.guestId)
+    }
+
+    for (const answer of data.answersToQuestions) {
+      if (typeof answer.guestId === 'number') {
+        guestIds.add(answer.guestId)
+      }
+      if (typeof answer.householdId === 'string') {
+        householdIds.add(answer.householdId)
+      }
+    }
+
+    if (guestIds.size > 0) {
+      const guestCount = await this.guestRepo.countByIdsInWedding(weddingId, Array.from(guestIds))
+
+      if (guestCount !== guestIds.size) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Invalid RSVP submission scope',
+        })
+      }
+    }
+
+    if (householdIds.size > 0) {
+      const householdCount = await this.householdRepo.countByIdsInWedding(
+        weddingId,
+        Array.from(householdIds)
+      )
+
+      if (householdCount !== householdIds.size) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Invalid RSVP submission scope',
+        })
+      }
+    }
+  }
+
+  private async getHouseholdFromRsvpToken(
+    subUrl: string,
+    rsvpToken: string
+  ): Promise<{ householdId: string; weddingId: string }> {
+    const household = await this.db.household.findFirst({
+      where: {
+        rsvpToken,
+        wedding: { website: { subUrl } },
+      },
+      select: { id: true, weddingId: true },
+    })
+
+    if (!household) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Invalid or expired RSVP token',
+      })
+    }
+
+    return { householdId: household.id, weddingId: household.weddingId }
+  }
+
+  private async ensureSubmissionBelongsToHousehold(
+    householdId: string,
+    weddingId: string,
+    data: Pick<SubmitRsvpSchemaInput, 'rsvpResponses' | 'answersToQuestions'>
+  ): Promise<void> {
+    if (data.rsvpResponses.length > 0) {
+      const invitationCount = await this.db.invitation.count({
+        where: {
+          weddingId,
+          guest: { householdId },
+          OR: data.rsvpResponses.map((response) => ({
+            guestId: response.guestId,
+            eventId: response.eventId,
+          })),
+        },
+      })
 
       if (invitationCount !== data.rsvpResponses.length) {
         throw new TRPCError({
@@ -199,14 +278,18 @@ export class RsvpSubmissionService {
       if (typeof answer.guestId === 'number') {
         guestIds.add(answer.guestId)
       }
-
       if (typeof answer.householdId === 'string') {
         householdIds.add(answer.householdId)
       }
     }
 
     if (guestIds.size > 0) {
-      const guestCount = await this.guestRepo.countByIdsInWedding(weddingId, Array.from(guestIds))
+      const guestCount = await this.db.guest.count({
+        where: {
+          householdId,
+          id: { in: Array.from(guestIds) },
+        },
+      })
 
       if (guestCount !== guestIds.size) {
         throw new TRPCError({
@@ -217,10 +300,12 @@ export class RsvpSubmissionService {
     }
 
     if (householdIds.size > 0) {
-      const householdCount = await this.householdRepo.countByIdsInWedding(
-        weddingId,
-        Array.from(householdIds)
-      )
+      const householdCount = await this.db.household.count({
+        where: {
+          id: householdId,
+          AND: { id: { in: Array.from(householdIds) } },
+        },
+      })
 
       if (householdCount !== householdIds.size) {
         throw new TRPCError({
