@@ -17,6 +17,8 @@ type VendorCardProps = {
 export function VendorCard({ vendor, quotePrices, onViewDetails, onDeleted }: VendorCardProps) {
   const utils = api.useUtils()
   const [showRatingsBreakdown, setShowRatingsBreakdown] = useState(false)
+  const isMuted = vendor.status === 'DECLINED' || vendor.status === 'NOT_AVAILABLE'
+  const isContacted = 'contacted' in vendor && vendor.contacted === true
 
   const deleteVendor = api.vendor.delete.useMutation({
     onSuccess: async () => {
@@ -62,7 +64,12 @@ export function VendorCard({ vendor, quotePrices, onViewDetails, onDeleted }: Ve
   }
 
   return (
-    <div className='group relative flex cursor-pointer flex-col gap-2 rounded-lg border border-border/90 bg-card/60 px-4 py-3 transition-all hover:bg-card hover:shadow-sm sm:flex-row sm:items-center sm:justify-between'>
+    <div
+      data-testid='vendor-card-root'
+      className={`group relative flex cursor-pointer flex-col gap-2 rounded-lg border border-border/90 bg-card/60 px-4 py-3 transition-all hover:bg-card hover:shadow-sm sm:flex-row sm:items-center sm:justify-between ${
+        isMuted ? 'opacity-60 grayscale' : ''
+      }`}
+    >
       <button
         type='button'
         className='absolute inset-0 rounded-lg'
@@ -79,9 +86,17 @@ export function VendorCard({ vendor, quotePrices, onViewDetails, onDeleted }: Ve
               {vendor.location}
             </span>
           )}
-          {quoteCount > 0 && (
+          {isContacted && (
             <>
               {vendor.location && <span className='text-border'>·</span>}
+              <span className='rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[0.52rem] text-primary uppercase tracking-wider'>
+                Contacted
+              </span>
+            </>
+          )}
+          {quoteCount > 0 && (
+            <>
+              {(vendor.location || isContacted) && <span className='text-border'>·</span>}
               <span className='font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
                 {quoteCount} {quoteCount === 1 ? 'quote' : 'quotes'}
               </span>
@@ -95,7 +110,8 @@ export function VendorCard({ vendor, quotePrices, onViewDetails, onDeleted }: Ve
         )}
       </div>
 
-      <div className='relative z-10 flex items-center gap-3'>
+      <div className='relative z-10 flex flex-wrap items-center gap-3'>
+        <StatusBadge status={vendor.status} />
         <div className='pointer-events-auto flex items-center gap-1'>
           {[1, 2, 3, 4, 5].map((star) => (
             <button
@@ -150,7 +166,6 @@ export function VendorCard({ vendor, quotePrices, onViewDetails, onDeleted }: Ve
             {priceDisplay()}
           </span>
         )}
-        <StatusBadge status={vendor.status} />
         <button
           type='button'
           className='text-muted-foreground/50 transition-opacity hover:text-destructive'

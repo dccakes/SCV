@@ -30,7 +30,7 @@ const VALID_HOUSEHOLD_WITH_ADDRESS = {
   state: 'NY',
   country: 'USA',
   zipCode: '10001',
-  phone: '555-1234',
+  phone: '+12025550123',
   email: 'family@example.com',
   notes: 'Seat near the aisle',
   guestParty: [VALID_GUEST],

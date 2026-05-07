@@ -33,7 +33,7 @@ describe('guestPartyInputSchema', () => {
       firstName: 'John',
       lastName: 'Doe',
       email: 'john@example.com',
-      phone: '+1234567890',
+      phone: '+12025550123',
       invites: {
         'event-123': 'Attending',
       },
@@ -308,5 +308,74 @@ describe('householdIdSchema', () => {
   it('should require non-empty householdId', () => {
     const result = householdIdSchema.safeParse({ householdId: '' })
     expect(result.success).toBe(false)
+  })
+})
+
+describe('phone validation in household schemas', () => {
+  const baseGuestParty = [
+    {
+      firstName: 'John',
+      lastName: 'Doe',
+      isPrimaryContact: true,
+      invites: {},
+    },
+  ]
+
+  it('accepts valid E.164 phone numbers', () => {
+    expect(
+      createHouseholdSchema.safeParse({
+        guestParty: baseGuestParty,
+        phone: '+12025550123',
+      }).success
+    ).toBe(true)
+
+    expect(
+      updateHouseholdSchema.safeParse({
+        householdId: 'household-123',
+        guestParty: baseGuestParty,
+        gifts: [],
+        phone: '+447911123456',
+      }).success
+    ).toBe(true)
+  })
+
+  it('rejects invalid phone numbers with a clear message', () => {
+    const result = createHouseholdSchema.safeParse({
+      guestParty: baseGuestParty,
+      phone: '2025550123',
+    })
+    expect(result.success).toBe(false)
+    expect(
+      result.error?.issues.some((issue) => issue.message === 'Please enter a valid phone number')
+    ).toBe(true)
+  })
+
+  it('accepts undefined and null', () => {
+    expect(
+      createHouseholdSchema.safeParse({
+        guestParty: baseGuestParty,
+        phone: undefined,
+      }).success
+    ).toBe(true)
+
+    expect(
+      updateHouseholdSchema.safeParse({
+        householdId: 'household-123',
+        guestParty: baseGuestParty,
+        gifts: [],
+        phone: null,
+      }).success
+    ).toBe(true)
+  })
+
+  it('transforms empty string to null', () => {
+    const result = createHouseholdSchema.safeParse({
+      guestParty: baseGuestParty,
+      phone: '',
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.phone).toBeNull()
+    }
   })
 })

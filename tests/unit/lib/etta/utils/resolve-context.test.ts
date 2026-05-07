@@ -162,6 +162,37 @@ describe('resolveEttaContext', () => {
     expect(ctx.pendingSuggestionCount).toBe(0)
     expect(ctx.recentMemories).toEqual([])
     expect(ctx.guestId).toBe(42)
+
+    // Confirm the planner-scoped DB reads did NOT run for a guest.
+    expect(mockVendorCount).not.toHaveBeenCalled()
+    expect(mockSuggestionCount).not.toHaveBeenCalled()
+    expect(mockMemories).not.toHaveBeenCalled()
+  })
+
+  it('runs planner-scoped queries for couple-bot (Telegram couple)', async () => {
+    setupMocks({
+      vendorCount: 7,
+      pendingSuggestionCount: 1,
+      memories: [{ content: 'Prefers outdoor ceremony', createdAt: new Date() }],
+    })
+
+    const ctx = await resolveEttaContext({
+      actor: 'couple-bot',
+      weddingId: 'wedding-1',
+    })
+
+    expect(mockVendorCount).toHaveBeenCalledWith({ where: { weddingId: 'wedding-1' } })
+    expect(mockSuggestionCount).toHaveBeenCalledWith({
+      where: { weddingId: 'wedding-1', status: 'pending' },
+    })
+    expect(mockMemories).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { weddingId: 'wedding-1' } })
+    )
+
+    expect(ctx.actor).toBe('couple-bot')
+    expect(ctx.vendorCount).toBe(7)
+    expect(ctx.pendingSuggestionCount).toBe(1)
+    expect(ctx.recentMemories).toEqual(['Prefers outdoor ceremony'])
   })
 
   it('throws when wedding is not found (null)', async () => {

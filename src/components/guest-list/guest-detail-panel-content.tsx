@@ -10,6 +10,7 @@ import {
   GuestDetailSections,
 } from '~/components/guest-list/v2/drawer/guest-detail-sections'
 import { Badge } from '~/components/ui/badge'
+import { PhoneInput } from '~/components/ui/phone-input'
 import { Slider } from '~/components/ui/slider'
 import { LIKELIHOOD_LABELS } from '~/lib/constants'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
@@ -167,7 +168,7 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
             <button
               type='button'
               onClick={() => setIsMembersModalOpen(true)}
-              className='font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:underline'
+              className='rounded-md border border-border/70 px-2 py-1 font-medium text-primary text-xs hover:bg-primary/5'
             >
               Manage members
             </button>
@@ -220,7 +221,7 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
             action={
               <Link
                 href={rsvpManageHref}
-                className='font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:underline'
+                className='rounded-md border border-border/70 px-2 py-1 font-medium text-primary text-xs hover:bg-primary/5'
               >
                 Manage RSVPs in Events
               </Link>
@@ -275,7 +276,7 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
             action={
               <Link
                 href={rsvpManageHref}
-                className='font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:underline'
+                className='rounded-md border border-border/70 px-2 py-1 font-medium text-primary text-xs hover:bg-primary/5'
               >
                 Manage RSVPs in Events
               </Link>
@@ -324,7 +325,7 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
           <button
             type='button'
             onClick={onRequestDelete}
-            className='font-mono text-[0.58rem] text-destructive uppercase tracking-wider hover:underline'
+            className='rounded-md border border-destructive/30 px-2 py-1 font-medium text-destructive text-xs hover:bg-destructive/10'
           >
             Delete party
           </button>
@@ -373,7 +374,7 @@ function ContactAddressSection(props: Readonly<ContactAddressSectionProps>) {
           <button
             type='button'
             onClick={onToggleEdit}
-            className='font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:underline'
+            className='rounded-md border border-border/70 px-2 py-1 font-medium text-primary text-xs hover:bg-primary/5'
           >
             Done
           </button>
@@ -393,17 +394,16 @@ function ContactAddressSection(props: Readonly<ContactAddressSectionProps>) {
               className='h-9 w-full rounded-md border border-border/70 bg-background px-2.5 text-sm'
             />
           </label>
+          {/* biome-ignore lint/a11y/noLabelWithoutControl: PhoneInput renders a nested input element */}
           <label className='space-y-1'>
             <span className='font-mono text-[0.55rem] text-foreground/55 uppercase tracking-widest'>
               Phone
             </span>
-            <input
+            <PhoneInput
               name='phone'
-              type='tel'
-              autoComplete='tel'
-              value={drawerDraft.phone}
-              onChange={(event) => updateDraft('phone', event.target.value)}
-              className='h-9 w-full rounded-md border border-border/70 bg-background px-2.5 text-sm'
+              value={drawerDraft.phone || undefined}
+              onChange={(nextValue) => updateDraft('phone', nextValue ?? '')}
+              className='w-full'
             />
           </label>
           <label className='space-y-1 sm:col-span-2'>
@@ -497,7 +497,7 @@ function ContactAddressSection(props: Readonly<ContactAddressSectionProps>) {
         <button
           type='button'
           onClick={onToggleEdit}
-          className='font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:underline'
+          className='rounded-md border border-border/70 px-2 py-1 font-medium text-primary text-xs hover:bg-primary/5'
           aria-label='Edit Contact & Address'
         >
           Edit
@@ -593,7 +593,7 @@ function NotesSection(props: Readonly<NotesSectionProps>) {
         <button
           type='button'
           onClick={onToggleEdit}
-          className='font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:underline'
+          className='rounded-md border border-border/70 px-2 py-1 font-medium text-primary text-xs hover:bg-primary/5'
           aria-label='Edit Notes'
         >
           {isEditing ? 'Done' : 'Edit'}
@@ -673,7 +673,7 @@ function CommunicationLogSection(props: Readonly<CommunicationLogSectionProps>) 
                     <button
                       type='button'
                       onClick={() => onDeleteNote(entry.id)}
-                      className='font-mono text-[0.5rem] text-destructive/60 uppercase tracking-wider hover:text-destructive'
+                      className='rounded-md px-1.5 py-0.5 font-medium text-destructive/70 text-xs hover:bg-destructive/10 hover:text-destructive'
                     >
                       Remove
                     </button>
@@ -701,7 +701,7 @@ function CommunicationLogSection(props: Readonly<CommunicationLogSectionProps>) 
             type='button'
             onClick={handleSubmitNote}
             disabled={!noteText.trim()}
-            className='h-8 rounded-md bg-primary/10 px-3 font-mono text-[0.6rem] text-primary uppercase tracking-wider hover:bg-primary/20 disabled:opacity-40 disabled:hover:bg-primary/10'
+            className='h-8 rounded-md bg-primary/10 px-3 font-medium text-primary text-xs hover:bg-primary/20 disabled:opacity-40 disabled:hover:bg-primary/10'
           >
             Add
           </button>

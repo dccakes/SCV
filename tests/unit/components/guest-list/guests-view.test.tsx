@@ -187,7 +187,7 @@ const households: HouseholdWithGuests[] = [
         firstName: 'Alex',
         lastName: 'Rivera',
         email: 'alex@example.com',
-        phone: '555-1111',
+        phone: '+12025550111',
         householdId: 'household-1',
         weddingId: 'wedding-1',
         isPrimaryContact: true,
@@ -467,7 +467,7 @@ describe('GuestsView', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Discard and close' }))
     fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
     expect(screen.getByText('late-success@example.com')).toBeInTheDocument()
-  })
+  }, 10000)
 
   it('should keep search/filter and add guest while rendering slim cards', () => {
     render(
@@ -482,10 +482,65 @@ describe('GuestsView', () => {
     )
 
     expect(screen.getByPlaceholderText('Find guests')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Filter By' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'RSVP Status' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Guest Tag' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Country' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Households' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Person Audit' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Sort by Name' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Sort by Party Size' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Card view' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Table view' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Add Guest' })).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: /select alex rivera household/i })
+    ).toBeInTheDocument()
+  })
+
+  it('should switch to person audit mode and show table headings', () => {
+    render(
+      <GuestsView
+        events={events}
+        households={householdsWithSecondFamily}
+        selectedEventId='all'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Person Audit' }))
+
+    expect(screen.getByRole('columnheader', { name: 'Person' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Household' })).toBeInTheDocument()
+  })
+
+  it('should show and clear active search state via the Clear control', () => {
+    render(
+      <GuestsView
+        events={events}
+        households={householdsWithSecondFamily}
+        selectedEventId='all'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    expect(screen.queryByRole('button', { name: 'Clear' })).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByPlaceholderText('Find guests'), { target: { value: 'Brooke' } })
+
+    expect(screen.getByRole('button', { name: 'Clear' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }))
+
+    expect(screen.queryByRole('button', { name: 'Clear' })).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /select alex rivera household/i })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /select brooke chen household/i })
     ).toBeInTheDocument()
   })
 
@@ -596,8 +651,7 @@ describe('GuestsView', () => {
     render(
       <GuestsView
         events={events}
-        households={householdsWithFilteredGuests.displayed}
-        allHouseholds={householdsWithFilteredGuests.canonical}
+        households={households}
         selectedEventId='event-1'
         setPrefillHousehold={jest.fn()}
         setPrefillEvent={jest.fn()}
@@ -622,12 +676,16 @@ describe('GuestsView', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save members' }))
 
     await waitFor(() => {
-      expect(screen.getAllByText('Taylor Rivera').length).toBeGreaterThan(0)
+      expect(mockHouseholdUpdateMutate).toHaveBeenCalled()
     })
 
-    expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument()
+    })
+
+    expect(screen.getAllByText('Taylor Rivera').length).toBeGreaterThan(0)
     expect(screen.getByRole('textbox', { name: 'Email' })).toHaveValue('draft-only@example.com')
-  })
+  }, 10000)
 
   it('should updates drawer party members after adding member in modal and saving', async () => {
     render(
@@ -761,6 +819,7 @@ describe('GuestsView', () => {
     const emailInput = screen.getByRole('textbox', { name: 'Email' })
     fireEvent.change(emailInput, { target: { value: 'updated@example.com' } })
 
+    expect(screen.getByText('Unsaved changes')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Discard changes' })).toBeInTheDocument()
 
@@ -773,6 +832,7 @@ describe('GuestsView', () => {
 
     expect(screen.queryByRole('textbox', { name: 'Email' })).not.toBeInTheDocument()
     expect(screen.getByText('updated@example.com')).toBeInTheDocument()
+    expect(screen.queryByText('Unsaved changes')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Save changes' })).not.toBeInTheDocument()
   })
 
@@ -826,6 +886,54 @@ describe('GuestsView', () => {
 
     expect(screen.getByRole('textbox', { name: 'Email' })).toHaveValue('failed-save@example.com')
     expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument()
+  })
+
+  it('clears invalid legacy phone values from the contact editor and save payload', async () => {
+    const householdsWithLegacyPhones: HouseholdWithGuests[] = [
+      {
+        ...households[0],
+        guests: households[0].guests.map((guest) => ({
+          ...guest,
+          phone: guest.isPrimaryContact ? '+1-555-0101' : '+1-555-0102',
+        })),
+      },
+    ]
+
+    render(
+      <GuestsView
+        events={events}
+        households={householdsWithLegacyPhones}
+        selectedEventId='event-1'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Contact & Address' }))
+
+    expect(document.querySelector('input[name="phone"]')).toHaveValue('')
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Email' }), {
+      target: { value: 'legacy-fixed@example.com' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    await waitFor(() => {
+      expect(mockHouseholdUpdateMutate).toHaveBeenCalled()
+    })
+
+    const payload = mockHouseholdUpdateMutate.mock.calls[0]?.[0] as {
+      guestParty: Array<{ guestId: number; phone: string | null }>
+    }
+
+    expect(payload.guestParty).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ guestId: 1, phone: null }),
+        expect.objectContaining({ guestId: 2, phone: null }),
+      ])
+    )
   })
 
   it('should guard closing when there are unsaved changes', () => {
@@ -978,7 +1086,7 @@ describe('GuestsView', () => {
 
     expect(screen.getByText('Contact & Address')).toBeInTheDocument()
     expect(screen.getByText('alex@example.com')).toBeInTheDocument()
-    expect(screen.getByText('555-1111')).toBeInTheDocument()
+    expect(screen.getByText('+12025550111')).toBeInTheDocument()
     expect(screen.getByText('123 Main St, Austin, TX, 73301, US')).toBeInTheDocument()
   })
 

@@ -17,11 +17,14 @@ jest.mock('server/application/vendor-insights', () => ({
 
 jest.mock('server/domains/vendor', () => ({
   vendorService: {
+    addVendorNote: jest.fn(),
     addQuote: jest.fn(),
     createVendor: jest.fn(),
     deleteQuote: jest.fn(),
     deleteQuoteFile: jest.fn(),
     deleteVendor: jest.fn(),
+    getCategoryConfig: jest.fn(),
+    getNotes: jest.fn(),
     getVendorWithQuotes: jest.fn(),
     getVendorsForWedding: jest.fn(),
     setVendorRating: jest.fn(),
@@ -29,6 +32,7 @@ jest.mock('server/domains/vendor', () => ({
     updateQuote: jest.fn(),
     updateStatus: jest.fn(),
     updateVendor: jest.fn(),
+    upsertCategoryConfig: jest.fn(),
   },
 }))
 
@@ -39,6 +43,8 @@ import { vendorRouter } from 'server/domains/vendor/vendor.router'
 const mockListVendors = vendorInsightsService.listVendors as jest.Mock
 const mockGetVendor = vendorInsightsService.getVendor as jest.Mock
 const mockSetVendorRating = vendorService.setVendorRating as jest.Mock
+const mockGetNotes = vendorService.getNotes as jest.Mock
+const mockUpsertCategoryConfig = vendorService.upsertCategoryConfig as jest.Mock
 
 describe('vendorRouter authz context plumbing', () => {
   beforeEach(() => {
@@ -220,6 +226,7 @@ describe('vendorRouter authz context plumbing', () => {
   it('forwards setRating with authz and active wedding', async () => {
     mockSetVendorRating.mockResolvedValue({ vendorId: 'vendor-1', stars: 5 })
     const activeOrganization = { organizationId: 'org-123', role: 'member' as const }
+
     const caller = vendorRouter.createCaller({
       auth: {
         session: { user: { id: 'user-123' } },
@@ -242,6 +249,69 @@ describe('vendorRouter authz context plumbing', () => {
       'vendor-1',
       'wedding-123',
       5
+    )
+  })
+
+  it('scopes getNotes to active wedding and forwards authz context', async () => {
+    const activeOrganization = { organizationId: 'org-123', role: 'member' as const }
+    mockGetNotes.mockResolvedValue([{ id: 'note-1' }])
+
+    const caller = vendorRouter.createCaller({
+      auth: {
+        session: { user: { id: 'user-123' } },
+        activeOrganization,
+        activeWeddingId: 'wedding-123',
+        userId: 'user-123',
+      },
+      authz: {
+        userId: 'user-123',
+        activeOrganization,
+      },
+      db: {} as never,
+      headers: new Headers(),
+    })
+
+    await caller.getNotes({ vendorId: 'vendor-1' })
+
+    expect(mockGetNotes).toHaveBeenCalledWith(
+      { userId: 'user-123', activeOrganization },
+      'vendor-1',
+      'wedding-123'
+    )
+  })
+
+  it('scopes upsertCategoryConfig to active wedding and forwards authz context', async () => {
+    const activeOrganization = { organizationId: 'org-123', role: 'owner' as const }
+    const fieldDefinitions = [
+      { key: 'capacity', label: 'Capacity', type: 'number', displayOrder: 1 },
+    ]
+    mockUpsertCategoryConfig.mockResolvedValue({ id: 'config-1' })
+
+    const caller = vendorRouter.createCaller({
+      auth: {
+        session: { user: { id: 'user-123' } },
+        activeOrganization,
+        activeWeddingId: 'wedding-123',
+        userId: 'user-123',
+      },
+      authz: {
+        userId: 'user-123',
+        activeOrganization,
+      },
+      db: {} as never,
+      headers: new Headers(),
+    })
+
+    await caller.upsertCategoryConfig({
+      category: 'VENUE',
+      fieldDefinitions,
+    })
+
+    expect(mockUpsertCategoryConfig).toHaveBeenCalledWith(
+      { userId: 'user-123', activeOrganization },
+      'wedding-123',
+      'VENUE',
+      fieldDefinitions
     )
   })
 })

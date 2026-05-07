@@ -49,16 +49,26 @@ function getAnthropicThinkingOptions(modelId: string) {
   }
 }
 
+const MEMORY_TOOL_NAMES = ['memory_read', 'memory_write'] as const
+
 export async function runEttaAgent(req: EttaRequest) {
   assertEttaRuntimeConfig()
 
-  const { actor, weddingId, guestId, authz, messages } = req
+  const { actor, weddingId, guestId, authz, messages, toolsetMode = 'full' } = req
   const startTime = Date.now()
 
   const ctx = await resolveEttaContext({ actor, weddingId, guestId, authz })
 
-  const tools = actor === 'couple' ? getPlannerTools(ctx) : getConciergeTools(ctx)
-  const system = buildSystemPrompt(ctx)
+  const fullTools = actor !== 'guest' ? getPlannerTools(ctx) : getConciergeTools(ctx)
+  const tools =
+    toolsetMode === 'memory-only'
+      ? Object.fromEntries(
+          Object.entries(fullTools).filter(([name]) =>
+            (MEMORY_TOOL_NAMES as readonly string[]).includes(name)
+          )
+        )
+      : fullTools
+  const system = buildSystemPrompt(ctx, { toolsetMode })
 
   const modelId = process.env.ETTA_MODEL || DEFAULT_MODEL
   const model = gateway(modelId)
@@ -66,10 +76,16 @@ export async function runEttaAgent(req: EttaRequest) {
 
   // Log inbound request
   const userMessage = messages.at(-1)
+  const chatRequestActorId =
+    actor === 'guest'
+      ? (authz?.userId ?? `guest:${guestId}`)
+      : actor === 'couple-bot'
+        ? (authz?.userId ?? 'couple-bot:unknown')
+        : (authz?.userId ?? 'couple:unknown')
   await logAudit({
     weddingId,
-    actorId: authz?.userId ?? `guest:${guestId}`,
-    actorType: actor === 'couple' ? 'couple' : 'guest',
+    actorId: chatRequestActorId,
+    actorType: actor === 'guest' ? 'guest' : actor === 'couple-bot' ? 'couple-bot' : 'couple',
     action: 'chat_request',
     resourceType: 'conversation',
     payload: {

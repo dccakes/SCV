@@ -29,4 +29,38 @@ describe('ListToolbar', () => {
     expect(onSortByName).toHaveBeenCalledTimes(1)
     expect(onSortByPartySize).toHaveBeenCalledTimes(1)
   })
+
+  it('shows cards as the default active view state', () => {
+    render(<ListToolbar totalHouseholds={3} onViewModeChange={jest.fn()} />)
+
+    expect(screen.getByRole('button', { name: 'Card view' })).toHaveClass('bg-primary')
+    expect(screen.getByRole('button', { name: 'Table view' })).not.toHaveClass('bg-primary')
+  })
+
+  it('shows table as the active view state when requested', () => {
+    render(<ListToolbar totalHouseholds={3} viewMode='table' onViewModeChange={jest.fn()} />)
+
+    expect(screen.getByRole('button', { name: 'Table view' })).toHaveClass('bg-primary')
+    expect(screen.getByRole('button', { name: 'Card view' })).not.toHaveClass('bg-primary')
+  })
+
+  it('shows workflow mode controls and calls mode change handler', () => {
+    const onWorkflowModeChange = jest.fn()
+
+    render(
+      <ListToolbar
+        totalHouseholds={3}
+        workflowMode='households'
+        onWorkflowModeChange={onWorkflowModeChange}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Person Audit' }))
+    expect(onWorkflowModeChange).toHaveBeenCalledWith('personAudit')
+  })
+
+  it('renders active sort state text when provided', () => {
+    render(<ListToolbar totalHouseholds={3} sortStateLabel='Name (A-Z)' />)
+    expect(screen.getByText('Sorted by Name (A-Z)')).toBeInTheDocument()
+  })
 })

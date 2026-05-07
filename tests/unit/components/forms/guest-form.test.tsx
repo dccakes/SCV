@@ -16,12 +16,27 @@ import {
   type HouseholdFormData,
   HouseholdFormSchema,
 } from '~/components/forms/guest-form.schema'
+import { shouldShowUnsavedCloseConfirm } from '~/components/forms/guest-form.utils'
 
 // Mock events for form initialization
 const mockEvents = [
   { id: 'event-1', name: 'Wedding Ceremony' },
   { id: 'event-2', name: 'Reception' },
 ]
+
+describe('GuestForm - Close Confirmation Rules', () => {
+  it('requires confirmation when form is dirty and not loading', () => {
+    expect(shouldShowUnsavedCloseConfirm(true, false)).toBe(true)
+  })
+
+  it('does not require confirmation when form is pristine', () => {
+    expect(shouldShowUnsavedCloseConfirm(false, false)).toBe(false)
+  })
+
+  it('does not require confirmation while loading', () => {
+    expect(shouldShowUnsavedCloseConfirm(true, true)).toBe(false)
+  })
+})
 
 describe('GuestForm - Deleted Guests Tracking', () => {
   describe('handleRemoveGuest behavior', () => {
@@ -780,7 +795,7 @@ describe('GuestForm - Common Use Cases', () => {
         result.current.form.setValue('guestParty.0.firstName', 'John')
         result.current.form.setValue('guestParty.0.lastName', 'Doe')
         result.current.form.setValue('guestParty.0.email', 'john@example.com')
-        result.current.form.setValue('guestParty.0.phone', '+1234567890')
+        result.current.form.setValue('guestParty.0.phone', '+12025550123')
         result.current.form.setValue('guestParty.0.isPrimaryContact', true)
       })
 
@@ -790,7 +805,7 @@ describe('GuestForm - Common Use Cases', () => {
           firstName: 'Jane',
           lastName: 'Doe',
           email: 'jane@example.com',
-          phone: '+0987654321',
+          phone: '+12025550124',
           isPrimaryContact: false,
           ageGroup: 'ADULT',
           tagIds: [],
@@ -818,11 +833,11 @@ describe('GuestForm - Common Use Cases', () => {
 
       // Verify first guest contact info
       expect(data.guestParty[0]?.email).toBe('john@example.com')
-      expect(data.guestParty[0]?.phone).toBe('+1234567890')
+      expect(data.guestParty[0]?.phone).toBe('+12025550123')
 
       // Verify second guest contact info
       expect(data.guestParty[1]?.email).toBe('jane@example.com')
-      expect(data.guestParty[1]?.phone).toBe('+0987654321')
+      expect(data.guestParty[1]?.phone).toBe('+12025550124')
     })
 
     it('should validate email format for both guests', async () => {

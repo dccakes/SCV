@@ -183,7 +183,7 @@ test.describe('Quote Management', () => {
     // Fill in quote form
     await dialog.getByLabel(/price/i).fill('2500')
     await dialog.getByLabel(/date/i).fill('2026-06-01')
-    await dialog.getByLabel(/notes/i).fill('E2E test quote')
+    await dialog.getByLabel('Notes', { exact: true }).fill('E2E test quote')
     await dialog.getByRole('button', { name: /add quote/i }).click()
 
     // New quote should appear
@@ -482,7 +482,7 @@ test.describe('XSS Injection Prevention', () => {
     await dialog.getByRole('button', { name: /add quote/i }).click()
     await dialog.getByLabel(/price/i).fill('999')
     await dialog.getByLabel(/date/i).fill('2026-01-01')
-    await dialog.getByLabel(/notes/i).fill(xssPayload)
+    await dialog.getByLabel('Notes', { exact: true }).fill(xssPayload)
     await dialog.getByRole('button', { name: /add quote/i }).click()
 
     // Page should still be functional — if XSS executed it would replace the entire body

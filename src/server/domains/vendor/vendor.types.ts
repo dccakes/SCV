@@ -9,6 +9,19 @@ import { QuoteType, VendorCategory, VendorStatus } from '@prisma/client'
 
 export { QuoteType, VendorCategory, VendorStatus }
 
+export type VendorFieldType = 'text' | 'number' | 'boolean'
+
+export type VendorCustomFields = Record<string, string> | null
+
+export type FieldDefinition = {
+  key: string
+  label: string
+  type: VendorFieldType
+  displayOrder: number
+}
+
+export type VendorFieldDefinition = FieldDefinition
+
 export type Vendor = {
   id: string
   weddingId: string
@@ -21,6 +34,29 @@ export type Vendor = {
   contactName: string | null
   contactEmail: string | null
   contactPhone: string | null
+  notes: string | null
+  contacted: boolean
+  customFields: VendorCustomFields
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type VendorNoteActorType = 'couple' | 'etta'
+
+export type VendorNote = {
+  id: string
+  vendorId: string
+  weddingId: string
+  message: string
+  actorType: VendorNoteActorType
+  createdAt: Date
+}
+
+export type VendorCategoryConfig = {
+  id: string
+  weddingId: string | null
+  category: VendorCategory
+  fieldDefinitions: FieldDefinition[]
   createdAt: Date
   updatedAt: Date
 }

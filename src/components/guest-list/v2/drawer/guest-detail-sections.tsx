@@ -35,7 +35,7 @@ export function GuestDetailSection(props: Readonly<GuestDetailSectionProps>) {
       )}
     >
       <div className='flex items-center justify-between gap-3'>
-        <h3 className='font-mono text-[0.58rem] text-foreground/60 uppercase tracking-widest'>
+        <h3 className='font-mono text-[0.64rem] text-foreground/70 uppercase tracking-widest'>
           {title}
         </h3>
         {action ? <div className={cn('shrink-0', actionClassName)}>{action}</div> : null}

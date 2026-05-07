@@ -8,6 +8,9 @@ import { VendorCategory, VendorStatus } from '@prisma/client'
 
 import type {
   Vendor,
+  VendorCategoryConfig,
+  VendorFieldDefinition,
+  VendorNote,
   VendorQuote,
   VendorQuoteFile,
   VendorWithQuotes,
@@ -25,8 +28,44 @@ export const mockVendor: Vendor = {
   contactName: 'Alice Smith',
   contactEmail: 'alice@alicephotos.com',
   contactPhone: '+1234567890',
+  notes: null,
+  contacted: false,
+  customFields: null,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
+}
+
+export const mockVendorNote: VendorNote = {
+  id: 'vendor-note-123',
+  vendorId: 'vendor-123',
+  weddingId: 'wedding-123',
+  message: 'Sent first outreach email',
+  actorType: 'couple',
+  createdAt: new Date('2026-02-01'),
+}
+
+export const mockFieldDefinitions: VendorFieldDefinition[] = [
+  {
+    key: 'capacity',
+    label: 'Capacity',
+    type: 'number',
+    displayOrder: 1,
+  },
+  {
+    key: 'outdoor',
+    label: 'Outdoor option',
+    type: 'boolean',
+    displayOrder: 2,
+  },
+]
+
+export const mockVendorCategoryConfig: VendorCategoryConfig = {
+  id: 'vendor-category-config-123',
+  weddingId: null,
+  category: VendorCategory.VENUE,
+  fieldDefinitions: mockFieldDefinitions,
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-01-01'),
 }
 
 export const mockQuoteFile: VendorQuoteFile = {
@@ -80,11 +119,21 @@ export const mockFindAllFileUrlsByVendorId = jest.fn()
 export const mockFindAllFileUrlsByQuoteId = jest.fn()
 export const mockCountFilesByQuoteId = jest.fn()
 export const mockSetRatingForUser = jest.fn()
+export const mockFindById = jest.fn()
+export const mockFindCustomFieldsById = jest.fn()
+export const mockFindNotesByVendorId = jest.fn()
+export const mockCreateVendorNote = jest.fn()
+export const mockFindWeddingCategoryConfig = jest.fn()
+export const mockFindSystemCategoryConfig = jest.fn()
+export const mockFindCategoryConfig = jest.fn()
+export const mockUpsertCategoryConfig = jest.fn()
 
 export const VendorRepository = jest.fn().mockImplementation(() => ({
   findAllByWeddingId: mockFindAllByWeddingId,
   findAllByUserId: mockFindAllByUserId,
   findByIdWithQuotes: mockFindByIdWithQuotes,
+  findById: mockFindById,
+  findCustomFieldsById: mockFindCustomFieldsById,
   create: mockCreate,
   update: mockUpdate,
   updateStatus: mockUpdateStatus,
@@ -101,12 +150,20 @@ export const VendorRepository = jest.fn().mockImplementation(() => ({
   findAllFileUrlsByQuoteId: mockFindAllFileUrlsByQuoteId,
   countFilesByQuoteId: mockCountFilesByQuoteId,
   setRatingForUser: mockSetRatingForUser,
+  findNotesByVendorId: mockFindNotesByVendorId,
+  createVendorNote: mockCreateVendorNote,
+  findWeddingCategoryConfig: mockFindWeddingCategoryConfig,
+  findSystemCategoryConfig: mockFindSystemCategoryConfig,
+  findCategoryConfig: mockFindCategoryConfig,
+  upsertCategoryConfig: mockUpsertCategoryConfig,
 }))
 
 export const resetMocks = (): void => {
   mockFindAllByWeddingId.mockReset()
   mockFindAllByUserId.mockReset()
   mockFindByIdWithQuotes.mockReset()
+  mockFindById.mockReset()
+  mockFindCustomFieldsById.mockReset()
   mockCreate.mockReset()
   mockUpdate.mockReset()
   mockUpdateStatus.mockReset()
@@ -123,5 +180,11 @@ export const resetMocks = (): void => {
   mockFindAllFileUrlsByQuoteId.mockReset()
   mockCountFilesByQuoteId.mockReset()
   mockSetRatingForUser.mockReset()
+  mockFindNotesByVendorId.mockReset()
+  mockCreateVendorNote.mockReset()
+  mockFindWeddingCategoryConfig.mockReset()
+  mockFindSystemCategoryConfig.mockReset()
+  mockFindCategoryConfig.mockReset()
+  mockUpsertCategoryConfig.mockReset()
   VendorRepository.mockClear()
 }

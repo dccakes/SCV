@@ -3,16 +3,20 @@
  */
 
 import {
+  addVendorNoteSchema,
   createQuoteSchema,
   createVendorSchema,
   deleteQuoteFileSchema,
   deleteQuoteSchema,
   deleteVendorSchema,
+  getCategoryConfigSchema,
+  getNotesSchema,
   saveQuoteFilesSchema,
   setVendorRatingSchema,
   updateQuoteSchema,
   updateVendorSchema,
   updateVendorStatusSchema,
+  upsertCategoryConfigSchema,
 } from '~/server/domains/vendor/vendor.validator'
 
 describe('createVendorSchema', () => {
@@ -30,7 +34,7 @@ describe('createVendorSchema', () => {
       instagram: '@grandhall',
       contactName: 'Jane Smith',
       contactEmail: 'jane@grandhall.com',
-      contactPhone: '+1234567890',
+      contactPhone: '+12025550123',
     }
     const result = createVendorSchema.safeParse(input)
     expect(result.success).toBe(true)
@@ -171,6 +175,74 @@ describe('updateVendorSchema', () => {
 
   it('should reject empty vendorId', () => {
     const result = updateVendorSchema.safeParse({ vendorId: '', name: 'Test' })
+    expect(result.success).toBe(false)
+  })
+
+  it('should validate enrichment fields', () => {
+    const result = updateVendorSchema.safeParse({
+      vendorId: 'vendor-123',
+      contacted: true,
+      notes: '',
+      customFields: {
+        capacity: '250',
+        outdoor: 'true',
+      },
+    })
+
+    expect(result.success).toBe(true)
+  })
+})
+
+describe('vendor note and category config schemas', () => {
+  it('should validate addVendorNote input', () => {
+    const result = addVendorNoteSchema.safeParse({
+      vendorId: 'vendor-123',
+      message: 'Left voicemail for pricing',
+    })
+
+    expect(result.success).toBe(true)
+  })
+
+  it('should reject whitespace-only vendor notes', () => {
+    const result = addVendorNoteSchema.safeParse({
+      vendorId: 'vendor-123',
+      message: '   ',
+    })
+
+    expect(result.success).toBe(false)
+  })
+
+  it('should validate getNotes input', () => {
+    const result = getNotesSchema.safeParse({ vendorId: 'vendor-123' })
+    expect(result.success).toBe(true)
+  })
+
+  it('should validate getCategoryConfig input', () => {
+    const result = getCategoryConfigSchema.safeParse({ category: 'VENUE' })
+    expect(result.success).toBe(true)
+  })
+
+  it('should validate a category config payload with unique field keys', () => {
+    const result = upsertCategoryConfigSchema.safeParse({
+      category: 'VENUE',
+      fieldDefinitions: [
+        { key: 'capacity', label: 'Capacity', type: 'number', displayOrder: 1 },
+        { key: 'outdoor', label: 'Outdoor option', type: 'boolean', displayOrder: 2 },
+      ],
+    })
+
+    expect(result.success).toBe(true)
+  })
+
+  it('should reject duplicate field keys in a category config payload', () => {
+    const result = upsertCategoryConfigSchema.safeParse({
+      category: 'VENUE',
+      fieldDefinitions: [
+        { key: 'capacity', label: 'Capacity', type: 'number', displayOrder: 1 },
+        { key: 'capacity', label: 'Max Guests', type: 'text', displayOrder: 2 },
+      ],
+    })
+
     expect(result.success).toBe(false)
   })
 })
@@ -610,5 +682,74 @@ describe('setVendorRatingSchema', () => {
       stars: 6,
     })
     expect(result.success).toBe(false)
+  })
+})
+
+describe('phone validation in vendor schemas', () => {
+  it('accepts valid E.164 contactPhone', () => {
+    expect(
+      createVendorSchema.safeParse({
+        category: 'VENUE',
+        name: 'Test',
+        contactPhone: '+12025550123',
+      }).success
+    ).toBe(true)
+
+    expect(
+      updateVendorSchema.safeParse({
+        vendorId: 'vendor-123',
+        contactPhone: '+447911123456',
+      }).success
+    ).toBe(true)
+  })
+
+  it('rejects invalid contactPhone', () => {
+    const result = createVendorSchema.safeParse({
+      category: 'VENUE',
+      name: 'Test',
+      contactPhone: '2025550123',
+    })
+    expect(result.success).toBe(false)
+    expect(
+      result.error?.issues.some((issue) => issue.message === 'Please enter a valid phone number')
+    ).toBe(true)
+  })
+
+  it('accepts undefined, rejects null', () => {
+    expect(
+      createVendorSchema.safeParse({
+        category: 'VENUE',
+        name: 'Test',
+        contactPhone: undefined,
+      }).success
+    ).toBe(true)
+
+    expect(
+      updateVendorSchema.safeParse({
+        vendorId: 'vendor-123',
+        contactPhone: null,
+      }).success
+    ).toBe(false)
+  })
+
+  it('transforms empty string to undefined', () => {
+    const createResult = createVendorSchema.safeParse({
+      category: 'VENUE',
+      name: 'Test',
+      contactPhone: '',
+    })
+    expect(createResult.success).toBe(true)
+    if (createResult.success) {
+      expect(createResult.data.contactPhone).toBeUndefined()
+    }
+
+    const updateResult = updateVendorSchema.safeParse({
+      vendorId: 'vendor-123',
+      contactPhone: '',
+    })
+    expect(updateResult.success).toBe(true)
+    if (updateResult.success) {
+      expect(updateResult.data.contactPhone).toBeUndefined()
+    }
   })
 })

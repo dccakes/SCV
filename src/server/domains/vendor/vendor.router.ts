@@ -10,11 +10,14 @@ import { vendorInsightsService } from '~/server/application/vendor-insights'
 import { requireActiveWeddingId } from '~/server/authz/active-wedding'
 import { vendorService } from '~/server/domains/vendor'
 import {
+  addVendorNoteSchema,
   createQuoteSchema,
   createVendorSchema,
   deleteQuoteFileSchema,
   deleteQuoteSchema,
   deleteVendorSchema,
+  getCategoryConfigSchema,
+  getNotesSchema,
   getVendorSchema,
   getVendorsByCategorySchema,
   saveQuoteFilesSchema,
@@ -22,6 +25,7 @@ import {
   updateQuoteSchema,
   updateVendorSchema,
   updateVendorStatusSchema,
+  upsertCategoryConfigSchema,
 } from '~/server/domains/vendor/vendor.validator'
 
 export const vendorRouter = createTRPCRouter({
@@ -57,6 +61,35 @@ export const vendorRouter = createTRPCRouter({
     const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return vendorService.updateVendor(ctx.authz, input.vendorId, weddingId, input)
   }),
+
+  addNote: protectedProcedure.input(addVendorNoteSchema).mutation(async ({ ctx, input }) => {
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+    return vendorService.addVendorNote(ctx.authz, input.vendorId, weddingId, input.message)
+  }),
+
+  getNotes: protectedProcedure.input(getNotesSchema).query(async ({ ctx, input }) => {
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+    return vendorService.getNotes(ctx.authz, input.vendorId, weddingId)
+  }),
+
+  getCategoryConfig: protectedProcedure
+    .input(getCategoryConfigSchema)
+    .query(async ({ ctx, input }) => {
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+      return vendorService.getCategoryConfig(ctx.authz, weddingId, input.category)
+    }),
+
+  upsertCategoryConfig: protectedProcedure
+    .input(upsertCategoryConfigSchema)
+    .mutation(async ({ ctx, input }) => {
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+      return vendorService.upsertCategoryConfig(
+        ctx.authz,
+        weddingId,
+        input.category,
+        input.fieldDefinitions
+      )
+    }),
 
   /**
    * Update vendor status (lifecycle progression)

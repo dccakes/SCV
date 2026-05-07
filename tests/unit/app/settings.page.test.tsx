@@ -18,6 +18,9 @@ const mockOrganizationMembersSettingsCard = jest.fn(() => (
 const mockOrganizationOutstandingInvitesCard = jest.fn(() => (
   <div data-testid='organization-outstanding-invites-card'>Outstanding invites card</div>
 ))
+const mockTelegramConnectCard = jest.fn(() => (
+  <div data-testid='telegram-connect-card'>Telegram card</div>
+))
 
 jest.mock('~/trpc/server', () => ({
   api: {
@@ -52,6 +55,11 @@ jest.mock('~/components/settings/organization-outstanding-invites-card', () => (
   OrganizationOutstandingInvitesCard: () => mockOrganizationOutstandingInvitesCard(),
 }))
 
+jest.mock('~/components/settings/telegram-connect-card', () => ({
+  __esModule: true,
+  TelegramConnectCard: () => mockTelegramConnectCard(),
+}))
+
 describe('SettingsPage', () => {
   beforeEach(() => {
     mockGetDetails.mockReset()
@@ -61,6 +69,7 @@ describe('SettingsPage', () => {
     mockWeddingSettingsForm.mockClear()
     mockOrganizationMembersSettingsCard.mockClear()
     mockOrganizationOutstandingInvitesCard.mockClear()
+    mockTelegramConnectCard.mockClear()
   })
 
   it('renders wedding settings and organization members section when details exist', async () => {
@@ -85,6 +94,7 @@ describe('SettingsPage', () => {
     expect(screen.getByTestId('wedding-settings-form')).toBeInTheDocument()
     expect(screen.getByTestId('organization-members-settings-card')).toBeInTheDocument()
     expect(screen.getByTestId('organization-outstanding-invites-card')).toBeInTheDocument()
+    expect(screen.getByTestId('telegram-connect-card')).toBeInTheDocument()
   })
 
   it('still renders organization members when wedding details query fails', async () => {
@@ -99,5 +109,6 @@ describe('SettingsPage', () => {
     expect(mockWeddingSettingsForm).not.toHaveBeenCalled()
     expect(mockOrganizationMembersSettingsCard).toHaveBeenCalledTimes(1)
     expect(mockOrganizationOutstandingInvitesCard).toHaveBeenCalledTimes(1)
+    expect(mockTelegramConnectCard).toHaveBeenCalledTimes(1)
   })
 })

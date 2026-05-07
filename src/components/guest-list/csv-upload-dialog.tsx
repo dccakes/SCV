@@ -42,7 +42,7 @@ function PreviewTable({ rows }: PreviewTableProps) {
       <table className='w-full text-sm'>
         <thead className='sticky top-0 bg-muted'>
           <tr>
-            {['#', 'First Name', 'Last Name', 'Email', 'Age Group', 'Status'].map((h) => (
+            {['#', 'First Name', 'Last Name', 'Email', 'Phone', 'Age Group', 'Status'].map((h) => (
               <th key={h} className='px-3 py-2 text-left font-medium text-muted-foreground'>
                 {h}
               </th>
@@ -61,6 +61,7 @@ function PreviewTable({ rows }: PreviewTableProps) {
               <td className='px-3 py-2'>{row.raw.firstName || '—'}</td>
               <td className='px-3 py-2'>{row.raw.lastName || '—'}</td>
               <td className='px-3 py-2 text-muted-foreground'>{row.raw.email || '—'}</td>
+              <td className='px-3 py-2 text-muted-foreground'>{row.raw.phone || '—'}</td>
               <td className='px-3 py-2 text-muted-foreground'>{row.raw.ageGroup || 'ADULT'}</td>
               <td className='px-3 py-2'>
                 {row.valid ? (
@@ -181,6 +182,9 @@ export function CsvUploadDialog({ open, onOpenChange, events }: CsvUploadDialogP
               <DialogTitle>Import Guests from CSV</DialogTitle>
               <DialogDescription>
                 Upload a CSV file to bulk-add guests. Each row becomes one household.
+                <span className='block'>
+                  Phone must be E.164 format (for example: +12025550123).
+                </span>
               </DialogDescription>
             </DialogHeader>
 

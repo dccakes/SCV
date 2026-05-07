@@ -110,7 +110,8 @@ function GuestCardComponent({
   const initials = getInitials(primaryGuestName)
   const locationLabel = getLocationLabel(household)
   const householdTags = getHouseholdTags(household, allTags)
-  const partyPreview = household.guests.slice(0, 4)
+  const visibleTags = householdTags.slice(0, 1)
+  const hiddenTagCount = Math.max(householdTags.length - visibleTags.length, 0)
   const handleSelect = useCallback(() => {
     onSelectHousehold(household)
   }, [household, onSelectHousehold])
@@ -178,7 +179,7 @@ function GuestCardComponent({
                 {rsvpSummary.declined} declined
               </Badge>
             )}
-            {householdTags.map((tag) => (
+            {visibleTags.map((tag) => (
               <Badge
                 key={tag.id}
                 variant='outline'
@@ -187,6 +188,14 @@ function GuestCardComponent({
                 {tag.name}
               </Badge>
             ))}
+            {hiddenTagCount > 0 && (
+              <Badge
+                variant='outline'
+                className='border-foreground/15 bg-foreground/[0.04] font-normal text-foreground/70'
+              >
+                +{hiddenTagCount} tags
+              </Badge>
+            )}
             {rsvpSummary.attending === 0 &&
               rsvpSummary.invited === 0 &&
               rsvpSummary.declined === 0 && (
@@ -194,29 +203,12 @@ function GuestCardComponent({
               )}
           </div>
 
-          <div className='flex items-center gap-1.5 border-border/80 border-t pt-2'>
-            <span className='font-mono text-[0.52rem] text-foreground/55 uppercase tracking-widest'>
-              Party
+          <div className='flex items-center justify-between border-border/80 border-t pt-2'>
+            <span className='font-mono text-[0.56rem] text-foreground/55 uppercase tracking-wider'>
+              {household.guests.length} people in party
             </span>
-            <div className='flex items-center'>
-              {partyPreview.map((guest) => {
-                const partyInitials = getInitials(`${guest.firstName} ${guest.lastName}`)
-                return (
-                  <span
-                    key={guest.id}
-                    className={`-ml-1.5 flex h-5 w-5 items-center justify-center rounded-full font-mono text-[0.45rem] uppercase first:ml-0 ${
-                      guest.isTagAlong
-                        ? 'border border-foreground/30 border-dashed bg-muted/40 text-foreground/45'
-                        : 'border border-card bg-muted text-foreground/65'
-                    }`}
-                  >
-                    {partyInitials}
-                  </span>
-                )
-              })}
-            </div>
-            <span className='font-mono text-[0.56rem] text-foreground/55 tracking-wider'>
-              {household.guests.length} people
+            <span className='font-mono text-[0.52rem] text-foreground/45 uppercase tracking-wider'>
+              Open details
             </span>
           </div>
         </CardContent>
