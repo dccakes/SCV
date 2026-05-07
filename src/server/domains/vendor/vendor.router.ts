@@ -18,6 +18,7 @@ import {
   getVendorSchema,
   getVendorsByCategorySchema,
   saveQuoteFilesSchema,
+  setVendorRatingSchema,
   updateQuoteSchema,
   updateVendorSchema,
   updateVendorStatusSchema,
@@ -118,4 +119,9 @@ export const vendorRouter = createTRPCRouter({
       const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
       return vendorService.deleteQuoteFile(ctx.authz, input.vendorId, weddingId, input)
     }),
+
+  setRating: protectedProcedure.input(setVendorRatingSchema).mutation(async ({ ctx, input }) => {
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+    return vendorService.setVendorRating(ctx.authz, input.vendorId, weddingId, input.stars)
+  }),
 })

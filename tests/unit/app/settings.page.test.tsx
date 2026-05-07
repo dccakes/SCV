@@ -15,6 +15,9 @@ const mockWeddingSettingsForm = jest.fn((_props: { initialData: Record<string, u
 const mockOrganizationMembersSettingsCard = jest.fn(() => (
   <div data-testid='organization-members-settings-card'>Members card</div>
 ))
+const mockOrganizationOutstandingInvitesCard = jest.fn(() => (
+  <div data-testid='organization-outstanding-invites-card'>Outstanding invites card</div>
+))
 
 jest.mock('~/trpc/server', () => ({
   api: {
@@ -44,6 +47,11 @@ jest.mock('~/components/settings/organization-members-settings-card', () => ({
   OrganizationMembersSettingsCard: () => mockOrganizationMembersSettingsCard(),
 }))
 
+jest.mock('~/components/settings/organization-outstanding-invites-card', () => ({
+  __esModule: true,
+  OrganizationOutstandingInvitesCard: () => mockOrganizationOutstandingInvitesCard(),
+}))
+
 describe('SettingsPage', () => {
   beforeEach(() => {
     mockGetDetails.mockReset()
@@ -52,6 +60,7 @@ describe('SettingsPage', () => {
     mockDashboardTopbar.mockClear()
     mockWeddingSettingsForm.mockClear()
     mockOrganizationMembersSettingsCard.mockClear()
+    mockOrganizationOutstandingInvitesCard.mockClear()
   })
 
   it('renders wedding settings and organization members section when details exist', async () => {
@@ -75,6 +84,7 @@ describe('SettingsPage', () => {
     expect(screen.getByText('Organization Members')).toBeInTheDocument()
     expect(screen.getByTestId('wedding-settings-form')).toBeInTheDocument()
     expect(screen.getByTestId('organization-members-settings-card')).toBeInTheDocument()
+    expect(screen.getByTestId('organization-outstanding-invites-card')).toBeInTheDocument()
   })
 
   it('still renders organization members when wedding details query fails', async () => {
@@ -88,5 +98,6 @@ describe('SettingsPage', () => {
     ).toBeInTheDocument()
     expect(mockWeddingSettingsForm).not.toHaveBeenCalled()
     expect(mockOrganizationMembersSettingsCard).toHaveBeenCalledTimes(1)
+    expect(mockOrganizationOutstandingInvitesCard).toHaveBeenCalledTimes(1)
   })
 })

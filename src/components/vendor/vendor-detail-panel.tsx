@@ -256,6 +256,13 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
     },
     onError: () => toast.error('Failed to delete file'),
   })
+  const setRating = api.vendor.setRating.useMutation({
+    onSuccess: async () => {
+      await Promise.all([refetch(), utils.vendor.getAll.invalidate()])
+      toast.success('Rating updated')
+    },
+    onError: () => toast.error('Failed to save rating'),
+  })
 
   if (!vendor || !vendorData) return null
 
@@ -292,6 +299,25 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                   onChange={(status) => updateStatus.mutate({ vendorId: vendorData.id, status })}
                   disabled={updateStatus.isPending}
                 />
+              </div>
+              <div className='mt-2 flex items-center gap-2'>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type='button'
+                    className='text-base leading-none'
+                    aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
+                    onClick={() => setRating.mutate({ vendorId: vendorData.id, stars: star })}
+                    disabled={setRating.isPending}
+                  >
+                    {star <= (vendorData.ratingSummary.currentUserRating ?? 0) ? '★' : '☆'}
+                  </button>
+                ))}
+                {vendorData.ratingSummary.currentUserRating === null && (
+                  <span className='font-mono text-[0.58rem] text-muted-foreground uppercase tracking-wider'>
+                    Unrated
+                  </span>
+                )}
               </div>
             </header>
 

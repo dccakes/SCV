@@ -18,6 +18,7 @@ import type {
   VendorCategory,
   VendorQuote,
   VendorQuoteFile,
+  VendorRatingRecord,
   VendorStatus,
   VendorWithQuotes,
 } from '~/server/domains/vendor/vendor.types'
@@ -56,7 +57,16 @@ export class VendorService {
     category?: VendorCategory
   ): Promise<VendorWithQuotes[]> {
     this.requireVendorPermission(ctx, 'read')
-    return this.vendorRepository.findAllByWeddingId(weddingId, category)
+    const vendors = await this.vendorRepository.findAllByWeddingId(weddingId, category)
+    return vendors.map((vendor) => ({
+      ...vendor,
+      ratingSummary: {
+        ...vendor.ratingSummary,
+        currentUserRating:
+          vendor.ratingSummary.ratings.find((rating) => rating.userId === ctx.userId)?.stars ??
+          null,
+      },
+    }))
   }
 
   /**
@@ -82,7 +92,26 @@ export class VendorService {
       })
     }
 
-    return vendor
+    return {
+      ...vendor,
+      ratingSummary: {
+        ...vendor.ratingSummary,
+        currentUserRating:
+          vendor.ratingSummary.ratings.find((rating) => rating.userId === ctx.userId)?.stars ??
+          null,
+      },
+    }
+  }
+
+  async setVendorRating(
+    ctx: AuthzContext,
+    vendorId: string,
+    weddingId: string,
+    stars: number
+  ): Promise<VendorRatingRecord> {
+    this.requireVendorPermission(ctx, 'read')
+    await this.assertVendorOwnership(vendorId, weddingId)
+    return this.vendorRepository.setRatingForUser(vendorId, ctx.userId, stars)
   }
 
   /**
