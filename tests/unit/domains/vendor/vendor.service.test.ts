@@ -43,6 +43,7 @@ import {
   mockQuoteFile,
   mockSaveImages,
   mockSetCoverImage,
+  mockSetRatingForUser,
   mockUpdate,
   mockUpdateQuote,
   mockUpdateStatus,
@@ -77,6 +78,7 @@ const mockFileBelongsToQuoteFn = mockFileBelongsToQuote as jest.Mock
 const mockRequirePermission = requirePermission as jest.Mock
 const mockFindAllFileUrlsByQuoteIdFn = mockFindAllFileUrlsByQuoteId as jest.Mock
 const mockCountFilesByQuoteIdFn = mockCountFilesByQuoteId as jest.Mock
+const mockSetRatingForUserFn = mockSetRatingForUser as jest.Mock
 const mockFindNotesByVendorIdFn = mockFindNotesByVendorId as jest.Mock
 const mockCreateVendorNoteFn = mockCreateVendorNote as jest.Mock
 const mockFindCategoryConfigFn = mockFindCategoryConfig as jest.Mock
@@ -144,6 +146,66 @@ describe('VendorService', () => {
       expect(result).toEqual([mockVendorWithQuotes])
       expect(mockFindAllByWeddingIdFn).toHaveBeenCalledWith('wedding-123', undefined)
     })
+
+    it('sets currentUserRating from submitted ratings for getAll', async () => {
+      mockFindAllByWeddingIdFn.mockResolvedValue([
+        {
+          ...mockVendorWithQuotes,
+          ratingSummary: {
+            average: 4.5,
+            currentUserRating: null,
+            ratings: [
+              { userId: 'actor-1', userLabel: 'Actor', stars: 4 },
+              { userId: 'user-2', userLabel: 'Taylor', stars: 5 },
+            ],
+          },
+        },
+      ])
+
+      const result = await vendorService.getVendorsForWedding(actorContext, 'wedding-123')
+
+      expect(result[0]?.ratingSummary.currentUserRating).toBe(4)
+      expect(result[0]?.ratingSummary.average).toBe(4.5)
+    })
+
+    it('keeps average null for unrated vendors', async () => {
+      mockFindAllByWeddingIdFn.mockResolvedValue([
+        {
+          ...mockVendorWithQuotes,
+          ratingSummary: {
+            average: null,
+            currentUserRating: null,
+            ratings: [],
+          },
+        },
+      ])
+
+      const result = await vendorService.getVendorsForWedding(actorContext, 'wedding-123')
+
+      expect(result[0]?.ratingSummary.average).toBeNull()
+      expect(result[0]?.ratingSummary.currentUserRating).toBeNull()
+    })
+
+    it('does not derive average from actor-only rating', async () => {
+      mockFindAllByWeddingIdFn.mockResolvedValue([
+        {
+          ...mockVendorWithQuotes,
+          ratingSummary: {
+            average: 3,
+            currentUserRating: null,
+            ratings: [
+              { userId: 'actor-1', userLabel: 'Actor', stars: 5 },
+              { userId: 'user-2', userLabel: 'Taylor', stars: 1 },
+            ],
+          },
+        },
+      ])
+
+      const result = await vendorService.getVendorsForWedding(actorContext, 'wedding-123')
+
+      expect(result[0]?.ratingSummary.currentUserRating).toBe(5)
+      expect(result[0]?.ratingSummary.average).toBe(3)
+    })
   })
 
   // ─── getVendorWithQuotes ───────────────────────────────────────────────────
@@ -178,6 +240,29 @@ describe('VendorService', () => {
       await expect(
         vendorService.getVendorWithQuotes(actorContext, 'vendor-123', 'other-wedding')
       ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+
+    it('sets currentUserRating from submitted ratings for getById', async () => {
+      mockFindByIdWithQuotesFn.mockResolvedValue({
+        ...mockVendorWithQuotes,
+        ratingSummary: {
+          average: 4,
+          currentUserRating: null,
+          ratings: [
+            { userId: 'actor-1', userLabel: 'Actor', stars: 4 },
+            { userId: 'user-2', userLabel: 'Taylor', stars: 4 },
+          ],
+        },
+      })
+
+      const result = await vendorService.getVendorWithQuotes(
+        actorContext,
+        'vendor-123',
+        'wedding-123'
+      )
+
+      expect(result.ratingSummary.currentUserRating).toBe(4)
+      expect(result.ratingSummary.average).toBe(4)
     })
   })
 
@@ -630,6 +715,7 @@ describe('VendorService', () => {
       )
 
       expect(result).toBe('quote-123')
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { vendor_quote: ['delete'] })
     })
 
     it('should clean up blob files before deleting quote', async () => {
@@ -669,6 +755,7 @@ describe('VendorService', () => {
       await expect(
         vendorService.deleteQuote(actorContext, 'quote-123', 'vendor-123', 'other-wedding')
       ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      expect(mockQuoteBelongsToVendorFn).not.toHaveBeenCalled()
     })
 
     it('should throw FORBIDDEN when quote does not belong to vendor', async () => {
@@ -832,7 +919,7 @@ describe('VendorService', () => {
       })
 
       it('should throw BAD_REQUEST when adding images would exceed the limit', async () => {
-        // Vendor has 3 existing, trying to add 3 more → 6 > 5
+        // Vendor has 3 existing, trying to add 3 more: 6 > 5
         mockBelongsToWeddingFn.mockResolvedValue(true)
         mockFindByIdWithQuotesFn.mockResolvedValue({
           ...mockVendorWithQuotes,
@@ -874,7 +961,7 @@ describe('VendorService', () => {
       })
 
       it('should succeed when adding images reaches exactly the limit', async () => {
-        // Vendor has 3 existing, trying to add 2 more → 5 = max
+        // Vendor has 3 existing, trying to add 2 more: 5 = max
         mockBelongsToWeddingFn.mockResolvedValue(true)
         mockFindByIdWithQuotesFn.mockResolvedValue({
           ...mockVendorWithQuotes,
@@ -1003,6 +1090,36 @@ describe('VendorService', () => {
           vendorService.fetchVendorWebsiteImages(actorContext, 'vendor-123', 'other-wedding')
         ).rejects.toMatchObject({ code: 'FORBIDDEN' })
       })
+    })
+  })
+
+  describe('setVendorRating', () => {
+    it('upserts rating for vendor in wedding scope', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockSetRatingForUserFn.mockResolvedValue({
+        vendorId: 'vendor-123',
+        userId: 'actor-1',
+        stars: 5,
+      })
+
+      const result = await vendorService.setVendorRating(
+        actorContext,
+        'vendor-123',
+        'wedding-123',
+        5
+      )
+
+      expect(result).toEqual({ vendorId: 'vendor-123', userId: 'actor-1', stars: 5 })
+      expect(mockSetRatingForUserFn).toHaveBeenCalledWith('vendor-123', 'actor-1', 5)
+    })
+
+    it('throws FORBIDDEN when vendor is outside active wedding', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(false)
+
+      await expect(
+        vendorService.setVendorRating(actorContext, 'vendor-123', 'other-wedding', 5)
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      expect(mockSetRatingForUserFn).not.toHaveBeenCalled()
     })
   })
 

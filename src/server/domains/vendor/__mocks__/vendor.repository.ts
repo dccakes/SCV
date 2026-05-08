@@ -109,6 +109,11 @@ export const mockVendorWithQuotes: VendorWithQuotes = {
   ...mockVendor,
   quotes: [mockQuote],
   images: [mockVendorImage],
+  ratingSummary: {
+    average: null,
+    ratings: [],
+    currentUserRating: null,
+  },
 }
 
 export const mockFindAllByWeddingId = jest.fn()
@@ -129,6 +134,7 @@ export const mockFileBelongsToQuote = jest.fn()
 export const mockFindAllFileUrlsByVendorId = jest.fn()
 export const mockFindAllFileUrlsByQuoteId = jest.fn()
 export const mockCountFilesByQuoteId = jest.fn()
+export const mockSetRatingForUser = jest.fn()
 export const mockFindById = jest.fn()
 export const mockFindCustomFieldsById = jest.fn()
 export const mockFindNotesByVendorId = jest.fn()
@@ -163,6 +169,7 @@ export const VendorRepository = jest.fn().mockImplementation(() => ({
   findAllFileUrlsByVendorId: mockFindAllFileUrlsByVendorId,
   findAllFileUrlsByQuoteId: mockFindAllFileUrlsByQuoteId,
   countFilesByQuoteId: mockCountFilesByQuoteId,
+  setRatingForUser: mockSetRatingForUser,
   findNotesByVendorId: mockFindNotesByVendorId,
   createVendorNote: mockCreateVendorNote,
   findWeddingCategoryConfig: mockFindWeddingCategoryConfig,
@@ -196,6 +203,7 @@ export const resetMocks = (): void => {
   mockFindAllFileUrlsByVendorId.mockReset()
   mockFindAllFileUrlsByQuoteId.mockReset()
   mockCountFilesByQuoteId.mockReset()
+  mockSetRatingForUser.mockReset()
   mockFindNotesByVendorId.mockReset()
   mockCreateVendorNote.mockReset()
   mockFindWeddingCategoryConfig.mockReset()

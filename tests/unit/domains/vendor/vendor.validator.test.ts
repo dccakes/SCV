@@ -12,6 +12,7 @@ import {
   getCategoryConfigSchema,
   getNotesSchema,
   saveQuoteFilesSchema,
+  setVendorRatingSchema,
   updateQuoteSchema,
   updateVendorSchema,
   updateVendorStatusSchema,
@@ -653,6 +654,32 @@ describe('deleteQuoteFileSchema', () => {
       fileId: '',
       quoteId: 'quote-123',
       vendorId: 'vendor-123',
+    })
+    expect(result.success).toBe(false)
+  })
+})
+
+describe('setVendorRatingSchema', () => {
+  it('validates a rating submission between 1 and 5', () => {
+    const result = setVendorRatingSchema.safeParse({
+      vendorId: 'vendor-123',
+      stars: 4,
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects stars below 1', () => {
+    const result = setVendorRatingSchema.safeParse({
+      vendorId: 'vendor-123',
+      stars: 0,
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects stars above 5', () => {
+    const result = setVendorRatingSchema.safeParse({
+      vendorId: 'vendor-123',
+      stars: 6,
     })
     expect(result.success).toBe(false)
   })
