@@ -9,6 +9,8 @@ type InviteRecord = {
   status: string
 }
 
+const ACTIVE_INVITATION_EXPIRES_AT = '2099-04-15T12:00:00.000Z'
+
 async function mockOrganizationInvitationApis(
   page: Parameters<(typeof test)['extend']>[0]['page'],
   options: {
@@ -104,7 +106,7 @@ test.describe('Settings Outstanding Invites', () => {
         {
           createdAt: '2026-04-06T12:00:00.000Z',
           email: 'pending@example.com',
-          expiresAt: '2026-04-15T12:00:00.000Z',
+          expiresAt: ACTIVE_INVITATION_EXPIRES_AT,
           id: 'invite-pending',
           role: 'member',
           status: 'pending',
@@ -112,7 +114,7 @@ test.describe('Settings Outstanding Invites', () => {
         {
           createdAt: '2026-04-05T12:00:00.000Z',
           email: 'accepted@example.com',
-          expiresAt: '2026-04-15T12:00:00.000Z',
+          expiresAt: ACTIVE_INVITATION_EXPIRES_AT,
           id: 'invite-accepted',
           role: 'admin',
           status: 'accepted',
@@ -155,7 +157,7 @@ test.describe('Settings Outstanding Invites', () => {
         {
           createdAt: '2026-04-06T12:00:00.000Z',
           email: 'pending@example.com',
-          expiresAt: '2026-04-15T12:00:00.000Z',
+          expiresAt: ACTIVE_INVITATION_EXPIRES_AT,
           id: 'invite-pending',
           role: 'member',
           status: 'pending',
@@ -164,7 +166,7 @@ test.describe('Settings Outstanding Invites', () => {
     })
 
     await page.goto('/settings')
-    await expect(page.getByText('Organization Members')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Organization Members' })).toBeVisible()
     await expect(page.getByText('Outstanding Invites')).toHaveCount(0)
   })
 })

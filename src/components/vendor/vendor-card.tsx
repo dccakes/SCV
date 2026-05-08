@@ -129,7 +129,7 @@ export function VendorCard({
         )}
       </div>
 
-      <div className='relative z-10 flex flex-wrap items-center gap-3'>
+      <div className='pointer-events-none relative z-10 flex flex-wrap items-center gap-3'>
         <StatusBadge status={vendor.status} />
         <div className='pointer-events-auto flex items-center gap-1'>
           {[1, 2, 3, 4, 5].map((star) => (
@@ -185,7 +185,7 @@ export function VendorCard({
         )}
         <button
           type='button'
-          className='text-muted-foreground/50 transition-opacity hover:text-destructive'
+          className='pointer-events-auto text-muted-foreground/50 transition-opacity hover:text-destructive'
           onClick={handleDelete}
           disabled={deleteVendor.isPending}
           aria-label={`Remove ${vendor.name}`}
