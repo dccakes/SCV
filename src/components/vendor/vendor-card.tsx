@@ -1,5 +1,7 @@
 'use client'
 
+import { X } from 'lucide-react'
+import Image from 'next/image'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -14,11 +16,17 @@ type VendorCardProps = {
   onDeleted: () => void
 }
 
-export function VendorCard({ vendor, quotePrices, onViewDetails, onDeleted }: VendorCardProps) {
+export function VendorCard({
+  vendor,
+  quotePrices,
+  onViewDetails,
+  onDeleted,
+}: Readonly<VendorCardProps>) {
   const utils = api.useUtils()
   const [showRatingsBreakdown, setShowRatingsBreakdown] = useState(false)
   const isMuted = vendor.status === 'DECLINED' || vendor.status === 'NOT_AVAILABLE'
   const isContacted = 'contacted' in vendor && vendor.contacted === true
+  const coverImage = vendor.images.find((img) => img.isPrimary)
 
   const deleteVendor = api.vendor.delete.useMutation({
     onSuccess: async () => {
@@ -76,32 +84,43 @@ export function VendorCard({ vendor, quotePrices, onViewDetails, onDeleted }: Ve
         onClick={() => onViewDetails(vendor.id)}
         aria-label={`View ${vendor.name} details`}
       />
-      <div className='pointer-events-none flex flex-col gap-0.5'>
-        <span className='font-display text-[1.05rem] text-foreground italic group-hover:text-primary'>
-          {vendor.name}
-        </span>
-        <div className='flex items-center gap-2'>
-          {vendor.location && (
-            <span className='font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
-              {vendor.location}
-            </span>
-          )}
-          {isContacted && (
-            <>
-              {vendor.location && <span className='text-border'>·</span>}
-              <span className='rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[0.52rem] text-primary uppercase tracking-wider'>
-                Contacted
+      <div className='pointer-events-none flex items-center gap-3'>
+        {coverImage && (
+          <Image
+            src={coverImage.url}
+            alt={vendor.name}
+            width={48}
+            height={48}
+            className='h-12 w-12 shrink-0 rounded-md object-cover'
+          />
+        )}
+        <div className='flex flex-col gap-0.5'>
+          <span className='font-display text-[1.05rem] text-foreground italic group-hover:text-primary'>
+            {vendor.name}
+          </span>
+          <div className='flex items-center gap-2'>
+            {vendor.location && (
+              <span className='font-mono text-[10px] text-muted-foreground lowercase tracking-wider'>
+                {vendor.location}
               </span>
-            </>
-          )}
-          {quoteCount > 0 && (
-            <>
-              {(vendor.location || isContacted) && <span className='text-border'>·</span>}
-              <span className='font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
-                {quoteCount} {quoteCount === 1 ? 'quote' : 'quotes'}
-              </span>
-            </>
-          )}
+            )}
+            {isContacted && (
+              <>
+                {vendor.location && <span className='text-border'>·</span>}
+                <span className='rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[10px] text-primary uppercase tracking-wider'>
+                  Contacted
+                </span>
+              </>
+            )}
+            {quoteCount > 0 && (
+              <>
+                {(vendor.location || isContacted) && <span className='text-border'>·</span>}
+                <span className='font-mono text-[10px] text-muted-foreground lowercase tracking-wider'>
+                  {quoteCount} {quoteCount === 1 ? 'quote' : 'quotes'}
+                </span>
+              </>
+            )}
+          </div>
         </div>
         {averageRating !== null && (
           <span className='font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
@@ -110,7 +129,7 @@ export function VendorCard({ vendor, quotePrices, onViewDetails, onDeleted }: Ve
         )}
       </div>
 
-      <div className='relative z-10 flex flex-wrap items-center gap-3'>
+      <div className='pointer-events-none relative z-10 flex flex-wrap items-center gap-3'>
         <StatusBadge status={vendor.status} />
         <div className='pointer-events-auto flex items-center gap-1'>
           {[1, 2, 3, 4, 5].map((star) => (
@@ -162,18 +181,16 @@ export function VendorCard({ vendor, quotePrices, onViewDetails, onDeleted }: Ve
           </div>
         )}
         {priceDisplay() && (
-          <span className='font-medium font-mono text-[0.72rem] text-foreground/80'>
-            {priceDisplay()}
-          </span>
+          <span className='font-medium font-mono text-foreground/80 text-xs'>{priceDisplay()}</span>
         )}
         <button
           type='button'
-          className='text-muted-foreground/50 transition-opacity hover:text-destructive'
+          className='pointer-events-auto text-muted-foreground/50 transition-opacity hover:text-destructive'
           onClick={handleDelete}
           disabled={deleteVendor.isPending}
           aria-label={`Remove ${vendor.name}`}
         >
-          ✕
+          <X className='h-3.5 w-3.5' aria-hidden='true' />
         </button>
       </div>
     </div>

@@ -1,9 +1,9 @@
 import type {
   VendorCategoryConfig as DomainVendorCategoryConfig,
   VendorNote as DomainVendorNote,
-  VendorCategory,
   VendorFieldDefinition,
   VendorFieldType,
+  VendorImage,
   VendorWithQuotes,
 } from '~/server/domains/vendor/vendor.types'
 
@@ -22,10 +22,13 @@ export type VendorNote = Omit<DomainVendorNote, 'createdAt'> & {
 
 export type VendorCustomFieldValues = Record<string, string>
 
+export type { VendorImage }
+
 export type EnrichedVendor = VendorWithQuotes & {
   contacted?: boolean
   notes?: string | null
   customFields?: VendorCustomFieldValues | null
+  coverImage?: VendorImage | null
 }
 
 export function toSnakeCase(value: string): string {

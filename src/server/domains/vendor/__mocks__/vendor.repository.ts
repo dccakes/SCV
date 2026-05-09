@@ -10,6 +10,7 @@ import type {
   Vendor,
   VendorCategoryConfig,
   VendorFieldDefinition,
+  VendorImage,
   VendorNote,
   VendorQuote,
   VendorQuoteFile,
@@ -90,9 +91,24 @@ export const mockQuote: VendorQuote = {
   updatedAt: new Date('2026-01-15'),
 }
 
+export const mockVendorImage: VendorImage = {
+  id: 'image-123',
+  vendorId: 'vendor-123',
+  url: 'https://abc123.public.blob.vercel-storage.com/photo.jpg',
+  key: 'photo.jpg',
+  size: 204800,
+  name: 'photo.jpg',
+  isPrimary: false,
+  order: 0,
+  source: 'manual',
+  createdAt: new Date('2026-01-01'),
+  updatedAt: new Date('2026-01-01'),
+}
+
 export const mockVendorWithQuotes: VendorWithQuotes = {
   ...mockVendor,
   quotes: [mockQuote],
+  images: [mockVendorImage],
   ratingSummary: {
     average: null,
     ratings: [],
@@ -127,6 +143,10 @@ export const mockFindWeddingCategoryConfig = jest.fn()
 export const mockFindSystemCategoryConfig = jest.fn()
 export const mockFindCategoryConfig = jest.fn()
 export const mockUpsertCategoryConfig = jest.fn()
+export const mockSaveImages = jest.fn()
+export const mockDeleteImage = jest.fn()
+export const mockSetCoverImage = jest.fn()
+export const mockGetVendorImageKeys = jest.fn()
 
 export const VendorRepository = jest.fn().mockImplementation(() => ({
   findAllByWeddingId: mockFindAllByWeddingId,
@@ -156,6 +176,10 @@ export const VendorRepository = jest.fn().mockImplementation(() => ({
   findSystemCategoryConfig: mockFindSystemCategoryConfig,
   findCategoryConfig: mockFindCategoryConfig,
   upsertCategoryConfig: mockUpsertCategoryConfig,
+  saveImages: mockSaveImages,
+  deleteImage: mockDeleteImage,
+  setCoverImage: mockSetCoverImage,
+  getVendorImageKeys: mockGetVendorImageKeys,
 }))
 
 export const resetMocks = (): void => {
@@ -186,5 +210,9 @@ export const resetMocks = (): void => {
   mockFindSystemCategoryConfig.mockReset()
   mockFindCategoryConfig.mockReset()
   mockUpsertCategoryConfig.mockReset()
+  mockSaveImages.mockReset()
+  mockDeleteImage.mockReset()
+  mockSetCoverImage.mockReset()
+  mockGetVendorImageKeys.mockReset()
   VendorRepository.mockClear()
 }

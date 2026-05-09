@@ -13,7 +13,7 @@ function actorBadgeClass(actorType: VendorNote['actorType']) {
 }
 
 function actorLabel(actorType: VendorNote['actorType']) {
-  return actorType === 'etta' ? 'Etta' : 'Couple'
+  return actorType === 'etta' ? 'Etta' : 'you'
 }
 
 export function VendorNoteTimeline({ notes }: { notes: VendorNote[] }) {

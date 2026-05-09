@@ -9,6 +9,7 @@ import {
   type PrismaClient,
   type Vendor as PrismaVendor,
   type VendorCategoryConfig as PrismaVendorCategoryConfig,
+  type VendorImage as PrismaVendorImage,
   type VendorNote as PrismaVendorNote,
   type VendorQuote as PrismaVendorQuote,
   type VendorQuoteFile as PrismaVendorQuoteFile,
@@ -23,6 +24,7 @@ import type {
   VendorCategoryConfig,
   VendorCustomFields,
   VendorFieldDefinition,
+  VendorImage,
   VendorNote,
   VendorNoteActorType,
   VendorQuote,
@@ -45,6 +47,7 @@ export class VendorRepository {
       where: { weddingId, ...(category ? { category } : {}) },
       include: {
         quotes: { include: { files: true }, orderBy: { quoteDate: 'desc' } },
+        images: { orderBy: { order: 'asc' } },
         ratings: {
           include: {
             user: { select: { name: true, email: true } },
@@ -68,6 +71,7 @@ export class VendorRepository {
       },
       include: {
         quotes: { include: { files: true }, orderBy: { quoteDate: 'desc' } },
+        images: { orderBy: { order: 'asc' } },
         ratings: {
           include: {
             user: { select: { name: true, email: true } },
@@ -88,6 +92,7 @@ export class VendorRepository {
       where: { id },
       include: {
         quotes: { include: { files: true }, orderBy: { quoteDate: 'desc' } },
+        images: { orderBy: { order: 'asc' } },
         ratings: {
           include: {
             user: { select: { name: true, email: true } },
@@ -341,6 +346,63 @@ export class VendorRepository {
     return this.serializeVendorCategoryConfig(row)
   }
 
+  // ─── Image operations ────────────────────────────────────────────────────
+
+  /**
+   * Save image records for a vendor (batch insert) and return them ordered
+   */
+  async saveImages(
+    vendorId: string,
+    images: { name: string; url: string; key: string; size: number; source: 'manual' | 'website' }[]
+  ): Promise<VendorImage[]> {
+    return this.db.$transaction(async (tx) => {
+      await tx.vendorImage.createMany({
+        data: images.map((img) => ({ ...img, vendorId })),
+      })
+      const rows = await tx.vendorImage.findMany({
+        where: { vendorId },
+        orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+      })
+      return rows.map((row) => this.serializeVendorImage(row))
+    })
+  }
+
+  /**
+   * Delete a single image record and return it (caller uses the key for blob cleanup)
+   */
+  async deleteImage(imageId: string): Promise<VendorImage> {
+    const row = await this.db.vendorImage.delete({ where: { id: imageId } })
+    return this.serializeVendorImage(row)
+  }
+
+  /**
+   * Set one image as primary — clears all others for the vendor first, inside a transaction
+   */
+  async setCoverImage(vendorId: string, imageId: string): Promise<VendorImage> {
+    return this.db.$transaction(async (tx) => {
+      await tx.vendorImage.updateMany({
+        where: { vendorId },
+        data: { isPrimary: false },
+      })
+      const row = await tx.vendorImage.update({
+        where: { id: imageId },
+        data: { isPrimary: true },
+      })
+      return this.serializeVendorImage(row)
+    })
+  }
+
+  /**
+   * Return all blob keys for a vendor's images (used for cleanup before vendor deletion)
+   */
+  async getVendorImageKeys(vendorId: string): Promise<string[]> {
+    const images = await this.db.vendorImage.findMany({
+      where: { vendorId },
+      select: { key: true },
+    })
+    return images.map((img) => img.key)
+  }
+
   // ─── Quote file operations ────────────────────────────────────────────────
 
   /**
@@ -428,13 +490,18 @@ export class VendorRepository {
     }
   }
 
+  private serializeVendorImage(row: PrismaVendorImage): VendorImage {
+    return { ...row, source: row.source as VendorImage['source'] }
+  }
+
   private serializeVendorWithQuotes = (
     row: PrismaVendor & {
       quotes: (PrismaVendorQuote & { files: PrismaVendorQuoteFile[] })[]
+      images: PrismaVendorImage[]
       ratings: { userId: string; stars: number; user: { name: string | null; email: string } }[]
     }
   ): VendorWithQuotes => {
-    const { quotes, ratings: rawRatings, ...vendorRow } = row
+    const { quotes, images, ratings: rawRatings, ...vendorRow } = row
     const ratings = rawRatings.map((rating) => ({
       userId: rating.userId,
       userLabel: rating.user.name ?? rating.user.email,
@@ -450,6 +517,7 @@ export class VendorRepository {
     return {
       ...this.serializeVendor(vendorRow),
       quotes: quotes.map((q) => this.serializeQuote(q)),
+      images: images.map((img) => this.serializeVendorImage(img)),
       ratingSummary: {
         average,
         ratings,

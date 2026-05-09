@@ -1,4 +1,7 @@
-import { expect, test } from '@playwright/test'
+import { expect, type Locator, test } from '@playwright/test'
+
+const getQuoteFileInput = (dialog: Locator) =>
+  dialog.locator('input[type="file"][accept*="application/pdf"]')
 
 test.describe('Vendors', () => {
   test('should load the vendors page', async ({ page }) => {
@@ -268,7 +271,7 @@ test.describe('File Upload UI', () => {
     await dialog.getByRole('button', { name: /attach files/i }).click()
 
     // Simulate file selection via the hidden input
-    const fileInput = dialog.locator('input[type="file"]')
+    const fileInput = getQuoteFileInput(dialog)
 
     // Create a test PDF buffer
     const buffer = Buffer.from('%PDF-1.4 test content')
@@ -295,7 +298,7 @@ test.describe('File Upload UI', () => {
 
     await dialog.getByRole('button', { name: /attach files/i }).click()
 
-    const fileInput = dialog.locator('input[type="file"]')
+    const fileInput = getQuoteFileInput(dialog)
     const buffer = Buffer.from('%PDF-1.4 test content')
 
     await fileInput.setInputFiles({
@@ -581,7 +584,7 @@ test.describe('File Upload Security', () => {
 
     await dialog.getByRole('button', { name: /attach files/i }).click()
 
-    const fileInput = dialog.locator('input[type="file"]')
+    const fileInput = getQuoteFileInput(dialog)
 
     // Try uploading an executable file — should be rejected by dropzone
     await fileInput.setInputFiles({
@@ -603,7 +606,7 @@ test.describe('File Upload Security', () => {
 
     await dialog.getByRole('button', { name: /attach files/i }).click()
 
-    const fileInput = dialog.locator('input[type="file"]')
+    const fileInput = getQuoteFileInput(dialog)
 
     // Try uploading an HTML file — could be used for stored XSS
     await fileInput.setInputFiles({
@@ -625,7 +628,7 @@ test.describe('File Upload Security', () => {
 
     await dialog.getByRole('button', { name: /attach files/i }).click()
 
-    const fileInput = dialog.locator('input[type="file"]')
+    const fileInput = getQuoteFileInput(dialog)
 
     // Create a buffer just over 8MB (allocUnsafe — contents irrelevant, only size matters)
     const oversizedBuffer = Buffer.allocUnsafe(8 * 1024 * 1024 + 1)
@@ -650,7 +653,7 @@ test.describe('File Upload Security', () => {
 
     await dialog.getByRole('button', { name: /add quote/i }).click()
 
-    const fileInput = dialog.locator('input[type="file"]')
+    const fileInput = getQuoteFileInput(dialog)
 
     // Upload 10 files (the maximum)
     const files = Array.from({ length: 10 }, (_, i) => ({
@@ -686,7 +689,7 @@ test.describe('File Upload Security', () => {
 
     await dialog.getByRole('button', { name: /attach files/i }).click()
 
-    const fileInput = dialog.locator('input[type="file"]')
+    const fileInput = getQuoteFileInput(dialog)
 
     // Upload a variety of valid file types
     await fileInput.setInputFiles([

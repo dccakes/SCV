@@ -1,7 +1,7 @@
 'use client'
 
 import * as DialogPrimitive from '@radix-ui/react-dialog'
-import { X } from 'lucide-react'
+import { Clock, Pencil, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { toast } from 'sonner'
@@ -20,6 +20,7 @@ import {
   DialogPortal,
   DialogTitle,
 } from '~/components/ui/dialog'
+import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
 import { Switch } from '~/components/ui/switch'
 import { Textarea } from '~/components/ui/textarea'
@@ -33,6 +34,7 @@ import type {
   VendorNote,
 } from '~/components/vendor/vendor-enrichment-types'
 import { VendorForm } from '~/components/vendor/vendor-form'
+import { VendorImageGallery } from '~/components/vendor/vendor-image-gallery'
 import { VendorNoteTimeline } from '~/components/vendor/vendor-note-timeline'
 import { VendorStatusSelect } from '~/components/vendor/vendor-status-select'
 import { uploadFiles } from '~/lib/blob'
@@ -109,13 +111,16 @@ function formatFileSize(bytes: number): string {
 function SectionLabel({
   children,
   action,
+  icon,
 }: {
   children: React.ReactNode
   action?: React.ReactNode
+  icon?: React.ReactNode
 }) {
   return (
     <div className='mb-2.5 flex items-center gap-3'>
-      <h3 className='shrink-0 font-mono text-[0.58rem] text-muted-foreground uppercase tracking-widest'>
+      <h3 className='flex shrink-0 items-center gap-1.5 font-mono text-[0.58rem] text-muted-foreground uppercase tracking-widest'>
+        {icon}
         {children}
       </h3>
       <span className='h-px flex-1 bg-border' aria-hidden='true' />
@@ -498,6 +503,15 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                 ) : (
                   <div className='space-y-5'>
                     <section>
+                      <SectionLabel>Photos</SectionLabel>
+                      <VendorImageGallery
+                        images={enrichedVendor.images ?? []}
+                        vendorId={enrichedVendor.id}
+                        hasWebsite={!!enrichedVendor.website}
+                      />
+                    </section>
+
+                    <section>
                       <SectionLabel
                         action={
                           <button
@@ -586,21 +600,16 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                     ) : null}
 
                     <section>
-                      <SectionLabel>Scratchpad</SectionLabel>
-                      <div className='space-y-3'>
-                        <div className='space-y-1.5'>
-                          <Label htmlFor='vendor-scratchpad' className='font-sans text-sm'>
-                            Scratchpad Notes
-                          </Label>
-                          <Textarea
-                            id='vendor-scratchpad'
-                            aria-label='Scratchpad notes'
-                            value={scratchpad}
-                            onChange={(event) => setScratchpad(event.target.value)}
-                            className='min-h-28 font-serif'
-                            placeholder='Capture impressions, constraints, and reminders.'
-                          />
-                        </div>
+                      <SectionLabel icon={<Pencil className='h-3 w-3' />}>Scratchpad</SectionLabel>
+                      <div className='rounded-md bg-amber-50/50 p-3 dark:bg-amber-950/10 space-y-3'>
+                        <Textarea
+                          id='vendor-scratchpad'
+                          aria-label='Scratchpad notes'
+                          value={scratchpad}
+                          onChange={(event) => setScratchpad(event.target.value)}
+                          className='min-h-28 font-serif'
+                          placeholder='Capture impressions, constraints, and reminders.'
+                        />
                         <Button
                           type='button'
                           variant='outline'
@@ -613,28 +622,30 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                     </section>
 
                     <section>
-                      <SectionLabel>Interaction Log</SectionLabel>
+                      <SectionLabel icon={<Clock className='h-3 w-3' />}>
+                        Interaction Log
+                      </SectionLabel>
                       <div className='space-y-3'>
-                        <div className='space-y-1.5'>
-                          <Label htmlFor='vendor-note-composer' className='font-sans text-sm'>
-                            Add Interaction Note
-                          </Label>
-                          <Textarea
+                        <div className='flex gap-2'>
+                          <Input
                             id='vendor-note-composer'
                             aria-label='Add interaction note'
                             value={newNote}
-                            onChange={(event) => setNewNote(event.target.value)}
-                            className='min-h-24 font-serif'
+                            onChange={(e) => setNewNote(e.target.value)}
                             placeholder='Log outreach, follow-ups, and decisions.'
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && newNote.trim()) handleAddNote()
+                            }}
+                            className='flex-1'
                           />
+                          <Button
+                            type='button'
+                            onClick={handleAddNote}
+                            disabled={addNote.isPending || newNote.trim().length === 0}
+                          >
+                            {addNote.isPending ? 'Adding...' : 'Add'}
+                          </Button>
                         </div>
-                        <Button
-                          type='button'
-                          onClick={handleAddNote}
-                          disabled={addNote.isPending || newNote.trim().length === 0}
-                        >
-                          {addNote.isPending ? 'Adding...' : 'Add Note'}
-                        </Button>
                         <VendorNoteTimeline notes={noteTimeline} />
                       </div>
                     </section>
@@ -663,7 +674,10 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                           ) : null
                         }
                       >
-                        Quotes ({enrichedVendor.quotes.length})
+                        Quotes
+                        {enrichedVendor.quotes.length > 0
+                          ? ` (${enrichedVendor.quotes.length})`
+                          : ''}
                       </SectionLabel>
 
                       {showQuoteForm ? (
@@ -842,9 +856,6 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
               </div>
 
               <footer className='flex gap-3 border-border/80 border-t px-5 py-4 md:px-6'>
-                <Button variant='outline' className='flex-1' onClick={() => setShowEditForm(true)}>
-                  Edit Details
-                </Button>
                 <Button variant='outline' className='flex-1' onClick={onClose}>
                   Close
                 </Button>

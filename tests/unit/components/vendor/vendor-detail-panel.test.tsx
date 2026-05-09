@@ -34,6 +34,10 @@ jest.mock('~/components/vendor/file-viewer-drawer', () => ({
   getViewableFileType: () => null,
 }))
 
+jest.mock('~/components/vendor/vendor-image-gallery', () => ({
+  VendorImageGallery: () => <div data-testid='vendor-image-gallery' />,
+}))
+
 jest.mock('~/components/vendor/quote-form', () => ({
   QuoteForm: () => <div data-testid='quote-form'>Quote form</div>,
 }))
@@ -48,6 +52,9 @@ jest.mock('~/trpc/react', () => ({
       vendor: {
         getAll: {
           invalidate: (...args: unknown[]) => mockInvalidate(...args),
+        },
+        getById: {
+          invalidate: jest.fn(),
         },
       },
     }),
@@ -125,6 +132,37 @@ jest.mock('~/trpc/react', () => ({
           },
         }),
       },
+      saveImages: {
+        useMutation: () => ({
+          mutateAsync: jest.fn(),
+          isPending: false,
+        }),
+      },
+      deleteImage: {
+        useMutation: () => ({
+          mutate: jest.fn(),
+          isPending: false,
+        }),
+      },
+      setCoverImage: {
+        useMutation: () => ({
+          mutate: jest.fn(),
+          isPending: false,
+        }),
+      },
+      fetchWebsiteImages: {
+        useQuery: () => ({
+          data: [],
+          isFetching: false,
+          refetch: jest.fn(),
+        }),
+      },
+      saveQuoteFiles: {
+        useMutation: () => ({
+          mutateAsync: jest.fn(),
+          isPending: false,
+        }),
+      },
     },
   },
 }))
@@ -144,6 +182,7 @@ type TestVendor = {
   createdAt: Date
   updatedAt: Date
   quotes: []
+  images: []
   ratingSummary: VendorRatingSummary
   contacted: boolean
   notes: string | null
@@ -165,6 +204,7 @@ const vendor: TestVendor = {
   createdAt: new Date('2026-01-01T00:00:00.000Z'),
   updatedAt: new Date('2026-01-02T00:00:00.000Z'),
   quotes: [],
+  images: [],
   ratingSummary: {
     average: null,
     ratings: [],
@@ -214,7 +254,7 @@ describe('VendorDetailPanel', () => {
     fireEvent.change(screen.getByLabelText(/add interaction note/i), {
       target: { value: 'Scheduled a tasting for next week.' },
     })
-    fireEvent.click(screen.getByRole('button', { name: /add note/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^add$/i }))
     expect(mockAddNoteMutate).toHaveBeenCalledWith(
       {
         vendorId: 'vendor-1',

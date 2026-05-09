@@ -567,6 +567,7 @@ model Vendor {
   quotes      VendorQuote[]
   ratings     VendorRating[]
   vendorNotes VendorNote[]
+  images      VendorImage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -658,6 +659,26 @@ model VendorQuoteFile {
   createdAt DateTime @default(now())
 
   @@index([quoteId])
+}
+
+model VendorImage {
+  id       String @id @default(uuid())
+  vendorId String
+  vendor   Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  url       String
+  key       String
+  size      Int
+  name      String
+  isPrimary Boolean @default(false)
+  order     Int     @default(0)
+  source    String  @default("manual")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([vendorId])
+  @@index([vendorId, isPrimary])
 }
 
 // ─── Etta AI Agent ───────────────────────────────────────────────────────────
