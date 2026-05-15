@@ -1,8 +1,8 @@
 'use client'
 
-import type { TaskCategory } from '@prisma/client'
 import { useCallback, useEffect, useState } from 'react'
 
+import type { TaskCategoryValue } from '~/lib/constants/task-categories'
 import type { Task } from '~/server/domains/task'
 
 const EMPTY_TASKS: Task[] = []
@@ -44,7 +44,7 @@ export function createTaskCardItems(tasks: Task[], now: Date = new Date()): Task
 }
 
 const getTaskTag = (
-  category: TaskCategory,
+  category: TaskCategoryValue,
   dueDate: Date | null,
   completed: boolean,
   now: Date
@@ -118,7 +118,7 @@ const endOfUtcWeek = (date: Date): Date => {
   return end
 }
 
-const TASK_CATEGORY_LABELS: Record<TaskCategory, string> = {
+const TASK_CATEGORY_LABELS: Record<TaskCategoryValue, string> = {
   VENUE: 'Venue',
   VENDORS: 'Vendor',
   ATTIRE: 'Attire',

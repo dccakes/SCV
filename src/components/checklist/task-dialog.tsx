@@ -1,11 +1,9 @@
 'use client'
 
 import { toNestErrors } from '@hookform/resolvers'
-import { TaskCategory } from '@prisma/client'
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
-
 import { Button } from '~/components/ui/button'
 import {
   Dialog,
@@ -25,12 +23,13 @@ import {
   SelectValue,
 } from '~/components/ui/select'
 import { Textarea } from '~/components/ui/textarea'
+import { TASK_CATEGORIES, type TaskCategoryValue } from '~/lib/constants/task-categories'
 import type { EventWithStats } from '~/server/domains/event'
 import type { Task } from '~/server/domains/task'
 
 const taskDialogSchema = z.object({
   title: z.string().trim().min(1, 'Task title is required').max(200),
-  category: z.nativeEnum(TaskCategory),
+  category: z.enum(TASK_CATEGORIES),
   eventId: z.string().min(1, 'Event is required'),
   monthsBeforeWedding: z
     .string()
@@ -51,7 +50,7 @@ type TaskDialogFormData = z.input<typeof taskDialogSchema>
 
 type TaskDialogSubmitData = {
   title: string
-  category: TaskCategory
+  category: TaskCategoryValue
   eventId: string
   monthsBeforeWedding: number
   dueDate: string | null
@@ -182,7 +181,7 @@ export function TaskDialog({
                       <SelectValue placeholder='Select category' />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.values(TaskCategory).map((category) => (
+                      {TASK_CATEGORIES.map((category) => (
                         <SelectItem key={category} value={category}>
                           {category}
                         </SelectItem>
@@ -300,7 +299,7 @@ function getDefaultValues(
 
   return {
     title: '',
-    category: TaskCategory.OTHER,
+    category: 'OTHER',
     eventId: primaryEventId,
     monthsBeforeWedding: '3',
     dueDate: '',

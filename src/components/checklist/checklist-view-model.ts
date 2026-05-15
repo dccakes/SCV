@@ -1,4 +1,4 @@
-import { TaskCategory } from '@prisma/client'
+import { TASK_CATEGORIES, type TaskCategoryValue } from '~/lib/constants/task-categories'
 
 import type { MilestoneWithEffectiveStatus } from '~/server/domains/milestone'
 import type { Task } from '~/server/domains/task'
@@ -6,7 +6,7 @@ import type { Task } from '~/server/domains/task'
 export type ChecklistStatusFilter = 'active' | 'completed' | 'all'
 
 export type ChecklistFilters = {
-  category: TaskCategory | 'all'
+  category: TaskCategoryValue | 'all'
   eventId: string | 'all'
   status: ChecklistStatusFilter
 }
@@ -157,8 +157,8 @@ function compareBucketTasks(left: Task, right: Task, now: Date): number {
   return left.createdAt.getTime() - right.createdAt.getTime() + now.getTime() * 0
 }
 
-function isTaskCategory(value: string | null): value is TaskCategory {
-  return value !== null && Object.values(TaskCategory).includes(value as TaskCategory)
+function isTaskCategory(value: string | null): value is TaskCategoryValue {
+  return value !== null && TASK_CATEGORIES.includes(value as TaskCategoryValue)
 }
 
 function startOfUtcDay(date: Date): Date {

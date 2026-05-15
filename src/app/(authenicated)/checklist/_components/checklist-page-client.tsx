@@ -1,6 +1,5 @@
 'use client'
 
-import { TaskCategory } from '@prisma/client'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useMemo, useState } from 'react'
@@ -27,6 +26,7 @@ import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Checkbox } from '~/components/ui/checkbox'
+import { TASK_CATEGORIES } from '~/lib/constants/task-categories'
 import type { EventWithStats } from '~/server/domains/event'
 import type { MilestoneWithEffectiveStatus } from '~/server/domains/milestone'
 import type { Task } from '~/server/domains/task'
@@ -265,7 +265,7 @@ export function ChecklistPageClient({
               >
                 ALL
               </FilterChip>
-              {Object.values(TaskCategory).map((category) => (
+              {TASK_CATEGORIES.map((category) => (
                 <FilterChip
                   key={category}
                   active={filters.category === category}
