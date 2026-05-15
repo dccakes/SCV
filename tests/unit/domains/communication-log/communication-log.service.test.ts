@@ -171,7 +171,10 @@ describe('CommunicationLogService', () => {
 
       const rsvpEntry = result.find((e) => e.type === 'RSVP_RECEIVED')
       expect(rsvpEntry).toBeDefined()
-      expect(rsvpEntry!.message).toBe("Bob Jones RSVP'd Declined for Reception")
+      if (!rsvpEntry) {
+        throw new Error('Expected RSVP_RECEIVED timeline entry')
+      }
+      expect(rsvpEntry.message).toBe("Bob Jones RSVP'd Declined for Reception")
     })
 
     it('checks guest:view permission', async () => {

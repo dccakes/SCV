@@ -13,8 +13,10 @@ import { guestTagRouter } from '~/server/domains/guest-tag/guest-tag.router'
 import { householdRouter } from '~/server/domains/household/household.router'
 import { invitationRouter } from '~/server/domains/invitation/invitation.router'
 import { messagingRouter } from '~/server/domains/messaging/messaging.router'
+import { milestoneRouter } from '~/server/domains/milestone/milestone.router'
 import { questionRouter } from '~/server/domains/question/question.router'
 import { createSelfFillRouter } from '~/server/domains/self-fill'
+import { taskRouter } from '~/server/domains/task/task.router'
 import { userRouter } from '~/server/domains/user/user.router'
 import { vendorRouter } from '~/server/domains/vendor/vendor.router'
 import { websiteRouter } from '~/server/domains/website/website.router'
@@ -57,6 +59,8 @@ export const appRouter = createTRPCRouter({
 
   // Phase 5 add-on domains
   vendor: vendorRouter,
+  milestone: milestoneRouter,
+  task: taskRouter,
 
   // Communication log (household outreach timeline)
   communicationLog: communicationLogRouter,

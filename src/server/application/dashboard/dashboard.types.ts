@@ -7,7 +7,9 @@
 import type { Gift } from '~/server/domains/gift'
 import type { GuestWithInvitations } from '~/server/domains/guest'
 import type { Household } from '~/server/domains/household'
+import type { MilestoneWithEffectiveStatus } from '~/server/domains/milestone'
 import type { Option, Question } from '~/server/domains/question'
+import type { TaskPriorityQueueResult } from '~/server/domains/task'
 
 /**
  * Wedding date format
@@ -117,6 +119,9 @@ export type DashboardData = {
   weddingData: WeddingData
   totalGuests: number
   totalEvents: number
+  tasksDueThisMonth: number
+  taskPriorityQueue: TaskPriorityQueueResult
+  milestones: MilestoneWithEffectiveStatus[]
   households: HouseholdWithGuests[]
   events: EventWithStats[]
 }

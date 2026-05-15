@@ -227,10 +227,15 @@ describe('MessagingService', () => {
       })
 
       expect(result).toHaveLength(10)
+      const newestMessage = result.at(-1)
+      expect(newestMessage).toBeDefined()
+      if (!newestMessage) {
+        throw new Error('Expected newest message in the conversation')
+      }
       // oldest first
-      expect(result[0]?.createdAt.getTime()).toBeLessThan(result.at(-1)!.createdAt.getTime())
+      expect(result[0]?.createdAt.getTime()).toBeLessThan(newestMessage.createdAt.getTime())
       // newest message is the first element of the input (most recent)
-      expect(result.at(-1)?.id).toBe('m-0')
+      expect(newestMessage.id).toBe('m-0')
     })
 
     it('respects maxChars cap', async () => {
@@ -277,8 +282,15 @@ describe('MessagingService', () => {
       const result = await service.loadConversation(identityId)
 
       for (let i = 1; i < result.length; i++) {
-        expect(result[i]!.createdAt.getTime()).toBeGreaterThanOrEqual(
-          result[i - 1]!.createdAt.getTime()
+        const currentMessage = result[i]
+        const previousMessage = result[i - 1]
+        expect(currentMessage).toBeDefined()
+        expect(previousMessage).toBeDefined()
+        if (!currentMessage || !previousMessage) {
+          throw new Error('Expected consecutive messages while checking sort order')
+        }
+        expect(currentMessage.createdAt.getTime()).toBeGreaterThanOrEqual(
+          previousMessage.createdAt.getTime()
         )
       }
     })

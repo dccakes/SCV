@@ -46,6 +46,17 @@ function makeEvent(overrides: {
   }
 }
 
+function expectFirstEventResult(
+  results: Awaited<ReturnType<EventRepository['findByWeddingIdWithStats']>>
+) {
+  const [result] = results
+  expect(result).toBeDefined()
+  if (!result) {
+    throw new Error('Expected a single event result')
+  }
+  return result
+}
+
 describe('EventRepository - estimatedAttendance', () => {
   let repo: EventRepository
 
@@ -64,8 +75,8 @@ describe('EventRepository - estimatedAttendance', () => {
       }),
     ])
 
-    const [result] = await repo.findByWeddingIdWithStats('wedding-1')
-    expect(result!.estimatedAttendance).toBe(2)
+    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
+    expect(result.estimatedAttendance).toBe(2)
   })
 
   it('should count declined guests at 0%', async () => {
@@ -78,8 +89,8 @@ describe('EventRepository - estimatedAttendance', () => {
       }),
     ])
 
-    const [result] = await repo.findByWeddingIdWithStats('wedding-1')
-    expect(result!.estimatedAttendance).toBe(0)
+    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
+    expect(result.estimatedAttendance).toBe(0)
   })
 
   it('should use likelihood weights for pending (Invited) guests', async () => {
@@ -92,9 +103,9 @@ describe('EventRepository - estimatedAttendance', () => {
       }),
     ])
 
-    const [result] = await repo.findByWeddingIdWithStats('wedding-1')
+    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
     // round(0.95 + 0.15) = round(1.10) = 1
-    expect(result!.estimatedAttendance).toBe(1)
+    expect(result.estimatedAttendance).toBe(1)
   })
 
   it('should use default weight (0.65) for null likelihood', async () => {
@@ -104,9 +115,9 @@ describe('EventRepository - estimatedAttendance', () => {
       }),
     ])
 
-    const [result] = await repo.findByWeddingIdWithStats('wedding-1')
+    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
     // round(0.65 + 0.65) = round(1.30) = 1
-    expect(result!.estimatedAttendance).toBe(1)
+    expect(result.estimatedAttendance).toBe(1)
   })
 
   it('should combine attending, declined, and pending correctly', async () => {
@@ -123,9 +134,9 @@ describe('EventRepository - estimatedAttendance', () => {
       }),
     ])
 
-    const [result] = await repo.findByWeddingIdWithStats('wedding-1')
+    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
     // round(1 + 1 + 0 + 0.95 + 0.80 + 0.65) = round(4.40) = 4
-    expect(result!.estimatedAttendance).toBe(4)
+    expect(result.estimatedAttendance).toBe(4)
   })
 
   it('should exclude Not Invited guests entirely', async () => {
@@ -139,8 +150,8 @@ describe('EventRepository - estimatedAttendance', () => {
       }),
     ])
 
-    const [result] = await repo.findByWeddingIdWithStats('wedding-1')
-    expect(result!.estimatedAttendance).toBe(1)
+    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
+    expect(result.estimatedAttendance).toBe(1)
   })
 
   it('should return 0 when all guests are declined or not invited', async () => {
@@ -150,15 +161,15 @@ describe('EventRepository - estimatedAttendance', () => {
       }),
     ])
 
-    const [result] = await repo.findByWeddingIdWithStats('wedding-1')
-    expect(result!.estimatedAttendance).toBe(0)
+    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
+    expect(result.estimatedAttendance).toBe(0)
   })
 
   it('should return 0 for event with no invitations', async () => {
     mockEventFindManyFn.mockResolvedValue([makeEvent({ invitations: [] })])
 
-    const [result] = await repo.findByWeddingIdWithStats('wedding-1')
-    expect(result!.estimatedAttendance).toBe(0)
+    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
+    expect(result.estimatedAttendance).toBe(0)
   })
 
   it('should exclude tag-along guests when event does not allow them', async () => {
@@ -174,10 +185,10 @@ describe('EventRepository - estimatedAttendance', () => {
       }),
     ])
 
-    const [result] = await repo.findByWeddingIdWithStats('wedding-1')
+    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
     // round(1 + 0.80) = round(1.80) = 2
-    expect(result!.estimatedAttendance).toBe(2)
-    expect(result!.guestResponses.attending).toBe(1)
+    expect(result.estimatedAttendance).toBe(2)
+    expect(result.guestResponses.attending).toBe(1)
   })
 
   it('should include tag-along guests when event allows them', async () => {
@@ -192,9 +203,9 @@ describe('EventRepository - estimatedAttendance', () => {
       }),
     ])
 
-    const [result] = await repo.findByWeddingIdWithStats('wedding-1')
+    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
     // round(1 + 1 + 0.80) = round(2.80) = 3
-    expect(result!.estimatedAttendance).toBe(3)
+    expect(result.estimatedAttendance).toBe(3)
   })
 
   it('should round estimate to nearest integer', async () => {
@@ -206,8 +217,8 @@ describe('EventRepository - estimatedAttendance', () => {
       }),
     ])
 
-    const [result] = await repo.findByWeddingIdWithStats('wedding-1')
-    expect(result!.estimatedAttendance).toBe(1)
+    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
+    expect(result.estimatedAttendance).toBe(1)
   })
 
   it('should handle each likelihood weight correctly', async () => {
@@ -224,8 +235,8 @@ describe('EventRepository - estimatedAttendance', () => {
       }),
     ])
 
-    const [result] = await repo.findByWeddingIdWithStats('wedding-1')
+    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
     // round(0.15 + 0.35 + 0.55 + 0.80 + 0.95) = round(2.80) = 3
-    expect(result!.estimatedAttendance).toBe(3)
+    expect(result.estimatedAttendance).toBe(3)
   })
 })
