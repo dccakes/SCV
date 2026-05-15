@@ -1,6 +1,7 @@
 import DashboardTopbar from '@/components/dashboard/dashboard-topbar'
 import WeddingSettingsForm from '~/components/forms/wedding-settings-form'
 import { OrganizationMembersSettingsCard } from '~/components/settings/organization-members-settings-card'
+import { OrganizationOutstandingInvitesCard } from '~/components/settings/organization-outstanding-invites-card'
 import { TelegramConnectCard } from '~/components/settings/telegram-connect-card'
 import { getRequiredWedding } from '~/server/application/authenticated-route/authenticated-route-data'
 import { api } from '~/trpc/server'
@@ -60,6 +61,7 @@ export default async function SettingsPage() {
                 </p>
               </div>
               <OrganizationMembersSettingsCard />
+              <OrganizationOutstandingInvitesCard />
             </div>
             <div className='space-y-3'>
               <div>

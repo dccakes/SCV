@@ -18,7 +18,7 @@ describe('guestCsvRowSchema', () => {
         firstName: 'John',
         lastName: 'Smith',
         email: 'john@example.com',
-        phone: '555-1234',
+        phone: '+12025550123',
         ageGroup: 'ADULT',
         address1: '123 Main St',
         address2: 'Apt 2',
@@ -36,7 +36,7 @@ describe('guestCsvRowSchema', () => {
         firstName: 'John',
         lastName: 'Smith',
         email: 'john@example.com',
-        phone: '555-1234',
+        phone: '+12025550123',
         ageGroup: 'ADULT',
         address1: '123 Main St',
         address2: 'Apt 2',
@@ -213,6 +213,20 @@ describe('guestCsvRowSchema', () => {
     })
   })
 
+  describe('invalid rows — bad phone', () => {
+    it('should reject a row with a non-E.164 phone format', () => {
+      const result = guestCsvRowSchema.safeParse({
+        firstName: 'John',
+        lastName: 'Doe',
+        phone: '555-1234',
+      })
+
+      expect(result.success).toBe(false)
+      const messages = result.error?.issues.map((i) => i.message) ?? []
+      expect(messages.some((m) => /valid phone number/i.test(m))).toBe(true)
+    })
+  })
+
   describe('empty string normalization for optional fields', () => {
     it('should normalize empty string email to undefined', () => {
       const result = guestCsvRowSchema.safeParse({
@@ -275,13 +289,13 @@ describe('guestCsvRowSchema', () => {
       const result = guestCsvRowSchema.safeParse({
         firstName: 'John',
         lastName: 'Doe',
-        phone: '555-9876',
+        phone: '+12025550124',
         city: 'Boston',
         notes: 'VIP',
       })
 
       expect(result.success).toBe(true)
-      expect(result.data?.phone).toBe('555-9876')
+      expect(result.data?.phone).toBe('+12025550124')
       expect(result.data?.city).toBe('Boston')
       expect(result.data?.notes).toBe('VIP')
     })
@@ -307,7 +321,7 @@ describe('parseCsvFile', () => {
   it('should return a valid ParsedCsvRow for a well-formed row', async () => {
     const csv = [
       HEADERS,
-      'John,Smith,john@example.com,555-1234,ADULT,123 Main St,,New York,NY,10001,USA,',
+      'John,Smith,john@example.com,+12025550123,ADULT,123 Main St,,New York,NY,10001,USA,',
     ].join('\n')
 
     const rows = await parseCsvFile(makeCsvFile(csv))

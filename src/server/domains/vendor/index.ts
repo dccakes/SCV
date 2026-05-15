@@ -16,8 +16,15 @@ export const vendorService = new VendorService(vendorRepository)
 export { VendorRepository } from '~/server/domains/vendor/vendor.repository'
 export { VendorService } from '~/server/domains/vendor/vendor.service'
 export type {
+  FieldDefinition,
   Vendor,
   VendorCategory,
+  VendorCategoryConfig,
+  VendorCustomFields,
+  VendorFieldDefinition,
+  VendorFieldType,
+  VendorNote,
+  VendorNoteActorType,
   VendorQuote,
   VendorQuoteFile,
   VendorStatus,
@@ -27,6 +34,8 @@ export type {
 export { QuoteType } from '~/server/domains/vendor/vendor.types'
 // Export validators
 export {
+  type AddVendorNoteInput,
+  addVendorNoteSchema,
   type CreateQuoteInput,
   type CreateVendorInput,
   createQuoteSchema,
@@ -37,15 +46,25 @@ export {
   deleteQuoteFileSchema,
   deleteQuoteSchema,
   deleteVendorSchema,
+  type FieldDefinitionInput,
+  fieldDefinitionSchema,
+  type GetCategoryConfigInput,
+  type GetNotesInput,
   type GetVendorsByCategoryInput,
+  getCategoryConfigSchema,
+  getNotesSchema,
   getVendorSchema,
   getVendorsByCategorySchema,
   type SaveQuoteFilesInput,
+  type SetVendorRatingInput,
   saveQuoteFilesSchema,
+  setVendorRatingSchema,
   type UpdateQuoteInput,
   type UpdateVendorInput,
   type UpdateVendorStatusInput,
+  type UpsertCategoryConfigInput,
   updateQuoteSchema,
   updateVendorSchema,
   updateVendorStatusSchema,
+  upsertCategoryConfigSchema,
 } from '~/server/domains/vendor/vendor.validator'

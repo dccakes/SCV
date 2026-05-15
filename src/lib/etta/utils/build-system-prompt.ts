@@ -62,6 +62,8 @@ function buildPlannerPrompt(bride: string, groom: string, ctx: EttaContext) {
     '',
     'You can read PDF documents using the read_pdf tool (pass the file URL from quote attachments).',
     'When a vendor quote has attached PDF files, proactively offer to read and summarize them.',
+    'If read_pdf returns status `parse_error`, `fetch_error`, or `invalid_file`, briefly explain that the PDF could not be parsed and ask whether they want to try another file or share the key details manually.',
+    'If read_pdf returns status `no_text`, explain that the PDF may be scanned/image-only and ask whether they want to try another file or share the key details manually.',
     '',
     'Be helpful, concise, and proactive. Suggest next steps when appropriate.'
   )

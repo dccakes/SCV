@@ -8,7 +8,7 @@
 import { TRPCError } from '@trpc/server'
 import { del } from '@vercel/blob'
 
-import { MAX_FILES_PER_QUOTE } from '~/lib/upload-config'
+import { MAX_FILES_PER_QUOTE, MAX_IMAGES_PER_VENDOR } from '~/lib/upload-config'
 
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
@@ -16,19 +16,29 @@ import type { VendorRepository } from '~/server/domains/vendor/vendor.repository
 import type {
   Vendor,
   VendorCategory,
+  VendorCategoryConfig,
+  VendorFieldDefinition,
+  VendorImage,
+  VendorNote,
+  VendorNoteActorType,
   VendorQuote,
   VendorQuoteFile,
+  VendorRatingRecord,
   VendorStatus,
   VendorWithQuotes,
 } from '~/server/domains/vendor/vendor.types'
 import type {
+  AddVendorNoteInput,
   CreateQuoteInput,
   CreateVendorInput,
   DeleteQuoteFileInput,
   SaveQuoteFilesInput,
+  SaveVendorImagesInput,
   UpdateQuoteInput,
   UpdateVendorInput,
 } from '~/server/domains/vendor/vendor.validator'
+import { upsertCategoryConfigSchema } from '~/server/domains/vendor/vendor.validator'
+import { fetchWebsiteImages } from '~/server/infrastructure/scraper/website-images'
 
 export class VendorService {
   constructor(private vendorRepository: VendorRepository) {}
@@ -56,7 +66,16 @@ export class VendorService {
     category?: VendorCategory
   ): Promise<VendorWithQuotes[]> {
     this.requireVendorPermission(ctx, 'read')
-    return this.vendorRepository.findAllByWeddingId(weddingId, category)
+    const vendors = await this.vendorRepository.findAllByWeddingId(weddingId, category)
+    return vendors.map((vendor) => ({
+      ...vendor,
+      ratingSummary: {
+        ...vendor.ratingSummary,
+        currentUserRating:
+          vendor.ratingSummary.ratings.find((rating) => rating.userId === ctx.userId)?.stars ??
+          null,
+      },
+    }))
   }
 
   /**
@@ -82,7 +101,26 @@ export class VendorService {
       })
     }
 
-    return vendor
+    return {
+      ...vendor,
+      ratingSummary: {
+        ...vendor.ratingSummary,
+        currentUserRating:
+          vendor.ratingSummary.ratings.find((rating) => rating.userId === ctx.userId)?.stars ??
+          null,
+      },
+    }
+  }
+
+  async setVendorRating(
+    ctx: AuthzContext,
+    vendorId: string,
+    weddingId: string,
+    stars: number
+  ): Promise<VendorRatingRecord> {
+    this.requireVendorPermission(ctx, 'read')
+    await this.assertVendorOwnership(vendorId, weddingId)
+    return this.vendorRepository.setRatingForUser(vendorId, ctx.userId, stars)
   }
 
   /**
@@ -131,8 +169,24 @@ export class VendorService {
   ): Promise<Vendor> {
     this.requireVendorPermission(ctx, 'update')
     await this.assertVendorOwnership(vendorId, weddingId)
-    const { vendorId: _, ...updateData } = data
-    return this.vendorRepository.update(vendorId, updateData)
+
+    const { vendorId: _, customFields, notes, ...updateData } = data
+    const normalizedNotes = notes === undefined ? undefined : notes?.trim() ? notes : null
+    const mergedCustomFields =
+      customFields === undefined
+        ? undefined
+        : customFields === null
+          ? null
+          : {
+              ...(await this.vendorRepository.findCustomFieldsById(vendorId)),
+              ...customFields,
+            }
+
+    return this.vendorRepository.update(vendorId, {
+      ...updateData,
+      ...(normalizedNotes !== undefined ? { notes: normalizedNotes } : {}),
+      ...(mergedCustomFields !== undefined ? { customFields: mergedCustomFields } : {}),
+    })
   }
 
   /**
@@ -149,17 +203,86 @@ export class VendorService {
     return this.vendorRepository.updateStatus(vendorId, status)
   }
 
+  async addVendorNote(
+    ctx: AuthzContext,
+    vendorId: string,
+    weddingId: string,
+    message: AddVendorNoteInput['message'],
+    actorType: VendorNoteActorType = 'couple'
+  ): Promise<VendorNote> {
+    this.requireVendorPermission(ctx, 'update')
+    await this.assertVendorOwnership(vendorId, weddingId)
+
+    const trimmedMessage = message.trim()
+    if (trimmedMessage.length === 0) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Message is required',
+      })
+    }
+
+    return this.vendorRepository.createVendorNote({
+      vendorId,
+      weddingId,
+      message: trimmedMessage,
+      actorType,
+    })
+  }
+
+  async getNotes(ctx: AuthzContext, vendorId: string, weddingId: string): Promise<VendorNote[]> {
+    this.requireVendorPermission(ctx, 'read')
+    await this.assertVendorOwnership(vendorId, weddingId)
+    return this.vendorRepository.findNotesByVendorId(vendorId)
+  }
+
+  async getCategoryConfig(
+    ctx: AuthzContext,
+    weddingId: string,
+    category: VendorCategory
+  ): Promise<VendorCategoryConfig> {
+    this.requireVendorPermission(ctx, 'read')
+
+    const categoryConfig = await this.vendorRepository.findCategoryConfig(weddingId, category)
+    if (!categoryConfig) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Vendor category config not found',
+      })
+    }
+
+    return categoryConfig
+  }
+
+  async upsertCategoryConfig(
+    ctx: AuthzContext,
+    weddingId: string,
+    category: VendorCategory,
+    fieldDefinitions: VendorFieldDefinition[]
+  ): Promise<VendorCategoryConfig> {
+    this.requireVendorPermission(ctx, 'update')
+    upsertCategoryConfigSchema.parse({
+      category,
+      fieldDefinitions,
+    })
+    return this.vendorRepository.upsertCategoryConfig({
+      weddingId,
+      category,
+      fieldDefinitions,
+    })
+  }
+
   /**
    * Delete a vendor (cascades to quotes) with ownership verification.
-   * Cleans up blob storage for all associated files before cascade-deleting.
+   * Cleans up blob storage for all associated files and images before cascade-deleting.
    */
   async deleteVendor(ctx: AuthzContext, vendorId: string, weddingId: string): Promise<string> {
     this.requireVendorPermission(ctx, 'delete')
     await this.assertVendorOwnership(vendorId, weddingId)
 
-    // Clean up blobs before cascade delete removes DB records
-    const fileUrls = await this.vendorRepository.findAllFileUrlsByVendorId(vendorId)
-    await this.deleteBlobsBestEffort(fileUrls)
+    const vendor = await this.vendorRepository.findByIdWithQuotes(vendorId)
+    const fileUrls = (vendor?.quotes ?? []).flatMap((q) => q.files.map((f) => f.url))
+    const imageUrls = (vendor?.images ?? []).map((img) => img.url)
+    await this.deleteBlobsBestEffort([...fileUrls, ...imageUrls])
 
     const deleted = await this.vendorRepository.delete(vendorId)
     return deleted.id
@@ -272,6 +395,88 @@ export class VendorService {
     const deletedFile = await this.vendorRepository.deleteQuoteFile(data.fileId)
     await this.deleteBlobsBestEffort([deletedFile.url])
     return deletedFile
+  }
+
+  // ─── Vendor image operations ───────────────────────────────────────────────
+
+  /**
+   * Save uploaded image metadata for a vendor with ownership verification.
+   * Enforces a per-vendor image limit of MAX_IMAGES_PER_VENDOR.
+   */
+  async saveImages(
+    ctx: AuthzContext,
+    vendorId: string,
+    weddingId: string,
+    data: SaveVendorImagesInput
+  ): Promise<VendorImage[]> {
+    this.requireVendorPermission(ctx, 'update')
+    await this.assertVendorOwnership(vendorId, weddingId)
+
+    // Enforce total image count (existing + new)
+    const vendor = await this.vendorRepository.findByIdWithQuotes(vendorId)
+    const existingCount = vendor?.images.length ?? 0
+    if (existingCount + data.images.length > MAX_IMAGES_PER_VENDOR) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: `A vendor can have at most ${MAX_IMAGES_PER_VENDOR} images (currently ${existingCount})`,
+      })
+    }
+
+    return this.vendorRepository.saveImages(vendorId, data.images)
+  }
+
+  /**
+   * Delete a single image from a vendor with ownership verification.
+   * Removes the blob from Vercel Blob storage after deleting the DB record.
+   */
+  async deleteImage(
+    ctx: AuthzContext,
+    vendorId: string,
+    weddingId: string,
+    imageId: string
+  ): Promise<string> {
+    this.requireVendorPermission(ctx, 'update')
+    await this.assertVendorOwnership(vendorId, weddingId)
+
+    const deleted = await this.vendorRepository.deleteImage(imageId)
+    await this.deleteBlobsBestEffort([deleted.url])
+    return deleted.id
+  }
+
+  /**
+   * Set the cover (primary) image for a vendor with ownership verification.
+   */
+  async setCoverImage(
+    ctx: AuthzContext,
+    vendorId: string,
+    weddingId: string,
+    imageId: string
+  ): Promise<VendorImage> {
+    this.requireVendorPermission(ctx, 'update')
+    await this.assertVendorOwnership(vendorId, weddingId)
+    return this.vendorRepository.setCoverImage(vendorId, imageId)
+  }
+
+  /**
+   * Fetch candidate image URLs from a vendor's website for the couple to review.
+   */
+  async fetchVendorWebsiteImages(
+    ctx: AuthzContext,
+    vendorId: string,
+    weddingId: string
+  ): Promise<string[]> {
+    this.requireVendorPermission(ctx, 'read')
+    await this.assertVendorOwnership(vendorId, weddingId)
+
+    const vendor = await this.vendorRepository.findByIdWithQuotes(vendorId)
+    if (!vendor?.website) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Vendor does not have a website URL',
+      })
+    }
+
+    return fetchWebsiteImages(vendor.website)
   }
 
   // ─── Private helpers ───────────────────────────────────────────────────────

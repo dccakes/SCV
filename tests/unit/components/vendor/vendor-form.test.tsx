@@ -139,4 +139,40 @@ describe('VendorForm', () => {
     )
     expect(mockCreateMutate).not.toHaveBeenCalled()
   })
+
+  it('drops legacy invalid contact phones when editing an existing vendor', () => {
+    render(
+      <VendorForm
+        mode='edit'
+        vendor={{
+          id: 'vendor-1',
+          weddingId: 'wedding-1',
+          category: VendorCategory.CATERING,
+          status: VendorStatus.IN_REVIEW,
+          name: 'Sample Vendor',
+          location: null,
+          website: null,
+          instagram: null,
+          contactName: null,
+          contactEmail: null,
+          contactPhone: '+1-555-0101',
+          createdAt: new Date('2026-01-01T00:00:00.000Z'),
+          updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+        }}
+        onSuccess={jest.fn()}
+        onCancel={jest.fn()}
+      />
+    )
+
+    expect(document.querySelector('input#vendor-contact-phone')).toHaveValue('')
+
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }))
+
+    expect(mockUpdateMutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        vendorId: 'vendor-1',
+        contactPhone: undefined,
+      })
+    )
+  })
 })

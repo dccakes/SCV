@@ -46,13 +46,9 @@ function makeEvent(overrides: {
   }
 }
 
-function expectFirstEventResult(
-  results: Awaited<ReturnType<EventRepository['findByWeddingIdWithStats']>>
-) {
-  const [result] = results
-  expect(result).toBeDefined()
+function expectFirstResult<T>(result: T | undefined): T {
   if (!result) {
-    throw new Error('Expected a single event result')
+    throw new Error('Expected repository to return at least one event')
   }
   return result
 }
@@ -75,7 +71,8 @@ describe('EventRepository - estimatedAttendance', () => {
       }),
     ])
 
-    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
+    const [firstResult] = await repo.findByWeddingIdWithStats('wedding-1')
+    const result = expectFirstResult(firstResult)
     expect(result.estimatedAttendance).toBe(2)
   })
 
@@ -89,7 +86,8 @@ describe('EventRepository - estimatedAttendance', () => {
       }),
     ])
 
-    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
+    const [firstResult] = await repo.findByWeddingIdWithStats('wedding-1')
+    const result = expectFirstResult(firstResult)
     expect(result.estimatedAttendance).toBe(0)
   })
 
@@ -103,7 +101,8 @@ describe('EventRepository - estimatedAttendance', () => {
       }),
     ])
 
-    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
+    const [firstResult] = await repo.findByWeddingIdWithStats('wedding-1')
+    const result = expectFirstResult(firstResult)
     // round(0.95 + 0.15) = round(1.10) = 1
     expect(result.estimatedAttendance).toBe(1)
   })
@@ -115,7 +114,8 @@ describe('EventRepository - estimatedAttendance', () => {
       }),
     ])
 
-    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
+    const [firstResult] = await repo.findByWeddingIdWithStats('wedding-1')
+    const result = expectFirstResult(firstResult)
     // round(0.65 + 0.65) = round(1.30) = 1
     expect(result.estimatedAttendance).toBe(1)
   })
@@ -134,7 +134,8 @@ describe('EventRepository - estimatedAttendance', () => {
       }),
     ])
 
-    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
+    const [firstResult] = await repo.findByWeddingIdWithStats('wedding-1')
+    const result = expectFirstResult(firstResult)
     // round(1 + 1 + 0 + 0.95 + 0.80 + 0.65) = round(4.40) = 4
     expect(result.estimatedAttendance).toBe(4)
   })
@@ -150,7 +151,8 @@ describe('EventRepository - estimatedAttendance', () => {
       }),
     ])
 
-    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
+    const [firstResult] = await repo.findByWeddingIdWithStats('wedding-1')
+    const result = expectFirstResult(firstResult)
     expect(result.estimatedAttendance).toBe(1)
   })
 
@@ -161,14 +163,16 @@ describe('EventRepository - estimatedAttendance', () => {
       }),
     ])
 
-    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
+    const [firstResult] = await repo.findByWeddingIdWithStats('wedding-1')
+    const result = expectFirstResult(firstResult)
     expect(result.estimatedAttendance).toBe(0)
   })
 
   it('should return 0 for event with no invitations', async () => {
     mockEventFindManyFn.mockResolvedValue([makeEvent({ invitations: [] })])
 
-    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
+    const [firstResult] = await repo.findByWeddingIdWithStats('wedding-1')
+    const result = expectFirstResult(firstResult)
     expect(result.estimatedAttendance).toBe(0)
   })
 
@@ -185,7 +189,8 @@ describe('EventRepository - estimatedAttendance', () => {
       }),
     ])
 
-    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
+    const [firstResult] = await repo.findByWeddingIdWithStats('wedding-1')
+    const result = expectFirstResult(firstResult)
     // round(1 + 0.80) = round(1.80) = 2
     expect(result.estimatedAttendance).toBe(2)
     expect(result.guestResponses.attending).toBe(1)
@@ -203,7 +208,8 @@ describe('EventRepository - estimatedAttendance', () => {
       }),
     ])
 
-    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
+    const [firstResult] = await repo.findByWeddingIdWithStats('wedding-1')
+    const result = expectFirstResult(firstResult)
     // round(1 + 1 + 0.80) = round(2.80) = 3
     expect(result.estimatedAttendance).toBe(3)
   })
@@ -217,7 +223,8 @@ describe('EventRepository - estimatedAttendance', () => {
       }),
     ])
 
-    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
+    const [firstResult] = await repo.findByWeddingIdWithStats('wedding-1')
+    const result = expectFirstResult(firstResult)
     expect(result.estimatedAttendance).toBe(1)
   })
 
@@ -235,7 +242,8 @@ describe('EventRepository - estimatedAttendance', () => {
       }),
     ])
 
-    const result = expectFirstEventResult(await repo.findByWeddingIdWithStats('wedding-1'))
+    const [firstResult] = await repo.findByWeddingIdWithStats('wedding-1')
+    const result = expectFirstResult(firstResult)
     // round(0.15 + 0.35 + 0.55 + 0.80 + 0.95) = round(2.80) = 3
     expect(result.estimatedAttendance).toBe(3)
   })

@@ -16,6 +16,7 @@ import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
+import { PhoneInput } from '~/components/ui/phone-input'
 import {
   Select,
   SelectContent,
@@ -217,13 +218,25 @@ export const GuestNameForm = ({
 
           <div className='space-y-2'>
             <Label htmlFor={`guest${guestIndex}-phone`}>Phone</Label>
-            <Input
-              id={`guest${guestIndex}-phone`}
-              {...register(`guestParty.${guestIndex}.phone`)}
-              className={guestErrors?.phone ? 'border-destructive' : ''}
+            <Controller
+              name={`guestParty.${guestIndex}.phone`}
+              control={control}
+              render={({ field }) => (
+                <PhoneInput
+                  id={`guest${guestIndex}-phone`}
+                  value={field.value}
+                  onChange={(nextValue) => field.onChange(nextValue ?? null)}
+                  error={Boolean(guestErrors?.phone)}
+                  aria-describedby={
+                    guestErrors?.phone ? `guest${guestIndex}-phone-error` : undefined
+                  }
+                />
+              )}
             />
             {guestErrors?.phone && (
-              <p className='text-destructive text-sm'>{guestErrors.phone.message}</p>
+              <p id={`guest${guestIndex}-phone-error`} className='text-destructive text-sm'>
+                {guestErrors.phone.message}
+              </p>
             )}
           </div>
         </div>

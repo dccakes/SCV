@@ -230,7 +230,7 @@ describe('MessagingService', () => {
       const newestMessage = result.at(-1)
       expect(newestMessage).toBeDefined()
       if (!newestMessage) {
-        throw new Error('Expected newest message in the conversation')
+        throw new Error('Expected newest message to be present')
       }
       // oldest first
       expect(result[0]?.createdAt.getTime()).toBeLessThan(newestMessage.createdAt.getTime())
@@ -284,10 +284,12 @@ describe('MessagingService', () => {
       for (let i = 1; i < result.length; i++) {
         const currentMessage = result[i]
         const previousMessage = result[i - 1]
+
         expect(currentMessage).toBeDefined()
         expect(previousMessage).toBeDefined()
+
         if (!currentMessage || !previousMessage) {
-          throw new Error('Expected consecutive messages while checking sort order')
+          throw new Error(`Expected messages at indexes ${i - 1} and ${i}`)
         }
         expect(currentMessage.createdAt.getTime()).toBeGreaterThanOrEqual(
           previousMessage.createdAt.getTime()

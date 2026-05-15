@@ -194,9 +194,20 @@ describe('selfFillGuestSchema', () => {
     expect(result.success).toBe(true)
   })
 
-  it('should reject phone exceeding 20 characters', () => {
-    const result = selfFillGuestSchema.safeParse({ ...validInput, phone: '1'.repeat(21) })
+  it('should reject invalid phone without country code', () => {
+    const result = selfFillGuestSchema.safeParse({ ...validInput, phone: '2025550123' })
     expect(result.success).toBe(false)
+    expect(
+      result.error?.issues.some((issue) => issue.message === 'Please enter a valid phone number')
+    ).toBe(true)
+  })
+
+  it('should transform empty string phone to null', () => {
+    const result = selfFillGuestSchema.safeParse({ ...validInput, phone: '' })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.phone).toBeNull()
+    }
   })
 })
 
