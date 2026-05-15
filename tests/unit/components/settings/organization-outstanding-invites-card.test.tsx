@@ -22,12 +22,12 @@ describe('OrganizationOutstandingInvitesCard', () => {
     mockFetch.mockReset()
   })
 
-  it('shows loading state before invitation requests resolve', () => {
+  it('renders nothing before initial invitation requests resolve', () => {
     mockFetch.mockImplementation(() => new Promise(() => undefined))
 
-    render(<OrganizationOutstandingInvitesCard />)
+    const { container } = render(<OrganizationOutstandingInvitesCard />)
 
-    expect(screen.getByRole('status')).toHaveTextContent('Loading outstanding invitations...')
+    expect(container).toBeEmptyDOMElement()
   })
 
   it('stays hidden when invitation:create permission is missing', async () => {
