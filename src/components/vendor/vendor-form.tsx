@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
+import { PhoneInput } from '~/components/ui/phone-input'
 import {
   Select,
   SelectContent,
@@ -12,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+import { normalizePhoneToE164 } from '~/lib/phone/phone-validator'
 import type { Vendor } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
 
@@ -24,6 +26,7 @@ const VENDOR_CATEGORIES = [
   'VIDEOGRAPHER',
   'MUSIC',
   'FLOWERS',
+  'ACCOMMODATION',
   'OTHER',
 ] satisfies VendorCategory[]
 
@@ -34,6 +37,7 @@ const CATEGORY_LABELS: Record<VendorCategory, string> = {
   VIDEOGRAPHER: 'Videographer',
   MUSIC: 'Music',
   FLOWERS: 'Flowers',
+  ACCOMMODATION: 'Accommodation',
   OTHER: 'Other',
 }
 
@@ -70,7 +74,7 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
   const [instagram, setInstagram] = useState(vendor?.instagram ?? '')
   const [contactName, setContactName] = useState(vendor?.contactName ?? '')
   const [contactEmail, setContactEmail] = useState(vendor?.contactEmail ?? '')
-  const [contactPhone, setContactPhone] = useState(vendor?.contactPhone ?? '')
+  const [contactPhone, setContactPhone] = useState(normalizePhoneToE164(vendor?.contactPhone) ?? '')
 
   const invalidateVendors = () => utils.vendor.getAll.invalidate()
 
@@ -80,7 +84,17 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
       toast.success('Vendor added')
       onSuccess()
     },
-    onError: () => toast.error('Failed to add vendor'),
+    onError: (err) => {
+      const fieldErrors = err.data?.zodError?.fieldErrors
+      if (fieldErrors) {
+        const firstField = Object.keys(fieldErrors)[0]
+        const firstMsg = firstField ? (fieldErrors[firstField]?.[0] ?? 'Invalid value') : null
+        const label = firstField ? ` (${firstField}: ${firstMsg})` : ''
+        toast.error(`Failed to add vendor${label}`)
+      } else {
+        toast.error('Failed to add vendor')
+      }
+    },
   })
 
   const updateVendor = api.vendor.update.useMutation({
@@ -96,14 +110,19 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    const normalizeWebsite = (url: string): string | undefined => {
+      if (!url) return undefined
+      if (/^https?:\/\//i.test(url)) return url
+      return `https://${url}`
+    }
     const common = {
       name,
       location: location || undefined,
-      website: website || undefined,
+      website: normalizeWebsite(website),
       instagram: instagram || undefined,
       contactName: contactName || undefined,
       contactEmail: contactEmail || undefined,
-      contactPhone: contactPhone || undefined,
+      contactPhone: normalizePhoneToE164(contactPhone),
     }
     if (isEditing) {
       updateVendor.mutate({ vendorId: props.vendor.id, ...common })
@@ -223,10 +242,10 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
               <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
                 Phone
               </span>
-              <Input
+              <PhoneInput
                 id='vendor-contact-phone'
-                value={contactPhone}
-                onChange={(e) => setContactPhone(e.target.value)}
+                value={contactPhone || undefined}
+                onChange={(nextValue) => setContactPhone(nextValue ?? '')}
                 placeholder='+1 (555) 000-0000'
               />
             </label>

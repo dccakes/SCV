@@ -7,6 +7,10 @@
 import {
   Prisma,
   type PrismaClient,
+  type Vendor as PrismaVendor,
+  type VendorCategoryConfig as PrismaVendorCategoryConfig,
+  type VendorImage as PrismaVendorImage,
+  type VendorNote as PrismaVendorNote,
   type VendorQuote as PrismaVendorQuote,
   type VendorQuoteFile as PrismaVendorQuoteFile,
   type QuoteType,
@@ -15,9 +19,17 @@ import {
 } from '@prisma/client'
 
 import type {
+  FieldDefinition,
   Vendor,
+  VendorCategoryConfig,
+  VendorCustomFields,
+  VendorFieldDefinition,
+  VendorImage,
+  VendorNote,
+  VendorNoteActorType,
   VendorQuote,
   VendorQuoteFile,
+  VendorRatingRecord,
   VendorWithQuotes,
 } from '~/server/domains/vendor/vendor.types'
 
@@ -33,7 +45,16 @@ export class VendorRepository {
   ): Promise<VendorWithQuotes[]> {
     const rows = await this.db.vendor.findMany({
       where: { weddingId, ...(category ? { category } : {}) },
-      include: { quotes: { include: { files: true }, orderBy: { quoteDate: 'desc' } } },
+      include: {
+        quotes: { include: { files: true }, orderBy: { quoteDate: 'desc' } },
+        images: { orderBy: { order: 'asc' } },
+        ratings: {
+          include: {
+            user: { select: { name: true, email: true } },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
       orderBy: [{ category: 'asc' }, { createdAt: 'asc' }],
     })
     return rows.map(this.serializeVendorWithQuotes)
@@ -48,7 +69,16 @@ export class VendorRepository {
         wedding: { userWeddings: { some: { userId } } },
         ...(category ? { category } : {}),
       },
-      include: { quotes: { include: { files: true }, orderBy: { quoteDate: 'desc' } } },
+      include: {
+        quotes: { include: { files: true }, orderBy: { quoteDate: 'desc' } },
+        images: { orderBy: { order: 'asc' } },
+        ratings: {
+          include: {
+            user: { select: { name: true, email: true } },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
       orderBy: [{ category: 'asc' }, { createdAt: 'asc' }],
     })
     return rows.map(this.serializeVendorWithQuotes)
@@ -60,10 +90,33 @@ export class VendorRepository {
   async findByIdWithQuotes(id: string): Promise<VendorWithQuotes | null> {
     const row = await this.db.vendor.findUnique({
       where: { id },
-      include: { quotes: { include: { files: true }, orderBy: { quoteDate: 'desc' } } },
+      include: {
+        quotes: { include: { files: true }, orderBy: { quoteDate: 'desc' } },
+        images: { orderBy: { order: 'asc' } },
+        ratings: {
+          include: {
+            user: { select: { name: true, email: true } },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
     })
     if (!row) return null
     return this.serializeVendorWithQuotes(row)
+  }
+
+  async findById(id: string): Promise<Vendor | null> {
+    const row = await this.db.vendor.findUnique({ where: { id } })
+    if (!row) return null
+    return this.serializeVendor(row)
+  }
+
+  async findCustomFieldsById(id: string): Promise<VendorCustomFields> {
+    const row = await this.db.vendor.findUnique({
+      where: { id },
+      select: { customFields: true },
+    })
+    return this.parseCustomFields(row?.customFields ?? null)
   }
 
   /**
@@ -80,7 +133,8 @@ export class VendorRepository {
     contactEmail?: string
     contactPhone?: string
   }): Promise<Vendor> {
-    return this.db.vendor.create({ data })
+    const row = await this.db.vendor.create({ data })
+    return this.serializeVendor(row)
   }
 
   /**
@@ -96,16 +150,30 @@ export class VendorRepository {
       contactName?: string
       contactEmail?: string
       contactPhone?: string
+      notes?: string | null
+      contacted?: boolean
+      customFields?: Prisma.InputJsonValue | null
     }
   ): Promise<Vendor> {
-    return this.db.vendor.update({ where: { id }, data })
+    const { customFields, ...rest } = data
+    const row = await this.db.vendor.update({
+      where: { id },
+      data: {
+        ...rest,
+        ...(customFields !== undefined
+          ? { customFields: customFields === null ? Prisma.JsonNull : customFields }
+          : {}),
+      },
+    })
+    return this.serializeVendor(row)
   }
 
   /**
    * Update vendor status only
    */
   async updateStatus(id: string, status: VendorStatus): Promise<Vendor> {
-    return this.db.vendor.update({ where: { id }, data: { status } })
+    const row = await this.db.vendor.update({ where: { id }, data: { status } })
+    return this.serializeVendor(row)
   }
 
   /**
@@ -136,7 +204,8 @@ export class VendorRepository {
    * Delete a vendor (cascades to quotes via DB)
    */
   async delete(id: string): Promise<Vendor> {
-    return this.db.vendor.delete({ where: { id } })
+    const row = await this.db.vendor.delete({ where: { id } })
+    return this.serializeVendor(row)
   }
 
   /**
@@ -209,6 +278,131 @@ export class VendorRepository {
     return quote !== null
   }
 
+  async createVendorNote(data: {
+    vendorId: string
+    weddingId: string
+    message: string
+    actorType: VendorNoteActorType
+  }): Promise<VendorNote> {
+    const row = await this.db.vendorNote.create({ data })
+    return this.serializeVendorNote(row)
+  }
+
+  async findNotesByVendorId(vendorId: string): Promise<VendorNote[]> {
+    const rows = await this.db.vendorNote.findMany({
+      where: { vendorId },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    })
+    return rows.map((row) => this.serializeVendorNote(row))
+  }
+
+  async findCategoryConfig(
+    weddingId: string,
+    category: VendorCategory
+  ): Promise<VendorCategoryConfig | null> {
+    const weddingConfig = await this.db.vendorCategoryConfig.findFirst({
+      where: {
+        weddingId,
+        category,
+      },
+    })
+
+    if (weddingConfig) {
+      return this.serializeVendorCategoryConfig(weddingConfig)
+    }
+
+    const systemConfig = await this.db.vendorCategoryConfig.findFirst({
+      where: {
+        weddingId: null,
+        category,
+      },
+    })
+
+    return systemConfig ? this.serializeVendorCategoryConfig(systemConfig) : null
+  }
+
+  async upsertCategoryConfig(data: {
+    weddingId: string
+    category: VendorCategory
+    fieldDefinitions: VendorFieldDefinition[]
+  }): Promise<VendorCategoryConfig> {
+    const row = await this.db.vendorCategoryConfig.upsert({
+      where: {
+        weddingId_category: {
+          weddingId: data.weddingId,
+          category: data.category,
+        },
+      },
+      create: {
+        weddingId: data.weddingId,
+        category: data.category,
+        fieldDefinitions: data.fieldDefinitions as Prisma.InputJsonValue,
+      },
+      update: {
+        fieldDefinitions: data.fieldDefinitions as Prisma.InputJsonValue,
+      },
+    })
+    return this.serializeVendorCategoryConfig(row)
+  }
+
+  // ─── Image operations ────────────────────────────────────────────────────
+
+  /**
+   * Save image records for a vendor (batch insert) and return them ordered
+   */
+  async saveImages(
+    vendorId: string,
+    images: { name: string; url: string; key: string; size: number; source: 'manual' | 'website' }[]
+  ): Promise<VendorImage[]> {
+    return this.db.$transaction(async (tx) => {
+      await tx.vendorImage.createMany({
+        data: images.map((img) => ({ ...img, vendorId })),
+      })
+      const rows = await tx.vendorImage.findMany({
+        where: { vendorId },
+        orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+      })
+      return rows.map((row) => this.serializeVendorImage(row))
+    })
+  }
+
+  /**
+   * Delete a single image record and return it (caller uses the key for blob cleanup)
+   */
+  async deleteImage(imageId: string): Promise<VendorImage> {
+    const row = await this.db.vendorImage.delete({ where: { id: imageId } })
+    return this.serializeVendorImage(row)
+  }
+
+  /**
+   * Set one image as primary — clears all others for the vendor first, inside a transaction
+   */
+  async setCoverImage(vendorId: string, imageId: string): Promise<VendorImage> {
+    return this.db.$transaction(async (tx) => {
+      await tx.vendorImage.updateMany({
+        where: { vendorId },
+        data: { isPrimary: false },
+      })
+      const row = await tx.vendorImage.update({
+        where: { id: imageId },
+        data: { isPrimary: true },
+      })
+      return this.serializeVendorImage(row)
+    })
+  }
+
+  /**
+   * Return all blob keys for a vendor's images (used for cleanup before vendor deletion)
+   */
+  async getVendorImageKeys(vendorId: string): Promise<string[]> {
+    const images = await this.db.vendorImage.findMany({
+      where: { vendorId },
+      select: { key: true },
+    })
+    return images.map((img) => img.key)
+  }
+
   // ─── Quote file operations ────────────────────────────────────────────────
 
   /**
@@ -254,15 +448,110 @@ export class VendorRepository {
     return file !== null
   }
 
+  async setRatingForUser(
+    vendorId: string,
+    userId: string,
+    stars: number
+  ): Promise<VendorRatingRecord> {
+    return this.db.vendorRating.upsert({
+      where: {
+        vendorId_userId: { vendorId, userId },
+      },
+      update: { stars },
+      create: { vendorId, userId, stars },
+      select: { id: true, vendorId: true, userId: true, stars: true },
+    })
+  }
+
   // ─── Private serializers ────────────────────────────────────────────────────
 
   private serializeQuote(row: PrismaVendorQuote & { files: PrismaVendorQuoteFile[] }): VendorQuote {
     return { ...row, price: parseFloat(row.price.toString()) }
   }
 
+  private serializeVendor(row: PrismaVendor): Vendor {
+    return {
+      ...row,
+      customFields: this.parseCustomFields(row.customFields),
+    }
+  }
+
+  private serializeVendorCategoryConfig(row: PrismaVendorCategoryConfig): VendorCategoryConfig {
+    return {
+      ...row,
+      fieldDefinitions: this.parseFieldDefinitions(row.fieldDefinitions),
+    }
+  }
+
+  private serializeVendorNote(row: PrismaVendorNote): VendorNote {
+    return {
+      ...row,
+      actorType: row.actorType as VendorNoteActorType,
+    }
+  }
+
+  private serializeVendorImage(row: PrismaVendorImage): VendorImage {
+    return { ...row, source: row.source as VendorImage['source'] }
+  }
+
   private serializeVendorWithQuotes = (
-    row: Vendor & { quotes: (PrismaVendorQuote & { files: PrismaVendorQuoteFile[] })[] }
+    row: PrismaVendor & {
+      quotes: (PrismaVendorQuote & { files: PrismaVendorQuoteFile[] })[]
+      images: PrismaVendorImage[]
+      ratings: { userId: string; stars: number; user: { name: string | null; email: string } }[]
+    }
   ): VendorWithQuotes => {
-    return { ...row, quotes: row.quotes.map((q) => this.serializeQuote(q)) }
+    const { quotes, images, ratings: rawRatings, ...vendorRow } = row
+    const ratings = rawRatings.map((rating) => ({
+      userId: rating.userId,
+      userLabel: rating.user.name ?? rating.user.email,
+      stars: rating.stars,
+    }))
+    const average =
+      ratings.length > 0
+        ? Number(
+            (ratings.reduce((acc, rating) => acc + rating.stars, 0) / ratings.length).toFixed(2)
+          )
+        : null
+
+    return {
+      ...this.serializeVendor(vendorRow),
+      quotes: quotes.map((q) => this.serializeQuote(q)),
+      images: images.map((img) => this.serializeVendorImage(img)),
+      ratingSummary: {
+        average,
+        ratings,
+        currentUserRating: null,
+      },
+    }
+  }
+
+  private parseCustomFields(customFields: Prisma.JsonValue | null): VendorCustomFields {
+    if (!customFields || typeof customFields !== 'object' || Array.isArray(customFields)) {
+      return null
+    }
+
+    return Object.fromEntries(
+      Object.entries(customFields).map(([key, value]) => [
+        key,
+        typeof value === 'string' ? value : '',
+      ])
+    )
+  }
+
+  private parseFieldDefinitions(fieldDefinitions: Prisma.JsonValue): FieldDefinition[] {
+    if (!Array.isArray(fieldDefinitions)) {
+      return []
+    }
+
+    return fieldDefinitions.map((fieldDefinition) => {
+      const record = fieldDefinition as Record<string, unknown>
+      return {
+        key: String(record.key ?? ''),
+        label: String(record.label ?? ''),
+        type: (record.type as VendorFieldDefinition['type']) ?? 'text',
+        displayOrder: Number(record.displayOrder ?? 0),
+      }
+    })
   }
 }

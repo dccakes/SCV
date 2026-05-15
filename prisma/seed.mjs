@@ -14,6 +14,82 @@ const prisma = new PrismaClient({
 
 const fixturePath = new URL('./seed-fixture.json', import.meta.url)
 
+const DEFAULT_VENDOR_CATEGORY_CONFIGS = {
+  VENUE: [
+    { key: 'max_guests', label: 'Max Guests', type: 'number', displayOrder: 0 },
+    { key: 'ceremony_onsite', label: 'Ceremony Onsite', type: 'boolean', displayOrder: 1 },
+    { key: 'outdoor_option', label: 'Outdoor Option', type: 'boolean', displayOrder: 2 },
+    { key: 'rain_plan', label: 'Rain Plan', type: 'text', displayOrder: 3 },
+  ],
+  CATERING: [
+    { key: 'service_style', label: 'Service Style', type: 'text', displayOrder: 0 },
+    { key: 'menu_highlights', label: 'Menu Highlights', type: 'text', displayOrder: 1 },
+    { key: 'tasting_included', label: 'Tasting Included', type: 'boolean', displayOrder: 2 },
+    {
+      key: 'dietary_flexibility',
+      label: 'Dietary Flexibility',
+      type: 'text',
+      displayOrder: 3,
+    },
+  ],
+  PHOTOGRAPHER: [
+    { key: 'hours_included', label: 'Hours Included', type: 'number', displayOrder: 0 },
+    { key: 'second_shooter', label: 'Second Shooter', type: 'boolean', displayOrder: 1 },
+    { key: 'editing_style', label: 'Editing Style', type: 'text', displayOrder: 2 },
+    { key: 'turnaround_weeks', label: 'Turnaround Weeks', type: 'number', displayOrder: 3 },
+  ],
+  VIDEOGRAPHER: [
+    { key: 'hours_included', label: 'Hours Included', type: 'number', displayOrder: 0 },
+    { key: 'drone_coverage', label: 'Drone Coverage', type: 'boolean', displayOrder: 1 },
+    {
+      key: 'highlight_film_length',
+      label: 'Highlight Film Length',
+      type: 'text',
+      displayOrder: 2,
+    },
+    { key: 'turnaround_weeks', label: 'Turnaround Weeks', type: 'number', displayOrder: 3 },
+  ],
+  MUSIC: [
+    { key: 'coverage_scope', label: 'Coverage Scope', type: 'text', displayOrder: 0 },
+    { key: 'dj_or_live_band', label: 'DJ or Live Band', type: 'text', displayOrder: 1 },
+    { key: 'mc_included', label: 'MC Included', type: 'boolean', displayOrder: 2 },
+    {
+      key: 'sound_equipment_included',
+      label: 'Sound Equipment Included',
+      type: 'boolean',
+      displayOrder: 3,
+    },
+  ],
+  FLOWERS: [
+    { key: 'style_focus', label: 'Style Focus', type: 'text', displayOrder: 0 },
+    {
+      key: 'delivery_setup_included',
+      label: 'Delivery + Setup Included',
+      type: 'boolean',
+      displayOrder: 1,
+    },
+    {
+      key: 'breakdown_included',
+      label: 'Breakdown Included',
+      type: 'boolean',
+      displayOrder: 2,
+    },
+    { key: 'budget_minimum', label: 'Budget Minimum', type: 'number', displayOrder: 3 },
+  ],
+  ACCOMMODATION: [
+    { key: 'room_block_size', label: 'Room Block Size', type: 'number', displayOrder: 0 },
+    { key: 'total_rooms', label: 'Total Rooms', type: 'number', displayOrder: 1 },
+    { key: 'room_type', label: 'Room Type', type: 'text', displayOrder: 2 },
+    { key: 'shuttle_included', label: 'Shuttle Included', type: 'boolean', displayOrder: 3 },
+    { key: 'booking_deadline', label: 'Booking Deadline', type: 'text', displayOrder: 4 },
+  ],
+  OTHER: [
+    { key: 'service_scope', label: 'Service Scope', type: 'text', displayOrder: 0 },
+    { key: 'package_summary', label: 'Package Summary', type: 'text', displayOrder: 1 },
+    { key: 'travel_included', label: 'Travel Included', type: 'boolean', displayOrder: 2 },
+  ],
+}
+
 /** @param {{ isPrimary?: boolean; role?: string }} user */
 function resolveSeedRole(user) {
   if (typeof user.role === 'string' && user.role.length > 0) {
@@ -39,6 +115,10 @@ async function seed() {
   const optionByKey = new Map()
 
   await prisma.$transaction(async (tx) => {
+    await tx.vendorCategoryConfig.deleteMany({
+      where: { weddingId: null },
+    })
+
     await tx.wedding.deleteMany({ where: { id: fixture.wedding.id } })
 
     if (fixture.organization) {
@@ -128,6 +208,16 @@ async function seed() {
         selfFillTokenGeneratedAt: new Date(fixture.wedding.selfFillTokenGeneratedAt),
       },
     })
+
+    for (const [category, fieldDefinitions] of Object.entries(DEFAULT_VENDOR_CATEGORY_CONFIGS)) {
+      await tx.vendorCategoryConfig.create({
+        data: {
+          category,
+          weddingId: null,
+          fieldDefinitions,
+        },
+      })
+    }
 
     for (const user of fixture.users) {
       await tx.userWedding.create({
@@ -358,6 +448,9 @@ async function seed() {
           contactName: vendor.contactName,
           contactEmail: vendor.contactEmail,
           contactPhone: vendor.contactPhone,
+          notes: vendor.notes ?? null,
+          contacted: vendor.contacted ?? false,
+          customFields: vendor.customFields ?? undefined,
           quotes: {
             create: vendor.quotes.map((quote) => ({
               price: quote.price,
@@ -365,6 +458,15 @@ async function seed() {
               notes: quote.notes,
             })),
           },
+          vendorNotes: vendor.vendorNotes
+            ? {
+                create: vendor.vendorNotes.map((note) => ({
+                  message: note.message,
+                  actorType: note.actorType ?? 'couple',
+                  weddingId: fixture.wedding.id,
+                })),
+              }
+            : undefined,
         },
       })
     }

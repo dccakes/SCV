@@ -34,7 +34,7 @@ describe('createGuestSchema', () => {
       firstName: 'John',
       lastName: 'Doe',
       email: 'john@example.com',
-      phone: '+1234567890',
+      phone: '+12025550123',
       householdId: 'household-123',
       isPrimaryContact: true,
     }
@@ -145,7 +145,7 @@ describe('updateGuestSchema', () => {
       guestId: 1,
       firstName: 'Jane',
       email: 'jane@example.com',
-      phone: '+9876543210',
+      phone: '+12025550124',
     }
 
     const result = updateGuestSchema.safeParse(validInput)
@@ -228,7 +228,7 @@ describe('guestPartySchema', () => {
       firstName: 'John',
       lastName: 'Doe',
       email: 'john@example.com',
-      phone: '+1234567890',
+      phone: '+12025550125',
       invites: {
         'event-123': 'Attending',
       },
@@ -273,5 +273,75 @@ describe('guestPartySchema', () => {
 
     const result = guestPartySchema.safeParse(invalidInput)
     expect(result.success).toBe(false)
+  })
+})
+
+describe('phone validation in guest schemas', () => {
+  it('accepts valid E.164 phone numbers', () => {
+    expect(
+      createGuestSchema.safeParse({
+        firstName: 'John',
+        householdId: 'household-123',
+        phone: '+12025550123',
+      }).success
+    ).toBe(true)
+
+    expect(
+      updateGuestSchema.safeParse({
+        guestId: 1,
+        phone: '+447911123456',
+      }).success
+    ).toBe(true)
+
+    expect(
+      guestPartySchema.safeParse({
+        firstName: 'John',
+        invites: {},
+        phone: '+5511987654321',
+      }).success
+    ).toBe(true)
+  })
+
+  it('rejects invalid phone without country code with a clear message', () => {
+    const createResult = createGuestSchema.safeParse({
+      firstName: 'John',
+      householdId: 'household-123',
+      phone: '2025550123',
+    })
+    expect(createResult.success).toBe(false)
+    expect(
+      createResult.error?.issues.some(
+        (issue) => issue.message === 'Please enter a valid phone number'
+      )
+    ).toBe(true)
+  })
+
+  it('accepts undefined and null', () => {
+    expect(
+      createGuestSchema.safeParse({
+        firstName: 'John',
+        householdId: 'household-123',
+        phone: undefined,
+      }).success
+    ).toBe(true)
+
+    expect(
+      updateGuestSchema.safeParse({
+        guestId: 1,
+        phone: null,
+      }).success
+    ).toBe(true)
+  })
+
+  it('transforms empty string to null', () => {
+    const result = guestPartySchema.safeParse({
+      firstName: 'John',
+      invites: {},
+      phone: '',
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.phone).toBeNull()
+    }
   })
 })

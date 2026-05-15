@@ -10,17 +10,26 @@ import { vendorInsightsService } from '~/server/application/vendor-insights'
 import { requireActiveWeddingId } from '~/server/authz/active-wedding'
 import { vendorService } from '~/server/domains/vendor'
 import {
+  addVendorNoteSchema,
   createQuoteSchema,
   createVendorSchema,
   deleteQuoteFileSchema,
   deleteQuoteSchema,
+  deleteVendorImageSchema,
   deleteVendorSchema,
+  fetchWebsiteImagesSchema,
+  getCategoryConfigSchema,
+  getNotesSchema,
   getVendorSchema,
   getVendorsByCategorySchema,
   saveQuoteFilesSchema,
+  saveVendorImagesSchema,
+  setCoverImageSchema,
+  setVendorRatingSchema,
   updateQuoteSchema,
   updateVendorSchema,
   updateVendorStatusSchema,
+  upsertCategoryConfigSchema,
 } from '~/server/domains/vendor/vendor.validator'
 
 export const vendorRouter = createTRPCRouter({
@@ -56,6 +65,35 @@ export const vendorRouter = createTRPCRouter({
     const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return vendorService.updateVendor(ctx.authz, input.vendorId, weddingId, input)
   }),
+
+  addNote: protectedProcedure.input(addVendorNoteSchema).mutation(async ({ ctx, input }) => {
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+    return vendorService.addVendorNote(ctx.authz, input.vendorId, weddingId, input.message)
+  }),
+
+  getNotes: protectedProcedure.input(getNotesSchema).query(async ({ ctx, input }) => {
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+    return vendorService.getNotes(ctx.authz, input.vendorId, weddingId)
+  }),
+
+  getCategoryConfig: protectedProcedure
+    .input(getCategoryConfigSchema)
+    .query(async ({ ctx, input }) => {
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+      return vendorService.getCategoryConfig(ctx.authz, weddingId, input.category)
+    }),
+
+  upsertCategoryConfig: protectedProcedure
+    .input(upsertCategoryConfigSchema)
+    .mutation(async ({ ctx, input }) => {
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+      return vendorService.upsertCategoryConfig(
+        ctx.authz,
+        weddingId,
+        input.category,
+        input.fieldDefinitions
+      )
+    }),
 
   /**
    * Update vendor status (lifecycle progression)
@@ -118,4 +156,45 @@ export const vendorRouter = createTRPCRouter({
       const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
       return vendorService.deleteQuoteFile(ctx.authz, input.vendorId, weddingId, input)
     }),
+
+  /**
+   * Save vendor images (uploaded to Blob storage)
+   */
+  saveImages: protectedProcedure.input(saveVendorImagesSchema).mutation(async ({ ctx, input }) => {
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+    return vendorService.saveImages(ctx.authz, input.vendorId, weddingId, input)
+  }),
+
+  /**
+   * Delete a vendor image
+   */
+  deleteImage: protectedProcedure
+    .input(deleteVendorImageSchema)
+    .mutation(async ({ ctx, input }) => {
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+      return vendorService.deleteImage(ctx.authz, input.vendorId, weddingId, input.imageId)
+    }),
+
+  /**
+   * Set the cover image for a vendor
+   */
+  setCoverImage: protectedProcedure.input(setCoverImageSchema).mutation(async ({ ctx, input }) => {
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+    return vendorService.setCoverImage(ctx.authz, input.vendorId, weddingId, input.imageId)
+  }),
+
+  /**
+   * Fetch images from a vendor's website
+   */
+  fetchWebsiteImages: protectedProcedure
+    .input(fetchWebsiteImagesSchema)
+    .mutation(async ({ ctx, input }) => {
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+      return vendorService.fetchVendorWebsiteImages(ctx.authz, input.vendorId, weddingId)
+    }),
+
+  setRating: protectedProcedure.input(setVendorRatingSchema).mutation(async ({ ctx, input }) => {
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+    return vendorService.setVendorRating(ctx.authz, input.vendorId, weddingId, input.stars)
+  }),
 })

@@ -10,6 +10,7 @@ import {
   GuestDetailSections,
 } from '~/components/guest-list/v2/drawer/guest-detail-sections'
 import { Badge } from '~/components/ui/badge'
+import { PhoneInput } from '~/components/ui/phone-input'
 import { Slider } from '~/components/ui/slider'
 import { LIKELIHOOD_LABELS } from '~/lib/constants'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
@@ -393,17 +394,16 @@ function ContactAddressSection(props: Readonly<ContactAddressSectionProps>) {
               className='h-9 w-full rounded-md border border-border/70 bg-background px-2.5 text-sm'
             />
           </label>
+          {/* biome-ignore lint/a11y/noLabelWithoutControl: PhoneInput renders a nested input element */}
           <label className='space-y-1'>
             <span className='font-mono text-[0.55rem] text-foreground/55 uppercase tracking-widest'>
               Phone
             </span>
-            <input
+            <PhoneInput
               name='phone'
-              type='tel'
-              autoComplete='tel'
-              value={drawerDraft.phone}
-              onChange={(event) => updateDraft('phone', event.target.value)}
-              className='h-9 w-full rounded-md border border-border/70 bg-background px-2.5 text-sm'
+              value={drawerDraft.phone || undefined}
+              onChange={(nextValue) => updateDraft('phone', nextValue ?? '')}
+              className='w-full'
             />
           </label>
           <label className='space-y-1 sm:col-span-2'>

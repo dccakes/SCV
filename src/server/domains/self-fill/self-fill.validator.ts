@@ -6,6 +6,8 @@
 
 import { z } from 'zod'
 
+import { optionalPhoneSchema } from '~/lib/phone/phone-validator'
+
 /**
  * Token must be a 32-character lowercase hex string (output of randomBytes(16).toString('hex')).
  * Trimmed before validation to reject whitespace-padded inputs.
@@ -49,7 +51,7 @@ export const selfFillGuestSchema = z.object({
     .min(1, 'Email is required')
     .email('Please enter a valid email address')
     .transform((v) => v.toLowerCase()),
-  phone: z.string().max(20).nullish(),
+  phone: optionalPhoneSchema,
   address1: z.string().trim().max(200).nullish(),
   address2: z.string().trim().max(200).nullish(),
   city: z.string().trim().max(100).nullish(),

@@ -13,6 +13,7 @@ jest.mock('~/server/domains/vendor/vendor.repository')
 jest.mock('@vercel/blob', () => ({
   del: jest.fn().mockResolvedValue(undefined),
 }))
+jest.mock('~/server/infrastructure/scraper/website-images')
 
 import { del } from '@vercel/blob'
 
@@ -24,29 +25,44 @@ import {
   mockCreate,
   mockCreateQuote,
   mockCreateQuoteFiles,
+  mockCreateVendorNote,
   mockDelete,
+  mockDeleteImage,
   mockDeleteQuote,
   mockDeleteQuoteFile,
+  mockFieldDefinitions,
   mockFileBelongsToQuote,
   mockFindAllByWeddingId,
   mockFindAllFileUrlsByQuoteId,
-  mockFindAllFileUrlsByVendorId,
   mockFindByIdWithQuotes,
+  mockFindCategoryConfig,
+  mockFindCustomFieldsById,
+  mockFindNotesByVendorId,
   mockQuote,
   mockQuoteBelongsToVendor,
   mockQuoteFile,
+  mockSaveImages,
+  mockSetCoverImage,
+  mockSetRatingForUser,
   mockUpdate,
   mockUpdateQuote,
   mockUpdateStatus,
+  mockUpsertCategoryConfig,
   mockVendor,
+  mockVendorCategoryConfig,
+  mockVendorImage,
+  mockVendorNote,
   mockVendorWithQuotes,
   resetMocks,
   VendorRepository,
 } from '~/server/domains/vendor/vendor.repository'
 import { VendorService } from '~/server/domains/vendor/vendor.service'
+// @ts-expect-error - Importing mock functions from mocked module
+import { fetchWebsiteImages } from '~/server/infrastructure/scraper/website-images'
 
 const mockFindAllByWeddingIdFn = mockFindAllByWeddingId as jest.Mock
 const mockFindByIdWithQuotesFn = mockFindByIdWithQuotes as jest.Mock
+const mockFindCustomFieldsByIdFn = mockFindCustomFieldsById as jest.Mock
 const mockCreateFn = mockCreate as jest.Mock
 const mockUpdateFn = mockUpdate as jest.Mock
 const mockUpdateStatusFn = mockUpdateStatus as jest.Mock
@@ -60,10 +76,18 @@ const mockCreateQuoteFilesFn = mockCreateQuoteFiles as jest.Mock
 const mockDeleteQuoteFileFn = mockDeleteQuoteFile as jest.Mock
 const mockFileBelongsToQuoteFn = mockFileBelongsToQuote as jest.Mock
 const mockRequirePermission = requirePermission as jest.Mock
-const mockFindAllFileUrlsByVendorIdFn = mockFindAllFileUrlsByVendorId as jest.Mock
 const mockFindAllFileUrlsByQuoteIdFn = mockFindAllFileUrlsByQuoteId as jest.Mock
 const mockCountFilesByQuoteIdFn = mockCountFilesByQuoteId as jest.Mock
+const mockSetRatingForUserFn = mockSetRatingForUser as jest.Mock
+const mockFindNotesByVendorIdFn = mockFindNotesByVendorId as jest.Mock
+const mockCreateVendorNoteFn = mockCreateVendorNote as jest.Mock
+const mockFindCategoryConfigFn = mockFindCategoryConfig as jest.Mock
+const mockUpsertCategoryConfigFn = mockUpsertCategoryConfig as jest.Mock
 const mockDel = del as jest.Mock
+const mockSaveImagesFn = mockSaveImages as jest.Mock
+const mockDeleteImageFn = mockDeleteImage as jest.Mock
+const mockSetCoverImageFn = mockSetCoverImage as jest.Mock
+const mockFetchWebsiteImages = fetchWebsiteImages as jest.Mock
 
 describe('VendorService', () => {
   let vendorService: VendorService
@@ -122,6 +146,66 @@ describe('VendorService', () => {
       expect(result).toEqual([mockVendorWithQuotes])
       expect(mockFindAllByWeddingIdFn).toHaveBeenCalledWith('wedding-123', undefined)
     })
+
+    it('sets currentUserRating from submitted ratings for getAll', async () => {
+      mockFindAllByWeddingIdFn.mockResolvedValue([
+        {
+          ...mockVendorWithQuotes,
+          ratingSummary: {
+            average: 4.5,
+            currentUserRating: null,
+            ratings: [
+              { userId: 'actor-1', userLabel: 'Actor', stars: 4 },
+              { userId: 'user-2', userLabel: 'Taylor', stars: 5 },
+            ],
+          },
+        },
+      ])
+
+      const result = await vendorService.getVendorsForWedding(actorContext, 'wedding-123')
+
+      expect(result[0]?.ratingSummary.currentUserRating).toBe(4)
+      expect(result[0]?.ratingSummary.average).toBe(4.5)
+    })
+
+    it('keeps average null for unrated vendors', async () => {
+      mockFindAllByWeddingIdFn.mockResolvedValue([
+        {
+          ...mockVendorWithQuotes,
+          ratingSummary: {
+            average: null,
+            currentUserRating: null,
+            ratings: [],
+          },
+        },
+      ])
+
+      const result = await vendorService.getVendorsForWedding(actorContext, 'wedding-123')
+
+      expect(result[0]?.ratingSummary.average).toBeNull()
+      expect(result[0]?.ratingSummary.currentUserRating).toBeNull()
+    })
+
+    it('does not derive average from actor-only rating', async () => {
+      mockFindAllByWeddingIdFn.mockResolvedValue([
+        {
+          ...mockVendorWithQuotes,
+          ratingSummary: {
+            average: 3,
+            currentUserRating: null,
+            ratings: [
+              { userId: 'actor-1', userLabel: 'Actor', stars: 5 },
+              { userId: 'user-2', userLabel: 'Taylor', stars: 1 },
+            ],
+          },
+        },
+      ])
+
+      const result = await vendorService.getVendorsForWedding(actorContext, 'wedding-123')
+
+      expect(result[0]?.ratingSummary.currentUserRating).toBe(5)
+      expect(result[0]?.ratingSummary.average).toBe(3)
+    })
   })
 
   // ─── getVendorWithQuotes ───────────────────────────────────────────────────
@@ -156,6 +240,29 @@ describe('VendorService', () => {
       await expect(
         vendorService.getVendorWithQuotes(actorContext, 'vendor-123', 'other-wedding')
       ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+
+    it('sets currentUserRating from submitted ratings for getById', async () => {
+      mockFindByIdWithQuotesFn.mockResolvedValue({
+        ...mockVendorWithQuotes,
+        ratingSummary: {
+          average: 4,
+          currentUserRating: null,
+          ratings: [
+            { userId: 'actor-1', userLabel: 'Actor', stars: 4 },
+            { userId: 'user-2', userLabel: 'Taylor', stars: 4 },
+          ],
+        },
+      })
+
+      const result = await vendorService.getVendorWithQuotes(
+        actorContext,
+        'vendor-123',
+        'wedding-123'
+      )
+
+      expect(result.ratingSummary.currentUserRating).toBe(4)
+      expect(result.ratingSummary.average).toBe(4)
     })
   })
 
@@ -236,6 +343,130 @@ describe('VendorService', () => {
         })
       ).rejects.toMatchObject({ code: 'FORBIDDEN' })
     })
+
+    it('normalizes empty-string notes to null and shallow-merges custom fields', async () => {
+      const updated = {
+        ...mockVendor,
+        contacted: true,
+        notes: null,
+        customFields: {
+          capacity: '250',
+          outdoor: 'false',
+          deposit: '20%',
+        },
+      }
+
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockFindCustomFieldsByIdFn.mockResolvedValue({
+        capacity: '250',
+        outdoor: 'true',
+      })
+      mockUpdateFn.mockResolvedValue(updated)
+
+      const result = await vendorService.updateVendor(actorContext, 'vendor-123', 'wedding-123', {
+        vendorId: 'vendor-123',
+        contacted: true,
+        notes: '',
+        customFields: {
+          outdoor: 'false',
+          deposit: '20%',
+        },
+      })
+
+      expect(result).toEqual(updated)
+      expect(mockUpdateFn).toHaveBeenCalledWith('vendor-123', {
+        contacted: true,
+        notes: null,
+        customFields: {
+          capacity: '250',
+          outdoor: 'false',
+          deposit: '20%',
+        },
+      })
+    })
+  })
+
+  describe('vendor notes', () => {
+    it('returns notes for an owned vendor', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockFindNotesByVendorIdFn.mockResolvedValue([mockVendorNote])
+
+      const result = await vendorService.getNotes(actorContext, 'vendor-123', 'wedding-123')
+
+      expect(result).toEqual([mockVendorNote])
+      expect(mockFindNotesByVendorIdFn).toHaveBeenCalledWith('vendor-123')
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { vendor: ['read'] })
+    })
+
+    it('adds a couple-authored note for an owned vendor', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockCreateVendorNoteFn.mockResolvedValue(mockVendorNote)
+
+      const result = await vendorService.addVendorNote(
+        actorContext,
+        'vendor-123',
+        'wedding-123',
+        'Sent first outreach email'
+      )
+
+      expect(result).toEqual(mockVendorNote)
+      expect(mockCreateVendorNoteFn).toHaveBeenCalledWith({
+        vendorId: 'vendor-123',
+        weddingId: 'wedding-123',
+        message: 'Sent first outreach email',
+        actorType: 'couple',
+      })
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { vendor: ['update'] })
+    })
+
+    it('rejects adding a note when the vendor is outside the wedding scope', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(false)
+
+      await expect(
+        vendorService.addVendorNote(
+          actorContext,
+          'vendor-123',
+          'other-wedding',
+          'Sent first outreach email'
+        )
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+  })
+
+  describe('category config', () => {
+    it('returns the category config for the active wedding scope', async () => {
+      mockFindCategoryConfigFn.mockResolvedValue(mockVendorCategoryConfig)
+
+      const result = await vendorService.getCategoryConfig(
+        actorContext,
+        'wedding-123',
+        VendorCategory.VENUE
+      )
+
+      expect(result).toEqual(mockVendorCategoryConfig)
+      expect(mockFindCategoryConfigFn).toHaveBeenCalledWith('wedding-123', VendorCategory.VENUE)
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { vendor: ['read'] })
+    })
+
+    it('upserts a wedding-specific category config', async () => {
+      const weddingConfig = { ...mockVendorCategoryConfig, weddingId: 'wedding-123' }
+      mockUpsertCategoryConfigFn.mockResolvedValue(weddingConfig)
+
+      const result = await vendorService.upsertCategoryConfig(
+        actorContext,
+        'wedding-123',
+        VendorCategory.VENUE,
+        mockFieldDefinitions
+      )
+
+      expect(result).toEqual(weddingConfig)
+      expect(mockUpsertCategoryConfigFn).toHaveBeenCalledWith({
+        weddingId: 'wedding-123',
+        category: VendorCategory.VENUE,
+        fieldDefinitions: mockFieldDefinitions,
+      })
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { vendor: ['update'] })
+    })
   })
 
   // ─── updateStatus ──────────────────────────────────────────────────────────
@@ -275,7 +506,11 @@ describe('VendorService', () => {
   describe('deleteVendor', () => {
     it('should delete vendor when it belongs to the wedding', async () => {
       mockBelongsToWeddingFn.mockResolvedValue(true)
-      mockFindAllFileUrlsByVendorIdFn.mockResolvedValue([])
+      mockFindByIdWithQuotesFn.mockResolvedValue({
+        ...mockVendorWithQuotes,
+        quotes: [],
+        images: [],
+      })
       mockDeleteFn.mockResolvedValue(mockVendor)
 
       const result = await vendorService.deleteVendor(actorContext, 'vendor-123', 'wedding-123')
@@ -284,26 +519,36 @@ describe('VendorService', () => {
       expect(mockDeleteFn).toHaveBeenCalledWith('vendor-123')
     })
 
-    it('should clean up blob files before cascade delete', async () => {
-      const urls = [
-        'https://abc.public.blob.vercel-storage.com/file1.pdf',
-        'https://abc.public.blob.vercel-storage.com/file2.pdf',
-      ]
+    it('should clean up quote file blobs before cascade delete', async () => {
+      const fileUrl = mockQuoteFile.url
       mockBelongsToWeddingFn.mockResolvedValue(true)
-      mockFindAllFileUrlsByVendorIdFn.mockResolvedValue(urls)
+      mockFindByIdWithQuotesFn.mockResolvedValue({ ...mockVendorWithQuotes, images: [] })
       mockDeleteFn.mockResolvedValue(mockVendor)
 
       await vendorService.deleteVendor(actorContext, 'vendor-123', 'wedding-123')
 
-      expect(mockDel).toHaveBeenCalledWith(urls)
+      expect(mockDel).toHaveBeenCalledWith([fileUrl])
       expect(mockDeleteFn).toHaveBeenCalledWith('vendor-123')
+    })
+
+    it('should clean up image blobs along with file blobs before cascade delete', async () => {
+      const fileUrl = mockQuoteFile.url
+      const imageUrl = mockVendorImage.url
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockFindByIdWithQuotesFn.mockResolvedValue({
+        ...mockVendorWithQuotes,
+        images: [mockVendorImage],
+      })
+      mockDeleteFn.mockResolvedValue(mockVendor)
+
+      await vendorService.deleteVendor(actorContext, 'vendor-123', 'wedding-123')
+
+      expect(mockDel).toHaveBeenCalledWith([fileUrl, imageUrl])
     })
 
     it('should still delete vendor when blob cleanup fails', async () => {
       mockBelongsToWeddingFn.mockResolvedValue(true)
-      mockFindAllFileUrlsByVendorIdFn.mockResolvedValue([
-        'https://x.public.blob.vercel-storage.com/f.pdf',
-      ])
+      mockFindByIdWithQuotesFn.mockResolvedValue({ ...mockVendorWithQuotes, images: [] })
       mockDel.mockRejectedValue(new Error('Blob service error'))
       mockDeleteFn.mockResolvedValue(mockVendor)
 
@@ -462,9 +707,15 @@ describe('VendorService', () => {
       mockFindAllFileUrlsByQuoteIdFn.mockResolvedValue([])
       mockDeleteQuoteFn.mockResolvedValue(mockQuote)
 
-      const result = await vendorService.deleteQuote('quote-123', 'vendor-123', 'wedding-123')
+      const result = await vendorService.deleteQuote(
+        actorContext,
+        'quote-123',
+        'vendor-123',
+        'wedding-123'
+      )
 
       expect(result).toBe('quote-123')
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { vendor_quote: ['delete'] })
     })
 
     it('should clean up blob files before deleting quote', async () => {
@@ -474,7 +725,7 @@ describe('VendorService', () => {
       mockFindAllFileUrlsByQuoteIdFn.mockResolvedValue(urls)
       mockDeleteQuoteFn.mockResolvedValue(mockQuote)
 
-      await vendorService.deleteQuote('quote-123', 'vendor-123', 'wedding-123')
+      await vendorService.deleteQuote(actorContext, 'quote-123', 'vendor-123', 'wedding-123')
 
       expect(mockDel).toHaveBeenCalledWith(urls)
     })
@@ -504,6 +755,7 @@ describe('VendorService', () => {
       await expect(
         vendorService.deleteQuote(actorContext, 'quote-123', 'vendor-123', 'other-wedding')
       ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      expect(mockQuoteBelongsToVendorFn).not.toHaveBeenCalled()
     })
 
     it('should throw FORBIDDEN when quote does not belong to vendor', async () => {
@@ -521,7 +773,11 @@ describe('VendorService', () => {
   describe('DB error propagation', () => {
     it('deleteVendor should propagate repository errors', async () => {
       mockBelongsToWeddingFn.mockResolvedValue(true)
-      mockFindAllFileUrlsByVendorIdFn.mockResolvedValue([])
+      mockFindByIdWithQuotesFn.mockResolvedValue({
+        ...mockVendorWithQuotes,
+        quotes: [],
+        images: [],
+      })
       mockDeleteFn.mockRejectedValue(new Error('DB connection error'))
 
       await expect(
@@ -618,6 +874,252 @@ describe('VendorService', () => {
       await expect(
         vendorService.saveQuoteFiles(actorContext, 'vendor-123', 'wedding-123', fileInput)
       ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+  })
+
+  // ─── image operations ──────────────────────────────────────────────────────
+
+  describe('image operations', () => {
+    const imageInput = {
+      vendorId: 'vendor-123',
+      images: [
+        {
+          name: 'photo.jpg',
+          url: 'https://abc123.public.blob.vercel-storage.com/photo.jpg',
+          key: 'photo.jpg',
+          size: 204800,
+          source: 'manual' as const,
+        },
+      ],
+    }
+
+    describe('saveImages', () => {
+      it('should save images when vendor belongs to the wedding', async () => {
+        mockBelongsToWeddingFn.mockResolvedValue(true)
+        mockFindByIdWithQuotesFn.mockResolvedValue({ ...mockVendorWithQuotes, images: [] })
+        mockSaveImagesFn.mockResolvedValue([mockVendorImage])
+
+        const result = await vendorService.saveImages(
+          actorContext,
+          'vendor-123',
+          'wedding-123',
+          imageInput
+        )
+
+        expect(result).toEqual([mockVendorImage])
+        expect(mockSaveImagesFn).toHaveBeenCalledWith('vendor-123', imageInput.images)
+      })
+
+      it('should throw FORBIDDEN when vendor does not belong to the wedding', async () => {
+        mockBelongsToWeddingFn.mockResolvedValue(false)
+
+        await expect(
+          vendorService.saveImages(actorContext, 'vendor-123', 'other-wedding', imageInput)
+        ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      })
+
+      it('should throw BAD_REQUEST when adding images would exceed the limit', async () => {
+        // Vendor has 3 existing, trying to add 3 more: 6 > 5
+        mockBelongsToWeddingFn.mockResolvedValue(true)
+        mockFindByIdWithQuotesFn.mockResolvedValue({
+          ...mockVendorWithQuotes,
+          images: [mockVendorImage, mockVendorImage, mockVendorImage],
+        })
+
+        const threeImages = {
+          vendorId: 'vendor-123',
+          images: [
+            {
+              name: 'a.jpg',
+              url: 'https://abc123.public.blob.vercel-storage.com/a.jpg',
+              key: 'a.jpg',
+              size: 100,
+              source: 'manual' as const,
+            },
+            {
+              name: 'b.jpg',
+              url: 'https://abc123.public.blob.vercel-storage.com/b.jpg',
+              key: 'b.jpg',
+              size: 100,
+              source: 'manual' as const,
+            },
+            {
+              name: 'c.jpg',
+              url: 'https://abc123.public.blob.vercel-storage.com/c.jpg',
+              key: 'c.jpg',
+              size: 100,
+              source: 'manual' as const,
+            },
+          ],
+        }
+
+        await expect(
+          vendorService.saveImages(actorContext, 'vendor-123', 'wedding-123', threeImages)
+        ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+
+        expect(mockSaveImagesFn).not.toHaveBeenCalled()
+      })
+
+      it('should succeed when adding images reaches exactly the limit', async () => {
+        // Vendor has 3 existing, trying to add 2 more: 5 = max
+        mockBelongsToWeddingFn.mockResolvedValue(true)
+        mockFindByIdWithQuotesFn.mockResolvedValue({
+          ...mockVendorWithQuotes,
+          images: [mockVendorImage, mockVendorImage, mockVendorImage],
+        })
+        mockSaveImagesFn.mockResolvedValue([mockVendorImage, mockVendorImage])
+
+        const twoImages = {
+          vendorId: 'vendor-123',
+          images: [
+            {
+              name: 'a.jpg',
+              url: 'https://abc123.public.blob.vercel-storage.com/a.jpg',
+              key: 'a.jpg',
+              size: 100,
+              source: 'manual' as const,
+            },
+            {
+              name: 'b.jpg',
+              url: 'https://abc123.public.blob.vercel-storage.com/b.jpg',
+              key: 'b.jpg',
+              size: 100,
+              source: 'manual' as const,
+            },
+          ],
+        }
+
+        const result = await vendorService.saveImages(
+          actorContext,
+          'vendor-123',
+          'wedding-123',
+          twoImages
+        )
+
+        expect(result).toHaveLength(2)
+      })
+    })
+
+    describe('deleteImage', () => {
+      it('should delete image and clean up blob', async () => {
+        mockBelongsToWeddingFn.mockResolvedValue(true)
+        mockDeleteImageFn.mockResolvedValue(mockVendorImage)
+
+        const result = await vendorService.deleteImage(
+          actorContext,
+          'vendor-123',
+          'wedding-123',
+          'image-123'
+        )
+
+        expect(result).toBe('image-123')
+        expect(mockDeleteImageFn).toHaveBeenCalledWith('image-123')
+        expect(mockDel).toHaveBeenCalledWith([mockVendorImage.url])
+      })
+
+      it('should throw FORBIDDEN when vendor does not belong to the wedding', async () => {
+        mockBelongsToWeddingFn.mockResolvedValue(false)
+
+        await expect(
+          vendorService.deleteImage(actorContext, 'vendor-123', 'other-wedding', 'image-123')
+        ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      })
+    })
+
+    describe('setCoverImage', () => {
+      it('should set cover image for vendor the couple owns', async () => {
+        const updatedImage = { ...mockVendorImage, isPrimary: true }
+        mockBelongsToWeddingFn.mockResolvedValue(true)
+        mockSetCoverImageFn.mockResolvedValue(updatedImage)
+
+        const result = await vendorService.setCoverImage(
+          actorContext,
+          'vendor-123',
+          'wedding-123',
+          'image-123'
+        )
+
+        expect(result.isPrimary).toBe(true)
+        expect(mockSetCoverImageFn).toHaveBeenCalledWith('vendor-123', 'image-123')
+      })
+
+      it('should throw FORBIDDEN when vendor does not belong to the wedding', async () => {
+        mockBelongsToWeddingFn.mockResolvedValue(false)
+
+        await expect(
+          vendorService.setCoverImage(actorContext, 'vendor-123', 'other-wedding', 'image-123')
+        ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      })
+    })
+
+    describe('fetchWebsiteImages', () => {
+      it('should return candidate image URLs for vendor with a website URL', async () => {
+        const candidateUrls = ['https://alicephotos.com/og.jpg', 'https://alicephotos.com/hero.jpg']
+        mockBelongsToWeddingFn.mockResolvedValue(true)
+        mockFindByIdWithQuotesFn.mockResolvedValue(mockVendorWithQuotes)
+        mockFetchWebsiteImages.mockResolvedValue(candidateUrls)
+
+        const result = await vendorService.fetchVendorWebsiteImages(
+          actorContext,
+          'vendor-123',
+          'wedding-123'
+        )
+
+        expect(result).toEqual(candidateUrls)
+        expect(mockFetchWebsiteImages).toHaveBeenCalledWith(mockVendor.website)
+      })
+
+      it('should throw BAD_REQUEST when vendor has no website URL', async () => {
+        mockBelongsToWeddingFn.mockResolvedValue(true)
+        mockFindByIdWithQuotesFn.mockResolvedValue({
+          ...mockVendorWithQuotes,
+          website: null,
+        })
+
+        await expect(
+          vendorService.fetchVendorWebsiteImages(actorContext, 'vendor-123', 'wedding-123')
+        ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+
+        expect(mockFetchWebsiteImages).not.toHaveBeenCalled()
+      })
+
+      it('should throw FORBIDDEN when vendor does not belong to the wedding', async () => {
+        mockBelongsToWeddingFn.mockResolvedValue(false)
+
+        await expect(
+          vendorService.fetchVendorWebsiteImages(actorContext, 'vendor-123', 'other-wedding')
+        ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      })
+    })
+  })
+
+  describe('setVendorRating', () => {
+    it('upserts rating for vendor in wedding scope', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(true)
+      mockSetRatingForUserFn.mockResolvedValue({
+        vendorId: 'vendor-123',
+        userId: 'actor-1',
+        stars: 5,
+      })
+
+      const result = await vendorService.setVendorRating(
+        actorContext,
+        'vendor-123',
+        'wedding-123',
+        5
+      )
+
+      expect(result).toEqual({ vendorId: 'vendor-123', userId: 'actor-1', stars: 5 })
+      expect(mockSetRatingForUserFn).toHaveBeenCalledWith('vendor-123', 'actor-1', 5)
+    })
+
+    it('throws FORBIDDEN when vendor is outside active wedding', async () => {
+      mockBelongsToWeddingFn.mockResolvedValue(false)
+
+      await expect(
+        vendorService.setVendorRating(actorContext, 'vendor-123', 'other-wedding', 5)
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      expect(mockSetRatingForUserFn).not.toHaveBeenCalled()
     })
   })
 

@@ -42,6 +42,7 @@ import {
 import { AsyncState } from '~/components/ui/async-state'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
+import { normalizePhoneToE164 } from '~/lib/phone/phone-validator'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 import { api } from '~/trpc/react'
 
@@ -188,7 +189,7 @@ export default function GuestsView({
     const primary = household.guests.find((guest) => guest.isPrimaryContact)
     return {
       email: primary?.email ?? '',
-      phone: primary?.phone ?? '',
+      phone: normalizePhoneToE164(primary?.phone) ?? '',
       address1: household.address1 ?? '',
       address2: household.address2 ?? '',
       city: household.city ?? '',
@@ -257,7 +258,9 @@ export default function GuestsView({
         firstName: guest.firstName,
         lastName: guest.lastName,
         email: guest.isPrimaryContact ? draftSnapshot.email || null : guest.email,
-        phone: guest.isPrimaryContact ? draftSnapshot.phone || null : guest.phone,
+        phone: guest.isPrimaryContact
+          ? (normalizePhoneToE164(draftSnapshot.phone) ?? null)
+          : (normalizePhoneToE164(guest.phone) ?? null),
         isPrimaryContact: guest.isPrimaryContact,
         ageGroup: guest.ageGroup ?? 'ADULT',
         isTagAlong: guest.isTagAlong ?? false,
@@ -306,7 +309,7 @@ export default function GuestsView({
                   return {
                     ...guest,
                     email: draftSnapshot.email || null,
-                    phone: draftSnapshot.phone || null,
+                    phone: normalizePhoneToE164(draftSnapshot.phone) ?? null,
                   }
                 }),
               }
@@ -349,7 +352,7 @@ export default function GuestsView({
           firstName: member.firstName,
           lastName: member.lastName,
           email: member.email,
-          phone: member.phone,
+          phone: normalizePhoneToE164(member.phone) ?? null,
           isPrimaryContact: member.isPrimaryContact,
           ageGroup: member.ageGroup,
           isTagAlong: member.isTagAlong,
@@ -376,7 +379,7 @@ export default function GuestsView({
             firstName: guest.firstName,
             lastName: guest.lastName,
             email: guest.email,
-            phone: guest.phone,
+            phone: normalizePhoneToE164(guest.phone) ?? null,
             isPrimaryContact: guest.isPrimaryContact,
             ageGroup: guest.ageGroup ?? 'ADULT',
             isTagAlong: guest.isTagAlong ?? false,

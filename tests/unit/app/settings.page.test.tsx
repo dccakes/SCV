@@ -15,6 +15,9 @@ const mockWeddingSettingsForm = jest.fn((_props: { initialData: Record<string, u
 const mockOrganizationMembersSettingsCard = jest.fn(() => (
   <div data-testid='organization-members-settings-card'>Members card</div>
 ))
+const mockOrganizationOutstandingInvitesCard = jest.fn(() => (
+  <div data-testid='organization-outstanding-invites-card'>Outstanding invites card</div>
+))
 const mockPluginsSettingsCard = jest.fn((_props: { enabledAddOns: string[] }) => (
   <div data-testid='plugins-settings-card'>Plugins card</div>
 ))
@@ -54,6 +57,11 @@ jest.mock('~/components/settings/organization-members-settings-card', () => ({
   OrganizationMembersSettingsCard: () => mockOrganizationMembersSettingsCard(),
 }))
 
+jest.mock('~/components/settings/organization-outstanding-invites-card', () => ({
+  __esModule: true,
+  OrganizationOutstandingInvitesCard: () => mockOrganizationOutstandingInvitesCard(),
+}))
+
 jest.mock('~/app/_components/settings/plugins-settings-card', () => ({
   __esModule: true,
   PluginsSettingsCard: (props: { enabledAddOns: string[] }) => mockPluginsSettingsCard(props),
@@ -75,6 +83,7 @@ describe('SettingsPage', () => {
     mockDashboardTopbar.mockClear()
     mockWeddingSettingsForm.mockClear()
     mockOrganizationMembersSettingsCard.mockClear()
+    mockOrganizationOutstandingInvitesCard.mockClear()
     mockPluginsSettingsCard.mockClear()
     mockTelegramConnectCard.mockClear()
   })
@@ -102,6 +111,8 @@ describe('SettingsPage', () => {
     expect(screen.getByTestId('wedding-settings-form')).toBeInTheDocument()
     expect(screen.getByTestId('plugins-settings-card')).toBeInTheDocument()
     expect(screen.getByTestId('organization-members-settings-card')).toBeInTheDocument()
+    expect(screen.getByTestId('organization-outstanding-invites-card')).toBeInTheDocument()
+    expect(screen.getByTestId('telegram-connect-card')).toBeInTheDocument()
   })
 
   it('still renders organization members when wedding details query fails', async () => {
@@ -115,5 +126,7 @@ describe('SettingsPage', () => {
     ).toBeInTheDocument()
     expect(mockWeddingSettingsForm).not.toHaveBeenCalled()
     expect(mockOrganizationMembersSettingsCard).toHaveBeenCalledTimes(1)
+    expect(mockOrganizationOutstandingInvitesCard).toHaveBeenCalledTimes(1)
+    expect(mockTelegramConnectCard).toHaveBeenCalledTimes(1)
   })
 })
