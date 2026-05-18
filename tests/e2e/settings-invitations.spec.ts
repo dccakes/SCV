@@ -24,12 +24,9 @@ async function mockOrganizationInvitationApis(
   await page.route('**/organization/get-full-organization*', async (route) => {
     await route.fulfill({
       body: JSON.stringify({
-        data: {
-          id: 'org-seed-shrek-fiona',
-          members: [],
-          name: 'Swamp Wedding',
-        },
-        error: null,
+        id: 'org-seed-shrek-fiona',
+        members: [],
+        name: 'Swamp Wedding',
       }),
       contentType: 'application/json',
       status: 200,
@@ -52,7 +49,7 @@ async function mockOrganizationInvitationApis(
     }
 
     await route.fulfill({
-      body: JSON.stringify({ data: { success }, error: null }),
+      body: JSON.stringify({ success }),
       contentType: 'application/json',
       status: 200,
     })
@@ -60,10 +57,7 @@ async function mockOrganizationInvitationApis(
 
   await page.route('**/organization/list-invitations*', async (route) => {
     await route.fulfill({
-      body: JSON.stringify({
-        data: options.invitations,
-        error: null,
-      }),
+      body: JSON.stringify(options.invitations),
       contentType: 'application/json',
       status: 200,
     })
@@ -72,10 +66,7 @@ async function mockOrganizationInvitationApis(
   await page.route('**/organization/invite-member*', async (route, request) => {
     options.onInviteMember?.(request.postDataJSON())
     await route.fulfill({
-      body: JSON.stringify({
-        data: { id: 'invite-pending' },
-        error: null,
-      }),
+      body: JSON.stringify({ id: 'invite-pending' }),
       contentType: 'application/json',
       status: 200,
     })
@@ -84,10 +75,7 @@ async function mockOrganizationInvitationApis(
   await page.route('**/organization/cancel-invitation*', async (route, request) => {
     options.onCancelInvitation?.(request.postDataJSON())
     await route.fulfill({
-      body: JSON.stringify({
-        data: { id: 'invite-pending', status: 'canceled' },
-        error: null,
-      }),
+      body: JSON.stringify({ id: 'invite-pending', status: 'canceled' }),
       contentType: 'application/json',
       status: 200,
     })
