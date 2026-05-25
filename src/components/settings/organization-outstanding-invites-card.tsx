@@ -78,7 +78,7 @@ async function authPost<T>(
 }
 
 async function fetchOutstandingInvitesState(): Promise<
-  Omit<OutstandingInvitesState, 'error' | 'isLoading'>
+  Omit<OutstandingInvitesState, 'error' | 'isLoading' | 'hasLoaded'>
 > {
   const organization = await authGet<FullOrganizationResponse>(
     '/organization/get-full-organization',
