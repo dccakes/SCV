@@ -13,7 +13,7 @@ describe('createEventSchema', () => {
   it('should validate a valid event creation input', () => {
     const validInput = {
       eventName: 'Wedding Ceremony',
-      date: '2026-06-15',
+      date: '2030-06-15',
       startTime: '14:00',
       endTime: '16:00',
       venue: 'Beautiful Garden',
@@ -126,7 +126,7 @@ describe('updateEventSchema', () => {
     const validInput = {
       eventId: 'event-123',
       eventName: 'Updated Event Name',
-      date: '2026-06-16',
+      date: '2030-06-16',
       startTime: '15:00',
       endTime: '17:00',
       venue: 'New Venue',

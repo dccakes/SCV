@@ -242,7 +242,10 @@ export function OrganizationOutstandingInvitesCard() {
   }
 
   return (
-    <div className='rounded-xl border border-border/90 bg-card/85 p-1'>
+    <div
+      className='rounded-xl border border-border/90 bg-card/85 p-1'
+      data-testid='outstanding-invites-card'
+    >
       <Card className='border-0 bg-transparent shadow-none'>
         <CardHeader className='pb-2'>
           <div className='flex items-start justify-between gap-3'>

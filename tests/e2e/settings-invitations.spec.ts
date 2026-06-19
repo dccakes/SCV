@@ -118,8 +118,9 @@ test.describe('Settings Outstanding Invites', () => {
 
     await page.goto('/settings')
     await expect(page.getByText('Outstanding Invites')).toBeVisible()
-    await expect(page.getByText('pending@example.com')).toBeVisible()
-    await expect(page.getByText('accepted@example.com')).toHaveCount(0)
+    const outstandingInvitesCard = page.getByTestId('outstanding-invites-card')
+    await expect(outstandingInvitesCard.getByText('pending@example.com')).toBeVisible()
+    await expect(outstandingInvitesCard.getByText('accepted@example.com')).toHaveCount(0)
 
     await page.getByRole('button', { name: 'Resend' }).click()
     await expect.poll(() => inviteMemberBody).not.toBeNull()
