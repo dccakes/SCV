@@ -23,7 +23,13 @@ const isPublicWebsitePath = (pathname: string): boolean => {
   if (segments.length === 0) {
     return false
   }
-  if (segments.length > 2 || (segments.length === 2 && segments[1] !== 'rsvp')) {
+  const [, childSegment] = segments
+  const isAllowedChildPath =
+    segments.length === 1 ||
+    (segments.length === 2 && ['invite', 'rsvp'].includes(childSegment ?? '')) ||
+    (segments.length === 3 && childSegment === 'invite')
+
+  if (!isAllowedChildPath) {
     return false
   }
 

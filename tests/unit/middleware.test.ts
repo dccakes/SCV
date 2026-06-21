@@ -76,6 +76,8 @@ describe('middleware', () => {
       joinResponse,
       websiteResponse,
       websiteRsvpResponse,
+      websiteInviteResponse,
+      websiteInviteTokenResponse,
       authApiResponse,
       blobUploadResponse,
     ] = await Promise.all([
@@ -89,6 +91,8 @@ describe('middleware', () => {
       middleware(createRequest('/join/sample-token')),
       middleware(createRequest('/shrek-and-fiona')),
       middleware(createRequest('/shrek-and-fiona/rsvp')),
+      middleware(createRequest('/shrek-and-fiona/invite')),
+      middleware(createRequest('/shrek-and-fiona/invite/sample-token')),
       middleware(createRequest('/api/auth/session')),
       middleware(createRequest('/api/blob/upload')),
     ])
@@ -103,6 +107,8 @@ describe('middleware', () => {
     expect(joinResponse.headers.get('location')).toBeNull()
     expect(websiteResponse.headers.get('location')).toBeNull()
     expect(websiteRsvpResponse.headers.get('location')).toBeNull()
+    expect(websiteInviteResponse.headers.get('location')).toBeNull()
+    expect(websiteInviteTokenResponse.headers.get('location')).toBeNull()
     expect(authApiResponse.headers.get('location')).toBeNull()
     expect(blobUploadResponse.headers.get('location')).toBeNull()
     expect(mockGetSessionCookie).not.toHaveBeenCalled()
