@@ -1,5 +1,3 @@
-# Household Save-the-Date Invites Design
-
 ## Goal
 
 Guests receive a household-specific digital save-the-date link. Opening the link authenticates that browser for the household for one year, shows the wedding save-the-date information, and lets the household update names, contact details, and mailing address for future physical invitations. The flow does not collect RSVPs.
@@ -52,4 +50,4 @@ The save-the-date page is guest-facing, mobile-first, and styled like personal s
 
 ## Testing
 
-Unit tests cover token creation/verification and the public update service scope checks. Page tests cover cookie-setting behavior and authenticated rendering. The focused verification commands are the relevant Jest tests plus `npm run check`.
+Unit tests cover token creation/verification and the public update service scope checks. Page tests cover cookie-setting behavior and authenticated rendering. Focused verification includes the relevant Jest tests plus `npm run check`.
