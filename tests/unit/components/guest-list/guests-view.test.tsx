@@ -138,6 +138,14 @@ jest.mock('~/trpc/react', () => ({
         }),
       },
     },
+    householdInvite: {
+      generateLink: {
+        useMutation: () => ({
+          mutateAsync: jest.fn().mockResolvedValue({ url: 'http://localhost:3000/invite/token' }),
+          isPending: false,
+        }),
+      },
+    },
   },
 }))
 
