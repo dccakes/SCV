@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 
 import { Button } from '~/components/ui/button'
 import { InvalidHouseholdInvite } from '~/components/website/household-invite/invalid-household-invite'
@@ -34,6 +35,7 @@ export default async function HouseholdInvitePage({
 }: HouseholdInvitePageProps) {
   const { websiteSubUrl } = await params
   const resolvedSearchParams = await searchParams
+  const t = await getTranslations('invite')
   const cookieStore = await cookies()
   const token = cookieStore.get(getCookieName(websiteSubUrl))?.value
   const inviteData = await householdInviteService.getInviteData(websiteSubUrl, token)
@@ -47,25 +49,25 @@ export default async function HouseholdInvitePage({
       <section className='mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-3xl flex-col justify-center'>
         {resolvedSearchParams?.updated === '1' && (
           <p className='mb-8 border border-success/30 bg-success/10 px-4 py-3 font-mono text-success text-xs uppercase tracking-wider'>
-            Your details were updated.
+            {t('detailsUpdated')}
           </p>
         )}
 
         <p className='mb-5 font-mono text-muted-foreground text-xs uppercase tracking-[0.28em]'>
-          Save the date
+          {t('saveTheDate')}
         </p>
         <h1 className='font-display text-6xl italic leading-none md:text-8xl'>{coupleNames}</h1>
 
         <div className='mt-10 grid gap-6 border-border border-y py-8 md:grid-cols-2'>
           <div>
             <p className='font-mono text-muted-foreground text-xs uppercase tracking-[0.22em]'>
-              Date
+              {t('date')}
             </p>
             <p className='mt-2 font-serif text-2xl'>May 30, 2027</p>
           </div>
           <div>
             <p className='font-mono text-muted-foreground text-xs uppercase tracking-[0.22em]'>
-              Location
+              {t('location')}
             </p>
             <p className='mt-2 font-serif text-2xl'>Puebla, Mexico</p>
           </div>
@@ -73,7 +75,7 @@ export default async function HouseholdInvitePage({
 
         <div className='mt-8'>
           <p className='font-mono text-muted-foreground text-xs uppercase tracking-[0.22em]'>
-            Invited household
+            {t('invitedHousehold')}
           </p>
           <ul className='mt-3 space-y-2 font-serif text-xl'>
             {inviteData.guests.map((guest) => (
@@ -83,13 +85,12 @@ export default async function HouseholdInvitePage({
         </div>
 
         <p className='mt-8 max-w-xl font-sans text-muted-foreground leading-7'>
-          Formal invitation details will follow. For now, please make sure we have the correct names
-          and mailing address for your household.
+          {t('formalInvitationNote')}
         </p>
 
         <div className='mt-10'>
           <Button asChild>
-            <Link href={`/${websiteSubUrl}/invite/update`}>Update our details</Link>
+            <Link href={`/${websiteSubUrl}/invite/update`}>{t('updateDetails')}</Link>
           </Button>
         </div>
       </section>

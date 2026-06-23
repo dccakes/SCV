@@ -34,6 +34,21 @@ jest.mock('~/server/application/household-invite', () => ({
   },
 }))
 
+const inviteTranslations: Record<string, string> = {
+  saveTheDate: 'Save the date',
+  detailsUpdated: 'Your details were updated.',
+  date: 'Date',
+  location: 'Location',
+  invitedHousehold: 'Invited household',
+  formalInvitationNote:
+    'Formal invitation details will follow. For now, please make sure we have the correct names and mailing address for your household.',
+  updateDetails: 'Update our details',
+}
+
+jest.mock('next-intl/server', () => ({
+  getTranslations: () => Promise.resolve((key: string) => inviteTranslations[key] ?? key),
+}))
+
 const inviteData = {
   weddingId: 'wedding-123',
   expiresAt: new Date('2027-06-18T12:00:00.000Z'),
