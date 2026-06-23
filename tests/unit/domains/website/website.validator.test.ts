@@ -61,6 +61,49 @@ describe('createWebsiteSchema', () => {
     const result = createWebsiteSchema.safeParse(invalidInput)
     expect(result.success).toBe(false)
   })
+
+  it('should allow an optional custom subUrl', () => {
+    const result = createWebsiteSchema.safeParse({
+      basePath: 'https://example.com',
+      email: 'john@example.com',
+      subUrl: 'hollyanddiego',
+    })
+
+    expect(result.success).toBe(true)
+    expect(result.data?.subUrl).toBe('hollyanddiego')
+  })
+
+  it('should lowercase a custom subUrl', () => {
+    const result = createWebsiteSchema.safeParse({
+      basePath: 'https://example.com',
+      email: 'john@example.com',
+      subUrl: 'HollyAndDiego',
+    })
+
+    expect(result.success).toBe(true)
+    expect(result.data?.subUrl).toBe('hollyanddiego')
+  })
+
+  it('should allow dashes in a custom subUrl', () => {
+    const result = createWebsiteSchema.safeParse({
+      basePath: 'https://example.com',
+      email: 'john@example.com',
+      subUrl: 'holly-and-diego',
+    })
+
+    expect(result.success).toBe(true)
+    expect(result.data?.subUrl).toBe('holly-and-diego')
+  })
+
+  it('should reject a subUrl with special characters', () => {
+    const result = createWebsiteSchema.safeParse({
+      basePath: 'https://example.com',
+      email: 'john@example.com',
+      subUrl: 'holly & diego',
+    })
+
+    expect(result.success).toBe(false)
+  })
 })
 
 describe('updateWebsiteSchema', () => {

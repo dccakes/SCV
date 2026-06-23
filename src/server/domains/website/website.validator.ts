@@ -13,6 +13,11 @@ import { z } from 'zod'
 export const createWebsiteSchema = z.object({
   basePath: z.string().min(1, 'Base path is required'),
   email: z.string().email('Valid email is required'),
+  subUrl: z
+    .string()
+    .regex(/^[\w-]+$/, 'URL can only contain letters, numbers, dashes, and underscores')
+    .transform((value) => value.toLowerCase())
+    .optional(),
 })
 
 /**
@@ -50,7 +55,10 @@ export const updateWebsiteSchema = z
     isPasswordEnabled: z.boolean().optional(),
     password: z.string().optional(),
     basePath: z.string().optional(),
-    subUrl: z.string().regex(/^\w+$/, 'URL should not contain any special characters!').optional(),
+    subUrl: z
+      .string()
+      .regex(/^[\w-]+$/, 'URL can only contain letters, numbers, dashes, and underscores')
+      .optional(),
   })
   .refine(
     (data) =>

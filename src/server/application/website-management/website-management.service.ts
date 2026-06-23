@@ -2,6 +2,7 @@ import { TRPCClientError } from '@trpc/client'
 import { TRPCError } from '@trpc/server'
 
 import { calculateDaysRemaining, formatDateNumber } from '~/app/utils/helpers'
+import { deriveWeddingSubUrl } from '~/lib/website-slug'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { EventRepository } from '~/server/domains/event/event.repository'
@@ -40,7 +41,7 @@ export class WebsiteManagementService {
     }
 
     const subUrl =
-      `${wedding.groomFirstName}${wedding.groomLastName}and${wedding.brideFirstName}${wedding.brideLastName}`.toLowerCase()
+      data.subUrl && data.subUrl.length > 0 ? data.subUrl : deriveWeddingSubUrl(wedding)
     const url = `${data.basePath}/${subUrl}`
 
     const existingWebsite = await this.websiteRepository.findBySubUrl(subUrl)
