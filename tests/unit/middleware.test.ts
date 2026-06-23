@@ -4,14 +4,17 @@ const mockRedirect = jest.fn((url: URL) => ({
   headers: new Headers({ location: url.toString() }),
 }))
 
-const mockNext = jest.fn(() => ({
+const mockNextResponse = {
   headers: new Headers(),
-}))
+  cookies: { set: jest.fn() },
+}
+
+const mockNext = jest.fn(() => mockNextResponse)
 
 jest.mock('next/server', () => ({
   NextResponse: {
     redirect: (url: URL) => mockRedirect(url),
-    next: () => mockNext(),
+    next: (...args: unknown[]) => mockNext(...args),
   },
 }))
 
@@ -34,6 +37,9 @@ const createRequest = (pathname: string, sessionToken?: string, search = ''): Ne
     url,
     headers,
     nextUrl: { pathname, search },
+    cookies: {
+      get: jest.fn().mockReturnValue(undefined),
+    },
   } as unknown as NextRequest
 }
 
@@ -120,7 +126,6 @@ describe('middleware', () => {
 
     expect(response.headers.get('location')).toBeNull()
     expect(mockNext).toHaveBeenCalledTimes(1)
-    expect(mockNext).toHaveBeenCalledWith()
   })
 
   it('protects non-public routes by default', async () => {

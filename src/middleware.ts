@@ -1,6 +1,7 @@
 import { getSessionCookie } from 'better-auth/cookies'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
+import { getLocaleFromCountry, type Locale } from '~/lib/locale/locale-detection'
 
 const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/join', '/blog', '/api/webhooks', '/api/cron']
 const PUBLIC_EXACT_PATHS = ['/', '/api/blob/upload', '/pricing', '/open-source']
@@ -54,11 +55,31 @@ const isPublicPath = (pathname: string): boolean =>
   PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)) ||
   isPublicWebsitePath(pathname)
 
+function buildLocaleResponse(req: NextRequest, locale: Locale): NextResponse {
+  const response = NextResponse.next({
+    request: {
+      headers: new Headers({
+        ...Object.fromEntries(req.headers.entries()),
+        'X-Locale': locale,
+      }),
+    },
+  })
+  response.cookies.set('locale', locale, { path: '/', maxAge: 60 * 60 * 24 * 365 })
+  return response
+}
+
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname
 
+  // Resolve locale (must be first)
+  const langOverride = req.cookies.get('lang-override')?.value
+  const locale: Locale =
+    langOverride === 'en' || langOverride === 'es'
+      ? langOverride
+      : getLocaleFromCountry(req.headers.get('x-vercel-ip-country'))
+
   if (isPublicPath(pathname)) {
-    return NextResponse.next()
+    return buildLocaleResponse(req, locale)
   }
 
   // Check for session token using Better Auth's utility (handles cookie prefixes)
@@ -71,7 +92,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  return NextResponse.next()
+  return buildLocaleResponse(req, locale)
 }
 
 export const config = {
