@@ -105,7 +105,26 @@ describe('WebsiteManager', () => {
     expect(mockCreateMutate).toHaveBeenCalledWith(expect.objectContaining({ subUrl: 'ourbigday' }))
   })
 
-  it('disables publishing when the slug is invalid', () => {
+  it('publishes with a dashed custom slug', () => {
+    render(
+      <WebsiteManager
+        initialWebsite={null}
+        userEmail='couple@example.com'
+        defaultSubUrl='janeandjohn'
+      />
+    )
+
+    fireEvent.change(screen.getByLabelText(/website address/i), {
+      target: { value: 'jane-and-john' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /publish website/i }))
+
+    expect(mockCreateMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ subUrl: 'jane-and-john' })
+    )
+  })
+
+  it('disables publishing and shows a prominent error when the slug is invalid', () => {
     render(
       <WebsiteManager
         initialWebsite={null}
@@ -118,6 +137,7 @@ describe('WebsiteManager', () => {
       target: { value: 'jane & john' },
     })
 
+    expect(screen.getByRole('alert')).toHaveTextContent(/letters, numbers, dashes/i)
     expect(screen.getByRole('button', { name: /publish website/i })).toBeDisabled()
     fireEvent.click(screen.getByRole('button', { name: /publish website/i }))
     expect(mockCreateMutate).not.toHaveBeenCalled()

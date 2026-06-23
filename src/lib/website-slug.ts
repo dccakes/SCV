@@ -6,7 +6,7 @@
  * format stay in sync.
  */
 
-export const WEDDING_SUBURL_PATTERN = /^\w+$/
+export const WEDDING_SUBURL_PATTERN = /^[\w-]+$/
 
 export type CoupleNames = {
   groomFirstName: string
@@ -23,7 +23,7 @@ export type CoupleNames = {
 export function deriveWeddingSubUrl(names: CoupleNames): string {
   return `${names.groomFirstName}${names.groomLastName}and${names.brideFirstName}${names.brideLastName}`
     .toLowerCase()
-    .replace(/[^a-z0-9_]/g, '')
+    .replace(/[^a-z0-9_-]/g, '')
 }
 
 export function isValidWeddingSubUrl(subUrl: string): boolean {

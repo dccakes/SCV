@@ -1,6 +1,6 @@
 'use client'
 
-import { Check, Copy, ExternalLink } from 'lucide-react'
+import { AlertCircle, Check, Copy, ExternalLink } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -122,7 +122,13 @@ export function WebsiteManager({ initialWebsite, userEmail, defaultSubUrl }: Web
         <Label htmlFor='website-suburl' className='font-medium text-foreground text-sm'>
           Website address
         </Label>
-        <div className='flex items-center overflow-hidden rounded-[4px] border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2'>
+        <div
+          className={`flex items-center overflow-hidden rounded-[4px] border bg-background focus-within:ring-2 focus-within:ring-offset-2 ${
+            isSubUrlValid
+              ? 'border-input focus-within:ring-ring'
+              : 'border-destructive focus-within:ring-destructive'
+          }`}
+        >
           <span className='whitespace-nowrap border-input border-r bg-muted/40 px-3 py-2 font-mono text-foreground/55 text-xs'>
             {previewHost}/
           </span>
@@ -132,14 +138,28 @@ export function WebsiteManager({ initialWebsite, userEmail, defaultSubUrl }: Web
             onChange={(event) => setSubUrl(event.target.value)}
             placeholder={defaultSubUrl}
             aria-invalid={!isSubUrlValid}
+            aria-describedby='website-suburl-hint'
             className='border-0 font-mono text-xs focus-visible:ring-0 focus-visible:ring-offset-0'
           />
         </div>
-        <p className='font-mono text-[0.58rem] text-foreground/50 tracking-wider'>
-          {isSubUrlValid
-            ? 'Letters, numbers, and underscores only. You can change this later in settings.'
-            : 'Use letters, numbers, and underscores only — no spaces or special characters.'}
-        </p>
+        {isSubUrlValid ? (
+          <p
+            id='website-suburl-hint'
+            className='font-mono text-[0.58rem] text-foreground/50 tracking-wider'
+          >
+            Letters, numbers, dashes, and underscores only. You can change this later in settings.
+          </p>
+        ) : (
+          <p
+            id='website-suburl-hint'
+            role='alert'
+            className='flex items-center gap-1.5 rounded-sm border border-destructive/40 bg-destructive/10 px-2.5 py-1.5 font-medium text-destructive text-xs'
+          >
+            <AlertCircle className='h-3.5 w-3.5 shrink-0' aria-hidden='true' />
+            Use letters, numbers, dashes, and underscores only — no spaces or other special
+            characters.
+          </p>
+        )}
       </div>
 
       <div className='mt-4'>
