@@ -3,6 +3,7 @@
 // to avoid circular module dependencies that cause TDZ errors in the compiled bundle.
 import { createTRPCRouter } from '~/server/api/trpc'
 import { dashboardRouter } from '~/server/application/dashboard/dashboard.router'
+import { householdInviteRouter } from '~/server/application/household-invite'
 import { rsvpSubmissionRouter } from '~/server/application/rsvp-submission/rsvp-submission.router'
 import { selfFillRegistrationService } from '~/server/application/self-fill-registration'
 import { communicationLogRouter } from '~/server/domains/communication-log/communication-log.router'
@@ -56,6 +57,7 @@ export const appRouter = createTRPCRouter({
   // Phase 4 application services (migrated)
   dashboard: dashboardRouter,
   rsvpSubmission: rsvpSubmissionRouter,
+  householdInvite: householdInviteRouter,
 
   // Phase 5 add-on domains
   vendor: vendorRouter,

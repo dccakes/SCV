@@ -1,21 +1,50 @@
 import { getSessionCookie } from 'better-auth/cookies'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
-import { reservedWebsiteRootSegmentsSet } from '~/lib/website/reserved-root-segments'
 
 const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/join', '/blog', '/api/webhooks', '/api/cron']
 const PUBLIC_EXACT_PATHS = ['/', '/api/blob/upload', '/pricing', '/open-source']
+const RESERVED_ROOT_SEGMENTS = new Set([
+  '',
+  'api',
+  'auth',
+  'dashboard',
+  'design-system',
+  'events',
+  'guest-list',
+  'join',
+  'old_dashboard',
+  'settings',
+  'vendors',
+  'w',
+  'website',
+])
 
 const isReservedSlug = (slug: string): boolean =>
-  reservedWebsiteRootSegmentsSet.has(slug) || slug.startsWith('auth') || slug.startsWith('join')
+  RESERVED_ROOT_SEGMENTS.has(slug) || slug.startsWith('auth') || slug.startsWith('join')
 
 const isPublicWebsitePath = (pathname: string): boolean => {
   const segments = pathname.split('/').filter(Boolean)
-  if (segments.length < 2) return false
-  if (segments[0] !== 'w') return false
-  if (segments.length > 3 || (segments.length === 3 && segments[2] !== 'rsvp')) return false
-  const slug = segments[1]
-  return !!slug && !isReservedSlug(slug)
+
+  // /w/[slug] and /w/[slug]/rsvp (wedding website viewer)
+  if (segments[0] === 'w') {
+    if (segments.length < 2) return false
+    const slug = segments[1]
+    if (!slug || isReservedSlug(slug)) return false
+    if (segments.length === 2) return true
+    if (segments.length === 3 && segments[2] === 'rsvp') return true
+    return false
+  }
+
+  // Root-level invite paths: /[slug]/invite and /[slug]/invite/[token]
+  if (segments.length === 0) return false
+  const [rootSegment, childSegment] = segments
+  if (!rootSegment || isReservedSlug(rootSegment)) return false
+
+  return (
+    (segments.length === 2 && childSegment === 'invite') ||
+    (segments.length === 3 && childSegment === 'invite')
+  )
 }
 
 const isPublicPath = (pathname: string): boolean =>
