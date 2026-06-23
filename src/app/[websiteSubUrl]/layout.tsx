@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getMessages } from 'next-intl/server'
 
 import DefaultBanner from '~/components/images/default-banner.jpg'
+import { LocaleToggle } from '~/components/locale-toggle'
 
 export default async function WeddingWebsiteLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale()
@@ -19,6 +20,9 @@ export default async function WeddingWebsiteLayout({ children }: { children: Rea
           sizes='100vw'
           className='object-cover'
         />
+      </div>
+      <div className='absolute top-4 right-4 z-10'>
+        <LocaleToggle />
       </div>
       {children}
     </NextIntlClientProvider>
