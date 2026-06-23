@@ -96,7 +96,10 @@ describe('WebsiteManagementService', () => {
       mockFindBySubUrlFn.mockResolvedValue(null)
       mockUpsertWebsiteByWeddingIdFn.mockResolvedValue(mockWebsite)
 
-      const result = await service.enableWebsite(actorContext, 'wedding-123')
+      const result = await service.enableWebsite(actorContext, 'wedding-123', {
+        basePath: 'https://example.com',
+        email: 'john@example.com',
+      })
 
       expect(result).toEqual(mockWebsite)
       expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { website: ['publish'] })
@@ -106,13 +109,33 @@ describe('WebsiteManagementService', () => {
       })
     })
 
+    it('creates website with a custom subUrl when provided', async () => {
+      mockFindWeddingByIdFn.mockResolvedValue(mockWedding)
+      mockFindBySubUrlFn.mockResolvedValue(null)
+      mockUpsertWebsiteByWeddingIdFn.mockResolvedValue(mockWebsite)
+
+      await service.enableWebsite(actorContext, 'wedding-123', {
+        basePath: 'https://example.com',
+        email: 'john@example.com',
+        subUrl: 'hollyanddiego',
+      })
+
+      expect(mockUpsertWebsiteByWeddingIdFn).toHaveBeenCalledWith({
+        weddingId: 'wedding-123',
+        subUrl: 'hollyanddiego',
+      })
+    })
+
     it('returns the existing website when a concurrent upsert already created it', async () => {
       mockFindWeddingByIdFn.mockResolvedValue(mockWedding)
       mockFindBySubUrlFn.mockResolvedValue(null)
       mockUpsertWebsiteByWeddingIdFn.mockRejectedValue({ code: 'P2002' })
       mockFindWebsiteByWeddingIdFn.mockResolvedValue(mockWebsite)
 
-      const result = await service.enableWebsite(actorContext, 'wedding-123')
+      const result = await service.enableWebsite(actorContext, 'wedding-123', {
+        basePath: 'https://example.com',
+        email: 'john@example.com',
+      })
 
       expect(result).toEqual(mockWebsite)
       expect(mockFindWebsiteByWeddingIdFn).toHaveBeenCalledWith('wedding-123')
@@ -121,7 +144,12 @@ describe('WebsiteManagementService', () => {
     it('fails when wedding does not exist', async () => {
       mockFindWeddingByIdFn.mockResolvedValue(null)
 
-      await expect(service.enableWebsite(actorContext, 'wedding-123')).rejects.toMatchObject({
+      await expect(
+        service.enableWebsite(actorContext, 'wedding-123', {
+          basePath: 'https://example.com',
+          email: 'john@example.com',
+        })
+      ).rejects.toMatchObject({
         code: 'NOT_FOUND',
       })
 
@@ -135,7 +163,12 @@ describe('WebsiteManagementService', () => {
         weddingId: 'different-wedding',
       })
 
-      await expect(service.enableWebsite(actorContext, 'wedding-123')).rejects.toMatchObject({
+      await expect(
+        service.enableWebsite(actorContext, 'wedding-123', {
+          basePath: 'https://example.com',
+          email: 'john@example.com',
+        })
+      ).rejects.toMatchObject({
         code: 'CONFLICT',
       })
 
@@ -148,7 +181,12 @@ describe('WebsiteManagementService', () => {
       mockUpsertWebsiteByWeddingIdFn.mockRejectedValue({ code: 'P2002' })
       mockFindWebsiteByWeddingIdFn.mockResolvedValue(null)
 
-      await expect(service.enableWebsite(actorContext, 'wedding-123')).rejects.toMatchObject({
+      await expect(
+        service.enableWebsite(actorContext, 'wedding-123', {
+          basePath: 'https://example.com',
+          email: 'john@example.com',
+        })
+      ).rejects.toMatchObject({
         code: 'CONFLICT',
       })
     })

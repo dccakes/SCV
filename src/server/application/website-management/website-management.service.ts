@@ -1,11 +1,13 @@
 import { TRPCError } from '@trpc/server'
 
 import { calculateDaysRemaining, formatDateNumber } from '~/app/utils/helpers'
+import { deriveWeddingSubUrl } from '~/lib/website-slug'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { EventRepository } from '~/server/domains/event/event.repository'
 import type { WebsiteRepository } from '~/server/domains/website/website.repository'
 import type {
+  CreateWebsiteInput,
   PublicWebsiteWithQuestions,
   Website,
   WebsiteWithQuestions,
@@ -29,7 +31,11 @@ export class WebsiteManagementService {
     >
   ) {}
 
-  async enableWebsite(ctx: AuthzContext, weddingId: string): Promise<Website> {
+  async enableWebsite(
+    ctx: AuthzContext,
+    weddingId: string,
+    data: CreateWebsiteInput
+  ): Promise<Website> {
     requirePermission(ctx, { website: ['publish'] })
 
     const wedding = await this.weddingRepository.findById(weddingId)
@@ -41,17 +47,18 @@ export class WebsiteManagementService {
     }
 
     const subUrl =
-      `${wedding.groomFirstName}${wedding.groomLastName}and${wedding.brideFirstName}${wedding.brideLastName}`.toLowerCase()
-    const existingSubUrlWebsite = await this.websiteRepository.findBySubUrl(subUrl)
-    if (existingSubUrlWebsite && existingSubUrlWebsite.weddingId !== weddingId) {
+      data.subUrl && data.subUrl.length > 0 ? data.subUrl : deriveWeddingSubUrl(wedding)
+
+    const existingWebsite = await this.websiteRepository.findBySubUrl(subUrl)
+    if (existingWebsite && existingWebsite.weddingId !== weddingId) {
       throw new TRPCError({
         code: 'CONFLICT',
         message: 'This URL is already taken',
       })
     }
 
-    if (existingSubUrlWebsite) {
-      return existingSubUrlWebsite
+    if (existingWebsite) {
+      return existingWebsite
     }
 
     try {

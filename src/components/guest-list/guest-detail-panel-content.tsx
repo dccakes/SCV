@@ -135,6 +135,8 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false)
   const [copiedInviteLink, setCopiedInviteLink] = useState(false)
   const generateHouseholdInviteLink = api.householdInvite.generateLink.useMutation()
+  const { data: website } = api.website.getByUserId.useQuery()
+  const isWebsiteMissing = website === null
   const partyMembers = selectedHousehold.guests.map((guest) => ({
     id: guest.id,
     firstName: guest.firstName,
@@ -169,8 +171,12 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
       toast.success(copied ? 'Save-the-date link copied' : 'Save-the-date link ready to copy', {
         description: copied ? undefined : result.url,
       })
-    } catch {
-      toast.error('Failed to copy save-the-date link')
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : 'Failed to copy save-the-date link'
+      toast.error(message)
     }
   }
 
@@ -261,7 +267,7 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
             <button
               type='button'
               onClick={handleCopyHouseholdInviteLink}
-              disabled={generateHouseholdInviteLink.isPending}
+              disabled={generateHouseholdInviteLink.isPending || isWebsiteMissing}
               className='inline-flex items-center gap-1.5 rounded-md border border-border/70 px-2 py-1 font-medium text-primary text-xs hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-50'
             >
               {copiedInviteLink ? (
@@ -273,10 +279,20 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
             </button>
           }
         >
-          <p className='text-foreground/75 text-sm leading-relaxed'>
-            Share a household-specific link that opens the save-the-date and lets this party update
-            their mailing details.
-          </p>
+          {isWebsiteMissing ? (
+            <p className='text-foreground/75 text-sm leading-relaxed'>
+              Publish your wedding website first to share save-the-date links.{' '}
+              <Link href='/website' className='text-primary underline underline-offset-2'>
+                Publish your website
+              </Link>
+              .
+            </p>
+          ) : (
+            <p className='text-foreground/75 text-sm leading-relaxed'>
+              Share a household-specific link that opens the save-the-date and lets this party
+              update their mailing details.
+            </p>
+          )}
         </GuestDetailSection>
 
         <AttendanceLikelihoodSection

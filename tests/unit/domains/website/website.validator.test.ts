@@ -13,20 +13,61 @@ import {
 } from '~/server/domains/website/website.validator'
 
 describe('createWebsiteSchema', () => {
-  it('should validate an empty website creation input', () => {
-    const result = createWebsiteSchema.safeParse({})
-    expect(result.success).toBe(true)
-    expect(result.data).toEqual({})
-  })
-
-  it('should strip unknown fields from website creation input', () => {
+  it('should validate a website creation input with required fields', () => {
     const result = createWebsiteSchema.safeParse({
       basePath: 'https://example.com',
       email: 'john@example.com',
     })
+    expect(result.success).toBe(true)
+    expect(result.data).toEqual({ basePath: 'https://example.com', email: 'john@example.com' })
+  })
+
+  it('should reject an empty website creation input', () => {
+    const result = createWebsiteSchema.safeParse({})
+    expect(result.success).toBe(false)
+  })
+
+  it('should allow an optional custom subUrl', () => {
+    const result = createWebsiteSchema.safeParse({
+      basePath: 'https://example.com',
+      email: 'john@example.com',
+      subUrl: 'hollyanddiego',
+    })
 
     expect(result.success).toBe(true)
-    expect(result.data).toEqual({})
+    expect(result.data?.subUrl).toBe('hollyanddiego')
+  })
+
+  it('should lowercase a custom subUrl', () => {
+    const result = createWebsiteSchema.safeParse({
+      basePath: 'https://example.com',
+      email: 'john@example.com',
+      subUrl: 'HollyAndDiego',
+    })
+
+    expect(result.success).toBe(true)
+    expect(result.data?.subUrl).toBe('hollyanddiego')
+  })
+
+  it('should allow dashes in a custom subUrl', () => {
+    const result = createWebsiteSchema.safeParse({
+      basePath: 'https://example.com',
+      email: 'john@example.com',
+      subUrl: 'holly-and-diego',
+    })
+
+    expect(result.success).toBe(true)
+    expect(result.data?.subUrl).toBe('holly-and-diego')
+  })
+
+  it('should reject a subUrl with special characters', () => {
+    const result = createWebsiteSchema.safeParse({
+      basePath: 'https://example.com',
+      email: 'john@example.com',
+      subUrl: 'holly & diego',
+    })
+
+    expect(result.success).toBe(false)
   })
 })
 

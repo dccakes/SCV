@@ -146,6 +146,11 @@ jest.mock('~/trpc/react', () => ({
         }),
       },
     },
+    website: {
+      getByUserId: {
+        useQuery: () => ({ data: { subUrl: 'janeandjohn' } }),
+      },
+    },
   },
 }))
 

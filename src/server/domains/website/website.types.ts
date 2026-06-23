@@ -49,7 +49,9 @@ export type PublicWebsiteWithQuestions = Omit<WebsiteWithQuestions, 'password'> 
  * Note: weddingId comes from authenticated user's wedding
  */
 export type CreateWebsiteInput = {
-  [key: string]: never
+  basePath: string
+  email: string
+  subUrl?: string
 }
 
 /**

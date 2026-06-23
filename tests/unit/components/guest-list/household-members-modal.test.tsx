@@ -260,6 +260,53 @@ describe('HouseholdMembersModal', () => {
     })
   })
 
+  it('preserves edits to multiple members across re-renders and saves them all', async () => {
+    const onSave = jest.fn().mockResolvedValue(true)
+    // A fresh array reference each render, mirroring the parent recomputing
+    // `partyMembers` on every render.
+    const members = [
+      makeMember({ firstName: 'John', lastName: 'Doe', isPrimaryContact: true }),
+      makeMember({ firstName: 'Jane', lastName: 'Doe', isPrimaryContact: false }),
+    ]
+
+    const { rerender } = render(
+      <HouseholdMembersModal
+        open
+        members={members.map((member) => ({ ...member }))}
+        onOpenChange={jest.fn()}
+        onSave={onSave}
+      />
+    )
+
+    fireEvent.change(screen.getByLabelText('First name (member 1)'), {
+      target: { value: 'Jonathan' },
+    })
+
+    // Simulate a parent re-render handing down a brand-new `members` array
+    // reference (e.g. a background refetch) while the modal stays open.
+    rerender(
+      <HouseholdMembersModal
+        open
+        members={members.map((member) => ({ ...member }))}
+        onOpenChange={jest.fn()}
+        onSave={onSave}
+      />
+    )
+
+    fireEvent.change(screen.getByLabelText('First name (member 2)'), {
+      target: { value: 'Janet' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save members' }))
+
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalledWith([
+        expect.objectContaining({ firstName: 'Jonathan' }),
+        expect.objectContaining({ firstName: 'Janet' }),
+      ])
+    })
+  })
+
   it('cancel button calls onOpenChange with false', () => {
     const onOpenChange = jest.fn()
     renderModal({ onOpenChange })

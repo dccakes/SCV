@@ -18,7 +18,15 @@ const subUrlSchema = z
  * Schema for enabling website add-on
  * Note: Wedding must already exist. Couple names come from Wedding entity.
  */
-export const createWebsiteSchema = z.object({})
+export const createWebsiteSchema = z.object({
+  basePath: z.string().min(1, 'Base path is required'),
+  email: z.string().email('Valid email is required'),
+  subUrl: z
+    .string()
+    .regex(/^[\w-]+$/, 'URL can only contain letters, numbers, dashes, and underscores')
+    .transform((value) => value.toLowerCase())
+    .optional(),
+})
 
 /**
  * Schema for RSVP form submission
@@ -54,12 +62,14 @@ export const updateWebsiteSchema = z
   .object({
     isPasswordEnabled: z.boolean().optional(),
     password: z.string().optional(),
+    basePath: z.string().optional(),
     subUrl: subUrlSchema.optional(),
   })
   .refine(
     (data) =>
       data.isPasswordEnabled !== undefined ||
       data.password !== undefined ||
+      data.basePath !== undefined ||
       data.subUrl !== undefined,
     {
       message: 'At least one website setting must be provided',
