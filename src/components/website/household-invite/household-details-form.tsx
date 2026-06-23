@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
@@ -15,12 +16,13 @@ type HouseholdDetailsFormProps = {
 
 const valueOrEmpty = (value: string | null) => value ?? ''
 
-export function HouseholdDetailsForm({
+export async function HouseholdDetailsForm({
   inviteData,
   action,
   errorMessage,
   inviteHref,
-}: HouseholdDetailsFormProps) {
+}: Readonly<HouseholdDetailsFormProps>) {
+  const t = await getTranslations('household')
   return (
     <form action={action} className='mt-10 space-y-10'>
       {errorMessage ? (
@@ -31,7 +33,7 @@ export function HouseholdDetailsForm({
 
       <section className='space-y-5'>
         <h2 className='font-mono text-muted-foreground text-xs uppercase tracking-[0.22em]'>
-          Household members
+          {t('members')}
         </h2>
 
         <div className='space-y-6'>
@@ -44,7 +46,7 @@ export function HouseholdDetailsForm({
 
               <div className='mt-4 grid gap-4 md:grid-cols-2'>
                 <div className='space-y-2'>
-                  <Label htmlFor={`guest-${guest.id}-firstName`}>First name</Label>
+                  <Label htmlFor={`guest-${guest.id}-firstName`}>{t('firstName')}</Label>
                   <Input
                     id={`guest-${guest.id}-firstName`}
                     name={`guest-${guest.id}-firstName`}
@@ -53,7 +55,7 @@ export function HouseholdDetailsForm({
                   />
                 </div>
                 <div className='space-y-2'>
-                  <Label htmlFor={`guest-${guest.id}-lastName`}>Last name</Label>
+                  <Label htmlFor={`guest-${guest.id}-lastName`}>{t('lastName')}</Label>
                   <Input
                     id={`guest-${guest.id}-lastName`}
                     name={`guest-${guest.id}-lastName`}
@@ -61,7 +63,7 @@ export function HouseholdDetailsForm({
                   />
                 </div>
                 <div className='space-y-2'>
-                  <Label htmlFor={`guest-${guest.id}-email`}>Email</Label>
+                  <Label htmlFor={`guest-${guest.id}-email`}>{t('email')}</Label>
                   <Input
                     id={`guest-${guest.id}-email`}
                     name={`guest-${guest.id}-email`}
@@ -70,7 +72,7 @@ export function HouseholdDetailsForm({
                   />
                 </div>
                 <div className='space-y-2'>
-                  <Label htmlFor={`guest-${guest.id}-phone`}>Phone</Label>
+                  <Label htmlFor={`guest-${guest.id}-phone`}>{t('phone')}</Label>
                   <Input
                     id={`guest-${guest.id}-phone`}
                     name={`guest-${guest.id}-phone`}
@@ -85,12 +87,12 @@ export function HouseholdDetailsForm({
 
       <section className='space-y-5'>
         <h2 className='font-mono text-muted-foreground text-xs uppercase tracking-[0.22em]'>
-          Mailing address
+          {t('mailingAddress')}
         </h2>
 
         <div className='grid gap-4'>
           <div className='space-y-2'>
-            <Label htmlFor='address1'>Street address</Label>
+            <Label htmlFor='address1'>{t('streetAddress')}</Label>
             <Input
               id='address1'
               name='address1'
@@ -98,7 +100,7 @@ export function HouseholdDetailsForm({
             />
           </div>
           <div className='space-y-2'>
-            <Label htmlFor='address2'>Apt, suite, or other</Label>
+            <Label htmlFor='address2'>{t('aptSuite')}</Label>
             <Input
               id='address2'
               name='address2'
@@ -107,11 +109,11 @@ export function HouseholdDetailsForm({
           </div>
           <div className='grid gap-4 md:grid-cols-2'>
             <div className='space-y-2'>
-              <Label htmlFor='city'>City</Label>
+              <Label htmlFor='city'>{t('city')}</Label>
               <Input id='city' name='city' defaultValue={valueOrEmpty(inviteData.household.city)} />
             </div>
             <div className='space-y-2'>
-              <Label htmlFor='state'>State / province</Label>
+              <Label htmlFor='state'>{t('stateProvince')}</Label>
               <Input
                 id='state'
                 name='state'
@@ -121,7 +123,7 @@ export function HouseholdDetailsForm({
           </div>
           <div className='grid gap-4 md:grid-cols-2'>
             <div className='space-y-2'>
-              <Label htmlFor='zipCode'>Postal code</Label>
+              <Label htmlFor='zipCode'>{t('postalCode')}</Label>
               <Input
                 id='zipCode'
                 name='zipCode'
@@ -129,7 +131,7 @@ export function HouseholdDetailsForm({
               />
             </div>
             <div className='space-y-2'>
-              <Label htmlFor='country'>Country</Label>
+              <Label htmlFor='country'>{t('country')}</Label>
               <Input
                 id='country'
                 name='country'
@@ -140,15 +142,12 @@ export function HouseholdDetailsForm({
         </div>
       </section>
 
-      <p className='max-w-xl text-muted-foreground text-sm leading-6'>
-        These details are only used by the couple to prepare future physical invitations for this
-        household.
-      </p>
+      <p className='max-w-xl text-muted-foreground text-sm leading-6'>{t('privacyNote')}</p>
 
       <div className='flex flex-wrap items-center gap-3'>
         <HouseholdSubmitButton />
         <Button asChild type='button' variant='outline'>
-          <Link href={inviteHref}>Back to save the date</Link>
+          <Link href={inviteHref}>{t('backToSaveTheDate')}</Link>
         </Button>
       </div>
     </form>

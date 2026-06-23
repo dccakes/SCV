@@ -43,6 +43,9 @@ const inviteTranslations: Record<string, string> = {
   formalInvitationNote:
     'Formal invitation details will follow. For now, please make sure we have the correct names and mailing address for your household.',
   updateDetails: 'Update our details',
+  couldNotOpen: 'We could not open this invitation.',
+  invalidLinkDescription:
+    'This invite link may be expired, mistyped, or opened without the original household link. Please use the save-the-date link you received, or ask the couple for a new one.',
 }
 
 jest.mock('next-intl/server', () => ({
