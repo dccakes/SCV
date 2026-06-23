@@ -40,7 +40,7 @@ export default async function HouseholdInvitePage({
   const token = cookieStore.get(getCookieName(websiteSubUrl))?.value
   const inviteData = await householdInviteService.getInviteData(websiteSubUrl, token)
 
-  if (!inviteData) return await InvalidHouseholdInvite({ websiteSubUrl })
+  if (!inviteData) return <InvalidHouseholdInvite websiteSubUrl={websiteSubUrl} />
 
   const coupleNames = `${inviteData.wedding.groomFirstName} & ${inviteData.wedding.brideFirstName}`
 

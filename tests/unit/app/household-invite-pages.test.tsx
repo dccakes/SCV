@@ -52,6 +52,18 @@ jest.mock('next-intl/server', () => ({
   getTranslations: () => Promise.resolve((key: string) => inviteTranslations[key] ?? key),
 }))
 
+jest.mock('~/components/website/household-invite/invalid-household-invite', () => ({
+  InvalidHouseholdInvite: jest.fn().mockReturnValue(
+    <div>
+      <p>We could not open this invitation.</p>
+      <p>
+        This invite link may be expired, mistyped, or opened without the original household link.
+        Please use the save-the-date link you received, or ask the couple for a new one.
+      </p>
+    </div>
+  ),
+}))
+
 const inviteData = {
   weddingId: 'wedding-123',
   expiresAt: new Date('2027-06-18T12:00:00.000Z'),
