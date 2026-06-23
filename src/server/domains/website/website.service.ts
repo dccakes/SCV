@@ -104,11 +104,7 @@ export class WebsiteService {
    * The id is validated against the template registry at the edge (validator),
    * but we guard here too so the service is safe to call directly.
    */
-  async updateTemplate(
-    ctx: AuthzContext,
-    weddingId: string,
-    templateId: string
-  ): Promise<Website> {
+  async updateTemplate(ctx: AuthzContext, weddingId: string, templateId: string): Promise<Website> {
     this.requireWebsitePermission(ctx, 'update')
 
     if (!isKnownTemplateId(templateId)) {

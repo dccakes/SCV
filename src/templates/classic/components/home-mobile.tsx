@@ -1,8 +1,9 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { formatDateStandard } from '~/app/utils/helpers'
+import { ClassicNavbar } from '~/templates/classic/components/navbar'
+import { WebsiteSections } from '~/templates/shared/website-sections'
 import type { TemplateSurfaceProps } from '~/templates/types'
-import { ClassicNavbar } from './navbar'
 
 export function ClassicHomeMobile({
   weddingData,
@@ -64,6 +65,8 @@ export function ClassicHomeMobile({
           )}
         </div>
       ))}
+
+      <WebsiteSections sections={weddingData.sections} />
 
       <ClassicNavbar path={path} isRsvpEnabled={website.isRsvpEnabled} />
 

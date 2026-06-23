@@ -100,6 +100,8 @@ export type WeddingPageData = {
   website: PublicWebsiteWithQuestions & {
     introText: string
   }
+  /** Enabled content sections (excluding HOME), ordered for display. */
+  sections: WebsiteSection[]
   daysRemaining: number
   events: Array<{
     id: string

@@ -1,8 +1,9 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { formatDateStandard } from '~/app/utils/helpers'
+import { ClassicNavbar } from '~/templates/classic/components/navbar'
+import { WebsiteSections } from '~/templates/shared/website-sections'
 import type { TemplateSurfaceProps } from '~/templates/types'
-import { ClassicNavbar } from './navbar'
 
 export function ClassicHome({ weddingData, path, introText }: Readonly<TemplateSurfaceProps>) {
   const { website } = weddingData
@@ -13,7 +14,9 @@ export function ClassicHome({ weddingData, path, introText }: Readonly<TemplateS
         <h1 className='my-5 font-medium text-6xl tracking-widest'>
           {weddingData.groomFirstName} & {weddingData.brideFirstName}
         </h1>
-        <span className='text-lg'>{weddingData.date?.standardFormat ?? 'Date To Be Announced'}</span>
+        <span className='text-lg'>
+          {weddingData.date?.standardFormat ?? 'Date To Be Announced'}
+        </span>
         {weddingData.daysRemaining > 0 && (
           <p className='text-lg'>{weddingData.daysRemaining} Days To Go!</p>
         )}
@@ -61,6 +64,8 @@ export function ClassicHome({ weddingData, path, introText }: Readonly<TemplateS
           )}
         </div>
       ))}
+
+      <WebsiteSections sections={weddingData.sections} />
 
       <div className='text-center'>
         <h2 className='border-black border-b px-5 pb-6 text-6xl'>

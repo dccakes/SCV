@@ -19,9 +19,7 @@ export function AureliaInvitation({ weddingData, path }: Readonly<TemplateSurfac
         <h1 className={`${headingFont} text-4xl text-foreground italic sm:text-5xl`}>
           {weddingData.brideFirstName} {weddingData.brideLastName}
         </h1>
-        <p className='mt-2 text-muted-foreground text-sm'>
-          request the pleasure of your company
-        </p>
+        <p className='mt-2 text-muted-foreground text-sm'>request the pleasure of your company</p>
 
         <span className='my-2 h-px w-16 bg-border' />
 

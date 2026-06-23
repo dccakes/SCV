@@ -28,6 +28,7 @@ import {
   WebsiteRepository,
 } from '~/server/domains/website/website.repository'
 import {
+  mockFindByWebsiteId,
   mockFindByWebsiteIdAndType,
   mockUpsertHomeSection,
   resetMocks as resetWebsiteSectionRepoMocks,
@@ -48,6 +49,7 @@ const mockUpsertWebsiteByWeddingIdFn = mockUpsertByWeddingId as jest.Mock
 const mockFindWeddingByIdFn = mockFindWeddingById as jest.Mock
 const mockFindByWeddingIdWithQuestionsFn = mockFindByWeddingIdWithQuestions as jest.Mock
 const mockFindWebsiteSectionByTypeFn = mockFindByWebsiteIdAndType as jest.Mock
+const mockFindWebsiteSectionsFn = mockFindByWebsiteId as jest.Mock
 const mockUpsertHomeSectionFn = mockUpsertHomeSection as jest.Mock
 
 const actorContext = {
@@ -241,14 +243,32 @@ describe('WebsiteManagementService', () => {
       mockFindBySubUrlWithQuestionsFn.mockResolvedValue(mockWebsiteWithQuestions)
       mockFindWeddingByIdFn.mockResolvedValue(mockWedding)
       mockFindByWeddingIdWithQuestionsFn.mockResolvedValue([mockEvent])
-      mockFindWebsiteSectionByTypeFn.mockResolvedValue({
-        id: 'section-123',
-        websiteId: 'website-123',
-        type: 'HOME',
-        isEnabled: true,
-        position: 0,
-        content: { introText: '' },
-      })
+      mockFindWebsiteSectionsFn.mockResolvedValue([
+        {
+          id: 'section-123',
+          websiteId: 'website-123',
+          type: 'HOME',
+          isEnabled: true,
+          position: 0,
+          content: { introText: '' },
+        },
+        {
+          id: 'section-story',
+          websiteId: 'website-123',
+          type: 'OUR_STORY',
+          isEnabled: true,
+          position: 1,
+          content: { heading: 'Our Story', body: 'We met in Rome.' },
+        },
+        {
+          id: 'section-travel-disabled',
+          websiteId: 'website-123',
+          type: 'TRAVEL',
+          isEnabled: false,
+          position: 3,
+          content: { heading: 'Travel', body: 'Hidden' },
+        },
+      ])
 
       const result = await service.fetchWeddingData('johndoeandjanesmith', undefined)
 
@@ -262,6 +282,9 @@ describe('WebsiteManagementService', () => {
       expect(result.websiteBuilderEnabled).toBe(false)
       expect(result.website).not.toHaveProperty('password')
       expect(result.events).toHaveLength(1)
+      // Only enabled, non-HOME sections are surfaced, in position order.
+      expect(result.sections).toHaveLength(1)
+      expect(result.sections[0]).toMatchObject({ type: 'OUR_STORY' })
     })
 
     it('throws when website does not exist', async () => {

@@ -1,8 +1,9 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { formatDateStandard } from '~/app/utils/helpers'
+import { AureliaNavbar } from '~/templates/aurelia/components/navbar'
+import { WebsiteSections } from '~/templates/shared/website-sections'
 import type { TemplateSurfaceProps } from '~/templates/types'
-import { AureliaNavbar } from './navbar'
 
 const headingFont = 'font-[family-name:var(--tpl-heading-font)]'
 
@@ -14,12 +15,14 @@ export function AureliaHome({ weddingData, path, introText }: Readonly<TemplateS
       <section className='relative flex w-full max-w-3xl flex-col items-center gap-8 pt-24 text-center'>
         <div
           aria-hidden
-          className='-z-10 -translate-x-1/2 absolute top-10 left-1/2 h-72 w-72 rounded-full bg-gradient-to-br from-primary/15 to-accent/15 blur-3xl'
+          className='absolute top-10 left-1/2 -z-10 h-72 w-72 -translate-x-1/2 rounded-full bg-gradient-to-br from-primary/15 to-accent/15 blur-3xl'
         />
-        <p className='text-[0.7rem] uppercase tracking-[0.45em] text-accent'>We're getting married</p>
+        <p className='text-[0.7rem] text-accent uppercase tracking-[0.45em]'>
+          We're getting married
+        </p>
         <h1 className={`${headingFont} text-6xl text-foreground italic leading-tight sm:text-7xl`}>
           {weddingData.groomFirstName}
-          <span className='mx-3 font-light not-italic text-primary'>&</span>
+          <span className='mx-3 font-light text-primary not-italic'>&</span>
           {weddingData.brideFirstName}
         </h1>
         <div className='flex items-center gap-4 text-muted-foreground'>
@@ -93,10 +96,10 @@ export function AureliaHome({ weddingData, path, introText }: Readonly<TemplateS
         </section>
       )}
 
+      <WebsiteSections sections={weddingData.sections} />
+
       <section className='flex flex-col items-center gap-3 text-center'>
-        <p
-          className={`${headingFont} text-5xl text-foreground italic`}
-        >
+        <p className={`${headingFont} text-5xl text-foreground italic`}>
           {weddingData.groomFirstName?.[0] ?? 'G'} &amp; {weddingData.brideFirstName?.[0] ?? 'B'}
         </p>
         <span className='h-px w-16 bg-border' />

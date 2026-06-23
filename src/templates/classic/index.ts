@@ -6,13 +6,13 @@
  */
 
 import { classicMeta } from '~/templates/catalog'
+import { ClassicHome } from '~/templates/classic/components/home'
+import { ClassicHomeMobile } from '~/templates/classic/components/home-mobile'
+import { ClassicInvitation } from '~/templates/classic/components/invitation'
+import { ClassicMinimal } from '~/templates/classic/components/minimal'
+import { ClassicSaveTheDate } from '~/templates/classic/components/save-the-date'
+import { classicTheme } from '~/templates/classic/theme'
 import type { WeddingTemplate } from '~/templates/types'
-import { ClassicHome } from './components/home'
-import { ClassicHomeMobile } from './components/home-mobile'
-import { ClassicInvitation } from './components/invitation'
-import { ClassicMinimal } from './components/minimal'
-import { ClassicSaveTheDate } from './components/save-the-date'
-import { classicTheme } from './theme'
 
 export const classicTemplate: WeddingTemplate = {
   ...classicMeta,

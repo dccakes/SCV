@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { SectionsEditor } from '~/app/_components/website/sections-editor'
 import { TemplatePicker } from '~/app/_components/website/template-picker'
 import { WebsiteDisabledCallout } from '~/app/_components/website/website-disabled-callout'
 import { WebsiteEditor } from '~/app/_components/website/website-editor'
@@ -38,8 +39,11 @@ export default async function WebsitePage() {
   const websiteId = existingWebsite?.id ?? null
   const websiteSubUrl = existingWebsite?.subUrl ?? null
 
-  const homeSection =
-    isWebsiteBuilderEnabled && websiteId ? await api.websiteSection.getHomeSection() : null
+  const [homeSection, sections] =
+    isWebsiteBuilderEnabled && websiteId
+      ? await Promise.all([api.websiteSection.getHomeSection(), api.websiteSection.getSections()])
+      : [null, []]
+  const introText = homeSection?.type === 'HOME' ? homeSection.content.introText : ''
 
   if (!isWebsiteBuilderEnabled) {
     return (
@@ -77,9 +81,10 @@ export default async function WebsitePage() {
                 currentTemplateId={existingWebsite?.templateId ?? null}
               />
               <WebsiteEditor
-                initialIntroText={homeSection?.content.introText ?? ''}
+                initialIntroText={introText}
                 publicUrl={computePublicWebsiteUrl(websiteSubUrl)}
               />
+              <SectionsEditor initialSections={sections} />
             </>
           ) : null}
         </div>

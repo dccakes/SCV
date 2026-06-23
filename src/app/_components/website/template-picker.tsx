@@ -54,19 +54,14 @@ export function TemplatePicker({ templates, currentTemplateId }: TemplatePickerP
         </p>
       </CardHeader>
       <CardContent>
-        <div
-          className='grid gap-4 sm:grid-cols-2'
-          role='radiogroup'
-          aria-label='Wedding website template'
-        >
+        <div className='grid gap-4 sm:grid-cols-2'>
           {templates.map((template) => {
             const isSelected = template.id === selectedId
             return (
               <button
                 key={template.id}
                 type='button'
-                role='radio'
-                aria-checked={isSelected}
+                aria-pressed={isSelected}
                 disabled={updateTemplate.isPending}
                 onClick={() => selectTemplate(template.id)}
                 className={cn(
@@ -83,9 +78,9 @@ export function TemplatePicker({ templates, currentTemplateId }: TemplatePickerP
                   </span>
                 ) : null}
                 <div className='flex gap-1.5' aria-hidden='true'>
-                  {template.swatches.map((swatch, index) => (
+                  {template.swatches.map((swatch) => (
                     <span
-                      key={`${template.id}-swatch-${index}`}
+                      key={`${template.id}-${swatch}`}
                       className='h-7 w-7 rounded-full border border-black/5'
                       style={{ backgroundColor: swatch }}
                     />

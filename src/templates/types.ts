@@ -13,8 +13,8 @@
  */
 
 import type { ComponentType, CSSProperties } from 'react'
-import type { TemplateMeta } from '~/templates/catalog'
 import type { WeddingPageData } from '~/server/domains/website/website.types'
+import type { TemplateMeta } from '~/templates/catalog'
 
 /**
  * Props shared by the rich, content-bearing surfaces (home, save the date,

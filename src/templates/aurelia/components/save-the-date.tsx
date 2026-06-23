@@ -11,12 +11,12 @@ export function AureliaSaveTheDate({ weddingData, path }: Readonly<TemplateSurfa
     <main className='flex min-h-screen flex-col items-center justify-center gap-10 px-6 py-24 text-center'>
       <div
         aria-hidden
-        className='-z-10 -translate-x-1/2 absolute top-24 left-1/2 h-72 w-72 rounded-full bg-gradient-to-br from-primary/15 to-accent/15 blur-3xl'
+        className='absolute top-24 left-1/2 -z-10 h-72 w-72 -translate-x-1/2 rounded-full bg-gradient-to-br from-primary/15 to-accent/15 blur-3xl'
       />
-      <p className='text-[0.7rem] uppercase tracking-[0.45em] text-accent'>Save the Date</p>
+      <p className='text-[0.7rem] text-accent uppercase tracking-[0.45em]'>Save the Date</p>
       <h1 className={`${headingFont} text-6xl text-foreground italic sm:text-7xl`}>
         {weddingData.groomFirstName}
-        <span className='mx-3 font-light not-italic text-primary'>&</span>
+        <span className='mx-3 font-light text-primary not-italic'>&</span>
         {weddingData.brideFirstName}
       </h1>
       <div className='flex items-center gap-4 text-muted-foreground'>
@@ -26,9 +26,7 @@ export function AureliaSaveTheDate({ weddingData, path }: Readonly<TemplateSurfa
         </span>
         <span className='h-px w-12 bg-border' />
       </div>
-      {venue ? (
-        <p className='text-foreground text-sm uppercase tracking-[0.3em]'>{venue}</p>
-      ) : null}
+      {venue ? <p className='text-foreground text-sm uppercase tracking-[0.3em]'>{venue}</p> : null}
       {weddingData.daysRemaining > 0 && (
         <p className='text-muted-foreground text-sm tracking-[0.2em]'>
           {weddingData.daysRemaining} days to go

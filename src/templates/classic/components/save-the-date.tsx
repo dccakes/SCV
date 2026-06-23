@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { formatDateStandard } from '~/app/utils/helpers'
 import type { TemplateSurfaceProps } from '~/templates/types'
 
 export function ClassicSaveTheDate({ weddingData, path }: Readonly<TemplateSurfaceProps>) {
@@ -19,10 +18,7 @@ export function ClassicSaveTheDate({ weddingData, path }: Readonly<TemplateSurfa
         <p className='text-lg'>{weddingData.daysRemaining} Days To Go!</p>
       )}
       <p className='mt-6 text-sm tracking-normal'>Formal invitation to follow.</p>
-      <Link
-        href={path}
-        className='text-sm underline underline-offset-4 hover:text-pink-500'
-      >
+      <Link href={path} className='text-sm underline underline-offset-4 hover:text-pink-500'>
         Visit our website
       </Link>
     </main>
