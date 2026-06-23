@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import type { Dispatch, SetStateAction } from 'react'
 import { FaCircleCheck } from 'react-icons/fa6'
 import { RxCrossCircled } from 'react-icons/rx'
@@ -13,23 +14,26 @@ type RsvpConfirmationProps = {
 }
 
 export default function RsvpConfirmation({ basePath, setCurrentStep }: RsvpConfirmationProps) {
+  const t = useTranslations('rsvp')
   const rsvpFormData = useRsvpForm()
   return (
     <div className='flex flex-col pt-5 pb-8'>
       <h2 className='text-2xl tracking-widest'>
-        all set! here&apos;s what we sent {rsvpFormData.weddingData.groomFirstName} &{' '}
-        {rsvpFormData.weddingData.brideFirstName}
+        {t('confirmationTitle', {
+          groomFirstName: rsvpFormData.weddingData.groomFirstName,
+          brideFirstName: rsvpFormData.weddingData.brideFirstName,
+        })}
       </h2>
       <Link
         className={`my-5 bg-gray-700 py-3 text-center text-white text-xl tracking-wide`}
         href={basePath}
       >
-        BACK TO HOMEPAGE
+        {t('backToHomepage')}
       </Link>
       <div className='flex justify-between border-b-2 py-4'>
-        <h2 className='text-xl'>Your RSVP Response</h2>
+        <h2 className='text-xl'>{t('yourRsvpResponse')}</h2>
         <button type='button' className='border-b-2 py-1' onClick={() => setCurrentStep(3)}>
-          Update Response
+          {t('updateResponse')}
         </button>
       </div>
       <ul>
@@ -58,12 +62,13 @@ const ConfirmationListItem = ({
   event: Event
   rsvpResponses: RsvpFormResponse[]
 }) => {
+  const tCommon = useTranslations('common')
   return (
     <li className='flex flex-col gap-3 border-b-2 py-6'>
       <div className='flex items-start justify-between'>
         <h3 className='font-bold text-lg'>{event.name}</h3>
         <button type='button' className='border-b-2 py-1'>
-          + Add to Calendar
+          {tCommon('addToCalendar')}
         </button>
       </div>
       {rsvpResponses.map((response) => {

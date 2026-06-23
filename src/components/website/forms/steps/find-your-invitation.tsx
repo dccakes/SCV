@@ -1,11 +1,14 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import type { StepFormProps } from '~/app/utils/shared-types'
 import { useRsvpForm, useUpdateRsvpForm } from '~/components/contexts/rsvp-form-context'
 import { api } from '~/trpc/react'
 
 export default function FindYourInvitationForm({ goNext }: StepFormProps) {
+  const t = useTranslations('rsvp')
+  const tCommon = useTranslations('common')
   const { weddingData } = useRsvpForm()
   const updateRsvpForm = useUpdateRsvpForm()
   const [name, setName] = useState<string>('')
@@ -39,7 +42,7 @@ export default function FindYourInvitationForm({ goNext }: StepFormProps) {
         RSVP for your entire group.
       </p>
       <input
-        placeholder='Full Name'
+        placeholder={t('fullNamePlaceholder')}
         className='border border-gray-400 p-3'
         onChange={(e) => {
           setShowError(false)
@@ -47,19 +50,14 @@ export default function FindYourInvitationForm({ goNext }: StepFormProps) {
         }}
         value={name}
       />
-      {showError && (
-        <p className='text-xs'>
-          Oops! We&apos;re having trouble finding your invite. Please try another spelling of your
-          name or contact the couple
-        </p>
-      )}
+      {showError && <p className='text-xs'>{t('notFound')}</p>}
       <button
         className={`mt-3 py-3 text-white text-xl tracking-wide ${name.length === 0 || isFetching ? 'cursor-not-allowed bg-stone-400' : 'bg-stone-700'}`}
         type='button'
         disabled={name.length === 0}
         onClick={handleOnSearch}
       >
-        {isFetching ? 'Searching...' : 'FIND YOUR INVITATION'}
+        {isFetching ? tCommon('searching') : t('findInvitation')}
       </button>
     </div>
   )
