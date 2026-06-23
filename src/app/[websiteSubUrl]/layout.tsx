@@ -1,10 +1,15 @@
 import Image from 'next/image'
+import { NextIntlClientProvider } from 'next-intl'
+import { getLocale, getMessages } from 'next-intl/server'
 
 import DefaultBanner from '~/components/images/default-banner.jpg'
 
-export default function WeddingWebsiteLayout({ children }: { children: React.ReactNode }) {
+export default async function WeddingWebsiteLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale()
+  const messages = await getMessages()
+
   return (
-    <>
+    <NextIntlClientProvider locale={locale} messages={messages}>
       <div className='relative h-48 w-full'>
         <Image
           alt='Pink Romantic Fresh Art Wedding Banner Background from pngtree.com'
@@ -16,6 +21,6 @@ export default function WeddingWebsiteLayout({ children }: { children: React.Rea
         />
       </div>
       {children}
-    </>
+    </NextIntlClientProvider>
   )
 }
