@@ -86,6 +86,24 @@ describe('WebsiteManagementService', () => {
       })
     })
 
+    it('creates website with a custom subUrl when provided', async () => {
+      mockFindWeddingByIdFn.mockResolvedValue(mockWedding)
+      mockFindBySubUrlFn.mockResolvedValue(null)
+      mockCreateFn.mockResolvedValue(mockWebsite)
+
+      await service.enableWebsite(actorContext, 'wedding-123', {
+        basePath: 'https://example.com',
+        email: 'john@example.com',
+        subUrl: 'hollyanddiego',
+      })
+
+      expect(mockCreateFn).toHaveBeenCalledWith({
+        weddingId: 'wedding-123',
+        url: 'https://example.com/hollyanddiego',
+        subUrl: 'hollyanddiego',
+      })
+    })
+
     it('fails when wedding does not exist', async () => {
       mockFindWeddingByIdFn.mockResolvedValue(null)
 

@@ -57,27 +57,81 @@ describe('WebsiteManager', () => {
     mockWebsite = null
   })
 
-  it('shows a publish button when no website exists', () => {
-    render(<WebsiteManager initialWebsite={null} userEmail='couple@example.com' />)
+  it('shows a publish button and pre-filled slug when no website exists', () => {
+    render(
+      <WebsiteManager
+        initialWebsite={null}
+        userEmail='couple@example.com'
+        defaultSubUrl='janeandjohn'
+      />
+    )
 
     expect(screen.getByText('Not published')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /publish website/i })).toBeInTheDocument()
+    expect(screen.getByLabelText(/website address/i)).toHaveValue('janeandjohn')
   })
 
-  it('publishes with the host and user email', () => {
-    render(<WebsiteManager initialWebsite={null} userEmail='couple@example.com' />)
+  it('publishes with the default slug, host, and user email', () => {
+    render(
+      <WebsiteManager
+        initialWebsite={null}
+        userEmail='couple@example.com'
+        defaultSubUrl='janeandjohn'
+      />
+    )
 
     fireEvent.click(screen.getByRole('button', { name: /publish website/i }))
 
     expect(mockCreateMutate).toHaveBeenCalledTimes(1)
     expect(mockCreateMutate).toHaveBeenCalledWith(
-      expect.objectContaining({ email: 'couple@example.com' })
+      expect.objectContaining({ email: 'couple@example.com', subUrl: 'janeandjohn' })
     )
+  })
+
+  it('publishes with an edited custom slug', () => {
+    render(
+      <WebsiteManager
+        initialWebsite={null}
+        userEmail='couple@example.com'
+        defaultSubUrl='janeandjohn'
+      />
+    )
+
+    fireEvent.change(screen.getByLabelText(/website address/i), {
+      target: { value: 'ourbigday' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /publish website/i }))
+
+    expect(mockCreateMutate).toHaveBeenCalledWith(expect.objectContaining({ subUrl: 'ourbigday' }))
+  })
+
+  it('disables publishing when the slug is invalid', () => {
+    render(
+      <WebsiteManager
+        initialWebsite={null}
+        userEmail='couple@example.com'
+        defaultSubUrl='janeandjohn'
+      />
+    )
+
+    fireEvent.change(screen.getByLabelText(/website address/i), {
+      target: { value: 'jane & john' },
+    })
+
+    expect(screen.getByRole('button', { name: /publish website/i })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: /publish website/i }))
+    expect(mockCreateMutate).not.toHaveBeenCalled()
   })
 
   it('shows the live url and view link when a website is published', () => {
     mockWebsite = buildWebsite()
-    render(<WebsiteManager initialWebsite={mockWebsite} userEmail='couple@example.com' />)
+    render(
+      <WebsiteManager
+        initialWebsite={mockWebsite}
+        userEmail='couple@example.com'
+        defaultSubUrl='janeandjohn'
+      />
+    )
 
     expect(screen.getByText('Published')).toBeInTheDocument()
     expect(screen.getByText(/\/janeandjohn$/)).toBeInTheDocument()

@@ -13,6 +13,11 @@ import { z } from 'zod'
 export const createWebsiteSchema = z.object({
   basePath: z.string().min(1, 'Base path is required'),
   email: z.string().email('Valid email is required'),
+  subUrl: z
+    .string()
+    .regex(/^\w+$/, 'URL should not contain any special characters!')
+    .transform((value) => value.toLowerCase())
+    .optional(),
 })
 
 /**

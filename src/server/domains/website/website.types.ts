@@ -41,6 +41,7 @@ export type PublicWebsiteWithQuestions = Omit<WebsiteWithQuestions, 'password'>
 export type CreateWebsiteInput = {
   basePath: string
   email: string
+  subUrl?: string
 }
 
 /**

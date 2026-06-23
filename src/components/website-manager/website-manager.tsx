@@ -5,12 +5,16 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '~/components/ui/button'
+import { Input } from '~/components/ui/input'
+import { Label } from '~/components/ui/label'
+import { isValidWeddingSubUrl } from '~/lib/website-slug'
 import type { Website } from '~/server/domains/website/website.types'
 import { api } from '~/trpc/react'
 
 type WebsiteManagerProps = {
   initialWebsite: Website | null
   userEmail: string
+  defaultSubUrl: string
 }
 
 const copyToClipboard = async (value: string) => {
@@ -23,13 +27,14 @@ const copyToClipboard = async (value: string) => {
   }
 }
 
-export function WebsiteManager({ initialWebsite, userEmail }: WebsiteManagerProps) {
+export function WebsiteManager({ initialWebsite, userEmail, defaultSubUrl }: WebsiteManagerProps) {
   const router = useRouter()
   const utils = api.useUtils()
   const { data: website } = api.website.getByUserId.useQuery(undefined, {
     initialData: initialWebsite,
   })
   const [copied, setCopied] = useState(false)
+  const [subUrl, setSubUrl] = useState(defaultSubUrl)
 
   const publishWebsite = api.website.create.useMutation({
     onSuccess: async () => {
@@ -90,6 +95,19 @@ export function WebsiteManager({ initialWebsite, userEmail }: WebsiteManagerProp
     )
   }
 
+  const trimmedSubUrl = subUrl.trim()
+  const isSubUrlValid = isValidWeddingSubUrl(trimmedSubUrl)
+  const previewHost = typeof window !== 'undefined' ? window.location.host : 'your-site.com'
+
+  const handlePublish = () => {
+    if (!isSubUrlValid) return
+    publishWebsite.mutate({
+      basePath: typeof window !== 'undefined' ? window.location.host : '',
+      email: userEmail,
+      subUrl: trimmedSubUrl,
+    })
+  }
+
   return (
     <div className='rounded-md border border-border/70 bg-card p-5'>
       <span className='inline-flex items-center rounded-full bg-muted px-2 py-0.5 font-mono text-[0.58rem] text-foreground/60 uppercase tracking-widest'>
@@ -99,16 +117,36 @@ export function WebsiteManager({ initialWebsite, userEmail }: WebsiteManagerProp
         Publish your wedding website to get a public page for your guests. You&apos;ll need a
         published website before you can share save-the-date links from the guest list.
       </p>
+
+      <div className='mt-4 space-y-1.5'>
+        <Label htmlFor='website-suburl' className='font-medium text-foreground text-sm'>
+          Website address
+        </Label>
+        <div className='flex items-center overflow-hidden rounded-[4px] border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2'>
+          <span className='whitespace-nowrap border-input border-r bg-muted/40 px-3 py-2 font-mono text-foreground/55 text-xs'>
+            {previewHost}/
+          </span>
+          <Input
+            id='website-suburl'
+            value={subUrl}
+            onChange={(event) => setSubUrl(event.target.value)}
+            placeholder={defaultSubUrl}
+            aria-invalid={!isSubUrlValid}
+            className='border-0 font-mono text-xs focus-visible:ring-0 focus-visible:ring-offset-0'
+          />
+        </div>
+        <p className='font-mono text-[0.58rem] text-foreground/50 tracking-wider'>
+          {isSubUrlValid
+            ? 'Letters, numbers, and underscores only. You can change this later in settings.'
+            : 'Use letters, numbers, and underscores only — no spaces or special characters.'}
+        </p>
+      </div>
+
       <div className='mt-4'>
         <Button
           type='button'
-          disabled={publishWebsite.isPending}
-          onClick={() =>
-            publishWebsite.mutate({
-              basePath: typeof window !== 'undefined' ? window.location.host : '',
-              email: userEmail,
-            })
-          }
+          disabled={publishWebsite.isPending || !isSubUrlValid}
+          onClick={handlePublish}
         >
           {publishWebsite.isPending ? 'Publishing…' : 'Publish website'}
         </Button>

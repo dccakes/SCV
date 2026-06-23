@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
 import { WebsiteManager } from '~/components/website-manager/website-manager'
 import { auth } from '~/lib/auth'
+import { deriveWeddingSubUrl } from '~/lib/website-slug'
 import { getRequiredWedding } from '~/server/application/authenticated-route/authenticated-route-data'
 import { api } from '~/trpc/server'
 
@@ -17,7 +18,8 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 export default async function WebsitePage() {
-  await getRequiredWedding()
+  const wedding = await getRequiredWedding()
+  const defaultSubUrl = deriveWeddingSubUrl(wedding)
 
   const session = await auth.api.getSession({ headers: await headers() })
   const userEmail = session?.user?.email
@@ -43,7 +45,11 @@ export default async function WebsitePage() {
               Publish your public wedding page and share it with guests.
             </p>
           </div>
-          <WebsiteManager initialWebsite={website} userEmail={userEmail} />
+          <WebsiteManager
+            initialWebsite={website}
+            userEmail={userEmail}
+            defaultSubUrl={defaultSubUrl}
+          />
         </div>
       </main>
     </>
