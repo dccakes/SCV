@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CheckCircle2, Loader2 } from 'lucide-react'
 import { useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -15,26 +16,38 @@ import { PhoneInput } from '~/components/ui/phone-input'
 import { optionalPhoneSchema } from '~/lib/phone/phone-validator'
 import { api } from '~/trpc/react'
 
-const selfFillFormSchema = z.object({
-  firstName: z.string().min(1, 'First name is required').max(100),
-  lastName: z.string().min(1, 'Last name is required').max(100),
-  email: z.string().trim().min(1, 'Email is required').email('Please enter a valid email'),
-  phone: optionalPhoneSchema,
-  address1: z.string().trim().max(200).optional(),
-  address2: z.string().trim().max(200).optional(),
-  city: z.string().trim().max(100).optional(),
-  state: z.string().trim().max(100).optional(),
-  zipCode: z.string().trim().max(20).optional(),
-  country: z.string().trim().max(100).optional(),
-})
-
-type SelfFillFormData = z.infer<typeof selfFillFormSchema>
+type SelfFillFormData = {
+  firstName: string
+  lastName: string
+  email: string
+  phone?: string | null
+  address1?: string
+  address2?: string
+  city?: string
+  state?: string
+  zipCode?: string
+  country?: string
+}
 
 export default function SelfFillPage() {
+  const t = useTranslations('join')
   const params = useParams()
   const token = params.token as string
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
+
+  const selfFillFormSchema = z.object({
+    firstName: z.string().min(1, t('firstNameRequired')).max(100),
+    lastName: z.string().min(1, t('lastNameRequired')).max(100),
+    email: z.string().trim().min(1, t('emailRequired')).email(t('emailInvalid')),
+    phone: optionalPhoneSchema,
+    address1: z.string().trim().max(200).optional(),
+    address2: z.string().trim().max(200).optional(),
+    city: z.string().trim().max(100).optional(),
+    state: z.string().trim().max(100).optional(),
+    zipCode: z.string().trim().max(20).optional(),
+    country: z.string().trim().max(100).optional(),
+  })
 
   const { data: wedding, isLoading: isLoadingWedding } = api.selfFill.getByToken.useQuery(
     { token },
@@ -52,11 +65,11 @@ export default function SelfFillPage() {
     onError: (error) => {
       // Map known error codes to user-friendly messages
       if (error.data?.code === 'NOT_FOUND') {
-        setMutationError('This registration link is no longer valid. Please contact the couple.')
+        setMutationError(t('errorInvalidLink'))
       } else if (error.data?.code === 'CONFLICT') {
-        setMutationError('You are already registered for this wedding.')
+        setMutationError(t('errorAlreadyRegistered'))
       } else {
-        setMutationError('Something went wrong. Please try again or contact the couple.')
+        setMutationError(t('errorGeneric'))
       }
     },
   })
@@ -88,13 +101,13 @@ export default function SelfFillPage() {
       firstName: data.firstName,
       lastName: data.lastName,
       email: data.email,
-      phone: data.phone || null,
-      address1: data.address1 || null,
-      address2: data.address2 || null,
-      city: data.city || null,
-      state: data.state || null,
-      zipCode: data.zipCode || null,
-      country: data.country || null,
+      phone: data.phone ?? null,
+      address1: data.address1 ?? null,
+      address2: data.address2 ?? null,
+      city: data.city ?? null,
+      state: data.state ?? null,
+      zipCode: data.zipCode ?? null,
+      country: data.country ?? null,
     })
   }
 
@@ -111,11 +124,8 @@ export default function SelfFillPage() {
       <div className='flex min-h-screen items-center justify-center bg-gradient-to-b from-rose-50 to-white p-4'>
         <Card className='w-full max-w-md'>
           <CardHeader className='text-center'>
-            <CardTitle className='text-2xl text-rose-700'>Link Not Found</CardTitle>
-            <CardDescription>
-              This registration link is invalid or has expired. Please contact the couple for a new
-              link.
-            </CardDescription>
+            <CardTitle className='text-2xl text-rose-700'>{t('linkNotFound')}</CardTitle>
+            <CardDescription>{t('linkNotFoundDescription')}</CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -130,13 +140,15 @@ export default function SelfFillPage() {
             <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100'>
               <CheckCircle2 className='h-10 w-10 text-green-600' />
             </div>
-            <CardTitle className='text-2xl text-green-700'>You&apos;re on the list!</CardTitle>
+            <CardTitle className='text-2xl text-green-700'>{t('successTitle')}</CardTitle>
             <CardDescription className='text-base'>{successMessage}</CardDescription>
           </CardHeader>
           <CardContent className='text-center text-muted-foreground text-sm'>
             <p>
-              {wedding.groomFirstName} & {wedding.brideFirstName} will be in touch with more
-              details.
+              {t('successNote', {
+                groomFirstName: wedding.groomFirstName,
+                brideFirstName: wedding.brideFirstName,
+              })}
             </p>
           </CardContent>
         </Card>
@@ -149,18 +161,19 @@ export default function SelfFillPage() {
       <Card className='w-full max-w-md'>
         <CardHeader className='text-center'>
           <CardTitle className='text-2xl text-rose-700'>
-            {wedding.groomFirstName} & {wedding.brideFirstName}&apos;s Wedding
+            {t('title', {
+              groomFirstName: wedding.groomFirstName,
+              brideFirstName: wedding.brideFirstName,
+            })}
           </CardTitle>
-          <CardDescription>
-            Add yourself to the guest list by filling out the form below.
-          </CardDescription>
+          <CardDescription>{t('subtitle')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className='space-y-6'>
             {/* Name */}
             <div className='grid grid-cols-2 gap-4'>
               <div className='space-y-2'>
-                <Label htmlFor='firstName'>First Name *</Label>
+                <Label htmlFor='firstName'>{`${t('firstName')} *`}</Label>
                 <Input
                   id='firstName'
                   placeholder='John'
@@ -172,7 +185,7 @@ export default function SelfFillPage() {
                 )}
               </div>
               <div className='space-y-2'>
-                <Label htmlFor='lastName'>Last Name *</Label>
+                <Label htmlFor='lastName'>{`${t('lastName')} *`}</Label>
                 <Input
                   id='lastName'
                   placeholder='Doe'
@@ -187,7 +200,7 @@ export default function SelfFillPage() {
 
             {/* Contact */}
             <div className='space-y-2'>
-              <Label htmlFor='email'>Email *</Label>
+              <Label htmlFor='email'>{`${t('email')} *`}</Label>
               <Input
                 id='email'
                 type='email'
@@ -199,7 +212,7 @@ export default function SelfFillPage() {
             </div>
 
             <div className='space-y-2'>
-              <Label htmlFor='phone'>Phone (optional)</Label>
+              <Label htmlFor='phone'>{t('phone')}</Label>
               <Controller
                 name='phone'
                 control={control}
@@ -224,14 +237,12 @@ export default function SelfFillPage() {
             {/* Mailing Address */}
             <div className='space-y-4'>
               <div>
-                <p className='font-medium text-sm'>Mailing Address (optional)</p>
-                <p className='text-muted-foreground text-xs'>
-                  Used for sending invitations and save the dates.
-                </p>
+                <p className='font-medium text-sm'>{t('mailingAddress')}</p>
+                <p className='text-muted-foreground text-xs'>{t('mailingAddressNote')}</p>
               </div>
 
               <div className='space-y-2'>
-                <Label htmlFor='address1'>Street Address</Label>
+                <Label htmlFor='address1'>{t('streetAddress')}</Label>
                 <Input
                   id='address1'
                   placeholder='123 Main St'
@@ -244,7 +255,7 @@ export default function SelfFillPage() {
               </div>
 
               <div className='space-y-2'>
-                <Label htmlFor='address2'>Apt / Suite / Other</Label>
+                <Label htmlFor='address2'>{t('aptSuite')}</Label>
                 <Input
                   id='address2'
                   placeholder='Apt 4B'
@@ -258,7 +269,7 @@ export default function SelfFillPage() {
 
               <div className='grid grid-cols-3 gap-4'>
                 <div className='col-span-2 space-y-2'>
-                  <Label htmlFor='city'>City</Label>
+                  <Label htmlFor='city'>{t('city')}</Label>
                   <Input
                     id='city'
                     placeholder='San Francisco'
@@ -268,7 +279,7 @@ export default function SelfFillPage() {
                   {errors.city && <p className='text-red-500 text-sm'>{errors.city.message}</p>}
                 </div>
                 <div className='space-y-2'>
-                  <Label htmlFor='state'>State</Label>
+                  <Label htmlFor='state'>{t('state')}</Label>
                   <Input
                     id='state'
                     placeholder='CA'
@@ -281,7 +292,7 @@ export default function SelfFillPage() {
 
               <div className='grid grid-cols-2 gap-4'>
                 <div className='space-y-2'>
-                  <Label htmlFor='zipCode'>Zip / Postal Code</Label>
+                  <Label htmlFor='zipCode'>{t('zipCode')}</Label>
                   <Input
                     id='zipCode'
                     placeholder='94102'
@@ -293,7 +304,7 @@ export default function SelfFillPage() {
                   )}
                 </div>
                 <div className='space-y-2'>
-                  <Label htmlFor='country'>Country</Label>
+                  <Label htmlFor='country'>{t('country')}</Label>
                   <Input
                     id='country'
                     placeholder='United States'
@@ -319,10 +330,10 @@ export default function SelfFillPage() {
               {isSubmitting || registerMutation.isPending ? (
                 <>
                   <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                  Adding...
+                  {t('adding')}
                 </>
               ) : (
-                'Add Me to the Guest List'
+                t('addToList')
               )}
             </Button>
           </form>
