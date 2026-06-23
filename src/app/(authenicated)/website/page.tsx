@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { TemplatePicker } from '~/app/_components/website/template-picker'
 import { WebsiteDisabledCallout } from '~/app/_components/website/website-disabled-callout'
 import { WebsiteEditor } from '~/app/_components/website/website-editor'
 import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
@@ -9,6 +10,7 @@ import { auth } from '~/lib/auth'
 import { computePublicWebsiteUrl } from '~/lib/website/public-url'
 import { deriveWeddingSubUrl } from '~/lib/website-slug'
 import { getRequiredWedding } from '~/server/application/authenticated-route/authenticated-route-data'
+import { listTemplateSummaries } from '~/templates/catalog'
 import { api } from '~/trpc/server'
 
 export const metadata: Metadata = {
@@ -69,10 +71,16 @@ export default async function WebsitePage() {
             defaultSubUrl={defaultSubUrl}
           />
           {websiteId && websiteSubUrl ? (
-            <WebsiteEditor
-              initialIntroText={homeSection?.content.introText ?? ''}
-              publicUrl={computePublicWebsiteUrl(websiteSubUrl)}
-            />
+            <>
+              <TemplatePicker
+                templates={listTemplateSummaries()}
+                currentTemplateId={existingWebsite?.templateId ?? null}
+              />
+              <WebsiteEditor
+                initialIntroText={homeSection?.content.introText ?? ''}
+                publicUrl={computePublicWebsiteUrl(websiteSubUrl)}
+              />
+            </>
           ) : null}
         </div>
       </div>

@@ -210,6 +210,16 @@ export class WebsiteRepository {
   }
 
   /**
+   * Update the selected website template
+   */
+  async updateTemplate(weddingId: string, templateId: string): Promise<Website> {
+    return this.db.website.update({
+      where: { weddingId },
+      data: { templateId },
+    })
+  }
+
+  /**
    * Check if a website exists for a wedding
    */
   async existsForWedding(weddingId: string): Promise<boolean> {

@@ -3,19 +3,17 @@ import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 
 import { loadWeddingBySubUrl } from '~/app/w/[websiteSubUrl]/_lib/load-wedding-by-suburl'
-import { RsvpFormProvider } from '~/components/contexts/rsvp-form-context'
-import MainRsvpForm from '~/components/website/forms/main'
 import PasswordPage from '~/components/website/password-page'
-import { resolveTemplate, TemplateThemeProvider } from '~/templates'
+import WeddingSurface from '~/components/website/wedding-surface'
 import { api } from '~/trpc/server'
 
-type RsvpPageProps = {
+type SaveTheDatePageProps = {
   params: Promise<{
     websiteSubUrl: string
   }>
 }
 
-export async function generateMetadata({ params }: RsvpPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: SaveTheDatePageProps): Promise<Metadata> {
   const { websiteSubUrl } = await params
   const cookieStore = await cookies()
   const accessCookieName = `wws_access_${websiteSubUrl}`
@@ -25,12 +23,12 @@ export async function generateMetadata({ params }: RsvpPageProps): Promise<Metad
   return {
     title:
       loadResult.status === 'ready'
-        ? `${loadResult.weddingData.groomFirstName} ${loadResult.weddingData.groomLastName} and ${loadResult.weddingData.brideFirstName} ${loadResult.weddingData.brideLastName}'s Wedding Website`
-        : 'Wedding Website',
+        ? `Save the Date — ${loadResult.weddingData.groomFirstName} & ${loadResult.weddingData.brideFirstName}`
+        : 'Save the Date',
   }
 }
 
-export default async function RsvpPage({ params }: RsvpPageProps) {
+export default async function SaveTheDatePage({ params }: SaveTheDatePageProps) {
   const { websiteSubUrl } = await params
   const cookieStore = await cookies()
   const accessCookieName = `wws_access_${websiteSubUrl}`
@@ -65,15 +63,12 @@ export default async function RsvpPage({ params }: RsvpPageProps) {
   if (loadResult.status === 'password-required') {
     return <PasswordPage verifyWebsitePassword={verifyWebsitePassword} />
   }
-  if (!loadResult.weddingData.website.isRsvpEnabled) return notFound()
-
-  const template = resolveTemplate(loadResult.weddingData.website.templateId)
 
   return (
-    <TemplateThemeProvider template={template}>
-      <RsvpFormProvider>
-        <MainRsvpForm weddingData={loadResult.weddingData} basePath={`/w/${websiteSubUrl}`} />
-      </RsvpFormProvider>
-    </TemplateThemeProvider>
+    <WeddingSurface
+      websiteSubUrl={websiteSubUrl}
+      weddingData={loadResult.weddingData}
+      surface='SaveTheDate'
+    />
   )
 }

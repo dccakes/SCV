@@ -1,8 +1,6 @@
 import { headers } from 'next/headers'
-import WebsiteMinimalPage from '~/components/website/minimal-page'
-import WeddingPage from '~/components/website/wedding-page'
-import WeddingPageMobile from '~/components/website/wedding-page-mobile'
 import type { WeddingPageData } from '~/server/domains/website/website.types'
+import { resolveTemplate, TemplateThemeProvider } from '~/templates'
 
 type WeddingWebsiteProps = {
   websiteSubUrl: string
@@ -20,19 +18,28 @@ export default async function WeddingWebsite({
   const websiteBuilderEnabled = weddingData.websiteBuilderEnabled
   const introText = weddingData.website.introText.trim() ? weddingData.website.introText : undefined
 
+  const template = resolveTemplate(weddingData.website.templateId)
+  const { Home, HomeMobile, Minimal } = template.components
+
   if (!websiteBuilderEnabled) {
     return (
-      <WebsiteMinimalPage
-        coupleNames={`${weddingData.groomFirstName} & ${weddingData.brideFirstName}`}
-        isRsvpEnabled={weddingData.website.isRsvpEnabled}
-        path={path}
-      />
+      <TemplateThemeProvider template={template}>
+        <Minimal
+          coupleNames={`${weddingData.groomFirstName} & ${weddingData.brideFirstName}`}
+          isRsvpEnabled={weddingData.website.isRsvpEnabled}
+          path={path}
+        />
+      </TemplateThemeProvider>
     )
   }
 
-  return isMobile ? (
-    <WeddingPageMobile weddingData={weddingData} path={path} introText={introText} />
-  ) : (
-    <WeddingPage weddingData={weddingData} path={path} introText={introText} />
+  return (
+    <TemplateThemeProvider template={template}>
+      {isMobile ? (
+        <HomeMobile weddingData={weddingData} path={path} introText={introText} />
+      ) : (
+        <Home weddingData={weddingData} path={path} introText={introText} />
+      )}
+    </TemplateThemeProvider>
   )
 }

@@ -18,6 +18,7 @@ import type {
 } from '~/server/domains/website/website.types'
 import { computeWebsiteUrl } from '~/server/domains/website/website.utils'
 import { WebsitePasswordService } from '~/server/domains/website/website-password.service'
+import { isKnownTemplateId } from '~/templates/catalog'
 
 export class WebsiteService {
   constructor(
@@ -95,6 +96,29 @@ export class WebsiteService {
   ): Promise<Website> {
     this.requireWebsitePermission(ctx, 'update')
     return this.websiteRepository.updateCoverPhoto(weddingId, coverPhotoUrl)
+  }
+
+  /**
+   * Update the selected website template.
+   *
+   * The id is validated against the template registry at the edge (validator),
+   * but we guard here too so the service is safe to call directly.
+   */
+  async updateTemplate(
+    ctx: AuthzContext,
+    weddingId: string,
+    templateId: string
+  ): Promise<Website> {
+    this.requireWebsitePermission(ctx, 'update')
+
+    if (!isKnownTemplateId(templateId)) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Unknown wedding website template',
+      })
+    }
+
+    return this.websiteRepository.updateTemplate(weddingId, templateId)
   }
 
   /**
