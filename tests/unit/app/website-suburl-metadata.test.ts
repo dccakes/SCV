@@ -1,25 +1,22 @@
 import { render } from '@testing-library/react'
 import { createElement } from 'react'
 
-import RootRouteHandler, { generateMetadata } from '~/app/[websiteSubUrl]/page'
+import RootRouteHandler, { generateMetadata } from '~/app/w/[websiteSubUrl]/page'
 
-const mockFetchWeddingData = jest.fn()
+const mockLoadWeddingBySubUrl = jest.fn()
 const mockCookiesGet = jest.fn()
-const mockGetUser = jest.fn()
-const mockGetBySubUrl = jest.fn()
-const mockWeddingWebsite = jest.fn(({ websiteSubUrl }: { websiteSubUrl: string }) =>
-  createElement('div', null, websiteSubUrl)
+const mockWeddingWebsite = jest.fn(
+  ({ websiteSubUrl }: { websiteSubUrl: string; weddingData?: unknown }) =>
+    createElement('div', null, websiteSubUrl)
 )
+
+jest.mock('~/app/w/[websiteSubUrl]/_lib/load-wedding-by-suburl', () => ({
+  loadWeddingBySubUrl: (...args: unknown[]) => mockLoadWeddingBySubUrl(...args),
+}))
 
 jest.mock('~/trpc/server', () => ({
   api: {
-    user: {
-      get: () => mockGetUser(),
-    },
     website: {
-      fetchWeddingData: (input: { subUrl: string }) => mockFetchWeddingData(input),
-      getBySubUrl: (input: { subUrl: string }) => mockGetBySubUrl(input),
-      hasPasswordAccess: jest.fn(),
       verifyWebsitePassword: jest.fn(),
     },
   },
@@ -27,7 +24,7 @@ jest.mock('~/trpc/server', () => ({
 
 jest.mock('~/components/website/wedding', () => ({
   __esModule: true,
-  default: (props: { websiteSubUrl: string }) => mockWeddingWebsite(props),
+  default: (props: { websiteSubUrl: string; weddingData?: unknown }) => mockWeddingWebsite(props),
 }))
 
 jest.mock('~/components/website/password-page', () => ({
@@ -43,20 +40,21 @@ jest.mock('next/headers', () => ({
 
 describe('website suburl metadata + page wiring', () => {
   beforeEach(() => {
-    mockFetchWeddingData.mockReset()
+    mockLoadWeddingBySubUrl.mockReset()
     mockCookiesGet.mockReset()
     mockCookiesGet.mockReturnValue(undefined)
-    mockGetUser.mockReset()
-    mockGetBySubUrl.mockReset()
     mockWeddingWebsite.mockClear()
   })
 
   it('uses params.websiteSubUrl to build metadata title', async () => {
-    mockFetchWeddingData.mockResolvedValue({
-      groomFirstName: 'John',
-      groomLastName: 'Doe',
-      brideFirstName: 'Jane',
-      brideLastName: 'Smith',
+    mockLoadWeddingBySubUrl.mockResolvedValue({
+      status: 'ready',
+      weddingData: {
+        groomFirstName: 'John',
+        groomLastName: 'Doe',
+        brideFirstName: 'Jane',
+        brideLastName: 'Smith',
+      },
     })
 
     const metadata = await (
@@ -68,17 +66,22 @@ describe('website suburl metadata + page wiring', () => {
     })
 
     expect(metadata.title).toBe("John Doe and Jane Smith's Wedding Website")
-    expect(mockFetchWeddingData).toHaveBeenCalledWith({
-      subUrl: 'john-and-jane',
-      accessToken: undefined,
-    })
-    expect(mockGetUser).not.toHaveBeenCalled()
+    expect(mockLoadWeddingBySubUrl).toHaveBeenCalledWith('john-and-jane', undefined)
   })
 
   it('passes params.websiteSubUrl into WeddingWebsite', async () => {
-    mockGetBySubUrl.mockResolvedValue({
-      id: 'website-1',
-      isPasswordEnabled: false,
+    const weddingData = {
+      groomFirstName: 'John',
+      groomLastName: 'Doe',
+      brideFirstName: 'Jane',
+      brideLastName: 'Smith',
+      websiteBuilderEnabled: true,
+      website: { id: 'website-1', subUrl: 'john-and-jane', introText: '' },
+      events: [],
+    }
+    mockLoadWeddingBySubUrl.mockResolvedValue({
+      status: 'ready',
+      weddingData,
     })
 
     const page = await RootRouteHandler({
@@ -87,6 +90,9 @@ describe('website suburl metadata + page wiring', () => {
 
     render(page)
 
-    expect(mockWeddingWebsite).toHaveBeenCalledWith({ websiteSubUrl: 'john-and-jane' })
+    expect(mockWeddingWebsite).toHaveBeenCalledWith({
+      websiteSubUrl: 'john-and-jane',
+      weddingData,
+    })
   })
 })

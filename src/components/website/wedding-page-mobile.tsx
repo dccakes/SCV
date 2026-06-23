@@ -8,9 +8,10 @@ import Navbar from '~/components/website/navbar'
 type WeddingPageProps = {
   weddingData: WeddingPageData
   path: string
+  introText?: string
 }
 
-export default function WeddingPageMobile({ weddingData, path }: WeddingPageProps) {
+export default function WeddingPageMobile({ weddingData, path, introText }: WeddingPageProps) {
   return (
     <main className='flex flex-col items-center justify-center gap-20 pb-24 text-center font-["Crimson_Text"] text-zinc-500 tracking-widest'>
       <div className='text-center'>
@@ -43,6 +44,12 @@ export default function WeddingPageMobile({ weddingData, path }: WeddingPageProp
           />
         </div>
       )}
+
+      {introText ? (
+        <section className='max-w-2xl text-balance px-6 text-lg leading-8 tracking-normal'>
+          <p>{introText}</p>
+        </section>
+      ) : null}
 
       {weddingData.events.map((event) => {
         return (

@@ -16,37 +16,35 @@ const RESERVED_ROOT_SEGMENTS = new Set([
   'old_dashboard',
   'settings',
   'vendors',
+  'w',
+  'website',
 ])
+
+const isReservedSlug = (slug: string): boolean =>
+  RESERVED_ROOT_SEGMENTS.has(slug) || slug.startsWith('auth') || slug.startsWith('join')
 
 const isPublicWebsitePath = (pathname: string): boolean => {
   const segments = pathname.split('/').filter(Boolean)
-  if (segments.length === 0) {
+
+  // /w/[slug] and /w/[slug]/rsvp (wedding website viewer)
+  if (segments[0] === 'w') {
+    if (segments.length < 2) return false
+    const slug = segments[1]
+    if (!slug || isReservedSlug(slug)) return false
+    if (segments.length === 2) return true
+    if (segments.length === 3 && segments[2] === 'rsvp') return true
     return false
   }
-  const [, childSegment] = segments
-  const isAllowedChildPath =
-    segments.length === 1 ||
-    (segments.length === 2 && ['invite', 'rsvp'].includes(childSegment ?? '')) ||
+
+  // Root-level invite paths: /[slug]/invite and /[slug]/invite/[token]
+  if (segments.length === 0) return false
+  const [rootSegment, childSegment] = segments
+  if (!rootSegment || isReservedSlug(rootSegment)) return false
+
+  return (
+    (segments.length === 2 && childSegment === 'invite') ||
     (segments.length === 3 && childSegment === 'invite')
-
-  if (!isAllowedChildPath) {
-    return false
-  }
-
-  const [rootSegment] = segments
-  if (!rootSegment) {
-    return false
-  }
-
-  if (
-    RESERVED_ROOT_SEGMENTS.has(rootSegment) ||
-    rootSegment.startsWith('auth') ||
-    rootSegment.startsWith('join')
-  ) {
-    return false
-  }
-
-  return true
+  )
 }
 
 const isPublicPath = (pathname: string): boolean =>
@@ -54,11 +52,24 @@ const isPublicPath = (pathname: string): boolean =>
   PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)) ||
   isPublicWebsitePath(pathname)
 
+const getLegacyWebsiteRedirect = (req: NextRequest): URL | null => {
+  const segments = req.nextUrl.pathname.split('/').filter(Boolean)
+  if (segments.length !== 1) return null
+  const [slug] = segments
+  if (!slug || isReservedSlug(slug)) return null
+  return new URL(`/w/${slug}${req.nextUrl.search}`, req.url)
+}
+
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname
 
   if (isPublicPath(pathname)) {
     return NextResponse.next()
+  }
+
+  const legacyWebsiteRedirect = getLegacyWebsiteRedirect(req)
+  if (legacyWebsiteRedirect) {
+    return NextResponse.redirect(legacyWebsiteRedirect, 302)
   }
 
   // Check for session token using Better Auth's utility (handles cookie prefixes)

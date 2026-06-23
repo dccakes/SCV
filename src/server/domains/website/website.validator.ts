@@ -5,6 +5,14 @@
  */
 
 import { z } from 'zod'
+import { reservedWebsiteRootSegmentsSet } from '~/lib/website/reserved-root-segments'
+
+const subUrlSchema = z
+  .string()
+  .regex(/^\w+$/, 'URL should not contain any special characters!')
+  .refine((value) => !reservedWebsiteRootSegmentsSet.has(value.toLowerCase()), {
+    message: 'This URL is reserved',
+  })
 
 /**
  * Schema for enabling website add-on
@@ -55,10 +63,7 @@ export const updateWebsiteSchema = z
     isPasswordEnabled: z.boolean().optional(),
     password: z.string().optional(),
     basePath: z.string().optional(),
-    subUrl: z
-      .string()
-      .regex(/^[\w-]+$/, 'URL can only contain letters, numbers, dashes, and underscores')
-      .optional(),
+    subUrl: subUrlSchema.optional(),
   })
   .refine(
     (data) =>

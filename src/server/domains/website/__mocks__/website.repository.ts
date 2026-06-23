@@ -11,8 +11,8 @@ export const mockWebsite: Website = {
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
   weddingId: 'wedding-123',
-  url: 'https://example.com/johndoeandjanesmith',
   subUrl: 'johndoeandjanesmith',
+  templateId: null,
   isPasswordEnabled: false,
   password: null,
   isRsvpEnabled: true,
@@ -27,20 +27,26 @@ export const mockWebsiteWithQuestions: WebsiteWithQuestions = {
       text: 'Will you be bringing any children under the age of 10?',
       type: 'Text',
       isRequired: false,
+      allowOther: false,
       websiteId: 'website-123',
       eventId: null,
       options: [],
       _count: { answers: 0 },
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-01'),
     },
     {
       id: 'q-2',
       text: 'Send a note to the couple?',
       type: 'Text',
       isRequired: false,
+      allowOther: false,
       websiteId: 'website-123',
       eventId: null,
       options: [],
       _count: { answers: 0 },
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-01'),
     },
   ],
 }
@@ -51,6 +57,7 @@ export const mockFindBySubUrl = jest.fn()
 export const mockFindBySubUrlWithQuestions = jest.fn()
 export const mockFindByWeddingIdWithQuestions = jest.fn()
 export const mockCreate = jest.fn()
+export const mockUpsertByWeddingId = jest.fn()
 export const mockUpdate = jest.fn()
 export const mockUpdateRsvpEnabled = jest.fn()
 export const mockUpdateCoverPhoto = jest.fn()
@@ -65,6 +72,7 @@ export const WebsiteRepository = jest.fn().mockImplementation(() => ({
   findBySubUrlWithQuestions: mockFindBySubUrlWithQuestions,
   findByWeddingIdWithQuestions: mockFindByWeddingIdWithQuestions,
   create: mockCreate,
+  upsertByWeddingId: mockUpsertByWeddingId,
   update: mockUpdate,
   updateRsvpEnabled: mockUpdateRsvpEnabled,
   updateCoverPhoto: mockUpdateCoverPhoto,
@@ -81,6 +89,7 @@ export const resetMocks = (): void => {
   mockFindBySubUrlWithQuestions.mockReset()
   mockFindByWeddingIdWithQuestions.mockReset()
   mockCreate.mockReset()
+  mockUpsertByWeddingId.mockReset()
   mockUpdate.mockReset()
   mockUpdateRsvpEnabled.mockReset()
   mockUpdateCoverPhoto.mockReset()

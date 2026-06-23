@@ -14,7 +14,9 @@ import type {
   PublicWebsite,
   UpdateWebsiteInput,
   Website,
+  WebsiteWithComputedUrl,
 } from '~/server/domains/website/website.types'
+import { computeWebsiteUrl } from '~/server/domains/website/website.utils'
 import { WebsitePasswordService } from '~/server/domains/website/website-password.service'
 
 export class WebsiteService {
@@ -31,7 +33,7 @@ export class WebsiteService {
     weddingId: string,
     data: UpdateWebsiteInput
   ): Promise<Website> {
-    const updateRequiresContentPermission = data.subUrl !== undefined || data.basePath !== undefined
+    const updateRequiresContentPermission = data.subUrl !== undefined
     const updateRequiresPasswordPermission =
       data.password !== undefined || data.isPasswordEnabled !== undefined
 
@@ -50,7 +52,6 @@ export class WebsiteService {
       this.requireWebsitePermission(ctx, 'password_update')
     }
 
-    const url = data.subUrl !== undefined ? `${data.basePath}/${data.subUrl}` : undefined
     const password = data.password
       ? this.websitePasswordService.hashPassword(data.password)
       : undefined
@@ -59,7 +60,6 @@ export class WebsiteService {
       isPasswordEnabled: data.isPasswordEnabled,
       password,
       subUrl: data.subUrl,
-      url,
     })
   }
 
@@ -100,11 +100,15 @@ export class WebsiteService {
   /**
    * Get website by wedding ID
    */
-  async getByWeddingId(weddingId: string | null): Promise<Website | null> {
+  async getByWeddingId(weddingId: string | null): Promise<WebsiteWithComputedUrl | null> {
     if (!weddingId) {
       return null
     }
-    return this.websiteRepository.findByWeddingId(weddingId)
+    const website = await this.websiteRepository.findByWeddingId(weddingId)
+    if (!website) {
+      return null
+    }
+    return this.attachComputedUrl(website)
   }
 
   /**
@@ -159,7 +163,17 @@ export class WebsiteService {
 
   private toPublicWebsite(website: Website): PublicWebsite {
     const { password: _password, ...publicWebsite } = website
-    return publicWebsite
+    return {
+      ...publicWebsite,
+      url: computeWebsiteUrl(website.subUrl),
+    }
+  }
+
+  private attachComputedUrl(website: Website): WebsiteWithComputedUrl {
+    return {
+      ...website,
+      url: computeWebsiteUrl(website.subUrl),
+    }
   }
 
   private requireWebsitePermission(

@@ -34,6 +34,7 @@ type OutstandingInvitesState = {
   canCancel: boolean
   canCreate: boolean
   error: string | null
+  hasLoaded: boolean
   invitations: OrganizationInvitation[]
   isLoading: boolean
   organizationId: string | null
@@ -43,6 +44,7 @@ const initialState: OutstandingInvitesState = {
   canCancel: false,
   canCreate: false,
   error: null,
+  hasLoaded: false,
   invitations: [],
   isLoading: true,
   organizationId: null,
@@ -76,7 +78,7 @@ async function authPost<T>(
 }
 
 async function fetchOutstandingInvitesState(): Promise<
-  Omit<OutstandingInvitesState, 'error' | 'isLoading'>
+  Omit<OutstandingInvitesState, 'error' | 'isLoading' | 'hasLoaded'>
 > {
   const organization = await authGet<FullOrganizationResponse>(
     '/organization/get-full-organization',
@@ -157,6 +159,7 @@ export function OrganizationOutstandingInvitesCard() {
         setState({
           ...next,
           error: null,
+          hasLoaded: true,
           isLoading: false,
         })
       })
@@ -166,6 +169,7 @@ export function OrganizationOutstandingInvitesCard() {
           canCancel: false,
           canCreate: false,
           error: error instanceof Error ? error.message : 'Unable to load outstanding invitations.',
+          hasLoaded: true,
           invitations: [],
           isLoading: false,
           organizationId: null,
@@ -236,6 +240,10 @@ export function OrganizationOutstandingInvitesCard() {
     },
     [loadState, state.canCancel]
   )
+
+  if (!state.hasLoaded) {
+    return null
+  }
 
   if (!state.isLoading && !state.error && !state.canCreate) {
     return null

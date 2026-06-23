@@ -19,6 +19,7 @@ import { createSelfFillRouter } from '~/server/domains/self-fill'
 import { userRouter } from '~/server/domains/user/user.router'
 import { vendorRouter } from '~/server/domains/vendor/vendor.router'
 import { websiteRouter } from '~/server/domains/website/website.router'
+import { websiteSectionRouter } from '~/server/domains/website-section/website-section.router'
 import { weddingRouter } from '~/server/domains/wedding/wedding.router'
 
 /**
@@ -37,6 +38,7 @@ export const appRouter = createTRPCRouter({
   // Phase 1 domains (migrated)
   user: userRouter,
   website: websiteRouter,
+  websiteSection: websiteSectionRouter,
   event: eventRouter,
 
   // Phase 2 domains (migrated)

@@ -35,7 +35,7 @@
     "groomLastName": "Ogre",
     "brideFirstName": "Fiona",
     "brideLastName": "Ogre",
-    "enabledAddOns": ["website", "tasks", "gifts", "vendors"],
+    "enabledAddOns": ["website", "tasks", "gifts", "vendors", "website_builder"],
     "selfFillToken": "swamp-join-portal",
     "selfFillTokenGeneratedAt": "2026-03-01T10:00:00.000Z"
   },

@@ -8,11 +8,11 @@ import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
 import { isValidWeddingSubUrl } from '~/lib/website-slug'
-import type { Website } from '~/server/domains/website/website.types'
+import type { WebsiteWithComputedUrl } from '~/server/domains/website/website.types'
 import { api } from '~/trpc/react'
 
 type WebsiteManagerProps = {
-  initialWebsite: Website | null
+  initialWebsite: WebsiteWithComputedUrl | null
   userEmail: string
   defaultSubUrl: string
 }

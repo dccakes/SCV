@@ -35,6 +35,7 @@ import type { Invitation } from '~/server/domains/invitation/invitation.types'
 import type { QuestionRepository } from '~/server/domains/question/question.repository'
 import type { UserRepository } from '~/server/domains/user/user.repository'
 import type { WebsiteRepository } from '~/server/domains/website/website.repository'
+import { computeWebsiteUrl } from '~/server/domains/website/website.utils'
 import type { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
 
 export class DashboardService {
@@ -200,6 +201,7 @@ export class DashboardService {
 
       websiteWithQuestions = {
         ...website,
+        url: computeWebsiteUrl(website.subUrl),
         generalQuestions: questionsWithRecentAnswers,
       }
     }

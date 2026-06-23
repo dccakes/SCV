@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 
-import { loadWeddingBySubUrl } from '~/app/[websiteSubUrl]/_lib/load-wedding-by-suburl'
+import { loadWeddingBySubUrl } from '~/app/w/[websiteSubUrl]/_lib/load-wedding-by-suburl'
 import PasswordPage from '~/components/website/password-page'
 import WeddingWebsite from '~/components/website/wedding'
 import { api } from '~/trpc/server'
@@ -18,35 +18,25 @@ export async function generateMetadata({ params }: RootRouteHandlerProps): Promi
   const cookieStore = await cookies()
   const accessCookieName = `wws_access_${websiteSubUrl}`
   const accessToken = cookieStore.get(accessCookieName)?.value
-  const weddingData = await loadWeddingBySubUrl(websiteSubUrl, accessToken)
+  const loadResult = await loadWeddingBySubUrl(websiteSubUrl, accessToken)
 
-  if (!weddingData) {
+  if (loadResult.status !== 'ready') {
     return {
       title: 'Wedding Website',
     }
   }
 
   return {
-    title: `${weddingData.groomFirstName} ${weddingData.groomLastName} and ${weddingData.brideFirstName} ${weddingData.brideLastName}'s Wedding Website`,
+    title: `${loadResult.weddingData.groomFirstName} ${loadResult.weddingData.groomLastName} and ${loadResult.weddingData.brideFirstName} ${loadResult.weddingData.brideLastName}'s Wedding Website`,
   }
 }
 
 export default async function RootRouteHandler({ params }: RootRouteHandlerProps) {
   const { websiteSubUrl } = await params
-  const website = await api.website.getBySubUrl({
-    subUrl: websiteSubUrl,
-  })
-
-  if (website === null) return notFound()
-  if (!website.isPasswordEnabled) return <WeddingWebsite websiteSubUrl={websiteSubUrl} />
-
   const cookieStore = await cookies()
   const accessCookieName = `wws_access_${websiteSubUrl}`
   const accessToken = cookieStore.get(accessCookieName)?.value
-  const hasPasswordAccess = await api.website.hasPasswordAccess({
-    subUrl: websiteSubUrl,
-    accessToken,
-  })
+  const loadResult = await loadWeddingBySubUrl(websiteSubUrl, accessToken)
 
   const verifyWebsitePassword = async (passwordInput: string) => {
     'use server'
@@ -65,19 +55,21 @@ export default async function RootRouteHandler({ params }: RootRouteHandlerProps
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      path: `/${websiteSubUrl}`,
+      path: `/w/${websiteSubUrl}`,
       maxAge: 60 * 60 * 6,
     })
 
     return true
   }
 
+  if (loadResult.status === 'not-found') return notFound()
+
   return (
     <main>
-      {hasPasswordAccess ? (
-        <WeddingWebsite websiteSubUrl={websiteSubUrl} />
-      ) : (
+      {loadResult.status === 'password-required' ? (
         <PasswordPage verifyWebsitePassword={verifyWebsitePassword} />
+      ) : (
+        <WeddingWebsite websiteSubUrl={websiteSubUrl} weddingData={loadResult.weddingData} />
       )}
     </main>
   )

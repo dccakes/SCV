@@ -27,10 +27,12 @@ export type {
   UpdateRsvpEnabledInput,
   UpdateWebsiteInput,
   Website,
+  WebsiteWithComputedUrl,
   WebsiteWithQuestions,
   WeddingDate,
   WeddingPageData,
 } from '~/server/domains/website/website.types'
+export { computeWebsiteUrl } from '~/server/domains/website/website.utils'
 // Export validators
 export {
   type AnswerToQuestion,

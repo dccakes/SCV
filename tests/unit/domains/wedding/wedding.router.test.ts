@@ -20,6 +20,7 @@ jest.mock('~/server/domains/event')
 import { eventService } from '~/server/domains/event'
 import {
   mockGetById,
+  mockToggleAddOn,
   mockUpdateWedding,
   mockWedding,
   resetMocks as resetWeddingMocks,
@@ -27,6 +28,7 @@ import {
 import { weddingRouter } from '~/server/domains/wedding/wedding.router'
 
 const mockGetByIdFn = mockGetById as jest.Mock
+const mockToggleAddOnFn = mockToggleAddOn as jest.Mock
 const mockUpdateWeddingFn = mockUpdateWedding as jest.Mock
 const mockGetWeddingEvents = eventService.getWeddingEvents as jest.Mock
 const mockCreateEvent = eventService.createEvent as jest.Mock
@@ -187,6 +189,60 @@ describe('weddingRouter', () => {
     it('should throw FORBIDDEN for viewer role', async () => {
       const caller = makeAuthCaller('user-123', 'wedding-123', 'viewer')
       await expect(caller.getActive()).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+  })
+
+  describe('toggleAddOn', () => {
+    it('throws when active wedding is missing', async () => {
+      const caller = makeAuthCaller('user-123', null)
+
+      await expect(
+        caller.toggleAddOn({ addOn: 'website_builder', enabled: true })
+      ).rejects.toMatchObject({
+        code: 'PRECONDITION_FAILED',
+      })
+    })
+
+    it('adds the requested add-on to the active wedding', async () => {
+      mockToggleAddOnFn.mockResolvedValue({
+        ...mockWedding,
+        enabledAddOns: ['website_builder'],
+      })
+
+      const caller = makeAuthCaller()
+      const result = await caller.toggleAddOn({
+        addOn: 'website_builder',
+        enabled: true,
+      })
+
+      expect(result.enabledAddOns).toEqual(['website_builder'])
+      expect(mockToggleAddOnFn).toHaveBeenCalledWith({
+        ctx: expect.objectContaining({ userId: 'user-123' }),
+        weddingId: 'wedding-123',
+        addOn: 'website_builder',
+        enabled: true,
+      })
+    })
+
+    it('removes the requested add-on from the active wedding', async () => {
+      mockToggleAddOnFn.mockResolvedValue({
+        ...mockWedding,
+        enabledAddOns: [],
+      })
+
+      const caller = makeAuthCaller()
+      const result = await caller.toggleAddOn({
+        addOn: 'website_builder',
+        enabled: false,
+      })
+
+      expect(result.enabledAddOns).toEqual([])
+      expect(mockToggleAddOnFn).toHaveBeenCalledWith({
+        ctx: expect.objectContaining({ userId: 'user-123' }),
+        weddingId: 'wedding-123',
+        addOn: 'website_builder',
+        enabled: false,
+      })
     })
   })
 
