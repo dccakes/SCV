@@ -11,14 +11,13 @@ export function ClassicHeaderImage({ url }: { url: string | null }) {
     return null
   }
   return (
-    <div className='w-full'>
+    <div className='relative aspect-[3/1] w-full overflow-hidden'>
       <Image
         src={url}
-        width={0}
-        height={0}
+        fill
         priority
         sizes='100vw'
-        className='h-auto w-full'
+        className='object-cover object-center'
         alt='Wedding header'
       />
     </div>
