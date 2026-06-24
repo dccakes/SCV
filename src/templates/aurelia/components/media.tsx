@@ -11,13 +11,14 @@ export function AureliaHeaderImage({ url }: { url: string | null }) {
     return null
   }
   return (
-    <div className='relative h-64 w-full max-w-4xl overflow-hidden rounded-[28px] border border-border shadow-sm sm:h-80 md:h-96'>
+    <div className='w-full max-w-4xl overflow-hidden rounded-[28px] border border-border shadow-sm'>
       <Image
         src={url}
-        fill
+        width={0}
+        height={0}
         priority
         sizes='(max-width: 768px) 100vw, 80vw'
-        className='object-cover'
+        className='h-auto w-full'
         alt='Wedding header'
       />
     </div>
