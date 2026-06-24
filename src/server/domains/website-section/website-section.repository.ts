@@ -1,10 +1,15 @@
 import type { PrismaClient } from '@prisma/client'
 
-import type { WebsiteSection } from '~/server/domains/website-section/website-section.types'
-import { WebsiteSectionType } from '~/server/domains/website-section/website-section.types'
+import { getSectionPosition } from '~/server/domains/website-section/website-section.catalog'
+import type {
+  WebsiteSection,
+  WebsiteSectionContent,
+  WebsiteSectionType,
+} from '~/server/domains/website-section/website-section.types'
+import { WebsiteSectionType as SectionType } from '~/server/domains/website-section/website-section.types'
 import {
   type CreateWebsiteSectionInput,
-  homeSectionContentSchema,
+  parseSectionContent,
 } from '~/server/domains/website-section/website-section.validator'
 
 export class WebsiteSectionRepository {
@@ -40,7 +45,7 @@ export class WebsiteSectionRepository {
 
   async update(
     id: string,
-    data: { content?: WebsiteSection['content']; isEnabled?: boolean; position?: number }
+    data: { content?: WebsiteSectionContent; isEnabled?: boolean; position?: number }
   ): Promise<WebsiteSection> {
     const section = await this.db.websiteSection.update({
       where: { id },
@@ -50,31 +55,44 @@ export class WebsiteSectionRepository {
     return this.toWebsiteSection(section)
   }
 
-  async upsertHomeSection(
+  /**
+   * Create or update a section by its (websiteId, type) pair. Position defaults
+   * to the section's canonical catalog order on first create.
+   */
+  async upsertByType(
     websiteId: string,
-    content: WebsiteSection['content']
+    type: WebsiteSectionType,
+    content: WebsiteSectionContent,
+    isEnabled: boolean
   ): Promise<WebsiteSection> {
     const section = await this.db.websiteSection.upsert({
       where: {
         websiteId_type: {
           websiteId,
-          type: WebsiteSectionType.HOME,
+          type,
         },
       },
       update: {
         content,
-        isEnabled: true,
+        isEnabled,
       },
       create: {
         websiteId,
-        type: WebsiteSectionType.HOME,
-        isEnabled: true,
-        position: 0,
+        type,
+        isEnabled,
+        position: getSectionPosition(type),
         content,
       },
     })
 
     return this.toWebsiteSection(section)
+  }
+
+  async upsertHomeSection(
+    websiteId: string,
+    content: { introText: string }
+  ): Promise<WebsiteSection> {
+    return this.upsertByType(websiteId, SectionType.HOME, content, true)
   }
 
   private toWebsiteSection(section: {
@@ -87,9 +105,10 @@ export class WebsiteSectionRepository {
     createdAt: Date
     updatedAt: Date
   }): WebsiteSection {
+    // Content shape is keyed off `type`; parse it with the matching schema.
     return {
       ...section,
-      content: homeSectionContentSchema.parse(section.content),
-    }
+      content: parseSectionContent(section.type, section.content),
+    } as WebsiteSection
   }
 }

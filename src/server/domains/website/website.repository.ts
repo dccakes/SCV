@@ -8,8 +8,9 @@
 import type { PrismaClient } from '@prisma/client'
 
 import type { Website, WebsiteWithQuestions } from '~/server/domains/website/website.types'
-import type { HomeSectionContent } from '~/server/domains/website-section/website-section.types'
+import type { WebsiteSection } from '~/server/domains/website-section/website-section.types'
 import { WebsiteSectionType } from '~/server/domains/website-section/website-section.types'
+import { parseSectionContent } from '~/server/domains/website-section/website-section.validator'
 
 export class WebsiteRepository {
   constructor(private db: PrismaClient) {}
@@ -210,6 +211,16 @@ export class WebsiteRepository {
   }
 
   /**
+   * Update the selected website template
+   */
+  async updateTemplate(weddingId: string, templateId: string): Promise<Website> {
+    return this.db.website.update({
+      where: { weddingId },
+      data: { templateId },
+    })
+  }
+
+  /**
    * Check if a website exists for a wedding
    */
   async existsForWedding(weddingId: string): Promise<boolean> {
@@ -257,7 +268,7 @@ export class WebsiteRepository {
       createdAt: Date
       updatedAt: Date
       content: unknown
-      type: 'HOME'
+      type: WebsiteSectionType
       websiteId: string
       isEnabled: boolean
       position: number
@@ -265,10 +276,13 @@ export class WebsiteRepository {
   }): WebsiteWithQuestions {
     return {
       ...website,
-      websiteSections: website.websiteSections?.map((section) => ({
-        ...section,
-        content: section.content as HomeSectionContent,
-      })),
+      websiteSections: website.websiteSections?.map(
+        (section) =>
+          ({
+            ...section,
+            content: parseSectionContent(section.type, section.content),
+          }) as WebsiteSection
+      ),
     }
   }
 }

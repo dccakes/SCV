@@ -5,6 +5,7 @@ import WebsitePage from '~/app/(authenicated)/website/page'
 const mockGetRequiredWedding = jest.fn()
 const mockGetWebsiteByUserId = jest.fn()
 const mockGetHomeSection = jest.fn()
+const mockGetSections = jest.fn()
 const mockGetSession = jest.fn()
 const mockDashboardTopbar = jest.fn(() => <header data-testid='dashboard-topbar'>Topbar</header>)
 const mockWebsiteDisabledCallout = jest.fn(() => (
@@ -22,6 +23,7 @@ jest.mock('~/trpc/server', () => ({
     },
     websiteSection: {
       getHomeSection: () => mockGetHomeSection(),
+      getSections: () => mockGetSections(),
     },
   },
 }))
@@ -67,6 +69,16 @@ jest.mock('~/app/_components/website/website-editor', () => ({
     mockWebsiteEditor(props),
 }))
 
+jest.mock('~/app/_components/website/template-picker', () => ({
+  __esModule: true,
+  TemplatePicker: () => <div data-testid='template-picker'>Template picker</div>,
+}))
+
+jest.mock('~/app/_components/website/sections-editor', () => ({
+  __esModule: true,
+  SectionsEditor: () => <div data-testid='sections-editor'>Sections editor</div>,
+}))
+
 describe('WebsitePage', () => {
   beforeEach(() => {
     mockGetRequiredWedding.mockReset()
@@ -78,6 +90,7 @@ describe('WebsitePage', () => {
     mockWebsiteManager.mockClear()
     mockWebsiteEditor.mockClear()
     mockGetHomeSection.mockResolvedValue(null)
+    mockGetSections.mockResolvedValue([])
     mockGetSession.mockResolvedValue({ user: { email: 'test@example.com' } })
 
     mockGetRequiredWedding.mockResolvedValue({
@@ -164,6 +177,7 @@ describe('WebsitePage', () => {
     })
     mockGetHomeSection.mockResolvedValue({
       id: 'section-123',
+      type: 'HOME',
       content: {
         introText: 'Welcome to our wedding weekend.',
       },

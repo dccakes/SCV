@@ -4,16 +4,7 @@ import { createElement } from 'react'
 import WeddingWebsite from '~/components/website/wedding'
 
 const mockHeadersGet = jest.fn()
-const mockWeddingPage = jest.fn(({ path, introText }: { path: string; introText?: string }) =>
-  createElement('div', { 'data-testid': 'full-page' }, `${path}|${introText ?? ''}`)
-)
-const mockWeddingPageMobile = jest.fn(({ path, introText }: { path: string; introText?: string }) =>
-  createElement('div', { 'data-testid': 'mobile-page' }, `${path}|${introText ?? ''}`)
-)
-const mockWebsiteMinimalPage = jest.fn(
-  ({ path, isRsvpEnabled }: { path: string; isRsvpEnabled: boolean }) =>
-    createElement('div', { 'data-testid': 'minimal-page' }, `${path}|${String(isRsvpEnabled)}`)
-)
+const mockResolveTemplate = jest.fn()
 
 jest.mock('next/headers', () => ({
   headers: () =>
@@ -26,20 +17,24 @@ jest.mock('next/navigation', () => ({
   notFound: jest.fn(),
 }))
 
-jest.mock('~/components/website/wedding-page', () => ({
+jest.mock('~/templates', () => ({
   __esModule: true,
-  default: (props: { path: string; introText?: string }) => mockWeddingPage(props),
+  TemplateThemeProvider: ({ children }: { children: React.ReactNode }) =>
+    createElement('div', { 'data-testid': 'template-root' }, children),
+  resolveTemplate: (templateId: string | null | undefined) => mockResolveTemplate(templateId),
 }))
 
-jest.mock('~/components/website/wedding-page-mobile', () => ({
-  __esModule: true,
-  default: (props: { path: string; introText?: string }) => mockWeddingPageMobile(props),
-}))
-
-jest.mock('~/components/website/minimal-page', () => ({
-  __esModule: true,
-  default: (props: { path: string; isRsvpEnabled: boolean }) => mockWebsiteMinimalPage(props),
-}))
+const buildTemplate = (id: string) => ({
+  id,
+  components: {
+    Home: ({ path, introText }: { path: string; introText?: string }) =>
+      createElement('div', { 'data-testid': 'full-page' }, `${path}|${introText ?? ''}`),
+    HomeMobile: ({ path, introText }: { path: string; introText?: string }) =>
+      createElement('div', { 'data-testid': 'mobile-page' }, `${path}|${introText ?? ''}`),
+    Minimal: ({ path, isRsvpEnabled }: { path: string; isRsvpEnabled: boolean }) =>
+      createElement('div', { 'data-testid': 'minimal-page' }, `${path}|${String(isRsvpEnabled)}`),
+  },
+})
 
 const createWeddingData = (overrides: Record<string, unknown> = {}) => ({
   groomFirstName: 'Shrek',
@@ -56,6 +51,7 @@ const createWeddingData = (overrides: Record<string, unknown> = {}) => ({
     id: 'website-1',
     weddingId: 'wedding-1',
     subUrl: 'shrek-and-fiona',
+    templateId: 'aurelia',
     isPasswordEnabled: false,
     isRsvpEnabled: true,
     coverPhotoUrl: null,
@@ -68,23 +64,31 @@ const createWeddingData = (overrides: Record<string, unknown> = {}) => ({
 describe('WeddingWebsite', () => {
   beforeEach(() => {
     mockHeadersGet.mockReset()
-    mockWeddingPage.mockClear()
-    mockWeddingPageMobile.mockClear()
-    mockWebsiteMinimalPage.mockClear()
+    mockResolveTemplate.mockReset()
+    mockResolveTemplate.mockImplementation((id: string | null | undefined) =>
+      buildTemplate(id ?? 'classic')
+    )
     mockHeadersGet.mockReturnValue('?0')
   })
 
-  it('renders the minimal public page when website_builder is disabled', async () => {
+  it('resolves the template from the stored templateId', async () => {
+    render(
+      await WeddingWebsite({ websiteSubUrl: 'shrek-and-fiona', weddingData: createWeddingData() })
+    )
+
+    expect(mockResolveTemplate).toHaveBeenCalledWith('aurelia')
+    expect(screen.getByTestId('template-root')).toBeInTheDocument()
+  })
+
+  it('renders the minimal page when website_builder is disabled', async () => {
     render(
       await WeddingWebsite({ websiteSubUrl: 'shrek-and-fiona', weddingData: createWeddingData() })
     )
 
     expect(screen.getByTestId('minimal-page')).toHaveTextContent('/w/shrek-and-fiona|true')
-    expect(mockWeddingPage).not.toHaveBeenCalled()
-    expect(mockWeddingPageMobile).not.toHaveBeenCalled()
   })
 
-  it('renders the full public page on desktop when website_builder is enabled', async () => {
+  it('renders the full home surface on desktop when website_builder is enabled', async () => {
     render(
       await WeddingWebsite({
         websiteSubUrl: 'shrek-and-fiona',
@@ -101,10 +105,9 @@ describe('WeddingWebsite', () => {
     expect(screen.getByTestId('full-page')).toHaveTextContent(
       '/w/shrek-and-fiona|Welcome to our wedding weekend.'
     )
-    expect(mockWebsiteMinimalPage).not.toHaveBeenCalled()
   })
 
-  it('renders the mobile page variant when website_builder is enabled on mobile', async () => {
+  it('renders the mobile home surface when website_builder is enabled on mobile', async () => {
     mockHeadersGet.mockReturnValue('?1')
     render(
       await WeddingWebsite({
@@ -116,6 +119,5 @@ describe('WeddingWebsite', () => {
     )
 
     expect(screen.getByTestId('mobile-page')).toHaveTextContent('/w/shrek-and-fiona')
-    expect(mockWeddingPage).not.toHaveBeenCalled()
   })
 })

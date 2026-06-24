@@ -16,6 +16,7 @@ export const mockFindByWebsiteId = jest.fn()
 export const mockFindByWebsiteIdAndType = jest.fn()
 export const mockUpdate = jest.fn()
 export const mockUpsertHomeSection = jest.fn()
+export const mockUpsertByType = jest.fn()
 
 export const WebsiteSectionRepository = jest.fn().mockImplementation(() => ({
   create: mockCreate,
@@ -23,6 +24,7 @@ export const WebsiteSectionRepository = jest.fn().mockImplementation(() => ({
   findByWebsiteIdAndType: mockFindByWebsiteIdAndType,
   update: mockUpdate,
   upsertHomeSection: mockUpsertHomeSection,
+  upsertByType: mockUpsertByType,
 }))
 
 export const resetMocks = (): void => {
@@ -31,5 +33,6 @@ export const resetMocks = (): void => {
   mockFindByWebsiteIdAndType.mockReset()
   mockUpdate.mockReset()
   mockUpsertHomeSection.mockReset()
+  mockUpsertByType.mockReset()
   WebsiteSectionRepository.mockClear()
 }

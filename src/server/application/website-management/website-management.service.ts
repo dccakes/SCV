@@ -16,7 +16,11 @@ import type {
 import { computeWebsiteUrl } from '~/server/domains/website/website.utils'
 import type { WebsitePasswordService } from '~/server/domains/website/website-password.service'
 import type { WebsiteSectionRepository } from '~/server/domains/website-section/website-section.repository'
-import { WebsiteSectionType } from '~/server/domains/website-section/website-section.types'
+import {
+  type WebsiteSection,
+  WebsiteSectionType,
+} from '~/server/domains/website-section/website-section.types'
+import { parseSectionContent } from '~/server/domains/website-section/website-section.validator'
 import type { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
 
 export class WebsiteManagementService {
@@ -27,7 +31,7 @@ export class WebsiteManagementService {
     private websitePasswordService: Pick<WebsitePasswordService, 'verifyAccessToken'>,
     private websiteSectionRepository: Pick<
       WebsiteSectionRepository,
-      'findByWebsiteIdAndType' | 'upsertHomeSection'
+      'findByWebsiteId' | 'findByWebsiteIdAndType' | 'upsertHomeSection' | 'upsertByType'
     >
   ) {}
 
@@ -113,6 +117,57 @@ export class WebsiteManagementService {
     return this.websiteSectionRepository.upsertHomeSection(website.id, input)
   }
 
+  /**
+   * List all stored sections for the current wedding's website (editor view).
+   */
+  async getSections(ctx: AuthzContext, weddingId: string): Promise<WebsiteSection[]> {
+    requirePermission(ctx, { website: ['read'] })
+
+    const website = await this.websiteRepository.findByWeddingId(weddingId)
+    if (!website) {
+      return []
+    }
+
+    return this.websiteSectionRepository.findByWebsiteId(website.id)
+  }
+
+  /**
+   * Create or update a section of any type for the current wedding's website.
+   */
+  async upsertSection(
+    ctx: AuthzContext,
+    weddingId: string,
+    input: { type: WebsiteSectionType; content: unknown; isEnabled?: boolean }
+  ): Promise<WebsiteSection> {
+    requirePermission(ctx, { website: ['update'] })
+
+    const website = await this.websiteRepository.findByWeddingId(weddingId)
+    if (!website) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Website not found',
+      })
+    }
+
+    let content: WebsiteSection['content']
+    try {
+      content = parseSectionContent(input.type, input.content)
+    } catch (error) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message:
+          error instanceof Error ? error.message : `Invalid content for ${input.type} section`,
+      })
+    }
+
+    return this.websiteSectionRepository.upsertByType(
+      website.id,
+      input.type,
+      content,
+      input.isEnabled ?? true
+    )
+  }
+
   async fetchWeddingData(
     subUrl: string,
     accessToken: string | undefined
@@ -140,10 +195,10 @@ export class WebsiteManagementService {
       }
     }
 
-    const [wedding, events, homeSection] = await Promise.all([
+    const [wedding, events, sections] = await Promise.all([
       this.weddingRepository.findById(website.weddingId),
       this.eventRepository.findByWeddingIdWithQuestions(website.weddingId),
-      this.websiteSectionRepository.findByWebsiteIdAndType(website.id, WebsiteSectionType.HOME),
+      this.websiteSectionRepository.findByWebsiteId(website.id),
     ])
     if (!wedding) {
       throw new TRPCError({
@@ -152,7 +207,16 @@ export class WebsiteManagementService {
       })
     }
     const weddingDate = events.find((event) => event.name === 'Wedding Day')?.date
-    const introText = homeSection?.isEnabled ? homeSection.content.introText : ''
+    const homeSection = sections.find((section) => section.type === WebsiteSectionType.HOME)
+    const introText =
+      homeSection?.isEnabled && homeSection.type === WebsiteSectionType.HOME
+        ? homeSection.content.introText
+        : ''
+    // Enabled, ordered content sections rendered below the hero (HOME drives the
+    // intro text instead of appearing as its own section).
+    const contentSections = sections
+      .filter((section) => section.isEnabled && section.type !== WebsiteSectionType.HOME)
+      .sort((a, b) => a.position - b.position)
 
     return {
       groomFirstName: wedding.groomFirstName,
@@ -170,6 +234,7 @@ export class WebsiteManagementService {
       },
       websiteBuilderEnabled: wedding.enabledAddOns.includes('website_builder'),
       website: this.toPublicWebsiteWithQuestions(website, introText),
+      sections: contentSections,
       daysRemaining: calculateDaysRemaining(weddingDate) ?? -1,
       events: events.map((event) => ({
         id: event.id,

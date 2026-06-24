@@ -6,6 +6,7 @@
 
 import { z } from 'zod'
 import { reservedWebsiteRootSegmentsSet } from '~/lib/website/reserved-root-segments'
+import { isKnownTemplateId } from '~/templates/catalog'
 
 const subUrlSchema = z
   .string()
@@ -92,6 +93,15 @@ export const updateCoverPhotoSchema = z.object({
 })
 
 /**
+ * Schema for selecting a wedding website template
+ */
+export const updateTemplateSchema = z.object({
+  templateId: z.string().refine(isKnownTemplateId, {
+    message: 'Unknown wedding website template',
+  }),
+})
+
+/**
  * Schema for fetching website by subUrl
  */
 export const getBySubUrlSchema = z.object({
@@ -121,6 +131,7 @@ export type CreateWebsiteSchemaInput = z.infer<typeof createWebsiteSchema>
 export type UpdateWebsiteSchemaInput = z.infer<typeof updateWebsiteSchema>
 export type UpdateRsvpEnabledSchemaInput = z.infer<typeof updateRsvpEnabledSchema>
 export type UpdateCoverPhotoSchemaInput = z.infer<typeof updateCoverPhotoSchema>
+export type UpdateTemplateSchemaInput = z.infer<typeof updateTemplateSchema>
 export type SubmitRsvpSchemaInput = z.infer<typeof submitRsvpSchema>
 export type HasPasswordAccessSchemaInput = z.infer<typeof hasPasswordAccessSchema>
 export type VerifyWebsitePasswordSchemaInput = z.infer<typeof verifyWebsitePasswordSchema>

@@ -6,17 +6,32 @@ const websiteSectionRepository = new WebsiteSectionRepository(db)
 
 export const websiteSectionService = new WebsiteSectionService(websiteSectionRepository)
 
+export {
+  SECTION_CATALOG,
+  type SectionCatalogEntry,
+} from '~/server/domains/website-section/website-section.catalog'
 export { WebsiteSectionRepository } from '~/server/domains/website-section/website-section.repository'
 export { websiteSectionRouter } from '~/server/domains/website-section/website-section.router'
 export { WebsiteSectionService } from '~/server/domains/website-section/website-section.service'
 export type {
+  FaqSectionContent,
   HomeSectionContent,
+  OurStorySectionContent,
+  RegistrySectionContent,
+  SectionContentByType,
+  TravelSectionContent,
   WebsiteSection,
+  WebsiteSectionContent,
   WebsiteSectionType,
+  WeddingPartySectionContent,
 } from '~/server/domains/website-section/website-section.types'
 export {
   createWebsiteSectionSchema,
   homeSectionContentSchema,
+  parseSectionContent,
   type UpdateHomeSectionInput,
+  type UpdateSectionInput,
   updateHomeSectionSchema,
+  updateSectionSchema,
+  WEBSITE_SECTION_TYPES,
 } from '~/server/domains/website-section/website-section.validator'

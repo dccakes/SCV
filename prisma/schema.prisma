@@ -101,6 +101,11 @@ model Website {
 
 enum WebsiteSectionType {
   HOME
+  OUR_STORY
+  WEDDING_PARTY
+  TRAVEL
+  FAQ
+  REGISTRY
 }
 
 model WebsiteSection {

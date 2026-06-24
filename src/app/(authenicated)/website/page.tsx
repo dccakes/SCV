@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { SectionsEditor } from '~/app/_components/website/sections-editor'
+import { TemplatePicker } from '~/app/_components/website/template-picker'
 import { WebsiteDisabledCallout } from '~/app/_components/website/website-disabled-callout'
 import { WebsiteEditor } from '~/app/_components/website/website-editor'
 import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
@@ -9,6 +11,7 @@ import { auth } from '~/lib/auth'
 import { computePublicWebsiteUrl } from '~/lib/website/public-url'
 import { deriveWeddingSubUrl } from '~/lib/website-slug'
 import { getRequiredWedding } from '~/server/application/authenticated-route/authenticated-route-data'
+import { listTemplateSummaries } from '~/templates/catalog'
 import { api } from '~/trpc/server'
 
 export const metadata: Metadata = {
@@ -20,14 +23,14 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 export default async function WebsitePage() {
-  const [wedding, existingWebsite] = await Promise.all([
+  const [wedding, existingWebsite, session] = await Promise.all([
     getRequiredWedding(),
     api.website.getByUserId(),
+    headers().then((requestHeaders) => auth.api.getSession({ headers: requestHeaders })),
   ])
   const isWebsiteBuilderEnabled = wedding.enabledAddOns.includes('website_builder')
   const defaultSubUrl = deriveWeddingSubUrl(wedding)
 
-  const session = await auth.api.getSession({ headers: await headers() })
   const userEmail = session?.user?.email
   if (!userEmail) {
     redirect('/')
@@ -36,8 +39,11 @@ export default async function WebsitePage() {
   const websiteId = existingWebsite?.id ?? null
   const websiteSubUrl = existingWebsite?.subUrl ?? null
 
-  const homeSection =
-    isWebsiteBuilderEnabled && websiteId ? await api.websiteSection.getHomeSection() : null
+  const [homeSection, sections] =
+    isWebsiteBuilderEnabled && websiteId
+      ? await Promise.all([api.websiteSection.getHomeSection(), api.websiteSection.getSections()])
+      : [null, []]
+  const introText = homeSection?.type === 'HOME' ? homeSection.content.introText : ''
 
   if (!isWebsiteBuilderEnabled) {
     return (
@@ -69,10 +75,17 @@ export default async function WebsitePage() {
             defaultSubUrl={defaultSubUrl}
           />
           {websiteId && websiteSubUrl ? (
-            <WebsiteEditor
-              initialIntroText={homeSection?.content.introText ?? ''}
-              publicUrl={computePublicWebsiteUrl(websiteSubUrl)}
-            />
+            <>
+              <TemplatePicker
+                templates={listTemplateSummaries()}
+                currentTemplateId={existingWebsite?.templateId ?? null}
+              />
+              <WebsiteEditor
+                initialIntroText={introText}
+                publicUrl={computePublicWebsiteUrl(websiteSubUrl)}
+              />
+              <SectionsEditor initialSections={sections} />
+            </>
           ) : null}
         </div>
       </div>

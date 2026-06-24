@@ -18,6 +18,7 @@ import {
   hasPasswordAccessSchema,
   updateCoverPhotoSchema,
   updateRsvpEnabledSchema,
+  updateTemplateSchema,
   updateWebsiteSchema,
   verifyWebsitePasswordSchema,
 } from '~/server/domains/website/website.validator'
@@ -66,6 +67,17 @@ export const websiteRouter = createTRPCRouter({
       const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
 
       return websiteService.updateCoverPhoto(ctx.authz, weddingId, input.coverPhotoUrl)
+    }),
+
+  /**
+   * Update the selected website template
+   */
+  updateTemplate: protectedProcedure
+    .input(updateTemplateSchema)
+    .mutation(async ({ ctx, input }) => {
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+
+      return websiteService.updateTemplate(ctx.authz, weddingId, input.templateId)
     }),
 
   /**

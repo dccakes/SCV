@@ -130,6 +130,9 @@ describe('SidebarNavFrame', () => {
   it('renders website navigation linking to the publish page', () => {
     render(<SidebarNavFrame isOpen={false} setIsOpen={jest.fn()} />)
 
-    expect(screen.getByRole('link', { name: 'Website' })).toHaveAttribute('href', '/website')
+    expect(screen.getByRole('link', { name: 'Wedding Website' })).toHaveAttribute(
+      'href',
+      '/website'
+    )
   })
 })
