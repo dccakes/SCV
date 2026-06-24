@@ -8,10 +8,7 @@
 import type { PrismaClient } from '@prisma/client'
 
 import type { Website, WebsiteWithQuestions } from '~/server/domains/website/website.types'
-import type {
-  WebsiteSection,
-  WebsiteSectionType as WebsiteSectionTypeName,
-} from '~/server/domains/website-section/website-section.types'
+import type { WebsiteSection } from '~/server/domains/website-section/website-section.types'
 import { WebsiteSectionType } from '~/server/domains/website-section/website-section.types'
 import { parseSectionContent } from '~/server/domains/website-section/website-section.validator'
 
@@ -271,7 +268,7 @@ export class WebsiteRepository {
       createdAt: Date
       updatedAt: Date
       content: unknown
-      type: WebsiteSectionTypeName
+      type: WebsiteSectionType
       websiteId: string
       isEnabled: boolean
       position: number

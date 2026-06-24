@@ -20,6 +20,10 @@ import type { TemplateMeta } from '~/templates/catalog'
 /**
  * Props shared by the rich, content-bearing surfaces (home, save the date,
  * invitation). These render directly from the couple's wedding data.
+ *
+ * Note: the content sections (`weddingData.sections`) are rendered only by the
+ * home surface via the template's `Sections` component — Save the Date and
+ * Invitation intentionally do not render them.
  */
 export type TemplateSurfaceProps = {
   weddingData: WeddingPageData

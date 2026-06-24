@@ -23,14 +23,14 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 export default async function WebsitePage() {
-  const [wedding, existingWebsite] = await Promise.all([
+  const [wedding, existingWebsite, session] = await Promise.all([
     getRequiredWedding(),
     api.website.getByUserId(),
+    headers().then((requestHeaders) => auth.api.getSession({ headers: requestHeaders })),
   ])
   const isWebsiteBuilderEnabled = wedding.enabledAddOns.includes('website_builder')
   const defaultSubUrl = deriveWeddingSubUrl(wedding)
 
-  const session = await auth.api.getSession({ headers: await headers() })
   const userEmail = session?.user?.email
   if (!userEmail) {
     redirect('/')
