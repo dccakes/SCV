@@ -99,6 +99,30 @@ export class WebsiteService {
   }
 
   /**
+   * Update the header/hero image
+   */
+  async updateHeaderImage(
+    ctx: AuthzContext,
+    weddingId: string,
+    headerImageUrl: string | null
+  ): Promise<Website> {
+    this.requireWebsitePermission(ctx, 'update')
+    return this.websiteRepository.updateHeaderImage(weddingId, headerImageUrl)
+  }
+
+  /**
+   * Update the couple photo gallery
+   */
+  async updateCoupleImages(
+    ctx: AuthzContext,
+    weddingId: string,
+    coupleImageUrls: string[]
+  ): Promise<Website> {
+    this.requireWebsitePermission(ctx, 'update')
+    return this.websiteRepository.updateCoupleImages(weddingId, coupleImageUrls)
+  }
+
+  /**
    * Update the selected website template.
    *
    * The id is validated against the template registry at the edge (validator),

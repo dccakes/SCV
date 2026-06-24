@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { formatDateStandard } from '~/app/utils/helpers'
+import { AureliaHeaderImage } from '~/templates/aurelia/components/media'
 import type { TemplateSurfaceProps } from '~/templates/types'
 
 const headingFont = 'font-[family-name:var(--tpl-heading-font)]'
@@ -9,7 +10,8 @@ export function AureliaInvitation({ weddingData, path }: Readonly<TemplateSurfac
   const weddingEvent = weddingData.events.find((event) => event.name === 'Wedding Day')
 
   return (
-    <main className='flex min-h-screen items-center justify-center px-6 py-24'>
+    <main className='flex min-h-screen flex-col items-center justify-center gap-8 px-6 py-24'>
+      <AureliaHeaderImage url={website.headerImageUrl} />
       <div className='flex w-full max-w-xl flex-col items-center gap-6 rounded-[28px] border border-border bg-card px-10 py-16 text-center text-card-foreground shadow-sm'>
         <p className='text-muted-foreground text-sm'>Together with their families</p>
         <h1 className={`${headingFont} text-4xl text-foreground italic sm:text-5xl`}>

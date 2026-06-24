@@ -16,7 +16,9 @@ import {
   mockFindBySubUrl,
   mockFindByWeddingId,
   mockUpdate,
+  mockUpdateCoupleImages,
   mockUpdateCoverPhoto,
+  mockUpdateHeaderImage,
   mockUpdateRsvpEnabled,
   mockWebsite,
   resetMocks as resetWebsiteMocks,
@@ -29,6 +31,8 @@ const mockFindBySubUrlFn = mockFindBySubUrl as jest.Mock
 const mockUpdateFn = mockUpdate as jest.Mock
 const mockUpdateRsvpEnabledFn = mockUpdateRsvpEnabled as jest.Mock
 const mockUpdateCoverPhotoFn = mockUpdateCoverPhoto as jest.Mock
+const mockUpdateHeaderImageFn = mockUpdateHeaderImage as jest.Mock
+const mockUpdateCoupleImagesFn = mockUpdateCoupleImages as jest.Mock
 const mockRequirePermission = requirePermission as jest.Mock
 const mockBelongsToWeddingFn = mockBelongsToWedding as jest.Mock
 
@@ -167,6 +171,54 @@ describe('WebsiteService', () => {
     })
   })
 
+  describe('updateHeaderImage', () => {
+    it('should update the header image URL', async () => {
+      const headerImageUrl = 'https://example.com/header.jpg'
+      mockUpdateHeaderImageFn.mockResolvedValue({ ...mockWebsite, headerImageUrl })
+
+      const result = await websiteService.updateHeaderImage(
+        actorContext,
+        'wedding-123',
+        headerImageUrl
+      )
+
+      expect(result.headerImageUrl).toBe(headerImageUrl)
+      expect(mockUpdateHeaderImageFn).toHaveBeenCalledWith('wedding-123', headerImageUrl)
+    })
+
+    it('should allow clearing the header image', async () => {
+      mockUpdateHeaderImageFn.mockResolvedValue({ ...mockWebsite, headerImageUrl: null })
+
+      await websiteService.updateHeaderImage(actorContext, 'wedding-123', null)
+
+      expect(mockUpdateHeaderImageFn).toHaveBeenCalledWith('wedding-123', null)
+    })
+  })
+
+  describe('updateCoupleImages', () => {
+    it('should update the couple photo gallery', async () => {
+      const coupleImageUrls = ['https://example.com/a.jpg', 'https://example.com/b.jpg']
+      mockUpdateCoupleImagesFn.mockResolvedValue({ ...mockWebsite, coupleImageUrls })
+
+      const result = await websiteService.updateCoupleImages(
+        actorContext,
+        'wedding-123',
+        coupleImageUrls
+      )
+
+      expect(result.coupleImageUrls).toEqual(coupleImageUrls)
+      expect(mockUpdateCoupleImagesFn).toHaveBeenCalledWith('wedding-123', coupleImageUrls)
+    })
+
+    it('should allow an empty gallery', async () => {
+      mockUpdateCoupleImagesFn.mockResolvedValue({ ...mockWebsite, coupleImageUrls: [] })
+
+      await websiteService.updateCoupleImages(actorContext, 'wedding-123', [])
+
+      expect(mockUpdateCoupleImagesFn).toHaveBeenCalledWith('wedding-123', [])
+    })
+  })
+
   describe('getByWeddingId', () => {
     it('should return website for valid weddingId', async () => {
       mockFindByWeddingIdFn.mockResolvedValue(mockWebsite)
@@ -212,6 +264,8 @@ describe('WebsiteService', () => {
         isPasswordEnabled: mockWebsite.isPasswordEnabled,
         isRsvpEnabled: mockWebsite.isRsvpEnabled,
         coverPhotoUrl: mockWebsite.coverPhotoUrl,
+        headerImageUrl: mockWebsite.headerImageUrl,
+        coupleImageUrls: mockWebsite.coupleImageUrls,
         url: 'https://oswp.example/w/johndoeandjanesmith',
       })
       expect(result).not.toHaveProperty('password')

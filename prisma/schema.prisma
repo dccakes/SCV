@@ -91,6 +91,8 @@ model Website {
   password          String?
   isRsvpEnabled     Boolean    @default(true)
   coverPhotoUrl     String?
+  headerImageUrl    String?
+  coupleImageUrls   String[]   @default([])
   generalQuestions  Question[] @relation(name: "Website_Questions")
   websiteSections   WebsiteSection[]
   createdAt         DateTime   @default(now())

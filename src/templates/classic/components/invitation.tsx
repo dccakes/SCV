@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { formatDateStandard } from '~/app/utils/helpers'
+import { ClassicHeaderImage } from '~/templates/classic/components/media'
 import type { TemplateSurfaceProps } from '~/templates/types'
 
 export function ClassicInvitation({ weddingData, path }: Readonly<TemplateSurfaceProps>) {
@@ -8,6 +9,7 @@ export function ClassicInvitation({ weddingData, path }: Readonly<TemplateSurfac
 
   return (
     <main className='flex min-h-screen flex-col items-center justify-center gap-6 px-6 py-24 text-center text-zinc-500 tracking-widest'>
+      <ClassicHeaderImage url={website.headerImageUrl} />
       <p className='text-sm tracking-normal'>Together with their families</p>
       <h1 className='font-medium text-5xl tracking-widest sm:text-6xl'>
         {weddingData.groomFirstName} {weddingData.groomLastName}

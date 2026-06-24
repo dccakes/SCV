@@ -10,6 +10,7 @@
  * theme.
  */
 
+import Image from 'next/image'
 import type {
   FaqSectionContent,
   OurStorySectionContent,
@@ -85,12 +86,26 @@ function WeddingParty({ content }: { content: WeddingPartySectionContent }) {
         {content.members.map((member) => (
           <div
             key={`${member.name}-${member.role}`}
-            className='flex flex-col items-center gap-1 rounded-[20px] border border-border bg-card px-6 py-8 text-card-foreground'
+            className='flex flex-col items-center gap-2 rounded-[20px] border border-border bg-card px-6 py-8 text-card-foreground'
           >
+            {member.imageUrl ? (
+              <div className='relative mb-1 h-28 w-28 overflow-hidden rounded-full border border-border'>
+                <Image
+                  src={member.imageUrl}
+                  fill
+                  sizes='112px'
+                  className='object-cover'
+                  alt={member.name}
+                />
+              </div>
+            ) : null}
             <p className={`${headingFont} text-2xl text-foreground`}>{member.name}</p>
             <p className='text-muted-foreground text-sm uppercase tracking-[0.2em]'>
               {member.role}
             </p>
+            {member.blurb ? (
+              <p className='text-muted-foreground text-sm leading-6'>{member.blurb}</p>
+            ) : null}
           </div>
         ))}
       </div>

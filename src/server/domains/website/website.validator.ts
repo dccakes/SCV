@@ -93,6 +93,22 @@ export const updateCoverPhotoSchema = z.object({
 })
 
 /**
+ * Schema for updating the header/hero image
+ */
+export const updateHeaderImageSchema = z.object({
+  headerImageUrl: z.string().url('Enter a valid image URL').nullable(),
+})
+
+/**
+ * Schema for updating the couple photo gallery
+ */
+export const updateCoupleImagesSchema = z.object({
+  coupleImageUrls: z
+    .array(z.string().url('Enter a valid image URL'))
+    .max(12, 'You can add up to 12 couple photos'),
+})
+
+/**
  * Schema for selecting a wedding website template
  */
 export const updateTemplateSchema = z.object({
@@ -131,6 +147,8 @@ export type CreateWebsiteSchemaInput = z.infer<typeof createWebsiteSchema>
 export type UpdateWebsiteSchemaInput = z.infer<typeof updateWebsiteSchema>
 export type UpdateRsvpEnabledSchemaInput = z.infer<typeof updateRsvpEnabledSchema>
 export type UpdateCoverPhotoSchemaInput = z.infer<typeof updateCoverPhotoSchema>
+export type UpdateHeaderImageSchemaInput = z.infer<typeof updateHeaderImageSchema>
+export type UpdateCoupleImagesSchemaInput = z.infer<typeof updateCoupleImagesSchema>
 export type UpdateTemplateSchemaInput = z.infer<typeof updateTemplateSchema>
 export type SubmitRsvpSchemaInput = z.infer<typeof submitRsvpSchema>
 export type HasPasswordAccessSchemaInput = z.infer<typeof hasPasswordAccessSchema>

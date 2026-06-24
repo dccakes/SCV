@@ -32,6 +32,12 @@ export const weddingPartySectionContentSchema = z.object({
       z.object({
         name: z.string().max(120, 'Name must be 120 characters or fewer'),
         role: z.string().max(120, 'Role must be 120 characters or fewer'),
+        imageUrl: z
+          .string()
+          .url('Enter a valid image URL')
+          .max(2000, 'Image URL must be 2000 characters or fewer')
+          .optional(),
+        blurb: z.string().max(1000, 'Blurb must be 1000 characters or fewer').optional(),
       })
     )
     .max(30, 'A wedding party can have up to 30 members'),

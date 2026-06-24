@@ -22,6 +22,10 @@ export type Website = {
   password: string | null
   isRsvpEnabled: boolean
   coverPhotoUrl: string | null
+  /** Full-width hero image shown at the top of every guest-facing surface. */
+  headerImageUrl: string | null
+  /** Gallery of couple photos shown on the home page. */
+  coupleImageUrls: string[]
 }
 
 export type PublicWebsite = Omit<Website, 'password'> & {
@@ -77,6 +81,22 @@ export type UpdateRsvpEnabledInput = {
 export type UpdateCoverPhotoInput = {
   weddingId: string
   coverPhotoUrl: string | null
+}
+
+/**
+ * Input for updating the header/hero image
+ */
+export type UpdateHeaderImageInput = {
+  weddingId: string
+  headerImageUrl: string | null
+}
+
+/**
+ * Input for updating the couple photo gallery
+ */
+export type UpdateCoupleImagesInput = {
+  weddingId: string
+  coupleImageUrls: string[]
 }
 
 /**

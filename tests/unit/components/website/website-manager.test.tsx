@@ -48,6 +48,8 @@ const buildWebsite = (overrides: Partial<Website> = {}): Website => ({
   password: null,
   isRsvpEnabled: true,
   coverPhotoUrl: null,
+  headerImageUrl: null,
+  coupleImageUrls: [],
   ...overrides,
 })
 

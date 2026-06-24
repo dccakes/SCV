@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { formatDateStandard } from '~/app/utils/helpers'
+import { ClassicCoupleGallery, ClassicHeaderImage } from '~/templates/classic/components/media'
 import { ClassicNavbar } from '~/templates/classic/components/navbar'
 import { ClassicSections } from '~/templates/classic/components/sections'
 import type { TemplateSurfaceProps } from '~/templates/types'
@@ -10,6 +11,7 @@ export function ClassicHome({ weddingData, path, introText }: Readonly<TemplateS
 
   return (
     <main className='flex flex-col items-center justify-center gap-20 pb-24 text-center text-zinc-500 tracking-widest'>
+      <ClassicHeaderImage url={website.headerImageUrl} />
       <div className='text-center'>
         <h1 className='my-5 font-medium text-6xl tracking-widest'>
           {weddingData.groomFirstName} & {weddingData.brideFirstName}
@@ -49,6 +51,8 @@ export function ClassicHome({ weddingData, path, introText }: Readonly<TemplateS
           <p>{introText}</p>
         </section>
       ) : null}
+
+      <ClassicCoupleGallery urls={website.coupleImageUrls} />
 
       {weddingData.events.map((event) => (
         <div key={event.id} className='flex flex-col gap-2'>
