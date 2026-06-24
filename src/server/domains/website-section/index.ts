@@ -14,12 +14,19 @@ export { WebsiteSectionRepository } from '~/server/domains/website-section/websi
 export { websiteSectionRouter } from '~/server/domains/website-section/website-section.router'
 export { WebsiteSectionService } from '~/server/domains/website-section/website-section.service'
 export type {
+  DestinationSectionContent,
+  ExperienceItem,
+  ExperiencesSectionContent,
   FaqSectionContent,
   HomeSectionContent,
   OurStorySectionContent,
   RegistrySectionContent,
   SectionContentByType,
+  TimelineMilestone,
+  TimelineSectionContent,
   TravelSectionContent,
+  TravelService,
+  TravelStay,
   WebsiteSection,
   WebsiteSectionContent,
   WebsiteSectionType,

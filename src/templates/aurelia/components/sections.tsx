@@ -12,9 +12,12 @@
 
 import Image from 'next/image'
 import type {
+  DestinationSectionContent,
+  ExperiencesSectionContent,
   FaqSectionContent,
   OurStorySectionContent,
   RegistrySectionContent,
+  TimelineSectionContent,
   TravelSectionContent,
   WebsiteSection,
   WeddingPartySectionContent,
@@ -69,9 +72,62 @@ function OurStory({ content }: { content: OurStorySectionContent }) {
 }
 
 function Travel({ content }: { content: TravelSectionContent }) {
+  const services = content.services ?? []
+  const stays = content.stays ?? []
   return (
     <SectionShell id='travel' eyebrow='Getting There' heading={content.heading}>
       <ProseBlock text={content.body} />
+      {services.length > 0 ? (
+        <div className='grid w-full max-w-3xl gap-4 sm:grid-cols-3'>
+          {services.map((service) => (
+            <div
+              key={`${service.title}`}
+              className='rounded-[16px] border border-border bg-card px-5 py-5 text-center'
+            >
+              <p className='text-foreground text-sm uppercase tracking-[0.18em]'>{service.title}</p>
+              <p className='mt-2 text-muted-foreground text-sm leading-6'>{service.description}</p>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {stays.length > 0 ? (
+        <div className='grid w-full gap-6 sm:grid-cols-2 lg:grid-cols-3'>
+          {stays.map((stay) => (
+            <article
+              key={`${stay.name}`}
+              className='flex flex-col overflow-hidden rounded-[20px] border border-border bg-card'
+            >
+              {stay.imageUrl ? (
+                <div className='relative aspect-[4/3] w-full'>
+                  <Image
+                    src={stay.imageUrl}
+                    fill
+                    sizes='(max-width: 768px) 50vw, 33vw'
+                    className='object-cover'
+                    alt={stay.name}
+                  />
+                </div>
+              ) : null}
+              <div className='flex flex-col gap-1 px-5 py-4 text-center'>
+                <p className={`${headingFont} text-foreground text-xl`}>{stay.name}</p>
+                {stay.description ? (
+                  <p className='text-muted-foreground text-sm leading-6'>{stay.description}</p>
+                ) : null}
+                {stay.url ? (
+                  <a
+                    href={stay.url}
+                    target='_blank'
+                    rel='noreferrer'
+                    className='mt-1 text-[0.7rem] text-primary uppercase tracking-[0.2em] underline-offset-4 hover:underline'
+                  >
+                    View
+                  </a>
+                ) : null}
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : null}
     </SectionShell>
   )
 }
@@ -107,6 +163,114 @@ function WeddingParty({ content }: { content: WeddingPartySectionContent }) {
               <p className='text-muted-foreground text-sm leading-6'>{member.blurb}</p>
             ) : null}
           </div>
+        ))}
+      </div>
+    </SectionShell>
+  )
+}
+
+function Timeline({ content }: { content: TimelineSectionContent }) {
+  if (content.milestones.length === 0) {
+    return null
+  }
+  return (
+    <SectionShell id='our-story' eyebrow={content.eyebrow ?? 'Our Story'} heading={content.heading}>
+      <ol className='grid w-full gap-8 sm:grid-cols-2 lg:grid-cols-4'>
+        {content.milestones.map((milestone) => (
+          <li
+            key={`${milestone.year}-${milestone.title}`}
+            className='flex flex-col items-center gap-1.5 rounded-[20px] border border-border bg-card px-6 py-7 text-center'
+          >
+            <span className={`${headingFont} text-3xl text-primary italic`}>{milestone.year}</span>
+            <span className='text-foreground text-sm uppercase tracking-[0.2em]'>
+              {milestone.title}
+            </span>
+            {milestone.location ? (
+              <span className='text-muted-foreground text-sm'>{milestone.location}</span>
+            ) : null}
+          </li>
+        ))}
+      </ol>
+    </SectionShell>
+  )
+}
+
+function Destination({ content }: { content: DestinationSectionContent }) {
+  if (!content.body.trim() && !content.imageUrl) {
+    return null
+  }
+  return (
+    <SectionShell
+      id='destination'
+      eyebrow={content.eyebrow ?? 'The Destination'}
+      heading={content.heading}
+    >
+      {content.imageUrl ? (
+        <div className='relative h-72 w-full max-w-3xl overflow-hidden rounded-[20px] border border-border'>
+          <Image
+            src={content.imageUrl}
+            fill
+            sizes='(max-width: 768px) 100vw, 70vw'
+            className='object-cover'
+            alt={content.venueName ?? content.heading}
+          />
+        </div>
+      ) : null}
+      {content.location ? (
+        <p className={`${headingFont} text-2xl text-primary italic`}>{content.location}</p>
+      ) : null}
+      <ProseBlock text={content.body} />
+      {content.venueName ? (
+        <p className='text-foreground text-sm uppercase tracking-[0.2em]'>{content.venueName}</p>
+      ) : null}
+      {content.ctaLabel && content.ctaUrl ? (
+        <a
+          href={content.ctaUrl}
+          target='_blank'
+          rel='noreferrer'
+          className='rounded-full border border-primary px-6 py-2.5 text-[0.72rem] text-primary uppercase tracking-[0.25em] transition-colors hover:bg-primary hover:text-primary-foreground'
+        >
+          {content.ctaLabel}
+        </a>
+      ) : null}
+    </SectionShell>
+  )
+}
+
+function Experiences({ content }: { content: ExperiencesSectionContent }) {
+  if (content.items.length === 0) {
+    return null
+  }
+  return (
+    <SectionShell
+      id='experiences'
+      eyebrow={content.eyebrow ?? 'Curated Experiences'}
+      heading={content.heading}
+    >
+      <div className='grid w-full gap-6 sm:grid-cols-2 lg:grid-cols-4'>
+        {content.items.map((item) => (
+          <article
+            key={`${item.title}`}
+            className='flex flex-col overflow-hidden rounded-[20px] border border-border bg-card'
+          >
+            {item.imageUrl ? (
+              <div className='relative aspect-[4/5] w-full'>
+                <Image
+                  src={item.imageUrl}
+                  fill
+                  sizes='(max-width: 768px) 50vw, 25vw'
+                  className='object-cover'
+                  alt={item.title}
+                />
+              </div>
+            ) : null}
+            <div className='flex flex-col gap-1 px-5 py-5 text-center'>
+              <h3 className={`${headingFont} text-2xl text-foreground italic`}>{item.title}</h3>
+              {item.description ? (
+                <p className='text-muted-foreground text-sm leading-6'>{item.description}</p>
+              ) : null}
+            </div>
+          </article>
         ))}
       </div>
     </SectionShell>
@@ -161,6 +325,12 @@ function SectionRenderer({ section }: { section: WebsiteSection }) {
   switch (section.type) {
     case 'OUR_STORY':
       return <OurStory content={section.content} />
+    case 'TIMELINE':
+      return <Timeline content={section.content} />
+    case 'DESTINATION':
+      return <Destination content={section.content} />
+    case 'EXPERIENCES':
+      return <Experiences content={section.content} />
     case 'TRAVEL':
       return <Travel content={section.content} />
     case 'WEDDING_PARTY':

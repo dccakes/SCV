@@ -15,9 +15,14 @@ import { aureliaTemplate } from '~/templates/aurelia'
 import { DEFAULT_TEMPLATE_ID } from '~/templates/catalog'
 import { classicTemplate } from '~/templates/classic'
 import type { WeddingTemplate } from '~/templates/types'
+import { voyageTemplate } from '~/templates/voyage'
 
 /** All registered template plugins, in display order. */
-export const TEMPLATES: readonly WeddingTemplate[] = [classicTemplate, aureliaTemplate]
+export const TEMPLATES: readonly WeddingTemplate[] = [
+  classicTemplate,
+  aureliaTemplate,
+  voyageTemplate,
+]
 
 const TEMPLATES_BY_ID: ReadonlyMap<string, WeddingTemplate> = new Map(
   TEMPLATES.map((template) => [template.id, template])

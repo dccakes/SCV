@@ -10,6 +10,9 @@ import {
 export const WEBSITE_SECTION_TYPES = [
   WebsiteSectionType.HOME,
   WebsiteSectionType.OUR_STORY,
+  WebsiteSectionType.TIMELINE,
+  WebsiteSectionType.DESTINATION,
+  WebsiteSectionType.EXPERIENCES,
   WebsiteSectionType.WEDDING_PARTY,
   WebsiteSectionType.TRAVEL,
   WebsiteSectionType.FAQ,
@@ -43,9 +46,81 @@ export const weddingPartySectionContentSchema = z.object({
     .max(30, 'A wedding party can have up to 30 members'),
 })
 
+const eyebrowSchema = z.string().max(60, 'Label must be 60 characters or fewer').optional()
+const optionalImageUrlSchema = z
+  .string()
+  .url('Enter a valid image URL')
+  .max(2000, 'Image URL must be 2000 characters or fewer')
+  .optional()
+const optionalLinkUrlSchema = z
+  .string()
+  .url('Enter a valid URL')
+  .max(500, 'URL must be 500 characters or fewer')
+  .optional()
+
+export const timelineSectionContentSchema = z.object({
+  heading: z.string().max(120, 'Heading must be 120 characters or fewer'),
+  eyebrow: eyebrowSchema,
+  milestones: z
+    .array(
+      z.object({
+        year: z.string().max(40, 'Year must be 40 characters or fewer'),
+        title: z.string().max(120, 'Title must be 120 characters or fewer'),
+        location: z.string().max(120, 'Location must be 120 characters or fewer').optional(),
+      })
+    )
+    .max(12, 'You can add up to 12 milestones'),
+})
+
+export const destinationSectionContentSchema = z.object({
+  eyebrow: eyebrowSchema,
+  heading: z.string().max(160, 'Heading must be 160 characters or fewer'),
+  body: z.string().max(2000, 'Description must be 2000 characters or fewer'),
+  location: z.string().max(120, 'Location must be 120 characters or fewer').optional(),
+  venueName: z.string().max(160, 'Venue name must be 160 characters or fewer').optional(),
+  venueNote: z.string().max(200, 'Venue note must be 200 characters or fewer').optional(),
+  ctaLabel: z.string().max(60, 'Button label must be 60 characters or fewer').optional(),
+  ctaUrl: optionalLinkUrlSchema,
+  imageUrl: optionalImageUrlSchema,
+})
+
+export const experiencesSectionContentSchema = z.object({
+  heading: z.string().max(120, 'Heading must be 120 characters or fewer'),
+  eyebrow: eyebrowSchema,
+  items: z
+    .array(
+      z.object({
+        title: z.string().max(120, 'Title must be 120 characters or fewer'),
+        description: z.string().max(300, 'Description must be 300 characters or fewer').optional(),
+        imageUrl: optionalImageUrlSchema,
+      })
+    )
+    .max(12, 'You can add up to 12 experiences'),
+})
+
 export const travelSectionContentSchema = z.object({
   heading: z.string().max(120, 'Heading must be 120 characters or fewer'),
   body: z.string().max(4000, 'Travel details must be 4000 characters or fewer'),
+  services: z
+    .array(
+      z.object({
+        title: z.string().max(120, 'Title must be 120 characters or fewer'),
+        description: z.string().max(300, 'Description must be 300 characters or fewer'),
+      })
+    )
+    .max(8, 'You can add up to 8 services')
+    .optional(),
+  stays: z
+    .array(
+      z.object({
+        name: z.string().max(160, 'Name must be 160 characters or fewer'),
+        description: z.string().max(300, 'Description must be 300 characters or fewer').optional(),
+        imageUrl: optionalImageUrlSchema,
+        url: optionalLinkUrlSchema,
+      })
+    )
+    .max(8, 'You can add up to 8 stays')
+    .optional(),
 })
 
 export const faqSectionContentSchema = z.object({
@@ -77,6 +152,9 @@ export const registrySectionContentSchema = z.object({
 export const sectionContentSchemaByType = {
   HOME: homeSectionContentSchema,
   OUR_STORY: ourStorySectionContentSchema,
+  TIMELINE: timelineSectionContentSchema,
+  DESTINATION: destinationSectionContentSchema,
+  EXPERIENCES: experiencesSectionContentSchema,
   WEDDING_PARTY: weddingPartySectionContentSchema,
   TRAVEL: travelSectionContentSchema,
   FAQ: faqSectionContentSchema,

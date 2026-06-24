@@ -10,6 +10,9 @@
 export const WebsiteSectionType = {
   HOME: 'HOME',
   OUR_STORY: 'OUR_STORY',
+  TIMELINE: 'TIMELINE',
+  DESTINATION: 'DESTINATION',
+  EXPERIENCES: 'EXPERIENCES',
   WEDDING_PARTY: 'WEDDING_PARTY',
   TRAVEL: 'TRAVEL',
   FAQ: 'FAQ',
@@ -27,6 +30,62 @@ export type OurStorySectionContent = {
   body: string
 }
 
+export type TimelineMilestone = {
+  /** A year or short label, e.g. "2018" or "Spring". */
+  year: string
+  /** What happened, e.g. "First Meeting". */
+  title: string
+  /** Optional place, e.g. "New York, USA". */
+  location?: string
+}
+
+/**
+ * A horizontal journey of dated milestones — the "Our Story" timeline. Renders
+ * as an editorial timeline in templates that support it.
+ */
+export type TimelineSectionContent = {
+  heading: string
+  /** Small uppercase eyebrow label shown above the heading. */
+  eyebrow?: string
+  milestones: TimelineMilestone[]
+}
+
+/**
+ * An editorial destination block: an image paired with copy, an optional venue
+ * callout and a link. Used for "Your Invitation to <place>".
+ */
+export type DestinationSectionContent = {
+  eyebrow?: string
+  heading: string
+  body: string
+  /** City / region, e.g. "Puebla, Mexico" — also surfaced in the hero. */
+  location?: string
+  /** Venue name callout, e.g. "Hacienda San José Actipan". */
+  venueName?: string
+  /** Short line under the venue name. */
+  venueNote?: string
+  /** Optional call-to-action label and URL. */
+  ctaLabel?: string
+  ctaUrl?: string
+  /** Optional large feature image of the destination/venue. */
+  imageUrl?: string
+}
+
+export type ExperienceItem = {
+  title: string
+  description?: string
+  imageUrl?: string
+}
+
+/**
+ * A row of curated image cards — ceremony, celebration, farewell, etc.
+ */
+export type ExperiencesSectionContent = {
+  heading: string
+  eyebrow?: string
+  items: ExperienceItem[]
+}
+
 export type WeddingPartyMember = {
   name: string
   role: string
@@ -41,9 +100,25 @@ export type WeddingPartySectionContent = {
   members: WeddingPartyMember[]
 }
 
+export type TravelService = {
+  title: string
+  description: string
+}
+
+export type TravelStay = {
+  name: string
+  description?: string
+  imageUrl?: string
+  url?: string
+}
+
 export type TravelSectionContent = {
   heading: string
   body: string
+  /** Optional thin-line service items (transfers, concierge, tips). */
+  services?: TravelService[]
+  /** Optional recommended places to stay, shown as cards. */
+  stays?: TravelStay[]
 }
 
 export type FaqItem = {
@@ -71,6 +146,9 @@ export type RegistrySectionContent = {
 export type SectionContentByType = {
   HOME: HomeSectionContent
   OUR_STORY: OurStorySectionContent
+  TIMELINE: TimelineSectionContent
+  DESTINATION: DestinationSectionContent
+  EXPERIENCES: ExperiencesSectionContent
   WEDDING_PARTY: WeddingPartySectionContent
   TRAVEL: TravelSectionContent
   FAQ: FaqSectionContent
