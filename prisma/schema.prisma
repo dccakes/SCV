@@ -104,6 +104,9 @@ model Website {
 enum WebsiteSectionType {
   HOME
   OUR_STORY
+  TIMELINE
+  DESTINATION
+  EXPERIENCES
   WEDDING_PARTY
   TRAVEL
   FAQ
