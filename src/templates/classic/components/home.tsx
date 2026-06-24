@@ -2,7 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { formatDateStandard } from '~/app/utils/helpers'
 import { ClassicNavbar } from '~/templates/classic/components/navbar'
-import { WebsiteSections } from '~/templates/shared/website-sections'
+import { ClassicSections } from '~/templates/classic/components/sections'
 import type { TemplateSurfaceProps } from '~/templates/types'
 
 export function ClassicHome({ weddingData, path, introText }: Readonly<TemplateSurfaceProps>) {
@@ -65,7 +65,7 @@ export function ClassicHome({ weddingData, path, introText }: Readonly<TemplateS
         </div>
       ))}
 
-      <WebsiteSections sections={weddingData.sections} />
+      <ClassicSections sections={weddingData.sections} />
 
       <div className='text-center'>
         <h2 className='border-black border-b px-5 pb-6 text-6xl'>

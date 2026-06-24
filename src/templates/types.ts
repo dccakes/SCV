@@ -14,6 +14,7 @@
 
 import type { ComponentType, CSSProperties } from 'react'
 import type { WeddingPageData } from '~/server/domains/website/website.types'
+import type { WebsiteSection } from '~/server/domains/website-section/website-section.types'
 import type { TemplateMeta } from '~/templates/catalog'
 
 /**
@@ -26,6 +27,14 @@ export type TemplateSurfaceProps = {
   path: string
   /** Optional intro copy from the HOME website section. */
   introText?: string
+}
+
+/**
+ * Props for the section renderer: the enabled, ordered content sections.
+ * Each template owns its own section layout (cards, grids, stacks, …).
+ */
+export type TemplateSectionsProps = {
+  sections: WebsiteSection[]
 }
 
 /**
@@ -64,6 +73,8 @@ export type TemplateComponents = {
   Minimal: ComponentType<TemplateMinimalProps>
   SaveTheDate: ComponentType<TemplateSurfaceProps>
   Invitation: ComponentType<TemplateSurfaceProps>
+  /** Renders the enabled content sections in the template's own layout. */
+  Sections: ComponentType<TemplateSectionsProps>
 }
 
 /**

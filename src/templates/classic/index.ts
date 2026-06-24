@@ -11,6 +11,7 @@ import { ClassicHomeMobile } from '~/templates/classic/components/home-mobile'
 import { ClassicInvitation } from '~/templates/classic/components/invitation'
 import { ClassicMinimal } from '~/templates/classic/components/minimal'
 import { ClassicSaveTheDate } from '~/templates/classic/components/save-the-date'
+import { ClassicSections } from '~/templates/classic/components/sections'
 import { classicTheme } from '~/templates/classic/theme'
 import type { WeddingTemplate } from '~/templates/types'
 
@@ -23,5 +24,6 @@ export const classicTemplate: WeddingTemplate = {
     Minimal: ClassicMinimal,
     SaveTheDate: ClassicSaveTheDate,
     Invitation: ClassicInvitation,
+    Sections: ClassicSections,
   },
 }

@@ -2,7 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { formatDateStandard } from '~/app/utils/helpers'
 import { AureliaNavbar } from '~/templates/aurelia/components/navbar'
-import { WebsiteSections } from '~/templates/shared/website-sections'
+import { AureliaSections } from '~/templates/aurelia/components/sections'
 import type { TemplateSurfaceProps } from '~/templates/types'
 
 const headingFont = 'font-[family-name:var(--tpl-heading-font)]'
@@ -96,7 +96,7 @@ export function AureliaHome({ weddingData, path, introText }: Readonly<TemplateS
         </section>
       )}
 
-      <WebsiteSections sections={weddingData.sections} />
+      <AureliaSections sections={weddingData.sections} />
 
       <section className='flex flex-col items-center gap-3 text-center'>
         <p className={`${headingFont} text-5xl text-foreground italic`}>

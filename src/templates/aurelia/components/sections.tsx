@@ -1,11 +1,13 @@
 /**
- * WebsiteSections
+ * AureliaSections
  *
- * Renders the couple's enabled content sections. It is shared by every template
- * and styled entirely with semantic theme tokens (`text-foreground`,
- * `text-primary`, `bg-card`, the `--tpl-heading-font` variable, …), so it
- * automatically takes on each template's palette and typography. Templates that
- * want a bespoke section look can render their own instead.
+ * Aurelia's take on the content sections: a structured, card-driven layout with
+ * accent eyebrow labels, a multi-column wedding-party grid, bordered FAQ rows,
+ * and pill-style registry buttons.
+ *
+ * Deliberately a *different layout* from Classic's centered, minimal renderer —
+ * same data, different page structure — to prove templates own layout, not just
+ * theme.
  */
 
 import type {
@@ -16,25 +18,40 @@ import type {
   WebsiteSection,
   WeddingPartySectionContent,
 } from '~/server/domains/website-section/website-section.types'
+import { splitParagraphs } from '~/templates/shared/prose'
 
-const headingClass =
-  'font-[family-name:var(--tpl-heading-font)] text-4xl text-foreground tracking-wide'
+const headingFont = 'font-[family-name:var(--tpl-heading-font)]'
 
-const anchorId = (type: string) => type.toLowerCase().replace(/_/g, '-')
+function SectionShell({
+  id,
+  eyebrow,
+  heading,
+  children,
+}: {
+  id: string
+  eyebrow: string
+  heading: string
+  children: React.ReactNode
+}) {
+  return (
+    <section id={id} className='flex w-full max-w-4xl flex-col items-center gap-6 text-center'>
+      <div className='flex flex-col items-center gap-2'>
+        <span className='text-[0.62rem] text-accent uppercase tracking-[0.4em]'>{eyebrow}</span>
+        <h2 className={`${headingFont} text-4xl text-foreground italic`}>{heading}</h2>
+        <span className='h-px w-12 bg-border' />
+      </div>
+      {children}
+    </section>
+  )
+}
 
-/** Render a multi-line string as separate paragraphs. */
-function Prose({ text }: { text: string }) {
-  const paragraphs = text
-    .split(/\n{2,}/)
-    .map((block) => block.trim())
-    .filter(Boolean)
-
+function ProseBlock({ text }: { text: string }) {
+  const paragraphs = splitParagraphs(text)
   if (paragraphs.length === 0) {
     return null
   }
-
   return (
-    <div className='space-y-4 text-balance text-lg text-muted-foreground leading-8'>
+    <div className='max-w-2xl space-y-4 text-balance text-lg text-muted-foreground leading-9'>
       {paragraphs.map((paragraph) => (
         <p key={paragraph}>{paragraph}</p>
       ))}
@@ -42,27 +59,18 @@ function Prose({ text }: { text: string }) {
   )
 }
 
-function SectionShell({
-  id,
-  heading,
-  children,
-}: {
-  id: string
-  heading: string
-  children: React.ReactNode
-}) {
+function OurStory({ content }: { content: OurStorySectionContent }) {
   return (
-    <section id={id} className='flex w-full max-w-3xl flex-col items-center gap-8 text-center'>
-      <h2 className={headingClass}>{heading}</h2>
-      {children}
-    </section>
+    <SectionShell id='our-story' eyebrow='Our Story' heading={content.heading}>
+      <ProseBlock text={content.body} />
+    </SectionShell>
   )
 }
 
-function OurStory({ content }: { content: OurStorySectionContent }) {
+function Travel({ content }: { content: TravelSectionContent }) {
   return (
-    <SectionShell id={anchorId('OUR_STORY')} heading={content.heading}>
-      <Prose text={content.body} />
+    <SectionShell id='travel' eyebrow='Getting There' heading={content.heading}>
+      <ProseBlock text={content.body} />
     </SectionShell>
   )
 }
@@ -71,18 +79,15 @@ function WeddingParty({ content }: { content: WeddingPartySectionContent }) {
   if (content.members.length === 0) {
     return null
   }
-
   return (
-    <SectionShell id={anchorId('WEDDING_PARTY')} heading={content.heading}>
+    <SectionShell id='wedding-party' eyebrow='By Our Side' heading={content.heading}>
       <div className='grid w-full gap-6 sm:grid-cols-2 md:grid-cols-3'>
         {content.members.map((member) => (
           <div
             key={`${member.name}-${member.role}`}
-            className='flex flex-col items-center gap-1 rounded-[16px] border border-border bg-card px-6 py-8 text-card-foreground'
+            className='flex flex-col items-center gap-1 rounded-[20px] border border-border bg-card px-6 py-8 text-card-foreground'
           >
-            <p className='font-[family-name:var(--tpl-heading-font)] text-2xl text-foreground'>
-              {member.name}
-            </p>
+            <p className={`${headingFont} text-2xl text-foreground`}>{member.name}</p>
             <p className='text-muted-foreground text-sm uppercase tracking-[0.2em]'>
               {member.role}
             </p>
@@ -93,24 +98,18 @@ function WeddingParty({ content }: { content: WeddingPartySectionContent }) {
   )
 }
 
-function Travel({ content }: { content: TravelSectionContent }) {
-  return (
-    <SectionShell id={anchorId('TRAVEL')} heading={content.heading}>
-      <Prose text={content.body} />
-    </SectionShell>
-  )
-}
-
 function Faq({ content }: { content: FaqSectionContent }) {
   if (content.items.length === 0) {
     return null
   }
-
   return (
-    <SectionShell id={anchorId('FAQ')} heading={content.heading}>
-      <dl className='w-full space-y-6 text-left'>
+    <SectionShell id='faq' eyebrow='Good to Know' heading={content.heading}>
+      <dl className='w-full max-w-2xl space-y-4 text-left'>
         {content.items.map((item) => (
-          <div key={item.question} className='border-border border-b pb-5'>
+          <div
+            key={item.question}
+            className='rounded-[16px] border border-border bg-card px-6 py-5 text-card-foreground'
+          >
             <dt className='text-foreground text-lg'>{item.question}</dt>
             <dd className='mt-2 text-muted-foreground leading-7'>{item.answer}</dd>
           </div>
@@ -122,8 +121,8 @@ function Faq({ content }: { content: FaqSectionContent }) {
 
 function Registry({ content }: { content: RegistrySectionContent }) {
   return (
-    <SectionShell id={anchorId('REGISTRY')} heading={content.heading}>
-      <Prose text={content.body} />
+    <SectionShell id='registry' eyebrow='With Gratitude' heading={content.heading}>
+      <ProseBlock text={content.body} />
       {content.links.length > 0 && (
         <div className='flex flex-wrap items-center justify-center gap-3'>
           {content.links.map((link) => (
@@ -147,25 +146,23 @@ function SectionRenderer({ section }: { section: WebsiteSection }) {
   switch (section.type) {
     case 'OUR_STORY':
       return <OurStory content={section.content} />
-    case 'WEDDING_PARTY':
-      return <WeddingParty content={section.content} />
     case 'TRAVEL':
       return <Travel content={section.content} />
+    case 'WEDDING_PARTY':
+      return <WeddingParty content={section.content} />
     case 'FAQ':
       return <Faq content={section.content} />
     case 'REGISTRY':
       return <Registry content={section.content} />
     default:
-      // HOME is rendered as the hero intro by each template, not here.
       return null
   }
 }
 
-export function WebsiteSections({ sections }: { sections: WebsiteSection[] }) {
+export function AureliaSections({ sections }: { sections: WebsiteSection[] }) {
   if (sections.length === 0) {
     return null
   }
-
   return (
     <>
       {sections.map((section) => (
