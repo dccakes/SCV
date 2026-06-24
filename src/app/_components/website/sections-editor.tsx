@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
+import { SingleImageUpload } from '~/app/_components/website/image-upload'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader } from '~/components/ui/card'
 import { Input } from '~/components/ui/input'
@@ -199,7 +200,11 @@ function WeddingPartyFields({
   content: WeddingPartySectionContent
   onChange: (content: WebsiteSectionContent) => void
 }) {
-  const updateMember = (index: number, key: 'name' | 'role', value: string) => {
+  const updateMember = (
+    index: number,
+    key: 'name' | 'role' | 'imageUrl' | 'blurb',
+    value: string | undefined
+  ) => {
     const members = content.members.map((member, i) =>
       i === index ? { ...member, [key]: value } : member
     )
@@ -212,33 +217,51 @@ function WeddingPartyFields({
         value={content.heading}
         onChange={(heading) => onChange({ ...content, heading })}
       />
-      <div className='space-y-2'>
+      <div className='space-y-3'>
         {content.members.map((member, index) => (
           <div
             // biome-ignore lint/suspicious/noArrayIndexKey: positional editable rows; field values are controlled by state
             key={index}
-            className='flex items-center gap-2'
+            className='space-y-2 rounded-[8px] border border-border/70 p-3'
           >
-            <Input
-              value={member.name}
-              maxLength={120}
-              placeholder='Name'
-              onChange={(event) => updateMember(index, 'name', event.target.value)}
-            />
-            <Input
-              value={member.role}
-              maxLength={120}
-              placeholder='Role (e.g. Maid of Honor)'
-              onChange={(event) => updateMember(index, 'role', event.target.value)}
-            />
-            <RemoveRowButton
-              label='Remove member'
-              onClick={() =>
-                onChange({
-                  ...content,
-                  members: content.members.filter((_, i) => i !== index),
-                })
-              }
+            <div className='flex items-center gap-2'>
+              <Input
+                value={member.name}
+                maxLength={120}
+                placeholder='Name'
+                onChange={(event) => updateMember(index, 'name', event.target.value)}
+              />
+              <Input
+                value={member.role}
+                maxLength={120}
+                placeholder='Role (e.g. Maid of Honor)'
+                onChange={(event) => updateMember(index, 'role', event.target.value)}
+              />
+              <RemoveRowButton
+                label='Remove member'
+                onClick={() =>
+                  onChange({
+                    ...content,
+                    members: content.members.filter((_, i) => i !== index),
+                  })
+                }
+              />
+            </div>
+            <div className='space-y-1.5'>
+              <span className={labelClass}>Photo (optional)</span>
+              <SingleImageUpload
+                value={member.imageUrl ?? null}
+                onChange={(url) => updateMember(index, 'imageUrl', url ?? undefined)}
+                aspectClassName='aspect-square max-w-[8rem]'
+                label='Add photo'
+              />
+            </div>
+            <Textarea
+              value={member.blurb ?? ''}
+              maxLength={1000}
+              rows={3}
+              placeholder='A short blurb about them and their relationship to the couple (optional)'
+              onChange={(event) => updateMember(index, 'blurb', event.target.value || undefined)}
             />
           </div>
         ))}

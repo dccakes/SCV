@@ -9,6 +9,7 @@
  * (not just different colors), so swapping templates restructures the page.
  */
 
+import Image from 'next/image'
 import Link from 'next/link'
 import type {
   FaqSectionContent,
@@ -63,11 +64,30 @@ function WeddingParty({ content }: { content: WeddingPartySectionContent }) {
   return (
     <section id='wedding-party' className='flex flex-col items-center gap-6'>
       <Heading>{content.heading}</Heading>
-      <ul className='flex flex-col gap-3 text-lg'>
+      <ul className='flex w-full max-w-2xl flex-col gap-8'>
         {content.members.map((member) => (
-          <li key={`${member.name}-${member.role}`}>
-            <span>{member.name}</span>
-            {member.role ? <span className='text-base'> — {member.role}</span> : null}
+          <li
+            key={`${member.name}-${member.role}`}
+            className='flex flex-col items-center gap-3 text-center'
+          >
+            {member.imageUrl ? (
+              <div className='relative h-32 w-32 overflow-hidden rounded-full'>
+                <Image
+                  src={member.imageUrl}
+                  fill
+                  sizes='128px'
+                  className='object-cover'
+                  alt={member.name}
+                />
+              </div>
+            ) : null}
+            <div>
+              <span className='text-lg'>{member.name}</span>
+              {member.role ? <span className='text-base'> — {member.role}</span> : null}
+            </div>
+            {member.blurb ? (
+              <p className='max-w-md text-base leading-7 tracking-normal'>{member.blurb}</p>
+            ) : null}
           </li>
         ))}
       </ul>

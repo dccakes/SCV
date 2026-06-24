@@ -211,6 +211,26 @@ export class WebsiteRepository {
   }
 
   /**
+   * Update the header/hero image URL
+   */
+  async updateHeaderImage(weddingId: string, headerImageUrl: string | null): Promise<Website> {
+    return this.db.website.update({
+      where: { weddingId },
+      data: { headerImageUrl },
+    })
+  }
+
+  /**
+   * Update the couple photo gallery
+   */
+  async updateCoupleImages(weddingId: string, coupleImageUrls: string[]): Promise<Website> {
+    return this.db.website.update({
+      where: { weddingId },
+      data: { coupleImageUrls },
+    })
+  }
+
+  /**
    * Update the selected website template
    */
   async updateTemplate(weddingId: string, templateId: string): Promise<Website> {
@@ -262,6 +282,8 @@ export class WebsiteRepository {
     password: string | null
     isRsvpEnabled: boolean
     coverPhotoUrl: string | null
+    headerImageUrl: string | null
+    coupleImageUrls: string[]
     generalQuestions: WebsiteWithQuestions['generalQuestions']
     websiteSections?: Array<{
       id: string

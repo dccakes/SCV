@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { formatDateStandard } from '~/app/utils/helpers'
+import { AureliaCoupleGallery, AureliaHeaderImage } from '~/templates/aurelia/components/media'
 import { AureliaNavbar } from '~/templates/aurelia/components/navbar'
 import { AureliaSections } from '~/templates/aurelia/components/sections'
 import type { TemplateSurfaceProps } from '~/templates/types'
@@ -12,6 +13,11 @@ export function AureliaHome({ weddingData, path, introText }: Readonly<TemplateS
 
   return (
     <main className='flex flex-col items-center gap-24 px-6 pb-28'>
+      {website.headerImageUrl ? (
+        <div className='w-full max-w-4xl pt-6'>
+          <AureliaHeaderImage url={website.headerImageUrl} />
+        </div>
+      ) : null}
       <section className='relative flex w-full max-w-3xl flex-col items-center gap-8 pt-24 text-center'>
         <div
           aria-hidden
@@ -66,6 +72,8 @@ export function AureliaHome({ weddingData, path, introText }: Readonly<TemplateS
           <p>{introText}</p>
         </section>
       ) : null}
+
+      <AureliaCoupleGallery urls={website.coupleImageUrls} />
 
       {weddingData.events.length > 0 && (
         <section className='grid w-full max-w-4xl gap-8 sm:grid-cols-2'>

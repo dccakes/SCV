@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { ClassicHeaderImage } from '~/templates/classic/components/media'
 import type { TemplateSurfaceProps } from '~/templates/types'
 
 export function ClassicSaveTheDate({ weddingData, path }: Readonly<TemplateSurfaceProps>) {
@@ -7,6 +8,7 @@ export function ClassicSaveTheDate({ weddingData, path }: Readonly<TemplateSurfa
 
   return (
     <main className='flex min-h-screen flex-col items-center justify-center gap-10 px-6 py-24 text-center text-zinc-500 tracking-widest'>
+      <ClassicHeaderImage url={weddingData.website.headerImageUrl} />
       <p className='text-sm uppercase tracking-[0.4em]'>Save the Date</p>
       <h1 className='font-medium text-6xl tracking-widest'>
         {weddingData.groomFirstName} & {weddingData.brideFirstName}

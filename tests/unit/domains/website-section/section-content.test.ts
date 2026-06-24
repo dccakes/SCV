@@ -36,6 +36,30 @@ describe('section content validation', () => {
     })
   })
 
+  it('accepts wedding party members with an optional photo and blurb', () => {
+    const content = {
+      heading: 'Party',
+      members: [
+        {
+          name: 'Sam',
+          role: 'Best Man',
+          imageUrl: 'https://example.com/sam.jpg',
+          blurb: 'College roommate and the groom’s oldest friend.',
+        },
+      ],
+    }
+    expect(parseSectionContent('WEDDING_PARTY', content)).toEqual(content)
+  })
+
+  it('rejects a wedding party member photo that is not a valid URL', () => {
+    expect(
+      isValidSectionContent('WEDDING_PARTY', {
+        heading: 'Party',
+        members: [{ name: 'Sam', role: 'Best Man', imageUrl: 'not-a-url' }],
+      })
+    ).toBe(false)
+  })
+
   it('rejects content that does not match the section type', () => {
     expect(isValidSectionContent('OUR_STORY', { introText: 'wrong shape' })).toBe(false)
     expect(

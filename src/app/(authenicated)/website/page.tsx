@@ -5,6 +5,7 @@ import { SectionsEditor } from '~/app/_components/website/sections-editor'
 import { TemplatePicker } from '~/app/_components/website/template-picker'
 import { WebsiteDisabledCallout } from '~/app/_components/website/website-disabled-callout'
 import { WebsiteEditor } from '~/app/_components/website/website-editor'
+import { WebsiteMediaEditor } from '~/app/_components/website/website-media-editor'
 import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
 import { WebsiteManager } from '~/components/website-manager/website-manager'
 import { auth } from '~/lib/auth'
@@ -83,6 +84,10 @@ export default async function WebsitePage() {
               <WebsiteEditor
                 initialIntroText={introText}
                 publicUrl={computePublicWebsiteUrl(websiteSubUrl)}
+              />
+              <WebsiteMediaEditor
+                initialHeaderImageUrl={existingWebsite?.headerImageUrl ?? null}
+                initialCoupleImageUrls={existingWebsite?.coupleImageUrls ?? []}
               />
               <SectionsEditor initialSections={sections} />
             </>

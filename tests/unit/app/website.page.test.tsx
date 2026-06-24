@@ -79,6 +79,11 @@ jest.mock('~/app/_components/website/sections-editor', () => ({
   SectionsEditor: () => <div data-testid='sections-editor'>Sections editor</div>,
 }))
 
+jest.mock('~/app/_components/website/website-media-editor', () => ({
+  __esModule: true,
+  WebsiteMediaEditor: () => <div data-testid='website-media-editor'>Media editor</div>,
+}))
+
 describe('WebsitePage', () => {
   beforeEach(() => {
     mockGetRequiredWedding.mockReset()

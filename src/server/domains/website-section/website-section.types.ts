@@ -30,6 +30,10 @@ export type OurStorySectionContent = {
 export type WeddingPartyMember = {
   name: string
   role: string
+  /** Optional photo of the member. */
+  imageUrl?: string
+  /** Optional blurb about the member and their relationship to the couple. */
+  blurb?: string
 }
 
 export type WeddingPartySectionContent = {

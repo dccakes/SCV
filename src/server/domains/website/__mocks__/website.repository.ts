@@ -17,6 +17,8 @@ export const mockWebsite: Website = {
   password: null,
   isRsvpEnabled: true,
   coverPhotoUrl: null,
+  headerImageUrl: null,
+  coupleImageUrls: [],
 }
 
 export const mockWebsiteWithQuestions: WebsiteWithQuestions = {
@@ -61,6 +63,8 @@ export const mockUpsertByWeddingId = jest.fn()
 export const mockUpdate = jest.fn()
 export const mockUpdateRsvpEnabled = jest.fn()
 export const mockUpdateCoverPhoto = jest.fn()
+export const mockUpdateHeaderImage = jest.fn()
+export const mockUpdateCoupleImages = jest.fn()
 export const mockExistsForWedding = jest.fn()
 export const mockIsSubUrlTaken = jest.fn()
 export const mockBelongsToWedding = jest.fn()
@@ -76,6 +80,8 @@ export const WebsiteRepository = jest.fn().mockImplementation(() => ({
   update: mockUpdate,
   updateRsvpEnabled: mockUpdateRsvpEnabled,
   updateCoverPhoto: mockUpdateCoverPhoto,
+  updateHeaderImage: mockUpdateHeaderImage,
+  updateCoupleImages: mockUpdateCoupleImages,
   existsForWedding: mockExistsForWedding,
   isSubUrlTaken: mockIsSubUrlTaken,
   belongsToWedding: mockBelongsToWedding,
@@ -93,6 +99,8 @@ export const resetMocks = (): void => {
   mockUpdate.mockReset()
   mockUpdateRsvpEnabled.mockReset()
   mockUpdateCoverPhoto.mockReset()
+  mockUpdateHeaderImage.mockReset()
+  mockUpdateCoupleImages.mockReset()
   mockExistsForWedding.mockReset()
   mockIsSubUrlTaken.mockReset()
   mockBelongsToWedding.mockReset()

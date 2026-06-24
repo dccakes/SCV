@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { AureliaHeaderImage } from '~/templates/aurelia/components/media'
 import type { TemplateSurfaceProps } from '~/templates/types'
 
 const headingFont = 'font-[family-name:var(--tpl-heading-font)]'
@@ -13,6 +14,7 @@ export function AureliaSaveTheDate({ weddingData, path }: Readonly<TemplateSurfa
         aria-hidden
         className='absolute top-24 left-1/2 -z-10 h-72 w-72 -translate-x-1/2 rounded-full bg-gradient-to-br from-primary/15 to-accent/15 blur-3xl'
       />
+      <AureliaHeaderImage url={weddingData.website.headerImageUrl} />
       <p className='text-[0.7rem] text-accent uppercase tracking-[0.45em]'>Save the Date</p>
       <h1 className={`${headingFont} text-6xl text-foreground italic sm:text-7xl`}>
         {weddingData.groomFirstName}
