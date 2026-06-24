@@ -9,6 +9,7 @@ import {
   headingFont,
   labelFont,
   PrimaryButton,
+  sectionHeadingClass,
 } from '~/templates/voyage/components/primitives'
 
 export function VoyageInvitation({ weddingData, path }: Readonly<TemplateSurfaceProps>) {
@@ -31,11 +32,11 @@ export function VoyageInvitation({ weddingData, path }: Readonly<TemplateSurface
         />
         <div className='relative flex flex-col items-center gap-5'>
           <Eyebrow>Together with their families</Eyebrow>
-          <h1 className={`${headingFont} font-light text-4xl text-[#1E1C18] sm:text-5xl`}>
+          <h1 className={sectionHeadingClass}>
             {weddingData.groomFirstName} {weddingData.groomLastName}
           </h1>
           <span className={`${headingFont} text-[#B89455] text-xl italic`}>and</span>
-          <h1 className={`${headingFont} font-light text-4xl text-[#1E1C18] sm:text-5xl`}>
+          <h1 className={sectionHeadingClass}>
             {weddingData.brideFirstName} {weddingData.brideLastName}
           </h1>
           <p className={`${bodyFont} text-[#746E64]`}>request the pleasure of your company</p>

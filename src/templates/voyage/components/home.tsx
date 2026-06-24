@@ -38,6 +38,7 @@ import {
   IconVenue,
   labelFont,
   PrimaryButton,
+  sectionHeadingClass,
 } from '~/templates/voyage/components/primitives'
 import {
   VoyageDestination,
@@ -84,9 +85,7 @@ function WeekendItinerary({ events }: { events: WeddingEvent[] }) {
       <div className='mx-auto max-w-6xl'>
         <div className='mb-14 flex flex-col items-center gap-4 text-center'>
           <Eyebrow>Wedding Weekend</Eyebrow>
-          <h2 className={`${headingFont} font-light text-4xl text-[#1E1C18] sm:text-5xl`}>
-            A Weekend to Remember
-          </h2>
+          <h2 className={sectionHeadingClass}>A Weekend to Remember</h2>
           <GoldRule />
         </div>
         <ol className='relative grid gap-12 sm:grid-cols-2 lg:grid-cols-5 lg:gap-6'>
@@ -261,11 +260,7 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
             ) : (
               <div className='flex flex-col gap-6'>
                 <Eyebrow>RSVP</Eyebrow>
-                <h2
-                  className={`${headingFont} font-light text-4xl text-[#1E1C18] leading-tight sm:text-5xl`}
-                >
-                  Will You Join Us?
-                </h2>
+                <h2 className={`${sectionHeadingClass} leading-tight`}>Will You Join Us?</h2>
                 <GoldRule className='self-start' />
                 <p className={`${bodyFont} max-w-xl text-[#746E64] text-lg leading-8`}>
                   We would be honored to celebrate with you. Let us know if you can make the

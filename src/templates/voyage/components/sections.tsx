@@ -37,6 +37,7 @@ import {
   IconConcierge,
   LandmarkSketch,
   OutlineButton,
+  sectionHeadingClass,
 } from '~/templates/voyage/components/primitives'
 
 /** Wrapper that gives every section consistent vertical rhythm and width. */
@@ -67,11 +68,7 @@ function CenteredHead({ eyebrow, heading }: { eyebrow?: string; heading: string 
   return (
     <div className='flex flex-col items-center gap-4 text-center'>
       {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
-      <h2
-        className={`${headingFont} max-w-3xl text-balance font-light text-4xl text-[#1E1C18] sm:text-5xl`}
-      >
-        {heading}
-      </h2>
+      <h2 className={`${sectionHeadingClass} max-w-3xl text-balance`}>{heading}</h2>
       <GoldRule />
     </div>
   )
@@ -179,9 +176,7 @@ export function VoyageDestination({ content }: { content: DestinationSectionCont
             className='pointer-events-none absolute top-0 -right-4 hidden h-full w-auto text-[#B89455]/15 lg:block'
           />
           {content.eyebrow ? <Eyebrow>{content.eyebrow}</Eyebrow> : null}
-          <h2
-            className={`${headingFont} font-light text-4xl text-[#1E1C18] leading-tight sm:text-5xl`}
-          >
+          <h2 className={`${sectionHeadingClass} leading-tight`}>
             {content.heading}
             {content.location ? (
               <span className='mt-1 block text-[#746E64] italic'>{content.location}</span>
@@ -319,9 +314,7 @@ export function VoyageTravel({ content }: { content: TravelSectionContent }) {
       <div className='grid gap-12 lg:grid-cols-[5fr_7fr] lg:gap-16'>
         <div className='flex flex-col gap-6'>
           <Eyebrow>Travel &amp; Stay</Eyebrow>
-          <h2 className={`${headingFont} font-light text-4xl text-[#1E1C18] sm:text-5xl`}>
-            {content.heading}
-          </h2>
+          <h2 className={sectionHeadingClass}>{content.heading}</h2>
           <GoldRule className='self-start' />
           <Prose text={content.body} />
           {services.length > 0 ? (
@@ -435,9 +428,7 @@ export function VoyageRegistry({ content }: { content: RegistrySectionContent })
   return (
     <div className='flex flex-col gap-6'>
       <Eyebrow>Registry</Eyebrow>
-      <h2 className={`${headingFont} font-light text-4xl text-[#1E1C18] leading-tight sm:text-5xl`}>
-        {content.heading}
-      </h2>
+      <h2 className={`${sectionHeadingClass} leading-tight`}>{content.heading}</h2>
       <GoldRule className='self-start' />
       <Prose text={content.body} />
       {content.links.length > 0 ? (

@@ -36,6 +36,11 @@ type SectionsEditorProps = Readonly<{
 
 const labelClass = 'font-mono text-[0.6rem] text-foreground/55 uppercase tracking-[0.18em]'
 
+/** Return a copy of `items` with the item at `index` patched on a single key. */
+function updateAt<T, K extends keyof T>(items: T[], index: number, key: K, value: T[K]): T[] {
+  return items.map((item, i) => (i === index ? { ...item, [key]: value } : item))
+}
+
 /** Editable section types — HOME is handled by the Welcome editor. */
 const EDITABLE_SECTIONS = SECTION_CATALOG.filter((entry) => entry.type !== 'HOME')
 
@@ -219,10 +224,7 @@ function WeddingPartyFields({
     key: 'name' | 'role' | 'imageUrl' | 'blurb',
     value: string | undefined
   ) => {
-    const members = content.members.map((member, i) =>
-      i === index ? { ...member, [key]: value } : member
-    )
-    onChange({ ...content, members })
+    onChange({ ...content, members: updateAt(content.members, index, key, value) })
   }
 
   return (
@@ -299,8 +301,7 @@ function FaqFields({
   onChange: (content: WebsiteSectionContent) => void
 }) {
   const updateItem = (index: number, key: 'question' | 'answer', value: string) => {
-    const items = content.items.map((item, i) => (i === index ? { ...item, [key]: value } : item))
-    onChange({ ...content, items })
+    onChange({ ...content, items: updateAt(content.items, index, key, value) })
   }
 
   return (
@@ -359,8 +360,7 @@ function RegistryFields({
   onChange: (content: WebsiteSectionContent) => void
 }) {
   const updateLink = (index: number, key: 'label' | 'url', value: string) => {
-    const links = content.links.map((link, i) => (i === index ? { ...link, [key]: value } : link))
-    onChange({ ...content, links })
+    onChange({ ...content, links: updateAt(content.links, index, key, value) })
   }
 
   return (
@@ -454,10 +454,7 @@ function TimelineFields({
     key: 'year' | 'title' | 'location',
     value: string | undefined
   ) => {
-    const milestones = content.milestones.map((milestone, i) =>
-      i === index ? { ...milestone, [key]: value } : milestone
-    )
-    onChange({ ...content, milestones })
+    onChange({ ...content, milestones: updateAt(content.milestones, index, key, value) })
   }
 
   return (
@@ -619,8 +616,7 @@ function ExperiencesFields({
     key: 'title' | 'description' | 'imageUrl',
     value: string | undefined
   ) => {
-    const items = content.items.map((item, i) => (i === index ? { ...item, [key]: value } : item))
-    onChange({ ...content, items })
+    onChange({ ...content, items: updateAt(content.items, index, key, value) })
   }
 
   return (
@@ -697,10 +693,7 @@ function TravelFields({
   const stays = content.stays ?? []
 
   const updateService = (index: number, key: 'title' | 'description', value: string) => {
-    const next = services.map((service, i) =>
-      i === index ? { ...service, [key]: value } : service
-    )
-    onChange({ ...content, services: next })
+    onChange({ ...content, services: updateAt(services, index, key, value) })
   }
 
   const updateStay = (
@@ -708,8 +701,7 @@ function TravelFields({
     key: 'name' | 'description' | 'imageUrl' | 'url',
     value: string | undefined
   ) => {
-    const next = stays.map((stay, i) => (i === index ? { ...stay, [key]: value } : stay))
-    onChange({ ...content, stays: next })
+    onChange({ ...content, stays: updateAt(stays, index, key, value) })
   }
 
   return (

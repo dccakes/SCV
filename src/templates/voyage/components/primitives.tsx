@@ -14,6 +14,9 @@ export const headingFont = 'font-[family-name:var(--tpl-heading-font)]'
 export const bodyFont = 'font-[family-name:var(--tpl-body-font)]'
 export const labelFont = 'font-[family-name:var(--tpl-label-font)]'
 
+/** The editorial section heading: display serif, light weight, soft-black, responsive. */
+export const sectionHeadingClass = `${headingFont} font-light text-4xl text-[#1E1C18] sm:text-5xl`
+
 /** Small uppercase, wide-tracked gold label sitting above a heading. */
 export function Eyebrow({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
