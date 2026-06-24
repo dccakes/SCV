@@ -13,7 +13,6 @@ const SIDEBAR_SECTIONS: readonly SidebarSection[] = [
     title: 'Planning',
     items: [
       { label: 'Dashboard', href: '/dashboard', icon: '◈' },
-      { label: 'RSVPs', href: '/guest-list', icon: '◉' },
       { label: 'Events', href: '/events', icon: '☷' },
       { label: 'Wedding Website', href: '/website', icon: '◌' },
       { label: 'Vendors', href: '/vendors', icon: '◐' },
@@ -21,7 +20,7 @@ const SIDEBAR_SECTIONS: readonly SidebarSection[] = [
   },
   {
     title: 'Guests',
-    items: [{ label: 'Guest List', href: '/guest-list', icon: '☷' }],
+    items: [{ label: 'Guest List', href: '/guest-list', icon: '◉' }],
   },
   {
     title: 'Settings',
