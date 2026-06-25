@@ -63,9 +63,10 @@ export default async function HouseholdInvitePage({
   const datedEvents = inviteData.events
     .filter((event): event is typeof event & { date: Date } => event.date != null)
     .sort((a, b) => a.date.getTime() - b.date.getTime())
-  const formattedDate = datedEvents.length
-    ? formatEventDateRange(datedEvents[0].date, datedEvents[datedEvents.length - 1].date)
-    : null
+  const firstEvent = datedEvents[0]
+  const lastEvent = datedEvents[datedEvents.length - 1]
+  const formattedDate =
+    firstEvent && lastEvent ? formatEventDateRange(firstEvent.date, lastEvent.date) : null
   const location = datedEvents.find((event) => event.venue)?.venue ?? null
 
   const calendarLinks = buildSaveTheDateCalendarLinks({
