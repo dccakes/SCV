@@ -51,6 +51,7 @@ const inviteHousehold = {
     groomLastName: 'Carvallo',
     brideFirstName: 'Laura',
     brideLastName: 'Zurich',
+    events: [{ date: new Date('2027-05-30T12:00:00.000Z'), venue: 'Puebla, Mexico' }],
   },
   guests: [
     {
@@ -100,20 +101,55 @@ describe('HouseholdInviteService', () => {
     })
   })
 
-  it('returns public couple names for a website slug without requiring a token', async () => {
+  it('returns public couple names, date, and venue for a website slug without a token', async () => {
+    const weddingDate = new Date('2027-05-30T12:00:00.000Z')
     const db = createDb()
     db.website.findFirst.mockResolvedValue({
-      wedding: { groomFirstName: 'Diego', brideFirstName: 'Laura' },
+      wedding: {
+        groomFirstName: 'Diego',
+        brideFirstName: 'Laura',
+        events: [{ date: weddingDate, venue: 'Puebla, Mexico' }],
+      },
     })
     const service = new HouseholdInviteService(db as never)
 
     await expect(service.getPublicWeddingSummary('diego-and-laura')).resolves.toEqual({
       groomFirstName: 'Diego',
       brideFirstName: 'Laura',
+      date: weddingDate,
+      venue: 'Puebla, Mexico',
     })
     expect(db.website.findFirst).toHaveBeenCalledWith({
       where: { subUrl: 'diego-and-laura' },
-      select: { wedding: { select: { groomFirstName: true, brideFirstName: true } } },
+      select: {
+        wedding: {
+          select: {
+            groomFirstName: true,
+            brideFirstName: true,
+            events: {
+              where: { name: 'Wedding Day' },
+              orderBy: { date: 'asc' },
+              take: 1,
+              select: { date: true, venue: true },
+            },
+          },
+        },
+      },
+    })
+  })
+
+  it('falls back to null date and venue when the wedding has no Wedding Day event', async () => {
+    const db = createDb()
+    db.website.findFirst.mockResolvedValue({
+      wedding: { groomFirstName: 'Diego', brideFirstName: 'Laura', events: [] },
+    })
+    const service = new HouseholdInviteService(db as never)
+
+    await expect(service.getPublicWeddingSummary('diego-and-laura')).resolves.toEqual({
+      groomFirstName: 'Diego',
+      brideFirstName: 'Laura',
+      date: null,
+      venue: null,
     })
   })
 

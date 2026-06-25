@@ -44,6 +44,8 @@ const inviteData = {
     groomLastName: 'Carvallo',
     brideFirstName: 'Laura',
     brideLastName: 'Zurich',
+    date: new Date('2027-05-30T12:00:00.000Z'),
+    venue: 'Puebla, Mexico',
   },
   household: {
     id: 'household-123',
@@ -127,10 +129,12 @@ describe('household invite pages', () => {
     expect(screen.getByText('Your details were updated.')).toBeInTheDocument()
   })
 
-  it('builds couple-specific save-the-date open graph metadata from the website slug', async () => {
+  it('builds save-the-date open graph metadata from the wedding date and venue', async () => {
     mockGetPublicWeddingSummary.mockResolvedValue({
       groomFirstName: 'Diego',
       brideFirstName: 'Holly',
+      date: new Date('2027-05-30T12:00:00.000Z'),
+      venue: 'Puebla, Mexico',
     })
     const { generateMetadata } = await import('~/app/[websiteSubUrl]/invite/page')
 
@@ -144,7 +148,27 @@ describe('household invite pages', () => {
     expect(metadata.openGraph?.title).toBe(expectedTitle)
     expect(metadata.twitter?.title).toBe(expectedTitle)
     expect(metadata.openGraph?.description).toContain('May 30, 2027')
+    expect(metadata.openGraph?.description).toContain('Puebla, Mexico')
     expect(metadata.robots).toEqual({ index: false, follow: false })
+  })
+
+  it('omits the date and venue from metadata when the wedding has neither yet', async () => {
+    mockGetPublicWeddingSummary.mockResolvedValue({
+      groomFirstName: 'Diego',
+      brideFirstName: 'Holly',
+      date: null,
+      venue: null,
+    })
+    const { generateMetadata } = await import('~/app/[websiteSubUrl]/invite/page')
+
+    const metadata = await generateMetadata({
+      params: Promise.resolve({ websiteSubUrl: 'holly-and-diego' }),
+    })
+
+    expect(metadata.title).toBe("Save the Date — Diego & Holly's Wedding")
+    expect(metadata.openGraph?.description).toBe(
+      'Diego & Holly are getting married. Open your household invitation to confirm your details.'
+    )
   })
 
   it('falls back to noindex-only metadata when the slug has no wedding', async () => {
