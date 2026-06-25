@@ -267,19 +267,17 @@ describe('PlanningOverview', () => {
     expect(screen.getByText('Vendors')).toBeInTheDocument()
   })
 
-  it('renders all placeholder vendor names', () => {
+  it('renders the vendors empty state when no vendors are added', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText('Ceremony Venue')).toBeInTheDocument()
-    expect(screen.getByText('Photographer')).toBeInTheDocument()
-    expect(screen.getByText('Caterer')).toBeInTheDocument()
-    expect(screen.getByText('Florist')).toBeInTheDocument()
-    expect(screen.getByText('Hair & Makeup')).toBeInTheDocument()
+    expect(screen.getByText('No vendors added yet')).toBeInTheDocument()
+    expect(
+      screen.getByText('Track quotes, contacts, and contracts in one place')
+    ).toBeInTheDocument()
   })
 
-  it('renders vendor status badges including non-Confirmed statuses', () => {
+  it('renders an add vendor CTA link in the vendors empty state', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText('Deposit due')).toBeInTheDocument()
-    expect(screen.getByText('Searching')).toBeInTheDocument()
+    expect(screen.getByText('Add your first vendor →')).toBeInTheDocument()
   })
 
   // ── Milestones Card ────────────────────────────────────────────────────────
