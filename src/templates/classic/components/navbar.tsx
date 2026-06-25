@@ -7,7 +7,10 @@ type ClassicNavbarProps = {
 
 const getNavLinks = (isRsvpEnabled: boolean) => [
   { title: 'Home', subPath: '', isVisible: true },
-  { title: 'Save the Date', subPath: '/save-the-date', isVisible: true },
+  // Guests get their save-the-date from the personalized household invite link
+  // (/[subUrl]/invite), which stays current as details change — so we don't
+  // surface the generic website save-the-date page as a second destination.
+  { title: 'Save the Date', subPath: '/save-the-date', isVisible: false },
   { title: 'Invitation', subPath: '/invitation', isVisible: true },
   { title: 'RSVP', subPath: '/rsvp', isVisible: isRsvpEnabled },
 ]
