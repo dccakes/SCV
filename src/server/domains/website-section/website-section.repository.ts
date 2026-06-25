@@ -2,6 +2,7 @@ import type { PrismaClient } from '@prisma/client'
 
 import { getSectionPosition } from '~/server/domains/website-section/website-section.catalog'
 import type {
+  HomeSectionContent,
   WebsiteSection,
   WebsiteSectionContent,
   WebsiteSectionType,
@@ -88,10 +89,7 @@ export class WebsiteSectionRepository {
     return this.toWebsiteSection(section)
   }
 
-  async upsertHomeSection(
-    websiteId: string,
-    content: { introText: string }
-  ): Promise<WebsiteSection> {
+  async upsertHomeSection(websiteId: string, content: HomeSectionContent): Promise<WebsiteSection> {
     return this.upsertByType(websiteId, SectionType.HOME, content, true)
   }
 

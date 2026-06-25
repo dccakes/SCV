@@ -17,6 +17,7 @@ import { computeWebsiteUrl } from '~/server/domains/website/website.utils'
 import type { WebsitePasswordService } from '~/server/domains/website/website-password.service'
 import type { WebsiteSectionRepository } from '~/server/domains/website-section/website-section.repository'
 import {
+  type HomeSectionContent,
   type WebsiteSection,
   WebsiteSectionType,
 } from '~/server/domains/website-section/website-section.types'
@@ -103,7 +104,7 @@ export class WebsiteManagementService {
     return this.websiteSectionRepository.findByWebsiteIdAndType(website.id, WebsiteSectionType.HOME)
   }
 
-  async updateHomeSection(ctx: AuthzContext, weddingId: string, input: { introText: string }) {
+  async updateHomeSection(ctx: AuthzContext, weddingId: string, input: HomeSectionContent) {
     requirePermission(ctx, { website: ['update'] })
 
     const website = await this.websiteRepository.findByWeddingId(weddingId)
@@ -208,10 +209,11 @@ export class WebsiteManagementService {
     }
     const weddingDate = events.find((event) => event.name === 'Wedding Day')?.date
     const homeSection = sections.find((section) => section.type === WebsiteSectionType.HOME)
-    const introText =
+    const homeContent =
       homeSection?.isEnabled && homeSection.type === WebsiteSectionType.HOME
-        ? homeSection.content.introText
-        : ''
+        ? homeSection.content
+        : undefined
+    const introText = homeContent?.introText ?? ''
     // Enabled, ordered content sections rendered below the hero (HOME drives the
     // intro text instead of appearing as its own section).
     const contentSections = sections
@@ -233,7 +235,11 @@ export class WebsiteManagementService {
         numberFormat: formatDateNumber(weddingDate),
       },
       websiteBuilderEnabled: wedding.enabledAddOns.includes('website_builder'),
-      website: this.toPublicWebsiteWithQuestions(website, introText),
+      website: this.toPublicWebsiteWithQuestions(website, {
+        introText,
+        headline: homeContent?.headline,
+        headlineAccent: homeContent?.headlineAccent,
+      }),
       sections: contentSections,
       daysRemaining: calculateDaysRemaining(weddingDate) ?? -1,
       events: events.map((event) => ({
@@ -254,13 +260,19 @@ export class WebsiteManagementService {
 
   private toPublicWebsiteWithQuestions(
     website: WebsiteWithQuestions,
+    home: Pick<HomeSectionContent, 'introText' | 'headline' | 'headlineAccent'>
+  ): PublicWebsiteWithQuestions & {
     introText: string
-  ): PublicWebsiteWithQuestions & { introText: string } {
+    headline?: string
+    headlineAccent?: string
+  } {
     const { password: _password, ...publicWebsite } = website
     return {
       ...publicWebsite,
       url: computeWebsiteUrl(website.subUrl),
-      introText,
+      introText: home.introText,
+      headline: home.headline,
+      headlineAccent: home.headlineAccent,
     }
   }
 }

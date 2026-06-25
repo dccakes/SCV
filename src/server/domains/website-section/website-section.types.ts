@@ -23,6 +23,14 @@ export type WebsiteSectionType = (typeof WebsiteSectionType)[keyof typeof Websit
 
 export type HomeSectionContent = {
   introText: string
+  /**
+   * Optional hero headline shown over the main image (templates with a hero,
+   * e.g. Voyage). Newlines are rendered as line breaks. Falls back to the
+   * template's default when empty.
+   */
+  headline?: string
+  /** Optional emphasised tail of the headline, rendered italic in the accent colour. */
+  headlineAccent?: string
 }
 
 export type OurStorySectionContent = {

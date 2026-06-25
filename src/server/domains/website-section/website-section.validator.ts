@@ -21,6 +21,8 @@ export const WEBSITE_SECTION_TYPES = [
 
 export const homeSectionContentSchema = z.object({
   introText: z.string().max(2000, 'Intro text must be 2000 characters or fewer'),
+  headline: z.string().max(160, 'Headline must be 160 characters or fewer').optional(),
+  headlineAccent: z.string().max(40, 'Emphasis must be 40 characters or fewer').optional(),
 })
 
 export const ourStorySectionContentSchema = z.object({

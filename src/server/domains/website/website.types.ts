@@ -119,6 +119,9 @@ export type WeddingPageData = {
   websiteBuilderEnabled: boolean
   website: PublicWebsiteWithQuestions & {
     introText: string
+    /** Optional hero headline + emphasised tail (HOME section, hero templates). */
+    headline?: string
+    headlineAccent?: string
   }
   /** Enabled content sections (excluding HOME), ordered for display. */
   sections: WebsiteSection[]

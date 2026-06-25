@@ -154,6 +154,8 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
 
   const heroUrl = website.headerImageUrl ?? website.coverPhotoUrl ?? null
   const dateLabel = weddingData.date?.standardFormat ?? null
+  const heroHeadline = website.headline?.trim() ? website.headline.trim() : null
+  const heroHeadlineAccent = website.headlineAccent?.trim() ? website.headlineAccent.trim() : null
 
   const story = pick(weddingData.sections, 'TIMELINE')
   const ourStory = pick(weddingData.sections, 'OUR_STORY')
@@ -198,11 +200,22 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
                 <h1
                   className={`${headingFont} font-light text-5xl text-[#F8F1E7] leading-[1.04] sm:text-6xl lg:text-7xl`}
                 >
-                  Our Greatest
-                  <br />
-                  Adventure
-                  <br />
-                  Begins <span className='text-[#D1B879] italic'>Here.</span>
+                  {heroHeadline ? (
+                    <>
+                      <span className='whitespace-pre-line'>{heroHeadline}</span>
+                      {heroHeadlineAccent ? (
+                        <span className='text-[#D1B879] italic'> {heroHeadlineAccent}</span>
+                      ) : null}
+                    </>
+                  ) : (
+                    <>
+                      Our Greatest
+                      <br />
+                      Adventure
+                      <br />
+                      Begins <span className='text-[#D1B879] italic'>Here.</span>
+                    </>
+                  )}
                 </h1>
                 <p className={`${bodyFont} max-w-xl text-[#F8F1E7]/85 text-lg leading-8`}>
                   {introText ??
