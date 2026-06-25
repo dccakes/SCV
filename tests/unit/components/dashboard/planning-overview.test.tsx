@@ -270,7 +270,9 @@ describe('PlanningOverview', () => {
   it('renders the vendors empty state when no vendors are added', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
     expect(screen.getByText('No vendors added yet')).toBeInTheDocument()
-    expect(screen.getByText('Track quotes, contacts, and contracts in one place')).toBeInTheDocument()
+    expect(
+      screen.getByText('Track quotes, contacts, and contracts in one place')
+    ).toBeInTheDocument()
   })
 
   it('renders an add vendor CTA link in the vendors empty state', () => {
