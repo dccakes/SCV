@@ -8,7 +8,7 @@ export default function RsvpPageSkeleton() {
     >
       <StaticProgressBar />
       <div>
-        <div className='mt-20 h-48'>
+        <div className='mt-24 h-48'>
           <div className='mb-2.5 h-40 w-full bg-gray-200 dark:bg-gray-700'></div>
         </div>
         <div className='m-auto w-[450px] py-5'>
