@@ -127,10 +127,10 @@ describe('household invite pages', () => {
     )
     expect(screen.getByText('Your details were updated.')).toBeInTheDocument()
 
-    // Calendar buttons span one day before the first event through one day
-    // after the last (the all-day end is exclusive, so May 30 → Jun 02).
+    // Calendar buttons span the day of the first event through the day of the
+    // last (the all-day end is exclusive, so May 30 → Jun 01).
     const googleLink = screen.getByRole('link', { name: /google calendar/i })
-    expect(googleLink).toHaveAttribute('href', expect.stringContaining('dates=20270529%2F20270602'))
+    expect(googleLink).toHaveAttribute('href', expect.stringContaining('dates=20270530%2F20270601'))
     expect(screen.getByRole('link', { name: /outlook/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /apple calendar/i })).toBeInTheDocument()
   })

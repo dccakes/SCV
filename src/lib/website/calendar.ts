@@ -2,7 +2,7 @@
  * Save the Date — calendar export helpers.
  *
  * Builds an all-day calendar block spanning the couple's wedding weekend: from
- * one day before their first event to one day after their last event. The same
+ * the day of their first event through the day of their last event. The same
  * block is offered three ways — a Google Calendar link, an Outlook link, and a
  * downloadable `.ics` file (Apple Calendar and most other clients) — so a guest
  * can save the dates straight from the Save the Date page.
@@ -22,9 +22,9 @@ export type SaveTheDateCalendar = {
   title: string
   description?: string
   location?: string
-  /** Inclusive first all-day date to block out (one day before the first event). */
+  /** Inclusive first all-day date to block out (the day of the first event). */
   start: Date
-  /** Exclusive end date (the day after the last all-day date to block out). */
+  /** Exclusive end date (the day after the last event). */
   endExclusive: Date
 }
 
@@ -92,11 +92,11 @@ export function buildSaveTheDateCalendar(input: {
     title: input.title,
     description: input.description,
     location: input.location,
-    // One day before the first event …
-    start: addUtcDays(firstEvent, -1),
-    // … through one day after the last event. The end is exclusive, so the
-    // inclusive last day (lastEvent + 1) becomes lastEvent + 2 here.
-    endExclusive: addUtcDays(lastEvent, 2),
+    // The day of the first event …
+    start: firstEvent,
+    // … through the day of the last event. The end is exclusive, so the
+    // inclusive last day (lastEvent) becomes lastEvent + 1 here.
+    endExclusive: addUtcDays(lastEvent, 1),
   }
 }
 
