@@ -117,8 +117,10 @@ describe('household invite pages', () => {
     )
 
     expect(screen.getByText('Save the date')).toBeInTheDocument()
-    expect(screen.getByText('May 30, 2027')).toBeInTheDocument()
-    expect(screen.getByText('Puebla, Mexico')).toBeInTheDocument()
+    // Date and location are inherited from the wedding's events, not hardcoded:
+    // the two events span May 30–31, and the first event's venue is the location.
+    expect(screen.getByText('May 30, 2027 – May 31, 2027')).toBeInTheDocument()
+    expect(screen.getByText('Hacienda')).toBeInTheDocument()
     expect(screen.getByText('Diego & Laura')).toBeInTheDocument()
     expect(screen.getByText('Ada Lovelace')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /update our details/i })).toHaveAttribute(

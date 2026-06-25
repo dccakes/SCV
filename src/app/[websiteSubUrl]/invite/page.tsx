@@ -30,6 +30,21 @@ const getCookieName = (websiteSubUrl: string) => `household_invite_${websiteSubU
 const formatGuestName = (guest: { firstName: string; lastName: string }) =>
   [guest.firstName, guest.lastName].filter(Boolean).join(' ')
 
+// Event dates come from a `@db.Date` column (midnight UTC), so format in UTC to
+// show the day the couple entered regardless of the viewer's timezone.
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  timeZone: 'UTC',
+})
+
+/** Display the event span as a single day or an inclusive date range. */
+const formatEventDateRange = (first: Date, last: Date) =>
+  first.getTime() === last.getTime()
+    ? dateFormatter.format(first)
+    : `${dateFormatter.format(first)} – ${dateFormatter.format(last)}`
+
 export default async function HouseholdInvitePage({
   params,
   searchParams,
@@ -43,10 +58,20 @@ export default async function HouseholdInvitePage({
   if (!inviteData) return <InvalidHouseholdInvite websiteSubUrl={websiteSubUrl} />
 
   const coupleNames = `${inviteData.wedding.groomFirstName} & ${inviteData.wedding.brideFirstName}`
+
+  // Everything below is inherited from the wedding's events — no hardcoded copy.
+  const datedEvents = inviteData.events
+    .filter((event): event is typeof event & { date: Date } => event.date != null)
+    .sort((a, b) => a.date.getTime() - b.date.getTime())
+  const formattedDate = datedEvents.length
+    ? formatEventDateRange(datedEvents[0].date, datedEvents[datedEvents.length - 1].date)
+    : null
+  const location = datedEvents.find((event) => event.venue)?.venue ?? null
+
   const calendarLinks = buildSaveTheDateCalendarLinks({
     title: `${coupleNames} Wedding`,
     description: `Save the date for the wedding of ${coupleNames}! Formal invitation to follow.`,
-    location: inviteData.events.find((event) => event.venue)?.venue ?? undefined,
+    location: location ?? undefined,
     events: inviteData.events,
   })
 
@@ -69,13 +94,13 @@ export default async function HouseholdInvitePage({
             <p className='font-mono text-muted-foreground text-xs uppercase tracking-[0.22em]'>
               Date
             </p>
-            <p className='mt-2 font-serif text-2xl'>May 30, 2027</p>
+            <p className='mt-2 font-serif text-2xl'>{formattedDate ?? 'To be announced'}</p>
           </div>
           <div>
             <p className='font-mono text-muted-foreground text-xs uppercase tracking-[0.22em]'>
               Location
             </p>
-            <p className='mt-2 font-serif text-2xl'>Puebla, Mexico</p>
+            <p className='mt-2 font-serif text-2xl'>{location ?? 'To be announced'}</p>
           </div>
         </div>
 
