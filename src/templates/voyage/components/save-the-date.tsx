@@ -17,12 +17,13 @@ export function VoyageSaveTheDate({ weddingData, path }: Readonly<TemplateSurfac
     weddingData.events.find((event) => event.name === 'Wedding Day') ?? weddingData.events[0]
   const venue = weddingEvent?.venue ?? null
   const dateLabel = weddingData.date?.standardFormat ?? 'Date to be announced'
+  const copy = weddingData.saveTheDate
 
   return (
     <main className='w-full'>
       <HeroBackground url={heroUrl}>
         <div className='mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-8 px-6 py-24 text-center text-[#F8F1E7]'>
-          <Eyebrow className='text-[#D1B879]'>Save the Date</Eyebrow>
+          <Eyebrow className='text-[#D1B879]'>{copy?.eyebrow ?? 'Save the Date'}</Eyebrow>
           <h1 className={`${headingFont} font-light text-5xl italic sm:text-7xl`}>
             {weddingData.groomFirstName}
             <span className='mx-3 text-[#D1B879] not-italic'>&amp;</span>
@@ -46,7 +47,14 @@ export function VoyageSaveTheDate({ weddingData, path }: Readonly<TemplateSurfac
               {weddingData.daysRemaining} days to go
             </p>
           ) : null}
-          <p className={`${bodyFont} text-[#F8F1E7]/70 italic`}>Formal invitation to follow.</p>
+          {copy?.message ? (
+            <p className={`${bodyFont} max-w-xl whitespace-pre-line text-[#F8F1E7]/85 leading-8`}>
+              {copy.message}
+            </p>
+          ) : null}
+          <p className={`${bodyFont} text-[#F8F1E7]/70 italic`}>
+            {copy?.footnote ?? 'Formal invitation to follow.'}
+          </p>
           <div className='pt-2'>
             <GhostButtonOnDark href={path}>Visit our website</GhostButtonOnDark>
           </div>

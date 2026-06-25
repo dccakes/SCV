@@ -7,6 +7,7 @@ const headingFont = 'font-[family-name:var(--tpl-heading-font)]'
 export function AureliaSaveTheDate({ weddingData, path }: Readonly<TemplateSurfaceProps>) {
   const weddingEvent = weddingData.events.find((event) => event.name === 'Wedding Day')
   const venue = weddingEvent?.venue
+  const copy = weddingData.saveTheDate
 
   return (
     <main className='flex min-h-screen flex-col items-center justify-center gap-10 px-6 py-24 text-center'>
@@ -15,7 +16,9 @@ export function AureliaSaveTheDate({ weddingData, path }: Readonly<TemplateSurfa
         className='absolute top-24 left-1/2 -z-10 h-72 w-72 -translate-x-1/2 rounded-full bg-gradient-to-br from-primary/15 to-accent/15 blur-3xl'
       />
       <AureliaHeaderImage url={weddingData.website.headerImageUrl} />
-      <p className='text-[0.7rem] text-accent uppercase tracking-[0.45em]'>Save the Date</p>
+      <p className='text-[0.7rem] text-accent uppercase tracking-[0.45em]'>
+        {copy?.eyebrow ?? 'Save the Date'}
+      </p>
       <h1 className={`${headingFont} text-6xl text-foreground italic sm:text-7xl`}>
         {weddingData.groomFirstName}
         <span className='mx-3 font-light text-primary not-italic'>&</span>
@@ -34,7 +37,14 @@ export function AureliaSaveTheDate({ weddingData, path }: Readonly<TemplateSurfa
           {weddingData.daysRemaining} days to go
         </p>
       )}
-      <p className='text-muted-foreground text-sm'>Formal invitation to follow.</p>
+      {copy?.message ? (
+        <p className='max-w-xl whitespace-pre-line text-muted-foreground leading-8'>
+          {copy.message}
+        </p>
+      ) : null}
+      <p className='text-muted-foreground text-sm'>
+        {copy?.footnote ?? 'Formal invitation to follow.'}
+      </p>
       <Link
         href={path}
         className='text-[0.72rem] text-primary uppercase tracking-[0.3em] underline-offset-4 hover:underline'

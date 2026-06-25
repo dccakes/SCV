@@ -214,10 +214,35 @@ export class WebsiteManagementService {
         ? homeSection.content
         : undefined
     const introText = homeContent?.introText ?? ''
-    // Enabled, ordered content sections rendered below the hero (HOME drives the
-    // intro text instead of appearing as its own section).
+
+    // Save the Date / Invitation are standalone surfaces, not home-page sections:
+    // when enabled, their content overrides the template's default page wording.
+    const saveTheDateSection = sections.find(
+      (section) => section.type === WebsiteSectionType.SAVE_THE_DATE
+    )
+    const saveTheDate =
+      saveTheDateSection?.isEnabled && saveTheDateSection.type === WebsiteSectionType.SAVE_THE_DATE
+        ? saveTheDateSection.content
+        : undefined
+    const invitationSection = sections.find(
+      (section) => section.type === WebsiteSectionType.INVITATION
+    )
+    const invitation =
+      invitationSection?.isEnabled && invitationSection.type === WebsiteSectionType.INVITATION
+        ? invitationSection.content
+        : undefined
+
+    // Enabled, ordered content sections rendered below the hero. HOME drives the
+    // intro text, and the Save the Date / Invitation surfaces are page-level
+    // (not home sections), so all three are excluded here.
     const contentSections = sections
-      .filter((section) => section.isEnabled && section.type !== WebsiteSectionType.HOME)
+      .filter(
+        (section) =>
+          section.isEnabled &&
+          section.type !== WebsiteSectionType.HOME &&
+          section.type !== WebsiteSectionType.SAVE_THE_DATE &&
+          section.type !== WebsiteSectionType.INVITATION
+      )
       .sort((a, b) => a.position - b.position)
 
     return {
@@ -241,6 +266,8 @@ export class WebsiteManagementService {
         headlineAccent: homeContent?.headlineAccent,
       }),
       sections: contentSections,
+      saveTheDate,
+      invitation,
       daysRemaining: calculateDaysRemaining(weddingDate) ?? -1,
       events: events.map((event) => ({
         id: event.id,

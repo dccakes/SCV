@@ -6,7 +6,11 @@
  */
 
 import type { Question, QuestionWithOptions } from '~/server/domains/question'
-import type { WebsiteSection } from '~/server/domains/website-section/website-section.types'
+import type {
+  InvitationSectionContent,
+  SaveTheDateSectionContent,
+  WebsiteSection,
+} from '~/server/domains/website-section/website-section.types'
 
 /**
  * Core Website entity type
@@ -125,6 +129,10 @@ export type WeddingPageData = {
   }
   /** Enabled content sections (excluding HOME), ordered for display. */
   sections: WebsiteSection[]
+  /** Editable Save the Date page copy (when that section is enabled). */
+  saveTheDate?: SaveTheDateSectionContent
+  /** Editable Invitation page copy (when that section is enabled). */
+  invitation?: InvitationSectionContent
   daysRemaining: number
   events: Array<{
     id: string

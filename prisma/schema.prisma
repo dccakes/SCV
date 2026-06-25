@@ -111,6 +111,8 @@ enum WebsiteSectionType {
   TRAVEL
   FAQ
   REGISTRY
+  SAVE_THE_DATE
+  INVITATION
 }
 
 model WebsiteSection {

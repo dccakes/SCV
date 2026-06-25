@@ -6,11 +6,12 @@ import type { TemplateSurfaceProps } from '~/templates/types'
 export function ClassicInvitation({ weddingData, path }: Readonly<TemplateSurfaceProps>) {
   const { website } = weddingData
   const weddingEvent = weddingData.events.find((event) => event.name === 'Wedding Day')
+  const copy = weddingData.invitation
 
   return (
     <main className='flex min-h-screen flex-col items-center justify-center gap-6 px-6 py-24 text-center text-zinc-500 tracking-widest'>
       <ClassicHeaderImage url={website.headerImageUrl} />
-      <p className='text-sm tracking-normal'>Together with their families</p>
+      <p className='text-sm tracking-normal'>{copy?.preface ?? 'Together with their families'}</p>
       <h1 className='font-medium text-5xl tracking-widest sm:text-6xl'>
         {weddingData.groomFirstName} {weddingData.groomLastName}
       </h1>
@@ -18,7 +19,14 @@ export function ClassicInvitation({ weddingData, path }: Readonly<TemplateSurfac
       <h1 className='font-medium text-5xl tracking-widest sm:text-6xl'>
         {weddingData.brideFirstName} {weddingData.brideLastName}
       </h1>
-      <p className='mt-4 text-sm tracking-normal'>request the pleasure of your company</p>
+      <p className='mt-4 text-sm tracking-normal'>
+        {copy?.invitationLine ?? 'request the pleasure of your company'}
+      </p>
+      {copy?.message ? (
+        <p className='max-w-xl whitespace-pre-line text-base leading-8 tracking-normal'>
+          {copy.message}
+        </p>
+      ) : null}
 
       <div className='mt-6 flex flex-col gap-2'>
         <p className='text-xl'>{weddingData.date?.standardFormat ?? 'Date To Be Announced'}</p>

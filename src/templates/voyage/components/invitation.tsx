@@ -18,6 +18,7 @@ export function VoyageInvitation({ weddingData, path }: Readonly<TemplateSurface
     weddingData.events.find((event) => event.name === 'Wedding Day') ?? weddingData.events[0]
   const venue = weddingEvent?.venue ?? null
   const dateLabel = weddingData.date?.standardFormat ?? 'Date to be announced'
+  const copy = weddingData.invitation
 
   return (
     <main className='flex min-h-screen w-full items-center justify-center bg-[#F7F3EA] px-6 py-20'>
@@ -31,7 +32,7 @@ export function VoyageInvitation({ weddingData, path }: Readonly<TemplateSurface
           className='pointer-events-none absolute top-1/2 -right-6 h-3/4 w-auto -translate-y-1/2 text-[#B89455]/12'
         />
         <div className='relative flex flex-col items-center gap-5'>
-          <Eyebrow>Together with their families</Eyebrow>
+          <Eyebrow>{copy?.preface ?? 'Together with their families'}</Eyebrow>
           <h1 className={sectionHeadingClass}>
             {weddingData.groomFirstName} {weddingData.groomLastName}
           </h1>
@@ -39,7 +40,16 @@ export function VoyageInvitation({ weddingData, path }: Readonly<TemplateSurface
           <h1 className={sectionHeadingClass}>
             {weddingData.brideFirstName} {weddingData.brideLastName}
           </h1>
-          <p className={`${bodyFont} text-[#746E64]`}>request the pleasure of your company</p>
+          <p className={`${bodyFont} text-[#746E64]`}>
+            {copy?.invitationLine ?? 'request the pleasure of your company'}
+          </p>
+          {copy?.message ? (
+            <p
+              className={`${bodyFont} max-w-md whitespace-pre-line text-[#746E64] text-sm leading-7`}
+            >
+              {copy.message}
+            </p>
+          ) : null}
           <GoldRule className='my-1' />
           <div className='flex flex-col gap-2'>
             <p className={`${labelFont} text-[#1E1C18] text-[0.72rem] uppercase tracking-[0.28em]`}>

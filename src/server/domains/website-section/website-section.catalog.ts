@@ -115,6 +115,24 @@ export const SECTION_CATALOG = [
     defaultEnabled: false,
     defaultContent: { heading: 'Registry', body: '', links: [] },
   }),
+  entry({
+    type: SectionType.SAVE_THE_DATE,
+    label: 'Save the Date Page',
+    description:
+      'Personalize the wording on your standalone Save the Date page. Turn on to use your own copy; off keeps the template default.',
+    position: 9,
+    defaultEnabled: false,
+    defaultContent: {},
+  }),
+  entry({
+    type: SectionType.INVITATION,
+    label: 'Invitation Page',
+    description:
+      'Personalize the wording on your standalone Invitation page. Turn on to use your own copy; off keeps the template default.',
+    position: 10,
+    defaultEnabled: false,
+    defaultContent: {},
+  }),
 ] as const satisfies readonly SectionCatalogEntry[]
 
 const CATALOG_BY_TYPE = new Map<WebsiteSectionType, SectionCatalogEntry>(

@@ -17,6 +17,8 @@ export const WebsiteSectionType = {
   TRAVEL: 'TRAVEL',
   FAQ: 'FAQ',
   REGISTRY: 'REGISTRY',
+  SAVE_THE_DATE: 'SAVE_THE_DATE',
+  INVITATION: 'INVITATION',
 } as const
 
 export type WebsiteSectionType = (typeof WebsiteSectionType)[keyof typeof WebsiteSectionType]
@@ -150,6 +152,30 @@ export type RegistrySectionContent = {
   links: RegistryLink[]
 }
 
+/**
+ * Editable copy for the standalone Save the Date page. These are page-level
+ * surfaces (not home-page sections), so they are not rendered in the home flow;
+ * each field overrides the template's default wording when set.
+ */
+export type SaveTheDateSectionContent = {
+  /** Small label above the names, e.g. "Save the Date". */
+  eyebrow?: string
+  /** Optional note shown beneath the date. */
+  message?: string
+  /** Closing line, e.g. "Formal invitation to follow.". */
+  footnote?: string
+}
+
+/** Editable copy for the standalone Invitation page. */
+export type InvitationSectionContent = {
+  /** Opening line above the names, e.g. "Together with their families". */
+  preface?: string
+  /** Line beneath the names, e.g. "request the pleasure of your company". */
+  invitationLine?: string
+  /** Optional closing note. */
+  message?: string
+}
+
 /** Maps each section type to the shape of its content. */
 export type SectionContentByType = {
   HOME: HomeSectionContent
@@ -161,6 +187,8 @@ export type SectionContentByType = {
   TRAVEL: TravelSectionContent
   FAQ: FaqSectionContent
   REGISTRY: RegistrySectionContent
+  SAVE_THE_DATE: SaveTheDateSectionContent
+  INVITATION: InvitationSectionContent
 }
 
 /** Any section content shape. */

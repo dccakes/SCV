@@ -19,8 +19,10 @@ import type {
   DestinationSectionContent,
   ExperiencesSectionContent,
   FaqSectionContent,
+  InvitationSectionContent,
   OurStorySectionContent,
   RegistrySectionContent,
+  SaveTheDateSectionContent,
   TimelineSectionContent,
   TravelSectionContent,
   WebsiteSection,
@@ -166,6 +168,12 @@ function SectionFields({ type, content, onChange }: SectionFieldsProps) {
       return <FaqFields content={content as FaqSectionContent} onChange={onChange} />
     case 'REGISTRY':
       return <RegistryFields content={content as RegistrySectionContent} onChange={onChange} />
+    case 'SAVE_THE_DATE':
+      return (
+        <SaveTheDateFields content={content as SaveTheDateSectionContent} onChange={onChange} />
+      )
+    case 'INVITATION':
+      return <InvitationFields content={content as InvitationSectionContent} onChange={onChange} />
     default:
       return null
   }
@@ -808,6 +816,82 @@ function TravelFields({
           label='Add stay'
           disabled={stays.length >= 8}
           onClick={() => onChange({ ...content, stays: [...stays, { name: '' }] })}
+        />
+      </div>
+    </div>
+  )
+}
+
+function SaveTheDateFields({
+  content,
+  onChange,
+}: {
+  content: SaveTheDateSectionContent
+  onChange: (content: WebsiteSectionContent) => void
+}) {
+  return (
+    <div className='space-y-3'>
+      <TextField
+        label='Label (optional)'
+        value={content.eyebrow ?? ''}
+        maxLength={60}
+        placeholder='Save the Date'
+        onChange={(eyebrow) => onChange({ ...content, eyebrow: eyebrow || undefined })}
+      />
+      <div className='space-y-1.5'>
+        <span className={labelClass}>Message (optional)</span>
+        <Textarea
+          maxLength={600}
+          rows={3}
+          value={content.message ?? ''}
+          onChange={(event) => onChange({ ...content, message: event.target.value || undefined })}
+          placeholder="A short note to your guests, e.g. “We can't wait to celebrate with you.”"
+        />
+      </div>
+      <TextField
+        label='Footnote (optional)'
+        value={content.footnote ?? ''}
+        maxLength={160}
+        placeholder='Formal invitation to follow.'
+        onChange={(footnote) => onChange({ ...content, footnote: footnote || undefined })}
+      />
+    </div>
+  )
+}
+
+function InvitationFields({
+  content,
+  onChange,
+}: {
+  content: InvitationSectionContent
+  onChange: (content: WebsiteSectionContent) => void
+}) {
+  return (
+    <div className='space-y-3'>
+      <TextField
+        label='Opening line (optional)'
+        value={content.preface ?? ''}
+        maxLength={160}
+        placeholder='Together with their families'
+        onChange={(preface) => onChange({ ...content, preface: preface || undefined })}
+      />
+      <TextField
+        label='Invitation line (optional)'
+        value={content.invitationLine ?? ''}
+        maxLength={200}
+        placeholder='request the pleasure of your company'
+        onChange={(invitationLine) =>
+          onChange({ ...content, invitationLine: invitationLine || undefined })
+        }
+      />
+      <div className='space-y-1.5'>
+        <span className={labelClass}>Message (optional)</span>
+        <Textarea
+          maxLength={600}
+          rows={3}
+          value={content.message ?? ''}
+          onChange={(event) => onChange({ ...content, message: event.target.value || undefined })}
+          placeholder='An optional closing note shown above the RSVP button.'
         />
       </div>
     </div>

@@ -17,6 +17,8 @@ export const WEBSITE_SECTION_TYPES = [
   WebsiteSectionType.TRAVEL,
   WebsiteSectionType.FAQ,
   WebsiteSectionType.REGISTRY,
+  WebsiteSectionType.SAVE_THE_DATE,
+  WebsiteSectionType.INVITATION,
 ] as const
 
 export const homeSectionContentSchema = z.object({
@@ -150,6 +152,18 @@ export const registrySectionContentSchema = z.object({
     .max(20, 'You can add up to 20 registry links'),
 })
 
+export const saveTheDateSectionContentSchema = z.object({
+  eyebrow: z.string().max(60, 'Label must be 60 characters or fewer').optional(),
+  message: z.string().max(600, 'Message must be 600 characters or fewer').optional(),
+  footnote: z.string().max(160, 'Footnote must be 160 characters or fewer').optional(),
+})
+
+export const invitationSectionContentSchema = z.object({
+  preface: z.string().max(160, 'Opening line must be 160 characters or fewer').optional(),
+  invitationLine: z.string().max(200, 'Invitation line must be 200 characters or fewer').optional(),
+  message: z.string().max(600, 'Message must be 600 characters or fewer').optional(),
+})
+
 /** Zod schema for each section type's content. */
 export const sectionContentSchemaByType = {
   HOME: homeSectionContentSchema,
@@ -161,6 +175,8 @@ export const sectionContentSchemaByType = {
   TRAVEL: travelSectionContentSchema,
   FAQ: faqSectionContentSchema,
   REGISTRY: registrySectionContentSchema,
+  SAVE_THE_DATE: saveTheDateSectionContentSchema,
+  INVITATION: invitationSectionContentSchema,
 } satisfies Record<WebsiteSectionType, z.ZodTypeAny>
 
 /**
