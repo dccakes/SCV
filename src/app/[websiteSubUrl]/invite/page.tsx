@@ -6,12 +6,8 @@ import { Button } from '~/components/ui/button'
 import { InvalidHouseholdInvite } from '~/components/website/household-invite/invalid-household-invite'
 import { householdInviteService } from '~/server/application/household-invite'
 
-export const metadata: Metadata = {
-  robots: {
-    index: false,
-    follow: false,
-  },
-}
+const WEDDING_DATE_LABEL = 'May 30, 2027'
+const WEDDING_LOCATION = 'Puebla, Mexico'
 
 type HouseholdInvitePageProps = {
   params: Promise<{
@@ -27,6 +23,45 @@ const getCookieName = (websiteSubUrl: string) => `household_invite_${websiteSubU
 
 const formatGuestName = (guest: { firstName: string; lastName: string }) =>
   [guest.firstName, guest.lastName].filter(Boolean).join(' ')
+
+export async function generateMetadata({ params }: HouseholdInvitePageProps): Promise<Metadata> {
+  const { websiteSubUrl } = await params
+
+  // Keep the invite flow out of search indexes regardless of who the couple are.
+  const baseMetadata: Metadata = {
+    robots: {
+      index: false,
+      follow: false,
+    },
+  }
+
+  // Link unfurlers (iMessage, WhatsApp, Slack, etc.) follow the token redirect to
+  // this page, but they rarely carry the httpOnly invite cookie. The couple names
+  // are public wedding details tied to the website slug, so derive the preview from
+  // the slug instead of the token to give shared links a proper "Save the Date" card.
+  const summary = await householdInviteService.getPublicWeddingSummary(websiteSubUrl)
+  if (!summary) return baseMetadata
+
+  const coupleNames = `${summary.groomFirstName} & ${summary.brideFirstName}`
+  const title = `Save the Date — ${coupleNames}'s Wedding`
+  const description = `${coupleNames} are getting married on ${WEDDING_DATE_LABEL} in ${WEDDING_LOCATION}. Open your household invitation to confirm your details.`
+
+  return {
+    ...baseMetadata,
+    title,
+    description,
+    openGraph: {
+      type: 'website',
+      title,
+      description,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+  }
+}
 
 export default async function HouseholdInvitePage({
   params,
@@ -61,13 +96,13 @@ export default async function HouseholdInvitePage({
             <p className='font-mono text-muted-foreground text-xs uppercase tracking-[0.22em]'>
               Date
             </p>
-            <p className='mt-2 font-serif text-2xl'>May 30, 2027</p>
+            <p className='mt-2 font-serif text-2xl'>{WEDDING_DATE_LABEL}</p>
           </div>
           <div>
             <p className='font-mono text-muted-foreground text-xs uppercase tracking-[0.22em]'>
               Location
             </p>
-            <p className='mt-2 font-serif text-2xl'>Puebla, Mexico</p>
+            <p className='mt-2 font-serif text-2xl'>{WEDDING_LOCATION}</p>
           </div>
         </div>
 

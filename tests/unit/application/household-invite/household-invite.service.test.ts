@@ -100,6 +100,31 @@ describe('HouseholdInviteService', () => {
     })
   })
 
+  it('returns public couple names for a website slug without requiring a token', async () => {
+    const db = createDb()
+    db.website.findFirst.mockResolvedValue({
+      wedding: { groomFirstName: 'Diego', brideFirstName: 'Laura' },
+    })
+    const service = new HouseholdInviteService(db as never)
+
+    await expect(service.getPublicWeddingSummary('diego-and-laura')).resolves.toEqual({
+      groomFirstName: 'Diego',
+      brideFirstName: 'Laura',
+    })
+    expect(db.website.findFirst).toHaveBeenCalledWith({
+      where: { subUrl: 'diego-and-laura' },
+      select: { wedding: { select: { groomFirstName: true, brideFirstName: true } } },
+    })
+  })
+
+  it('returns null public summary when no website matches the slug', async () => {
+    const db = createDb()
+    db.website.findFirst.mockResolvedValue(null)
+    const service = new HouseholdInviteService(db as never)
+
+    await expect(service.getPublicWeddingSummary('unknown-slug')).resolves.toBeNull()
+  })
+
   it('returns null when the invite token wedding does not match the website sub URL', async () => {
     const db = createDb()
     db.website.findFirst.mockResolvedValue({ weddingId: 'different-wedding' })

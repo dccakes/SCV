@@ -188,6 +188,25 @@ export class HouseholdInviteService {
     }
   }
 
+  async getPublicWeddingSummary(
+    subUrl: string
+  ): Promise<{ groomFirstName: string; brideFirstName: string } | null> {
+    const website = await this.db.website.findFirst({
+      where: { subUrl },
+      select: {
+        wedding: {
+          select: {
+            groomFirstName: true,
+            brideFirstName: true,
+          },
+        },
+      },
+    })
+
+    if (!website) return null
+    return website.wedding
+  }
+
   async getInviteData(subUrl: string, token: string | null | undefined) {
     const scopedInvite = await this.resolveInviteScope(subUrl, token)
     if (!scopedInvite) return null

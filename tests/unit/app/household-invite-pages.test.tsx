@@ -15,6 +15,7 @@ const mockCookieGet = jest.fn()
 const mockRedirect = jest.fn()
 const mockGetInviteData = jest.fn()
 const mockUpdateHouseholdDetails = jest.fn()
+const mockGetPublicWeddingSummary = jest.fn()
 
 jest.mock('next/headers', () => ({
   cookies: () =>
@@ -31,6 +32,7 @@ jest.mock('~/server/application/household-invite', () => ({
   householdInviteService: {
     getInviteData: (...args: unknown[]) => mockGetInviteData(...args),
     updateHouseholdDetails: (...args: unknown[]) => mockUpdateHouseholdDetails(...args),
+    getPublicWeddingSummary: (...args: unknown[]) => mockGetPublicWeddingSummary(...args),
   },
 }))
 
@@ -69,6 +71,7 @@ describe('household invite pages', () => {
     mockRedirect.mockReset()
     mockGetInviteData.mockReset()
     mockUpdateHouseholdDetails.mockReset()
+    mockGetPublicWeddingSummary.mockReset()
     jest.useFakeTimers().setSystemTime(new Date('2026-06-18T12:00:00.000Z'))
   })
 
@@ -122,6 +125,39 @@ describe('household invite pages', () => {
       '/diego-and-laura/invite/update'
     )
     expect(screen.getByText('Your details were updated.')).toBeInTheDocument()
+  })
+
+  it('builds couple-specific save-the-date open graph metadata from the website slug', async () => {
+    mockGetPublicWeddingSummary.mockResolvedValue({
+      groomFirstName: 'Diego',
+      brideFirstName: 'Holly',
+    })
+    const { generateMetadata } = await import('~/app/[websiteSubUrl]/invite/page')
+
+    const metadata = await generateMetadata({
+      params: Promise.resolve({ websiteSubUrl: 'holly-and-diego' }),
+    })
+
+    expect(mockGetPublicWeddingSummary).toHaveBeenCalledWith('holly-and-diego')
+    const expectedTitle = "Save the Date — Diego & Holly's Wedding"
+    expect(metadata.title).toBe(expectedTitle)
+    expect(metadata.openGraph?.title).toBe(expectedTitle)
+    expect(metadata.twitter?.title).toBe(expectedTitle)
+    expect(metadata.openGraph?.description).toContain('May 30, 2027')
+    expect(metadata.robots).toEqual({ index: false, follow: false })
+  })
+
+  it('falls back to noindex-only metadata when the slug has no wedding', async () => {
+    mockGetPublicWeddingSummary.mockResolvedValue(null)
+    const { generateMetadata } = await import('~/app/[websiteSubUrl]/invite/page')
+
+    const metadata = await generateMetadata({
+      params: Promise.resolve({ websiteSubUrl: 'unknown-slug' }),
+    })
+
+    expect(metadata.title).toBeUndefined()
+    expect(metadata.openGraph).toBeUndefined()
+    expect(metadata.robots).toEqual({ index: false, follow: false })
   })
 
   it('renders a guest-friendly invalid invite page without a valid household cookie', async () => {
