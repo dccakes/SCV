@@ -43,6 +43,10 @@ const inviteData = {
     brideFirstName: 'Laura',
     brideLastName: 'Zurich',
   },
+  events: [
+    { name: 'Ceremony', date: new Date('2027-05-30T00:00:00.000Z'), venue: 'Hacienda' },
+    { name: 'Brunch', date: new Date('2027-05-31T00:00:00.000Z'), venue: null },
+  ],
   household: {
     id: 'household-123',
     address1: '123 Main St',
@@ -122,6 +126,13 @@ describe('household invite pages', () => {
       '/diego-and-laura/invite/update'
     )
     expect(screen.getByText('Your details were updated.')).toBeInTheDocument()
+
+    // Calendar buttons span one day before the first event through one day
+    // after the last (the all-day end is exclusive, so May 30 → Jun 02).
+    const googleLink = screen.getByRole('link', { name: /google calendar/i })
+    expect(googleLink).toHaveAttribute('href', expect.stringContaining('dates=20270529%2F20270602'))
+    expect(screen.getByRole('link', { name: /outlook/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /apple calendar/i })).toBeInTheDocument()
   })
 
   it('renders a guest-friendly invalid invite page without a valid household cookie', async () => {

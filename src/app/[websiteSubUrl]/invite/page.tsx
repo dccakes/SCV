@@ -3,7 +3,9 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 
 import { Button } from '~/components/ui/button'
+import { AddToCalendarButtons } from '~/components/website/add-to-calendar-buttons'
 import { InvalidHouseholdInvite } from '~/components/website/household-invite/invalid-household-invite'
+import { buildSaveTheDateCalendarLinks } from '~/lib/website/calendar'
 import { householdInviteService } from '~/server/application/household-invite'
 
 export const metadata: Metadata = {
@@ -41,6 +43,12 @@ export default async function HouseholdInvitePage({
   if (!inviteData) return <InvalidHouseholdInvite websiteSubUrl={websiteSubUrl} />
 
   const coupleNames = `${inviteData.wedding.groomFirstName} & ${inviteData.wedding.brideFirstName}`
+  const calendarLinks = buildSaveTheDateCalendarLinks({
+    title: `${coupleNames} Wedding`,
+    description: `Save the date for the wedding of ${coupleNames}! Formal invitation to follow.`,
+    location: inviteData.events.find((event) => event.venue)?.venue ?? undefined,
+    events: inviteData.events,
+  })
 
   return (
     <main className='min-h-screen bg-background px-5 py-10 text-foreground'>
@@ -70,6 +78,17 @@ export default async function HouseholdInvitePage({
             <p className='mt-2 font-serif text-2xl'>Puebla, Mexico</p>
           </div>
         </div>
+
+        {calendarLinks ? (
+          <div className='mt-8'>
+            <p className='mb-3 font-mono text-muted-foreground text-xs uppercase tracking-[0.22em]'>
+              Add to your calendar
+            </p>
+            <div className='flex justify-start'>
+              <AddToCalendarButtons {...calendarLinks} />
+            </div>
+          </div>
+        ) : null}
 
         <div className='mt-8'>
           <p className='font-mono text-muted-foreground text-xs uppercase tracking-[0.22em]'>
