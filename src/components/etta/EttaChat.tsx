@@ -12,8 +12,10 @@ const PLANNER_SUGGESTIONS = [
 
 const CONCIERGE_SUGGESTIONS = ['When is the ceremony?', 'How do I RSVP?', 'What should I wear?']
 
+// TODO(review-implementation): If `old_dashboard/etta-panel` stays active, extract
+// shared Etta header/status/suggestion chrome instead of maintaining two variants.
+
 interface EttaChatProps {
-  weddingId: string
   persona: 'planner' | 'concierge'
   guestToken?: string
   isConfigured?: boolean
@@ -41,33 +43,19 @@ function getToolName(p: Part): string {
   return p.type.replace('tool-', '').replaceAll('_', ' ')
 }
 
-// ── Collapsible thinking block ───────────────────────────────────────────────
+// ── Thinking indicator ───────────────────────────────────────────────────────
 
-function ThinkingBlock({ text, state }: { text: string; state?: 'streaming' | 'done' }) {
-  const [expanded, setExpanded] = useState(false)
+function ThinkingBlock({ state }: { state?: 'streaming' | 'done' }) {
   const isStreaming = state === 'streaming'
 
-  if (!text) return null
+  if (!isStreaming) return null
 
   return (
-    <div className='rounded border border-white/8 bg-white/[0.03]'>
-      <button
-        type='button'
-        onClick={() => setExpanded((v) => !v)}
-        className='flex w-full items-center gap-2 px-2.5 py-1.5 text-left font-mono text-[0.6rem] text-sidebar-cream/40 uppercase tracking-widest transition-colors hover:text-sidebar-cream/60'
-      >
-        {isStreaming ? (
-          <span className='h-1.5 w-1.5 rounded-full bg-amber-400 motion-safe:animate-pulse' />
-        ) : (
-          <span className='text-[0.5rem]'>{expanded ? '▾' : '▸'}</span>
-        )}
-        {isStreaming ? 'thinking…' : 'thought process'}
-      </button>
-      {(expanded || isStreaming) && (
-        <div className='border-white/8 border-t px-2.5 py-2 font-mono text-[0.68rem] text-sidebar-cream/30 leading-relaxed'>
-          {text}
-        </div>
-      )}
+    <div className='rounded border border-white/8 bg-white/[0.03] px-2.5 py-1.5 font-mono text-[0.6rem] text-sidebar-cream/60 uppercase tracking-widest'>
+      <span className='inline-flex items-center gap-2'>
+        <span className='h-1.5 w-1.5 rounded-full bg-amber-400 motion-safe:animate-pulse' />
+        thinking…
+      </span>
     </div>
   )
 }
@@ -92,7 +80,7 @@ function MessageParts({ parts }: { parts: Part[] }) {
     const key = `${part.type}-${i}`
 
     if (isReasoningPart(part)) {
-      elements.push(<ThinkingBlock key={key} text={part.text} state={part.state} />)
+      elements.push(<ThinkingBlock key={key} state={part.state} />)
     } else if (isTextPart(part)) {
       if (part.text) {
         elements.push(
@@ -130,10 +118,10 @@ export function EttaChat({ persona, guestToken, isConfigured = true, onClose }: 
   const suggestions = persona === 'planner' ? PLANNER_SUGGESTIONS : CONCIERGE_SUGGESTIONS
   const subtitle = persona === 'planner' ? 'OSWP AI Planner' : 'Wedding Concierge'
   const statusLabel = isConfigured ? 'online' : 'offline'
-  const statusClassName = isConfigured ? 'text-emerald-400' : 'text-red-400'
+  const statusClassName = isConfigured ? 'text-success' : 'text-destructive'
   const statusDotClassName = isConfigured
-    ? 'bg-emerald-400 motion-safe:animate-pulse'
-    : 'bg-red-400'
+    ? 'bg-success motion-safe:animate-pulse'
+    : 'bg-destructive'
 
   const messageCount = messages.length
   // biome-ignore lint/correctness/useExhaustiveDependencies: messageCount and isLoading are intentional triggers for auto-scroll
@@ -165,7 +153,7 @@ export function EttaChat({ persona, guestToken, isConfigured = true, onClose }: 
         </div>
         <div className='min-w-0 flex-1'>
           <p className='font-serif text-[1rem] text-sidebar-cream italic leading-tight'>Etta</p>
-          <p className='font-mono text-[0.55rem] text-sidebar-cream/32 uppercase tracking-widest'>
+          <p className='font-mono text-[0.55rem] text-sidebar-cream/65 uppercase tracking-widest'>
             {subtitle}
           </p>
         </div>
@@ -247,7 +235,7 @@ export function EttaChat({ persona, guestToken, isConfigured = true, onClose }: 
               key={s}
               type='button'
               onClick={() => handleSuggestionClick(s)}
-              className='min-h-[44px] rounded border border-white/7 bg-white/[0.04] px-3 py-2 text-left font-mono text-[0.58rem] text-sidebar-cream/45 tracking-wider transition-all hover:border-accent/30 hover:bg-accent/[0.06] hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-etta-ink'
+              className='min-h-[44px] rounded border border-white/7 bg-white/[0.04] px-3 py-2 text-left font-mono text-[0.58rem] text-sidebar-cream/70 tracking-wider transition-all hover:border-accent/30 hover:bg-accent/[0.06] hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-etta-ink'
             >
               &ldquo;{s}&rdquo;
             </button>
@@ -265,7 +253,7 @@ export function EttaChat({ persona, guestToken, isConfigured = true, onClose }: 
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder='Ask Etta anything…'
-          className='flex-1 rounded border border-white/10 bg-white/[0.06] px-3 py-2 font-serif text-[0.82rem] text-sidebar-cream/80 italic placeholder:text-sidebar-cream/35 focus:border-accent/50 focus:text-sidebar-cream focus:outline-none focus:ring-2 focus:ring-accent/40'
+          className='flex-1 rounded border border-white/10 bg-white/[0.06] px-3 py-2 font-serif text-[0.82rem] text-sidebar-cream/80 italic placeholder:text-sidebar-cream/50 focus:border-accent/50 focus:text-sidebar-cream focus:outline-none focus:ring-2 focus:ring-accent/40'
         />
         <button
           type='submit'

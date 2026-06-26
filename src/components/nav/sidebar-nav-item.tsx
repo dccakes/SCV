@@ -18,12 +18,12 @@ export default function NavItem(props: Readonly<NavItemProps>) {
       onClick={onClick}
       title={label}
       aria-label={label}
-      className={`flex items-center border-l-2 py-2.5 font-mono text-xs uppercase tracking-widest transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-inset ${
+      className={`flex items-center border-l-2 py-2.5 font-mono text-xs uppercase tracking-widest transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-inset ${
         isCollapsed ? 'justify-center px-2' : 'gap-2.5 px-4'
       } ${
         isActive
-          ? 'border-primary bg-primary/25 text-primary-foreground'
-          : 'border-transparent text-muted-foreground hover:bg-white/25 hover:text-primary-foreground'
+          ? 'border-primary bg-primary/12 text-sidebar-cream'
+          : 'border-transparent text-sidebar-cream/55 hover:bg-white/[0.04] hover:text-sidebar-cream/85'
       }`}
     >
       <span className='flex-shrink-0 text-center text-base leading-none'>{icon}</span>
