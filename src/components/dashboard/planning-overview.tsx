@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
+import { formatDateStandard } from '~/app/utils/helpers'
 import type { DashboardData, EventWithResponses } from '~/app/utils/shared-types'
 import { TaskListItem } from '~/components/dashboard/planning-overview/task-list-item'
 import { useTasksCardState } from '~/components/dashboard/planning-overview/use-tasks-card-state'
@@ -355,26 +356,32 @@ function VendorsCard() {
 }
 
 function MilestonesCard({ dashboardData }: { dashboardData: DashboardData | null }) {
-  const weddingDateLabel = dashboardData?.weddingData?.date?.standardFormat ?? ''
   const events = dashboardData?.events ?? []
 
-  const staticMilestones = [
-    { title: 'Venue booked', date: 'Jan 2026', status: 'done' as const },
-    { title: 'Invitations sent', date: 'Feb 2026', status: 'done' as const },
-    { title: 'RSVP deadline', date: 'Mar 2026', status: 'today' as const },
-    { title: 'Final headcount to caterer', date: 'Apr 2026', status: 'upcoming' as const },
-    { title: 'Seating plan finalised', date: 'Jan 2027', status: 'upcoming' as const },
-    { title: 'Rehearsal dinner', date: 'Day before', status: 'upcoming' as const },
-  ]
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
 
-  const weddingMilestone = {
-    title: events[0]?.name ?? 'The wedding',
-    date: weddingDateLabel,
-    status: 'upcoming' as const,
-    highlight: true,
-  }
+  const milestones = events.map((event) => {
+    const rawDate = event.date ? new Date(event.date) : null
+    if (rawDate) rawDate.setHours(0, 0, 0, 0)
 
-  const allMilestones = [...staticMilestones, weddingMilestone]
+    let status: 'done' | 'today' | 'upcoming'
+    if (!rawDate) {
+      status = 'upcoming'
+    } else if (rawDate.getTime() < today.getTime()) {
+      status = 'done'
+    } else if (rawDate.getTime() === today.getTime()) {
+      status = 'today'
+    } else {
+      status = 'upcoming'
+    }
+
+    return {
+      title: event.name,
+      date: rawDate ? (formatDateStandard(rawDate) ?? '') : 'No date set',
+      status,
+    }
+  })
 
   const dotClass = {
     done: 'bg-success border-success',
@@ -383,38 +390,49 @@ function MilestonesCard({ dashboardData }: { dashboardData: DashboardData | null
   }
 
   return (
-    <CardShell title='Milestones' icon='▷' action='Full timeline →' actionHref='/dashboard'>
-      <div className='flex flex-col'>
-        {allMilestones.map((m, i) => (
-          <div key={m.title} className='relative flex gap-3 pb-3 last:pb-0'>
-            {i < allMilestones.length - 1 && (
-              <div className='absolute top-4 bottom-0 left-[5px] w-px bg-border' />
-            )}
-            <span
-              className={`relative z-10 mt-1 h-3 w-3 flex-shrink-0 rounded-full border-2 ${dotClass[m.status]}`}
-            />
-            <div>
-              <p
-                className={`font-serif text-[0.88rem] leading-tight ${
-                  'highlight' in m && m.highlight
-                    ? 'font-semibold text-foreground italic'
-                    : 'text-foreground'
-                }`}
-              >
-                {m.title}
-                {'highlight' in m && m.highlight ? ' ✦' : ''}
-              </p>
-              <p
-                className={`mt-0.5 font-mono text-[0.58rem] tracking-wider ${
-                  m.status === 'today' ? 'text-foreground/80' : 'text-foreground/60'
-                }`}
-              >
-                {m.date}
-              </p>
+    <CardShell title='Events' icon='▷' action='Manage →' actionHref='/events'>
+      {milestones.length === 0 ? (
+        <div className='flex flex-col gap-3 py-1'>
+          <p className='font-mono text-[0.62rem] text-foreground/50 tracking-wider'>
+            No events added yet
+          </p>
+          <Link
+            href='/events'
+            className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+          >
+            Add your first event →
+          </Link>
+        </div>
+      ) : (
+        <div className='flex flex-col'>
+          {milestones.map((m, i) => (
+            <div key={m.title} className='relative flex gap-3 pb-3 last:pb-0'>
+              {i < milestones.length - 1 && (
+                <div className='absolute top-4 bottom-0 left-[5px] w-px bg-border' />
+              )}
+              <span
+                className={`relative z-10 mt-1 h-3 w-3 flex-shrink-0 rounded-full border-2 ${dotClass[m.status]}`}
+              />
+              <div>
+                <p
+                  className={`font-serif text-[0.88rem] leading-tight ${
+                    m.status === 'done' ? 'text-foreground/50' : 'text-foreground'
+                  }`}
+                >
+                  {m.title}
+                </p>
+                <p
+                  className={`mt-0.5 font-mono text-[0.58rem] tracking-wider ${
+                    m.status === 'today' ? 'text-foreground/80' : 'text-foreground/60'
+                  }`}
+                >
+                  {m.date}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </CardShell>
   )
 }
