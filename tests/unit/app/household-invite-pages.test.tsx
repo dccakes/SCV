@@ -47,6 +47,10 @@ const inviteData = {
     date: new Date('2027-05-30T12:00:00.000Z'),
     venue: 'Puebla, Mexico',
   },
+  events: [
+    { name: 'Ceremony', date: new Date('2027-05-30T00:00:00.000Z'), venue: 'Hacienda' },
+    { name: 'Brunch', date: new Date('2027-05-31T00:00:00.000Z'), venue: null },
+  ],
   household: {
     id: 'household-123',
     address1: '123 Main St',
@@ -118,8 +122,10 @@ describe('household invite pages', () => {
     )
 
     expect(screen.getByText('Save the date')).toBeInTheDocument()
-    expect(screen.getByText('May 30, 2027')).toBeInTheDocument()
-    expect(screen.getByText('Puebla, Mexico')).toBeInTheDocument()
+    // Date and location are inherited from the wedding's events, not hardcoded:
+    // the two events span May 30–31, and the first event's venue is the location.
+    expect(screen.getByText('May 30, 2027 – May 31, 2027')).toBeInTheDocument()
+    expect(screen.getByText('Hacienda')).toBeInTheDocument()
     expect(screen.getByText('Diego & Laura')).toBeInTheDocument()
     expect(screen.getByText('Ada Lovelace')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /update our details/i })).toHaveAttribute(
@@ -127,6 +133,13 @@ describe('household invite pages', () => {
       '/diego-and-laura/invite/update'
     )
     expect(screen.getByText('Your details were updated.')).toBeInTheDocument()
+
+    // Calendar buttons span the day of the first event through the day of the
+    // last (the all-day end is exclusive, so May 30 → Jun 01).
+    const googleLink = screen.getByRole('link', { name: /google calendar/i })
+    expect(googleLink).toHaveAttribute('href', expect.stringContaining('dates=20270530%2F20270601'))
+    expect(screen.getByRole('link', { name: /outlook/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /apple calendar/i })).toBeInTheDocument()
   })
 
   it('builds save-the-date open graph metadata from the wedding date and venue', async () => {

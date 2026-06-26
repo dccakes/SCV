@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { AddToCalendarButtons } from '~/components/website/add-to-calendar-buttons'
+import { buildSaveTheDateCalendarLinks } from '~/lib/website/calendar'
 import { AureliaHeaderImage } from '~/templates/aurelia/components/media'
 import type { TemplateSurfaceProps } from '~/templates/types'
 
@@ -7,6 +9,13 @@ const headingFont = 'font-[family-name:var(--tpl-heading-font)]'
 export function AureliaSaveTheDate({ weddingData, path }: Readonly<TemplateSurfaceProps>) {
   const weddingEvent = weddingData.events.find((event) => event.name === 'Wedding Day')
   const venue = weddingEvent?.venue
+  const coupleNames = `${weddingData.groomFirstName} & ${weddingData.brideFirstName}`
+  const calendarLinks = buildSaveTheDateCalendarLinks({
+    title: `${coupleNames} Wedding`,
+    description: `Save the date for the wedding of ${coupleNames}! Formal invitation to follow. ${weddingData.website.url}`,
+    location: venue ?? undefined,
+    events: weddingData.events,
+  })
 
   return (
     <main className='flex min-h-screen flex-col items-center justify-center gap-10 px-6 py-24 text-center'>
@@ -35,6 +44,7 @@ export function AureliaSaveTheDate({ weddingData, path }: Readonly<TemplateSurfa
         </p>
       )}
       <p className='text-muted-foreground text-sm'>Formal invitation to follow.</p>
+      {calendarLinks ? <AddToCalendarButtons {...calendarLinks} /> : null}
       <Link
         href={path}
         className='text-[0.72rem] text-primary uppercase tracking-[0.3em] underline-offset-4 hover:underline'

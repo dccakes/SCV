@@ -45,6 +45,12 @@ export type HouseholdInviteData = {
     date: Date | null
     venue: string | null
   }
+  /** Wedding events, used to build the "save the date" calendar block. */
+  events: Array<{
+    name: string
+    date: Date | null
+    venue: string | null
+  }>
   household: {
     id: string
     address1: string | null
@@ -396,10 +402,8 @@ export class HouseholdInviteService {
             brideFirstName: true,
             brideLastName: true,
             events: {
-              where: { name: WEDDING_DAY_EVENT_NAME },
               orderBy: { date: 'asc' },
-              take: 1,
-              select: { date: true, venue: true },
+              select: { name: true, date: true, venue: true },
             },
           },
         },
@@ -418,19 +422,20 @@ export class HouseholdInviteService {
 
     if (!household) return null
 
-    const weddingDayEvent = household.wedding.events[0]
+    const { events, ...weddingNames } = household.wedding
+    // The primary date/venue come from the "Wedding Day" event; the full event
+    // list drives the save-the-date calendar block.
+    const weddingDayEvent = events.find((event) => event.name === WEDDING_DAY_EVENT_NAME)
 
     return {
       weddingId,
       expiresAt,
       wedding: {
-        groomFirstName: household.wedding.groomFirstName,
-        groomLastName: household.wedding.groomLastName,
-        brideFirstName: household.wedding.brideFirstName,
-        brideLastName: household.wedding.brideLastName,
+        ...weddingNames,
         date: weddingDayEvent?.date ?? null,
         venue: weddingDayEvent?.venue ?? null,
       },
+      events,
       household: {
         id: household.id,
         address1: household.address1,
