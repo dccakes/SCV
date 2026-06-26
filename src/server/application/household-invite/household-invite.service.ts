@@ -30,6 +30,10 @@ export type UpdateHouseholdInviteInput = {
   guests: HouseholdInviteGuestInput[]
 }
 
+// The primary wedding date and venue live on the event named "Wedding Day"
+// (see website-management.service.ts), not on the Wedding record itself.
+const WEDDING_DAY_EVENT_NAME = 'Wedding Day'
+
 export type HouseholdInviteData = {
   weddingId: string
   expiresAt: Date
@@ -38,6 +42,8 @@ export type HouseholdInviteData = {
     groomLastName: string
     brideFirstName: string
     brideLastName: string
+    date: Date | null
+    venue: string | null
   }
   /** Wedding events, used to build the "save the date" calendar block. */
   events: Array<{
@@ -191,6 +197,41 @@ export class HouseholdInviteService {
     return {
       url: `${normalizeBaseUrl(input.baseUrl)}/${website.subUrl}/invite/${token}`,
       expiresAt,
+    }
+  }
+
+  async getPublicWeddingSummary(subUrl: string): Promise<{
+    groomFirstName: string
+    brideFirstName: string
+    date: Date | null
+    venue: string | null
+  } | null> {
+    const website = await this.db.website.findFirst({
+      where: { subUrl },
+      select: {
+        wedding: {
+          select: {
+            groomFirstName: true,
+            brideFirstName: true,
+            events: {
+              where: { name: WEDDING_DAY_EVENT_NAME },
+              orderBy: { date: 'asc' },
+              take: 1,
+              select: { date: true, venue: true },
+            },
+          },
+        },
+      },
+    })
+
+    if (!website) return null
+
+    const weddingDayEvent = website.wedding.events[0]
+    return {
+      groomFirstName: website.wedding.groomFirstName,
+      brideFirstName: website.wedding.brideFirstName,
+      date: weddingDayEvent?.date ?? null,
+      venue: weddingDayEvent?.venue ?? null,
     }
   }
 
@@ -382,11 +423,18 @@ export class HouseholdInviteService {
     if (!household) return null
 
     const { events, ...weddingNames } = household.wedding
+    // The primary date/venue come from the "Wedding Day" event; the full event
+    // list drives the save-the-date calendar block.
+    const weddingDayEvent = events.find((event) => event.name === WEDDING_DAY_EVENT_NAME)
 
     return {
       weddingId,
       expiresAt,
-      wedding: weddingNames,
+      wedding: {
+        ...weddingNames,
+        date: weddingDayEvent?.date ?? null,
+        venue: weddingDayEvent?.venue ?? null,
+      },
       events,
       household: {
         id: household.id,

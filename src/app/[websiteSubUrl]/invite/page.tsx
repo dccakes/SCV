@@ -2,18 +2,14 @@ import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
 
+import { formatDateStandard } from '~/app/utils/helpers'
 import { Button } from '~/components/ui/button'
 import { AddToCalendarButtons } from '~/components/website/add-to-calendar-buttons'
 import { InvalidHouseholdInvite } from '~/components/website/household-invite/invalid-household-invite'
 import { buildSaveTheDateCalendarLinks } from '~/lib/website/calendar'
 import { householdInviteService } from '~/server/application/household-invite'
 
-export const metadata: Metadata = {
-  robots: {
-    index: false,
-    follow: false,
-  },
-}
+const DETAIL_FALLBACK = 'To be announced'
 
 type HouseholdInvitePageProps = {
   params: Promise<{
@@ -44,6 +40,60 @@ const formatEventDateRange = (first: Date, last: Date) =>
   first.getTime() === last.getTime()
     ? dateFormatter.format(first)
     : `${dateFormatter.format(first)} – ${dateFormatter.format(last)}`
+
+const buildSaveTheDateDescription = (
+  coupleNames: string,
+  dateLabel: string | undefined,
+  venue: string | null
+) => {
+  const when = dateLabel ? ` on ${dateLabel}` : ''
+  const where = venue ? ` in ${venue}` : ''
+  return `${coupleNames} are getting married${when}${where}. Open your household invitation to confirm your details.`
+}
+
+export async function generateMetadata({ params }: HouseholdInvitePageProps): Promise<Metadata> {
+  const { websiteSubUrl } = await params
+
+  // Keep the invite flow out of search indexes regardless of who the couple are.
+  const baseMetadata: Metadata = {
+    robots: {
+      index: false,
+      follow: false,
+    },
+  }
+
+  // Link unfurlers (iMessage, WhatsApp, Slack, etc.) follow the token redirect to
+  // this page, but they rarely carry the httpOnly invite cookie. The couple names,
+  // date, and venue are public wedding details tied to the website slug, so derive
+  // the preview from the slug instead of the token to give shared links a proper
+  // "Save the Date" card.
+  const summary = await householdInviteService.getPublicWeddingSummary(websiteSubUrl)
+  if (!summary) return baseMetadata
+
+  const coupleNames = `${summary.groomFirstName} & ${summary.brideFirstName}`
+  const title = `Save the Date — ${coupleNames}'s Wedding`
+  const description = buildSaveTheDateDescription(
+    coupleNames,
+    formatDateStandard(summary.date),
+    summary.venue
+  )
+
+  return {
+    ...baseMetadata,
+    title,
+    description,
+    openGraph: {
+      type: 'website',
+      title,
+      description,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+  }
+}
 
 export default async function HouseholdInvitePage({
   params,
@@ -95,13 +145,13 @@ export default async function HouseholdInvitePage({
             <p className='font-mono text-muted-foreground text-xs uppercase tracking-[0.22em]'>
               Date
             </p>
-            <p className='mt-2 font-serif text-2xl'>{formattedDate ?? 'To be announced'}</p>
+            <p className='mt-2 font-serif text-2xl'>{formattedDate ?? DETAIL_FALLBACK}</p>
           </div>
           <div>
             <p className='font-mono text-muted-foreground text-xs uppercase tracking-[0.22em]'>
               Location
             </p>
-            <p className='mt-2 font-serif text-2xl'>{location ?? 'To be announced'}</p>
+            <p className='mt-2 font-serif text-2xl'>{location ?? DETAIL_FALLBACK}</p>
           </div>
         </div>
 
