@@ -118,9 +118,8 @@ describe('PlanningOverview', () => {
 
   it('renders the wedding date in the hero', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
-    // Date appears at minimum in hero and milestones
-    const dateEls = screen.getAllByText('17 May 2027')
-    expect(dateEls.length).toBeGreaterThanOrEqual(2)
+    // standardFormat date string appears in the hero
+    expect(screen.getByText('17 May 2027')).toBeInTheDocument()
   })
 
   it('renders the planning progress percentage', () => {
@@ -280,27 +279,27 @@ describe('PlanningOverview', () => {
     expect(screen.getByText('Add your first vendor →')).toBeInTheDocument()
   })
 
-  // ── Milestones Card ────────────────────────────────────────────────────────
+  // ── Events Card ────────────────────────────────────────────────────────────
 
-  it('renders the Milestones card title', () => {
+  it('renders the Events card title', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText('Milestones')).toBeInTheDocument()
+    expect(screen.getByText('Events')).toBeInTheDocument()
   })
 
-  it('renders all static milestone titles', () => {
+  it('renders real event names from dashboardData in the Events card', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText('Venue booked')).toBeInTheDocument()
-    expect(screen.getByText('Invitations sent')).toBeInTheDocument()
-    expect(screen.getByText('RSVP deadline')).toBeInTheDocument()
-    expect(screen.getByText('Final headcount to caterer')).toBeInTheDocument()
-    expect(screen.getByText('Seating plan finalised')).toBeInTheDocument()
-    expect(screen.getByText('Rehearsal dinner')).toBeInTheDocument()
+    // events[0].name = 'Wedding'
+    expect(screen.getByText('Wedding')).toBeInTheDocument()
   })
 
-  it('renders the wedding event name as a highlighted milestone', () => {
-    render(<PlanningOverview dashboardData={mockDashboardData} />)
-    // events[0].name = 'Wedding', rendered with a ✦ marker
-    expect(screen.getByText('Wedding ✦')).toBeInTheDocument()
+  it('renders the empty state when no events are provided', () => {
+    const noEventsData = { ...mockDashboardData, events: [] } as unknown as DashboardData
+    render(<PlanningOverview dashboardData={noEventsData} />)
+    expect(screen.getByText('No events added yet')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /add your first event/i })).toHaveAttribute(
+      'href',
+      '/events'
+    )
   })
 
   // ── Edge Cases ─────────────────────────────────────────────────────────────
