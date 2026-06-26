@@ -299,7 +299,7 @@ function BudgetCard() {
   ]
 
   return (
-    <CardShell title='Budget' icon='◧' action='Details →' actionHref='/dashboard#website-editor'>
+    <CardShell title='Budget' icon='◧'>
       <div className='mb-3 flex items-baseline gap-2'>
         <span className='font-serif text-[2.2rem] text-foreground leading-none'>—</span>
         <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
@@ -330,74 +330,26 @@ function BudgetCard() {
   )
 }
 
-const PLACEHOLDER_VENDORS = [
-  {
-    initials: 'V1',
-    name: 'Ceremony Venue',
-    type: 'Venue',
-    status: 'Confirmed',
-    statusColor: 'bg-success/12 text-success',
-  },
-  {
-    initials: 'V2',
-    name: 'Photographer',
-    type: 'Photography',
-    status: 'Confirmed',
-    statusColor: 'bg-success/12 text-success',
-  },
-  {
-    initials: 'V3',
-    name: 'Caterer',
-    type: 'Catering',
-    status: 'Deposit due',
-    statusColor: 'bg-destructive/10 text-destructive',
-  },
-  {
-    initials: 'V4',
-    name: 'Florist',
-    type: 'Flowers',
-    status: 'Confirmed',
-    statusColor: 'bg-success/12 text-success',
-  },
-  {
-    initials: '—',
-    name: 'Hair & Makeup',
-    type: 'Beauty',
-    status: 'Searching',
-    statusColor: 'bg-accent/12 text-accent-foreground',
-  },
-]
-
 function VendorsCard() {
   return (
     <CardShell title='Vendors' icon='◐' action='Manage →' actionHref='/vendors'>
-      <div className='flex flex-col gap-1'>
-        {PLACEHOLDER_VENDORS.map((v) => (
-          <Link
-            key={v.name}
-            href='/vendors'
-            className='flex min-h-[44px] items-center gap-2.5 rounded px-2 py-2 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
-          >
-            <span className='flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-muted font-medium font-mono text-[0.6rem] text-foreground/60 uppercase'>
-              {v.initials}
-            </span>
-            <div className='min-w-0 flex-1'>
-              <p className='truncate font-serif text-[0.88rem] text-foreground'>{v.name}</p>
-              <p className='font-mono text-[0.56rem] text-foreground/60 uppercase tracking-widest'>
-                {v.type}
-              </p>
-            </div>
-            <span
-              className={`flex-shrink-0 rounded-full px-2 py-0.5 font-mono text-[0.58rem] uppercase tracking-wider ${v.statusColor}`}
-            >
-              {v.status}
-            </span>
-          </Link>
-        ))}
+      <div className='flex flex-col gap-3'>
+        <div className='flex items-baseline gap-2'>
+          <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
+          <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
+            No vendors added yet
+          </span>
+        </div>
+        <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
+          Track quotes, contacts, and contracts in one place
+        </div>
+        <Link
+          href='/vendors'
+          className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+        >
+          Add your first vendor →
+        </Link>
       </div>
-      <p className='mt-3 font-mono text-[0.56rem] text-foreground/50 tracking-wider'>
-        Showing placeholder data — manage real vendors →
-      </p>
     </CardShell>
   )
 }

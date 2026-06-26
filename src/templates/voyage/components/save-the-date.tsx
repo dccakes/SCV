@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { AddToCalendarButtons } from '~/components/website/add-to-calendar-buttons'
+import { buildSaveTheDateCalendarLinks } from '~/lib/website/calendar'
 import type { TemplateSurfaceProps } from '~/templates/types'
 import { HeroBackground } from '~/templates/voyage/components/media'
 import {
@@ -18,6 +20,13 @@ export function VoyageSaveTheDate({ weddingData, path }: Readonly<TemplateSurfac
   const venue = weddingEvent?.venue ?? null
   const dateLabel = weddingData.date?.standardFormat ?? 'Date to be announced'
   const copy = weddingData.saveTheDate
+  const coupleNames = `${weddingData.groomFirstName} & ${weddingData.brideFirstName}`
+  const calendarLinks = buildSaveTheDateCalendarLinks({
+    title: `${coupleNames} Wedding`,
+    description: `Save the date for the wedding of ${coupleNames}! Formal invitation to follow. ${website.url}`,
+    location: venue ?? undefined,
+    events: weddingData.events,
+  })
 
   return (
     <main className='w-full'>
@@ -55,6 +64,7 @@ export function VoyageSaveTheDate({ weddingData, path }: Readonly<TemplateSurfac
           <p className={`${bodyFont} text-[#F8F1E7]/70 italic`}>
             {copy?.footnote ?? 'Formal invitation to follow.'}
           </p>
+          {calendarLinks ? <AddToCalendarButtons {...calendarLinks} /> : null}
           <div className='pt-2'>
             <GhostButtonOnDark href={path}>Visit our website</GhostButtonOnDark>
           </div>
