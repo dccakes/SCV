@@ -81,7 +81,6 @@ export function VendorCard({
   }
 
   return (
-    <>
     <div
       data-testid='vendor-card-root'
       className={`group relative flex cursor-pointer flex-col gap-2 rounded-lg border border-border/90 bg-card/60 px-4 py-3 transition-all hover:bg-card hover:shadow-sm sm:flex-row sm:items-center sm:justify-between ${
@@ -203,31 +202,29 @@ export function VendorCard({
           <X className='h-3.5 w-3.5' aria-hidden='true' />
         </button>
       </div>
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove {vendor.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove this vendor and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteVendor.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                deleteVendor.mutate({ vendorId: vendor.id })
+              }}
+              disabled={deleteVendor.isPending}
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+            >
+              {deleteVendor.isPending ? 'Removing…' : 'Remove vendor'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
-
-    <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Remove {vendor.name}?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This will permanently remove this vendor and cannot be undone.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={deleteVendor.isPending}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={(e) => {
-              e.preventDefault()
-              deleteVendor.mutate({ vendorId: vendor.id })
-            }}
-            disabled={deleteVendor.isPending}
-            className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
-          >
-            {deleteVendor.isPending ? 'Removing…' : 'Remove vendor'}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-    </>
   )
 }
