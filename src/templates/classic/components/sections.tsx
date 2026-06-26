@@ -12,9 +12,12 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import type {
+  DestinationSectionContent,
+  ExperiencesSectionContent,
   FaqSectionContent,
   OurStorySectionContent,
   RegistrySectionContent,
+  TimelineSectionContent,
   TravelSectionContent,
   WebsiteSection,
   WeddingPartySectionContent,
@@ -49,10 +52,152 @@ function OurStory({ content }: { content: OurStorySectionContent }) {
 }
 
 function Travel({ content }: { content: TravelSectionContent }) {
+  const services = content.services ?? []
+  const stays = content.stays ?? []
   return (
     <section id='travel' className='flex flex-col items-center gap-6'>
       <Heading>{content.heading}</Heading>
       <ProseBlock text={content.body} />
+      {services.length > 0 ? (
+        <ul className='flex max-w-2xl flex-col gap-4 px-6 text-center'>
+          {services.map((service) => (
+            <li key={`${service.title}`}>
+              <p className='text-xl tracking-wide'>{service.title}</p>
+              <p className='font-thin text-lg leading-8 tracking-normal'>{service.description}</p>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {stays.length > 0 ? (
+        <ul className='flex w-full max-w-2xl flex-col gap-8'>
+          {stays.map((stay) => (
+            <li key={`${stay.name}`} className='flex flex-col items-center gap-3 text-center'>
+              {stay.imageUrl ? (
+                <div className='relative h-44 w-full max-w-md overflow-hidden'>
+                  <Image
+                    src={stay.imageUrl}
+                    fill
+                    sizes='(max-width: 768px) 100vw, 28rem'
+                    className='object-cover'
+                    alt={stay.name}
+                  />
+                </div>
+              ) : null}
+              <span className='text-2xl tracking-widest'>{stay.name}</span>
+              {stay.description ? (
+                <p className='max-w-md font-thin text-lg leading-8 tracking-normal'>
+                  {stay.description}
+                </p>
+              ) : null}
+              {stay.url ? (
+                <Link
+                  href={stay.url}
+                  target='_blank'
+                  rel='noreferrer'
+                  className='underline underline-offset-4 hover:text-pink-500'
+                >
+                  View stay
+                </Link>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
+  )
+}
+
+function Timeline({ content }: { content: TimelineSectionContent }) {
+  if (content.milestones.length === 0) {
+    return null
+  }
+  return (
+    <section id='our-story' className='flex flex-col items-center gap-6'>
+      <Heading>{content.heading}</Heading>
+      <ul className='flex w-full max-w-3xl flex-col gap-6 sm:flex-row sm:justify-center sm:gap-10'>
+        {content.milestones.map((milestone) => (
+          <li
+            key={`${milestone.year}-${milestone.title}`}
+            className='flex flex-col items-center gap-1 text-center'
+          >
+            <span className='text-4xl tracking-widest'>{milestone.year}</span>
+            <span className='text-lg lowercase tracking-widest'>{milestone.title}</span>
+            {milestone.location ? (
+              <span className='font-thin text-base tracking-normal'>{milestone.location}</span>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+function Destination({ content }: { content: DestinationSectionContent }) {
+  if (!content.body.trim() && !content.imageUrl) {
+    return null
+  }
+  return (
+    <section id='destination' className='flex flex-col items-center gap-6'>
+      <Heading>{content.heading}</Heading>
+      {content.imageUrl ? (
+        <div className='relative h-80 w-full max-w-3xl overflow-hidden px-6'>
+          <Image
+            src={content.imageUrl}
+            fill
+            sizes='(max-width: 768px) 100vw, 48rem'
+            className='object-cover'
+            alt={content.venueName ?? content.heading}
+          />
+        </div>
+      ) : null}
+      {content.location ? <p className='text-2xl tracking-widest'>{content.location}</p> : null}
+      <ProseBlock text={content.body} />
+      {content.venueName ? <p className='text-xl tracking-wide'>{content.venueName}</p> : null}
+      {content.ctaLabel && content.ctaUrl ? (
+        <Link
+          href={content.ctaUrl}
+          target='_blank'
+          rel='noreferrer'
+          className='underline underline-offset-4 hover:text-pink-500'
+        >
+          {content.ctaLabel}
+        </Link>
+      ) : null}
+    </section>
+  )
+}
+
+function Experiences({ content }: { content: ExperiencesSectionContent }) {
+  if (content.items.length === 0) {
+    return null
+  }
+  return (
+    <section id='experiences' className='flex flex-col items-center gap-6'>
+      <Heading>{content.heading}</Heading>
+      <ul className='flex w-full max-w-3xl flex-col gap-10 sm:flex-row sm:flex-wrap sm:justify-center'>
+        {content.items.map((item) => (
+          <li
+            key={`${item.title}`}
+            className='flex w-full flex-col items-center gap-3 text-center sm:w-64'
+          >
+            {item.imageUrl ? (
+              <div className='relative h-48 w-full overflow-hidden'>
+                <Image
+                  src={item.imageUrl}
+                  fill
+                  sizes='(max-width: 768px) 100vw, 16rem'
+                  className='object-cover'
+                  alt={item.title}
+                />
+              </div>
+            ) : null}
+            <span className='text-2xl tracking-widest'>{item.title}</span>
+            {item.description ? (
+              <p className='font-thin text-lg leading-8 tracking-normal'>{item.description}</p>
+            ) : null}
+          </li>
+        ))}
+      </ul>
     </section>
   )
 }
@@ -143,6 +288,12 @@ function SectionRenderer({ section }: { section: WebsiteSection }) {
   switch (section.type) {
     case 'OUR_STORY':
       return <OurStory content={section.content} />
+    case 'TIMELINE':
+      return <Timeline content={section.content} />
+    case 'DESTINATION':
+      return <Destination content={section.content} />
+    case 'EXPERIENCES':
+      return <Experiences content={section.content} />
     case 'TRAVEL':
       return <Travel content={section.content} />
     case 'WEDDING_PARTY':

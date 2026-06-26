@@ -8,12 +8,15 @@ const headingFont = 'font-[family-name:var(--tpl-heading-font)]'
 export function AureliaInvitation({ weddingData, path }: Readonly<TemplateSurfaceProps>) {
   const { website } = weddingData
   const weddingEvent = weddingData.events.find((event) => event.name === 'Wedding Day')
+  const copy = weddingData.invitation
 
   return (
     <main className='flex min-h-screen flex-col items-center justify-center gap-8 px-6 py-24'>
       <AureliaHeaderImage url={website.headerImageUrl} />
       <div className='flex w-full max-w-xl flex-col items-center gap-6 rounded-[28px] border border-border bg-card px-10 py-16 text-center text-card-foreground shadow-sm'>
-        <p className='text-muted-foreground text-sm'>Together with their families</p>
+        <p className='text-muted-foreground text-sm'>
+          {copy?.preface ?? 'Together with their families'}
+        </p>
         <h1 className={`${headingFont} text-4xl text-foreground italic sm:text-5xl`}>
           {weddingData.groomFirstName} {weddingData.groomLastName}
         </h1>
@@ -21,7 +24,14 @@ export function AureliaInvitation({ weddingData, path }: Readonly<TemplateSurfac
         <h1 className={`${headingFont} text-4xl text-foreground italic sm:text-5xl`}>
           {weddingData.brideFirstName} {weddingData.brideLastName}
         </h1>
-        <p className='mt-2 text-muted-foreground text-sm'>request the pleasure of your company</p>
+        <p className='mt-2 text-muted-foreground text-sm'>
+          {copy?.invitationLine ?? 'request the pleasure of your company'}
+        </p>
+        {copy?.message ? (
+          <p className='whitespace-pre-line text-muted-foreground text-sm leading-7'>
+            {copy.message}
+          </p>
+        ) : null}
 
         <span className='my-2 h-px w-16 bg-border' />
 

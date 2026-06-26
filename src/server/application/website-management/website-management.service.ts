@@ -17,6 +17,7 @@ import { computeWebsiteUrl } from '~/server/domains/website/website.utils'
 import type { WebsitePasswordService } from '~/server/domains/website/website-password.service'
 import type { WebsiteSectionRepository } from '~/server/domains/website-section/website-section.repository'
 import {
+  type HomeSectionContent,
   type WebsiteSection,
   WebsiteSectionType,
 } from '~/server/domains/website-section/website-section.types'
@@ -103,7 +104,7 @@ export class WebsiteManagementService {
     return this.websiteSectionRepository.findByWebsiteIdAndType(website.id, WebsiteSectionType.HOME)
   }
 
-  async updateHomeSection(ctx: AuthzContext, weddingId: string, input: { introText: string }) {
+  async updateHomeSection(ctx: AuthzContext, weddingId: string, input: HomeSectionContent) {
     requirePermission(ctx, { website: ['update'] })
 
     const website = await this.websiteRepository.findByWeddingId(weddingId)
@@ -208,14 +209,40 @@ export class WebsiteManagementService {
     }
     const weddingDate = events.find((event) => event.name === 'Wedding Day')?.date
     const homeSection = sections.find((section) => section.type === WebsiteSectionType.HOME)
-    const introText =
+    const homeContent =
       homeSection?.isEnabled && homeSection.type === WebsiteSectionType.HOME
-        ? homeSection.content.introText
-        : ''
-    // Enabled, ordered content sections rendered below the hero (HOME drives the
-    // intro text instead of appearing as its own section).
+        ? homeSection.content
+        : undefined
+    const introText = homeContent?.introText ?? ''
+
+    // Save the Date / Invitation are standalone surfaces, not home-page sections:
+    // when enabled, their content overrides the template's default page wording.
+    const saveTheDateSection = sections.find(
+      (section) => section.type === WebsiteSectionType.SAVE_THE_DATE
+    )
+    const saveTheDate =
+      saveTheDateSection?.isEnabled && saveTheDateSection.type === WebsiteSectionType.SAVE_THE_DATE
+        ? saveTheDateSection.content
+        : undefined
+    const invitationSection = sections.find(
+      (section) => section.type === WebsiteSectionType.INVITATION
+    )
+    const invitation =
+      invitationSection?.isEnabled && invitationSection.type === WebsiteSectionType.INVITATION
+        ? invitationSection.content
+        : undefined
+
+    // Enabled, ordered content sections rendered below the hero. HOME drives the
+    // intro text, and the Save the Date / Invitation surfaces are page-level
+    // (not home sections), so all three are excluded here.
     const contentSections = sections
-      .filter((section) => section.isEnabled && section.type !== WebsiteSectionType.HOME)
+      .filter(
+        (section) =>
+          section.isEnabled &&
+          section.type !== WebsiteSectionType.HOME &&
+          section.type !== WebsiteSectionType.SAVE_THE_DATE &&
+          section.type !== WebsiteSectionType.INVITATION
+      )
       .sort((a, b) => a.position - b.position)
 
     return {
@@ -233,8 +260,14 @@ export class WebsiteManagementService {
         numberFormat: formatDateNumber(weddingDate),
       },
       websiteBuilderEnabled: wedding.enabledAddOns.includes('website_builder'),
-      website: this.toPublicWebsiteWithQuestions(website, introText),
+      website: this.toPublicWebsiteWithQuestions(website, {
+        introText,
+        headline: homeContent?.headline,
+        headlineAccent: homeContent?.headlineAccent,
+      }),
       sections: contentSections,
+      saveTheDate,
+      invitation,
       daysRemaining: calculateDaysRemaining(weddingDate) ?? -1,
       events: events.map((event) => ({
         id: event.id,
@@ -254,13 +287,19 @@ export class WebsiteManagementService {
 
   private toPublicWebsiteWithQuestions(
     website: WebsiteWithQuestions,
+    home: Pick<HomeSectionContent, 'introText' | 'headline' | 'headlineAccent'>
+  ): PublicWebsiteWithQuestions & {
     introText: string
-  ): PublicWebsiteWithQuestions & { introText: string } {
+    headline?: string
+    headlineAccent?: string
+  } {
     const { password: _password, ...publicWebsite } = website
     return {
       ...publicWebsite,
       url: computeWebsiteUrl(website.subUrl),
-      introText,
+      introText: home.introText,
+      headline: home.headline,
+      headlineAccent: home.headlineAccent,
     }
   }
 }

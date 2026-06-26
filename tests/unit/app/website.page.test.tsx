@@ -12,9 +12,14 @@ const mockWebsiteDisabledCallout = jest.fn(() => (
   <div data-testid='website-disabled-callout'>Disabled callout</div>
 ))
 const mockWebsiteManager = jest.fn(() => <div data-testid='website-manager'>Manager</div>)
-const mockWebsiteEditor = jest.fn((_props: { publicUrl: string; initialIntroText: string }) => (
-  <div data-testid='website-editor'>Editor</div>
-))
+const mockWebsiteEditor = jest.fn(
+  (_props: {
+    publicUrl: string
+    initialIntroText: string
+    initialHeadline: string
+    initialHeadlineAccent: string
+  }) => <div data-testid='website-editor'>Editor</div>
+)
 
 jest.mock('~/trpc/server', () => ({
   api: {
@@ -65,8 +70,12 @@ jest.mock('~/components/website-manager/website-manager', () => ({
 
 jest.mock('~/app/_components/website/website-editor', () => ({
   __esModule: true,
-  WebsiteEditor: (props: { publicUrl: string; initialIntroText: string }) =>
-    mockWebsiteEditor(props),
+  WebsiteEditor: (props: {
+    publicUrl: string
+    initialIntroText: string
+    initialHeadline: string
+    initialHeadlineAccent: string
+  }) => mockWebsiteEditor(props),
 }))
 
 jest.mock('~/app/_components/website/template-picker', () => ({
@@ -164,6 +173,8 @@ describe('WebsitePage', () => {
     expect(mockWebsiteEditor).toHaveBeenCalledWith({
       publicUrl: 'http://localhost:3000/w/existing-site',
       initialIntroText: '',
+      initialHeadline: '',
+      initialHeadlineAccent: '',
     })
   })
 
@@ -185,6 +196,8 @@ describe('WebsitePage', () => {
       type: 'HOME',
       content: {
         introText: 'Welcome to our wedding weekend.',
+        headline: 'Our Greatest\nAdventure\nBegins',
+        headlineAccent: 'Here.',
       },
     })
 
@@ -194,6 +207,8 @@ describe('WebsitePage', () => {
     expect(mockWebsiteEditor).toHaveBeenCalledWith({
       publicUrl: 'http://localhost:3000/w/existing-site',
       initialIntroText: 'Welcome to our wedding weekend.',
+      initialHeadline: 'Our Greatest\nAdventure\nBegins',
+      initialHeadlineAccent: 'Here.',
     })
   })
 })

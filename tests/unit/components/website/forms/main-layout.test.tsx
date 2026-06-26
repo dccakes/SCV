@@ -104,6 +104,20 @@ describe('Main RSVP layout', () => {
     expect(classTokens).not.toContain('w-[450px]')
   })
 
+  it('reserves top space so content clears the fixed progress bar', () => {
+    const { container } = render(
+      <MainRsvpForm
+        weddingData={{ events: [], website: { generalQuestions: [] } } as never}
+        basePath='/wedding'
+      />
+    )
+
+    // The form's wrapper pads the top to clear the fixed "RSVP" header bar,
+    // otherwise the first step's copy renders underneath it.
+    const wrapper = container.querySelector('form')?.parentElement
+    expect(wrapper?.className.split(' ')).toContain('pt-24')
+  })
+
   it('uses responsive side pane footer widths for mobile screens', () => {
     expect(sharedStyles.sidebarFormWidth).toContain('w-full')
     expect(sharedStyles.sidebarFormWidth).toContain('max-w-')

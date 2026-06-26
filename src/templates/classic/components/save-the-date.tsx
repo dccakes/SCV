@@ -7,6 +7,7 @@ import type { TemplateSurfaceProps } from '~/templates/types'
 export function ClassicSaveTheDate({ weddingData, path }: Readonly<TemplateSurfaceProps>) {
   const weddingEvent = weddingData.events.find((event) => event.name === 'Wedding Day')
   const venue = weddingEvent?.venue
+  const copy = weddingData.saveTheDate
   const coupleNames = `${weddingData.groomFirstName} & ${weddingData.brideFirstName}`
   const calendarLinks = buildSaveTheDateCalendarLinks({
     title: `${coupleNames} Wedding`,
@@ -18,7 +19,7 @@ export function ClassicSaveTheDate({ weddingData, path }: Readonly<TemplateSurfa
   return (
     <main className='flex min-h-screen flex-col items-center justify-center gap-10 px-6 py-24 text-center text-zinc-500 tracking-widest'>
       <ClassicHeaderImage url={weddingData.website.headerImageUrl} />
-      <p className='text-sm uppercase tracking-[0.4em]'>Save the Date</p>
+      <p className='text-sm uppercase tracking-[0.4em]'>{copy?.eyebrow ?? 'Save the Date'}</p>
       <h1 className='font-medium text-6xl tracking-widest'>
         {weddingData.groomFirstName} & {weddingData.brideFirstName}
       </h1>
@@ -28,7 +29,14 @@ export function ClassicSaveTheDate({ weddingData, path }: Readonly<TemplateSurfa
       {weddingData.daysRemaining > 0 && (
         <p className='text-lg'>{weddingData.daysRemaining} Days To Go!</p>
       )}
-      <p className='mt-6 text-sm tracking-normal'>Formal invitation to follow.</p>
+      {copy?.message ? (
+        <p className='max-w-xl whitespace-pre-line text-base leading-8 tracking-normal'>
+          {copy.message}
+        </p>
+      ) : null}
+      <p className='mt-6 text-sm tracking-normal'>
+        {copy?.footnote ?? 'Formal invitation to follow.'}
+      </p>
       {calendarLinks ? <AddToCalendarButtons {...calendarLinks} /> : null}
       <Link href={path} className='text-sm underline underline-offset-4 hover:text-pink-500'>
         Visit our website

@@ -44,7 +44,10 @@ export default async function WebsitePage() {
     isWebsiteBuilderEnabled && websiteId
       ? await Promise.all([api.websiteSection.getHomeSection(), api.websiteSection.getSections()])
       : [null, []]
-  const introText = homeSection?.type === 'HOME' ? homeSection.content.introText : ''
+  const homeContent = homeSection?.type === 'HOME' ? homeSection.content : null
+  const introText = homeContent?.introText ?? ''
+  const headline = homeContent?.headline ?? ''
+  const headlineAccent = homeContent?.headlineAccent ?? ''
 
   if (!isWebsiteBuilderEnabled) {
     return (
@@ -83,6 +86,8 @@ export default async function WebsitePage() {
               />
               <WebsiteEditor
                 initialIntroText={introText}
+                initialHeadline={headline}
+                initialHeadlineAccent={headlineAccent}
                 publicUrl={computePublicWebsiteUrl(websiteSubUrl)}
               />
               <WebsiteMediaEditor

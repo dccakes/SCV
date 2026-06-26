@@ -7,17 +7,27 @@ import { toast } from 'sonner'
 
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
+import { Input } from '~/components/ui/input'
 import { Textarea } from '~/components/ui/textarea'
 import { api } from '~/trpc/react'
 
 type WebsiteEditorProps = Readonly<{
   publicUrl: string
   initialIntroText: string
+  initialHeadline: string
+  initialHeadlineAccent: string
 }>
 
-export function WebsiteEditor({ initialIntroText, publicUrl }: WebsiteEditorProps) {
+export function WebsiteEditor({
+  initialIntroText,
+  initialHeadline,
+  initialHeadlineAccent,
+  publicUrl,
+}: WebsiteEditorProps) {
   const router = useRouter()
   const [introText, setIntroText] = useState(initialIntroText)
+  const [headline, setHeadline] = useState(initialHeadline)
+  const [headlineAccent, setHeadlineAccent] = useState(initialHeadlineAccent)
   const [copied, setCopied] = useState(false)
   const copyResetTimeoutRef = useRef<number | null>(null)
   const updateHomeSection = api.websiteSection.updateHomeSection.useMutation({
@@ -25,7 +35,7 @@ export function WebsiteEditor({ initialIntroText, publicUrl }: WebsiteEditorProp
       toast.error('Unable to save your website intro.')
     },
     onSuccess: () => {
-      toast.success('Website intro saved')
+      toast.success('Hero & intro saved')
       router.refresh()
     },
   })
@@ -54,7 +64,10 @@ export function WebsiteEditor({ initialIntroText, publicUrl }: WebsiteEditorProp
     }
   }
 
-  const hasChanges = introText !== initialIntroText
+  const hasChanges =
+    introText !== initialIntroText ||
+    headline !== initialHeadline ||
+    headlineAccent !== initialHeadlineAccent
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -73,6 +86,8 @@ export function WebsiteEditor({ initialIntroText, publicUrl }: WebsiteEditorProp
   const saveIntro = () => {
     updateHomeSection.mutate({
       introText,
+      headline: headline.trim() ? headline : undefined,
+      headlineAccent: headlineAccent.trim() ? headlineAccent : undefined,
     })
   }
 
@@ -116,6 +131,48 @@ export function WebsiteEditor({ initialIntroText, publicUrl }: WebsiteEditorProp
             </p>
             <p className='mt-2 break-all font-mono text-[0.72rem] text-foreground'>{publicUrl}</p>
           </div>
+          <div className='grid gap-4 sm:grid-cols-[2fr_1fr]'>
+            <div className='space-y-2'>
+              <label
+                className='font-mono text-[0.62rem] text-foreground/55 uppercase tracking-[0.18em]'
+                htmlFor='website-hero-headline'
+              >
+                Hero Headline
+              </label>
+              <Textarea
+                id='website-hero-headline'
+                maxLength={160}
+                name='headline'
+                rows={3}
+                onChange={(event) => setHeadline(event.target.value)}
+                placeholder={'Our Greatest\nAdventure\nBegins'}
+                value={headline}
+              />
+              <p className='font-sans text-muted-foreground text-sm leading-6'>
+                The large headline shown over your main hero image. Each line break starts a new
+                line. Leave blank to use the template default.
+              </p>
+            </div>
+            <div className='space-y-2'>
+              <label
+                className='font-mono text-[0.62rem] text-foreground/55 uppercase tracking-[0.18em]'
+                htmlFor='website-hero-accent'
+              >
+                Emphasis
+              </label>
+              <Input
+                id='website-hero-accent'
+                maxLength={40}
+                name='headlineAccent'
+                onChange={(event) => setHeadlineAccent(event.target.value)}
+                placeholder='Here.'
+                value={headlineAccent}
+              />
+              <p className='font-sans text-muted-foreground text-sm leading-6'>
+                An optional final word rendered in italic accent colour (e.g. “Here.”).
+              </p>
+            </div>
+          </div>
           <div className='space-y-2'>
             <label
               className='font-mono text-[0.62rem] text-foreground/55 uppercase tracking-[0.18em]'
@@ -149,7 +206,7 @@ export function WebsiteEditor({ initialIntroText, publicUrl }: WebsiteEditorProp
               </p>
             </div>
             <Button disabled={!hasChanges || updateHomeSection.isPending} onClick={saveIntro}>
-              {updateHomeSection.isPending ? 'Saving…' : 'Save Intro'}
+              {updateHomeSection.isPending ? 'Saving…' : 'Save'}
             </Button>
           </div>
         </CardContent>

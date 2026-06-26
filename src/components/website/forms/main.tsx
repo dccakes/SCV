@@ -113,7 +113,9 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
   }, [weddingData, rsvpFormData.selectedHousehold, rsvpFormData.rsvpResponses])
 
   return (
-    <div className='pb-20 font-serif'>
+    // pt-24 reserves space for the fixed ProgressBar so the first step's copy
+    // isn't hidden beneath it.
+    <div className='pt-24 pb-20 font-serif'>
       <ProgressBar
         currentStep={currentStep}
         progress={progress}

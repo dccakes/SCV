@@ -1,6 +1,7 @@
 import { TRPCError } from '@trpc/server'
 import type { WebsiteSectionRepository } from '~/server/domains/website-section/website-section.repository'
 import {
+  type HomeSectionContent,
   type WebsiteSectionContent,
   WebsiteSectionType,
 } from '~/server/domains/website-section/website-section.types'
@@ -30,7 +31,7 @@ export class WebsiteSectionService {
     return this.websiteSectionRepository.findByWebsiteIdAndType(websiteId, WebsiteSectionType.HOME)
   }
 
-  async updateHomeSection(websiteId: string, input: { introText: string }) {
+  async updateHomeSection(websiteId: string, input: HomeSectionContent) {
     const parsed = updateHomeSectionSchema.safeParse(input)
     if (!parsed.success) {
       throw new TRPCError({
