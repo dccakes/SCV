@@ -22,5 +22,5 @@ export function useTasksCardState() {
     )
   }, [])
 
-  return { tasks, toggleTask }
+  return { tasks, setTasks, toggleTask }
 }

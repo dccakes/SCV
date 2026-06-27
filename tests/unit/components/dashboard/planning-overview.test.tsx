@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import type { DashboardData } from '~/app/utils/shared-types'
 import PlanningOverview from '~/components/dashboard/planning-overview'
 
@@ -122,9 +122,9 @@ describe('PlanningOverview', () => {
     expect(screen.getByText('17 May 2027')).toBeInTheDocument()
   })
 
-  it('renders the planning progress percentage', () => {
+  it('does not render a fake planning progress percentage', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText(/67% of planning complete/i)).toBeInTheDocument()
+    expect(screen.queryByText(/% of planning complete/i)).not.toBeInTheDocument()
   })
 
   // ── Mini Stats ─────────────────────────────────────────────────────────────
@@ -219,27 +219,16 @@ describe('PlanningOverview', () => {
     expect(screen.getByText('Upcoming tasks')).toBeInTheDocument()
   })
 
-  it('renders specific placeholder task rows', () => {
+  it('renders the tasks empty state', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText('Book ceremony venue')).toBeInTheDocument()
-    expect(screen.getByText('Confirm catering headcount')).toBeInTheDocument()
-    expect(screen.getByText('Pay rehearsal dinner deposit')).toBeInTheDocument()
+    expect(screen.getByText('No tasks yet')).toBeInTheDocument()
+    expect(screen.getByText('Task management is coming soon')).toBeInTheDocument()
   })
 
-  it('toggles task done state when a task row is clicked', () => {
+  it('does not render fake placeholder task rows', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
-    const taskBtn = screen.getByRole('button', { name: /confirm catering headcount/i })
-    const taskText = taskBtn.querySelectorAll('span')[1]
-    expect(taskText).not.toHaveClass('line-through')
-    fireEvent.click(taskBtn)
-    expect(taskText).toHaveClass('line-through')
-  })
-
-  it('marks pre-done tasks with line-through from the start', () => {
-    render(<PlanningOverview dashboardData={mockDashboardData} />)
-    const taskBtn = screen.getByRole('button', { name: /book ceremony venue/i })
-    const taskText = taskBtn.querySelectorAll('span')[1]
-    expect(taskText).toHaveClass('line-through')
+    expect(screen.queryByText('Book ceremony venue')).not.toBeInTheDocument()
+    expect(screen.queryByText('Pay rehearsal dinner deposit')).not.toBeInTheDocument()
   })
 
   // ── Budget Card ────────────────────────────────────────────────────────────
@@ -249,14 +238,16 @@ describe('PlanningOverview', () => {
     expect(screen.getByText('Budget')).toBeInTheDocument()
   })
 
-  it('renders all budget category names', () => {
+  it('renders the budget empty state', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
-    // Venue/Catering/Photography/Flowers also appear as VendorsCard type labels — use getAllBy
-    expect(screen.getAllByText('Venue').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('Catering').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('Photography').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('Flowers').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByText('Other')).toBeInTheDocument()
+    expect(screen.getByText('No budget set up yet')).toBeInTheDocument()
+    expect(screen.getByText(/Budget tracking coming soon/)).toBeInTheDocument()
+  })
+
+  it('does not render fake budget category names', () => {
+    render(<PlanningOverview dashboardData={mockDashboardData} />)
+    expect(screen.queryByText('Flowers')).not.toBeInTheDocument()
+    expect(screen.queryByText('Photography')).not.toBeInTheDocument()
   })
 
   // ── Vendors Card ───────────────────────────────────────────────────────────
