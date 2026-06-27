@@ -16,8 +16,11 @@ import {
   fetchWeddingDataSchema,
   getBySubUrlSchema,
   hasPasswordAccessSchema,
+  updateCoupleImagesSchema,
   updateCoverPhotoSchema,
+  updateHeaderImageSchema,
   updateRsvpEnabledSchema,
+  updateTemplateSchema,
   updateWebsiteSchema,
   verifyWebsitePasswordSchema,
 } from '~/server/domains/website/website.validator'
@@ -66,6 +69,39 @@ export const websiteRouter = createTRPCRouter({
       const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
 
       return websiteService.updateCoverPhoto(ctx.authz, weddingId, input.coverPhotoUrl)
+    }),
+
+  /**
+   * Update header/hero image
+   */
+  updateHeaderImage: protectedProcedure
+    .input(updateHeaderImageSchema)
+    .mutation(async ({ ctx, input }) => {
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+
+      return websiteService.updateHeaderImage(ctx.authz, weddingId, input.headerImageUrl)
+    }),
+
+  /**
+   * Update couple photo gallery
+   */
+  updateCoupleImages: protectedProcedure
+    .input(updateCoupleImagesSchema)
+    .mutation(async ({ ctx, input }) => {
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+
+      return websiteService.updateCoupleImages(ctx.authz, weddingId, input.coupleImageUrls)
+    }),
+
+  /**
+   * Update the selected website template
+   */
+  updateTemplate: protectedProcedure
+    .input(updateTemplateSchema)
+    .mutation(async ({ ctx, input }) => {
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+
+      return websiteService.updateTemplate(ctx.authz, weddingId, input.templateId)
     }),
 
   /**

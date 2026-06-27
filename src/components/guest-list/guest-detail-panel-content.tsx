@@ -1,5 +1,7 @@
+import { Check, Copy } from 'lucide-react'
 import Link from 'next/link'
 import { type Dispatch, type SetStateAction, useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import type { Event } from '~/app/utils/shared-types'
 import {
   type HouseholdMemberDraft,
@@ -15,6 +17,7 @@ import { Slider } from '~/components/ui/slider'
 import { LIKELIHOOD_LABELS } from '~/lib/constants'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 import type { CommunicationLogEntry } from '~/server/domains/communication-log/communication-log.types'
+import { api } from '~/trpc/react'
 
 export type DrawerDraft = {
   email: string
@@ -71,6 +74,28 @@ const getDisplayRsvpForGuest = (
   return 'Not Invited'
 }
 
+const copyToClipboard = async (value: string) => {
+  if (navigator.clipboard) {
+    try {
+      await navigator.clipboard.writeText(value)
+      return true
+    } catch {
+      // Fall through to the legacy selection path below.
+    }
+  }
+
+  const textArea = document.createElement('textarea')
+  textArea.value = value
+  textArea.setAttribute('readonly', '')
+  textArea.style.position = 'fixed'
+  textArea.style.opacity = '0'
+  document.body.appendChild(textArea)
+  textArea.select()
+  const copied = document.execCommand('copy')
+  document.body.removeChild(textArea)
+  return copied
+}
+
 type GuestDetailPanelContentProps = {
   selectedHousehold: HouseholdWithGuests
   selectedEventId: string
@@ -108,6 +133,10 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
     onRequestDelete,
   } = props
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false)
+  const [copiedInviteLink, setCopiedInviteLink] = useState(false)
+  const generateHouseholdInviteLink = api.householdInvite.generateLink.useMutation()
+  const { data: website } = api.website.getByUserId.useQuery()
+  const isWebsiteMissing = website === null
   const partyMembers = selectedHousehold.guests.map((guest) => ({
     id: guest.id,
     firstName: guest.firstName,
@@ -127,6 +156,28 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
 
   const updateDraft = <K extends keyof DrawerDraft>(key: K, value: DrawerDraft[K]) => {
     setDrawerDraft((draft) => ({ ...draft, [key]: value }))
+  }
+
+  const handleCopyHouseholdInviteLink = async () => {
+    if (typeof window === 'undefined') return
+
+    try {
+      const result = await generateHouseholdInviteLink.mutateAsync({
+        householdId: selectedHousehold.id,
+      })
+      const copied = await copyToClipboard(result.url)
+      setCopiedInviteLink(true)
+      setTimeout(() => setCopiedInviteLink(false), 2000)
+      toast.success(copied ? 'Save-the-date link copied' : 'Save-the-date link ready to copy', {
+        description: copied ? undefined : result.url,
+      })
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : 'Failed to copy save-the-date link'
+      toast.error(message)
+    }
   }
 
   return (
@@ -207,6 +258,41 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
               )
             })}
           </ul>
+        </GuestDetailSection>
+
+        <GuestDetailSection
+          title='Save the Date'
+          contentClassName='space-y-2'
+          action={
+            <button
+              type='button'
+              onClick={handleCopyHouseholdInviteLink}
+              disabled={generateHouseholdInviteLink.isPending || isWebsiteMissing}
+              className='inline-flex items-center gap-1.5 rounded-md border border-border/70 px-2 py-1 font-medium text-primary text-xs hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-50'
+            >
+              {copiedInviteLink ? (
+                <Check className='h-3.5 w-3.5' aria-hidden='true' />
+              ) : (
+                <Copy className='h-3.5 w-3.5' aria-hidden='true' />
+              )}
+              Copy link
+            </button>
+          }
+        >
+          {isWebsiteMissing ? (
+            <p className='text-foreground/75 text-sm leading-relaxed'>
+              Publish your wedding website first to share save-the-date links.{' '}
+              <Link href='/website' className='text-primary underline underline-offset-2'>
+                Publish your website
+              </Link>
+              .
+            </p>
+          ) : (
+            <p className='text-foreground/75 text-sm leading-relaxed'>
+              Share a household-specific link that opens the save-the-date and lets this party
+              update their mailing details.
+            </p>
+          )}
         </GuestDetailSection>
 
         <AttendanceLikelihoodSection

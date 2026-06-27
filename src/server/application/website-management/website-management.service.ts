@@ -1,19 +1,27 @@
-import { TRPCClientError } from '@trpc/client'
 import { TRPCError } from '@trpc/server'
 
 import { calculateDaysRemaining, formatDateNumber } from '~/app/utils/helpers'
+import { deriveWeddingSubUrl } from '~/lib/website-slug'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { EventRepository } from '~/server/domains/event/event.repository'
-import type { CreateWebsiteInput } from '~/server/domains/website'
 import type { WebsiteRepository } from '~/server/domains/website/website.repository'
 import type {
+  CreateWebsiteInput,
   PublicWebsiteWithQuestions,
   Website,
   WebsiteWithQuestions,
   WeddingPageData,
 } from '~/server/domains/website/website.types'
+import { computeWebsiteUrl } from '~/server/domains/website/website.utils'
 import type { WebsitePasswordService } from '~/server/domains/website/website-password.service'
+import type { WebsiteSectionRepository } from '~/server/domains/website-section/website-section.repository'
+import {
+  type HomeSectionContent,
+  type WebsiteSection,
+  WebsiteSectionType,
+} from '~/server/domains/website-section/website-section.types'
+import { parseSectionContent } from '~/server/domains/website-section/website-section.validator'
 import type { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
 
 export class WebsiteManagementService {
@@ -21,7 +29,11 @@ export class WebsiteManagementService {
     private websiteRepository: WebsiteRepository,
     private weddingRepository: WeddingRepository,
     private eventRepository: EventRepository,
-    private websitePasswordService: Pick<WebsitePasswordService, 'verifyAccessToken'>
+    private websitePasswordService: Pick<WebsitePasswordService, 'verifyAccessToken'>,
+    private websiteSectionRepository: Pick<
+      WebsiteSectionRepository,
+      'findByWebsiteId' | 'findByWebsiteIdAndType' | 'upsertHomeSection' | 'upsertByType'
+    >
   ) {}
 
   async enableWebsite(
@@ -40,22 +52,121 @@ export class WebsiteManagementService {
     }
 
     const subUrl =
-      `${wedding.groomFirstName}${wedding.groomLastName}and${wedding.brideFirstName}${wedding.brideLastName}`.toLowerCase()
-    const url = `${data.basePath}/${subUrl}`
+      data.subUrl && data.subUrl.length > 0 ? data.subUrl : deriveWeddingSubUrl(wedding)
 
     const existingWebsite = await this.websiteRepository.findBySubUrl(subUrl)
-    if (existingWebsite) {
+    if (existingWebsite && existingWebsite.weddingId !== weddingId) {
       throw new TRPCError({
         code: 'CONFLICT',
         message: 'This URL is already taken',
       })
     }
 
-    return this.websiteRepository.create({
-      weddingId,
-      url,
-      subUrl,
-    })
+    if (existingWebsite) {
+      return existingWebsite
+    }
+
+    try {
+      return await this.websiteRepository.upsertByWeddingId({
+        weddingId,
+        subUrl,
+      })
+    } catch (error) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === 'P2002'
+      ) {
+        const website = await this.websiteRepository.findByWeddingId(weddingId)
+        if (website) {
+          return website
+        }
+
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: 'This URL is already taken',
+        })
+      }
+
+      throw error
+    }
+  }
+
+  async getHomeSection(ctx: AuthzContext, weddingId: string) {
+    requirePermission(ctx, { website: ['read'] })
+
+    const website = await this.websiteRepository.findByWeddingId(weddingId)
+    if (!website) {
+      return null
+    }
+
+    return this.websiteSectionRepository.findByWebsiteIdAndType(website.id, WebsiteSectionType.HOME)
+  }
+
+  async updateHomeSection(ctx: AuthzContext, weddingId: string, input: HomeSectionContent) {
+    requirePermission(ctx, { website: ['update'] })
+
+    const website = await this.websiteRepository.findByWeddingId(weddingId)
+    if (!website) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Website not found',
+      })
+    }
+
+    return this.websiteSectionRepository.upsertHomeSection(website.id, input)
+  }
+
+  /**
+   * List all stored sections for the current wedding's website (editor view).
+   */
+  async getSections(ctx: AuthzContext, weddingId: string): Promise<WebsiteSection[]> {
+    requirePermission(ctx, { website: ['read'] })
+
+    const website = await this.websiteRepository.findByWeddingId(weddingId)
+    if (!website) {
+      return []
+    }
+
+    return this.websiteSectionRepository.findByWebsiteId(website.id)
+  }
+
+  /**
+   * Create or update a section of any type for the current wedding's website.
+   */
+  async upsertSection(
+    ctx: AuthzContext,
+    weddingId: string,
+    input: { type: WebsiteSectionType; content: unknown; isEnabled?: boolean }
+  ): Promise<WebsiteSection> {
+    requirePermission(ctx, { website: ['update'] })
+
+    const website = await this.websiteRepository.findByWeddingId(weddingId)
+    if (!website) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Website not found',
+      })
+    }
+
+    let content: WebsiteSection['content']
+    try {
+      content = parseSectionContent(input.type, input.content)
+    } catch (error) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message:
+          error instanceof Error ? error.message : `Invalid content for ${input.type} section`,
+      })
+    }
+
+    return this.websiteSectionRepository.upsertByType(
+      website.id,
+      input.type,
+      content,
+      input.isEnabled ?? true
+    )
   }
 
   async fetchWeddingData(
@@ -64,7 +175,10 @@ export class WebsiteManagementService {
   ): Promise<WeddingPageData> {
     const website = await this.websiteRepository.findBySubUrlWithQuestions(subUrl)
     if (!website) {
-      throw new TRPCClientError('This website does not exist.')
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'This website does not exist.',
+      })
     }
 
     if (website.isPasswordEnabled) {
@@ -82,16 +196,54 @@ export class WebsiteManagementService {
       }
     }
 
-    const wedding = await this.weddingRepository.findById(website.weddingId)
+    const [wedding, events, sections] = await Promise.all([
+      this.weddingRepository.findById(website.weddingId),
+      this.eventRepository.findByWeddingIdWithQuestions(website.weddingId),
+      this.websiteSectionRepository.findByWebsiteId(website.id),
+    ])
     if (!wedding) {
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
         message: 'Failed to fetch wedding data.',
       })
     }
-
-    const events = await this.eventRepository.findByWeddingIdWithQuestions(website.weddingId)
     const weddingDate = events.find((event) => event.name === 'Wedding Day')?.date
+    const homeSection = sections.find((section) => section.type === WebsiteSectionType.HOME)
+    const homeContent =
+      homeSection?.isEnabled && homeSection.type === WebsiteSectionType.HOME
+        ? homeSection.content
+        : undefined
+    const introText = homeContent?.introText ?? ''
+
+    // Save the Date / Invitation are standalone surfaces, not home-page sections:
+    // when enabled, their content overrides the template's default page wording.
+    const saveTheDateSection = sections.find(
+      (section) => section.type === WebsiteSectionType.SAVE_THE_DATE
+    )
+    const saveTheDate =
+      saveTheDateSection?.isEnabled && saveTheDateSection.type === WebsiteSectionType.SAVE_THE_DATE
+        ? saveTheDateSection.content
+        : undefined
+    const invitationSection = sections.find(
+      (section) => section.type === WebsiteSectionType.INVITATION
+    )
+    const invitation =
+      invitationSection?.isEnabled && invitationSection.type === WebsiteSectionType.INVITATION
+        ? invitationSection.content
+        : undefined
+
+    // Enabled, ordered content sections rendered below the hero. HOME drives the
+    // intro text, and the Save the Date / Invitation surfaces are page-level
+    // (not home sections), so all three are excluded here.
+    const contentSections = sections
+      .filter(
+        (section) =>
+          section.isEnabled &&
+          section.type !== WebsiteSectionType.HOME &&
+          section.type !== WebsiteSectionType.SAVE_THE_DATE &&
+          section.type !== WebsiteSectionType.INVITATION
+      )
+      .sort((a, b) => a.position - b.position)
 
     return {
       groomFirstName: wedding.groomFirstName,
@@ -107,7 +259,15 @@ export class WebsiteManagementService {
         }),
         numberFormat: formatDateNumber(weddingDate),
       },
-      website: this.toPublicWebsiteWithQuestions(website),
+      websiteBuilderEnabled: wedding.enabledAddOns.includes('website_builder'),
+      website: this.toPublicWebsiteWithQuestions(website, {
+        introText,
+        headline: homeContent?.headline,
+        headlineAccent: homeContent?.headlineAccent,
+      }),
+      sections: contentSections,
+      saveTheDate,
+      invitation,
       daysRemaining: calculateDaysRemaining(weddingDate) ?? -1,
       events: events.map((event) => ({
         id: event.id,
@@ -125,8 +285,21 @@ export class WebsiteManagementService {
     }
   }
 
-  private toPublicWebsiteWithQuestions(website: WebsiteWithQuestions): PublicWebsiteWithQuestions {
+  private toPublicWebsiteWithQuestions(
+    website: WebsiteWithQuestions,
+    home: Pick<HomeSectionContent, 'introText' | 'headline' | 'headlineAccent'>
+  ): PublicWebsiteWithQuestions & {
+    introText: string
+    headline?: string
+    headlineAccent?: string
+  } {
     const { password: _password, ...publicWebsite } = website
-    return publicWebsite
+    return {
+      ...publicWebsite,
+      url: computeWebsiteUrl(website.subUrl),
+      introText: home.introText,
+      headline: home.headline,
+      headlineAccent: home.headlineAccent,
+    }
   }
 }

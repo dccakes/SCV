@@ -225,6 +225,59 @@ describe('PlanningOverview', () => {
     expect(screen.getByText(/67% of planning complete/i)).toBeInTheDocument()
   })
 
+  it('renders Hours and Mins labels in the countdown hero', () => {
+    render(<PlanningOverview dashboardData={mockDashboardData} />)
+    expect(screen.getByText('Hours')).toBeInTheDocument()
+    expect(screen.getByText('Mins')).toBeInTheDocument()
+  })
+
+  it('renders current hours and minutes as zero-padded strings', () => {
+    // Fix the clock so the padded output is deterministic
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date('2026-03-04T09:05:00'))
+    try {
+      render(<PlanningOverview dashboardData={mockDashboardData} />)
+      expect(screen.getByText('09')).toBeInTheDocument() // hours zero-padded
+      expect(screen.getByText('05')).toBeInTheDocument() // mins zero-padded
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
+  it('updates the minutes display when the 60-second interval fires', () => {
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date('2026-03-04T14:07:00'))
+    try {
+      render(<PlanningOverview dashboardData={mockDashboardData} />)
+
+      // Initial state: 14 hours, 07 mins
+      expect(screen.getByText('14')).toBeInTheDocument()
+      expect(screen.getByText('07')).toBeInTheDocument()
+
+      // Advance one full minute — interval fires once
+      act(() => {
+        jest.advanceTimersByTime(60_000)
+      })
+
+      // 07 should be gone, 08 should appear (14:08)
+      expect(screen.queryByText('07')).not.toBeInTheDocument()
+      expect(screen.getByText('08')).toBeInTheDocument()
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
+  it('renders couple names in the countdown hero', () => {
+    render(<PlanningOverview dashboardData={mockDashboardData} />)
+    expect(screen.getByText('Holly & Diego')).toBeInTheDocument()
+  })
+
+  it('renders the wedding date in the hero', () => {
+    render(<PlanningOverview dashboardData={mockDashboardData} />)
+    // standardFormat date string appears in the hero
+    expect(screen.getByText('17 May 2027')).toBeInTheDocument()
+  })
+
   it('renders tasks due this month in mini stats', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
 
@@ -284,6 +337,70 @@ describe('PlanningOverview', () => {
         description: null,
         notes: null,
       })
+    )
+  })
+
+  it('renders the budget empty state', () => {
+    render(<PlanningOverview dashboardData={mockDashboardData} />)
+    expect(screen.getByText('No budget set up yet')).toBeInTheDocument()
+    expect(screen.getByText(/Budget tracking coming soon/)).toBeInTheDocument()
+  })
+
+  it('does not render fake budget category names', () => {
+    render(<PlanningOverview dashboardData={mockDashboardData} />)
+    expect(screen.queryByText('Flowers')).not.toBeInTheDocument()
+    expect(screen.queryByText('Photography')).not.toBeInTheDocument()
+  })
+
+  // ── Vendors Card ───────────────────────────────────────────────────────────
+
+  it('renders the Vendors card title', () => {
+    render(<PlanningOverview dashboardData={mockDashboardData} />)
+    expect(screen.getByText('Vendors')).toBeInTheDocument()
+  })
+
+  it('renders the vendors empty state when no vendors are added', () => {
+    render(<PlanningOverview dashboardData={mockDashboardData} />)
+    expect(screen.getByText('No vendors added yet')).toBeInTheDocument()
+    expect(
+      screen.getByText('Track quotes, contacts, and contracts in one place')
+    ).toBeInTheDocument()
+  })
+
+  it('renders an add vendor CTA link in the vendors empty state', () => {
+    render(<PlanningOverview dashboardData={mockDashboardData} />)
+    expect(screen.getByText('Add your first vendor →')).toBeInTheDocument()
+  })
+
+  // ── Edge Cases ─────────────────────────────────────────────────────────────
+
+  it('falls back to "Your Wedding" couple name when both names are empty', () => {
+    const emptyData = {
+      ...mockDashboardData,
+      weddingData: {
+        ...mockDashboardData.weddingData,
+        brideFirstName: '',
+        groomFirstName: '',
+        daysRemaining: 0,
+      },
+      totalGuests: 0,
+      events: [],
+    } as unknown as DashboardData
+
+    render(<PlanningOverview dashboardData={emptyData} />)
+    expect(screen.getByText('Your Wedding')).toBeInTheDocument()
+    // Multiple "0" values render across stats cells — verify at least one exists
+    expect(screen.getAllByText('0').length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('shows zero RSVP counts when no events are provided', () => {
+    const noEventsData = { ...mockDashboardData, events: [] } as unknown as DashboardData
+    render(<PlanningOverview dashboardData={noEventsData} />)
+    // RSVP bar should have 0/0 → all zeroes, no crash
+    const bar = screen.getByRole('img', { name: /RSVP breakdown/i })
+    expect(bar).toHaveAttribute(
+      'aria-label',
+      'RSVP breakdown: 0% confirmed, 0% pending, 0% declined'
     )
   })
 

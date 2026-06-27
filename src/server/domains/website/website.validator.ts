@@ -5,6 +5,15 @@
  */
 
 import { z } from 'zod'
+import { reservedWebsiteRootSegmentsSet } from '~/lib/website/reserved-root-segments'
+import { isKnownTemplateId } from '~/templates/catalog'
+
+const subUrlSchema = z
+  .string()
+  .regex(/^\w+$/, 'URL should not contain any special characters!')
+  .refine((value) => !reservedWebsiteRootSegmentsSet.has(value.toLowerCase()), {
+    message: 'This URL is reserved',
+  })
 
 /**
  * Schema for enabling website add-on
@@ -13,6 +22,11 @@ import { z } from 'zod'
 export const createWebsiteSchema = z.object({
   basePath: z.string().min(1, 'Base path is required'),
   email: z.string().email('Valid email is required'),
+  subUrl: z
+    .string()
+    .regex(/^[\w-]+$/, 'URL can only contain letters, numbers, dashes, and underscores')
+    .transform((value) => value.toLowerCase())
+    .optional(),
 })
 
 /**
@@ -50,7 +64,7 @@ export const updateWebsiteSchema = z
     isPasswordEnabled: z.boolean().optional(),
     password: z.string().optional(),
     basePath: z.string().optional(),
-    subUrl: z.string().regex(/^\w+$/, 'URL should not contain any special characters!').optional(),
+    subUrl: subUrlSchema.optional(),
   })
   .refine(
     (data) =>
@@ -76,6 +90,31 @@ export const updateRsvpEnabledSchema = z.object({
  */
 export const updateCoverPhotoSchema = z.object({
   coverPhotoUrl: z.string().nullable(),
+})
+
+/**
+ * Schema for updating the header/hero image
+ */
+export const updateHeaderImageSchema = z.object({
+  headerImageUrl: z.string().url('Enter a valid image URL').nullable(),
+})
+
+/**
+ * Schema for updating the couple photo gallery
+ */
+export const updateCoupleImagesSchema = z.object({
+  coupleImageUrls: z
+    .array(z.string().url('Enter a valid image URL'))
+    .max(12, 'You can add up to 12 couple photos'),
+})
+
+/**
+ * Schema for selecting a wedding website template
+ */
+export const updateTemplateSchema = z.object({
+  templateId: z.string().refine(isKnownTemplateId, {
+    message: 'Unknown wedding website template',
+  }),
 })
 
 /**
@@ -108,6 +147,9 @@ export type CreateWebsiteSchemaInput = z.infer<typeof createWebsiteSchema>
 export type UpdateWebsiteSchemaInput = z.infer<typeof updateWebsiteSchema>
 export type UpdateRsvpEnabledSchemaInput = z.infer<typeof updateRsvpEnabledSchema>
 export type UpdateCoverPhotoSchemaInput = z.infer<typeof updateCoverPhotoSchema>
+export type UpdateHeaderImageSchemaInput = z.infer<typeof updateHeaderImageSchema>
+export type UpdateCoupleImagesSchemaInput = z.infer<typeof updateCoupleImagesSchema>
+export type UpdateTemplateSchemaInput = z.infer<typeof updateTemplateSchema>
 export type SubmitRsvpSchemaInput = z.infer<typeof submitRsvpSchema>
 export type HasPasswordAccessSchemaInput = z.infer<typeof hasPasswordAccessSchema>
 export type VerifyWebsitePasswordSchemaInput = z.infer<typeof verifyWebsitePasswordSchema>

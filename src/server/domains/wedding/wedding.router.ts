@@ -14,6 +14,7 @@ import { eventService } from '~/server/domains/event'
 import { weddingService } from '~/server/domains/wedding'
 import {
   createWeddingSchema,
+  toggleWeddingAddOnSchema,
   updateWeddingDetailsSchema,
   updateWeddingSchema,
 } from '~/server/domains/wedding/wedding.validator'
@@ -89,6 +90,19 @@ export const weddingRouter = createTRPCRouter({
       })
 
       return { success: true }
+    }),
+
+  toggleAddOn: protectedProcedure
+    .input(toggleWeddingAddOnSchema)
+    .mutation(async ({ ctx, input }) => {
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+
+      return weddingService.toggleAddOn({
+        ctx: ctx.authz,
+        weddingId,
+        addOn: input.addOn,
+        enabled: input.enabled,
+      })
     }),
 
   /**

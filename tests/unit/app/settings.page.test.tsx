@@ -18,6 +18,9 @@ const mockOrganizationMembersSettingsCard = jest.fn(() => (
 const mockOrganizationOutstandingInvitesCard = jest.fn(() => (
   <div data-testid='organization-outstanding-invites-card'>Outstanding invites card</div>
 ))
+const mockPluginsSettingsCard = jest.fn((_props: { enabledAddOns: string[] }) => (
+  <div data-testid='plugins-settings-card'>Plugins card</div>
+))
 const mockTelegramConnectCard = jest.fn(() => (
   <div data-testid='telegram-connect-card'>Telegram card</div>
 ))
@@ -26,6 +29,10 @@ jest.mock('~/trpc/server', () => ({
   api: {
     wedding: {
       getDetails: () => mockGetDetails(),
+      getActive: jest.fn().mockResolvedValue({
+        id: 'wedding-123',
+        enabledAddOns: ['website_builder'],
+      }),
     },
   },
 }))
@@ -55,6 +62,11 @@ jest.mock('~/components/settings/organization-outstanding-invites-card', () => (
   OrganizationOutstandingInvitesCard: () => mockOrganizationOutstandingInvitesCard(),
 }))
 
+jest.mock('~/app/_components/settings/plugins-settings-card', () => ({
+  __esModule: true,
+  PluginsSettingsCard: (props: { enabledAddOns: string[] }) => mockPluginsSettingsCard(props),
+}))
+
 jest.mock('~/components/settings/telegram-connect-card', () => ({
   __esModule: true,
   TelegramConnectCard: () => mockTelegramConnectCard(),
@@ -64,11 +76,15 @@ describe('SettingsPage', () => {
   beforeEach(() => {
     mockGetDetails.mockReset()
     mockGetRequiredWedding.mockReset()
-    mockGetRequiredWedding.mockResolvedValue({ id: 'wedding-123' })
+    mockGetRequiredWedding.mockResolvedValue({
+      id: 'wedding-123',
+      enabledAddOns: ['website_builder'],
+    })
     mockDashboardTopbar.mockClear()
     mockWeddingSettingsForm.mockClear()
     mockOrganizationMembersSettingsCard.mockClear()
     mockOrganizationOutstandingInvitesCard.mockClear()
+    mockPluginsSettingsCard.mockClear()
     mockTelegramConnectCard.mockClear()
   })
 
@@ -91,7 +107,9 @@ describe('SettingsPage', () => {
       showManagementActions: false,
     })
     expect(screen.getByText('Organization Members')).toBeInTheDocument()
+    expect(screen.getByText('Plugins')).toBeInTheDocument()
     expect(screen.getByTestId('wedding-settings-form')).toBeInTheDocument()
+    expect(screen.getByTestId('plugins-settings-card')).toBeInTheDocument()
     expect(screen.getByTestId('organization-members-settings-card')).toBeInTheDocument()
     expect(screen.getByTestId('organization-outstanding-invites-card')).toBeInTheDocument()
     expect(screen.getByTestId('telegram-connect-card')).toBeInTheDocument()

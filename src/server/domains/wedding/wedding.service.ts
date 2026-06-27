@@ -118,6 +118,32 @@ export class WeddingService {
     return this.weddingRepository.update(weddingId, data)
   }
 
+  async toggleAddOn(input: {
+    ctx: AuthzContext
+    weddingId: string
+    addOn: string
+    enabled: boolean
+  }): Promise<Wedding> {
+    const { addOn, ctx, enabled, weddingId } = input
+    requirePermission(ctx, { wedding: ['update'] })
+
+    const wedding = await this.weddingRepository.findById(weddingId)
+    if (!wedding) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Wedding not found',
+      })
+    }
+
+    const enabledAddOns = enabled
+      ? Array.from(new Set([...wedding.enabledAddOns, addOn]))
+      : wedding.enabledAddOns.filter((currentAddOn) => currentAddOn !== addOn)
+
+    return this.weddingRepository.update(weddingId, {
+      enabledAddOns,
+    })
+  }
+
   /**
    * Get wedding by user ID
    */

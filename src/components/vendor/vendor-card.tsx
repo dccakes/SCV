@@ -5,6 +5,16 @@ import Image from 'next/image'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '~/components/ui/alert-dialog'
 import { StatusBadge } from '~/components/vendor/vendor-status-select'
 import type { VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
@@ -24,6 +34,7 @@ export function VendorCard({
 }: Readonly<VendorCardProps>) {
   const utils = api.useUtils()
   const [showRatingsBreakdown, setShowRatingsBreakdown] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const isMuted = vendor.status === 'DECLINED' || vendor.status === 'NOT_AVAILABLE'
   const isContacted = 'contacted' in vendor && vendor.contacted === true
   const coverImage = vendor.images.find((img) => img.isPrimary)
@@ -46,9 +57,7 @@ export function VendorCard({
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (window.confirm(`Remove ${vendor.name}?`)) {
-      deleteVendor.mutate({ vendorId: vendor.id })
-    }
+    setShowDeleteDialog(true)
   }
 
   const formatPrice = (price: number) =>
@@ -193,6 +202,29 @@ export function VendorCard({
           <X className='h-3.5 w-3.5' aria-hidden='true' />
         </button>
       </div>
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove {vendor.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove this vendor and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteVendor.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                deleteVendor.mutate({ vendorId: vendor.id })
+              }}
+              disabled={deleteVendor.isPending}
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+            >
+              {deleteVendor.isPending ? 'Removing…' : 'Remove vendor'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

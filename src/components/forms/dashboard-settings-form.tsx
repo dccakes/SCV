@@ -6,6 +6,7 @@ import { BsTrash3 } from 'react-icons/bs'
 import { IoMdClose } from 'react-icons/io'
 import { sharedStyles } from '~/app/utils/shared-styles'
 import type { Website } from '~/app/utils/shared-types'
+import { computePublicWebsiteUrl } from '~/app/utils/website'
 import EditUrlView from '~/components/forms/website-settings/edit-url'
 import SetPasswordView from '~/components/forms/website-settings/set-password'
 import SidePaneWrapper from '~/components/forms/wrapper'
@@ -163,7 +164,7 @@ const Main = ({
             Edit URL
           </button>
         </div>
-        <span>{website?.url}</span>
+        <span>{website?.subUrl ? computePublicWebsiteUrl(website.subUrl) : ''}</span>
       </div>
       <div className='flex items-center justify-center border-t border-b py-10'>
         <div className='flex gap-2'>

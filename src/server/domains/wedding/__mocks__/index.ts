@@ -28,6 +28,7 @@ export const mockGetById = jest.fn()
 export const mockCreate = jest.fn()
 export const mockUpdate = jest.fn()
 export const mockUpdateWedding = jest.fn()
+export const mockToggleAddOn = jest.fn()
 export const mockGetWeddingIdByUserId = jest.fn()
 export const mockHasWedding = jest.fn()
 
@@ -37,6 +38,7 @@ export const weddingService = {
   getById: mockGetById,
   createWedding: mockCreate,
   updateWedding: mockUpdateWedding,
+  toggleAddOn: mockToggleAddOn,
   hasWedding: mockHasWedding,
   getWeddingIdByUserId: mockGetWeddingIdByUserId,
   getScopedWeddingByUserId: mockGetScopedWeddingByUserId,
@@ -49,6 +51,7 @@ export const resetMocks = (): void => {
   mockCreate.mockReset()
   mockUpdate.mockReset()
   mockUpdateWedding.mockReset()
+  mockToggleAddOn.mockReset()
   mockGetWeddingIdByUserId.mockReset()
   mockHasWedding.mockReset()
 }

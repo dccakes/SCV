@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
+import { formatDateStandard } from '~/app/utils/helpers'
 import type { DashboardData, EventWithResponses } from '~/app/utils/shared-types'
 import { TaskDialog } from '~/components/checklist/task-dialog'
 import { TaskListItem } from '~/components/dashboard/planning-overview/task-list-item'
@@ -328,114 +329,46 @@ function TasksCard({ dashboardData }: { dashboardData: DashboardData | null }) {
 }
 
 function BudgetCard() {
-  const categories = [
-    { name: 'Venue', pct: 90, color: 'bg-success' },
-    { name: 'Catering', pct: 60, color: 'bg-accent' },
-    { name: 'Photography', pct: 45, color: 'bg-primary' },
-    { name: 'Flowers', pct: 30, color: 'bg-foreground/40' },
-    { name: 'Other', pct: 12, color: 'bg-border' },
-  ]
-
   return (
-    <CardShell title='Budget' icon='◧' action='Details →' actionHref='/dashboard#website-editor'>
-      <div className='mb-3 flex items-baseline gap-2'>
-        <span className='font-serif text-[2.2rem] text-foreground leading-none'>—</span>
-        <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
-          Budget tracking coming soon
-        </span>
-      </div>
-      <div className='mb-2 h-2 overflow-hidden rounded-full bg-border'>
-        <div className='h-full w-0 rounded-full bg-gradient-to-r from-success to-accent' />
-      </div>
-      <div className='mb-4 font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
-        Set up your budget to track spending
-      </div>
-      <div className='flex flex-col gap-2'>
-        {categories.map((c) => (
-          <div key={c.name} className='flex items-center gap-2'>
-            <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${c.color}`} />
-            <span className='flex-1 font-serif text-[0.85rem] text-foreground'>{c.name}</span>
-            <div className='h-[3px] w-14 overflow-hidden rounded-full bg-border'>
-              <div className={`h-full rounded-full ${c.color}`} style={{ width: `${c.pct}%` }} />
-            </div>
-            <span className='w-10 text-right font-mono text-[0.6rem] text-foreground/60 tracking-wider'>
-              —
-            </span>
-          </div>
-        ))}
+    <CardShell title='Budget' icon='◧'>
+      <div className='flex flex-col gap-3'>
+        <div className='flex items-baseline gap-2'>
+          <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
+          <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
+            No budget set up yet
+          </span>
+        </div>
+        <div className='h-2 overflow-hidden rounded-full bg-border'>
+          <div className='h-full w-0 rounded-full bg-gradient-to-r from-success to-accent' />
+        </div>
+        <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
+          Budget tracking coming soon — set up your budget to track spending
+        </div>
       </div>
     </CardShell>
   )
 }
 
-const PLACEHOLDER_VENDORS = [
-  {
-    initials: 'V1',
-    name: 'Ceremony Venue',
-    type: 'Venue',
-    status: 'Confirmed',
-    statusColor: 'bg-success/12 text-success',
-  },
-  {
-    initials: 'V2',
-    name: 'Photographer',
-    type: 'Photography',
-    status: 'Confirmed',
-    statusColor: 'bg-success/12 text-success',
-  },
-  {
-    initials: 'V3',
-    name: 'Caterer',
-    type: 'Catering',
-    status: 'Deposit due',
-    statusColor: 'bg-destructive/10 text-destructive',
-  },
-  {
-    initials: 'V4',
-    name: 'Florist',
-    type: 'Flowers',
-    status: 'Confirmed',
-    statusColor: 'bg-success/12 text-success',
-  },
-  {
-    initials: '—',
-    name: 'Hair & Makeup',
-    type: 'Beauty',
-    status: 'Searching',
-    statusColor: 'bg-accent/12 text-accent-foreground',
-  },
-]
-
 function VendorsCard() {
   return (
     <CardShell title='Vendors' icon='◐' action='Manage →' actionHref='/vendors'>
-      <div className='flex flex-col gap-1'>
-        {PLACEHOLDER_VENDORS.map((v) => (
-          <Link
-            key={v.name}
-            href='/vendors'
-            className='flex min-h-[44px] items-center gap-2.5 rounded px-2 py-2 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
-          >
-            <span className='flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-muted font-medium font-mono text-[0.6rem] text-foreground/60 uppercase'>
-              {v.initials}
-            </span>
-            <div className='min-w-0 flex-1'>
-              <p className='truncate font-serif text-[0.88rem] text-foreground'>{v.name}</p>
-              <p className='font-mono text-[0.56rem] text-foreground/60 uppercase tracking-widest'>
-                {v.type}
-              </p>
-            </div>
-            <span
-              className={`flex-shrink-0 rounded-full px-2 py-0.5 font-mono text-[0.58rem] uppercase tracking-wider ${v.statusColor}`}
-            >
-              {v.status}
-            </span>
-          </Link>
-        ))}
+      <div className='flex flex-col gap-3'>
+        <div className='flex items-baseline gap-2'>
+          <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
+          <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
+            No vendors added yet
+          </span>
+        </div>
+        <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
+          Track quotes, contacts, and contracts in one place
+        </div>
+        <Link
+          href='/vendors'
+          className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+        >
+          Add your first vendor →
+        </Link>
       </div>
-      <p className='mt-3 font-mono text-[0.56rem] text-foreground/50 tracking-wider'>
-        Showing placeholder data — manage real vendors →
-      </p>
     </CardShell>
   )
 }

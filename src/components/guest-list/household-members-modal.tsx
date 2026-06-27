@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 
 import { TagInput } from '~/components/guest-list/tag-input'
 import { Button } from '~/components/ui/button'
@@ -56,11 +56,18 @@ export function HouseholdMembersModal(props: Readonly<HouseholdMembersModalProps
 
   const { data: tags = [], refetch: refetchTags } = api.guestTag.getAll.useQuery()
 
+  // Seed the draft only when the modal transitions from closed to open. The
+  // `members` prop is recreated on every parent render, so depending on it here
+  // would clobber in-progress edits to other members whenever the parent
+  // re-renders (e.g. a background refetch) while the modal is open.
+  const wasOpenRef = useRef(false)
   useEffect(() => {
-    if (!open) return
-    setDraftMembers(members)
-    setSaveError(null)
-  }, [members, open])
+    if (open && !wasOpenRef.current) {
+      setDraftMembers(members)
+      setSaveError(null)
+    }
+    wasOpenRef.current = open
+  }, [open, members])
 
   const primaryCount = useMemo(
     () => draftMembers.filter((member) => member.isPrimaryContact && !member.isTagAlong).length,

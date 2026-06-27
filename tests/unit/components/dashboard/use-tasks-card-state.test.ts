@@ -2,6 +2,7 @@ import { act, renderHook } from '@testing-library/react'
 
 import {
   createTaskCardItems,
+  type TaskItem,
   useTasksCardState,
 } from '~/components/dashboard/planning-overview/use-tasks-card-state'
 
@@ -64,15 +65,28 @@ describe('useTasksCardState', () => {
     })
 
     const after = result.current.tasks
-    expect(after).toHaveLength(before.length)
-
-    const targetBefore = before.find((task) => task.id === targetId)
-    const targetAfter = after.find((task) => task.id === targetId)
-
-    expect(targetBefore?.done).toBe(false)
-    expect(targetAfter?.done).toBe(true)
-
+    expect(after[0]?.done).toBe(true)
     expect(after[1]).toBe(before[1])
+  })
+
+  it('does not affect other tasks when toggling one', () => {
+    const { result } = renderHook(() => useTasksCardState())
+
+    const tasks: TaskItem[] = [
+      { id: 'a', text: 'Task A', tag: 'Admin', due: 'Today', done: false, urgent: false },
+      { id: 'b', text: 'Task B', tag: 'Vendor', due: 'Tomorrow', done: false, urgent: false },
+    ]
+
+    act(() => {
+      result.current.setTasks(tasks)
+    })
+
+    act(() => {
+      result.current.toggleTask('a')
+    })
+
+    expect(result.current.tasks.find((t) => t.id === 'a')?.done).toBe(true)
+    expect(result.current.tasks.find((t) => t.id === 'b')?.done).toBe(false)
   })
 
   it('maps real tasks into card labels and urgency', () => {

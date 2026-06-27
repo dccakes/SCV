@@ -303,6 +303,73 @@ describe('WeddingService', () => {
     })
   })
 
+  describe('toggleAddOn', () => {
+    it('adds a missing add-on', async () => {
+      mockFindById.mockResolvedValue(mockWedding)
+      mockUpdateFn.mockResolvedValue({
+        ...mockWedding,
+        enabledAddOns: ['website_builder'],
+      })
+
+      const result = await weddingService.toggleAddOn({
+        ctx: actorContext,
+        weddingId: 'wedding-123',
+        addOn: 'website_builder',
+        enabled: true,
+      })
+
+      expect(result.enabledAddOns).toEqual(['website_builder'])
+      expect(mockUpdateFn).toHaveBeenCalledWith('wedding-123', {
+        enabledAddOns: ['website_builder'],
+      })
+    })
+
+    it('does not duplicate an existing add-on', async () => {
+      mockFindById.mockResolvedValue({
+        ...mockWedding,
+        enabledAddOns: ['website_builder'],
+      })
+      mockUpdateFn.mockResolvedValue({
+        ...mockWedding,
+        enabledAddOns: ['website_builder'],
+      })
+
+      await weddingService.toggleAddOn({
+        ctx: actorContext,
+        weddingId: 'wedding-123',
+        addOn: 'website_builder',
+        enabled: true,
+      })
+
+      expect(mockUpdateFn).toHaveBeenCalledWith('wedding-123', {
+        enabledAddOns: ['website_builder'],
+      })
+    })
+
+    it('removes an enabled add-on', async () => {
+      mockFindById.mockResolvedValue({
+        ...mockWedding,
+        enabledAddOns: ['website_builder', 'tasks'],
+      })
+      mockUpdateFn.mockResolvedValue({
+        ...mockWedding,
+        enabledAddOns: ['tasks'],
+      })
+
+      const result = await weddingService.toggleAddOn({
+        ctx: actorContext,
+        weddingId: 'wedding-123',
+        addOn: 'website_builder',
+        enabled: false,
+      })
+
+      expect(result.enabledAddOns).toEqual(['tasks'])
+      expect(mockUpdateFn).toHaveBeenCalledWith('wedding-123', {
+        enabledAddOns: ['tasks'],
+      })
+    })
+  })
+
   describe('hasWedding', () => {
     it('should return true when user has wedding', async () => {
       mockExistsForUserFn.mockResolvedValue(true)

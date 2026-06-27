@@ -126,9 +126,9 @@ test.describe('Vendor CRUD', () => {
     await dialog.getByRole('button', { name: /add vendor/i }).click()
     await expect(page.locator('body')).toContainText('Vendor To Delete')
 
-    // Now delete it using the remove button
-    page.once('dialog', (d) => d.accept())
+    // Now delete it using the remove button — confirm in the AlertDialog
     await page.getByLabel(/remove vendor to delete/i).click()
+    await page.getByRole('button', { name: /remove vendor/i }).click()
 
     // Vendor should be gone
     await expect(page.locator('body')).not.toContainText('Vendor To Delete')
@@ -381,8 +381,8 @@ test.describe('XSS Injection Prevention', () => {
     const removeBtns = page.getByLabel(new RegExp(`remove.*${escapedPayload}`, 'i'))
     let leftoverCount = await removeBtns.count()
     while (leftoverCount > 0) {
-      page.once('dialog', (d) => d.accept())
       await removeBtns.first().click()
+      await page.getByRole('button', { name: /remove vendor/i }).click()
       await page.waitForTimeout(300)
       leftoverCount = await removeBtns.count()
     }
@@ -415,8 +415,8 @@ test.describe('XSS Injection Prevention', () => {
     // Clean up — delete all XSS vendors created in this test
     let remaining = await removeBtns.count()
     while (remaining > 0) {
-      page.once('dialog', (d) => d.accept())
       await removeBtns.first().click()
+      await page.getByRole('button', { name: /remove vendor/i }).click()
       await page.waitForTimeout(300)
       remaining = await removeBtns.count()
     }
@@ -431,8 +431,8 @@ test.describe('XSS Injection Prevention', () => {
     const locationRemoveBtns = page.getByLabel(/remove.*xss location test/i)
     let leftoverCount = await locationRemoveBtns.count()
     while (leftoverCount > 0) {
-      page.once('dialog', (d) => d.accept())
       await locationRemoveBtns.first().click()
+      await page.getByRole('button', { name: /remove vendor/i }).click()
       await page.waitForTimeout(300)
       leftoverCount = await locationRemoveBtns.count()
     }
@@ -465,8 +465,8 @@ test.describe('XSS Injection Prevention', () => {
     await detailDialog.getByRole('button', { name: /close/i }).last().click()
     let remaining = await locationRemoveBtns.count()
     while (remaining > 0) {
-      page.once('dialog', (d) => d.accept())
       await locationRemoveBtns.first().click()
+      await page.getByRole('button', { name: /remove vendor/i }).click()
       await page.waitForTimeout(300)
       remaining = await locationRemoveBtns.count()
     }

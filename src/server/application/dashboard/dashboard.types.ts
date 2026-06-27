@@ -41,6 +41,7 @@ export type WebsiteWithQuestions = {
   weddingId: string
   url: string
   subUrl: string
+  templateId: string | null
   isPasswordEnabled: boolean
   password: string | null
   coverPhotoUrl: string | null

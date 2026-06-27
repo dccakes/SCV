@@ -29,7 +29,7 @@ export function useTasksCardState(priorityTasks: Task[] = EMPTY_TASKS) {
     )
   }, [])
 
-  return { tasks, toggleTask }
+  return { tasks, setTasks, toggleTask }
 }
 
 export function createTaskCardItems(tasks: Task[], now: Date = new Date()): TaskItem[] {

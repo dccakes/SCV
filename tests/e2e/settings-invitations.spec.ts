@@ -66,7 +66,9 @@ async function mockOrganizationInvitationApis(
   await page.route('**/organization/invite-member*', async (route, request) => {
     options.onInviteMember?.(request.postDataJSON())
     await route.fulfill({
-      body: JSON.stringify({ id: 'invite-pending' }),
+      body: JSON.stringify({
+        id: 'invite-pending',
+      }),
       contentType: 'application/json',
       status: 200,
     })
@@ -75,7 +77,10 @@ async function mockOrganizationInvitationApis(
   await page.route('**/organization/cancel-invitation*', async (route, request) => {
     options.onCancelInvitation?.(request.postDataJSON())
     await route.fulfill({
-      body: JSON.stringify({ id: 'invite-pending', status: 'canceled' }),
+      body: JSON.stringify({
+        id: 'invite-pending',
+        status: 'canceled',
+      }),
       contentType: 'application/json',
       status: 200,
     })
@@ -117,12 +122,12 @@ test.describe('Settings Outstanding Invites', () => {
     })
 
     await page.goto('/settings')
-    await expect(page.getByText('Outstanding Invites')).toBeVisible()
-    const outstandingInvitesCard = page.getByTestId('outstanding-invites-card')
+    const outstandingInvitesCard = page.getByTestId('organization-outstanding-invites-card')
+    await expect(outstandingInvitesCard).toBeVisible()
     await expect(outstandingInvitesCard.getByText('pending@example.com')).toBeVisible()
     await expect(outstandingInvitesCard.getByText('accepted@example.com')).toHaveCount(0)
 
-    await page.getByRole('button', { name: 'Resend' }).click()
+    await outstandingInvitesCard.getByRole('button', { name: 'Resend' }).click()
     await expect.poll(() => inviteMemberBody).not.toBeNull()
     expect(inviteMemberBody).toMatchObject({
       email: 'pending@example.com',
@@ -131,7 +136,7 @@ test.describe('Settings Outstanding Invites', () => {
       role: 'member',
     })
 
-    await page.getByRole('button', { name: 'Cancel' }).click()
+    await outstandingInvitesCard.getByRole('button', { name: 'Cancel' }).click()
     await expect.poll(() => cancelInvitationBody).not.toBeNull()
     expect(cancelInvitationBody).toMatchObject({
       invitationId: 'invite-pending',
@@ -156,6 +161,6 @@ test.describe('Settings Outstanding Invites', () => {
 
     await page.goto('/settings')
     await expect(page.getByRole('heading', { name: 'Organization Members' })).toBeVisible()
-    await expect(page.getByText('Outstanding Invites')).toHaveCount(0)
+    await expect(page.getByTestId('organization-outstanding-invites-card')).toHaveCount(0)
   })
 })
