@@ -19,7 +19,14 @@ describe('useTasksCardState', () => {
   it('toggles done state for a task when one exists', () => {
     const { result } = renderHook(() => useTasksCardState())
 
-    const task: TaskItem = { id: 'test-1', text: 'Test task', tag: 'Admin', due: 'Today', done: false, urgent: false }
+    const task: TaskItem = {
+      id: 'test-1',
+      text: 'Test task',
+      tag: 'Admin',
+      due: 'Today',
+      done: false,
+      urgent: false,
+    }
 
     act(() => {
       result.current.setTasks([task])
