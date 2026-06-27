@@ -5,8 +5,6 @@ import { useEffect, useState } from 'react'
 
 import { formatDateStandard } from '~/app/utils/helpers'
 import type { DashboardData, EventWithResponses } from '~/app/utils/shared-types'
-import { TaskListItem } from '~/components/dashboard/planning-overview/task-list-item'
-import { useTasksCardState } from '~/components/dashboard/planning-overview/use-tasks-card-state'
 
 interface PlanningOverviewProps {
   dashboardData: DashboardData | null
@@ -65,9 +63,6 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
   const hours = now.getHours()
   const mins = now.getMinutes()
 
-  // Rough planning progress (placeholder — 67% until real task tracking exists)
-  const planningPct = 67
-
   return (
     <div className='relative overflow-hidden rounded-lg bg-sidebar-ink px-6 py-5'>
       {/* decorative glow */}
@@ -94,15 +89,6 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
               </Link>
             </p>
           )}
-          <div className='mt-3 h-[2px] w-full max-w-[200px] overflow-hidden rounded-full bg-white/[0.08]'>
-            <div
-              className='h-full rounded-full bg-gradient-to-r from-primary to-accent'
-              style={{ width: `${planningPct}%` }}
-            />
-          </div>
-          <p className='mt-1 font-mono text-[0.55rem] text-sidebar-cream/30 tracking-widest'>
-            {planningPct}% of planning complete
-          </p>
         </div>
 
         {hasDate ? (
@@ -274,58 +260,39 @@ function RsvpCard({ dashboardData }: { dashboardData: DashboardData | null }) {
 }
 
 function TasksCard() {
-  const { tasks, toggleTask } = useTasksCardState()
-
   return (
     <CardShell title='Upcoming tasks' icon='◈'>
-      <div className='flex flex-col gap-1.5'>
-        {tasks.map((task) => (
-          <TaskListItem key={task.id} task={task} onToggle={toggleTask} />
-        ))}
+      <div className='flex flex-col gap-3'>
+        <div className='flex items-baseline gap-2'>
+          <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
+          <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
+            No tasks yet
+          </span>
+        </div>
+        <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
+          Task management is coming soon
+        </div>
       </div>
-      <p className='mt-3 font-mono text-[0.56rem] text-foreground/50 tracking-wider'>
-        Task tracking coming soon — these are placeholders
-      </p>
     </CardShell>
   )
 }
 
 function BudgetCard() {
-  const categories = [
-    { name: 'Venue', pct: 90, color: 'bg-success' },
-    { name: 'Catering', pct: 60, color: 'bg-accent' },
-    { name: 'Photography', pct: 45, color: 'bg-primary' },
-    { name: 'Flowers', pct: 30, color: 'bg-foreground/40' },
-    { name: 'Other', pct: 12, color: 'bg-border' },
-  ]
-
   return (
     <CardShell title='Budget' icon='◧'>
-      <div className='mb-3 flex items-baseline gap-2'>
-        <span className='font-serif text-[2.2rem] text-foreground leading-none'>—</span>
-        <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
-          Budget tracking coming soon
-        </span>
-      </div>
-      <div className='mb-2 h-2 overflow-hidden rounded-full bg-border'>
-        <div className='h-full w-0 rounded-full bg-gradient-to-r from-success to-accent' />
-      </div>
-      <div className='mb-4 font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
-        Set up your budget to track spending
-      </div>
-      <div className='flex flex-col gap-2'>
-        {categories.map((c) => (
-          <div key={c.name} className='flex items-center gap-2'>
-            <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${c.color}`} />
-            <span className='flex-1 font-serif text-[0.85rem] text-foreground'>{c.name}</span>
-            <div className='h-[3px] w-14 overflow-hidden rounded-full bg-border'>
-              <div className={`h-full rounded-full ${c.color}`} style={{ width: `${c.pct}%` }} />
-            </div>
-            <span className='w-10 text-right font-mono text-[0.6rem] text-foreground/60 tracking-wider'>
-              —
-            </span>
-          </div>
-        ))}
+      <div className='flex flex-col gap-3'>
+        <div className='flex items-baseline gap-2'>
+          <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
+          <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
+            No budget set up yet
+          </span>
+        </div>
+        <div className='h-2 overflow-hidden rounded-full bg-border'>
+          <div className='h-full w-0 rounded-full bg-gradient-to-r from-success to-accent' />
+        </div>
+        <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
+          Budget tracking coming soon — set up your budget to track spending
+        </div>
       </div>
     </CardShell>
   )
