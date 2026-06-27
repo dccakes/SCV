@@ -822,9 +822,7 @@ export default function GuestsView({
                 const primary =
                   selectedCanonicalHousehold?.guests.find((g) => g.isPrimaryContact) ??
                   selectedCanonicalHousehold?.guests[0]
-                return primary
-                  ? `${primary.firstName} ${primary.lastName}`.trim()
-                  : 'this party'
+                return primary ? `${primary.firstName} ${primary.lastName}`.trim() : 'this party'
               })()}
               &rdquo;?
             </AlertDialogTitle>
