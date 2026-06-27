@@ -442,8 +442,8 @@ test.describe('Guest List Drawer - Delete Party', () => {
 
     await page.getByRole('button', { name: /delete party/i }).click()
 
-    // Confirmation dialog should appear
-    await expect(page.getByRole('heading', { name: /delete party\?/i })).toBeVisible()
+    // Confirmation dialog should appear with the party name in the title
+    await expect(page.getByRole('heading', { name: /delete "donkey the donkey"\?/i })).toBeVisible()
     await expect(
       page.getByText(/this will permanently delete this party and all associated guests/i)
     ).toBeVisible()
