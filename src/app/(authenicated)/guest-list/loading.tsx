@@ -1,92 +1,63 @@
-import { sharedStyles } from '~/app/utils/shared-styles'
+import { Skeleton } from '~/components/ui/skeleton'
 
 export default function GuestListSkeleton() {
   return (
-    <div className={`pt-10 ${sharedStyles.desktopPaddingSidesGuestList}`}>
-      <div
-        role='status'
-        className='flex animate-pulse flex-col space-y-8 md:space-y-0 rtl:space-x-reverse'
-      >
-        {/* EventTabs */}
-        <div className='border-b'>
-          <ul className='flex gap-5'>
-            <div className='mb-4 h-7 w-20 bg-gray-200 dark:bg-gray-700'></div>
-            <div className='mb-4 h-7 w-28 bg-gray-200 dark:bg-gray-700'></div>
-            <div className='mb-4 h-7 w-24 bg-gray-200 dark:bg-gray-700'></div>
-            <div className='mb-4 h-7 w-32 bg-gray-200 dark:bg-gray-700'></div>
-          </ul>
+    <div className='flex flex-col gap-4 px-4 py-5 lg:px-6 lg:py-6' aria-busy='true'>
+      {/* Event filter tabs */}
+      <div className='flex items-center gap-5 border-border border-b pb-px'>
+        <Skeleton className='mb-3 h-5 w-20' />
+        <Skeleton className='mb-3 h-5 w-28' />
+        <Skeleton className='mb-3 h-5 w-24' />
+      </div>
+
+      {/* Invite link button + search/filter row */}
+      <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+        <div className='flex flex-wrap items-center gap-2'>
+          <Skeleton className='h-9 w-64' />
+          <Skeleton className='h-9 w-28' />
+          <Skeleton className='h-9 w-28' />
+          <Skeleton className='h-9 w-28' />
         </div>
+        <Skeleton className='h-9 w-28' />
+      </div>
 
-        {/* GuestTable */}
-        <section>
-          {/* DefaultTableHeader */}
-          <div className='flex gap-7 py-8'>
-            <div className='mb-4 h-5 w-48 bg-gray-200 dark:bg-gray-700'></div>
-            <div className='mb-4 h-5 w-40 bg-gray-200 dark:bg-gray-700'></div>
-            <div className='mb-4 h-5 w-40 bg-gray-200 dark:bg-gray-700'></div>
-          </div>
+      {/* Toolbar: count + sort buttons */}
+      <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+        <Skeleton className='h-4 w-32' />
+        <div className='flex items-center gap-2'>
+          <Skeleton className='h-8 w-28' />
+          <Skeleton className='h-8 w-32' />
+          <Skeleton className='h-8 w-16 rounded-md' />
+        </div>
+      </div>
 
-          {/* GuestSearchFilter */}
-          <div className='flex justify-between'>
-            <div className='flex items-center gap-8'>
-              <div className='mb-4 h-12 w-80 bg-gray-200 dark:bg-gray-700'></div>
-              <div className='mb-4 h-12 w-56 bg-gray-200 dark:bg-gray-700'></div>
-            </div>
-            <div className='flex gap-5'>
-              <div className='mb-2.5 h-12 w-44 rounded-full bg-gray-200 dark:bg-gray-700'></div>
-              <div className='mb-2.5 h-12 w-36 rounded-full bg-gray-200 dark:bg-gray-700'></div>
-            </div>
-          </div>
-
-          <div className='max-h-[75vh] overflow-auto'>
-            <div>
-              <div>
-                {/* TableHeadings */}
-                <div
-                  className='sticky top-0 grid min-w-fit items-center gap-12 border-b bg-white px-8 py-6 text-gray-600 italic'
-                  style={{
-                    gridTemplateColumns: '40px 240px 100px 125px repeat(2, 175px) 175px',
-                  }}
-                >
-                  <div className='h-7 w-7 bg-gray-200 dark:bg-gray-700'></div>
-                  <div className='h-5 w-20 bg-gray-200 dark:bg-gray-700'></div>
-                  <div className='h-5 w-28 bg-gray-200 dark:bg-gray-700'></div>
-                  <div className='h-5 w-20 bg-gray-200 dark:bg-gray-700'></div>
-                  <div className='h-5 w-48 bg-gray-200 dark:bg-gray-700'></div>
-                  <div className='h-5 w-40 bg-gray-200 dark:bg-gray-700'></div>
-                  <div className='h-5 w-28 bg-gray-200 dark:bg-gray-700'></div>
+      {/* Guest cards grid */}
+      <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3'>
+        {['a', 'b', 'c', 'd', 'e', 'f'].map((cardId) => (
+          <div
+            key={`guest-skeleton-${cardId}`}
+            className='flex flex-col gap-3 rounded-lg border border-border bg-card/90 p-4'
+          >
+            <div className='flex items-start justify-between gap-3'>
+              <div className='flex items-start gap-2.5'>
+                <Skeleton className='h-9 w-9 shrink-0 rounded-full' />
+                <div className='flex flex-col gap-1.5'>
+                  <Skeleton className='h-4 w-32' />
+                  <Skeleton className='h-3 w-24' />
                 </div>
-
-                {/* TableRows */}
-                {[1, 2, 3, 4, 5].map((_count) => {
-                  return (
-                    <div
-                      key={_count}
-                      className='box-border grid min-w-fit items-center gap-12 border-r border-b border-l px-8 py-5'
-                      style={{
-                        gridTemplateColumns: `40px 240px 100px 125px repeat(2, 175px) 175px`,
-                      }}
-                    >
-                      <div className='h-7 w-7 bg-gray-200 dark:bg-gray-700'></div>
-                      <div className='h-5 w-36 bg-gray-200 dark:bg-gray-700'></div>
-                      <div className='h-5 w-3 bg-gray-200 dark:bg-gray-700'></div>
-
-                      <div className='flex gap-2'>
-                        <div className='h-7 w-7 bg-gray-200 dark:bg-gray-700'></div>
-                        <div className='h-7 w-7 bg-gray-200 dark:bg-gray-700'></div>
-                        <div className='h-7 w-7 bg-gray-200 dark:bg-gray-700'></div>
-                      </div>
-
-                      <div className='h-5 w-32 bg-gray-200 dark:bg-gray-700'></div>
-                      <div className='h-5 w-32 bg-gray-200 dark:bg-gray-700'></div>
-                      <div className='h-5 w-24 bg-gray-200 dark:bg-gray-700'></div>
-                    </div>
-                  )
-                })}
               </div>
+              <Skeleton className='h-5 w-20 rounded-full' />
+            </div>
+            <div className='flex gap-2'>
+              <Skeleton className='h-5 w-20 rounded-full' />
+              <Skeleton className='h-5 w-16 rounded-full' />
+            </div>
+            <div className='flex items-center justify-between border-border/80 border-t pt-2'>
+              <Skeleton className='h-3 w-28' />
+              <Skeleton className='h-3 w-20' />
             </div>
           </div>
-        </section>
+        ))}
       </div>
     </div>
   )
