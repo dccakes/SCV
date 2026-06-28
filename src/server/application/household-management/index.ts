@@ -9,6 +9,7 @@ import { GiftRepository } from '~/server/domains/gift/gift.repository'
 import { GuestRepository } from '~/server/domains/guest/guest.repository'
 import { HouseholdRepository } from '~/server/domains/household/household.repository'
 import { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
+import { WebsiteRepository } from '~/server/domains/website/website.repository'
 import { db } from '~/server/infrastructure/database'
 
 // Create repository instances
@@ -16,6 +17,7 @@ const householdRepo = new HouseholdRepository(db)
 const guestRepo = new GuestRepository(db)
 const invitationRepo = new InvitationRepository(db)
 const giftRepo = new GiftRepository(db)
+const websiteRepo = new WebsiteRepository(db)
 
 // Create singleton instance with injected repositories
 export const householdManagementService = new HouseholdManagementService(
@@ -23,6 +25,7 @@ export const householdManagementService = new HouseholdManagementService(
   guestRepo,
   invitationRepo,
   giftRepo,
+  websiteRepo,
   db
 )
 

@@ -24,6 +24,7 @@ import { GuestRepository } from '~/server/domains/guest/guest.repository'
 import { HouseholdRepository } from '~/server/domains/household/household.repository'
 import type { Household, HouseholdSearchResult } from '~/server/domains/household/household.types'
 import { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
+import type { WebsiteRepository } from '~/server/domains/website/website.repository'
 
 export class HouseholdManagementService {
   constructor(
@@ -31,6 +32,7 @@ export class HouseholdManagementService {
     private guestRepo: GuestRepository,
     private invitationRepo: InvitationRepository,
     _giftRepo: GiftRepository,
+    private websiteRepo: WebsiteRepository,
     private db: PrismaClient
   ) {}
 
@@ -295,6 +297,28 @@ export class HouseholdManagementService {
   ): Promise<HouseholdSearchResult[]> {
     requirePermission(ctx, { guest: ['read'] })
     return this.householdRepo.search(searchText, weddingId)
+  }
+
+  /**
+   * Search households for the public guest-facing RSVP flow.
+   *
+   * The guest is unauthenticated, so the search is scoped to the wedding that
+   * owns the given website subUrl rather than to an active wedding session.
+   */
+  async searchHouseholdsPublic(
+    subUrl: string,
+    searchText: string
+  ): Promise<HouseholdSearchResult[]> {
+    const website = await this.websiteRepo.findBySubUrl(subUrl)
+
+    if (!website?.isRsvpEnabled) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'RSVP is not available for this wedding',
+      })
+    }
+
+    return this.householdRepo.search(searchText, website.weddingId)
   }
 
   /**
