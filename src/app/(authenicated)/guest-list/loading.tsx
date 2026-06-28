@@ -34,7 +34,10 @@ export default function GuestListSkeleton() {
       {/* Guest cards grid */}
       <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3'>
         {['a', 'b', 'c', 'd', 'e', 'f'].map((cardId) => (
-          <div key={`guest-skeleton-${cardId}`} className='flex flex-col gap-3 rounded-lg border border-border bg-card/90 p-4'>
+          <div
+            key={`guest-skeleton-${cardId}`}
+            className='flex flex-col gap-3 rounded-lg border border-border bg-card/90 p-4'
+          >
             <div className='flex items-start justify-between gap-3'>
               <div className='flex items-start gap-2.5'>
                 <Skeleton className='h-9 w-9 shrink-0 rounded-full' />
