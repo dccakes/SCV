@@ -137,6 +137,7 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
 
 function MiniStats({ dashboardData }: { dashboardData: DashboardData | null }) {
   const total = dashboardData?.totalGuests ?? 0
+  const totalEvents = dashboardData?.totalEvents ?? 0
   const rsvpSummary = (dashboardData?.events ?? []).reduce(
     (acc, event) => {
       const eventWithResponses = event as EventWithResponses
@@ -156,7 +157,7 @@ function MiniStats({ dashboardData }: { dashboardData: DashboardData | null }) {
     { icon: '◉', val: total, label: 'Total guests', delta: null },
     { icon: '✓', val: confirmed, label: 'Confirmed', delta: `${pct}%` },
     { icon: '◐', val: pending, label: 'Awaiting reply', delta: null },
-    { icon: '◧', val: '—', label: 'Budget spent', delta: 'Set up budget' },
+    { icon: '▷', val: totalEvents, label: 'Events', delta: null },
   ]
 
   return (
