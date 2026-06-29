@@ -142,6 +142,51 @@ describe('household invite pages', () => {
     expect(screen.getByRole('button', { name: /apple calendar/i })).toBeInTheDocument()
   })
 
+  it('themes the invite card with the chosen template and the couple’s Save the Date copy', async () => {
+    mockCookieGet.mockReturnValue({ value: 'cookie-token' })
+    mockGetInviteData.mockResolvedValue({
+      ...inviteData,
+      templateId: 'aurelia',
+      saveTheDate: {
+        eyebrow: "You're Invited",
+        message: 'Join us in Puebla for the celebration.',
+      },
+    })
+    const InvitePage = (await import('~/app/[websiteSubUrl]/invite/page')).default
+
+    const { container } = render(
+      await InvitePage({
+        params: Promise.resolve({ websiteSubUrl: 'diego-and-laura' }),
+        searchParams: Promise.resolve({}),
+      })
+    )
+
+    // The card is wrapped in the couple's selected template theme so its colours
+    // and fonts track the public website surfaces.
+    expect(container.querySelector('[data-wedding-template="aurelia"]')).toBeInTheDocument()
+    // The customisable Save the Date copy flows into the invite instead of the defaults.
+    expect(screen.getByText("You're Invited")).toBeInTheDocument()
+    expect(screen.getByText('Join us in Puebla for the celebration.')).toBeInTheDocument()
+    expect(screen.queryByText('Save the date')).not.toBeInTheDocument()
+  })
+
+  it('falls back to the default template and copy when none are customised', async () => {
+    mockCookieGet.mockReturnValue({ value: 'cookie-token' })
+    mockGetInviteData.mockResolvedValue({ ...inviteData, templateId: null })
+    const InvitePage = (await import('~/app/[websiteSubUrl]/invite/page')).default
+
+    const { container } = render(
+      await InvitePage({
+        params: Promise.resolve({ websiteSubUrl: 'diego-and-laura' }),
+        searchParams: Promise.resolve({}),
+      })
+    )
+
+    // Unknown/null template resolves to the default (classic) theme.
+    expect(container.querySelector('[data-wedding-template="classic"]')).toBeInTheDocument()
+    expect(screen.getByText('Save the date')).toBeInTheDocument()
+  })
+
   it('builds save-the-date open graph metadata from the wedding date and venue', async () => {
     mockGetPublicWeddingSummary.mockResolvedValue({
       groomFirstName: 'Diego',

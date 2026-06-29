@@ -9,6 +9,11 @@ import {
 } from '~/server/application/household-invite/household-invite-token'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
+import {
+  type SaveTheDateSectionContent,
+  WebsiteSectionType,
+} from '~/server/domains/website-section/website-section.types'
+import { saveTheDateSectionContentSchema } from '~/server/domains/website-section/website-section.validator'
 
 type HouseholdInviteDb = Pick<PrismaClient, 'household' | 'website' | 'guest' | '$transaction'>
 
@@ -37,6 +42,16 @@ const WEDDING_DAY_EVENT_NAME = 'Wedding Day'
 export type HouseholdInviteData = {
   weddingId: string
   expiresAt: Date
+  /**
+   * The wedding website template the couple selected. The invite card themes
+   * itself with this so it matches the public Save the Date / Invitation pages.
+   */
+  templateId: string | null
+  /**
+   * The couple's editable Save the Date copy (when that section is enabled), so
+   * the same customisation shown on the website surfaces flows into the invite.
+   */
+  saveTheDate?: SaveTheDateSectionContent
   wedding: {
     groomFirstName: string
     groomLastName: string
@@ -385,40 +400,55 @@ export class HouseholdInviteService {
     householdId: string,
     expiresAt: Date
   ): Promise<HouseholdInviteData | null> {
-    const household = await this.db.household.findFirst({
-      where: { id: householdId, weddingId },
-      select: {
-        id: true,
-        address1: true,
-        address2: true,
-        city: true,
-        state: true,
-        zipCode: true,
-        country: true,
-        wedding: {
-          select: {
-            groomFirstName: true,
-            groomLastName: true,
-            brideFirstName: true,
-            brideLastName: true,
-            events: {
-              orderBy: { date: 'asc' },
-              select: { name: true, date: true, venue: true },
+    const [household, website] = await Promise.all([
+      this.db.household.findFirst({
+        where: { id: householdId, weddingId },
+        select: {
+          id: true,
+          address1: true,
+          address2: true,
+          city: true,
+          state: true,
+          zipCode: true,
+          country: true,
+          wedding: {
+            select: {
+              groomFirstName: true,
+              groomLastName: true,
+              brideFirstName: true,
+              brideLastName: true,
+              events: {
+                orderBy: { date: 'asc' },
+                select: { name: true, date: true, venue: true },
+              },
+            },
+          },
+          guests: {
+            orderBy: { id: 'asc' },
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              phone: true,
             },
           },
         },
-        guests: {
-          orderBy: { id: 'asc' },
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            phone: true,
+      }),
+      // The selected template and Save the Date copy live on the website; load
+      // them so the invite card mirrors the public Save the Date / Invitation
+      // surfaces instead of falling back to the app's default look.
+      this.db.website.findFirst({
+        where: { weddingId },
+        select: {
+          templateId: true,
+          websiteSections: {
+            where: { type: WebsiteSectionType.SAVE_THE_DATE },
+            select: { isEnabled: true, content: true },
           },
         },
-      },
-    })
+      }),
+    ])
 
     if (!household) return null
 
@@ -427,9 +457,19 @@ export class HouseholdInviteService {
     // list drives the save-the-date calendar block.
     const weddingDayEvent = events.find((event) => event.name === WEDDING_DAY_EVENT_NAME)
 
+    // Mirror the website surfaces: only enabled Save the Date copy overrides the
+    // template defaults, and malformed stored content is ignored rather than thrown.
+    const saveTheDateSection = website?.websiteSections?.[0]
+    const parsedSaveTheDate = saveTheDateSection?.isEnabled
+      ? saveTheDateSectionContentSchema.safeParse(saveTheDateSection.content)
+      : undefined
+    const saveTheDate = parsedSaveTheDate?.success ? parsedSaveTheDate.data : undefined
+
     return {
       weddingId,
       expiresAt,
+      templateId: website?.templateId ?? null,
+      saveTheDate,
       wedding: {
         ...weddingNames,
         date: weddingDayEvent?.date ?? null,
