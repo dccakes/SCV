@@ -4,11 +4,9 @@ import SettingsPage from '~/app/(authenicated)/settings/page'
 
 const mockGetDetails = jest.fn()
 const mockGetRequiredWedding = jest.fn()
-const mockDashboardTopbar = jest.fn(
-  (_props: { title?: string; showManagementActions?: boolean }) => (
-    <header data-testid='dashboard-topbar'>Topbar</header>
-  )
-)
+const mockDashboardTopbar = jest.fn((_props: { title?: string }) => (
+  <header data-testid='dashboard-topbar'>Topbar</header>
+))
 const mockWeddingSettingsForm = jest.fn((_props: { initialData: Record<string, unknown> }) => (
   <div data-testid='wedding-settings-form'>Wedding form</div>
 ))
@@ -43,8 +41,7 @@ jest.mock('~/server/application/authenticated-route/authenticated-route-data', (
 
 jest.mock('@/components/dashboard/dashboard-topbar', () => ({
   __esModule: true,
-  default: (props: { title?: string; showManagementActions?: boolean }) =>
-    mockDashboardTopbar(props),
+  default: (props: { title?: string }) => mockDashboardTopbar(props),
 }))
 
 jest.mock('~/components/forms/wedding-settings-form', () => ({
@@ -104,7 +101,6 @@ describe('SettingsPage', () => {
 
     expect(mockDashboardTopbar).toHaveBeenCalledWith({
       title: 'Settings',
-      showManagementActions: false,
     })
     expect(screen.getByText('Organization Members')).toBeInTheDocument()
     expect(screen.getByText('Plugins')).toBeInTheDocument()
