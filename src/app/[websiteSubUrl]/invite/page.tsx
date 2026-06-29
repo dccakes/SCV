@@ -6,6 +6,7 @@ import { formatDateStandard } from '~/app/utils/helpers'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent } from '~/components/ui/card'
 import { AddToCalendarButtons } from '~/components/website/add-to-calendar-buttons'
+import { EnvelopeReveal } from '~/components/website/household-invite/envelope-reveal'
 import { InvalidHouseholdInvite } from '~/components/website/household-invite/invalid-household-invite'
 import { buildSaveTheDateCalendarLinks } from '~/lib/website/calendar'
 import { householdInviteService } from '~/server/application/household-invite'
@@ -148,94 +149,96 @@ export default async function HouseholdInvitePage({
         </div>
 
         <div className='mx-auto flex min-h-[calc(100vh-6rem)] w-full max-w-2xl items-center'>
-          <Card className='w-full overflow-hidden border-border/70 shadow-foreground/5 shadow-xl'>
-            {/* Slim accent band at the top of the card. */}
-            <div className='h-1.5 w-full bg-gradient-to-r from-primary via-accent to-primary' />
+          <EnvelopeReveal coupleNames={coupleNames} websiteSubUrl={websiteSubUrl}>
+            <Card className='w-full overflow-hidden border-border/70 shadow-foreground/5 shadow-xl'>
+              {/* Slim accent band at the top of the card. */}
+              <div className='h-1.5 w-full bg-gradient-to-r from-primary via-accent to-primary' />
 
-            <CardContent className='px-6 py-10 sm:px-12 sm:py-14'>
-              {resolvedSearchParams?.updated === '1' && (
-                <p
-                  className={`mb-8 rounded-md border border-success/30 bg-success/10 px-4 py-3 text-center text-success text-xs uppercase tracking-wider ${labelFont}`}
-                >
-                  Your details were updated.
-                </p>
-              )}
-
-              <div className='text-center'>
-                <p
-                  className={`text-muted-foreground text-xs uppercase tracking-[0.28em] ${labelFont}`}
-                >
-                  {saveTheDateCopy?.eyebrow ?? 'Save the date'}
-                </p>
-                <h1 className={`mt-4 text-5xl italic leading-none sm:text-7xl ${headingFont}`}>
-                  {coupleNames}
-                </h1>
-                <span className='mx-auto mt-6 block h-px w-16 bg-border' />
-              </div>
-
-              <div className='mt-8 grid gap-6 border-border border-y py-8 text-center sm:grid-cols-2 sm:text-left'>
-                <div>
+              <CardContent className='px-6 py-10 sm:px-12 sm:py-14'>
+                {resolvedSearchParams?.updated === '1' && (
                   <p
-                    className={`text-muted-foreground text-xs uppercase tracking-[0.22em] ${labelFont}`}
+                    className={`mb-8 rounded-md border border-success/30 bg-success/10 px-4 py-3 text-center text-success text-xs uppercase tracking-wider ${labelFont}`}
                   >
-                    Date
+                    Your details were updated.
                   </p>
-                  <p className='mt-2 text-2xl'>{formattedDate ?? DETAIL_FALLBACK}</p>
+                )}
+
+                <div className='text-center'>
+                  <p
+                    className={`text-muted-foreground text-xs uppercase tracking-[0.28em] ${labelFont}`}
+                  >
+                    {saveTheDateCopy?.eyebrow ?? 'Save the date'}
+                  </p>
+                  <h1 className={`mt-4 text-5xl italic leading-none sm:text-7xl ${headingFont}`}>
+                    {coupleNames}
+                  </h1>
+                  <span className='mx-auto mt-6 block h-px w-16 bg-border' />
                 </div>
-                <div>
-                  <p
-                    className={`text-muted-foreground text-xs uppercase tracking-[0.22em] ${labelFont}`}
-                  >
-                    Location
-                  </p>
-                  <p className='mt-2 text-2xl'>{location ?? DETAIL_FALLBACK}</p>
-                </div>
-              </div>
 
-              {calendarLinks ? (
-                <div className='mt-8 text-center sm:text-left'>
-                  <p
-                    className={`mb-3 text-muted-foreground text-xs uppercase tracking-[0.22em] ${labelFont}`}
-                  >
-                    Add to your calendar
-                  </p>
-                  <div className='flex justify-center sm:justify-start'>
-                    <AddToCalendarButtons {...calendarLinks} />
+                <div className='mt-8 grid gap-6 border-border border-y py-8 text-center sm:grid-cols-2 sm:text-left'>
+                  <div>
+                    <p
+                      className={`text-muted-foreground text-xs uppercase tracking-[0.22em] ${labelFont}`}
+                    >
+                      Date
+                    </p>
+                    <p className='mt-2 text-2xl'>{formattedDate ?? DETAIL_FALLBACK}</p>
+                  </div>
+                  <div>
+                    <p
+                      className={`text-muted-foreground text-xs uppercase tracking-[0.22em] ${labelFont}`}
+                    >
+                      Location
+                    </p>
+                    <p className='mt-2 text-2xl'>{location ?? DETAIL_FALLBACK}</p>
                   </div>
                 </div>
-              ) : null}
 
-              <div className='mt-8 text-center sm:text-left'>
-                <p
-                  className={`text-muted-foreground text-xs uppercase tracking-[0.22em] ${labelFont}`}
-                >
-                  Invited household
+                {calendarLinks ? (
+                  <div className='mt-8 text-center sm:text-left'>
+                    <p
+                      className={`mb-3 text-muted-foreground text-xs uppercase tracking-[0.22em] ${labelFont}`}
+                    >
+                      Add to your calendar
+                    </p>
+                    <div className='flex justify-center sm:justify-start'>
+                      <AddToCalendarButtons {...calendarLinks} />
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className='mt-8 text-center sm:text-left'>
+                  <p
+                    className={`text-muted-foreground text-xs uppercase tracking-[0.22em] ${labelFont}`}
+                  >
+                    Invited household
+                  </p>
+                  <ul className='mt-3 space-y-2 text-xl'>
+                    {inviteData.guests.map((guest) => (
+                      <li key={guest.id}>{formatGuestName(guest)}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                {saveTheDateCopy?.message ? (
+                  <p className='mt-8 whitespace-pre-line text-muted-foreground leading-7'>
+                    {saveTheDateCopy.message}
+                  </p>
+                ) : null}
+
+                <p className='mt-8 text-muted-foreground leading-7'>
+                  {saveTheDateCopy?.footnote ??
+                    'Formal invitation details will follow. For now, please make sure we have the correct names and mailing address for your household.'}
                 </p>
-                <ul className='mt-3 space-y-2 text-xl'>
-                  {inviteData.guests.map((guest) => (
-                    <li key={guest.id}>{formatGuestName(guest)}</li>
-                  ))}
-                </ul>
-              </div>
 
-              {saveTheDateCopy?.message ? (
-                <p className='mt-8 whitespace-pre-line text-muted-foreground leading-7'>
-                  {saveTheDateCopy.message}
-                </p>
-              ) : null}
-
-              <p className='mt-8 text-muted-foreground leading-7'>
-                {saveTheDateCopy?.footnote ??
-                  'Formal invitation details will follow. For now, please make sure we have the correct names and mailing address for your household.'}
-              </p>
-
-              <div className='mt-10 flex justify-center sm:justify-start'>
-                <Button asChild size='lg'>
-                  <Link href={`/${websiteSubUrl}/invite/update`}>Update our details</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                <div className='mt-10 flex justify-center sm:justify-start'>
+                  <Button asChild size='lg'>
+                    <Link href={`/${websiteSubUrl}/invite/update`}>Update our details</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </EnvelopeReveal>
         </div>
       </main>
     </TemplateThemeProvider>
