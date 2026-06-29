@@ -23,6 +23,7 @@ const mockDashboardData = {
     },
   },
   totalGuests: 127,
+  totalEvents: 1,
   events: [
     {
       id: 'evt1',
@@ -150,6 +151,13 @@ describe('PlanningOverview', () => {
     expect(screen.getAllByText('23').length).toBeGreaterThanOrEqual(1)
   })
 
+  it('renders events count in the MiniStats bar using totalEvents from dashboardData', () => {
+    render(<PlanningOverview dashboardData={mockDashboardData} />)
+    // totalEvents=1 from mockDashboardData appears in the MiniStats Events cell
+    // The value "1" is unique to this cell in the mock (no other stat has value 1)
+    expect(screen.getByText('1')).toBeInTheDocument()
+  })
+
   // ── RSVP Card ──────────────────────────────────────────────────────────────
 
   it('renders the RSVP Status card title', () => {
@@ -274,7 +282,8 @@ describe('PlanningOverview', () => {
 
   it('renders the Events card title', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText('Events')).toBeInTheDocument()
+    // 'Events' appears in both the MilestonesCard heading and the MiniStats bar
+    expect(screen.getAllByText('Events').length).toBeGreaterThanOrEqual(1)
   })
 
   it('renders real event names from dashboardData in the Events card', () => {
