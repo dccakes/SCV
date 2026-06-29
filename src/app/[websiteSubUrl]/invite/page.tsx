@@ -4,6 +4,7 @@ import Link from 'next/link'
 
 import { formatDateStandard } from '~/app/utils/helpers'
 import { Button } from '~/components/ui/button'
+import { Card, CardContent } from '~/components/ui/card'
 import { AddToCalendarButtons } from '~/components/website/add-to-calendar-buttons'
 import { InvalidHouseholdInvite } from '~/components/website/household-invite/invalid-household-invite'
 import { buildSaveTheDateCalendarLinks } from '~/lib/website/calendar'
@@ -127,67 +128,85 @@ export default async function HouseholdInvitePage({
   })
 
   return (
-    <main className='min-h-screen bg-background px-5 py-10 text-foreground'>
-      <section className='mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-3xl flex-col justify-center'>
-        {resolvedSearchParams?.updated === '1' && (
-          <p className='mb-8 border border-success/30 bg-success/10 px-4 py-3 font-mono text-success text-xs uppercase tracking-wider'>
-            Your details were updated.
-          </p>
-        )}
+    <main className='relative min-h-screen overflow-hidden bg-background px-5 py-12 text-foreground sm:py-16'>
+      {/* Soft, warm backdrop so the invitation card reads as a framed keepsake. */}
+      <div aria-hidden className='pointer-events-none absolute inset-0 -z-10'>
+        <div className='absolute -top-32 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl' />
+        <div className='absolute right-0 bottom-0 h-72 w-72 translate-x-1/4 rounded-full bg-accent/15 blur-3xl' />
+      </div>
 
-        <p className='mb-5 font-mono text-muted-foreground text-xs uppercase tracking-[0.28em]'>
-          Save the date
-        </p>
-        <h1 className='font-display text-6xl italic leading-none md:text-8xl'>{coupleNames}</h1>
+      <div className='mx-auto flex min-h-[calc(100vh-6rem)] w-full max-w-2xl items-center'>
+        <Card className='w-full overflow-hidden border-border/70 shadow-foreground/5 shadow-xl'>
+          {/* Slim accent band at the top of the card. */}
+          <div className='h-1.5 w-full bg-gradient-to-r from-primary via-accent to-primary' />
 
-        <div className='mt-10 grid gap-6 border-border border-y py-8 md:grid-cols-2'>
-          <div>
-            <p className='font-mono text-muted-foreground text-xs uppercase tracking-[0.22em]'>
-              Date
-            </p>
-            <p className='mt-2 font-serif text-2xl'>{formattedDate ?? DETAIL_FALLBACK}</p>
-          </div>
-          <div>
-            <p className='font-mono text-muted-foreground text-xs uppercase tracking-[0.22em]'>
-              Location
-            </p>
-            <p className='mt-2 font-serif text-2xl'>{location ?? DETAIL_FALLBACK}</p>
-          </div>
-        </div>
+          <CardContent className='px-6 py-10 sm:px-12 sm:py-14'>
+            {resolvedSearchParams?.updated === '1' && (
+              <p className='mb-8 rounded-md border border-success/30 bg-success/10 px-4 py-3 text-center font-mono text-success text-xs uppercase tracking-wider'>
+                Your details were updated.
+              </p>
+            )}
 
-        {calendarLinks ? (
-          <div className='mt-8'>
-            <p className='mb-3 font-mono text-muted-foreground text-xs uppercase tracking-[0.22em]'>
-              Add to your calendar
-            </p>
-            <div className='flex justify-start'>
-              <AddToCalendarButtons {...calendarLinks} />
+            <div className='text-center'>
+              <p className='font-mono text-muted-foreground text-xs uppercase tracking-[0.28em]'>
+                Save the date
+              </p>
+              <h1 className='mt-4 font-display text-5xl italic leading-none sm:text-7xl'>
+                {coupleNames}
+              </h1>
+              <span className='mx-auto mt-6 block h-px w-16 bg-border' />
             </div>
-          </div>
-        ) : null}
 
-        <div className='mt-8'>
-          <p className='font-mono text-muted-foreground text-xs uppercase tracking-[0.22em]'>
-            Invited household
-          </p>
-          <ul className='mt-3 space-y-2 font-serif text-xl'>
-            {inviteData.guests.map((guest) => (
-              <li key={guest.id}>{formatGuestName(guest)}</li>
-            ))}
-          </ul>
-        </div>
+            <div className='mt-8 grid gap-6 border-border border-y py-8 text-center sm:grid-cols-2 sm:text-left'>
+              <div>
+                <p className='font-mono text-muted-foreground text-xs uppercase tracking-[0.22em]'>
+                  Date
+                </p>
+                <p className='mt-2 font-serif text-2xl'>{formattedDate ?? DETAIL_FALLBACK}</p>
+              </div>
+              <div>
+                <p className='font-mono text-muted-foreground text-xs uppercase tracking-[0.22em]'>
+                  Location
+                </p>
+                <p className='mt-2 font-serif text-2xl'>{location ?? DETAIL_FALLBACK}</p>
+              </div>
+            </div>
 
-        <p className='mt-8 max-w-xl font-sans text-muted-foreground leading-7'>
-          Formal invitation details will follow. For now, please make sure we have the correct names
-          and mailing address for your household.
-        </p>
+            {calendarLinks ? (
+              <div className='mt-8 text-center sm:text-left'>
+                <p className='mb-3 font-mono text-muted-foreground text-xs uppercase tracking-[0.22em]'>
+                  Add to your calendar
+                </p>
+                <div className='flex justify-center sm:justify-start'>
+                  <AddToCalendarButtons {...calendarLinks} />
+                </div>
+              </div>
+            ) : null}
 
-        <div className='mt-10'>
-          <Button asChild>
-            <Link href={`/${websiteSubUrl}/invite/update`}>Update our details</Link>
-          </Button>
-        </div>
-      </section>
+            <div className='mt-8 text-center sm:text-left'>
+              <p className='font-mono text-muted-foreground text-xs uppercase tracking-[0.22em]'>
+                Invited household
+              </p>
+              <ul className='mt-3 space-y-2 font-serif text-xl'>
+                {inviteData.guests.map((guest) => (
+                  <li key={guest.id}>{formatGuestName(guest)}</li>
+                ))}
+              </ul>
+            </div>
+
+            <p className='mt-8 font-sans text-muted-foreground leading-7'>
+              Formal invitation details will follow. For now, please make sure we have the correct
+              names and mailing address for your household.
+            </p>
+
+            <div className='mt-10 flex justify-center sm:justify-start'>
+              <Button asChild size='lg'>
+                <Link href={`/${websiteSubUrl}/invite/update`}>Update our details</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </main>
   )
 }
