@@ -104,9 +104,9 @@ describe('household invite pages', () => {
       expect.stringContaining('household_invite_diego-and-laura=signed-token')
     )
     expect(response.headers.get('set-cookie')).toEqual(expect.stringContaining('Max-Age=31536000'))
-    expect(response.headers.get('set-cookie')).toEqual(
-      expect.stringContaining('Path=/diego-and-laura')
-    )
+    // Scoped to `/` (not `/<slug>`) so the cookie is also sent on the `/w/<slug>`
+    // website routes, letting recognised guests skip the password prompt.
+    expect(response.headers.get('set-cookie')).toEqual(expect.stringContaining('Path=/;'))
   })
 
   it('renders the authenticated save-the-date page with household names and wedding details', async () => {

@@ -1,5 +1,7 @@
 import { TRPCError } from '@trpc/server'
 
+import { createHouseholdInviteToken } from '~/server/application/household-invite/household-invite-token'
+
 jest.mock('~/server/authz/permission-checker', () => ({
   requirePermission: jest.fn(),
 }))
@@ -64,6 +66,7 @@ describe('WebsiteManagementService', () => {
 
   beforeEach(() => {
     process.env.NEXT_PUBLIC_APP_URL = 'https://oswp.example'
+    process.env.BETTER_AUTH_SECRET = 'test-secret-for-website-management'
     resetWebsiteRepoMocks()
     resetWeddingRepoMocks()
     resetEventRepoMocks()
@@ -303,6 +306,48 @@ describe('WebsiteManagementService', () => {
 
       await expect(
         service.fetchWeddingData('johndoeandjanesmith', undefined)
+      ).rejects.toMatchObject({
+        code: 'FORBIDDEN',
+      })
+    })
+
+    it('grants access to a protected site when a valid household invite token matches the wedding', async () => {
+      mockFindBySubUrlWithQuestionsFn.mockResolvedValue({
+        ...mockWebsiteWithQuestions,
+        isPasswordEnabled: true,
+        password: '$hashed-password',
+      })
+      // No valid password access token for this guest.
+      mockVerifyAccessToken.mockReturnValue(false)
+      mockFindWeddingByIdFn.mockResolvedValue(mockWedding)
+      mockFindByWeddingIdWithQuestionsFn.mockResolvedValue([mockEvent])
+      mockFindWebsiteSectionsFn.mockResolvedValue([])
+
+      const inviteToken = createHouseholdInviteToken({
+        weddingId: 'wedding-123',
+        householdId: 'household-1',
+      })
+
+      const result = await service.fetchWeddingData('johndoeandjanesmith', undefined, inviteToken)
+
+      expect(result.groomFirstName).toBe('John')
+    })
+
+    it('still forbids a protected site when the invite token belongs to another wedding', async () => {
+      mockFindBySubUrlWithQuestionsFn.mockResolvedValue({
+        ...mockWebsiteWithQuestions,
+        isPasswordEnabled: true,
+        password: '$hashed-password',
+      })
+      mockVerifyAccessToken.mockReturnValue(false)
+
+      const otherWeddingToken = createHouseholdInviteToken({
+        weddingId: 'some-other-wedding',
+        householdId: 'household-1',
+      })
+
+      await expect(
+        service.fetchWeddingData('johndoeandjanesmith', undefined, otherWeddingToken)
       ).rejects.toMatchObject({
         code: 'FORBIDDEN',
       })

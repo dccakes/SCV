@@ -78,6 +78,11 @@ jest.mock('~/app/_components/website/website-editor', () => ({
   }) => mockWebsiteEditor(props),
 }))
 
+jest.mock('~/app/_components/website/website-password-card', () => ({
+  __esModule: true,
+  WebsitePasswordCard: () => <div data-testid='website-password-card'>Password card</div>,
+}))
+
 jest.mock('~/app/_components/website/template-picker', () => ({
   __esModule: true,
   TemplatePicker: () => <div data-testid='template-picker'>Template picker</div>,

@@ -9,6 +9,7 @@ import { AddToCalendarButtons } from '~/components/website/add-to-calendar-butto
 import { EnvelopeReveal } from '~/components/website/household-invite/envelope-reveal'
 import { InvalidHouseholdInvite } from '~/components/website/household-invite/invalid-household-invite'
 import { buildSaveTheDateCalendarLinks } from '~/lib/website/calendar'
+import { householdInviteCookieName } from '~/lib/website/cookies'
 import { householdInviteService } from '~/server/application/household-invite'
 import { resolveTemplate, TemplateThemeProvider } from '~/templates'
 
@@ -28,8 +29,6 @@ type HouseholdInvitePageProps = {
     updated?: string
   }>
 }
-
-const getCookieName = (websiteSubUrl: string) => `household_invite_${websiteSubUrl}`
 
 const formatGuestName = (guest: { firstName: string; lastName: string }) =>
   [guest.firstName, guest.lastName].filter(Boolean).join(' ')
@@ -110,7 +109,7 @@ export default async function HouseholdInvitePage({
   const { websiteSubUrl } = await params
   const resolvedSearchParams = await searchParams
   const cookieStore = await cookies()
-  const token = cookieStore.get(getCookieName(websiteSubUrl))?.value
+  const token = cookieStore.get(householdInviteCookieName(websiteSubUrl))?.value
   const inviteData = await householdInviteService.getInviteData(websiteSubUrl, token)
 
   if (!inviteData) return <InvalidHouseholdInvite websiteSubUrl={websiteSubUrl} />

@@ -131,9 +131,9 @@ describe('websiteRouter', () => {
         headers: new Headers(),
       })
 
-      const input = { subUrl: 'johnandjane', accessToken: undefined }
+      const input = { subUrl: 'johnandjane', accessToken: undefined, inviteToken: 'invite-token' }
       await expect(caller.fetchWeddingData(input)).resolves.toEqual(payload)
-      expect(mockFetchWeddingData).toHaveBeenCalledWith('johnandjane', undefined)
+      expect(mockFetchWeddingData).toHaveBeenCalledWith('johnandjane', undefined, 'invite-token')
     })
   })
 })

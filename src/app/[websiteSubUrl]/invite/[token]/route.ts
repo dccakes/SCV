@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { householdInviteCookieName, householdInviteCookiePath } from '~/lib/website/cookies'
 import { householdInviteService } from '~/server/application/household-invite'
 
 type HouseholdInviteTokenRouteProps = {
@@ -8,8 +9,6 @@ type HouseholdInviteTokenRouteProps = {
     token: string
   }>
 }
-
-const getCookieName = (websiteSubUrl: string) => `household_invite_${websiteSubUrl}`
 
 const getInviteCookieMaxAge = (expiresAt: Date) =>
   Math.max(0, Math.floor((expiresAt.getTime() - Date.now()) / 1000))
@@ -31,11 +30,11 @@ export async function GET(request: Request, { params }: HouseholdInviteTokenRout
     })
   }
 
-  response.cookies.set(getCookieName(websiteSubUrl), token, {
+  response.cookies.set(householdInviteCookieName(websiteSubUrl), token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    path: `/${websiteSubUrl}`,
+    path: householdInviteCookiePath,
     maxAge: getInviteCookieMaxAge(inviteData.expiresAt),
   })
 
