@@ -11,6 +11,16 @@ import {
   SIDE_PANE_OVERLAY_CLASS,
   SIDE_PANE_SURFACE_CLASS,
 } from '~/components/layout/side-pane-styles'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '~/components/ui/alert-dialog'
 import { Button } from '~/components/ui/button'
 import {
   Dialog,
@@ -283,6 +293,12 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
   const [viewingPdf, setViewingPdf] = useState<{ name: string; url: string } | null>(null)
   const [scratchpad, setScratchpad] = useState('')
   const [newNote, setNewNote] = useState('')
+  const [deletingQuoteId, setDeletingQuoteId] = useState<string | null>(null)
+  const [deletingFile, setDeletingFile] = useState<{
+    fileId: string
+    quoteId: string
+    name: string
+  } | null>(null)
   const utils = api.useUtils()
   const vendorApi = api.vendor as VendorApiWithEnrichment
 
@@ -318,6 +334,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
 
   const deleteQuote = api.vendor.deleteQuote.useMutation({
     onSuccess: async () => {
+      setDeletingQuoteId(null)
       await refetch()
       toast.success('Quote removed')
     },
@@ -326,6 +343,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
 
   const deleteFile = api.vendor.deleteQuoteFile.useMutation({
     onSuccess: async () => {
+      setDeletingFile(null)
       await refetch()
       toast.success('File removed')
     },
@@ -751,18 +769,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                                       <button
                                         type='button'
                                         className='font-mono text-[0.58rem] text-destructive/70 uppercase tracking-wider hover:text-destructive'
-                                        onClick={() => {
-                                          if (
-                                            window.confirm(
-                                              'Remove this quote and all its attached files?'
-                                            )
-                                          ) {
-                                            deleteQuote.mutate({
-                                              quoteId: quote.id,
-                                              vendorId: enrichedVendor.id,
-                                            })
-                                          }
-                                        }}
+                                        onClick={() => setDeletingQuoteId(quote.id)}
                                         disabled={deleteQuote.isPending}
                                       >
                                         Remove
@@ -806,15 +813,13 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
                                             <button
                                               type='button'
                                               aria-label={`Remove ${file.name}`}
-                                              onClick={() => {
-                                                if (window.confirm(`Remove "${file.name}"?`)) {
-                                                  deleteFile.mutate({
-                                                    fileId: file.id,
-                                                    quoteId: quote.id,
-                                                    vendorId: enrichedVendor.id,
-                                                  })
-                                                }
-                                              }}
+                                              onClick={() =>
+                                                setDeletingFile({
+                                                  fileId: file.id,
+                                                  quoteId: quote.id,
+                                                  name: file.name,
+                                                })
+                                              }
                                               disabled={deleteFile.isPending}
                                               className='shrink-0 text-muted-foreground hover:text-destructive'
                                             >
@@ -866,6 +871,65 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
       </Dialog>
 
       <FileViewerDrawer file={viewingPdf} onClose={() => setViewingPdf(null)} />
+
+      <AlertDialog
+        open={!!deletingQuoteId}
+        onOpenChange={(open) => !open && setDeletingQuoteId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove this quote?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the quote and all its attached files.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteQuote.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                if (deletingQuoteId) {
+                  deleteQuote.mutate({ quoteId: deletingQuoteId, vendorId: enrichedVendor.id })
+                }
+              }}
+              disabled={deleteQuote.isPending}
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+            >
+              {deleteQuote.isPending ? 'Removing…' : 'Remove quote'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deletingFile} onOpenChange={(open) => !open && setDeletingFile(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove this file?</AlertDialogTitle>
+            <AlertDialogDescription>
+              &ldquo;{deletingFile?.name}&rdquo; will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteFile.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                if (deletingFile) {
+                  deleteFile.mutate({
+                    fileId: deletingFile.fileId,
+                    quoteId: deletingFile.quoteId,
+                    vendorId: enrichedVendor.id,
+                  })
+                }
+              }}
+              disabled={deleteFile.isPending}
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+            >
+              {deleteFile.isPending ? 'Removing…' : 'Remove file'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
