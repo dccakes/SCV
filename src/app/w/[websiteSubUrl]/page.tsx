@@ -2,11 +2,8 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
 import { resolveInvitedHousehold } from '~/app/w/[websiteSubUrl]/_lib/invited-household'
-import { loadWeddingBySubUrl } from '~/app/w/[websiteSubUrl]/_lib/load-wedding-by-suburl'
-import {
-  grantWebsiteAccess,
-  readWebsiteVisitorCookies,
-} from '~/app/w/[websiteSubUrl]/_lib/website-access'
+import { loadVisitorWedding } from '~/app/w/[websiteSubUrl]/_lib/load-visitor-wedding'
+import { grantWebsiteAccess } from '~/app/w/[websiteSubUrl]/_lib/website-access'
 import PasswordPage from '~/components/website/password-page'
 import WeddingWebsite from '~/components/website/wedding'
 
@@ -18,8 +15,7 @@ type RootRouteHandlerProps = {
 
 export async function generateMetadata({ params }: RootRouteHandlerProps): Promise<Metadata> {
   const { websiteSubUrl } = await params
-  const { accessToken, inviteToken } = await readWebsiteVisitorCookies(websiteSubUrl)
-  const loadResult = await loadWeddingBySubUrl(websiteSubUrl, accessToken, inviteToken)
+  const { loadResult } = await loadVisitorWedding(websiteSubUrl)
 
   if (loadResult.status !== 'ready') {
     return {
@@ -34,8 +30,7 @@ export async function generateMetadata({ params }: RootRouteHandlerProps): Promi
 
 export default async function RootRouteHandler({ params }: RootRouteHandlerProps) {
   const { websiteSubUrl } = await params
-  const { accessToken, inviteToken } = await readWebsiteVisitorCookies(websiteSubUrl)
-  const loadResult = await loadWeddingBySubUrl(websiteSubUrl, accessToken, inviteToken)
+  const { loadResult, inviteToken } = await loadVisitorWedding(websiteSubUrl)
 
   const verifyWebsitePassword = async (passwordInput: string) => {
     'use server'

@@ -1,11 +1,8 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
-import { loadWeddingBySubUrl } from '~/app/w/[websiteSubUrl]/_lib/load-wedding-by-suburl'
-import {
-  grantWebsiteAccess,
-  readWebsiteVisitorCookies,
-} from '~/app/w/[websiteSubUrl]/_lib/website-access'
+import { loadVisitorWedding } from '~/app/w/[websiteSubUrl]/_lib/load-visitor-wedding'
+import { grantWebsiteAccess } from '~/app/w/[websiteSubUrl]/_lib/website-access'
 import PasswordPage from '~/components/website/password-page'
 import WeddingSurface from '~/components/website/wedding-surface'
 
@@ -17,8 +14,7 @@ type SaveTheDatePageProps = {
 
 export async function generateMetadata({ params }: SaveTheDatePageProps): Promise<Metadata> {
   const { websiteSubUrl } = await params
-  const { accessToken, inviteToken } = await readWebsiteVisitorCookies(websiteSubUrl)
-  const loadResult = await loadWeddingBySubUrl(websiteSubUrl, accessToken, inviteToken)
+  const { loadResult } = await loadVisitorWedding(websiteSubUrl)
 
   return {
     title:
@@ -30,8 +26,7 @@ export async function generateMetadata({ params }: SaveTheDatePageProps): Promis
 
 export default async function SaveTheDatePage({ params }: SaveTheDatePageProps) {
   const { websiteSubUrl } = await params
-  const { accessToken, inviteToken } = await readWebsiteVisitorCookies(websiteSubUrl)
-  const loadResult = await loadWeddingBySubUrl(websiteSubUrl, accessToken, inviteToken)
+  const { loadResult } = await loadVisitorWedding(websiteSubUrl)
 
   const verifyWebsitePassword = async (passwordInput: string) => {
     'use server'
