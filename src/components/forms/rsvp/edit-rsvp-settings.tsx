@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { IoMdClose } from 'react-icons/io'
+import { toast } from 'sonner'
 import { sharedStyles } from '~/app/utils/shared-styles'
 import type { Website } from '~/app/utils/shared-types'
 import { useToggleEditRsvpSettingsForm } from '~/components/contexts/edit-rsvp-settings-form-context'
@@ -27,8 +28,9 @@ export default function EditRsvpSettingsForm({ website }: EditRsvpSettingsFormPr
       toggleEditRsvpSettingsForm()
     },
     onError: (err) => {
-      if (err) window.alert(err)
-      else window.alert('Failed to update RSVP Settings! Please refresh the page and try again.')
+      toast.error('Failed to update RSVP settings', {
+        description: err.message ?? 'Please refresh the page and try again.',
+      })
     },
   })
 
