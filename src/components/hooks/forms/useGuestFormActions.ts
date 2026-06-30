@@ -1,4 +1,5 @@
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 import { useToggleGuestForm } from '~/components/contexts/guest-form-context'
 import { api } from '~/trpc/react'
@@ -13,9 +14,10 @@ const useGuestFormActions = (closeForm: boolean, resetForm: () => void) => {
       resetForm()
     },
     onError: (err) => {
-      const errorMessage = err.data?.zodError?.fieldErrors?.guestParty
-      if (errorMessage?.[0]) window.alert(errorMessage)
-      else window.alert('Failed to create guests! Please try again later.')
+      const fieldError = err.data?.zodError?.fieldErrors?.guestParty?.[0]
+      toast.error('Failed to create guests', {
+        description: fieldError ?? err.message ?? 'Please try again later.',
+      })
     },
   })
 
@@ -26,9 +28,10 @@ const useGuestFormActions = (closeForm: boolean, resetForm: () => void) => {
       resetForm()
     },
     onError: (err) => {
-      const errorMessage = err.data?.zodError?.fieldErrors?.guestParty
-      if (errorMessage?.[0]) window.alert(errorMessage)
-      else window.alert('Failed to update party! Please try again later.')
+      const fieldError = err.data?.zodError?.fieldErrors?.guestParty?.[0]
+      toast.error('Failed to update party', {
+        description: fieldError ?? err.message ?? 'Please try again later.',
+      })
     },
   })
 
@@ -38,9 +41,10 @@ const useGuestFormActions = (closeForm: boolean, resetForm: () => void) => {
       router.refresh()
     },
     onError: (err) => {
-      const errorMessage = err.data?.zodError?.fieldErrors?.eventName
-      if (errorMessage?.[0]) window.alert(errorMessage)
-      else window.alert('Failed to delete event! Please try again later.')
+      const fieldError = err.data?.zodError?.fieldErrors?.eventName?.[0]
+      toast.error('Failed to delete household', {
+        description: fieldError ?? err.message ?? 'Please try again later.',
+      })
     },
   })
 

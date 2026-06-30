@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { type Dispatch, type SetStateAction, useState } from 'react'
 import { GoArrowLeft } from 'react-icons/go'
+import { toast } from 'sonner'
 
 import { sharedStyles } from '~/app/utils/shared-styles'
 import { api } from '~/trpc/react'
@@ -22,8 +23,9 @@ export default function SetPasswordView({ setShowPasswordView, password }: SetPa
       router.refresh()
     },
     onError: (err) => {
-      if (err) window.alert(err)
-      else window.alert('Failed to update website! Please try again later.')
+      toast.error('Failed to update website password', {
+        description: err.message ?? 'Please try again later.',
+      })
     },
   })
 
