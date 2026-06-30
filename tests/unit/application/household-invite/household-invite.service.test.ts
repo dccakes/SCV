@@ -161,6 +161,54 @@ describe('HouseholdInviteService', () => {
     await expect(service.getPublicWeddingSummary('unknown-slug')).resolves.toBeNull()
   })
 
+  it('returns the website template and enabled Save the Date copy with the invite data', async () => {
+    const db = createDb()
+    db.website.findFirst.mockResolvedValue({
+      weddingId: 'wedding-123',
+      templateId: 'aurelia',
+      websiteSections: [
+        {
+          isEnabled: true,
+          content: { eyebrow: "You're Invited", message: 'Join us in Puebla.' },
+        },
+      ],
+    })
+    db.household.findFirst.mockResolvedValue(inviteHousehold)
+    const service = new HouseholdInviteService(db as never)
+    const token = service.createTokenForTesting({
+      weddingId: 'wedding-123',
+      householdId: 'household-123',
+    })
+
+    const inviteData = await service.getInviteData('diego-and-laura', token)
+
+    expect(inviteData?.templateId).toBe('aurelia')
+    expect(inviteData?.saveTheDate).toEqual({
+      eyebrow: "You're Invited",
+      message: 'Join us in Puebla.',
+    })
+  })
+
+  it('ignores Save the Date copy that is present but disabled', async () => {
+    const db = createDb()
+    db.website.findFirst.mockResolvedValue({
+      weddingId: 'wedding-123',
+      templateId: null,
+      websiteSections: [{ isEnabled: false, content: { eyebrow: 'Hidden' } }],
+    })
+    db.household.findFirst.mockResolvedValue(inviteHousehold)
+    const service = new HouseholdInviteService(db as never)
+    const token = service.createTokenForTesting({
+      weddingId: 'wedding-123',
+      householdId: 'household-123',
+    })
+
+    const inviteData = await service.getInviteData('diego-and-laura', token)
+
+    expect(inviteData?.templateId).toBeNull()
+    expect(inviteData?.saveTheDate).toBeUndefined()
+  })
+
   it('returns null when the invite token wedding does not match the website sub URL', async () => {
     const db = createDb()
     db.website.findFirst.mockResolvedValue({ weddingId: 'different-wedding' })

@@ -32,11 +32,13 @@ if (typeof window !== 'undefined') {
   }))
 
   Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
     writable: true,
     value: matchMedia,
   })
 
   Object.defineProperty(globalThis, 'matchMedia', {
+    configurable: true,
     writable: true,
     value: matchMedia,
   })
