@@ -1,11 +1,10 @@
 import type { Metadata } from 'next'
-import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 
 import { loadWeddingBySubUrl } from '~/app/w/[websiteSubUrl]/_lib/load-wedding-by-suburl'
 import {
   grantWebsiteAccess,
-  websiteAccessCookieName,
+  readWebsiteVisitorCookies,
 } from '~/app/w/[websiteSubUrl]/_lib/website-access'
 import { RsvpFormProvider } from '~/components/contexts/rsvp-form-context'
 import MainRsvpForm from '~/components/website/forms/main'
@@ -20,9 +19,8 @@ type RsvpPageProps = {
 
 export async function generateMetadata({ params }: RsvpPageProps): Promise<Metadata> {
   const { websiteSubUrl } = await params
-  const cookieStore = await cookies()
-  const accessToken = cookieStore.get(websiteAccessCookieName(websiteSubUrl))?.value
-  const loadResult = await loadWeddingBySubUrl(websiteSubUrl, accessToken)
+  const { accessToken, inviteToken } = await readWebsiteVisitorCookies(websiteSubUrl)
+  const loadResult = await loadWeddingBySubUrl(websiteSubUrl, accessToken, inviteToken)
 
   return {
     title:
@@ -34,9 +32,8 @@ export async function generateMetadata({ params }: RsvpPageProps): Promise<Metad
 
 export default async function RsvpPage({ params }: RsvpPageProps) {
   const { websiteSubUrl } = await params
-  const cookieStore = await cookies()
-  const accessToken = cookieStore.get(websiteAccessCookieName(websiteSubUrl))?.value
-  const loadResult = await loadWeddingBySubUrl(websiteSubUrl, accessToken)
+  const { accessToken, inviteToken } = await readWebsiteVisitorCookies(websiteSubUrl)
+  const loadResult = await loadWeddingBySubUrl(websiteSubUrl, accessToken, inviteToken)
 
   const verifyWebsitePassword = async (passwordInput: string) => {
     'use server'

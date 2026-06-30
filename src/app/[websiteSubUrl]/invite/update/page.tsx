@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 
 import { HouseholdDetailsForm } from '~/components/website/household-invite/household-details-form'
 import { InvalidHouseholdInvite } from '~/components/website/household-invite/invalid-household-invite'
+import { householdInviteCookieName } from '~/lib/website/cookies'
 import { householdInviteService } from '~/server/application/household-invite'
 import type { UpdateHouseholdInviteInput } from '~/server/application/household-invite/household-invite.service'
 
@@ -23,8 +24,6 @@ type HouseholdInviteUpdatePageProps = {
     error?: string
   }>
 }
-
-const getCookieName = (websiteSubUrl: string) => `household_invite_${websiteSubUrl}`
 
 const stringValue = (formData: FormData, key: string) => {
   const value = formData.get(key)
@@ -78,7 +77,7 @@ export default async function HouseholdInviteUpdatePage({
   const { websiteSubUrl } = await params
   const resolvedSearchParams = await searchParams
   const cookieStore = await cookies()
-  const token = cookieStore.get(getCookieName(websiteSubUrl))?.value
+  const token = cookieStore.get(householdInviteCookieName(websiteSubUrl))?.value
   const inviteData = await householdInviteService.getInviteData(websiteSubUrl, token)
 
   if (!inviteData) return <InvalidHouseholdInvite websiteSubUrl={websiteSubUrl} />
@@ -87,7 +86,7 @@ export default async function HouseholdInviteUpdatePage({
     'use server'
 
     const cookieStore = await cookies()
-    const token = cookieStore.get(getCookieName(websiteSubUrl))?.value
+    const token = cookieStore.get(householdInviteCookieName(websiteSubUrl))?.value
     try {
       await householdInviteService.updateHouseholdDetails(
         websiteSubUrl,

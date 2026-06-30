@@ -6,6 +6,7 @@ import { TemplatePicker } from '~/app/_components/website/template-picker'
 import { WebsiteDisabledCallout } from '~/app/_components/website/website-disabled-callout'
 import { WebsiteEditor } from '~/app/_components/website/website-editor'
 import { WebsiteMediaEditor } from '~/app/_components/website/website-media-editor'
+import { WebsitePasswordCard } from '~/app/_components/website/website-password-card'
 import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
 import { WebsiteManager } from '~/components/website-manager/website-manager'
 import { auth } from '~/lib/auth'
@@ -80,6 +81,9 @@ export default async function WebsitePage() {
           />
           {websiteId && websiteSubUrl ? (
             <>
+              <WebsitePasswordCard
+                initialIsPasswordEnabled={existingWebsite?.isPasswordEnabled ?? false}
+              />
               <TemplatePicker
                 templates={listTemplateSummaries()}
                 currentTemplateId={existingWebsite?.templateId ?? null}
