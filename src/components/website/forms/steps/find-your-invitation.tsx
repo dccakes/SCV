@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { StepFormProps } from '~/app/utils/shared-types'
 import { useRsvpForm, useUpdateRsvpForm } from '~/components/contexts/rsvp-form-context'
+import { formatCoupleNames } from '~/lib/couple-names'
 import { api } from '~/trpc/react'
 
 export default function FindYourInvitationForm({ goNext }: StepFormProps) {
@@ -33,7 +34,7 @@ export default function FindYourInvitationForm({ goNext }: StepFormProps) {
 
   return (
     <div className='flex flex-col gap-5'>
-      <h2 className='text-2xl tracking-widest'>{`${weddingData.groomFirstName} & ${weddingData.brideFirstName}'s wedding`}</h2>
+      <h2 className='text-2xl tracking-widest'>{`${formatCoupleNames(weddingData, weddingData.nameDisplayOrder)}'s wedding`}</h2>
       <p className='mb-3 font-thin'>
         If you&apos;re responding for you and a guest (or for your family), you&apos;ll be able to
         RSVP for your entire group.

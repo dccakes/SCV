@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { AddToCalendarButtons } from '~/components/website/add-to-calendar-buttons'
+import { formatCoupleNames } from '~/lib/couple-names'
 import { buildSaveTheDateCalendarLinks } from '~/lib/website/calendar'
 import { ClassicHeaderImage } from '~/templates/classic/components/media'
 import type { TemplateSurfaceProps } from '~/templates/types'
@@ -8,7 +9,7 @@ export function ClassicSaveTheDate({ weddingData, path }: Readonly<TemplateSurfa
   const weddingEvent = weddingData.events.find((event) => event.name === 'Wedding Day')
   const venue = weddingEvent?.venue
   const copy = weddingData.saveTheDate
-  const coupleNames = `${weddingData.groomFirstName} & ${weddingData.brideFirstName}`
+  const coupleNames = formatCoupleNames(weddingData, weddingData.nameDisplayOrder)
   const calendarLinks = buildSaveTheDateCalendarLinks({
     title: `${coupleNames} Wedding`,
     description: `Save the date for the wedding of ${coupleNames}! Formal invitation to follow. ${weddingData.website.url}`,
@@ -26,7 +27,7 @@ export function ClassicSaveTheDate({ weddingData, path }: Readonly<TemplateSurfa
               {copy?.eyebrow ?? 'Save the Date'}
             </p>
             <h1 className='font-medium text-5xl text-card-foreground tracking-widest sm:text-6xl'>
-              {weddingData.groomFirstName} & {weddingData.brideFirstName}
+              {coupleNames}
             </h1>
             <div className='h-px w-24 bg-border' />
             <p className='text-2xl text-card-foreground'>

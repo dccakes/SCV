@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { AddToCalendarButtons } from '~/components/website/add-to-calendar-buttons'
+import { formatCoupleNames, getOrderedPartners } from '~/lib/couple-names'
 import { buildSaveTheDateCalendarLinks } from '~/lib/website/calendar'
 import type { TemplateSurfaceProps } from '~/templates/types'
 import { HeroBackground } from '~/templates/voyage/components/media'
@@ -20,7 +21,8 @@ export function VoyageSaveTheDate({ weddingData, path }: Readonly<TemplateSurfac
   const venue = weddingEvent?.venue ?? null
   const dateLabel = weddingData.date?.standardFormat ?? 'Date to be announced'
   const copy = weddingData.saveTheDate
-  const coupleNames = `${weddingData.groomFirstName} & ${weddingData.brideFirstName}`
+  const { first, second } = getOrderedPartners(weddingData, weddingData.nameDisplayOrder)
+  const coupleNames = formatCoupleNames(weddingData, weddingData.nameDisplayOrder)
   const calendarLinks = buildSaveTheDateCalendarLinks({
     title: `${coupleNames} Wedding`,
     description: `Save the date for the wedding of ${coupleNames}! Formal invitation to follow. ${website.url}`,
@@ -34,9 +36,9 @@ export function VoyageSaveTheDate({ weddingData, path }: Readonly<TemplateSurfac
         <div className='mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-8 px-6 py-24 text-center text-[#F8F1E7]'>
           <Eyebrow className='text-[#D1B879]'>{copy?.eyebrow ?? 'Save the Date'}</Eyebrow>
           <h1 className={`${headingFont} font-light text-5xl italic sm:text-7xl`}>
-            {weddingData.groomFirstName}
+            {first.firstName}
             <span className='mx-3 text-[#D1B879] not-italic'>&amp;</span>
-            {weddingData.brideFirstName}
+            {second.firstName}
           </h1>
           <GoldRule className='bg-[#D1B879]/70' />
           <p

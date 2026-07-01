@@ -13,6 +13,7 @@
  */
 
 import { formatDateHTML5, formatDateStandard } from '~/app/utils/helpers'
+import { formatCoupleNames, getOrderedPartners } from '~/lib/couple-names'
 import type { WeddingPageData } from '~/server/domains/website/website.types'
 import type {
   WebsiteSection,
@@ -154,10 +155,9 @@ function HeroInfoRow({ icon, children }: { icon: React.ReactNode; children: Reac
 
 export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSurfaceProps>) {
   const { website } = weddingData
-  const groom = weddingData.groomFirstName ?? ''
-  const bride = weddingData.brideFirstName ?? ''
-  const monogram = `${groom?.[0] ?? 'A'} | ${bride?.[0] ?? 'B'}`.toUpperCase()
-  const coupleNames = [groom, bride].filter(Boolean).join(' & ') || 'Our Wedding'
+  const { first, second } = getOrderedPartners(weddingData, weddingData.nameDisplayOrder)
+  const monogram = `${first.firstName?.[0] ?? 'A'} | ${second.firstName?.[0] ?? 'B'}`.toUpperCase()
+  const coupleNames = formatCoupleNames(weddingData, weddingData.nameDisplayOrder) || 'Our Wedding'
 
   const heroUrl = website.headerImageUrl ?? website.coverPhotoUrl ?? null
   const dateLabel = weddingData.date?.standardFormat ?? null

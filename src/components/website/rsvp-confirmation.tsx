@@ -6,6 +6,7 @@ import { FaCircleCheck } from 'react-icons/fa6'
 import { RxCrossCircled } from 'react-icons/rx'
 import type { Event, RsvpFormResponse } from '~/app/utils/shared-types'
 import { useRsvpForm } from '~/components/contexts/rsvp-form-context'
+import { formatCoupleNames } from '~/lib/couple-names'
 
 type RsvpConfirmationProps = {
   basePath: string
@@ -17,8 +18,8 @@ export default function RsvpConfirmation({ basePath, setCurrentStep }: RsvpConfi
   return (
     <div className='flex flex-col pt-5 pb-8'>
       <h2 className='text-2xl tracking-widest'>
-        all set! here&apos;s what we sent {rsvpFormData.weddingData.groomFirstName} &{' '}
-        {rsvpFormData.weddingData.brideFirstName}
+        all set! here&apos;s what we sent{' '}
+        {formatCoupleNames(rsvpFormData.weddingData, rsvpFormData.weddingData.nameDisplayOrder)}
       </h2>
       <Link
         className={`my-5 bg-gray-700 py-3 text-center text-white text-xl tracking-wide`}

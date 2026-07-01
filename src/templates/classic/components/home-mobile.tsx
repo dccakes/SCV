@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { formatDateStandard } from '~/app/utils/helpers'
+import { getOrderedPartners } from '~/lib/couple-names'
 import { ClassicCoupleGallery, ClassicHeaderImage } from '~/templates/classic/components/media'
 import { ClassicNavbar } from '~/templates/classic/components/navbar'
 import { ClassicSections } from '~/templates/classic/components/sections'
@@ -12,13 +13,14 @@ export function ClassicHomeMobile({
   introText,
 }: Readonly<TemplateSurfaceProps>) {
   const { website } = weddingData
+  const { first, second } = getOrderedPartners(weddingData, weddingData.nameDisplayOrder)
 
   return (
     <main className='flex flex-col items-center justify-center gap-20 pb-24 text-center text-zinc-500 tracking-widest'>
       <ClassicHeaderImage url={website.headerImageUrl} />
       <div className='text-center'>
         <h1 className='my-5 font-medium text-6xl tracking-widest'>
-          {weddingData.groomFirstName} & {weddingData.brideFirstName}
+          {first.firstName} & {second.firstName}
         </h1>
         <p className='text-lg'>{weddingData.date?.standardFormat ?? 'Date To Be Announced'}</p>
         {weddingData.daysRemaining > 0 && (
@@ -76,7 +78,7 @@ export function ClassicHomeMobile({
 
       <div className='text-center'>
         <h2 className='border-black border-b px-5 pb-6 text-6xl'>
-          {weddingData.groomFirstName?.[0] ?? 'G'} & {weddingData.brideFirstName?.[0] ?? 'B'}
+          {first.firstName?.[0] ?? 'G'} & {second.firstName?.[0] ?? 'B'}
         </h2>
         <p className='mt-4 text-lg tracking-widest'>
           {weddingData.date.numberFormat?.toString() ?? 'Date To Be Announced'}

@@ -4,13 +4,21 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarIcon, MapPin } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import type { z } from 'zod'
 
 import { LoadingSpinner } from '~/components/loaders'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/ui/select'
+import type { NameDisplayOrder } from '~/server/domains/wedding/wedding.types'
 import { updateWeddingDetailsSchema } from '~/server/domains/wedding/wedding.validator'
 import { api } from '~/trpc/react'
 
@@ -22,6 +30,7 @@ type WeddingSettingsFormProps = {
     groomLastName: string
     brideFirstName: string
     brideLastName: string
+    nameDisplayOrder: NameDisplayOrder
     weddingDate?: string
     weddingLocation?: string
     primaryEventId?: string
@@ -47,11 +56,15 @@ export default function WeddingSettingsForm({ initialData }: WeddingSettingsForm
       groomLastName: initialData.groomLastName,
       brideFirstName: initialData.brideFirstName,
       brideLastName: initialData.brideLastName,
+      nameDisplayOrder: initialData.nameDisplayOrder,
     },
   })
 
-  const { register, handleSubmit, formState } = form
+  const { register, handleSubmit, control, watch, formState } = form
   const { errors, isSubmitting } = formState
+
+  const groomFirstNameValue = watch('groomFirstName') || 'Groom'
+  const brideFirstNameValue = watch('brideFirstName') || 'Bride'
 
   const parsedCeremonyDate = initialData.weddingDate ? new Date(initialData.weddingDate) : null
   const ceremonyDateLabel =
@@ -150,6 +163,36 @@ export default function WeddingSettingsForm({ initialData }: WeddingSettingsForm
             )}
           </div>
         </div>
+      </div>
+
+      {/* Name Display Order */}
+      <div className='space-y-2 rounded-lg border border-border/90 bg-card/85 p-5'>
+        <h3 className='font-mono text-[0.62rem] text-foreground/55 uppercase tracking-widest'>
+          Name Order
+        </h3>
+        <Label htmlFor='nameDisplayOrder'>Whose name appears first on your website</Label>
+        <Controller
+          name='nameDisplayOrder'
+          control={control}
+          render={({ field }) => (
+            <Select value={field.value} onValueChange={field.onChange} disabled={isSubmitting}>
+              <SelectTrigger id='nameDisplayOrder'>
+                <SelectValue placeholder='Select name order' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='GROOM_FIRST'>
+                  {groomFirstNameValue} &amp; {brideFirstNameValue}
+                </SelectItem>
+                <SelectItem value='BRIDE_FIRST'>
+                  {brideFirstNameValue} &amp; {groomFirstNameValue}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        />
+        <p className='text-foreground/65 text-sm'>
+          This order is used across your wedding website, save the date, invitation, and RSVP pages.
+        </p>
       </div>
 
       {/* Ceremony Event Summary */}

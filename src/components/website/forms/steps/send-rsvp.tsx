@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { StepFormProps } from '~/app/utils/shared-types'
 import { useRsvpForm } from '~/components/contexts/rsvp-form-context'
+import { formatCoupleNames } from '~/lib/couple-names'
 
 interface SendRsvpProps extends StepFormProps {
   isFetching: boolean
@@ -15,7 +16,7 @@ export default function SendRsvp({ goBack, isFetching }: SendRsvpProps) {
 
   return (
     <div className='flex flex-col gap-5'>
-      <h2 className='text-2xl tracking-widest'>{`last step! send your rsvp to ${weddingData.groomFirstName} & ${weddingData.brideFirstName}'s wedding`}</h2>
+      <h2 className='text-2xl tracking-widest'>{`last step! send your rsvp to ${formatCoupleNames(weddingData, weddingData.nameDisplayOrder)}'s wedding`}</h2>
       <div className='flex items-center gap-3'>
         <input
           id='send-email-confirmation'

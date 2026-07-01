@@ -258,6 +258,7 @@ export class WebsiteManagementService {
       groomLastName: wedding.groomLastName,
       brideFirstName: wedding.brideFirstName,
       brideLastName: wedding.brideLastName,
+      nameDisplayOrder: wedding.nameDisplayOrder,
       date: {
         standardFormat: weddingDate?.toLocaleDateString('en-us', {
           weekday: 'long',
