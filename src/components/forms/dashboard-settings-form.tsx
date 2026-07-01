@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { type Dispatch, type SetStateAction, useState } from 'react'
 import { BsTrash3 } from 'react-icons/bs'
 import { IoMdClose } from 'react-icons/io'
+import { toast } from 'sonner'
 import { sharedStyles } from '~/app/utils/shared-styles'
 import type { Website } from '~/app/utils/shared-types'
 import { computePublicWebsiteUrl } from '~/app/utils/website'
@@ -70,8 +71,9 @@ const Main = ({
       router.refresh()
     },
     onError: (err) => {
-      if (err) window.alert(err)
-      else window.alert('Failed to update website! Please try again later.')
+      toast.error('Failed to update website settings', {
+        description: err.message ?? 'Please try again later.',
+      })
     },
   })
 

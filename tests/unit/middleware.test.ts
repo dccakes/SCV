@@ -78,7 +78,8 @@ describe('middleware', () => {
       websiteResponse,
       websiteRsvpResponse,
       websiteInviteResponse,
-      websiteInviteTokenResponse,
+      websiteInviteCodeResponse,
+      websiteInviteUpdateResponse,
       authApiResponse,
       blobUploadResponse,
     ] = await Promise.all([
@@ -92,8 +93,9 @@ describe('middleware', () => {
       middleware(createRequest('/join/sample-token')),
       middleware(createRequest('/w/shrek-and-fiona')),
       middleware(createRequest('/w/shrek-and-fiona/rsvp')),
-      middleware(createRequest('/shrek-and-fiona/invite')),
-      middleware(createRequest('/shrek-and-fiona/invite/sample-token')),
+      middleware(createRequest('/w/shrek-and-fiona/invite')),
+      middleware(createRequest('/w/shrek-and-fiona/invite/sf-4f9k2c')),
+      middleware(createRequest('/w/shrek-and-fiona/invite/update')),
       middleware(createRequest('/api/auth/session')),
       middleware(createRequest('/api/blob/upload')),
     ])
@@ -109,10 +111,21 @@ describe('middleware', () => {
     expect(websiteResponse.headers.get('location')).toBeNull()
     expect(websiteRsvpResponse.headers.get('location')).toBeNull()
     expect(websiteInviteResponse.headers.get('location')).toBeNull()
-    expect(websiteInviteTokenResponse.headers.get('location')).toBeNull()
+    expect(websiteInviteCodeResponse.headers.get('location')).toBeNull()
+    expect(websiteInviteUpdateResponse.headers.get('location')).toBeNull()
     expect(authApiResponse.headers.get('location')).toBeNull()
     expect(blobUploadResponse.headers.get('location')).toBeNull()
     expect(mockGetSessionCookie).not.toHaveBeenCalled()
+  })
+
+  it('does not treat the legacy root-level invite path as public anymore', async () => {
+    mockGetSessionCookie.mockReturnValue(null)
+
+    const response = await middleware(createRequest('/shrek-and-fiona/invite/sf-4f9k2c'))
+
+    expect(response.headers.get('location')).toBe(
+      'https://example.com/auth/sign-in?callbackUrl=%2Fshrek-and-fiona%2Finvite%2Fsf-4f9k2c'
+    )
   })
 
   it('redirects legacy root website URLs to /w/[slug]', async () => {

@@ -20,26 +20,32 @@ const isWebsiteNotFoundError = (error: unknown): boolean => {
   )
 }
 
-export const loadWeddingBySubUrl = cache(async (websiteSubUrl: string, accessToken?: string) => {
-  if (!websiteSubUrl) {
-    return { status: 'not-found' } as const
-  }
-
-  try {
-    const weddingData = await api.website.fetchWeddingData({ subUrl: websiteSubUrl, accessToken })
-    return {
-      status: 'ready',
-      weddingData,
-    } satisfies WeddingBySubUrlLoadResult
-  } catch (error) {
-    if (isPasswordRequiredError(error)) {
-      return { status: 'password-required' } as const
-    }
-
-    if (isWebsiteNotFoundError(error)) {
+export const loadWeddingBySubUrl = cache(
+  async (websiteSubUrl: string, accessToken?: string, inviteToken?: string) => {
+    if (!websiteSubUrl) {
       return { status: 'not-found' } as const
     }
 
-    throw error
+    try {
+      const weddingData = await api.website.fetchWeddingData({
+        subUrl: websiteSubUrl,
+        accessToken,
+        inviteToken,
+      })
+      return {
+        status: 'ready',
+        weddingData,
+      } satisfies WeddingBySubUrlLoadResult
+    } catch (error) {
+      if (isPasswordRequiredError(error)) {
+        return { status: 'password-required' } as const
+      }
+
+      if (isWebsiteNotFoundError(error)) {
+        return { status: 'not-found' } as const
+      }
+
+      throw error
+    }
   }
-})
+)

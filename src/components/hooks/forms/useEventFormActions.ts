@@ -1,4 +1,5 @@
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 import { useToggleEventForm } from '~/components/contexts/event-form-context'
 import { api } from '~/trpc/react'
@@ -13,9 +14,10 @@ const useEventFormActions = () => {
       router.refresh()
     },
     onError: (err) => {
-      const errorMessage = err.data?.zodError?.fieldErrors?.eventName
-      if (errorMessage?.[0]) window.alert(errorMessage)
-      else window.alert('Failed to create event! Please try again later.')
+      const fieldError = err.data?.zodError?.fieldErrors?.eventName?.[0]
+      toast.error('Failed to create event', {
+        description: fieldError ?? err.message ?? 'Please try again later.',
+      })
     },
   })
 
@@ -25,9 +27,10 @@ const useEventFormActions = () => {
       router.refresh()
     },
     onError: (err) => {
-      const errorMessage = err.data?.zodError?.fieldErrors?.eventName
-      if (errorMessage?.[0]) window.alert(errorMessage)
-      else window.alert('Failed to update event! Please try again later.')
+      const fieldError = err.data?.zodError?.fieldErrors?.eventName?.[0]
+      toast.error('Failed to update event', {
+        description: fieldError ?? err.message ?? 'Please try again later.',
+      })
     },
   })
 
@@ -37,9 +40,10 @@ const useEventFormActions = () => {
       router.refresh()
     },
     onError: (err) => {
-      const errorMessage = err.data?.zodError?.fieldErrors?.eventName
-      if (errorMessage?.[0]) window.alert(errorMessage)
-      else window.alert('Failed to delete event! Please try again later.')
+      const fieldError = err.data?.zodError?.fieldErrors?.eventName?.[0]
+      toast.error('Failed to delete event', {
+        description: fieldError ?? err.message ?? 'Please try again later.',
+      })
     },
   })
 

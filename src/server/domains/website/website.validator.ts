@@ -130,6 +130,12 @@ export const getBySubUrlSchema = z.object({
 export const fetchWeddingDataSchema = z.object({
   subUrl: z.string().min(1, 'Sub URL is required'),
   accessToken: z.string().optional(),
+  /**
+   * Household invite token held by guests who arrived via a save-the-date /
+   * invite link. A valid token for this wedding unlocks a password-protected
+   * site without prompting for the password.
+   */
+  inviteToken: z.string().optional(),
 })
 
 export const hasPasswordAccessSchema = z.object({

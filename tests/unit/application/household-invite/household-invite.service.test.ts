@@ -1,7 +1,6 @@
 jest.mock('~/lib/auth-permissions', () => require('~/lib/__mocks__/auth-permissions'))
 
 import { HouseholdInviteService } from '~/server/application/household-invite/household-invite.service'
-import { verifyHouseholdInviteToken } from '~/server/application/household-invite/household-invite-token'
 
 const authz = {
   userId: 'user-123',
@@ -25,6 +24,7 @@ const createDb = () => {
   return {
     household: {
       findFirst: jest.fn(),
+      update: jest.fn().mockResolvedValue({}),
     },
     website: {
       findFirst: jest.fn(),
@@ -37,9 +37,14 @@ const createDb = () => {
   }
 }
 
+const INVITE_CODE = 'al-4f9k2c'
+const INVITE_CODE_EXPIRES_AT = new Date('2027-06-18T12:00:00.000Z')
+
 const inviteHousehold = {
   id: 'household-123',
   weddingId: 'wedding-123',
+  inviteCode: INVITE_CODE,
+  inviteCodeExpiresAt: INVITE_CODE_EXPIRES_AT,
   address1: null,
   address2: null,
   city: null,
@@ -79,7 +84,11 @@ describe('HouseholdInviteService', () => {
 
   it('generates a one-year invite link for a household in the active wedding', async () => {
     const db = createDb()
-    db.household.findFirst.mockResolvedValue({ id: 'household-123', weddingId: 'wedding-123' })
+    db.household.findFirst.mockResolvedValue({
+      id: 'household-123',
+      weddingId: 'wedding-123',
+      guests: [{ firstName: 'Ada', lastName: 'Lovelace' }],
+    })
     db.website.findFirst.mockResolvedValue({ subUrl: 'diego-and-laura' })
     const service = new HouseholdInviteService(db as never)
 
@@ -88,20 +97,30 @@ describe('HouseholdInviteService', () => {
       baseUrl: 'https://example.com/dashboard',
     })
 
-    const token = result.url.split('/').at(-1)
-    expect(result.url).toMatch(/^https:\/\/example\.com\/diego-and-laura\/invite\//)
-    expect(verifyHouseholdInviteToken(token)).toEqual({
-      weddingId: 'wedding-123',
-      householdId: 'household-123',
-      expiresAt: new Date('2027-06-18T12:00:00.000Z'),
-    })
+    expect(result.url).toMatch(/^https:\/\/example\.com\/w\/diego-and-laura\/invite\/al-[a-z0-9]+$/)
+    expect(result.expiresAt).toEqual(new Date('2027-06-18T12:00:00.000Z'))
     expect(db.household.findFirst).toHaveBeenCalledWith({
       where: { id: 'household-123', weddingId: 'wedding-123' },
-      select: { id: true, weddingId: true },
+      select: {
+        id: true,
+        weddingId: true,
+        guests: {
+          orderBy: { id: 'asc' },
+          take: 1,
+          select: { firstName: true, lastName: true },
+        },
+      },
+    })
+    expect(db.household.update).toHaveBeenCalledWith({
+      where: { id: 'household-123' },
+      data: {
+        inviteCode: expect.stringMatching(/^al-[a-z0-9]+$/),
+        inviteCodeExpiresAt: new Date('2027-06-18T12:00:00.000Z'),
+      },
     })
   })
 
-  it('returns public couple names, date, and venue for a website slug without a token', async () => {
+  it('returns public couple names, date, and venue for a website slug without a code', async () => {
     const weddingDate = new Date('2027-05-30T12:00:00.000Z')
     const db = createDb()
     db.website.findFirst.mockResolvedValue({
@@ -161,32 +180,100 @@ describe('HouseholdInviteService', () => {
     await expect(service.getPublicWeddingSummary('unknown-slug')).resolves.toBeNull()
   })
 
-  it('returns null when the invite token wedding does not match the website sub URL', async () => {
+  it('returns the website template and enabled Save the Date copy with the invite data', async () => {
     const db = createDb()
+    db.website.findFirst.mockResolvedValue({
+      weddingId: 'wedding-123',
+      templateId: 'aurelia',
+      websiteSections: [
+        {
+          isEnabled: true,
+          content: { eyebrow: "You're Invited", message: 'Join us in Puebla.' },
+        },
+      ],
+    })
+    db.household.findFirst.mockResolvedValue(inviteHousehold)
+    const service = new HouseholdInviteService(db as never)
+    const code = INVITE_CODE
+
+    const inviteData = await service.getInviteData('diego-and-laura', code)
+
+    expect(inviteData?.templateId).toBe('aurelia')
+    expect(inviteData?.saveTheDate).toEqual({
+      eyebrow: "You're Invited",
+      message: 'Join us in Puebla.',
+    })
+  })
+
+  it('ignores Save the Date copy that is present but disabled', async () => {
+    const db = createDb()
+    db.website.findFirst.mockResolvedValue({
+      weddingId: 'wedding-123',
+      templateId: null,
+      websiteSections: [{ isEnabled: false, content: { eyebrow: 'Hidden' } }],
+    })
+    db.household.findFirst.mockResolvedValue(inviteHousehold)
+    const service = new HouseholdInviteService(db as never)
+    const code = INVITE_CODE
+
+    const inviteData = await service.getInviteData('diego-and-laura', code)
+
+    expect(inviteData?.templateId).toBeNull()
+    expect(inviteData?.saveTheDate).toBeUndefined()
+  })
+
+  it('returns null when the invite code household is scoped to a different wedding', async () => {
+    const db = createDb()
+    db.household.findFirst.mockResolvedValue({
+      id: 'household-123',
+      weddingId: 'wedding-123',
+      inviteCodeExpiresAt: INVITE_CODE_EXPIRES_AT,
+    })
     db.website.findFirst.mockResolvedValue({ weddingId: 'different-wedding' })
     const service = new HouseholdInviteService(db as never)
 
-    const token = service.createTokenForTesting({
-      weddingId: 'wedding-123',
-      householdId: 'household-123',
+    await expect(service.getInviteData('diego-and-laura', INVITE_CODE)).resolves.toBeNull()
+    expect(db.household.findFirst).toHaveBeenCalledTimes(1)
+    expect(db.household.findFirst).toHaveBeenCalledWith({
+      where: { inviteCode: INVITE_CODE },
+      select: { id: true, weddingId: true, inviteCodeExpiresAt: true },
     })
+  })
 
-    await expect(service.getInviteData('diego-and-laura', token)).resolves.toBeNull()
+  it('returns null for an unknown or expired invite code', async () => {
+    const db = createDb()
+    const service = new HouseholdInviteService(db as never)
+
+    db.household.findFirst.mockResolvedValueOnce(null)
+    await expect(service.getInviteData('diego-and-laura', 'no-such-code')).resolves.toBeNull()
+
+    db.household.findFirst.mockResolvedValueOnce({
+      id: 'household-123',
+      weddingId: 'wedding-123',
+      inviteCodeExpiresAt: new Date('2026-06-18T11:59:59.000Z'),
+    })
+    await expect(service.getInviteData('diego-and-laura', INVITE_CODE)).resolves.toBeNull()
+
+    expect(db.website.findFirst).not.toHaveBeenCalled()
+  })
+
+  it('returns null when no code is supplied', async () => {
+    const db = createDb()
+    const service = new HouseholdInviteService(db as never)
+
+    await expect(service.getInviteData('diego-and-laura', undefined)).resolves.toBeNull()
     expect(db.household.findFirst).not.toHaveBeenCalled()
   })
 
-  it('rejects updates that include a guest outside the token household', async () => {
+  it('rejects updates that include a guest outside the invite code household', async () => {
     const db = createDb()
     db.website.findFirst.mockResolvedValue({ weddingId: 'wedding-123' })
     db.household.findFirst.mockResolvedValue(inviteHousehold)
     const service = new HouseholdInviteService(db as never)
-    const token = service.createTokenForTesting({
-      weddingId: 'wedding-123',
-      householdId: 'household-123',
-    })
+    const code = INVITE_CODE
 
     await expect(
-      service.updateHouseholdDetails('diego-and-laura', token, {
+      service.updateHouseholdDetails('diego-and-laura', code, {
         address1: '123 Main St',
         address2: null,
         city: 'Puebla',
@@ -219,13 +306,10 @@ describe('HouseholdInviteService', () => {
     db.website.findFirst.mockResolvedValue({ weddingId: 'wedding-123' })
     db.household.findFirst.mockResolvedValue(inviteHousehold)
     const service = new HouseholdInviteService(db as never)
-    const token = service.createTokenForTesting({
-      weddingId: 'wedding-123',
-      householdId: 'household-123',
-    })
+    const code = INVITE_CODE
 
     await expect(
-      service.updateHouseholdDetails('diego-and-laura', token, {
+      service.updateHouseholdDetails('diego-and-laura', code, {
         address1: ' 123 Main St ',
         address2: '',
         city: ' Puebla ',
@@ -279,13 +363,10 @@ describe('HouseholdInviteService', () => {
     db.website.findFirst.mockResolvedValue({ weddingId: 'wedding-123' })
     db.household.findFirst.mockResolvedValue(inviteHousehold)
     const service = new HouseholdInviteService(db as never)
-    const token = service.createTokenForTesting({
-      weddingId: 'wedding-123',
-      householdId: 'household-123',
-    })
+    const code = INVITE_CODE
 
     await expect(
-      service.updateHouseholdDetails('diego-and-laura', token, {
+      service.updateHouseholdDetails('diego-and-laura', code, {
         address1: null,
         address2: null,
         city: null,
@@ -323,13 +404,10 @@ describe('HouseholdInviteService', () => {
       ],
     })
     const service = new HouseholdInviteService(db as never)
-    const token = service.createTokenForTesting({
-      weddingId: 'wedding-123',
-      householdId: 'household-123',
-    })
+    const code = INVITE_CODE
 
     await expect(
-      service.updateHouseholdDetails('diego-and-laura', token, {
+      service.updateHouseholdDetails('diego-and-laura', code, {
         address1: null,
         address2: null,
         city: null,

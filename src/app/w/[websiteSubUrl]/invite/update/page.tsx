@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 
 import { HouseholdDetailsForm } from '~/components/website/household-invite/household-details-form'
 import { InvalidHouseholdInvite } from '~/components/website/household-invite/invalid-household-invite'
+import { householdInviteCookieName } from '~/lib/website/cookies'
 import { householdInviteService } from '~/server/application/household-invite'
 import type { UpdateHouseholdInviteInput } from '~/server/application/household-invite/household-invite.service'
 
@@ -23,8 +24,6 @@ type HouseholdInviteUpdatePageProps = {
     error?: string
   }>
 }
-
-const getCookieName = (websiteSubUrl: string) => `household_invite_${websiteSubUrl}`
 
 const stringValue = (formData: FormData, key: string) => {
   const value = formData.get(key)
@@ -78,8 +77,8 @@ export default async function HouseholdInviteUpdatePage({
   const { websiteSubUrl } = await params
   const resolvedSearchParams = await searchParams
   const cookieStore = await cookies()
-  const token = cookieStore.get(getCookieName(websiteSubUrl))?.value
-  const inviteData = await householdInviteService.getInviteData(websiteSubUrl, token)
+  const code = cookieStore.get(householdInviteCookieName(websiteSubUrl))?.value
+  const inviteData = await householdInviteService.getInviteData(websiteSubUrl, code)
 
   if (!inviteData) return <InvalidHouseholdInvite websiteSubUrl={websiteSubUrl} />
 
@@ -87,25 +86,25 @@ export default async function HouseholdInviteUpdatePage({
     'use server'
 
     const cookieStore = await cookies()
-    const token = cookieStore.get(getCookieName(websiteSubUrl))?.value
+    const code = cookieStore.get(householdInviteCookieName(websiteSubUrl))?.value
     try {
       await householdInviteService.updateHouseholdDetails(
         websiteSubUrl,
-        token,
+        code,
         parseUpdateFormData(formData)
       )
     } catch (error) {
       if (error instanceof TRPCError && error.code === 'FORBIDDEN') {
-        redirect(`/${websiteSubUrl}/invite/update?error=expired`)
+        redirect(`/w/${websiteSubUrl}/invite/update?error=expired`)
       }
 
       if (error instanceof TRPCError && ['BAD_REQUEST', 'CONFLICT'].includes(error.code)) {
-        redirect(`/${websiteSubUrl}/invite/update?error=validation`)
+        redirect(`/w/${websiteSubUrl}/invite/update?error=validation`)
       }
 
-      redirect(`/${websiteSubUrl}/invite/update?error=save`)
+      redirect(`/w/${websiteSubUrl}/invite/update?error=save`)
     }
-    redirect(`/${websiteSubUrl}/invite?updated=1`)
+    redirect(`/w/${websiteSubUrl}/invite?updated=1`)
   }
 
   return (
@@ -124,7 +123,7 @@ export default async function HouseholdInviteUpdatePage({
           inviteData={inviteData}
           action={updateHouseholdDetails}
           errorMessage={getErrorMessage(resolvedSearchParams?.error)}
-          inviteHref={`/${websiteSubUrl}/invite`}
+          inviteHref={`/w/${websiteSubUrl}/invite`}
         />
       </section>
     </main>
