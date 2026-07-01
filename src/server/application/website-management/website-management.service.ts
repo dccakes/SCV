@@ -2,7 +2,7 @@ import { TRPCError } from '@trpc/server'
 
 import { calculateDaysRemaining, formatDateNumber } from '~/app/utils/helpers'
 import { deriveWeddingSubUrl } from '~/lib/website-slug'
-import { verifyHouseholdInviteToken } from '~/server/application/household-invite/household-invite-token'
+import type { HouseholdInviteService } from '~/server/application/household-invite/household-invite.service'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { EventRepository } from '~/server/domains/event/event.repository'
@@ -34,7 +34,8 @@ export class WebsiteManagementService {
     private websiteSectionRepository: Pick<
       WebsiteSectionRepository,
       'findByWebsiteId' | 'findByWebsiteIdAndType' | 'upsertHomeSection' | 'upsertByType'
-    >
+    >,
+    private householdInviteService: Pick<HouseholdInviteService, 'isInviteCodeValidForWedding'>
   ) {}
 
   async enableWebsite(
@@ -191,9 +192,9 @@ export class WebsiteManagementService {
       )
 
       // Guests who arrived through a save-the-date / invite link already proved
-      // they belong to this wedding: a valid invite token for this wedding
+      // they belong to this wedding: a valid invite code for this wedding
       // unlocks the site without the password prompt.
-      const hasInviteAccess = this.hasValidInviteForWedding(inviteToken, website.weddingId)
+      const hasInviteAccess = await this.hasValidInviteForWedding(inviteToken, website.weddingId)
 
       if (!hasPasswordAccess && !hasInviteAccess) {
         throw new TRPCError({
@@ -292,14 +293,12 @@ export class WebsiteManagementService {
     }
   }
 
-  /**
-   * Whether a household invite token is valid and scoped to this wedding.
-   * The token is HMAC-signed and carries its own wedding id, so verification
-   * needs no extra database lookup.
-   */
-  private hasValidInviteForWedding(inviteToken: string | undefined, weddingId: string): boolean {
-    const verified = verifyHouseholdInviteToken(inviteToken)
-    return verified?.weddingId === weddingId
+  /** Whether a household invite code is valid and scoped to this wedding. */
+  private hasValidInviteForWedding(
+    inviteToken: string | undefined,
+    weddingId: string
+  ): Promise<boolean> {
+    return this.householdInviteService.isInviteCodeValidForWedding(inviteToken, weddingId)
   }
 
   private toPublicWebsiteWithQuestions(

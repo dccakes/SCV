@@ -69,11 +69,11 @@ export async function generateMetadata({ params }: HouseholdInvitePageProps): Pr
     },
   }
 
-  // Link unfurlers (iMessage, WhatsApp, Slack, etc.) follow the token redirect to
-  // this page, but they rarely carry the httpOnly invite cookie. The couple names,
-  // date, and venue are public wedding details tied to the website slug, so derive
-  // the preview from the slug instead of the token to give shared links a proper
-  // "Save the Date" card.
+  // Link unfurlers (iMessage, WhatsApp, Slack, etc.) follow the invite code
+  // redirect to this page, but they rarely carry the httpOnly invite cookie.
+  // The couple names, date, and venue are public wedding details tied to the
+  // website slug, so derive the preview from the slug instead of the invite
+  // code to give shared links a proper "Save the Date" card.
   const summary = await householdInviteService.getPublicWeddingSummary(websiteSubUrl)
   if (!summary) return baseMetadata
 
@@ -109,8 +109,8 @@ export default async function HouseholdInvitePage({
   const { websiteSubUrl } = await params
   const resolvedSearchParams = await searchParams
   const cookieStore = await cookies()
-  const token = cookieStore.get(householdInviteCookieName(websiteSubUrl))?.value
-  const inviteData = await householdInviteService.getInviteData(websiteSubUrl, token)
+  const code = cookieStore.get(householdInviteCookieName(websiteSubUrl))?.value
+  const inviteData = await householdInviteService.getInviteData(websiteSubUrl, code)
 
   if (!inviteData) return <InvalidHouseholdInvite websiteSubUrl={websiteSubUrl} />
 
@@ -232,7 +232,7 @@ export default async function HouseholdInvitePage({
 
                 <div className='mt-10 flex justify-center sm:justify-start'>
                   <Button asChild size='lg'>
-                    <Link href={`/${websiteSubUrl}/invite/update`}>Update our details</Link>
+                    <Link href={`/w/${websiteSubUrl}/invite/update`}>Update our details</Link>
                   </Button>
                 </div>
               </CardContent>
