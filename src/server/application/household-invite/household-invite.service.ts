@@ -416,7 +416,11 @@ export class HouseholdInviteService {
    * household/wedding it's scoped to. Shared by every consumer that only
    * needs to check the code, not fully load the household's invite data.
    */
-  private async findActiveHouseholdByInviteCode(code: string | null | undefined) {
+  private async findActiveHouseholdByInviteCode(code: string | null | undefined): Promise<{
+    id: string
+    weddingId: string
+    inviteCodeExpiresAt: Date
+  } | null> {
     if (!code) return null
 
     const household = await this.db.household.findFirst({
@@ -427,7 +431,11 @@ export class HouseholdInviteService {
     if (!household?.inviteCodeExpiresAt) return null
     if (household.inviteCodeExpiresAt.getTime() <= Date.now()) return null
 
-    return household
+    return {
+      id: household.id,
+      weddingId: household.weddingId,
+      inviteCodeExpiresAt: household.inviteCodeExpiresAt,
+    }
   }
 
   /**
