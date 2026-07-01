@@ -106,15 +106,18 @@ export function VoyageFlightSearch({
                     <li key={airport.code}>
                       <button
                         type='button'
-                        className='flex w-full items-baseline justify-between gap-3 px-4 py-2.5 text-left text-sm hover:bg-[#FBF8F1]'
+                        className='flex w-full items-start justify-between gap-3 px-4 py-2.5 text-left hover:bg-[#FBF8F1]'
                         onMouseDown={(event) => {
                           event.preventDefault()
                           setOrigin(airport.code)
                           setIsOriginFocused(false)
                         }}
                       >
-                        <span className='text-[#1E1C18]'>
-                          {airport.city}, {airport.country}
+                        <span className='flex flex-col'>
+                          <span className='text-[#1E1C18] text-sm'>{airport.name}</span>
+                          <span className='text-[#746E64] text-xs'>
+                            {airport.city}, {airport.country}
+                          </span>
                         </span>
                         <span className={`${labelFont} text-[#B89455] text-xs tracking-[0.1em]`}>
                           {airport.code}
