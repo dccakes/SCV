@@ -12,13 +12,14 @@
  * line-illustrated state when a photo is absent.
  */
 
-import { formatDateStandard } from '~/app/utils/helpers'
+import { formatDateHTML5, formatDateStandard } from '~/app/utils/helpers'
 import type { WeddingPageData } from '~/server/domains/website/website.types'
 import type {
   WebsiteSection,
   WebsiteSectionType,
 } from '~/server/domains/website-section/website-section.types'
 import type { TemplateSurfaceProps } from '~/templates/types'
+import { VoyageFlightSearch } from '~/templates/voyage/components/flight-search'
 import { HeroBackground, VoyageGalleryStrip } from '~/templates/voyage/components/media'
 import { VoyageNavbar, type VoyageNavItem } from '~/templates/voyage/components/navbar'
 import {
@@ -63,6 +64,12 @@ function pick<T extends WebsiteSectionType>(
 }
 
 const WEEKEND_ICONS = [IconGlass, IconRings, IconDinner, IconMusic, IconCoffee]
+
+function addDays(date: Date, days: number): Date {
+  const result = new Date(date)
+  result.setDate(result.getDate() + days)
+  return result
+}
 
 function eventWhenLabel(event: WeddingEvent): string | null {
   const formatted = event.date ? formatDateStandard(event.date) : undefined
@@ -171,6 +178,19 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
   const location = destination?.content.location ?? null
   const venue = destination?.content.venueName ?? weddingEvent?.venue ?? null
 
+  const eventDates = weddingData.events
+    .map((event) => event.date)
+    .filter((date): date is Date => date !== null)
+    .sort((a, b) => a.getTime() - b.getTime())
+  const firstEventDate = eventDates[0] ?? null
+  const lastEventDate = eventDates[eventDates.length - 1] ?? null
+  const flightDepartPlaceholder = firstEventDate
+    ? (formatDateHTML5(addDays(firstEventDate, -1)) ?? null)
+    : null
+  const flightReturnPlaceholder = lastEventDate
+    ? (formatDateHTML5(addDays(lastEventDate, 1)) ?? null)
+    : null
+
   // Build the in-page nav from what actually exists, in editorial order.
   const navItems: VoyageNavItem[] = []
   if (story || ourStory) navItems.push({ label: 'Our Story', href: '#our-story' })
@@ -178,6 +198,7 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
   if (weddingData.events.length > 0)
     navItems.push({ label: 'Wedding Weekend', href: '#wedding-weekend' })
   if (travel) navItems.push({ label: 'Travel & Stay', href: '#travel' })
+  navItems.push({ label: 'Flights', href: '#flights' })
   if (registry) navItems.push({ label: 'Registry', href: '#registry' })
 
   const firstAnchor = navItems[0]?.href ?? '#registry'
@@ -259,6 +280,10 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
       {experiences ? <VoyageExperiences content={experiences.content} /> : null}
       {weddingParty ? <VoyageWeddingParty content={weddingParty.content} /> : null}
       {travel ? <VoyageTravel content={travel.content} /> : null}
+      <VoyageFlightSearch
+        departPlaceholder={flightDepartPlaceholder}
+        returnPlaceholder={flightReturnPlaceholder}
+      />
       <VoyageGalleryStrip urls={website.coupleImageUrls} />
 
       {/* Registry + RSVP invitation. */}
