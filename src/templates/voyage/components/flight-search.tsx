@@ -66,8 +66,8 @@ export function VoyageFlightSearch({
           <h2 className={sectionHeadingClass}>Search Flights</h2>
           <GoldRule />
           <p className={`${bodyFont} max-w-xl text-[#746E64] text-lg leading-8`}>
-            We're located between Mexico City and Puebla — find a flight into whichever airport
-            suits your journey.
+            We recommend flying to either Mexico City or Puebla — find a flight into whichever
+            airport suits your journey.
           </p>
         </div>
 
