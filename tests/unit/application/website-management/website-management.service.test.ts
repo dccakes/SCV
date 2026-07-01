@@ -1,7 +1,5 @@
 import { TRPCError } from '@trpc/server'
 
-import { createHouseholdInviteToken } from '~/server/application/household-invite/household-invite-token'
-
 jest.mock('~/server/authz/permission-checker', () => ({
   requirePermission: jest.fn(),
 }))
@@ -63,6 +61,7 @@ describe('WebsiteManagementService', () => {
   let service: WebsiteManagementService
   const originalAppUrl = process.env.NEXT_PUBLIC_APP_URL
   const mockVerifyAccessToken = jest.fn()
+  const mockIsInviteCodeValidForWedding = jest.fn()
 
   beforeEach(() => {
     process.env.NEXT_PUBLIC_APP_URL = 'https://oswp.example'
@@ -72,6 +71,7 @@ describe('WebsiteManagementService', () => {
     resetEventRepoMocks()
     resetWebsiteSectionRepoMocks()
     mockVerifyAccessToken.mockReset()
+    mockIsInviteCodeValidForWedding.mockReset().mockResolvedValue(false)
     mockRequirePermission.mockReset()
     mockRequirePermission.mockReturnValue({ organizationId: 'org-1', role: 'admin' })
 
@@ -87,7 +87,10 @@ describe('WebsiteManagementService', () => {
       {
         verifyAccessToken: mockVerifyAccessToken,
       } as never,
-      websiteSectionRepo
+      websiteSectionRepo,
+      {
+        isInviteCodeValidForWedding: mockIsInviteCodeValidForWedding,
+      }
     )
   })
 
@@ -311,7 +314,7 @@ describe('WebsiteManagementService', () => {
       })
     })
 
-    it('grants access to a protected site when a valid household invite token matches the wedding', async () => {
+    it('grants access to a protected site when a valid household invite code matches the wedding', async () => {
       mockFindBySubUrlWithQuestionsFn.mockResolvedValue({
         ...mockWebsiteWithQuestions,
         isPasswordEnabled: true,
@@ -322,32 +325,25 @@ describe('WebsiteManagementService', () => {
       mockFindWeddingByIdFn.mockResolvedValue(mockWedding)
       mockFindByWeddingIdWithQuestionsFn.mockResolvedValue([mockEvent])
       mockFindWebsiteSectionsFn.mockResolvedValue([])
+      mockIsInviteCodeValidForWedding.mockResolvedValue(true)
 
-      const inviteToken = createHouseholdInviteToken({
-        weddingId: 'wedding-123',
-        householdId: 'household-1',
-      })
-
-      const result = await service.fetchWeddingData('johndoeandjanesmith', undefined, inviteToken)
+      const result = await service.fetchWeddingData('johndoeandjanesmith', undefined, 'al-4f9k2c')
 
       expect(result.groomFirstName).toBe('John')
+      expect(mockIsInviteCodeValidForWedding).toHaveBeenCalledWith('al-4f9k2c', 'wedding-123')
     })
 
-    it('still forbids a protected site when the invite token belongs to another wedding', async () => {
+    it('still forbids a protected site when the invite code belongs to another wedding', async () => {
       mockFindBySubUrlWithQuestionsFn.mockResolvedValue({
         ...mockWebsiteWithQuestions,
         isPasswordEnabled: true,
         password: '$hashed-password',
       })
       mockVerifyAccessToken.mockReturnValue(false)
-
-      const otherWeddingToken = createHouseholdInviteToken({
-        weddingId: 'some-other-wedding',
-        householdId: 'household-1',
-      })
+      mockIsInviteCodeValidForWedding.mockResolvedValue(false)
 
       await expect(
-        service.fetchWeddingData('johndoeandjanesmith', undefined, otherWeddingToken)
+        service.fetchWeddingData('johndoeandjanesmith', undefined, 'other-wedding-code')
       ).rejects.toMatchObject({
         code: 'FORBIDDEN',
       })

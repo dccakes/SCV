@@ -3,10 +3,7 @@ import { Prisma, type PrismaClient } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 
-import {
-  createHouseholdInviteToken,
-  verifyHouseholdInviteToken,
-} from '~/server/application/household-invite/household-invite-token'
+import { createHouseholdInviteCode } from '~/server/application/household-invite/household-invite-code'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import {
@@ -166,10 +163,6 @@ const isUniqueConstraintError = (error: unknown) =>
 export class HouseholdInviteService {
   constructor(private db: HouseholdInviteDb) {}
 
-  createTokenForTesting(input: { weddingId: string; householdId: string }) {
-    return createHouseholdInviteToken(input)
-  }
-
   async generateInviteLink(
     ctx: AuthzContext,
     weddingId: string,
@@ -179,7 +172,15 @@ export class HouseholdInviteService {
 
     const household = await this.db.household.findFirst({
       where: { id: input.householdId, weddingId },
-      select: { id: true, weddingId: true },
+      select: {
+        id: true,
+        weddingId: true,
+        guests: {
+          orderBy: { id: 'asc' },
+          take: 1,
+          select: { firstName: true, lastName: true },
+        },
+      },
     })
 
     if (!household) {
@@ -203,16 +204,44 @@ export class HouseholdInviteService {
 
     const expiresAt = new Date()
     expiresAt.setUTCFullYear(expiresAt.getUTCFullYear() + 1)
-    const token = createHouseholdInviteToken({
-      weddingId,
-      householdId: household.id,
-      expiresAt,
-    })
+    const code = await this.assignInviteCode(household.id, household.guests, expiresAt)
 
     return {
-      url: `${normalizeBaseUrl(input.baseUrl)}/${website.subUrl}/invite/${token}`,
+      url: `${normalizeBaseUrl(input.baseUrl)}/w/${website.subUrl}/invite/${code}`,
       expiresAt,
     }
+  }
+
+  /**
+   * Assigns a short invite code to the household, retrying on the rare
+   * collision with another household's code (the DB unique constraint is the
+   * source of truth). Reused links keep the same code and just get a fresh
+   * expiry.
+   */
+  private async assignInviteCode(
+    householdId: string,
+    guests: Array<{ firstName: string; lastName: string | null }>,
+    expiresAt: Date
+  ): Promise<string> {
+    const maxAttempts = 5
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const code = createHouseholdInviteCode(guests)
+      try {
+        await this.db.household.update({
+          where: { id: householdId },
+          data: { inviteCode: code, inviteCodeExpiresAt: expiresAt },
+        })
+        return code
+      } catch (error) {
+        if (isUniqueConstraintError(error) && attempt < maxAttempts - 1) continue
+        throw error
+      }
+    }
+
+    throw new TRPCError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'Could not generate a unique invite code',
+    })
   }
 
   async getPublicWeddingSummary(subUrl: string): Promise<{
@@ -250,8 +279,8 @@ export class HouseholdInviteService {
     }
   }
 
-  async getInviteData(subUrl: string, token: string | null | undefined) {
-    const scopedInvite = await this.resolveInviteScope(subUrl, token)
+  async getInviteData(subUrl: string, code: string | null | undefined) {
+    const scopedInvite = await this.resolveInviteScope(subUrl, code)
     if (!scopedInvite) return null
 
     return this.loadHouseholdInviteData(
@@ -263,10 +292,10 @@ export class HouseholdInviteService {
 
   async updateHouseholdDetails(
     subUrl: string,
-    token: string | null | undefined,
+    code: string | null | undefined,
     input: UpdateHouseholdInviteInput
   ): Promise<{ success: true }> {
-    const inviteData = await this.getInviteData(subUrl, token)
+    const inviteData = await this.getInviteData(subUrl, code)
     if (!inviteData) {
       throw new TRPCError({
         code: 'FORBIDDEN',
@@ -382,17 +411,51 @@ export class HouseholdInviteService {
     return { success: true }
   }
 
-  private async resolveInviteScope(subUrl: string, token: string | null | undefined) {
-    const verifiedToken = verifyHouseholdInviteToken(token)
-    if (!verifiedToken) return null
+  /**
+   * Whether an invite code is currently active (unexpired) and, if so, which
+   * household/wedding it's scoped to. Shared by every consumer that only
+   * needs to check the code, not fully load the household's invite data.
+   */
+  private async findActiveHouseholdByInviteCode(code: string | null | undefined) {
+    if (!code) return null
+
+    const household = await this.db.household.findFirst({
+      where: { inviteCode: code },
+      select: { id: true, weddingId: true, inviteCodeExpiresAt: true },
+    })
+
+    if (!household?.inviteCodeExpiresAt) return null
+    if (household.inviteCodeExpiresAt.getTime() <= Date.now()) return null
+
+    return household
+  }
+
+  /**
+   * Whether a guest's invite code is valid and scoped to this wedding, so a
+   * password-protected site can be unlocked without a fresh DB lookup for the
+   * household details.
+   */
+  async isInviteCodeValidForWedding(code: string | undefined, weddingId: string): Promise<boolean> {
+    const household = await this.findActiveHouseholdByInviteCode(code)
+    return household?.weddingId === weddingId
+  }
+
+  private async resolveInviteScope(subUrl: string, code: string | null | undefined) {
+    const household = await this.findActiveHouseholdByInviteCode(code)
+    if (!household) return null
 
     const website = await this.db.website.findFirst({
       where: { subUrl },
       select: { weddingId: true },
     })
 
-    if (!website || website.weddingId !== verifiedToken.weddingId) return null
-    return verifiedToken
+    if (!website || website.weddingId !== household.weddingId) return null
+
+    return {
+      weddingId: household.weddingId,
+      householdId: household.id,
+      expiresAt: household.inviteCodeExpiresAt,
+    }
   }
 
   private async loadHouseholdInviteData(

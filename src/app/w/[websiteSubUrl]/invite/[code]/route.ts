@@ -3,21 +3,21 @@ import { NextResponse } from 'next/server'
 import { householdInviteCookieName, householdInviteCookiePath } from '~/lib/website/cookies'
 import { householdInviteService } from '~/server/application/household-invite'
 
-type HouseholdInviteTokenRouteProps = {
+type HouseholdInviteCodeRouteProps = {
   params: Promise<{
     websiteSubUrl: string
-    token: string
+    code: string
   }>
 }
 
 const getInviteCookieMaxAge = (expiresAt: Date) =>
   Math.max(0, Math.floor((expiresAt.getTime() - Date.now()) / 1000))
 
-export async function GET(request: Request, { params }: HouseholdInviteTokenRouteProps) {
-  const { websiteSubUrl, token } = await params
-  const inviteData = await householdInviteService.getInviteData(websiteSubUrl, token)
+export async function GET(request: Request, { params }: HouseholdInviteCodeRouteProps) {
+  const { websiteSubUrl, code } = await params
+  const inviteData = await householdInviteService.getInviteData(websiteSubUrl, code)
 
-  const redirectUrl = new URL(`/${websiteSubUrl}/invite`, request.url)
+  const redirectUrl = new URL(`/w/${websiteSubUrl}/invite`, request.url)
   const response = NextResponse.redirect(redirectUrl)
   response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 
@@ -30,11 +30,11 @@ export async function GET(request: Request, { params }: HouseholdInviteTokenRout
     })
   }
 
-  response.cookies.set(householdInviteCookieName(websiteSubUrl), token, {
+  response.cookies.set(householdInviteCookieName(websiteSubUrl), code, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    path: householdInviteCookiePath,
+    path: householdInviteCookiePath(websiteSubUrl),
     maxAge: getInviteCookieMaxAge(inviteData.expiresAt),
   })
 
