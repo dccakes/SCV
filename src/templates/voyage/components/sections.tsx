@@ -1,15 +1,13 @@
 /**
  * VoyageSections
  *
- * Voyage's editorial section layouts: a horizontal story timeline with hand-
- * drawn landmark sketches, a two-column destination feature, a row of curated
- * experience cards, a travel grid with thin-line services and stay cards, plus
- * refined takes on wedding party, FAQ and registry.
- *
- * Each block is exported individually so the Home surface can compose them in a
- * bespoke editorial order (interleaving the hero, weekend itinerary and gallery
- * that are not themselves sections). `VoyageSections` renders any enabled
- * sections in stored order to satisfy the template contract.
+ * Voyage's editorial section layouts: an "About Us" feature, a horizontal story
+ * timeline with hand-drawn landmark sketches, a two-column destination feature
+ * with a highlights row, a wedding-party grid whose portraits reveal a blurb on
+ * hover, and a combined Travel & Questions band (thin-line services + an FAQ
+ * accordion). Each block is exported individually so the Home surface can
+ * compose them in a bespoke editorial order; `VoyageSections` renders any
+ * enabled sections in stored order to satisfy the template contract.
  */
 
 import Image from 'next/image'
@@ -26,16 +24,28 @@ import type {
 } from '~/server/domains/website-section/website-section.types'
 import { splitParagraphs } from '~/templates/shared/prose'
 import {
+  BotanicalBranch,
   BotanicalSprig,
   bodyFont,
   Eyebrow,
   GoldRule,
+  HeartRule,
   headingFont,
+  IconArch,
   IconArrow,
+  IconBed,
+  IconCamera,
   IconCar,
   IconCompass,
   IconConcierge,
+  IconCuisine,
+  IconFerris,
+  IconHeart,
+  IconPlane,
+  IconPlus,
+  IconRosette,
   LandmarkSketch,
+  labelFont,
   OutlineButton,
   sectionHeadingClass,
 } from '~/templates/voyage/components/primitives'
@@ -56,7 +66,7 @@ function Band({
     <section
       id={id}
       className={`w-full scroll-mt-24 px-6 py-20 sm:py-24 lg:px-10 ${
-        tone === 'cream' ? 'bg-[#FBF8F1]' : 'bg-[#F7F3EA]'
+        tone === 'cream' ? 'bg-[#FBF8F2]' : 'bg-[#F7F3EC]'
       } ${className}`}
     >
       <div className='mx-auto max-w-6xl'>{children}</div>
@@ -69,7 +79,7 @@ function CenteredHead({ eyebrow, heading }: { eyebrow?: string; heading: string 
     <div className='flex flex-col items-center gap-4 text-center'>
       {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
       <h2 className={`${sectionHeadingClass} max-w-3xl text-balance`}>{heading}</h2>
-      <GoldRule />
+      <HeartRule className='mt-1' />
     </div>
   )
 }
@@ -80,7 +90,7 @@ function Prose({ text, className = '' }: { text: string; className?: string }) {
     return null
   }
   return (
-    <div className={`space-y-5 text-[#746E64] text-[1.06rem] leading-8 ${bodyFont} ${className}`}>
+    <div className={`space-y-5 text-[#6F675D] text-[1.06rem] leading-8 ${bodyFont} ${className}`}>
       {paragraphs.map((paragraph) => (
         <p key={paragraph}>{paragraph}</p>
       ))}
@@ -88,16 +98,57 @@ function Prose({ text, className = '' }: { text: string; className?: string }) {
   )
 }
 
-export function VoyageOurStory({ content }: { content: OurStorySectionContent }) {
+/**
+ * "About Us" — a two-column feature: the couple's story on the left and a
+ * portrait on the right, framed by a soft botanical branch. Falls back to a
+ * line-illustrated tile when no photo is available.
+ */
+export function VoyageOurStory({
+  content,
+  imageUrl,
+}: {
+  content: OurStorySectionContent
+  imageUrl?: string | null
+}) {
   if (!content.body.trim()) {
     return null
   }
   return (
-    <Band id='our-story'>
-      <div className='flex flex-col items-center gap-8'>
-        <CenteredHead eyebrow='Our Story' heading={content.heading} />
-        <div className='max-w-2xl text-center'>
-          <Prose text={content.body} />
+    <Band id='our-story' className='overflow-hidden'>
+      <div className='grid items-center gap-10 lg:grid-cols-2 lg:gap-16'>
+        <div className='relative flex flex-col gap-6'>
+          <Eyebrow>About Us</Eyebrow>
+          <h2 className={`${sectionHeadingClass} leading-tight`}>
+            {content.heading}
+            <IconHeart className='ml-3 inline-block h-6 w-6 align-middle text-[#B9965B]' />
+          </h2>
+          <GoldRule className='self-start' />
+          <Prose text={content.body} className='max-w-xl' />
+          <p className={`${headingFont} text-2xl text-[#B9965B] italic`}>
+            Thank you for being part of our story.
+          </p>
+        </div>
+
+        <div className='relative'>
+          <BotanicalBranch
+            aria-hidden='true'
+            className='pointer-events-none absolute -top-10 -right-6 hidden h-40 w-auto text-[#B9965B]/25 lg:block'
+          />
+          <div className='relative aspect-[4/5] w-full overflow-hidden rounded-[3px] border border-[#DDD2C0]'>
+            {imageUrl ? (
+              <Image
+                src={imageUrl}
+                alt={content.heading}
+                fill
+                sizes='(max-width: 1024px) 100vw, 45vw'
+                className='object-cover'
+              />
+            ) : (
+              <div className='absolute inset-0 flex items-center justify-center bg-[#EFE7DA]'>
+                <BotanicalSprig className='h-2/3 w-auto text-[#B9965B]/30' />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </Band>
@@ -109,36 +160,44 @@ export function VoyageTimeline({ content }: { content: TimelineSectionContent })
     return null
   }
   return (
-    <Band id='our-story'>
+    <Band id='timeline' tone='cream'>
       <div className='flex flex-col items-center gap-14'>
         <CenteredHead eyebrow={content.eyebrow ?? 'Our Story'} heading={content.heading} />
         <ol className='relative grid w-full gap-12 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6'>
           {/* The connecting champagne line across desktop columns. */}
           <span
             aria-hidden='true'
-            className='absolute top-[0.4rem] right-[12%] left-[12%] hidden h-px bg-[#B89455]/40 lg:block'
+            className='absolute top-[0.4rem] right-[12%] left-[12%] hidden h-px bg-[#B9965B]/40 lg:block'
           />
           {content.milestones.map((milestone, index) => (
             <li
               key={`${milestone.year}-${milestone.title}`}
               className='relative flex flex-col items-center gap-3 text-center'
             >
+              {index > 0 ? (
+                <IconHeart
+                  aria-hidden='true'
+                  className='absolute top-[-0.15rem] -left-3 hidden h-3.5 w-3.5 -translate-x-1/2 text-[#B9965B]/70 lg:block'
+                />
+              ) : null}
               <span
                 aria-hidden='true'
-                className='h-2 w-2 rounded-full border border-[#B89455] bg-[#F7F3EA] ring-4 ring-[#F7F3EA]'
+                className='h-2 w-2 rounded-full border border-[#B9965B] bg-[#FBF8F2] ring-4 ring-[#FBF8F2]'
               />
-              <span className={`${headingFont} font-light text-3xl text-[#B89455]`}>
+              <span className={`${headingFont} font-light text-3xl text-[#B9965B]`}>
                 {milestone.year}
               </span>
-              <span className='font-[family-name:var(--tpl-label-font)] text-[#1E1C18] text-[0.66rem] uppercase tracking-[0.24em]'>
+              <span
+                className={`${labelFont} text-[#1D2320] text-[0.66rem] uppercase tracking-[0.24em]`}
+              >
                 {milestone.title}
               </span>
               {milestone.location ? (
-                <span className={`${bodyFont} text-[#746E64] text-sm italic`}>
+                <span className={`${bodyFont} text-[#6F675D] text-sm italic`}>
                   {milestone.location}
                 </span>
               ) : null}
-              <LandmarkSketch index={index} className='mt-2 h-12 w-auto text-[#B89455]/70' />
+              <LandmarkSketch index={index} className='mt-2 h-12 w-auto text-[#B9965B]/70' />
             </li>
           ))}
         </ol>
@@ -147,14 +206,22 @@ export function VoyageTimeline({ content }: { content: TimelineSectionContent })
   )
 }
 
+/** The fixed destination highlights shown beneath the destination copy. */
+const DESTINATION_HIGHLIGHTS = [
+  { Icon: IconArch, label: 'Colonial Beauty' },
+  { Icon: IconFerris, label: 'Rich Culture' },
+  { Icon: IconCuisine, label: 'Incredible Cuisine' },
+  { Icon: IconRosette, label: 'Warm Hospitality' },
+] as const
+
 export function VoyageDestination({ content }: { content: DestinationSectionContent }) {
   if (!content.body.trim() && !content.imageUrl) {
     return null
   }
   return (
-    <Band id='destination' tone='cream' className='overflow-hidden'>
+    <Band id='destination' className='overflow-hidden'>
       <div className='grid items-stretch gap-10 lg:grid-cols-2 lg:gap-16'>
-        <div className='relative min-h-[20rem] overflow-hidden rounded-[3px] border border-[#DED4C4]'>
+        <div className='relative min-h-[22rem] overflow-hidden rounded-[3px] border border-[#DDD2C0]'>
           {content.imageUrl ? (
             <Image
               src={content.imageUrl}
@@ -164,8 +231,8 @@ export function VoyageDestination({ content }: { content: DestinationSectionCont
               className='object-cover'
             />
           ) : (
-            <div className='absolute inset-0 flex items-center justify-center bg-[#F1EADB]'>
-              <BotanicalSprig className='h-2/3 w-auto text-[#B89455]/30' />
+            <div className='absolute inset-0 flex items-center justify-center bg-[#EFE7DA]'>
+              <BotanicalSprig className='h-2/3 w-auto text-[#B9965B]/30' />
             </div>
           )}
         </div>
@@ -173,26 +240,42 @@ export function VoyageDestination({ content }: { content: DestinationSectionCont
         <div className='relative flex flex-col justify-center gap-6 py-2'>
           <BotanicalSprig
             aria-hidden='true'
-            className='pointer-events-none absolute top-0 -right-4 hidden h-full w-auto text-[#B89455]/15 lg:block'
+            className='pointer-events-none absolute top-0 -right-4 hidden h-full w-auto text-[#B9965B]/15 lg:block'
           />
-          {content.eyebrow ? <Eyebrow>{content.eyebrow}</Eyebrow> : null}
+          <Eyebrow>{content.eyebrow ?? 'The Destination'}</Eyebrow>
           <h2 className={`${sectionHeadingClass} leading-tight`}>
             {content.heading}
             {content.location ? (
-              <span className='mt-1 block text-[#746E64] italic'>{content.location}</span>
+              <span className='mt-1 block text-[#6F675D] italic'>{content.location}</span>
             ) : null}
           </h2>
           <Prose text={content.body} className='max-w-xl' />
           {content.venueName ? (
-            <div className='border-[#B89455]/50 border-l-2 pl-4'>
-              <p className={`${headingFont} text-[#1E1C18] text-xl`}>{content.venueName}</p>
+            <div className='border-[#B9965B]/50 border-l-2 pl-4'>
+              <p className={`${headingFont} text-[#1D2320] text-xl`}>{content.venueName}</p>
               {content.venueNote ? (
-                <p className={`${bodyFont} text-[#746E64] text-sm italic`}>{content.venueNote}</p>
+                <p className={`${bodyFont} text-[#6F675D] text-sm italic`}>{content.venueNote}</p>
               ) : null}
             </div>
           ) : null}
+
+          <ul className='mt-2 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4'>
+            {DESTINATION_HIGHLIGHTS.map(({ Icon, label }) => (
+              <li key={label} className='flex flex-col items-center gap-2 text-center'>
+                <span className='flex h-12 w-12 items-center justify-center rounded-full border border-[#DDD2C0] text-[#B9965B]'>
+                  <Icon className='h-6 w-6' />
+                </span>
+                <span
+                  className={`${labelFont} text-[#6F675D] text-[0.56rem] uppercase leading-tight tracking-[0.18em]`}
+                >
+                  {label}
+                </span>
+              </li>
+            ))}
+          </ul>
+
           {content.ctaLabel && content.ctaUrl ? (
-            <div className='pt-2'>
+            <div className='pt-1'>
               <OutlineButton href={content.ctaUrl} external>
                 {content.ctaLabel}
                 <IconArrow className='h-4 w-4' />
@@ -205,6 +288,11 @@ export function VoyageDestination({ content }: { content: DestinationSectionCont
   )
 }
 
+/**
+ * Legacy "Curated Experiences" card row. The Home surface now feeds this
+ * section's items into the Favorite Moments fotowall instead, but the standalone
+ * renderer is kept for the section contract.
+ */
 export function VoyageExperiences({ content }: { content: ExperiencesSectionContent }) {
   if (content.items.length === 0) {
     return null
@@ -220,9 +308,9 @@ export function VoyageExperiences({ content }: { content: ExperiencesSectionCont
           {content.items.map((item) => (
             <article
               key={`${item.title}`}
-              className='group flex flex-col overflow-hidden rounded-[3px] border border-[#DED4C4] bg-[#FBF8F1]'
+              className='group flex flex-col overflow-hidden rounded-[3px] border border-[#DDD2C0] bg-[#FBF8F2]'
             >
-              <div className='relative aspect-[4/5] overflow-hidden bg-[#F1EADB]'>
+              <div className='relative aspect-[4/5] overflow-hidden bg-[#EFE7DA]'>
                 {item.imageUrl ? (
                   <Image
                     src={item.imageUrl}
@@ -233,14 +321,14 @@ export function VoyageExperiences({ content }: { content: ExperiencesSectionCont
                   />
                 ) : (
                   <div className='flex h-full items-center justify-center'>
-                    <BotanicalSprig className='h-1/2 w-auto text-[#B89455]/30' />
+                    <BotanicalSprig className='h-1/2 w-auto text-[#B9965B]/30' />
                   </div>
                 )}
               </div>
               <div className='flex flex-1 flex-col gap-2 px-5 py-6 text-center'>
-                <h3 className={`${headingFont} text-2xl text-[#1E1C18] italic`}>{item.title}</h3>
+                <h3 className={`${headingFont} text-2xl text-[#1D2320] italic`}>{item.title}</h3>
                 {item.description ? (
-                  <p className={`${bodyFont} text-[#746E64] text-sm leading-6`}>
+                  <p className={`${bodyFont} text-[#6F675D] text-sm leading-6`}>
                     {item.description}
                   </p>
                 ) : null}
@@ -253,6 +341,11 @@ export function VoyageExperiences({ content }: { content: ExperiencesSectionCont
   )
 }
 
+/**
+ * The wedding party. Each portrait sits in a tall editorial frame; on hover a
+ * champagne overlay fades in the member's blurb. On touch screens (no hover)
+ * the blurb is shown beneath the portrait so it is never lost.
+ */
 export function VoyageWeddingParty({ content }: { content: WeddingPartySectionContent }) {
   if (content.members.length === 0) {
     return null
@@ -260,36 +353,44 @@ export function VoyageWeddingParty({ content }: { content: WeddingPartySectionCo
   return (
     <Band id='wedding-party' tone='cream'>
       <div className='flex flex-col items-center gap-12'>
-        <CenteredHead eyebrow='By Our Side' heading={content.heading} />
-        <div className='grid w-full gap-8 sm:grid-cols-2 lg:grid-cols-3'>
+        <CenteredHead eyebrow='Our People' heading={content.heading} />
+        <div className='grid w-full gap-6 sm:grid-cols-2 lg:grid-cols-4'>
           {content.members.map((member) => (
             <div
               key={`${member.name}-${member.role}`}
               className='flex flex-col items-center gap-3 text-center'
             >
-              {member.imageUrl ? (
-                <div className='relative h-40 w-40 overflow-hidden rounded-full border border-[#DED4C4]'>
+              <div className='group relative aspect-[4/5] w-full overflow-hidden rounded-[3px] border border-[#DDD2C0] bg-[#EFE7DA]'>
+                {member.imageUrl ? (
                   <Image
                     src={member.imageUrl}
                     alt={member.name}
                     fill
-                    sizes='160px'
-                    className='object-cover'
+                    sizes='(max-width: 1024px) 50vw, 25vw'
+                    className='object-cover transition-transform duration-700 group-hover:scale-[1.04]'
                   />
-                </div>
-              ) : (
-                <div className='flex h-40 w-40 items-center justify-center rounded-full border border-[#DED4C4] bg-[#FBF8F1]'>
-                  <span className={`${headingFont} text-3xl text-[#B89455]`}>
-                    {member.name?.[0] ?? '·'}
-                  </span>
-                </div>
-              )}
-              <p className={`${headingFont} text-2xl text-[#1E1C18]`}>{member.name}</p>
-              <p className='font-[family-name:var(--tpl-label-font)] text-[#B89455] text-[0.62rem] uppercase tracking-[0.24em]'>
+                ) : (
+                  <div className='flex h-full items-center justify-center'>
+                    <span className={`${headingFont} text-5xl text-[#B9965B]`}>
+                      {member.name?.[0] ?? '·'}
+                    </span>
+                  </div>
+                )}
+                {member.blurb ? (
+                  <div className='absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#1D2320]/78 px-5 text-center opacity-0 backdrop-blur-[1px] transition-opacity duration-500 group-hover:opacity-100'>
+                    <IconHeart className='h-5 w-5 text-[#D3BD8A]' />
+                    <p className={`${bodyFont} text-[#F7F3EC] text-sm leading-6`}>{member.blurb}</p>
+                  </div>
+                ) : null}
+              </div>
+              <p className={`${headingFont} text-2xl text-[#1D2320]`}>{member.name}</p>
+              <p
+                className={`${labelFont} text-[#B9965B] text-[0.62rem] uppercase tracking-[0.24em]`}
+              >
                 {member.role}
               </p>
               {member.blurb ? (
-                <p className={`${bodyFont} max-w-xs text-[#746E64] text-sm leading-6`}>
+                <p className={`${bodyFont} max-w-xs text-[#6F675D] text-sm leading-6 lg:hidden`}>
                   {member.blurb}
                 </p>
               ) : null}
@@ -301,8 +402,169 @@ export function VoyageWeddingParty({ content }: { content: WeddingPartySectionCo
   )
 }
 
-const SERVICE_ICONS = [IconCar, IconConcierge, IconCompass]
+const SERVICE_ICONS = [IconPlane, IconCar, IconBed, IconCamera, IconConcierge, IconCompass]
 
+/** Travel copy + a responsive grid of thin-line services (no Band wrapper). */
+function TravelContent({ content }: { content: TravelSectionContent }) {
+  const services = content.services ?? []
+  return (
+    <div className='flex flex-col gap-6'>
+      <Eyebrow>Travel &amp; Stay</Eyebrow>
+      <h2 className={`${sectionHeadingClass} leading-tight`}>{content.heading}</h2>
+      <GoldRule className='self-start' />
+      <Prose text={content.body} />
+      {services.length > 0 ? (
+        <ul className='mt-2 grid grid-cols-2 gap-x-6 gap-y-8'>
+          {services.map((service, index) => {
+            const Icon = SERVICE_ICONS[index % SERVICE_ICONS.length] ?? IconCompass
+            return (
+              <li key={`${service.title}`} className='flex flex-col items-center gap-2 text-center'>
+                <span className='flex h-12 w-12 items-center justify-center rounded-full border border-[#DDD2C0] text-[#B9965B]'>
+                  <Icon className='h-6 w-6' />
+                </span>
+                <p
+                  className={`${labelFont} text-[#1D2320] text-[0.62rem] uppercase tracking-[0.2em]`}
+                >
+                  {service.title}
+                </p>
+                <p className={`${bodyFont} text-[#6F675D] text-sm leading-6`}>
+                  {service.description}
+                </p>
+              </li>
+            )
+          })}
+        </ul>
+      ) : null}
+    </div>
+  )
+}
+
+/** Recommended-stay cards (no Band wrapper). */
+function StaysGrid({ content }: { content: TravelSectionContent }) {
+  const stays = content.stays ?? []
+  if (stays.length === 0) {
+    return null
+  }
+  return (
+    <div className='mt-14 flex flex-col gap-5'>
+      <Eyebrow>Recommended Stays</Eyebrow>
+      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+        {stays.map((stay) => {
+          const card = (
+            <>
+              <div className='relative aspect-[4/3] overflow-hidden bg-[#EFE7DA]'>
+                {stay.imageUrl ? (
+                  <Image
+                    src={stay.imageUrl}
+                    alt={stay.name}
+                    fill
+                    sizes='(max-width: 1024px) 50vw, 25vw'
+                    className='object-cover transition-transform duration-700 group-hover:scale-[1.05]'
+                  />
+                ) : (
+                  <div className='flex h-full items-center justify-center'>
+                    <BotanicalSprig className='h-1/2 w-auto text-[#B9965B]/30' />
+                  </div>
+                )}
+              </div>
+              <div className='flex flex-col gap-1 px-4 py-4'>
+                <p
+                  className={`${labelFont} text-[#1D2320] text-[0.62rem] uppercase tracking-[0.2em]`}
+                >
+                  {stay.name}
+                </p>
+                {stay.description ? (
+                  <p className={`${bodyFont} text-[#6F675D] text-sm leading-6`}>
+                    {stay.description}
+                  </p>
+                ) : null}
+              </div>
+            </>
+          )
+          const cardClass =
+            'group flex flex-col overflow-hidden rounded-[3px] border border-[#DDD2C0] bg-[#FBF8F2]'
+          return stay.url ? (
+            <a
+              key={`${stay.name}`}
+              href={stay.url}
+              target='_blank'
+              rel='noreferrer'
+              className={`${cardClass} transition-colors hover:border-[#B9965B]`}
+            >
+              {card}
+            </a>
+          ) : (
+            <div key={`${stay.name}`} className={cardClass}>
+              {card}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+/** The FAQ as a champagne-ruled accordion (no Band wrapper). */
+function FaqContent({ content }: { content: FaqSectionContent }) {
+  return (
+    <div className='flex flex-col gap-6'>
+      <Eyebrow>Questions?</Eyebrow>
+      <h2 className={`${sectionHeadingClass} leading-tight`}>{content.heading}</h2>
+      <GoldRule className='self-start' />
+      <div className='flex flex-col'>
+        {content.items.map((item) => (
+          <details key={`${item.question}`} className='group border-[#DDD2C0] border-t py-4'>
+            <summary className='flex cursor-pointer list-none items-center justify-between gap-4 [&::-webkit-details-marker]:hidden'>
+              <span className={`${headingFont} text-[#1D2320] text-xl`}>{item.question}</span>
+              <IconPlus className='h-4 w-4 shrink-0 text-[#B9965B] transition-transform duration-300 group-open:rotate-45' />
+            </summary>
+            <p className={`${bodyFont} mt-3 text-[#6F675D] text-[0.98rem] leading-7`}>
+              {item.answer}
+            </p>
+          </details>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Combined Travel & Questions band, mirroring the design's side-by-side layout.
+ * Renders whichever of the two is present; when both exist they sit in a
+ * two-column grid on large screens. Recommended stays span full width beneath.
+ */
+export function VoyageTravelFaq({
+  travel,
+  faq,
+}: {
+  travel?: TravelSectionContent | null
+  faq?: FaqSectionContent | null
+}) {
+  const hasTravel =
+    !!travel &&
+    (travel.body.trim().length > 0 ||
+      (travel.services?.length ?? 0) > 0 ||
+      (travel.stays?.length ?? 0) > 0)
+  const hasFaq = !!faq && faq.items.length > 0
+  if (!hasTravel && !hasFaq) {
+    return null
+  }
+  return (
+    <Band id='travel' tone='cream'>
+      <div className={`grid gap-14 ${hasTravel && hasFaq ? 'lg:grid-cols-2 lg:gap-16' : ''}`}>
+        {hasTravel && travel ? <TravelContent content={travel} /> : null}
+        {hasFaq && faq ? (
+          <div id='faq' className='scroll-mt-24'>
+            <FaqContent content={faq} />
+          </div>
+        ) : null}
+      </div>
+      {hasTravel && travel ? <StaysGrid content={travel} /> : null}
+    </Band>
+  )
+}
+
+/** Standalone Travel band for the section-contract renderer. */
 export function VoyageTravel({ content }: { content: TravelSectionContent }) {
   const services = content.services ?? []
   const stays = content.stays ?? []
@@ -311,114 +573,21 @@ export function VoyageTravel({ content }: { content: TravelSectionContent }) {
   }
   return (
     <Band id='travel'>
-      <div className='grid gap-12 lg:grid-cols-[5fr_7fr] lg:gap-16'>
-        <div className='flex flex-col gap-6'>
-          <Eyebrow>Travel &amp; Stay</Eyebrow>
-          <h2 className={sectionHeadingClass}>{content.heading}</h2>
-          <GoldRule className='self-start' />
-          <Prose text={content.body} />
-          {services.length > 0 ? (
-            <ul className='mt-2 flex flex-col gap-5'>
-              {services.map((service, index) => {
-                const Icon = SERVICE_ICONS[index % SERVICE_ICONS.length] ?? IconCompass
-                return (
-                  <li key={`${service.title}`} className='flex items-start gap-4'>
-                    <span className='flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#DED4C4] text-[#B89455]'>
-                      <Icon className='h-5 w-5' />
-                    </span>
-                    <div>
-                      <p className='font-[family-name:var(--tpl-label-font)] text-[#1E1C18] text-[0.66rem] uppercase tracking-[0.22em]'>
-                        {service.title}
-                      </p>
-                      <p className={`${bodyFont} text-[#746E64] text-sm leading-6`}>
-                        {service.description}
-                      </p>
-                    </div>
-                  </li>
-                )
-              })}
-            </ul>
-          ) : null}
-        </div>
-
-        {stays.length > 0 ? (
-          <div className='flex flex-col gap-5'>
-            <Eyebrow className='lg:text-right'>Recommended Stays</Eyebrow>
-            <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-              {stays.map((stay) => {
-                const card = (
-                  <>
-                    <div className='relative aspect-[4/3] overflow-hidden bg-[#F1EADB]'>
-                      {stay.imageUrl ? (
-                        <Image
-                          src={stay.imageUrl}
-                          alt={stay.name}
-                          fill
-                          sizes='(max-width: 1024px) 50vw, 20vw'
-                          className='object-cover transition-transform duration-700 group-hover:scale-[1.05]'
-                        />
-                      ) : (
-                        <div className='flex h-full items-center justify-center'>
-                          <BotanicalSprig className='h-1/2 w-auto text-[#B89455]/30' />
-                        </div>
-                      )}
-                    </div>
-                    <div className='flex flex-col gap-1 px-4 py-4'>
-                      <p className='font-[family-name:var(--tpl-label-font)] text-[#1E1C18] text-[0.62rem] uppercase tracking-[0.2em]'>
-                        {stay.name}
-                      </p>
-                      {stay.description ? (
-                        <p className={`${bodyFont} text-[#746E64] text-sm leading-6`}>
-                          {stay.description}
-                        </p>
-                      ) : null}
-                    </div>
-                  </>
-                )
-                const cardClass =
-                  'group flex flex-col overflow-hidden rounded-[3px] border border-[#DED4C4] bg-[#FBF8F1]'
-                return stay.url ? (
-                  <a
-                    key={`${stay.name}`}
-                    href={stay.url}
-                    target='_blank'
-                    rel='noreferrer'
-                    className={`${cardClass} transition-colors hover:border-[#B89455]`}
-                  >
-                    {card}
-                  </a>
-                ) : (
-                  <div key={`${stay.name}`} className={cardClass}>
-                    {card}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        ) : null}
-      </div>
+      <TravelContent content={content} />
+      <StaysGrid content={content} />
     </Band>
   )
 }
 
+/** Standalone FAQ band for the section-contract renderer. */
 export function VoyageFaq({ content }: { content: FaqSectionContent }) {
   if (content.items.length === 0) {
     return null
   }
   return (
     <Band id='faq' tone='cream'>
-      <div className='flex flex-col items-center gap-12'>
-        <CenteredHead eyebrow='Good to Know' heading={content.heading} />
-        <dl className='grid w-full max-w-4xl gap-x-12 gap-y-8 sm:grid-cols-2'>
-          {content.items.map((item) => (
-            <div key={`${item.question}`} className='border-[#DED4C4] border-t pt-5'>
-              <dt className={`${headingFont} text-[#1E1C18] text-xl`}>{item.question}</dt>
-              <dd className={`${bodyFont} mt-2 text-[#746E64] text-[0.98rem] leading-7`}>
-                {item.answer}
-              </dd>
-            </div>
-          ))}
-        </dl>
+      <div className='mx-auto max-w-3xl'>
+        <FaqContent content={content} />
       </div>
     </Band>
   )
@@ -439,7 +608,7 @@ export function VoyageRegistry({ content }: { content: RegistrySectionContent })
               href={link.url}
               target='_blank'
               rel='noreferrer'
-              className='inline-flex items-center gap-2 rounded-[2px] border border-[#1E1C18]/30 px-5 py-2.5 font-[family-name:var(--tpl-label-font)] text-[#1E1C18] text-[0.64rem] uppercase tracking-[0.22em] transition-colors hover:border-[#B89455] hover:text-[#B89455]'
+              className={`${labelFont} inline-flex items-center gap-2 rounded-[2px] border border-[#1D2320]/30 px-5 py-2.5 text-[#1D2320] text-[0.64rem] uppercase tracking-[0.22em] transition-colors hover:border-[#B9965B] hover:text-[#B9965B]`}
             >
               {link.label}
               <IconArrow className='h-4 w-4' />

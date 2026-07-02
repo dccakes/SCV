@@ -5,6 +5,12 @@
  * labels, champagne rules, buttons with wide tracking, and a set of thin-line
  * SVG icons and botanical/landmark illustrations drawn by hand (stroke =
  * currentColor) so they inherit champagne gold and never look stock.
+ *
+ * Colour tokens (kept literal so Tailwind's JIT can see them):
+ *   ivory #F7F3EC · paper #FBF8F2 · cream #EFE7DA · border #DDD2C0
+ *   gold #B9965B · gold-light #D3BD8A · bronze #8A6A3E
+ *   charcoal #1D2320 · charcoal-soft #2B302C · text #252525 · muted #6F675D
+ *   text-light #F7F3EC
  */
 
 import Link from 'next/link'
@@ -15,22 +21,36 @@ export const bodyFont = 'font-[family-name:var(--tpl-body-font)]'
 export const labelFont = 'font-[family-name:var(--tpl-label-font)]'
 
 /** The editorial section heading: display serif, light weight, soft-black, responsive. */
-export const sectionHeadingClass = `${headingFont} font-light text-4xl text-[#1E1C18] sm:text-5xl`
+export const sectionHeadingClass = `${headingFont} font-light text-4xl text-[#1D2320] sm:text-5xl`
 
 /** Small uppercase, wide-tracked gold label sitting above a heading. */
 export function Eyebrow({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <span
-      className={`${labelFont} text-[#B89455] text-[0.62rem] uppercase tracking-[0.42em] ${className}`}
+      className={`${labelFont} text-[#B9965B] text-[0.62rem] uppercase tracking-[0.42em] ${className}`}
     >
       {children}
     </span>
   )
 }
 
-/** A thin champagne rule, optionally centered with a small diamond node. */
+/** A thin champagne rule. */
 export function GoldRule({ className = '' }: { className?: string }) {
-  return <span className={`block h-px w-14 bg-[#B89455]/60 ${className}`} aria-hidden='true' />
+  return <span className={`block h-px w-14 bg-[#B9965B]/60 ${className}`} aria-hidden='true' />
+}
+
+/** A centered champagne rule with a small heart node — the design's romantic divider. */
+export function HeartRule({ className = '' }: { className?: string }) {
+  return (
+    <span
+      className={`flex items-center justify-center gap-3 text-[#B9965B] ${className}`}
+      aria-hidden='true'
+    >
+      <span className='block h-px w-10 bg-[#B9965B]/50' />
+      <IconHeart className='h-3.5 w-3.5' />
+      <span className='block h-px w-10 bg-[#B9965B]/50' />
+    </span>
+  )
 }
 
 type ButtonProps = {
@@ -44,7 +64,7 @@ const buttonBase = `${labelFont} inline-flex items-center justify-center gap-2 t
 
 /** Champagne-filled primary action. */
 export function PrimaryButton({ href, children, external, className = '' }: ButtonProps) {
-  const cls = `${buttonBase} rounded-[2px] bg-[#B89455] px-8 py-3.5 text-[#181611] hover:bg-[#A6824A] ${className}`
+  const cls = `${buttonBase} rounded-[2px] bg-[#B9965B] px-8 py-3.5 text-[#1D2320] hover:bg-[#8A6A3E] hover:text-[#F7F3EC] ${className}`
   return external ? (
     <a href={href} target='_blank' rel='noreferrer' className={cls}>
       {children}
@@ -58,7 +78,7 @@ export function PrimaryButton({ href, children, external, className = '' }: Butt
 
 /** Thin-outline secondary action. */
 export function OutlineButton({ href, children, external, className = '' }: ButtonProps) {
-  const cls = `${buttonBase} rounded-[2px] border border-[#1E1C18]/35 px-8 py-3.5 text-[#1E1C18] hover:border-[#1E1C18] ${className}`
+  const cls = `${buttonBase} rounded-[2px] border border-[#1D2320]/35 px-8 py-3.5 text-[#1D2320] hover:border-[#1D2320] ${className}`
   return external ? (
     <a href={href} target='_blank' rel='noreferrer' className={cls}>
       {children}
@@ -75,7 +95,7 @@ export function GhostButtonOnDark({ href, children, className = '' }: ButtonProp
   return (
     <Link
       href={href}
-      className={`${buttonBase} rounded-[2px] border border-[#F8F1E7]/40 px-8 py-3.5 text-[#F8F1E7] hover:border-[#F8F1E7] ${className}`}
+      className={`${buttonBase} rounded-[2px] border border-[#F7F3EC]/40 px-8 py-3.5 text-[#F7F3EC] hover:border-[#F7F3EC] hover:bg-[#F7F3EC]/10 ${className}`}
     >
       {children}
     </Link>
@@ -90,6 +110,14 @@ const iconBase: SVGProps<SVGSVGElement> = {
   strokeWidth: 1,
   strokeLinecap: 'round',
   strokeLinejoin: 'round',
+}
+
+export function IconHeart(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox='0 0 24 24' aria-hidden='true' {...iconBase} {...props}>
+      <path d='M12 20s-7-4.4-9.2-8.5C1.3 8.3 2.7 5 6 5c2 0 3.2 1.2 4 2.4C10.8 6.2 12 5 14 5c3.3 0 4.7 3.3 3.2 6.5C19 15.6 12 20 12 20Z' />
+    </svg>
+  )
 }
 
 export function IconCalendar(props: SVGProps<SVGSVGElement>) {
@@ -163,6 +191,16 @@ export function IconCoffee(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+/** A confetti / disco-ball style mark for the after-party. */
+export function IconSparkle(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox='0 0 24 24' aria-hidden='true' {...iconBase} {...props}>
+      <circle cx='12' cy='13' r='6' />
+      <path d='M12 3v3M12 7l4 4M12 7l-4 4M6 13h12M8.5 8.5l7 9M15.5 8.5l-7 9' />
+    </svg>
+  )
+}
+
 export function IconCar(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox='0 0 24 24' aria-hidden='true' {...iconBase} {...props}>
@@ -188,11 +226,88 @@ export function IconCompass(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+export function IconPlane(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox='0 0 24 24' aria-hidden='true' {...iconBase} {...props}>
+      <path d='M10.5 3.2c.5-.9 1.5-.9 2 0l1 6.6 6.7 3.6c.6.3.8.8.6 1.4-.2.5-.7.7-1.3.6l-6-1.1-.5 4 1.8 1.6c.3.3.3.7 0 .9l-.4.2-2.9-1.2-2.9 1.2-.4-.2c-.3-.2-.3-.6 0-.9l1.8-1.6-.5-4-6 1.1c-.6.1-1.1-.1-1.3-.6-.2-.6 0-1.1.6-1.4l6.7-3.6 1-6.6Z' />
+    </svg>
+  )
+}
+
+export function IconBed(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox='0 0 24 24' aria-hidden='true' {...iconBase} {...props}>
+      <path d='M3 8v11M3 12h18v7M21 12v-1.5a2.5 2.5 0 0 0-2.5-2.5H9v4M6.5 10.5a1.5 1.5 0 1 0 0-.01' />
+    </svg>
+  )
+}
+
+export function IconCamera(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox='0 0 24 24' aria-hidden='true' {...iconBase} {...props}>
+      <rect x='3' y='7' width='18' height='13' rx='2' />
+      <path d='M8.5 7 10 4.5h4L15.5 7' />
+      <circle cx='12' cy='13.5' r='3.3' />
+    </svg>
+  )
+}
+
+// — Destination highlight marks —————————————————————————————————————
+
+/** A colonial archway — "colonial beauty". */
+export function IconArch(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox='0 0 24 24' aria-hidden='true' {...iconBase} {...props}>
+      <path d='M5 21V10a7 7 0 0 1 14 0v11M5 21h14M9 21v-9a3 3 0 0 1 6 0v9' />
+    </svg>
+  )
+}
+
+/** A ferris wheel — "rich culture". */
+export function IconFerris(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox='0 0 24 24' aria-hidden='true' {...iconBase} {...props}>
+      <circle cx='12' cy='11' r='7.5' />
+      <circle cx='12' cy='11' r='2' />
+      <path d='M12 3.5v3M12 15.5v3M4.5 11h3M16.5 11h3M6.7 5.7l2.1 2.1M15.2 13.2l2.1 2.1M17.3 5.7l-2.1 2.1M8.8 13.2l-2.1 2.1M9 21h6' />
+    </svg>
+  )
+}
+
+/** Fork & spoon — "incredible cuisine". */
+export function IconCuisine(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox='0 0 24 24' aria-hidden='true' {...iconBase} {...props}>
+      <path d='M7 3v6a2 2 0 0 0 4 0V3M9 9v12M17 3c-1.5 0-2.5 2-2.5 4.5S15.5 12 17 12M17 12v9' />
+    </svg>
+  )
+}
+
+/** A rosette / ribbon — "warm hospitality". */
+export function IconRosette(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox='0 0 24 24' aria-hidden='true' {...iconBase} {...props}>
+      <circle cx='12' cy='9' r='5' />
+      <circle cx='12' cy='9' r='2' />
+      <path d='M9.5 13.3 8 21l4-2 4 2-1.5-7.7' />
+    </svg>
+  )
+}
+
 /** Right-pointing arrow used as a thin link affordance. */
 export function IconArrow(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox='0 0 24 24' aria-hidden='true' {...iconBase} {...props}>
       <path d='M4 12h15m-5-5 5 5-5 5' />
+    </svg>
+  )
+}
+
+/** A thin plus, used as an accordion affordance. */
+export function IconPlus(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox='0 0 24 24' aria-hidden='true' {...iconBase} {...props}>
+      <path d='M12 5v14M5 12h14' />
     </svg>
   )
 }
@@ -219,6 +334,41 @@ export function BotanicalSprig(props: SVGProps<SVGSVGElement>) {
       })}
     </svg>
   )
+}
+
+/** A wider botanical branch with roses, used to frame section corners. */
+export function BotanicalBranch(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox='0 0 200 200' aria-hidden='true' {...iconBase} strokeWidth={0.8} {...props}>
+      <path d='M10 190C60 170 110 120 150 60C165 38 178 24 192 14' />
+      {[
+        [150, 60],
+        [110, 118],
+        [66, 158],
+      ].map(([cx, cy]) => (
+        <g key={`${cx}-${cy}`}>
+          <circle cx={cx} cy={cy} r='9' />
+          <path
+            d={`M${cx} ${cy - 9}C${cx - 6} ${cy - 4} ${cx - 6} ${cy + 4} ${cx} ${cy + 9}C${cx + 6} ${cy + 4} ${cx + 6} ${cy - 4} ${cx} ${cy - 9}`}
+          />
+        </g>
+      ))}
+      {[
+        [128, 92],
+        [88, 138],
+      ].map(([x, y]) => (
+        <path
+          key={`${x}-${y}`}
+          d={`M${x} ${y}C${x - 14} ${y - 8} ${x - 20} ${y - 2} ${x - 22} ${y + 8}C${x - 10} ${y + 8} ${x - 2} ${y + 6} ${x} ${y}`}
+        />
+      ))}
+    </svg>
+  )
+}
+
+/** The hacienda landmark, used as the hero card seal and around the RSVP band. */
+export function HaciendaSketch(props: SVGProps<SVGSVGElement>) {
+  return <SketchHacienda {...props} />
 }
 
 function SketchBridge(props: SVGProps<SVGSVGElement>) {

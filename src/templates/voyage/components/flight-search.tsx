@@ -25,9 +25,9 @@ const DESTINATIONS = [
   { code: 'PBC', label: 'Puebla (PBC)' },
 ] as const
 
-const fieldLabelClass = `${labelFont} text-[#746E64] text-[0.62rem] uppercase tracking-[0.22em]`
+const fieldLabelClass = `${labelFont} text-[#6F675D] text-[0.62rem] uppercase tracking-[0.22em]`
 const fieldClass =
-  'w-full rounded-[2px] border border-[#DED4C4] bg-white px-4 py-3 text-[#1E1C18] text-sm outline-none transition-colors focus:border-[#B89455]'
+  'w-full rounded-[2px] border border-[#DDD2C0] bg-white px-4 py-3 text-[#1D2320] text-sm outline-none transition-colors focus:border-[#B9965B]'
 
 export function VoyageFlightSearch({
   departPlaceholder,
@@ -59,19 +59,19 @@ export function VoyageFlightSearch({
   }
 
   return (
-    <section id='flights' className='w-full scroll-mt-24 bg-[#FBF8F1] px-6 py-20 sm:py-24 lg:px-10'>
+    <section id='flights' className='w-full scroll-mt-24 bg-[#FBF8F2] px-6 py-20 sm:py-24 lg:px-10'>
       <div className='mx-auto max-w-4xl'>
         <div className='mb-12 flex flex-col items-center gap-4 text-center'>
           <Eyebrow>Getting There</Eyebrow>
           <h2 className={sectionHeadingClass}>Search Flights</h2>
           <GoldRule />
-          <p className={`${bodyFont} max-w-xl text-[#746E64] text-lg leading-8`}>
+          <p className={`${bodyFont} max-w-xl text-[#6F675D] text-lg leading-8`}>
             We recommend flying to either Mexico City or Puebla — find a flight into whichever
             airport suits your journey.
           </p>
         </div>
 
-        <div className='rounded-[3px] border border-[#DED4C4] bg-white/70 p-6 sm:p-8'>
+        <div className='rounded-[3px] border border-[#DDD2C0] bg-white/70 p-6 sm:p-8'>
           <div className='grid gap-5 sm:grid-cols-2 lg:grid-cols-4'>
             <label className='flex flex-col gap-2'>
               <span className={fieldLabelClass}>Flying Into</span>
@@ -101,12 +101,12 @@ export function VoyageFlightSearch({
                 onBlur={() => setIsOriginFocused(false)}
               />
               {showSuggestions ? (
-                <ul className='absolute top-full left-0 z-10 mt-1 w-full rounded-[2px] border border-[#DED4C4] bg-white shadow-lg'>
+                <ul className='absolute top-full left-0 z-10 mt-1 w-full rounded-[2px] border border-[#DDD2C0] bg-white shadow-lg'>
                   {originSuggestions.map((airport) => (
                     <li key={airport.code}>
                       <button
                         type='button'
-                        className='flex w-full items-start justify-between gap-3 px-4 py-2.5 text-left hover:bg-[#FBF8F1]'
+                        className='flex w-full items-start justify-between gap-3 px-4 py-2.5 text-left hover:bg-[#FBF8F2]'
                         onMouseDown={(event) => {
                           event.preventDefault()
                           setOrigin(airport.code)
@@ -114,12 +114,12 @@ export function VoyageFlightSearch({
                         }}
                       >
                         <span className='flex flex-col'>
-                          <span className='text-[#1E1C18] text-sm'>{airport.name}</span>
-                          <span className='text-[#746E64] text-xs'>
+                          <span className='text-[#1D2320] text-sm'>{airport.name}</span>
+                          <span className='text-[#6F675D] text-xs'>
                             {airport.city}, {airport.country}
                           </span>
                         </span>
-                        <span className={`${labelFont} text-[#B89455] text-xs tracking-[0.1em]`}>
+                        <span className={`${labelFont} text-[#B9965B] text-xs tracking-[0.1em]`}>
                           {airport.code}
                         </span>
                       </button>
@@ -155,7 +155,7 @@ export function VoyageFlightSearch({
               type='button'
               onClick={handleSearch}
               disabled={!canSearch}
-              className={`${labelFont} inline-flex items-center justify-center gap-2 rounded-[2px] bg-[#B89455] px-8 py-3.5 text-[0.68rem] text-[#181611] uppercase tracking-[0.28em] transition-colors duration-300 hover:bg-[#A6824A] disabled:cursor-not-allowed disabled:opacity-40`}
+              className={`${labelFont} inline-flex items-center justify-center gap-2 rounded-[2px] bg-[#B9965B] px-8 py-3.5 text-[#1D2320] text-[0.68rem] uppercase tracking-[0.28em] transition-colors duration-300 hover:bg-[#8A6A3E] disabled:cursor-not-allowed disabled:opacity-40`}
             >
               Search Flights
             </button>
