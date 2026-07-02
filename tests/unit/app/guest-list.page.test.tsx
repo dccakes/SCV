@@ -6,11 +6,9 @@ const mockGetRequiredDashboardOverview = jest.fn()
 const mockGuestList = jest.fn((_props: { dashboardData: unknown }) => (
   <div data-testid='guest-list'>Guest list content</div>
 ))
-const mockDashboardTopbar = jest.fn(
-  (_props: { title?: string }) => (
-    <header data-testid='dashboard-topbar'>Topbar</header>
-  )
-)
+const mockDashboardTopbar = jest.fn((_props: { title?: string }) => (
+  <header data-testid='dashboard-topbar'>Topbar</header>
+))
 
 jest.mock('~/server/application/authenticated-route/authenticated-route-data', () => ({
   getRequiredDashboardOverview: () => mockGetRequiredDashboardOverview(),
@@ -23,8 +21,7 @@ jest.mock('~/components/guest-list', () => ({
 
 jest.mock('~/components/dashboard/dashboard-topbar', () => ({
   __esModule: true,
-  default: (props: { title?: string }) =>
-    mockDashboardTopbar(props),
+  default: (props: { title?: string }) => mockDashboardTopbar(props),
 }))
 
 describe('GuestListPage', () => {

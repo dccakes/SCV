@@ -8,11 +8,9 @@ const mockRedirect = jest.fn()
 const mockVendorList = jest.fn((_props: { initialVendors: unknown[] }) => (
   <div data-testid='vendor-list'>Vendor list</div>
 ))
-const mockDashboardTopbar = jest.fn(
-  (_props: { title?: string }) => (
-    <header data-testid='dashboard-topbar'>Topbar</header>
-  )
-)
+const mockDashboardTopbar = jest.fn((_props: { title?: string }) => (
+  <header data-testid='dashboard-topbar'>Topbar</header>
+))
 
 jest.mock('next/navigation', () => ({
   redirect: (path: string) => mockRedirect(path),
@@ -38,8 +36,7 @@ jest.mock('~/components/vendor', () => ({
 
 jest.mock('~/components/dashboard/dashboard-topbar', () => ({
   __esModule: true,
-  default: (props: { title?: string }) =>
-    mockDashboardTopbar(props),
+  default: (props: { title?: string }) => mockDashboardTopbar(props),
 }))
 
 describe('VendorsPage', () => {
