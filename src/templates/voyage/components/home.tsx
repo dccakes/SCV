@@ -20,6 +20,7 @@ import type {
   WebsiteSectionType,
 } from '~/server/domains/website-section/website-section.types'
 import type { TemplateSurfaceProps } from '~/templates/types'
+import { Decor } from '~/templates/voyage/components/decor'
 import { VoyageFlightSearch } from '~/templates/voyage/components/flight-search'
 import {
   HeroBackground,
@@ -93,8 +94,20 @@ function WeekendItinerary({ events }: { events: WeddingEvent[] }) {
       id='wedding-weekend'
       className='relative w-full scroll-mt-24 overflow-hidden bg-[#F7F3EC] px-6 py-20 sm:py-24 lg:px-10'
     >
-      <FloralCorner className='pointer-events-none absolute top-8 left-3 hidden h-24 w-auto -scale-x-100 opacity-70 lg:block' />
-      <FloralCorner className='pointer-events-none absolute right-3 bottom-8 hidden h-24 w-auto -scale-y-100 opacity-70 lg:block' />
+      <Decor
+        name='floralSpray2'
+        className='pointer-events-none absolute top-1/2 -left-10 hidden h-[22rem] w-auto -translate-y-1/2 -scale-x-100 lg:block'
+        fallback={
+          <FloralCorner className='pointer-events-none absolute top-8 left-3 hidden h-24 w-auto -scale-x-100 opacity-70 lg:block' />
+        }
+      />
+      <Decor
+        name='floralSpray2'
+        className='pointer-events-none absolute top-1/2 -right-10 hidden h-[22rem] w-auto -translate-y-1/2 lg:block'
+        fallback={
+          <FloralCorner className='pointer-events-none absolute right-3 bottom-8 hidden h-24 w-auto -scale-y-100 opacity-70 lg:block' />
+        }
+      />
       <div className='relative mx-auto max-w-6xl'>
         <div className='mb-14 flex flex-col items-center gap-4 text-center'>
           <Eyebrow>Wedding Weekend</Eyebrow>
@@ -177,7 +190,11 @@ function HeroCelebrationCard({
           </p>
         ) : null}
         <HeartRule className='mt-5' />
-        <HaciendaSketch className='mx-auto mt-5 h-14 w-auto text-[#7C7264]/80' />
+        <Decor
+          name='churchSeal'
+          className='mx-auto mt-5 h-28 w-auto object-contain'
+          fallback={<HaciendaSketch className='mx-auto mt-5 h-14 w-auto text-[#7C7264]/80' />}
+        />
         {venue ? (
           <p
             className={`${labelFont} mt-4 text-[#1D2320] text-[0.6rem] uppercase tracking-[0.26em]`}
@@ -325,11 +342,23 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
           id='registry'
           className='relative w-full scroll-mt-24 overflow-hidden bg-[#FBF8F2] px-6 py-20 sm:py-24 lg:px-10'
         >
-          <div className='pointer-events-none absolute top-1/2 left-0 hidden -translate-y-1/2 items-end gap-2 lg:flex'>
-            <HaciendaSketch className='h-24 w-auto text-[#7C7264]/50' />
-            <FloralSpray className='h-[24rem] w-auto opacity-90' />
-          </div>
-          <FloralSpray className='pointer-events-none absolute top-1/2 right-0 hidden h-[26rem] w-auto -translate-y-1/2 -scale-x-100 opacity-90 lg:block' />
+          <Decor
+            name='floralCorner'
+            className='pointer-events-none absolute -top-6 -left-8 hidden h-56 w-auto -scale-x-100 -scale-y-100 lg:block'
+            fallback={
+              <div className='pointer-events-none absolute top-1/2 left-0 hidden -translate-y-1/2 items-end gap-2 lg:flex'>
+                <HaciendaSketch className='h-24 w-auto text-[#7C7264]/50' />
+                <FloralSpray className='h-[24rem] w-auto opacity-90' />
+              </div>
+            }
+          />
+          <Decor
+            name='floralCorner'
+            className='pointer-events-none absolute -right-8 -bottom-6 hidden h-56 w-auto lg:block'
+            fallback={
+              <FloralSpray className='pointer-events-none absolute top-1/2 right-0 hidden h-[26rem] w-auto -translate-y-1/2 -scale-x-100 opacity-90 lg:block' />
+            }
+          />
           <div className='relative mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16'>
             {registry ? (
               <VoyageRegistry content={registry.content} />
@@ -344,6 +373,10 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
                   We would be honored to celebrate with you. Let us know if you can make the
                   journey.
                 </p>
+                <Decor
+                  name='hacienda'
+                  className='mt-2 hidden h-64 w-auto object-contain lg:block'
+                />
               </div>
             )}
             {rsvpHref ? (
@@ -395,8 +428,20 @@ function VoyageFooter({
 }) {
   return (
     <footer className='relative w-full overflow-hidden border-[#DDD2C0] border-t bg-[#F7F3EC] px-6 py-16 lg:px-10'>
-      <FloralCorner className='pointer-events-none absolute top-6 left-4 hidden h-20 w-auto -scale-x-100 opacity-60 lg:block' />
-      <FloralCorner className='pointer-events-none absolute top-6 right-4 hidden h-20 w-auto opacity-60 lg:block' />
+      <Decor
+        name='floralBranch'
+        className='pointer-events-none absolute -top-4 -left-6 hidden h-40 w-auto -scale-x-100 opacity-80 lg:block'
+        fallback={
+          <FloralCorner className='pointer-events-none absolute top-6 left-4 hidden h-20 w-auto -scale-x-100 opacity-60 lg:block' />
+        }
+      />
+      <Decor
+        name='floralBranch'
+        className='pointer-events-none absolute -top-4 -right-6 hidden h-40 w-auto opacity-80 lg:block'
+        fallback={
+          <FloralCorner className='pointer-events-none absolute top-6 right-4 hidden h-20 w-auto opacity-60 lg:block' />
+        }
+      />
       <div className='relative mx-auto flex max-w-6xl flex-col items-center gap-4 text-center'>
         <span className={`${headingFont} text-3xl text-[#1D2320] tracking-[0.2em]`}>
           {monogram}

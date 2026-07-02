@@ -11,6 +11,7 @@
  */
 
 import Image from 'next/image'
+import { Fragment } from 'react'
 import type {
   DestinationSectionContent,
   ExperiencesSectionContent,
@@ -23,6 +24,7 @@ import type {
   WeddingPartySectionContent,
 } from '~/server/domains/website-section/website-section.types'
 import { splitParagraphs } from '~/templates/shared/prose'
+import { Decor, type DecorName } from '~/templates/voyage/components/decor'
 import {
   BotanicalSprig,
   bodyFont,
@@ -131,7 +133,13 @@ export function VoyageOurStory({
         </div>
 
         <div className='relative'>
-          <FloralSpray className='pointer-events-none absolute top-1/2 -right-8 hidden h-[26rem] w-auto -translate-y-1/2 opacity-90 lg:block xl:-right-20' />
+          <Decor
+            name='floralCorner2'
+            className='pointer-events-none absolute -top-14 -right-10 hidden h-64 w-auto lg:block xl:-right-16'
+            fallback={
+              <FloralSpray className='pointer-events-none absolute top-1/2 -right-8 hidden h-[26rem] w-auto -translate-y-1/2 opacity-90 lg:block xl:-right-20' />
+            }
+          />
           <div className='relative z-10 aspect-[4/5] w-full overflow-hidden rounded-[3px] border border-[#DDD2C0]'>
             {imageUrl ? (
               <Image
@@ -152,6 +160,9 @@ export function VoyageOurStory({
     </Band>
   )
 }
+
+/** Watercolour vignettes for the story milestones, in narrative order. */
+const MILESTONE_DECOR: DecorName[] = ['coffee', 'mountains', 'ringBox', 'church']
 
 export function VoyageTimeline({ content }: { content: TimelineSectionContent }) {
   if (content.milestones.length === 0) {
@@ -195,7 +206,13 @@ export function VoyageTimeline({ content }: { content: TimelineSectionContent })
                   {milestone.location}
                 </span>
               ) : null}
-              <LandmarkSketch index={index} className='mt-2 h-12 w-auto text-[#7C7264]/80' />
+              <Decor
+                name={MILESTONE_DECOR[index % MILESTONE_DECOR.length] ?? 'church'}
+                className='mt-2 h-24 w-auto max-w-[12rem] object-contain'
+                fallback={
+                  <LandmarkSketch index={index} className='mt-2 h-12 w-auto text-[#7C7264]/80' />
+                }
+              />
             </li>
           ))}
         </ol>
@@ -236,7 +253,13 @@ export function VoyageDestination({ content }: { content: DestinationSectionCont
         </div>
 
         <div className='relative flex flex-col justify-center gap-6 py-2'>
-          <FloralSpray className='pointer-events-none absolute top-1/2 -right-10 hidden h-[24rem] w-auto -translate-y-1/2 opacity-90 lg:block xl:-right-24' />
+          <Decor
+            name='floralSpray'
+            className='pointer-events-none absolute top-1/2 -right-14 hidden h-[26rem] w-auto -translate-y-1/2 lg:block xl:-right-28'
+            fallback={
+              <FloralSpray className='pointer-events-none absolute top-1/2 -right-10 hidden h-[24rem] w-auto -translate-y-1/2 opacity-90 lg:block xl:-right-24' />
+            }
+          />
           <Eyebrow>{content.eyebrow ?? 'The Destination'}</Eyebrow>
           <h2 className={`${sectionHeadingClass} leading-tight`}>
             {content.heading}
@@ -348,51 +371,76 @@ export function VoyageWeddingParty({ content }: { content: WeddingPartySectionCo
   }
   return (
     <Band id='wedding-party' tone='cream' className='relative overflow-hidden'>
-      <FloralCorner className='pointer-events-none absolute top-6 right-4 hidden h-24 w-auto opacity-80 lg:block' />
-      <FloralCorner className='pointer-events-none absolute bottom-6 left-4 hidden h-24 w-auto -scale-x-100 -scale-y-100 opacity-80 lg:block' />
+      <Decor
+        name='floralCorner'
+        className='pointer-events-none absolute -right-8 -bottom-8 hidden h-56 w-auto lg:block'
+        fallback={
+          <FloralCorner className='pointer-events-none absolute top-6 right-4 hidden h-24 w-auto opacity-80 lg:block' />
+        }
+      />
+      <Decor
+        name='floralCorner2'
+        className='pointer-events-none absolute -top-8 -left-8 hidden h-56 w-auto -scale-x-100 lg:block'
+        fallback={
+          <FloralCorner className='pointer-events-none absolute bottom-6 left-4 hidden h-24 w-auto -scale-x-100 -scale-y-100 opacity-80 lg:block' />
+        }
+      />
       <div className='relative flex flex-col items-center gap-12'>
         <CenteredHead eyebrow='Our People' heading={content.heading} />
         <div className='grid w-full gap-6 sm:grid-cols-2 lg:grid-cols-4'>
-          {content.members.map((member) => (
-            <div
-              key={`${member.name}-${member.role}`}
-              className='flex flex-col items-center gap-3 text-center'
-            >
-              <div className='group relative aspect-[4/5] w-full overflow-hidden rounded-[3px] border border-[#DDD2C0] bg-[#EFE7DA]'>
-                {member.imageUrl ? (
-                  <Image
-                    src={member.imageUrl}
-                    alt={member.name}
-                    fill
-                    sizes='(max-width: 1024px) 50vw, 25vw'
-                    className='object-cover transition-transform duration-700 group-hover:scale-[1.04]'
+          {content.members.map((member, index) => (
+            <Fragment key={`${member.name}-${member.role}`}>
+              {content.members.length >= 4 && index === Math.ceil(content.members.length / 2) ? (
+                <div className='hidden flex-col items-center justify-center gap-4 rounded-[3px] border border-[#DDD2C0] bg-[#F7F3EC] px-6 py-10 text-center lg:flex'>
+                  <p className={`${headingFont} text-2xl text-[#B15C41] italic leading-snug`}>
+                    Thank you for being our people.
+                  </p>
+                  <Decor
+                    name='floralCorner'
+                    className='h-20 w-auto object-contain'
+                    fallback={<HeartRule />}
                   />
-                ) : (
-                  <div className='flex h-full items-center justify-center'>
-                    <span className={`${headingFont} text-5xl text-[#B15C41]`}>
-                      {member.name?.[0] ?? '·'}
-                    </span>
-                  </div>
-                )}
+                </div>
+              ) : null}
+              <div className='flex flex-col items-center gap-3 text-center'>
+                <div className='group relative aspect-[4/5] w-full overflow-hidden rounded-[3px] border border-[#DDD2C0] bg-[#EFE7DA]'>
+                  {member.imageUrl ? (
+                    <Image
+                      src={member.imageUrl}
+                      alt={member.name}
+                      fill
+                      sizes='(max-width: 1024px) 50vw, 25vw'
+                      className='object-cover transition-transform duration-700 group-hover:scale-[1.04]'
+                    />
+                  ) : (
+                    <div className='flex h-full items-center justify-center'>
+                      <span className={`${headingFont} text-5xl text-[#B15C41]`}>
+                        {member.name?.[0] ?? '·'}
+                      </span>
+                    </div>
+                  )}
+                  {member.blurb ? (
+                    <div className='absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#5A2C1E]/82 px-5 text-center opacity-0 backdrop-blur-[1px] transition-opacity duration-500 group-hover:opacity-100'>
+                      <IconHeart className='h-5 w-5 text-[#E7C4BB]' />
+                      <p className={`${bodyFont} text-[#F7F3EC] text-sm leading-6`}>
+                        {member.blurb}
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+                <p className={`${headingFont} text-2xl text-[#1D2320]`}>{member.name}</p>
+                <p
+                  className={`${labelFont} text-[#B15C41] text-[0.62rem] uppercase tracking-[0.24em]`}
+                >
+                  {member.role}
+                </p>
                 {member.blurb ? (
-                  <div className='absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#5A2C1E]/82 px-5 text-center opacity-0 backdrop-blur-[1px] transition-opacity duration-500 group-hover:opacity-100'>
-                    <IconHeart className='h-5 w-5 text-[#E7C4BB]' />
-                    <p className={`${bodyFont} text-[#F7F3EC] text-sm leading-6`}>{member.blurb}</p>
-                  </div>
+                  <p className={`${bodyFont} max-w-xs text-[#6F675D] text-sm leading-6 lg:hidden`}>
+                    {member.blurb}
+                  </p>
                 ) : null}
               </div>
-              <p className={`${headingFont} text-2xl text-[#1D2320]`}>{member.name}</p>
-              <p
-                className={`${labelFont} text-[#B15C41] text-[0.62rem] uppercase tracking-[0.24em]`}
-              >
-                {member.role}
-              </p>
-              {member.blurb ? (
-                <p className={`${bodyFont} max-w-xs text-[#6F675D] text-sm leading-6 lg:hidden`}>
-                  {member.blurb}
-                </p>
-              ) : null}
-            </div>
+            </Fragment>
           ))}
         </div>
       </div>
@@ -549,8 +597,20 @@ export function VoyageTravelFaq({
   }
   return (
     <Band id='travel' tone='cream' className='relative overflow-hidden'>
-      <FloralSpray className='pointer-events-none absolute top-10 -right-10 hidden h-[26rem] w-auto opacity-90 lg:block xl:right-0' />
-      <FloralCorner className='pointer-events-none absolute bottom-6 left-2 hidden h-24 w-auto -scale-x-100 -scale-y-100 opacity-70 lg:block' />
+      <Decor
+        name='floralBranch'
+        className='pointer-events-none absolute top-10 -right-8 hidden h-[24rem] w-auto lg:block xl:right-0'
+        fallback={
+          <FloralSpray className='pointer-events-none absolute top-10 -right-10 hidden h-[26rem] w-auto opacity-90 lg:block xl:right-0' />
+        }
+      />
+      <Decor
+        name='floralCorner'
+        className='pointer-events-none absolute -bottom-8 -left-8 hidden h-48 w-auto -scale-x-100 lg:block'
+        fallback={
+          <FloralCorner className='pointer-events-none absolute bottom-6 left-2 hidden h-24 w-auto -scale-x-100 -scale-y-100 opacity-70 lg:block' />
+        }
+      />
       <div
         className={`relative grid gap-14 ${hasTravel && hasFaq ? 'lg:grid-cols-2 lg:gap-16' : ''}`}
       >
