@@ -5,7 +5,7 @@ import SettingsPage from '~/app/(authenicated)/settings/page'
 const mockGetDetails = jest.fn()
 const mockGetRequiredWedding = jest.fn()
 const mockDashboardTopbar = jest.fn(
-  (_props: { title?: string; showManagementActions?: boolean }) => (
+  (_props: { title?: string }) => (
     <header data-testid='dashboard-topbar'>Topbar</header>
   )
 )
@@ -43,7 +43,7 @@ jest.mock('~/server/application/authenticated-route/authenticated-route-data', (
 
 jest.mock('@/components/dashboard/dashboard-topbar', () => ({
   __esModule: true,
-  default: (props: { title?: string; showManagementActions?: boolean }) =>
+  default: (props: { title?: string }) =>
     mockDashboardTopbar(props),
 }))
 
@@ -104,7 +104,6 @@ describe('SettingsPage', () => {
 
     expect(mockDashboardTopbar).toHaveBeenCalledWith({
       title: 'Settings',
-      showManagementActions: false,
     })
     expect(screen.getByText('Organization Members')).toBeInTheDocument()
     expect(screen.getByText('Plugins')).toBeInTheDocument()

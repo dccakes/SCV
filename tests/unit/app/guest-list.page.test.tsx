@@ -7,7 +7,7 @@ const mockGuestList = jest.fn((_props: { dashboardData: unknown }) => (
   <div data-testid='guest-list'>Guest list content</div>
 ))
 const mockDashboardTopbar = jest.fn(
-  (_props: { title?: string; showManagementActions?: boolean }) => (
+  (_props: { title?: string }) => (
     <header data-testid='dashboard-topbar'>Topbar</header>
   )
 )
@@ -23,7 +23,7 @@ jest.mock('~/components/guest-list', () => ({
 
 jest.mock('~/components/dashboard/dashboard-topbar', () => ({
   __esModule: true,
-  default: (props: { title?: string; showManagementActions?: boolean }) =>
+  default: (props: { title?: string }) =>
     mockDashboardTopbar(props),
 }))
 
@@ -54,7 +54,6 @@ describe('GuestListPage', () => {
 
     expect(mockDashboardTopbar).toHaveBeenCalledWith({
       title: 'Guest List',
-      showManagementActions: false,
     })
     expect(screen.getByTestId('dashboard-topbar')).toBeInTheDocument()
     expect(

@@ -9,7 +9,7 @@ const mockVendorList = jest.fn((_props: { initialVendors: unknown[] }) => (
   <div data-testid='vendor-list'>Vendor list</div>
 ))
 const mockDashboardTopbar = jest.fn(
-  (_props: { title?: string; showManagementActions?: boolean }) => (
+  (_props: { title?: string }) => (
     <header data-testid='dashboard-topbar'>Topbar</header>
   )
 )
@@ -38,7 +38,7 @@ jest.mock('~/components/vendor', () => ({
 
 jest.mock('~/components/dashboard/dashboard-topbar', () => ({
   __esModule: true,
-  default: (props: { title?: string; showManagementActions?: boolean }) =>
+  default: (props: { title?: string }) =>
     mockDashboardTopbar(props),
 }))
 
@@ -81,7 +81,6 @@ describe('VendorsPage', () => {
 
     expect(mockDashboardTopbar).toHaveBeenCalledWith({
       title: 'Vendors',
-      showManagementActions: false,
     })
     expect(screen.getByTestId('dashboard-topbar')).toBeInTheDocument()
     expect(

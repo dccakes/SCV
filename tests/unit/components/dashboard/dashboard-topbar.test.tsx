@@ -35,11 +35,6 @@ describe('DashboardTopbar', () => {
     expect(screen.getByText('Guest List')).toBeInTheDocument()
   })
 
-  it('renders the Add task button', () => {
-    render(<DashboardTopbar />)
-    expect(screen.getByRole('button', { name: /add task/i })).toBeInTheDocument()
-  })
-
   it('opens sidebar when hamburger button is clicked', () => {
     render(<DashboardTopbar />)
     fireEvent.click(screen.getByRole('button', { name: /open sidebar/i }))
@@ -68,26 +63,9 @@ describe('DashboardTopbar', () => {
     expect(format).toHaveBeenCalledWith(expect.any(Date))
   })
 
-  it('renders Export guest list button', () => {
-    render(<DashboardTopbar />)
-    expect(screen.getByRole('button', { name: /export guest list/i })).toBeInTheDocument()
-  })
-
-  it('renders Send update button', () => {
-    render(<DashboardTopbar />)
-    expect(screen.getByRole('button', { name: /send update/i })).toBeInTheDocument()
-  })
-
   it('renders a theme toggle button', () => {
     render(<DashboardTopbar />)
     expect(screen.getByRole('button', { name: /toggle theme/i })).toBeInTheDocument()
-  })
-
-  it('hides management actions when disabled', () => {
-    render(<DashboardTopbar showManagementActions={false} />)
-    expect(screen.queryByRole('button', { name: /export guest list/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /send update/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /add task/i })).not.toBeInTheDocument()
   })
 
   it('uses the warm translucent topbar styling', () => {

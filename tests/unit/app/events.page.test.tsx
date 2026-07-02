@@ -8,7 +8,7 @@ const mockEventsPageClient = jest.fn(({ initialEvents }: { initialEvents: unknow
   <div data-testid='events-page-client'>{initialEvents.length}</div>
 ))
 const mockDashboardTopbar = jest.fn(
-  (_props: { title?: string; showManagementActions?: boolean }) => (
+  (_props: { title?: string }) => (
     <header data-testid='dashboard-topbar'>Topbar</header>
   )
 )
@@ -32,7 +32,7 @@ jest.mock('~/app/(authenicated)/events/_components/events-page-client', () => ({
 
 jest.mock('~/components/dashboard/dashboard-topbar', () => ({
   __esModule: true,
-  default: (props: { title?: string; showManagementActions?: boolean }) =>
+  default: (props: { title?: string }) =>
     mockDashboardTopbar(props),
 }))
 
@@ -80,7 +80,6 @@ describe('EventsPage', () => {
 
     expect(mockDashboardTopbar).toHaveBeenCalledWith({
       title: 'Events',
-      showManagementActions: false,
     })
     expect(screen.getByTestId('dashboard-topbar')).toBeInTheDocument()
     expect(
