@@ -341,11 +341,13 @@ export function BotanicalBranch(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox='0 0 200 200' aria-hidden='true' {...iconBase} strokeWidth={0.8} {...props}>
       <path d='M10 190C60 170 110 120 150 60C165 38 178 24 192 14' />
-      {[
-        [150, 60],
-        [110, 118],
-        [66, 158],
-      ].map(([cx, cy]) => (
+      {(
+        [
+          [150, 60],
+          [110, 118],
+          [66, 158],
+        ] as const
+      ).map(([cx, cy]) => (
         <g key={`${cx}-${cy}`}>
           <circle cx={cx} cy={cy} r='9' />
           <path
@@ -353,10 +355,12 @@ export function BotanicalBranch(props: SVGProps<SVGSVGElement>) {
           />
         </g>
       ))}
-      {[
-        [128, 92],
-        [88, 138],
-      ].map(([x, y]) => (
+      {(
+        [
+          [128, 92],
+          [88, 138],
+        ] as const
+      ).map(([x, y]) => (
         <path
           key={`${x}-${y}`}
           d={`M${x} ${y}C${x - 14} ${y - 8} ${x - 20} ${y - 2} ${x - 22} ${y + 8}C${x - 10} ${y + 8} ${x - 2} ${y + 6} ${x} ${y}`}
