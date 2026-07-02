@@ -7,12 +7,11 @@ import { ThemeToggle } from '~/components/theme-toggle'
 
 type DashboardTopbarProps = {
   title?: string
-  showManagementActions?: boolean
   onMenuToggle?: () => void
 }
 
 export default function DashboardTopbar(props: Readonly<DashboardTopbarProps>) {
-  const { title = 'Dashboard', showManagementActions = true, onMenuToggle } = props
+  const { title = 'Dashboard', onMenuToggle } = props
   const { openSidebar } = useAuthenticatedSidebar()
   const [today, setToday] = useState('')
 
@@ -63,31 +62,6 @@ export default function DashboardTopbar(props: Readonly<DashboardTopbarProps>) {
 
       <div className='flex items-center gap-2'>
         <ThemeToggle />
-        {showManagementActions && (
-          <>
-            <button
-              type='button'
-              aria-label='Export guest list'
-              className='hidden min-h-[44px] items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 font-mono text-[0.62rem] text-foreground/70 uppercase tracking-widest transition-colors hover:border-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2 sm:flex'
-            >
-              Export guest list
-            </button>
-            <button
-              type='button'
-              aria-label='Send update'
-              className='hidden min-h-[44px] items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 font-mono text-[0.62rem] text-foreground/70 uppercase tracking-widest transition-colors hover:border-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2 md:flex'
-            >
-              Send update
-            </button>
-            <button
-              type='button'
-              aria-label='Add task'
-              className='flex min-h-[44px] items-center gap-1.5 rounded-sm bg-foreground px-3 py-1.5 font-mono text-[0.62rem] text-background uppercase tracking-widest transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
-            >
-              + Add task
-            </button>
-          </>
-        )}
       </div>
     </header>
   )

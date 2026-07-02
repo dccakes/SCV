@@ -53,7 +53,7 @@ export default async function WebsitePage() {
   if (!isWebsiteBuilderEnabled) {
     return (
       <>
-        <DashboardTopbar title='Website' showManagementActions={false} />
+        <DashboardTopbar title='Website' />
         <div className='min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-6 lg:py-6'>
           <div className='mx-auto max-w-2xl'>
             <WebsiteDisabledCallout />
