@@ -59,7 +59,7 @@ export function VoyageNavbar({ monogram, coupleNames, navItems, rsvpHref }: Voya
         {rsvpHref ? (
           <Link
             href={rsvpHref}
-            className={`${labelFont} rounded-[2px] bg-[#B9965B] px-6 py-2.5 text-[#1D2320] text-[0.6rem] uppercase tracking-[0.26em] transition-colors hover:bg-[#8A6A3E] hover:text-[#F7F3EC]`}
+            className={`${labelFont} rounded-[2px] bg-[#B15C41] px-6 py-2.5 text-[#F7F3EC] text-[0.6rem] uppercase tracking-[0.26em] transition-colors hover:bg-[#92462F]`}
           >
             RSVP
           </Link>

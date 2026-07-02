@@ -24,10 +24,11 @@ import type {
 } from '~/server/domains/website-section/website-section.types'
 import { splitParagraphs } from '~/templates/shared/prose'
 import {
-  BotanicalBranch,
   BotanicalSprig,
   bodyFont,
   Eyebrow,
+  FloralCorner,
+  FloralSpray,
   GoldRule,
   HeartRule,
   headingFont,
@@ -120,21 +121,18 @@ export function VoyageOurStory({
           <Eyebrow>About Us</Eyebrow>
           <h2 className={`${sectionHeadingClass} leading-tight`}>
             {content.heading}
-            <IconHeart className='ml-3 inline-block h-6 w-6 align-middle text-[#B9965B]' />
+            <IconHeart className='ml-3 inline-block h-6 w-6 align-middle text-[#B15C41]' />
           </h2>
           <GoldRule className='self-start' />
           <Prose text={content.body} className='max-w-xl' />
-          <p className={`${headingFont} text-2xl text-[#B9965B] italic`}>
+          <p className={`${headingFont} text-2xl text-[#B15C41] italic`}>
             Thank you for being part of our story.
           </p>
         </div>
 
         <div className='relative'>
-          <BotanicalBranch
-            aria-hidden='true'
-            className='pointer-events-none absolute -top-10 -right-6 hidden h-40 w-auto text-[#B9965B]/25 lg:block'
-          />
-          <div className='relative aspect-[4/5] w-full overflow-hidden rounded-[3px] border border-[#DDD2C0]'>
+          <FloralSpray className='pointer-events-none absolute top-1/2 -right-8 hidden h-[26rem] w-auto -translate-y-1/2 opacity-90 lg:block xl:-right-20' />
+          <div className='relative z-10 aspect-[4/5] w-full overflow-hidden rounded-[3px] border border-[#DDD2C0]'>
             {imageUrl ? (
               <Image
                 src={imageUrl}
@@ -145,7 +143,7 @@ export function VoyageOurStory({
               />
             ) : (
               <div className='absolute inset-0 flex items-center justify-center bg-[#EFE7DA]'>
-                <BotanicalSprig className='h-2/3 w-auto text-[#B9965B]/30' />
+                <BotanicalSprig className='h-2/3 w-auto text-[#B15C41]/30' />
               </div>
             )}
           </div>
@@ -167,7 +165,7 @@ export function VoyageTimeline({ content }: { content: TimelineSectionContent })
           {/* The connecting champagne line across desktop columns. */}
           <span
             aria-hidden='true'
-            className='absolute top-[0.4rem] right-[12%] left-[12%] hidden h-px bg-[#B9965B]/40 lg:block'
+            className='absolute top-[0.4rem] right-[12%] left-[12%] hidden h-px bg-[#C9A87F]/50 lg:block'
           />
           {content.milestones.map((milestone, index) => (
             <li
@@ -177,14 +175,14 @@ export function VoyageTimeline({ content }: { content: TimelineSectionContent })
               {index > 0 ? (
                 <IconHeart
                   aria-hidden='true'
-                  className='absolute top-[-0.15rem] -left-3 hidden h-3.5 w-3.5 -translate-x-1/2 text-[#B9965B]/70 lg:block'
+                  className='absolute top-[-0.2rem] -left-3 hidden h-4 w-4 -translate-x-1/2 text-[#B15C41]/80 lg:block'
                 />
               ) : null}
               <span
                 aria-hidden='true'
-                className='h-2 w-2 rounded-full border border-[#B9965B] bg-[#FBF8F2] ring-4 ring-[#FBF8F2]'
+                className='h-2 w-2 rounded-full border border-[#B15C41] bg-[#FBF8F2] ring-4 ring-[#FBF8F2]'
               />
-              <span className={`${headingFont} font-light text-3xl text-[#B9965B]`}>
+              <span className={`${headingFont} font-light text-3xl text-[#B15C41]`}>
                 {milestone.year}
               </span>
               <span
@@ -197,7 +195,7 @@ export function VoyageTimeline({ content }: { content: TimelineSectionContent })
                   {milestone.location}
                 </span>
               ) : null}
-              <LandmarkSketch index={index} className='mt-2 h-12 w-auto text-[#B9965B]/70' />
+              <LandmarkSketch index={index} className='mt-2 h-12 w-auto text-[#7C7264]/80' />
             </li>
           ))}
         </ol>
@@ -232,26 +230,24 @@ export function VoyageDestination({ content }: { content: DestinationSectionCont
             />
           ) : (
             <div className='absolute inset-0 flex items-center justify-center bg-[#EFE7DA]'>
-              <BotanicalSprig className='h-2/3 w-auto text-[#B9965B]/30' />
+              <BotanicalSprig className='h-2/3 w-auto text-[#B15C41]/30' />
             </div>
           )}
         </div>
 
         <div className='relative flex flex-col justify-center gap-6 py-2'>
-          <BotanicalSprig
-            aria-hidden='true'
-            className='pointer-events-none absolute top-0 -right-4 hidden h-full w-auto text-[#B9965B]/15 lg:block'
-          />
+          <FloralSpray className='pointer-events-none absolute top-1/2 -right-10 hidden h-[24rem] w-auto -translate-y-1/2 opacity-90 lg:block xl:-right-24' />
           <Eyebrow>{content.eyebrow ?? 'The Destination'}</Eyebrow>
           <h2 className={`${sectionHeadingClass} leading-tight`}>
             {content.heading}
+            <IconHeart className='ml-3 inline-block h-6 w-6 align-middle text-[#B15C41]' />
             {content.location ? (
               <span className='mt-1 block text-[#6F675D] italic'>{content.location}</span>
             ) : null}
           </h2>
           <Prose text={content.body} className='max-w-xl' />
           {content.venueName ? (
-            <div className='border-[#B9965B]/50 border-l-2 pl-4'>
+            <div className='border-[#B15C41]/40 border-l-2 pl-4'>
               <p className={`${headingFont} text-[#1D2320] text-xl`}>{content.venueName}</p>
               {content.venueNote ? (
                 <p className={`${bodyFont} text-[#6F675D] text-sm italic`}>{content.venueNote}</p>
@@ -262,7 +258,7 @@ export function VoyageDestination({ content }: { content: DestinationSectionCont
           <ul className='mt-2 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4'>
             {DESTINATION_HIGHLIGHTS.map(({ Icon, label }) => (
               <li key={label} className='flex flex-col items-center gap-2 text-center'>
-                <span className='flex h-12 w-12 items-center justify-center rounded-full border border-[#DDD2C0] text-[#B9965B]'>
+                <span className='flex h-12 w-12 items-center justify-center rounded-full border border-[#DDD2C0] text-[#B15C41]'>
                   <Icon className='h-6 w-6' />
                 </span>
                 <span
@@ -351,8 +347,10 @@ export function VoyageWeddingParty({ content }: { content: WeddingPartySectionCo
     return null
   }
   return (
-    <Band id='wedding-party' tone='cream'>
-      <div className='flex flex-col items-center gap-12'>
+    <Band id='wedding-party' tone='cream' className='relative overflow-hidden'>
+      <FloralCorner className='pointer-events-none absolute top-6 right-4 hidden h-24 w-auto opacity-80 lg:block' />
+      <FloralCorner className='pointer-events-none absolute bottom-6 left-4 hidden h-24 w-auto -scale-x-100 -scale-y-100 opacity-80 lg:block' />
+      <div className='relative flex flex-col items-center gap-12'>
         <CenteredHead eyebrow='Our People' heading={content.heading} />
         <div className='grid w-full gap-6 sm:grid-cols-2 lg:grid-cols-4'>
           {content.members.map((member) => (
@@ -371,21 +369,21 @@ export function VoyageWeddingParty({ content }: { content: WeddingPartySectionCo
                   />
                 ) : (
                   <div className='flex h-full items-center justify-center'>
-                    <span className={`${headingFont} text-5xl text-[#B9965B]`}>
+                    <span className={`${headingFont} text-5xl text-[#B15C41]`}>
                       {member.name?.[0] ?? '·'}
                     </span>
                   </div>
                 )}
                 {member.blurb ? (
-                  <div className='absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#1D2320]/78 px-5 text-center opacity-0 backdrop-blur-[1px] transition-opacity duration-500 group-hover:opacity-100'>
-                    <IconHeart className='h-5 w-5 text-[#D3BD8A]' />
+                  <div className='absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#5A2C1E]/82 px-5 text-center opacity-0 backdrop-blur-[1px] transition-opacity duration-500 group-hover:opacity-100'>
+                    <IconHeart className='h-5 w-5 text-[#E7C4BB]' />
                     <p className={`${bodyFont} text-[#F7F3EC] text-sm leading-6`}>{member.blurb}</p>
                   </div>
                 ) : null}
               </div>
               <p className={`${headingFont} text-2xl text-[#1D2320]`}>{member.name}</p>
               <p
-                className={`${labelFont} text-[#B9965B] text-[0.62rem] uppercase tracking-[0.24em]`}
+                className={`${labelFont} text-[#B15C41] text-[0.62rem] uppercase tracking-[0.24em]`}
               >
                 {member.role}
               </p>
@@ -410,7 +408,7 @@ function TravelContent({ content }: { content: TravelSectionContent }) {
   return (
     <div className='flex flex-col gap-6'>
       <Eyebrow>Travel &amp; Stay</Eyebrow>
-      <h2 className={`${sectionHeadingClass} leading-tight`}>{content.heading}</h2>
+      <h2 className={`${sectionHeadingClass} italic leading-tight`}>{content.heading}</h2>
       <GoldRule className='self-start' />
       <Prose text={content.body} />
       {services.length > 0 ? (
@@ -419,7 +417,7 @@ function TravelContent({ content }: { content: TravelSectionContent }) {
             const Icon = SERVICE_ICONS[index % SERVICE_ICONS.length] ?? IconCompass
             return (
               <li key={`${service.title}`} className='flex flex-col items-center gap-2 text-center'>
-                <span className='flex h-12 w-12 items-center justify-center rounded-full border border-[#DDD2C0] text-[#B9965B]'>
+                <span className='flex h-12 w-12 items-center justify-center rounded-full border border-[#DDD2C0] text-[#B15C41]'>
                   <Icon className='h-6 w-6' />
                 </span>
                 <p
@@ -463,7 +461,7 @@ function StaysGrid({ content }: { content: TravelSectionContent }) {
                   />
                 ) : (
                   <div className='flex h-full items-center justify-center'>
-                    <BotanicalSprig className='h-1/2 w-auto text-[#B9965B]/30' />
+                    <BotanicalSprig className='h-1/2 w-auto text-[#B15C41]/30' />
                   </div>
                 )}
               </div>
@@ -489,7 +487,7 @@ function StaysGrid({ content }: { content: TravelSectionContent }) {
               href={stay.url}
               target='_blank'
               rel='noreferrer'
-              className={`${cardClass} transition-colors hover:border-[#B9965B]`}
+              className={`${cardClass} transition-colors hover:border-[#B15C41]`}
             >
               {card}
             </a>
@@ -509,14 +507,14 @@ function FaqContent({ content }: { content: FaqSectionContent }) {
   return (
     <div className='flex flex-col gap-6'>
       <Eyebrow>Questions?</Eyebrow>
-      <h2 className={`${sectionHeadingClass} leading-tight`}>{content.heading}</h2>
+      <h2 className={`${sectionHeadingClass} italic leading-tight`}>{content.heading}</h2>
       <GoldRule className='self-start' />
       <div className='flex flex-col'>
         {content.items.map((item) => (
           <details key={`${item.question}`} className='group border-[#DDD2C0] border-t py-4'>
             <summary className='flex cursor-pointer list-none items-center justify-between gap-4 [&::-webkit-details-marker]:hidden'>
               <span className={`${headingFont} text-[#1D2320] text-xl`}>{item.question}</span>
-              <IconPlus className='h-4 w-4 shrink-0 text-[#B9965B] transition-transform duration-300 group-open:rotate-45' />
+              <IconPlus className='h-4 w-4 shrink-0 text-[#B15C41] transition-transform duration-300 group-open:rotate-45' />
             </summary>
             <p className={`${bodyFont} mt-3 text-[#6F675D] text-[0.98rem] leading-7`}>
               {item.answer}
@@ -550,8 +548,12 @@ export function VoyageTravelFaq({
     return null
   }
   return (
-    <Band id='travel' tone='cream'>
-      <div className={`grid gap-14 ${hasTravel && hasFaq ? 'lg:grid-cols-2 lg:gap-16' : ''}`}>
+    <Band id='travel' tone='cream' className='relative overflow-hidden'>
+      <FloralSpray className='pointer-events-none absolute top-10 -right-10 hidden h-[26rem] w-auto opacity-90 lg:block xl:right-0' />
+      <FloralCorner className='pointer-events-none absolute bottom-6 left-2 hidden h-24 w-auto -scale-x-100 -scale-y-100 opacity-70 lg:block' />
+      <div
+        className={`relative grid gap-14 ${hasTravel && hasFaq ? 'lg:grid-cols-2 lg:gap-16' : ''}`}
+      >
         {hasTravel && travel ? <TravelContent content={travel} /> : null}
         {hasFaq && faq ? (
           <div id='faq' className='scroll-mt-24'>

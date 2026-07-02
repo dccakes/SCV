@@ -28,9 +28,10 @@ import {
 } from '~/templates/voyage/components/media'
 import { VoyageNavbar, type VoyageNavItem } from '~/templates/voyage/components/navbar'
 import {
-  BotanicalBranch,
   bodyFont,
   Eyebrow,
+  FloralCorner,
+  FloralSpray,
   GhostButtonOnDark,
   GoldRule,
   HaciendaSketch,
@@ -90,30 +91,32 @@ function WeekendItinerary({ events }: { events: WeddingEvent[] }) {
   return (
     <section
       id='wedding-weekend'
-      className='w-full scroll-mt-24 bg-[#F7F3EC] px-6 py-20 sm:py-24 lg:px-10'
+      className='relative w-full scroll-mt-24 overflow-hidden bg-[#F7F3EC] px-6 py-20 sm:py-24 lg:px-10'
     >
-      <div className='mx-auto max-w-6xl'>
+      <FloralCorner className='pointer-events-none absolute top-8 left-3 hidden h-24 w-auto -scale-x-100 opacity-70 lg:block' />
+      <FloralCorner className='pointer-events-none absolute right-3 bottom-8 hidden h-24 w-auto -scale-y-100 opacity-70 lg:block' />
+      <div className='relative mx-auto max-w-6xl'>
         <div className='mb-14 flex flex-col items-center gap-4 text-center'>
           <Eyebrow>Wedding Weekend</Eyebrow>
-          <h2 className={sectionHeadingClass}>Let&rsquo;s Celebrate Together</h2>
+          <h2 className={`${sectionHeadingClass} italic`}>Let&rsquo;s Celebrate Together</h2>
           <HeartRule className='mt-1' />
         </div>
         <ol className='relative grid gap-12 sm:grid-cols-2 lg:grid-cols-6 lg:gap-6'>
           <span
             aria-hidden='true'
-            className='absolute top-7 right-[8%] left-[8%] hidden h-px bg-[#B9965B]/40 lg:block'
+            className='absolute top-7 right-[8%] left-[8%] hidden h-px bg-[#C9A87F]/50 lg:block'
           />
           {items.map((event, index) => {
             const Icon = WEEKEND_ICONS[index % WEEKEND_ICONS.length] ?? IconGlass
             const when = eventWhenLabel(event)
             return (
               <li key={event.id} className='relative flex flex-col items-center gap-3 text-center'>
-                <span className='flex h-14 w-14 items-center justify-center rounded-full border border-[#B9965B]/60 bg-[#F7F3EC] text-[#B9965B] ring-4 ring-[#F7F3EC]'>
+                <span className='flex h-14 w-14 items-center justify-center rounded-full border border-[#B15C41]/50 bg-[#F7F3EC] text-[#B15C41] ring-4 ring-[#F7F3EC]'>
                   <Icon className='h-6 w-6' />
                 </span>
                 {when ? (
                   <span
-                    className={`${labelFont} text-[#B9965B] text-[0.58rem] uppercase tracking-[0.22em]`}
+                    className={`${labelFont} text-[#B15C41] text-[0.58rem] uppercase tracking-[0.22em]`}
                   >
                     {when}
                   </span>
@@ -158,7 +161,7 @@ function HeroCelebrationCard({
   return (
     <div className='lg:col-span-5 lg:justify-self-end'>
       <div className='mx-auto max-w-sm rounded-[3px] border border-[#DDD2C0] bg-[#FBF8F2]/95 px-8 py-9 text-center shadow-[0_18px_50px_-25px_rgba(13,17,15,0.55)] backdrop-blur-sm'>
-        <p className={`${headingFont} text-2xl text-[#B9965B] italic`}>Let&rsquo;s Celebrate</p>
+        <p className={`${headingFont} text-2xl text-[#B15C41] italic`}>Let&rsquo;s Celebrate</p>
         {dateLabel ? (
           <p
             className={`${labelFont} mt-4 text-[#1D2320] text-sm uppercase tracking-[0.3em] sm:text-base`}
@@ -174,7 +177,7 @@ function HeroCelebrationCard({
           </p>
         ) : null}
         <HeartRule className='mt-5' />
-        <HaciendaSketch className='mx-auto mt-5 h-14 w-auto text-[#B9965B]/70' />
+        <HaciendaSketch className='mx-auto mt-5 h-14 w-auto text-[#7C7264]/80' />
         {venue ? (
           <p
             className={`${labelFont} mt-4 text-[#1D2320] text-[0.6rem] uppercase tracking-[0.26em]`}
@@ -322,22 +325,19 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
           id='registry'
           className='relative w-full scroll-mt-24 overflow-hidden bg-[#FBF8F2] px-6 py-20 sm:py-24 lg:px-10'
         >
-          <BotanicalBranch
-            aria-hidden='true'
-            className='pointer-events-none absolute top-8 left-0 hidden h-56 w-auto text-[#B9965B]/20 lg:block'
-          />
-          <BotanicalBranch
-            aria-hidden='true'
-            className='pointer-events-none absolute top-8 right-0 hidden h-56 w-auto scale-x-[-1] text-[#B9965B]/20 lg:block'
-          />
-          <div className='mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16'>
+          <div className='pointer-events-none absolute top-1/2 left-0 hidden -translate-y-1/2 items-end gap-2 lg:flex'>
+            <HaciendaSketch className='h-24 w-auto text-[#7C7264]/50' />
+            <FloralSpray className='h-[24rem] w-auto opacity-90' />
+          </div>
+          <FloralSpray className='pointer-events-none absolute top-1/2 right-0 hidden h-[26rem] w-auto -translate-y-1/2 -scale-x-100 opacity-90 lg:block' />
+          <div className='relative mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16'>
             {registry ? (
               <VoyageRegistry content={registry.content} />
             ) : (
               <div className='flex flex-col gap-6'>
                 <Eyebrow>Kindly RSVP</Eyebrow>
-                <h2 className={`${sectionHeadingClass} leading-tight`}>
-                  We Can&rsquo;t Wait to Celebrate With You
+                <h2 className={`${sectionHeadingClass} italic leading-tight`}>
+                  We can&rsquo;t wait to celebrate with you!
                 </h2>
                 <GoldRule className='self-start' />
                 <p className={`${bodyFont} max-w-xl text-[#6F675D] text-lg leading-8`}>
@@ -394,21 +394,23 @@ function VoyageFooter({
   location: string | null
 }) {
   return (
-    <footer className='w-full bg-[#1D2320] px-6 py-16 text-[#F7F3EC] lg:px-10'>
-      <div className='mx-auto flex max-w-6xl flex-col items-center gap-5 text-center'>
-        <span className={`${headingFont} text-3xl tracking-[0.2em]`}>{monogram}</span>
-        <span className={`${headingFont} text-2xl text-[#D3BD8A] italic`}>{coupleNames}</span>
+    <footer className='relative w-full overflow-hidden border-[#DDD2C0] border-t bg-[#F7F3EC] px-6 py-16 lg:px-10'>
+      <FloralCorner className='pointer-events-none absolute top-6 left-4 hidden h-20 w-auto -scale-x-100 opacity-60 lg:block' />
+      <FloralCorner className='pointer-events-none absolute top-6 right-4 hidden h-20 w-auto opacity-60 lg:block' />
+      <div className='relative mx-auto flex max-w-6xl flex-col items-center gap-4 text-center'>
+        <span className={`${headingFont} text-3xl text-[#1D2320] tracking-[0.2em]`}>
+          {monogram}
+        </span>
         {dateLabel || location ? (
-          <span
-            className={`${labelFont} text-[#F7F3EC]/60 text-[0.6rem] uppercase tracking-[0.28em]`}
-          >
-            {[dateLabel, location].filter(Boolean).join(' · ')}
+          <span className={`${labelFont} text-[#6F675D] text-[0.6rem] uppercase tracking-[0.28em]`}>
+            {[coupleNames, dateLabel, location].filter(Boolean).join(' · ')}
           </span>
-        ) : null}
-        <HeartRule className='mt-1 text-[#D3BD8A]' />
-        <p className={`${headingFont} flex items-center gap-2 text-[#F7F3EC]/75 text-xl italic`}>
+        ) : (
+          <span className={`${headingFont} text-2xl text-[#B15C41] italic`}>{coupleNames}</span>
+        )}
+        <p className={`${headingFont} mt-1 flex items-center gap-2 text-[#B15C41] text-xl italic`}>
           Thank you for being part of our beginning
-          <IconHeart className='h-4 w-4 text-[#D3BD8A]' />
+          <IconHeart className='h-4 w-4 text-[#B15C41]' />
         </p>
       </div>
     </footer>
