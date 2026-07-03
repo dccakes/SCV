@@ -29,6 +29,8 @@ export type WeddingData = {
   date: WeddingDate
   location?: string | null
   daysRemaining: number
+  /** Unix timestamp (ms) of the wedding date for client-side countdown calculations */
+  dateTimestamp: number | null
 }
 
 /**

@@ -530,6 +530,14 @@ describe('DashboardService', () => {
       expect(result?.weddingData.daysRemaining).toBeDefined()
     })
 
+    it('should include dateTimestamp for client-side countdown', async () => {
+      const result = await getOverview()
+
+      // dateTimestamp should be the unix ms of the wedding date for accurate D:H:M countdown
+      expect(result?.weddingData.dateTimestamp).toBeDefined()
+      expect(typeof result?.weddingData.dateTimestamp).toBe('number')
+    })
+
     it('should include website with general questions', async () => {
       const result = await getOverview()
 

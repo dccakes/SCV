@@ -50,8 +50,7 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
   const bride = weddingData?.brideFirstName ?? ''
   const groom = weddingData?.groomFirstName ?? ''
   const coupleName = bride && groom ? `${bride} & ${groom}` : bride || groom || 'Your Wedding'
-  const hasDate = weddingData?.daysRemaining != null && weddingData.daysRemaining >= 0
-  const days = hasDate ? weddingData.daysRemaining : null
+  const dateTimestamp = weddingData?.dateTimestamp ?? null
   const dateLabel = weddingData?.date?.standardFormat ?? ''
   const location = weddingData?.location ?? ''
 
@@ -60,8 +59,16 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
     const timer = setInterval(() => setNow(new Date()), 60_000)
     return () => clearInterval(timer)
   }, [])
-  const hours = now.getHours()
-  const mins = now.getMinutes()
+
+  const remainingMs = dateTimestamp != null ? Math.max(0, dateTimestamp - now.getTime()) : null
+  const hasDate = remainingMs != null
+  const days = remainingMs != null ? Math.floor(remainingMs / (24 * 60 * 60 * 1000)) : null
+  const hours =
+    remainingMs != null
+      ? Math.floor((remainingMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000))
+      : null
+  const mins =
+    remainingMs != null ? Math.floor((remainingMs % (60 * 60 * 1000)) / (60 * 1000)) : null
 
   return (
     <div className='relative overflow-hidden rounded-lg bg-sidebar-ink px-6 py-5'>
@@ -71,7 +78,7 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
       <div className='relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div>
           <p className='mb-1 font-mono text-[0.6rem] text-sidebar-cream/40 uppercase tracking-[0.18em]'>
-            {hasDate ? 'Days until the big day' : 'Your wedding'}
+            {hasDate ? 'Countdown to the big day' : 'Your wedding'}
           </p>
           <p className='font-serif text-2xl text-sidebar-cream italic leading-tight'>
             {coupleName}
@@ -104,7 +111,7 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
             <span className='pb-1 font-serif text-3xl text-sidebar-cream/15'>:</span>
             <div className='text-center'>
               <span className='block font-serif text-5xl text-sidebar-cream leading-none'>
-                {String(hours).padStart(2, '0')}
+                {String(hours ?? 0).padStart(2, '0')}
               </span>
               <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
                 Hours
@@ -113,7 +120,7 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
             <span className='pb-1 font-serif text-3xl text-sidebar-cream/15'>:</span>
             <div className='text-center'>
               <span className='block font-serif text-5xl text-sidebar-cream leading-none'>
-                {String(mins).padStart(2, '0')}
+                {String(mins ?? 0).padStart(2, '0')}
               </span>
               <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
                 Mins

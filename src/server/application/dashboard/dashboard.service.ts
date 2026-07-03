@@ -223,6 +223,7 @@ export class DashboardService {
       },
       location: weddingLocation ?? null,
       daysRemaining: calculateDaysRemaining(weddingDate) ?? -1,
+      dateTimestamp: weddingDate?.getTime() ?? null,
     }
   }
 
