@@ -27,7 +27,7 @@ const DESTINATIONS = [
 
 const fieldLabelClass = `${labelFont} text-[#6F675D] text-[0.62rem] uppercase tracking-[0.22em]`
 const fieldClass =
-  'w-full rounded-[2px] border border-[#DDD2C0] bg-white px-4 py-3 text-[#1D2320] text-sm outline-none transition-colors focus:border-[#B9965B]'
+  'w-full rounded-[2px] border border-[#DDD2C0] bg-white px-4 py-3 text-[#1D2320] text-sm outline-none transition-colors focus:border-[#B15C41]'
 
 export function VoyageFlightSearch({
   departPlaceholder,
@@ -119,7 +119,7 @@ export function VoyageFlightSearch({
                             {airport.city}, {airport.country}
                           </span>
                         </span>
-                        <span className={`${labelFont} text-[#B9965B] text-xs tracking-[0.1em]`}>
+                        <span className={`${labelFont} text-[#B15C41] text-xs tracking-[0.1em]`}>
                           {airport.code}
                         </span>
                       </button>
@@ -155,7 +155,7 @@ export function VoyageFlightSearch({
               type='button'
               onClick={handleSearch}
               disabled={!canSearch}
-              className={`${labelFont} inline-flex items-center justify-center gap-2 rounded-[2px] bg-[#B9965B] px-8 py-3.5 text-[#1D2320] text-[0.68rem] uppercase tracking-[0.28em] transition-colors duration-300 hover:bg-[#8A6A3E] disabled:cursor-not-allowed disabled:opacity-40`}
+              className={`${labelFont} inline-flex items-center justify-center gap-2 rounded-[2px] bg-[#B15C41] px-8 py-3.5 text-[#F7F3EC] text-[0.68rem] uppercase tracking-[0.28em] transition-colors duration-300 hover:bg-[#92462F] disabled:cursor-not-allowed disabled:opacity-40`}
             >
               Search Flights
             </button>

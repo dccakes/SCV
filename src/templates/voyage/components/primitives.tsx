@@ -19,6 +19,8 @@ import type { ReactNode, SVGProps } from 'react'
 export const headingFont = 'font-[family-name:var(--tpl-heading-font)]'
 export const bodyFont = 'font-[family-name:var(--tpl-body-font)]'
 export const labelFont = 'font-[family-name:var(--tpl-label-font)]'
+/** Flowing calligraphy for romantic flavour phrases ("Let's Celebrate", the hero accent). */
+export const scriptFont = 'font-[family-name:var(--tpl-script-font)]'
 
 /** The editorial section heading: display serif, light weight, soft-black, responsive. */
 export const sectionHeadingClass = `${headingFont} font-light text-4xl text-[#1D2320] sm:text-5xl`

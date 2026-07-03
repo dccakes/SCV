@@ -13,7 +13,7 @@
  * serves both desktop and mobile.
  */
 
-import { formatDateHTML5, formatDateStandard } from '~/app/utils/helpers'
+import { formatDateHTML5 } from '~/app/utils/helpers'
 import type { WeddingPageData } from '~/server/domains/website/website.types'
 import type {
   WebsiteSection,
@@ -46,6 +46,7 @@ import {
   IconSparkle,
   labelFont,
   PrimaryButton,
+  scriptFont,
   sectionHeadingClass,
 } from '~/templates/voyage/components/primitives'
 import {
@@ -76,12 +77,11 @@ function addDays(date: Date, days: number): Date {
   return result
 }
 
-function eventWhenLabel(event: WeddingEvent): string | null {
-  const formatted = event.date ? formatDateStandard(event.date) : undefined
-  if (formatted && event.startTime) {
-    return `${formatted} · ${event.startTime}`
-  }
-  return formatted ?? event.startTime ?? null
+const WEEKDAY_FORMAT = new Intl.DateTimeFormat('en-US', { weekday: 'long' })
+
+/** Day-of-week ("Saturday") when the event has a date, else null. */
+function eventDayLabel(event: WeddingEvent): string | null {
+  return event.date ? WEEKDAY_FORMAT.format(event.date) : null
 }
 
 function WeekendItinerary({ events }: { events: WeddingEvent[] }) {
@@ -111,41 +111,43 @@ function WeekendItinerary({ events }: { events: WeddingEvent[] }) {
       <div className='relative mx-auto max-w-6xl'>
         <div className='mb-14 flex flex-col items-center gap-4 text-center'>
           <Eyebrow>Wedding Weekend</Eyebrow>
-          <h2 className={`${sectionHeadingClass} italic`}>Let&rsquo;s Celebrate Together</h2>
-          <HeartRule className='mt-1' />
+          <h2 className={`${scriptFont} text-5xl text-[#B15C41] sm:text-6xl`}>
+            Let&rsquo;s Celebrate Together
+          </h2>
         </div>
-        <ol className='relative grid gap-12 sm:grid-cols-2 lg:grid-cols-6 lg:gap-6'>
-          <span
-            aria-hidden='true'
-            className='absolute top-7 right-[8%] left-[8%] hidden h-px bg-[#C9A87F]/50 lg:block'
-          />
+        <ol className='relative grid gap-12 sm:grid-cols-2 lg:grid-cols-6 lg:gap-0 lg:divide-x lg:divide-[#DDD2C0]/80'>
           {items.map((event, index) => {
             const Icon = WEEKEND_ICONS[index % WEEKEND_ICONS.length] ?? IconGlass
-            const when = eventWhenLabel(event)
+            const day = eventDayLabel(event)
             return (
-              <li key={event.id} className='relative flex flex-col items-center gap-3 text-center'>
-                <span className='flex h-14 w-14 items-center justify-center rounded-full border border-[#B15C41]/50 bg-[#F7F3EC] text-[#B15C41] ring-4 ring-[#F7F3EC]'>
-                  <Icon className='h-6 w-6' />
+              <li
+                key={event.id}
+                className='relative flex flex-col items-center gap-2 text-center lg:px-3'
+              >
+                <span className='flex h-14 w-14 items-center justify-center bg-[#F7F3EC] text-[#8A7A66] ring-4 ring-[#F7F3EC]'>
+                  <Icon className='h-9 w-9' />
                 </span>
-                {when ? (
+                {day ? (
                   <span
-                    className={`${labelFont} text-[#B15C41] text-[0.58rem] uppercase tracking-[0.22em]`}
+                    className={`${labelFont} mt-1 text-[#B15C41] text-[0.58rem] uppercase tracking-[0.24em]`}
                   >
-                    {when}
+                    {day}
                   </span>
                 ) : null}
-                <span className={`${headingFont} text-2xl text-[#1D2320] italic`}>
+                <span
+                  className={`${labelFont} font-semibold text-[#1D2320] text-[0.74rem] uppercase tracking-[0.2em]`}
+                >
                   {event.name}
                 </span>
-                {event.venue ? (
+                {event.startTime ? (
                   <span
-                    className={`${labelFont} text-[#6F675D] text-[0.58rem] uppercase tracking-[0.2em]`}
+                    className={`${labelFont} text-[#6F675D] text-[0.62rem] uppercase tracking-[0.2em]`}
                   >
-                    {event.venue}
+                    {event.startTime}
                   </span>
                 ) : null}
                 {event.description ? (
-                  <p className={`${bodyFont} max-w-[15rem] text-[#6F675D] text-sm leading-6`}>
+                  <p className={`${bodyFont} mt-1 max-w-[15rem] text-[#6F675D] text-sm leading-6`}>
                     {event.description}
                   </p>
                 ) : null}
@@ -174,11 +176,9 @@ function HeroCelebrationCard({
   return (
     <div className='lg:col-span-5 lg:justify-self-end'>
       <div className='mx-auto max-w-sm rounded-[3px] border border-[#DDD2C0] bg-[#FBF8F2]/95 px-8 py-9 text-center shadow-[0_18px_50px_-25px_rgba(13,17,15,0.55)] backdrop-blur-sm'>
-        <p className={`${headingFont} text-2xl text-[#B15C41] italic`}>Let&rsquo;s Celebrate</p>
+        <p className={`${scriptFont} text-3xl text-[#B15C41]`}>Let&rsquo;s Celebrate</p>
         {dateLabel ? (
-          <p
-            className={`${labelFont} mt-4 text-[#1D2320] text-sm uppercase tracking-[0.3em] sm:text-base`}
-          >
+          <p className={`${headingFont} mt-4 text-2xl text-[#1D2320] uppercase tracking-[0.14em]`}>
             {dateLabel}
           </p>
         ) : null}
@@ -287,23 +287,32 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
           <div className='mx-auto flex w-full max-w-6xl flex-1 items-center px-6 pt-10 pb-16 lg:items-end lg:px-10'>
             <div className='grid w-full items-center gap-12 lg:grid-cols-12 lg:items-end'>
               <div className='flex flex-col gap-7 lg:col-span-7'>
-                <Eyebrow className='text-[#D3BD8A]'>{coupleNames}</Eyebrow>
                 <h1
-                  className={`${headingFont} font-light text-5xl text-[#F7F3EC] leading-[1.04] sm:text-6xl lg:text-7xl`}
+                  className={`${headingFont} font-light text-5xl text-[#F7F3EC] leading-[1.08] sm:text-6xl lg:text-7xl`}
                 >
                   {heroHeadline ? (
                     <>
                       <span className='whitespace-pre-line'>{heroHeadline}</span>
                       {heroHeadlineAccent ? (
-                        <span className='text-[#D3BD8A] italic'> {heroHeadlineAccent}</span>
+                        <span
+                          className={`${scriptFont} mt-2 block text-[#EFE0D2] text-[1.15em] leading-[1.2]`}
+                        >
+                          {heroHeadlineAccent}
+                          <IconHeart className='ml-4 inline-block h-[0.32em] w-[0.32em] align-middle' />
+                        </span>
                       ) : null}
                     </>
                   ) : (
                     <>
                       Our Forever
                       <br />
-                      Begins in{' '}
-                      <span className='text-[#D3BD8A] italic'>{location ?? 'Paradise'}</span>
+                      Begins in
+                      <span
+                        className={`${scriptFont} mt-2 block text-[#EFE0D2] text-[1.15em] leading-[1.2]`}
+                      >
+                        {(location ?? 'Paradise').split(',')[0]}
+                        <IconHeart className='ml-4 inline-block h-[0.32em] w-[0.32em] align-middle' />
+                      </span>
                     </>
                   )}
                 </h1>
@@ -453,7 +462,7 @@ function VoyageFooter({
         ) : (
           <span className={`${headingFont} text-2xl text-[#B15C41] italic`}>{coupleNames}</span>
         )}
-        <p className={`${headingFont} mt-1 flex items-center gap-2 text-[#B15C41] text-xl italic`}>
+        <p className={`${scriptFont} mt-1 flex items-center gap-3 text-3xl text-[#B15C41]`}>
           Thank you for being part of our beginning
           <IconHeart className='h-4 w-4 text-[#B15C41]' />
         </p>

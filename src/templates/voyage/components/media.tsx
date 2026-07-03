@@ -10,7 +10,6 @@ import type { ReactNode } from 'react'
 import {
   BotanicalSprig,
   bodyFont,
-  HeartRule,
   headingFont,
   labelFont,
 } from '~/templates/voyage/components/primitives'
@@ -75,11 +74,10 @@ export function VoyageMoments({ moments }: { moments: VoyageMoment[] }) {
   const hasCaptions = shots.some((moment) => moment.title || moment.description)
   return (
     <section id='moments' className='w-full scroll-mt-24 bg-[#F7F3EC] pb-4'>
-      <div className='mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 pt-20 pb-10 text-center sm:pt-24 lg:px-10'>
-        <span className={`${headingFont} text-3xl text-[#B15C41] italic sm:text-4xl`}>
+      <div className='mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 pt-16 pb-8 text-center sm:pt-20 lg:px-10'>
+        <span className={`${labelFont} text-[#B15C41] text-[0.62rem] uppercase tracking-[0.42em]`}>
           A Few of Our Favorite Moments
         </span>
-        <HeartRule />
       </div>
       <div className='grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-6'>
         {shots.map((moment, index) => {

@@ -50,6 +50,7 @@ import {
   LandmarkSketch,
   labelFont,
   OutlineButton,
+  scriptFont,
   sectionHeadingClass,
 } from '~/templates/voyage/components/primitives'
 
@@ -127,7 +128,7 @@ export function VoyageOurStory({
           </h2>
           <GoldRule className='self-start' />
           <Prose text={content.body} className='max-w-xl' />
-          <p className={`${headingFont} text-2xl text-[#B15C41] italic`}>
+          <p className={`${scriptFont} text-3xl text-[#B15C41]`}>
             Thank you for being part of our story.
           </p>
         </div>
@@ -196,16 +197,9 @@ export function VoyageTimeline({ content }: { content: TimelineSectionContent })
               <span className={`${headingFont} font-light text-3xl text-[#B15C41]`}>
                 {milestone.year}
               </span>
-              <span
-                className={`${labelFont} text-[#1D2320] text-[0.66rem] uppercase tracking-[0.24em]`}
-              >
+              <span className={`${headingFont} text-[#B15C41] text-xl italic`}>
                 {milestone.title}
               </span>
-              {milestone.location ? (
-                <span className={`${bodyFont} text-[#6F675D] text-sm italic`}>
-                  {milestone.location}
-                </span>
-              ) : null}
               <Decor
                 name={MILESTONE_DECOR[index % MILESTONE_DECOR.length] ?? 'church'}
                 className='mt-2 h-24 w-auto max-w-[12rem] object-contain'
@@ -213,6 +207,11 @@ export function VoyageTimeline({ content }: { content: TimelineSectionContent })
                   <LandmarkSketch index={index} className='mt-2 h-12 w-auto text-[#7C7264]/80' />
                 }
               />
+              {milestone.location ? (
+                <span className={`${bodyFont} mt-1 max-w-[14rem] text-[#6F675D] text-sm leading-6`}>
+                  {milestone.location}
+                </span>
+              ) : null}
             </li>
           ))}
         </ol>
@@ -280,10 +279,8 @@ export function VoyageDestination({ content }: { content: DestinationSectionCont
 
           <ul className='mt-2 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4'>
             {DESTINATION_HIGHLIGHTS.map(({ Icon, label }) => (
-              <li key={label} className='flex flex-col items-center gap-2 text-center'>
-                <span className='flex h-12 w-12 items-center justify-center rounded-full border border-[#DDD2C0] text-[#B15C41]'>
-                  <Icon className='h-6 w-6' />
-                </span>
+              <li key={label} className='flex flex-col items-center gap-2.5 text-center'>
+                <Icon className='h-9 w-9 text-[#8A7A66]' />
                 <span
                   className={`${labelFont} text-[#6F675D] text-[0.56rem] uppercase leading-tight tracking-[0.18em]`}
                 >
@@ -340,7 +337,7 @@ export function VoyageExperiences({ content }: { content: ExperiencesSectionCont
                   />
                 ) : (
                   <div className='flex h-full items-center justify-center'>
-                    <BotanicalSprig className='h-1/2 w-auto text-[#B9965B]/30' />
+                    <BotanicalSprig className='h-1/2 w-auto text-[#B15C41]/30' />
                   </div>
                 )}
               </div>
@@ -387,29 +384,29 @@ export function VoyageWeddingParty({ content }: { content: WeddingPartySectionCo
       />
       <div className='relative flex flex-col items-center gap-12'>
         <CenteredHead eyebrow='Our People' heading={content.heading} />
-        <div className='grid w-full gap-6 sm:grid-cols-2 lg:grid-cols-4'>
+        <div className='flex w-full flex-wrap items-stretch justify-center gap-4'>
           {content.members.map((member, index) => (
             <Fragment key={`${member.name}-${member.role}`}>
               {content.members.length >= 4 && index === Math.ceil(content.members.length / 2) ? (
-                <div className='hidden flex-col items-center justify-center gap-4 rounded-[3px] border border-[#DDD2C0] bg-[#F7F3EC] px-6 py-10 text-center lg:flex'>
-                  <p className={`${headingFont} text-2xl text-[#B15C41] italic leading-snug`}>
+                <div className='hidden w-44 flex-col items-center justify-center gap-4 rounded-[3px] border border-[#DDD2C0] bg-[#FBF8F2] px-4 py-8 text-center lg:flex'>
+                  <p className={`${scriptFont} text-2xl text-[#B15C41] leading-snug`}>
                     Thank you for being our people.
                   </p>
                   <Decor
                     name='floralCorner'
-                    className='h-20 w-auto object-contain'
+                    className='h-16 w-auto object-contain'
                     fallback={<HeartRule />}
                   />
                 </div>
               ) : null}
-              <div className='flex flex-col items-center gap-3 text-center'>
-                <div className='group relative aspect-[4/5] w-full overflow-hidden rounded-[3px] border border-[#DDD2C0] bg-[#EFE7DA]'>
+              <div className='flex w-40 flex-col items-center gap-1.5 rounded-[3px] border border-[#DDD2C0] bg-[#FBF8F2] p-2 pb-4 text-center sm:w-44'>
+                <div className='group relative aspect-[4/5] w-full overflow-hidden rounded-[2px] bg-[#EFE7DA]'>
                   {member.imageUrl ? (
                     <Image
                       src={member.imageUrl}
                       alt={member.name}
                       fill
-                      sizes='(max-width: 1024px) 50vw, 25vw'
+                      sizes='176px'
                       className='object-cover transition-transform duration-700 group-hover:scale-[1.04]'
                     />
                   ) : (
@@ -420,22 +417,22 @@ export function VoyageWeddingParty({ content }: { content: WeddingPartySectionCo
                     </div>
                   )}
                   {member.blurb ? (
-                    <div className='absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#5A2C1E]/82 px-5 text-center opacity-0 backdrop-blur-[1px] transition-opacity duration-500 group-hover:opacity-100'>
-                      <IconHeart className='h-5 w-5 text-[#E7C4BB]' />
-                      <p className={`${bodyFont} text-[#F7F3EC] text-sm leading-6`}>
+                    <div className='absolute inset-0 flex flex-col items-center justify-center gap-2.5 bg-[#5A2C1E]/82 px-4 text-center opacity-0 backdrop-blur-[1px] transition-opacity duration-500 group-hover:opacity-100'>
+                      <IconHeart className='h-4 w-4 text-[#E7C4BB]' />
+                      <p className={`${bodyFont} text-[#F7F3EC] text-[0.82rem] leading-5`}>
                         {member.blurb}
                       </p>
                     </div>
                   ) : null}
                 </div>
-                <p className={`${headingFont} text-2xl text-[#1D2320]`}>{member.name}</p>
                 <p
-                  className={`${labelFont} text-[#B15C41] text-[0.62rem] uppercase tracking-[0.24em]`}
+                  className={`${labelFont} mt-2 text-[#1D2320] text-[0.66rem] uppercase tracking-[0.22em]`}
                 >
-                  {member.role}
+                  {member.name}
                 </p>
+                <p className={`${bodyFont} text-[#6F675D] text-sm italic`}>{member.role}</p>
                 {member.blurb ? (
-                  <p className={`${bodyFont} max-w-xs text-[#6F675D] text-sm leading-6 lg:hidden`}>
+                  <p className={`${bodyFont} px-1 text-[#6F675D] text-xs leading-5 lg:hidden`}>
                     {member.blurb}
                   </p>
                 ) : null}
@@ -460,16 +457,17 @@ function TravelContent({ content }: { content: TravelSectionContent }) {
       <GoldRule className='self-start' />
       <Prose text={content.body} />
       {services.length > 0 ? (
-        <ul className='mt-2 grid grid-cols-2 gap-x-6 gap-y-8'>
+        <ul className='mt-2 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-4'>
           {services.map((service, index) => {
             const Icon = SERVICE_ICONS[index % SERVICE_ICONS.length] ?? IconCompass
             return (
-              <li key={`${service.title}`} className='flex flex-col items-center gap-2 text-center'>
-                <span className='flex h-12 w-12 items-center justify-center rounded-full border border-[#DDD2C0] text-[#B15C41]'>
-                  <Icon className='h-6 w-6' />
-                </span>
+              <li
+                key={`${service.title}`}
+                className='flex flex-col items-center gap-2.5 text-center'
+              >
+                <Icon className='h-9 w-9 text-[#8A7A66]' />
                 <p
-                  className={`${labelFont} text-[#1D2320] text-[0.62rem] uppercase tracking-[0.2em]`}
+                  className={`${labelFont} font-semibold text-[#1D2320] text-[0.62rem] uppercase tracking-[0.2em]`}
                 >
                   {service.title}
                 </p>
@@ -557,14 +555,17 @@ function FaqContent({ content }: { content: FaqSectionContent }) {
       <Eyebrow>Questions?</Eyebrow>
       <h2 className={`${sectionHeadingClass} italic leading-tight`}>{content.heading}</h2>
       <GoldRule className='self-start' />
-      <div className='flex flex-col'>
+      <div className='flex flex-col gap-3'>
         {content.items.map((item) => (
-          <details key={`${item.question}`} className='group border-[#DDD2C0] border-t py-4'>
+          <details
+            key={`${item.question}`}
+            className='group rounded-[2px] border border-[#DDD2C0] bg-[#F7F3EC] px-4 py-3.5'
+          >
             <summary className='flex cursor-pointer list-none items-center justify-between gap-4 [&::-webkit-details-marker]:hidden'>
-              <span className={`${headingFont} text-[#1D2320] text-xl`}>{item.question}</span>
+              <span className={`${headingFont} text-[#1D2320] text-lg`}>{item.question}</span>
               <IconPlus className='h-4 w-4 shrink-0 text-[#B15C41] transition-transform duration-300 group-open:rotate-45' />
             </summary>
-            <p className={`${bodyFont} mt-3 text-[#6F675D] text-[0.98rem] leading-7`}>
+            <p className={`${bodyFont} mt-2.5 text-[#6F675D] text-[0.98rem] leading-7`}>
               {item.answer}
             </p>
           </details>
@@ -670,7 +671,7 @@ export function VoyageRegistry({ content }: { content: RegistrySectionContent })
               href={link.url}
               target='_blank'
               rel='noreferrer'
-              className={`${labelFont} inline-flex items-center gap-2 rounded-[2px] border border-[#1D2320]/30 px-5 py-2.5 text-[#1D2320] text-[0.64rem] uppercase tracking-[0.22em] transition-colors hover:border-[#B9965B] hover:text-[#B9965B]`}
+              className={`${labelFont} inline-flex items-center gap-2 rounded-[2px] border border-[#1D2320]/30 px-5 py-2.5 text-[#1D2320] text-[0.64rem] uppercase tracking-[0.22em] transition-colors hover:border-[#B15C41] hover:text-[#B15C41]`}
             >
               {link.label}
               <IconArrow className='h-4 w-4' />

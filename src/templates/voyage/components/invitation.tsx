@@ -25,18 +25,18 @@ export function VoyageInvitation({ weddingData, path }: Readonly<TemplateSurface
       <div className='relative w-full max-w-xl overflow-hidden rounded-[3px] border border-[#DDD2C0] bg-[#FBF8F2] px-10 py-16 text-center'>
         <BotanicalSprig
           aria-hidden='true'
-          className='pointer-events-none absolute top-1/2 -left-6 h-3/4 w-auto -translate-y-1/2 text-[#B9965B]/12'
+          className='pointer-events-none absolute top-1/2 -left-6 h-3/4 w-auto -translate-y-1/2 text-[#B15C41]/12'
         />
         <BotanicalSprig
           aria-hidden='true'
-          className='pointer-events-none absolute top-1/2 -right-6 h-3/4 w-auto -translate-y-1/2 text-[#B9965B]/12'
+          className='pointer-events-none absolute top-1/2 -right-6 h-3/4 w-auto -translate-y-1/2 text-[#B15C41]/12'
         />
         <div className='relative flex flex-col items-center gap-5'>
           <Eyebrow>{copy?.preface ?? 'Together with their families'}</Eyebrow>
           <h1 className={sectionHeadingClass}>
             {weddingData.groomFirstName} {weddingData.groomLastName}
           </h1>
-          <span className={`${headingFont} text-[#B9965B] text-xl italic`}>and</span>
+          <span className={`${headingFont} text-[#B15C41] text-xl italic`}>and</span>
           <h1 className={sectionHeadingClass}>
             {weddingData.brideFirstName} {weddingData.brideLastName}
           </h1>
@@ -76,7 +76,7 @@ export function VoyageInvitation({ weddingData, path }: Readonly<TemplateSurface
           ) : (
             <Link
               href={path}
-              className={`${labelFont} pt-2 text-[#B9965B] text-[0.64rem] uppercase tracking-[0.26em] underline-offset-4 hover:underline`}
+              className={`${labelFont} pt-2 text-[#B15C41] text-[0.64rem] uppercase tracking-[0.26em] underline-offset-4 hover:underline`}
             >
               Visit our website
             </Link>
