@@ -2,6 +2,9 @@ import { act, render, screen } from '@testing-library/react'
 import type { DashboardData } from '~/app/utils/shared-types'
 import PlanningOverview from '~/components/dashboard/planning-overview'
 
+// Wedding date as a unix timestamp — used to drive deterministic countdown tests
+const WEDDING_TIMESTAMP = new Date('2027-05-17T00:00:00Z').getTime()
+
 const mockDashboardData = {
   weddingData: {
     groomFirstName: 'Diego',
@@ -9,6 +12,7 @@ const mockDashboardData = {
     brideFirstName: 'Holly',
     brideLastName: 'Smith',
     daysRemaining: 440,
+    dateTimestamp: WEDDING_TIMESTAMP,
     date: { standardFormat: '17 May 2027', numberFormat: '2027-05-17' },
     website: {
       id: 'site-1',
@@ -63,22 +67,37 @@ describe('PlanningOverview', () => {
   // ── Countdown Hero ─────────────────────────────────────────────────────────
 
   it('renders the days remaining value in the countdown hero', () => {
-    render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText('440')).toBeInTheDocument()
-    // "Days" label rendered uppercase alongside the number
-    expect(screen.getByText('Days')).toBeInTheDocument()
+    jest.useFakeTimers()
+    // Freeze clock so that exactly 440 whole days remain until WEDDING_TIMESTAMP
+    jest.setSystemTime(new Date(WEDDING_TIMESTAMP - 440 * 24 * 60 * 60 * 1000))
+    try {
+      render(<PlanningOverview dashboardData={mockDashboardData} />)
+      expect(screen.getByText('440')).toBeInTheDocument()
+      // "Days" label rendered uppercase alongside the number
+      expect(screen.getByText('Days')).toBeInTheDocument()
+    } finally {
+      jest.useRealTimers()
+    }
   })
 
   it('renders Hours and Mins labels in the countdown hero', () => {
-    render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText('Hours')).toBeInTheDocument()
-    expect(screen.getByText('Mins')).toBeInTheDocument()
+    jest.useFakeTimers()
+    // Any time before the wedding is sufficient; freeze one day out for simplicity
+    jest.setSystemTime(new Date(WEDDING_TIMESTAMP - 24 * 60 * 60 * 1000))
+    try {
+      render(<PlanningOverview dashboardData={mockDashboardData} />)
+      expect(screen.getByText('Hours')).toBeInTheDocument()
+      expect(screen.getByText('Mins')).toBeInTheDocument()
+    } finally {
+      jest.useRealTimers()
+    }
   })
 
-  it('renders current hours and minutes as zero-padded strings', () => {
-    // Fix the clock so the padded output is deterministic
+  it('renders countdown hours and minutes as zero-padded strings', () => {
+    // Freeze clock so that 1 day + 9 h + 5 min remain → hours='09', mins='05'
     jest.useFakeTimers()
-    jest.setSystemTime(new Date('2026-03-04T09:05:00'))
+    const offset = 1 * 24 * 60 * 60 * 1000 + 9 * 60 * 60 * 1000 + 5 * 60 * 1000
+    jest.setSystemTime(new Date(WEDDING_TIMESTAMP - offset))
     try {
       render(<PlanningOverview dashboardData={mockDashboardData} />)
       expect(screen.getByText('09')).toBeInTheDocument() // hours zero-padded
@@ -90,22 +109,24 @@ describe('PlanningOverview', () => {
 
   it('updates the minutes display when the 60-second interval fires', () => {
     jest.useFakeTimers()
-    jest.setSystemTime(new Date('2026-03-04T14:07:00'))
+    // Freeze so exactly 14 h 7 min remain → days=0, hours='14', mins='07'
+    const offset = 14 * 60 * 60 * 1000 + 7 * 60 * 1000
+    jest.setSystemTime(new Date(WEDDING_TIMESTAMP - offset))
     try {
       render(<PlanningOverview dashboardData={mockDashboardData} />)
 
-      // Initial state: 14 hours, 07 mins
+      // Initial state: 14 hours, 07 mins remaining
       expect(screen.getByText('14')).toBeInTheDocument()
       expect(screen.getByText('07')).toBeInTheDocument()
 
-      // Advance one full minute — interval fires once
+      // Advance one full minute — interval fires, one minute less remaining
       act(() => {
         jest.advanceTimersByTime(60_000)
       })
 
-      // 07 should be gone, 08 should appear (14:08)
+      // 07 mins gone; 06 mins remaining now shown
       expect(screen.queryByText('07')).not.toBeInTheDocument()
-      expect(screen.getByText('08')).toBeInTheDocument()
+      expect(screen.getByText('06')).toBeInTheDocument()
     } finally {
       jest.useRealTimers()
     }
