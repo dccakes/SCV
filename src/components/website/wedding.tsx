@@ -35,7 +35,7 @@ export default async function WeddingWebsite({
       <TemplateThemeProvider template={template}>
         {welcome}
         <Minimal
-          coupleNames={`${weddingData.groomFirstName} & ${weddingData.brideFirstName}`}
+          coupleNames={`${weddingData.brideFirstName} & ${weddingData.groomFirstName}`}
           isRsvpEnabled={weddingData.website.isRsvpEnabled}
           path={path}
         />

@@ -154,10 +154,10 @@ function HeroInfoRow({ icon, children }: { icon: React.ReactNode; children: Reac
 
 export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSurfaceProps>) {
   const { website } = weddingData
-  const groom = weddingData.groomFirstName ?? ''
   const bride = weddingData.brideFirstName ?? ''
-  const monogram = `${groom?.[0] ?? 'A'} | ${bride?.[0] ?? 'B'}`.toUpperCase()
-  const coupleNames = [groom, bride].filter(Boolean).join(' & ') || 'Our Wedding'
+  const groom = weddingData.groomFirstName ?? ''
+  const monogram = `${bride?.[0] ?? 'B'} | ${groom?.[0] ?? 'G'}`.toUpperCase()
+  const coupleNames = [bride, groom].filter(Boolean).join(' & ') || 'Our Wedding'
 
   const heroUrl = website.headerImageUrl ?? website.coverPhotoUrl ?? null
   const dateLabel = weddingData.date?.standardFormat ?? null

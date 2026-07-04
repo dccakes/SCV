@@ -18,11 +18,11 @@ export function AureliaInvitation({ weddingData, path }: Readonly<TemplateSurfac
           {copy?.preface ?? 'Together with their families'}
         </p>
         <h1 className={`${headingFont} text-4xl text-foreground italic sm:text-5xl`}>
-          {weddingData.groomFirstName} {weddingData.groomLastName}
+          {weddingData.brideFirstName} {weddingData.brideLastName}
         </h1>
         <p className='text-muted-foreground text-xl italic'>and</p>
         <h1 className={`${headingFont} text-4xl text-foreground italic sm:text-5xl`}>
-          {weddingData.brideFirstName} {weddingData.brideLastName}
+          {weddingData.groomFirstName} {weddingData.groomLastName}
         </h1>
         <p className='mt-2 text-muted-foreground text-sm'>
           {copy?.invitationLine ?? 'request the pleasure of your company'}
