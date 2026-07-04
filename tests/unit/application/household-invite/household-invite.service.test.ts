@@ -97,7 +97,9 @@ describe('HouseholdInviteService', () => {
       baseUrl: 'https://example.com/dashboard',
     })
 
-    expect(result.url).toMatch(/^https:\/\/example\.com\/w\/diego-and-laura\/invite\/al-[a-z0-9]+$/)
+    expect(result.url).toMatch(
+      /^https:\/\/example\.com\/w\/diego-and-laura\/save-the-date\/al-[a-z0-9]+$/
+    )
     expect(result.expiresAt).toEqual(new Date('2027-06-18T12:00:00.000Z'))
     expect(db.household.findFirst).toHaveBeenCalledWith({
       where: { id: 'household-123', weddingId: 'wedding-123' },

@@ -7,9 +7,10 @@ type ClassicNavbarProps = {
 
 const getNavLinks = (isRsvpEnabled: boolean) => [
   { title: 'Home', subPath: '', isVisible: true },
-  // Guests get their save-the-date from the personalized household invite link
-  // (/w/[subUrl]/invite), which stays current as details change — so we don't
-  // surface the generic website save-the-date page as a second destination.
+  // Guests reach their personalized save-the-date through their household link
+  // (/w/[subUrl]/save-the-date/[token]), which sets a cookie and stays current as
+  // details change. A token-less nav entry would only hit the invalid state, so
+  // we keep this destination hidden from the public nav.
   { title: 'Save the Date', subPath: '/save-the-date', isVisible: false },
   { title: 'Invitation', subPath: '/invitation', isVisible: true },
   { title: 'RSVP', subPath: '/rsvp', isVisible: isRsvpEnabled },

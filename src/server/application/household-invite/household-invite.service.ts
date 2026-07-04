@@ -207,7 +207,7 @@ export class HouseholdInviteService {
     const code = await this.assignInviteCode(household.id, household.guests, expiresAt)
 
     return {
-      url: `${normalizeBaseUrl(input.baseUrl)}/w/${website.subUrl}/invite/${code}`,
+      url: `${normalizeBaseUrl(input.baseUrl)}/w/${website.subUrl}/save-the-date/${code}`,
       expiresAt,
     }
   }

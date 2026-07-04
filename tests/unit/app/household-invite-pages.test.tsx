@@ -106,18 +106,23 @@ describe('household invite pages', () => {
 
   it('validates the code route, sets a code-matched household invite cookie, and redirects', async () => {
     mockGetInviteData.mockResolvedValue(inviteData)
-    const { GET } = await import('~/app/w/[websiteSubUrl]/invite/[code]/route')
+    const { GET } = await import('~/app/w/[websiteSubUrl]/save-the-date/[code]/route')
 
-    const response = await GET(new Request('https://example.com/w/diego-and-laura/invite/code'), {
-      params: Promise.resolve({
-        websiteSubUrl: 'diego-and-laura',
-        code: 'ab-4f9k2c',
-      }),
-    })
+    const response = await GET(
+      new Request('https://example.com/w/diego-and-laura/save-the-date/code'),
+      {
+        params: Promise.resolve({
+          websiteSubUrl: 'diego-and-laura',
+          code: 'ab-4f9k2c',
+        }),
+      }
+    )
 
     expect(mockGetInviteData).toHaveBeenCalledWith('diego-and-laura', 'ab-4f9k2c')
     expect(response.status).toBe(307)
-    expect(response.headers.get('location')).toBe('https://example.com/w/diego-and-laura/invite')
+    expect(response.headers.get('location')).toBe(
+      'https://example.com/w/diego-and-laura/save-the-date'
+    )
     expect(response.headers.get('x-robots-tag')).toBe('noindex, nofollow')
     expect(response.headers.get('set-cookie')).toEqual(
       expect.stringContaining('household_invite_diego-and-laura=ab-4f9k2c')
@@ -133,7 +138,7 @@ describe('household invite pages', () => {
   it('renders the authenticated save-the-date page with household names and wedding details', async () => {
     mockCookieGet.mockReturnValue({ value: 'cookie-code' })
     mockGetInviteData.mockResolvedValue(inviteData)
-    const InvitePage = (await import('~/app/w/[websiteSubUrl]/invite/page')).default
+    const InvitePage = (await import('~/app/w/[websiteSubUrl]/save-the-date/page')).default
 
     render(
       await InvitePage({
@@ -151,7 +156,7 @@ describe('household invite pages', () => {
     expect(screen.getByText('Ada Lovelace')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /update our details/i })).toHaveAttribute(
       'href',
-      '/w/diego-and-laura/invite/update'
+      '/w/diego-and-laura/save-the-date/update'
     )
     expect(screen.getByText('Your details were updated.')).toBeInTheDocument()
 
@@ -173,7 +178,7 @@ describe('household invite pages', () => {
         message: 'Join us in Puebla for the celebration.',
       },
     })
-    const InvitePage = (await import('~/app/w/[websiteSubUrl]/invite/page')).default
+    const InvitePage = (await import('~/app/w/[websiteSubUrl]/save-the-date/page')).default
 
     const { container } = render(
       await InvitePage({
@@ -194,7 +199,7 @@ describe('household invite pages', () => {
   it('falls back to the default template and copy when none are customised', async () => {
     mockCookieGet.mockReturnValue({ value: 'cookie-token' })
     mockGetInviteData.mockResolvedValue({ ...inviteData, templateId: null })
-    const InvitePage = (await import('~/app/w/[websiteSubUrl]/invite/page')).default
+    const InvitePage = (await import('~/app/w/[websiteSubUrl]/save-the-date/page')).default
 
     const { container } = render(
       await InvitePage({
@@ -215,7 +220,7 @@ describe('household invite pages', () => {
       date: new Date('2027-05-30T12:00:00.000Z'),
       venue: 'Puebla, Mexico',
     })
-    const { generateMetadata } = await import('~/app/w/[websiteSubUrl]/invite/page')
+    const { generateMetadata } = await import('~/app/w/[websiteSubUrl]/save-the-date/page')
 
     const metadata = await generateMetadata({
       params: Promise.resolve({ websiteSubUrl: 'holly-and-diego' }),
@@ -238,7 +243,7 @@ describe('household invite pages', () => {
       date: null,
       venue: null,
     })
-    const { generateMetadata } = await import('~/app/w/[websiteSubUrl]/invite/page')
+    const { generateMetadata } = await import('~/app/w/[websiteSubUrl]/save-the-date/page')
 
     const metadata = await generateMetadata({
       params: Promise.resolve({ websiteSubUrl: 'holly-and-diego' }),
@@ -246,13 +251,13 @@ describe('household invite pages', () => {
 
     expect(metadata.title).toBe("Save the Date — Diego & Holly's Wedding")
     expect(metadata.openGraph?.description).toBe(
-      'Diego & Holly are getting married. Open your household invitation to confirm your details.'
+      'Diego & Holly are getting married. Open your household save the date to confirm your details.'
     )
   })
 
   it('falls back to noindex-only metadata when the slug has no wedding', async () => {
     mockGetPublicWeddingSummary.mockResolvedValue(null)
-    const { generateMetadata } = await import('~/app/w/[websiteSubUrl]/invite/page')
+    const { generateMetadata } = await import('~/app/w/[websiteSubUrl]/save-the-date/page')
 
     const metadata = await generateMetadata({
       params: Promise.resolve({ websiteSubUrl: 'unknown-slug' }),
@@ -266,7 +271,7 @@ describe('household invite pages', () => {
   it('renders a guest-friendly invalid invite page without a valid household cookie', async () => {
     mockCookieGet.mockReturnValue(undefined)
     mockGetInviteData.mockResolvedValue(null)
-    const InvitePage = (await import('~/app/w/[websiteSubUrl]/invite/page')).default
+    const InvitePage = (await import('~/app/w/[websiteSubUrl]/save-the-date/page')).default
 
     render(
       await InvitePage({
