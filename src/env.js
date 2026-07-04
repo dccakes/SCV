@@ -53,6 +53,10 @@ export const env = createEnv({
     TELEGRAM_SESSION_MAX_CHARS: z.coerce.number().int().positive().optional(),
     // Vercel Cron shared secret (protects /api/cron/* routes)
     CRON_SECRET: z.string().min(1).optional(),
+    // Optional: PostHog server-side analytics. Falls back to the public key
+    // (same project) when a dedicated server key is not supplied.
+    POSTHOG_KEY: z.string().min(1).optional(),
+    POSTHOG_HOST: z.string().url().optional(),
   },
 
   /**
@@ -71,6 +75,9 @@ export const env = createEnv({
           (process.env.VERCEL_BRANCH_URL ? `https://${process.env.VERCEL_BRANCH_URL}` : undefined)
       )
       .pipe(z.string().url().optional()),
+    // Optional: PostHog client-side analytics (product + template instrumentation).
+    NEXT_PUBLIC_POSTHOG_KEY: z.string().min(1).optional(),
+    NEXT_PUBLIC_POSTHOG_HOST: z.string().url().optional(),
   },
 
   /**
@@ -110,6 +117,10 @@ export const env = createEnv({
     TELEGRAM_SESSION_MAX_MESSAGES: process.env.TELEGRAM_SESSION_MAX_MESSAGES,
     TELEGRAM_SESSION_MAX_CHARS: process.env.TELEGRAM_SESSION_MAX_CHARS,
     CRON_SECRET: process.env.CRON_SECRET,
+    POSTHOG_KEY: process.env.POSTHOG_KEY,
+    POSTHOG_HOST: process.env.POSTHOG_HOST,
+    NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+    NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

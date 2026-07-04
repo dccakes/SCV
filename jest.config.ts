@@ -41,6 +41,8 @@ export default async () => {
     'jose',
     'react-phone-number-input',
     'libphonenumber-js',
+    'posthog-node',
+    'posthog-js',
   ]
   const pkg = esmPackages.join('|')
 
