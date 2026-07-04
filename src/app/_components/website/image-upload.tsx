@@ -17,6 +17,7 @@ import { useId, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '~/components/ui/button'
+import { isDuplicateBlobError } from '~/lib/blob'
 import { MAX_FILE_SIZE } from '~/lib/upload-config'
 
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -70,8 +71,12 @@ export function SingleImageUpload({
     try {
       const url = await uploadImage(file)
       onChange(url)
-    } catch {
-      toast.error('Upload failed. Please try again.')
+    } catch (error) {
+      toast.error(
+        isDuplicateBlobError(error)
+          ? `A file named "${file.name}" already exists. Please rename it and try again.`
+          : 'Upload failed. Please try again.'
+      )
     } finally {
       setIsUploading(false)
       if (inputRef.current) {
@@ -170,10 +175,28 @@ export function ImageGalleryUpload({
     }
     setIsUploading(true)
     try {
-      const uploaded = await Promise.all(files.map(uploadImage))
-      onChange([...values, ...uploaded])
-    } catch {
-      toast.error('One or more uploads failed. Please try again.')
+      const results = await Promise.allSettled(files.map(uploadImage))
+      const uploaded: string[] = []
+      const duplicates: string[] = []
+      const failed: string[] = []
+      for (const [i, result] of results.entries()) {
+        if (result.status === 'fulfilled') {
+          uploaded.push(result.value)
+        } else if (isDuplicateBlobError(result.reason)) {
+          duplicates.push(files[i]?.name ?? 'unknown')
+        } else {
+          failed.push(files[i]?.name ?? 'unknown')
+        }
+      }
+      if (uploaded.length > 0) {
+        onChange([...values, ...uploaded])
+      }
+      if (duplicates.length > 0) {
+        toast.error(`A file with the same name already exists: ${duplicates.join(', ')}`)
+      }
+      if (failed.length > 0) {
+        toast.error(`Failed to upload: ${failed.join(', ')}`)
+      }
     } finally {
       setIsUploading(false)
       if (inputRef.current) {

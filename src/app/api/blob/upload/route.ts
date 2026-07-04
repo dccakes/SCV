@@ -23,6 +23,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         return {
           allowedContentTypes: [...ALLOWED_CONTENT_TYPES],
           maximumSizeInBytes: MAX_FILE_SIZE,
+          addRandomSuffix: false,
           tokenPayload: JSON.stringify({ userId: session.user.id }),
         }
       },

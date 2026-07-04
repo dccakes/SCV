@@ -8,6 +8,11 @@ export type BlobUploadResult = {
   size: number
 }
 
+/** True if a blob upload failed because a file with that name already exists. */
+export function isDuplicateBlobError(error: unknown): boolean {
+  return error instanceof Error && error.message.toLowerCase().includes('already exists')
+}
+
 /**
  * Upload files to Vercel Blob via client upload.
  *
@@ -34,16 +39,22 @@ export async function uploadFiles(files: File[]): Promise<BlobUploadResult[]> {
 
   const fulfilled: BlobUploadResult[] = []
   const failed: string[] = []
+  const duplicates: string[] = []
 
   for (const [i, result] of results.entries()) {
     if (result.status === 'fulfilled') {
       fulfilled.push(result.value)
     } else {
-      failed.push(files[i]?.name ?? 'unknown')
+      const name = files[i]?.name ?? 'unknown'
+      if (isDuplicateBlobError(result.reason)) {
+        duplicates.push(name)
+      } else {
+        failed.push(name)
+      }
     }
   }
 
-  if (failed.length > 0) {
+  if (failed.length > 0 || duplicates.length > 0) {
     // Clean up already-uploaded blobs to avoid orphans
     if (fulfilled.length > 0) {
       try {
@@ -52,7 +63,11 @@ export async function uploadFiles(files: File[]): Promise<BlobUploadResult[]> {
         // Best-effort cleanup — orphaned blobs are preferable to crashing here
       }
     }
-    throw new Error(`Failed to upload: ${failed.join(', ')}`)
+    const messages = [
+      duplicates.length > 0 ? `A file with the same name already exists: ${duplicates.join(', ')}` : null,
+      failed.length > 0 ? `Failed to upload: ${failed.join(', ')}` : null,
+    ].filter(Boolean)
+    throw new Error(messages.join('. '))
   }
 
   return fulfilled
