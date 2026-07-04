@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { AddToCalendarButtons } from '~/components/website/add-to-calendar-buttons'
-import { formatCoupleNames, getOrderedPartners } from '~/lib/couple-names'
 import { buildSaveTheDateCalendarLinks } from '~/lib/website/calendar'
 import { AureliaHeaderImage } from '~/templates/aurelia/components/media'
 import type { TemplateSurfaceProps } from '~/templates/types'
@@ -11,8 +10,7 @@ export function AureliaSaveTheDate({ weddingData, path }: Readonly<TemplateSurfa
   const weddingEvent = weddingData.events.find((event) => event.name === 'Wedding Day')
   const venue = weddingEvent?.venue
   const copy = weddingData.saveTheDate
-  const { first, second } = getOrderedPartners(weddingData, weddingData.nameDisplayOrder)
-  const coupleNames = formatCoupleNames(weddingData, weddingData.nameDisplayOrder)
+  const coupleNames = `${weddingData.brideFirstName} & ${weddingData.groomFirstName}`
   const calendarLinks = buildSaveTheDateCalendarLinks({
     title: `${coupleNames} Wedding`,
     description: `Save the date for the wedding of ${coupleNames}! Formal invitation to follow. ${weddingData.website.url}`,
@@ -31,9 +29,9 @@ export function AureliaSaveTheDate({ weddingData, path }: Readonly<TemplateSurfa
         {copy?.eyebrow ?? 'Save the Date'}
       </p>
       <h1 className={`${headingFont} text-6xl text-foreground italic sm:text-7xl`}>
-        {first.firstName}
+        {weddingData.brideFirstName}
         <span className='mx-3 font-light text-primary not-italic'>&</span>
-        {second.firstName}
+        {weddingData.groomFirstName}
       </h1>
       <div className='flex items-center gap-4 text-muted-foreground'>
         <span className='h-px w-12 bg-border' />

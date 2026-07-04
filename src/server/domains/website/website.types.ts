@@ -11,7 +11,6 @@ import type {
   SaveTheDateSectionContent,
   WebsiteSection,
 } from '~/server/domains/website-section/website-section.types'
-import type { NameDisplayOrder } from '~/server/domains/wedding/wedding.types'
 
 /**
  * Core Website entity type
@@ -120,7 +119,6 @@ export type WeddingPageData = {
   groomLastName: string | null
   brideFirstName: string | null
   brideLastName: string | null
-  nameDisplayOrder: NameDisplayOrder
   date: WeddingDate
   websiteBuilderEnabled: boolean
   website: PublicWebsiteWithQuestions & {

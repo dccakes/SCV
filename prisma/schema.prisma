@@ -18,7 +18,6 @@ model Wedding {
   groomLastName            String
   brideFirstName           String
   brideLastName            String
-  nameDisplayOrder         NameDisplayOrder @default(GROOM_FIRST) // Which partner's name is shown first across templates
   enabledAddOns            String[]      @default([]) // e.g., ["website", "tasks", "gifts"]
   selfFillToken            String?       @unique // Unique token for self-fill guest registration link
   selfFillTokenGeneratedAt DateTime? // When the current token was generated (enables expiry)
@@ -581,12 +580,6 @@ enum VendorStatus {
 enum QuoteType {
   FLAT_FEE
   PER_GUEST
-}
-
-// Enum: which partner's name is displayed first across templates and guest-facing surfaces
-enum NameDisplayOrder {
-  GROOM_FIRST
-  BRIDE_FIRST
 }
 
 // Add-on: Vendor tracking per wedding

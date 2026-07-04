@@ -103,7 +103,6 @@ describe('weddingRouter', () => {
         groomLastName: 'Doe',
         brideFirstName: 'Jane',
         brideLastName: 'Smith',
-        nameDisplayOrder: 'GROOM_FIRST',
         weddingDate: new Date('2025-06-15').toISOString(),
         weddingLocation: 'Beach Resort',
         primaryEventId: 'event-123',
@@ -122,7 +121,6 @@ describe('weddingRouter', () => {
         groomLastName: 'Doe',
         brideFirstName: 'Jane',
         brideLastName: 'Smith',
-        nameDisplayOrder: 'GROOM_FIRST',
         weddingDate: undefined,
         weddingLocation: undefined,
         primaryEventId: undefined,
@@ -136,7 +134,6 @@ describe('weddingRouter', () => {
       groomLastName: 'Doe',
       brideFirstName: 'Jane',
       brideLastName: 'Smith',
-      nameDisplayOrder: 'GROOM_FIRST' as const,
     }
 
     it('should throw when active wedding is missing', async () => {
@@ -167,7 +164,6 @@ describe('weddingRouter', () => {
           groomLastName: 'Doe',
           brideFirstName: 'Jane',
           brideLastName: 'Smith',
-          nameDisplayOrder: 'GROOM_FIRST',
         },
       })
       expect(mockGetWeddingEvents).not.toHaveBeenCalled()

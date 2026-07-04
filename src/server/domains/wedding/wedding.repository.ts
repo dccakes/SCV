@@ -7,7 +7,7 @@
 
 import type { Prisma, PrismaClient } from '@prisma/client'
 
-import type { NameDisplayOrder, Wedding } from '~/server/domains/wedding/wedding.types'
+import type { Wedding } from '~/server/domains/wedding/wedding.types'
 
 export class WeddingRepository {
   constructor(private db: PrismaClient | Prisma.TransactionClient) {}
@@ -83,7 +83,6 @@ export class WeddingRepository {
       groomLastName?: string
       brideFirstName?: string
       brideLastName?: string
-      nameDisplayOrder?: NameDisplayOrder
       enabledAddOns?: string[]
     }
   ): Promise<Wedding> {
@@ -94,7 +93,6 @@ export class WeddingRepository {
         groomLastName: data.groomLastName,
         brideFirstName: data.brideFirstName,
         brideLastName: data.brideLastName,
-        nameDisplayOrder: data.nameDisplayOrder,
         enabledAddOns: data.enabledAddOns,
       },
     })

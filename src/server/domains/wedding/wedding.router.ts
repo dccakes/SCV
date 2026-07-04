@@ -63,7 +63,6 @@ export const weddingRouter = createTRPCRouter({
       groomLastName: wedding.groomLastName,
       brideFirstName: wedding.brideFirstName,
       brideLastName: wedding.brideLastName,
-      nameDisplayOrder: wedding.nameDisplayOrder,
       weddingDate: primaryEvent?.date?.toISOString() ?? undefined,
       weddingLocation: primaryEvent?.venue ?? undefined,
       primaryEventId: primaryEvent?.id ?? undefined,
@@ -87,7 +86,6 @@ export const weddingRouter = createTRPCRouter({
           groomLastName: input.groomLastName,
           brideFirstName: input.brideFirstName,
           brideLastName: input.brideLastName,
-          nameDisplayOrder: input.nameDisplayOrder,
         },
       })
 

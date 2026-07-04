@@ -1,7 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { formatDateStandard } from '~/app/utils/helpers'
-import { getOrderedPartners } from '~/lib/couple-names'
 import { AureliaCoupleGallery, AureliaHeaderImage } from '~/templates/aurelia/components/media'
 import { AureliaNavbar } from '~/templates/aurelia/components/navbar'
 import { AureliaSections } from '~/templates/aurelia/components/sections'
@@ -11,7 +10,6 @@ const headingFont = 'font-[family-name:var(--tpl-heading-font)]'
 
 export function AureliaHome({ weddingData, path, introText }: Readonly<TemplateSurfaceProps>) {
   const { website } = weddingData
-  const { first, second } = getOrderedPartners(weddingData, weddingData.nameDisplayOrder)
 
   return (
     <main className='flex flex-col items-center gap-24 px-6 pb-28'>
@@ -29,9 +27,9 @@ export function AureliaHome({ weddingData, path, introText }: Readonly<TemplateS
           We're getting married
         </p>
         <h1 className={`${headingFont} text-6xl text-foreground italic leading-tight sm:text-7xl`}>
-          {first.firstName}
+          {weddingData.brideFirstName}
           <span className='mx-3 font-light text-primary not-italic'>&</span>
-          {second.firstName}
+          {weddingData.groomFirstName}
         </h1>
         <div className='flex items-center gap-4 text-muted-foreground'>
           <span className='h-px w-12 bg-border' />
@@ -110,7 +108,7 @@ export function AureliaHome({ weddingData, path, introText }: Readonly<TemplateS
 
       <section className='flex flex-col items-center gap-3 text-center'>
         <p className={`${headingFont} text-5xl text-foreground italic`}>
-          {first.firstName?.[0] ?? 'G'} &amp; {second.firstName?.[0] ?? 'B'}
+          {weddingData.brideFirstName?.[0] ?? 'B'} &amp; {weddingData.groomFirstName?.[0] ?? 'G'}
         </p>
         <span className='h-px w-16 bg-border' />
         <p className='text-muted-foreground text-sm tracking-[0.3em]'>

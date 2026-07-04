@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { formatDateStandard } from '~/app/utils/helpers'
-import { getOrderedPartners } from '~/lib/couple-names'
 import { ClassicHeaderImage } from '~/templates/classic/components/media'
 import type { TemplateSurfaceProps } from '~/templates/types'
 
@@ -8,7 +7,6 @@ export function ClassicInvitation({ weddingData, path }: Readonly<TemplateSurfac
   const { website } = weddingData
   const weddingEvent = weddingData.events.find((event) => event.name === 'Wedding Day')
   const copy = weddingData.invitation
-  const { first, second } = getOrderedPartners(weddingData, weddingData.nameDisplayOrder)
 
   return (
     <main className='flex min-h-screen w-full items-center justify-center bg-background px-4 py-12 sm:py-20'>
@@ -20,11 +18,11 @@ export function ClassicInvitation({ weddingData, path }: Readonly<TemplateSurfac
               {copy?.preface ?? 'Together with their families'}
             </p>
             <h1 className='font-medium text-4xl text-card-foreground tracking-widest sm:text-6xl'>
-              {first.firstName} {first.lastName}
+              {weddingData.brideFirstName} {weddingData.brideLastName}
             </h1>
             <p className='text-2xl italic'>and</p>
             <h1 className='font-medium text-4xl text-card-foreground tracking-widest sm:text-6xl'>
-              {second.firstName} {second.lastName}
+              {weddingData.groomFirstName} {weddingData.groomLastName}
             </h1>
             <p className='mt-2 text-sm tracking-normal'>
               {copy?.invitationLine ?? 'request the pleasure of your company'}

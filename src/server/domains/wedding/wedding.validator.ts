@@ -7,11 +7,6 @@
 import { z } from 'zod'
 
 /**
- * Which partner's name is displayed first across templates and guest-facing surfaces
- */
-export const nameDisplayOrderSchema = z.enum(['GROOM_FIRST', 'BRIDE_FIRST'])
-
-/**
  * Schema for creating a new wedding (onboarding)
  */
 export const createWeddingSchema = z.object({
@@ -34,7 +29,6 @@ export const updateWeddingSchema = z.object({
   groomLastName: z.string().min(1).optional(),
   brideFirstName: z.string().min(1).optional(),
   brideLastName: z.string().min(1).optional(),
-  nameDisplayOrder: nameDisplayOrderSchema.optional(),
   enabledAddOns: z.array(z.string()).optional(),
 })
 
@@ -46,7 +40,6 @@ export const updateWeddingDetailsSchema = z.object({
   groomLastName: z.string().min(1, 'Groom last name is required'),
   brideFirstName: z.string().min(1, 'Bride first name is required'),
   brideLastName: z.string().min(1, 'Bride last name is required'),
-  nameDisplayOrder: nameDisplayOrderSchema,
 })
 
 export const toggleWeddingAddOnSchema = z.object({

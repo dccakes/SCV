@@ -13,7 +13,6 @@ export const mockWedding: Wedding = {
   groomLastName: 'Doe',
   brideFirstName: 'Jane',
   brideLastName: 'Smith',
-  nameDisplayOrder: 'GROOM_FIRST',
   enabledAddOns: [],
   selfFillToken: null,
   selfFillTokenGeneratedAt: null,
