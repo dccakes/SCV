@@ -376,7 +376,7 @@ function WeddingPartyCard({ member, anchorId }: { member: WeddingPartyMember; an
             src={member.imageUrl}
             alt={member.name}
             fill
-            sizes='(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 220px'
+            sizes='(max-width: 640px) 45vw, (max-width: 1024px) 22vw, 180px'
             className='object-cover'
           />
         ) : (
@@ -484,7 +484,7 @@ export function VoyageWeddingParty({ content }: { content: WeddingPartySectionCo
       />
       <div className='relative flex flex-col items-center gap-12'>
         <CenteredHead eyebrow='Our People' heading={content.heading} />
-        <div className='grid w-full grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4'>
+        <div className='grid w-full grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6'>
           {content.members.map((member, index) => {
             const anchorId = `party-${index}-${member.name.replace(/\s+/g, '-').toLowerCase()}`
             return (
