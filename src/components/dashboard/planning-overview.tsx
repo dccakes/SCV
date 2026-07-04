@@ -66,14 +66,6 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
   const dateLabel = weddingData?.date?.standardFormat ?? ''
   const location = weddingData?.location ?? ''
 
-  const [now, setNow] = useState(() => new Date())
-  useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 60_000)
-    return () => clearInterval(timer)
-  }, [])
-  const hours = now.getHours()
-  const mins = now.getMinutes()
-
   const milestones = dashboardData?.milestones ?? []
   const completedMilestones = milestones.filter((milestone) => milestone.effectiveStatus === 'done')
   const planningPct =
@@ -117,39 +109,17 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
         </div>
 
         {hasDate ? (
-          <div className='flex items-end gap-3'>
-            <div className='text-center'>
-              <span className='block font-serif text-5xl text-sidebar-cream leading-none'>
-                {days}
-              </span>
-              <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
-                Days
-              </span>
-            </div>
-            <span className='pb-1 font-serif text-3xl text-sidebar-cream/15'>:</span>
-            <div className='text-center'>
-              <span className='block font-serif text-5xl text-sidebar-cream leading-none'>
-                {String(hours).padStart(2, '0')}
-              </span>
-              <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
-                Hours
-              </span>
-            </div>
-            <span className='pb-1 font-serif text-3xl text-sidebar-cream/15'>:</span>
-            <div className='text-center'>
-              <span className='block font-serif text-5xl text-sidebar-cream leading-none'>
-                {String(mins).padStart(2, '0')}
-              </span>
-              <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
-                Mins
-              </span>
-            </div>
+          <div className='text-center'>
+            <span className='block font-serif text-6xl text-sidebar-cream leading-none'>
+              {days}
+            </span>
+            <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
+              Days
+            </span>
           </div>
         ) : (
           <div className='text-center'>
-            <span className='block font-serif text-3xl text-sidebar-cream/30 leading-none'>
-              --:--:--
-            </span>
+            <span className='block font-serif text-5xl text-sidebar-cream/30 leading-none'>—</span>
             <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
               No date set
             </span>

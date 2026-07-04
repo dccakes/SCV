@@ -225,48 +225,6 @@ describe('PlanningOverview', () => {
     expect(screen.getByText(/67% of planning complete/i)).toBeInTheDocument()
   })
 
-  it('renders Hours and Mins labels in the countdown hero', () => {
-    render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText('Hours')).toBeInTheDocument()
-    expect(screen.getByText('Mins')).toBeInTheDocument()
-  })
-
-  it('renders current hours and minutes as zero-padded strings', () => {
-    // Fix the clock so the padded output is deterministic
-    jest.useFakeTimers()
-    jest.setSystemTime(new Date('2026-03-04T09:05:00'))
-    try {
-      render(<PlanningOverview dashboardData={mockDashboardData} />)
-      expect(screen.getByText('09')).toBeInTheDocument() // hours zero-padded
-      expect(screen.getByText('05')).toBeInTheDocument() // mins zero-padded
-    } finally {
-      jest.useRealTimers()
-    }
-  })
-
-  it('updates the minutes display when the 60-second interval fires', () => {
-    jest.useFakeTimers()
-    jest.setSystemTime(new Date('2026-03-04T14:07:00'))
-    try {
-      render(<PlanningOverview dashboardData={mockDashboardData} />)
-
-      // Initial state: 14 hours, 07 mins
-      expect(screen.getByText('14')).toBeInTheDocument()
-      expect(screen.getByText('07')).toBeInTheDocument()
-
-      // Advance one full minute — interval fires once
-      act(() => {
-        jest.advanceTimersByTime(60_000)
-      })
-
-      // 07 should be gone, 08 should appear (14:08)
-      expect(screen.queryByText('07')).not.toBeInTheDocument()
-      expect(screen.getByText('08')).toBeInTheDocument()
-    } finally {
-      jest.useRealTimers()
-    }
-  })
-
   it('renders couple names in the countdown hero', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
     expect(screen.getByText('Holly & Diego')).toBeInTheDocument()
