@@ -12,10 +12,14 @@ import { buildSaveTheDateCalendarLinks } from '~/lib/website/calendar'
 import { householdInviteCookieName } from '~/lib/website/cookies'
 import { householdInviteService } from '~/server/application/household-invite'
 import { resolveTemplate, TemplateThemeProvider } from '~/templates'
+import { VOYAGE_TEMPLATE_ID } from '~/templates/catalog'
+import { Decor } from '~/templates/voyage/components/decor'
+import { FloralCorner } from '~/templates/voyage/components/primitives'
 
-// Match the template surfaces: headings use the template heading font, labels
+// Match the template surfaces: the couple's names prefer a script font when the
+// template defines one (falling back to its heading font otherwise), labels
 // fall back to the body font when a template doesn't define a separate label font.
-const headingFont = 'font-[family-name:var(--tpl-heading-font)]'
+const coupleNameFont = 'font-[family-name:var(--tpl-script-font,var(--tpl-heading-font))]'
 const labelFont = 'font-[family-name:var(--tpl-label-font,var(--tpl-body-font))]'
 
 const DETAIL_FALLBACK = 'To be announced'
@@ -118,6 +122,11 @@ export default async function HouseholdInvitePage({
   // via CSS variables) and reuse their editable Save the Date copy.
   const template = resolveTemplate(inviteData.templateId)
   const saveTheDateCopy = inviteData.saveTheDate
+  const isVoyage = inviteData.templateId === VOYAGE_TEMPLATE_ID
+  const hasScriptFont = Boolean(
+    (template.theme.cssVars as Record<string, string | undefined>)['--tpl-script-font']
+  )
+  const coupleNameClassName = `${coupleNameFont} ${hasScriptFont ? '' : 'italic'}`.trim()
 
   const coupleNames = `${inviteData.wedding.groomFirstName} & ${inviteData.wedding.brideFirstName}`
 
@@ -140,15 +149,37 @@ export default async function HouseholdInvitePage({
 
   return (
     <TemplateThemeProvider template={template}>
-      <main className='relative min-h-screen overflow-hidden bg-background px-5 py-12 text-foreground sm:py-16'>
+      <main className='relative isolate min-h-screen overflow-hidden bg-background px-5 py-12 text-foreground sm:py-16'>
         {/* Soft, warm backdrop so the invitation card reads as a framed keepsake. */}
         <div aria-hidden className='pointer-events-none absolute inset-0 -z-10'>
           <div className='absolute -top-32 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl' />
           <div className='absolute right-0 bottom-0 h-72 w-72 translate-x-1/4 rounded-full bg-accent/15 blur-3xl' />
+          {isVoyage ? (
+            <>
+              <Decor
+                name='floralCorner2'
+                className='absolute top-0 left-0 hidden h-64 w-auto lg:block'
+                fallback={
+                  <FloralCorner className='absolute top-0 left-0 hidden h-48 w-auto -scale-x-100 opacity-70 lg:block' />
+                }
+              />
+              <Decor
+                name='floralCorner'
+                className='absolute right-0 bottom-0 hidden h-64 w-auto lg:block'
+                fallback={
+                  <FloralCorner className='absolute right-0 bottom-0 hidden h-48 w-auto opacity-70 lg:block' />
+                }
+              />
+            </>
+          ) : null}
         </div>
 
         <div className='mx-auto flex min-h-[calc(100vh-6rem)] w-full max-w-2xl items-center'>
-          <EnvelopeReveal coupleNames={coupleNames} websiteSubUrl={websiteSubUrl}>
+          <EnvelopeReveal
+            coupleNames={coupleNames}
+            websiteSubUrl={websiteSubUrl}
+            coupleNameClassName={coupleNameClassName}
+          >
             <Card className='w-full overflow-hidden border-border/70 shadow-foreground/5 shadow-xl'>
               {/* Slim accent band at the top of the card. */}
               <div className='h-1.5 w-full bg-gradient-to-r from-primary via-accent to-primary' />
@@ -168,7 +199,7 @@ export default async function HouseholdInvitePage({
                   >
                     {saveTheDateCopy?.eyebrow ?? 'Save the date'}
                   </p>
-                  <h1 className={`mt-4 text-5xl italic leading-none sm:text-7xl ${headingFont}`}>
+                  <h1 className={`mt-4 text-5xl leading-none sm:text-7xl ${coupleNameClassName}`}>
                     {coupleNames}
                   </h1>
                   <span className='mx-auto mt-6 block h-px w-16 bg-border' />
