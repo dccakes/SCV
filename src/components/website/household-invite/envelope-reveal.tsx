@@ -9,7 +9,7 @@ type EnvelopeRevealProps = {
   /** Couple names shown on the letter peeking out of the envelope. */
   coupleNames: string
   /** Font classes for the couple names, matched to the template (heading font, or a script font when the template defines one). */
-  coupleNameClassName?: string
+  coupleNameClassName: string
   /** The real invite card, rendered on the server and revealed after the intro. */
   children: ReactNode
 }
@@ -29,12 +29,10 @@ const storageKeyFor = (websiteSubUrl: string) => `household_invite_envelope_${we
  * The intro is skipped when the guest prefers reduced motion or has already seen
  * it this session.
  */
-const DEFAULT_COUPLE_NAME_CLASS = 'font-[family-name:var(--tpl-heading-font)] italic'
-
 export function EnvelopeReveal({
   websiteSubUrl,
   coupleNames,
-  coupleNameClassName = DEFAULT_COUPLE_NAME_CLASS,
+  coupleNameClassName,
   children,
 }: Readonly<EnvelopeRevealProps>) {
   const [phase, setPhase] = useState<Phase>('pending')

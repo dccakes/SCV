@@ -126,7 +126,7 @@ export default async function HouseholdInvitePage({
   const hasScriptFont = Boolean(
     (template.theme.cssVars as Record<string, string | undefined>)['--tpl-script-font']
   )
-  const coupleNameClassName = `${coupleNameFont} ${hasScriptFont ? '' : 'italic'}`.trim()
+  const coupleNameClassName = hasScriptFont ? coupleNameFont : `${coupleNameFont} italic`
 
   const coupleNames = `${inviteData.wedding.groomFirstName} & ${inviteData.wedding.brideFirstName}`
 
