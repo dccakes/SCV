@@ -41,14 +41,14 @@ export function HeroBackground({ url, children }: { url: string | null; children
           </div>
         </div>
       )}
-      {/* Warm dark gradient overlay for readability. */}
+      {/* Light warm scrim for text legibility, without obscuring the photo. */}
       <div
         aria-hidden='true'
-        className='absolute inset-0 -z-10 bg-gradient-to-r from-[#0D110F]/85 via-[#0D110F]/55 to-[#0D110F]/25'
+        className='absolute inset-0 -z-10 bg-gradient-to-r from-[#0D110F]/55 via-[#0D110F]/25 to-transparent'
       />
       <div
         aria-hidden='true'
-        className='absolute inset-0 -z-10 bg-gradient-to-t from-[#0D110F]/80 via-transparent to-[#0D110F]/45'
+        className='absolute inset-0 -z-10 bg-gradient-to-t from-[#0D110F]/45 via-transparent to-[#0D110F]/20'
       />
       {children}
     </section>

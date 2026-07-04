@@ -298,7 +298,7 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
             <div className='grid w-full items-center gap-12 lg:grid-cols-12 lg:items-end'>
               <div className='flex flex-col gap-7 lg:col-span-7'>
                 <h1
-                  className={`${headingFont} font-light text-5xl text-[#F7F3EC] leading-[1.08] sm:text-6xl lg:text-7xl`}
+                  className={`${headingFont} font-light text-5xl text-[#F7F3EC] leading-[1.08] [text-shadow:0_2px_16px_rgba(13,17,15,0.5)] sm:text-6xl lg:text-7xl`}
                 >
                   {heroHeadline ? (
                     <>
@@ -326,7 +326,9 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
                     </>
                   )}
                 </h1>
-                <p className={`${bodyFont} max-w-xl text-[#F7F3EC]/85 text-lg leading-8`}>
+                <p
+                  className={`${bodyFont} max-w-xl text-[#F7F3EC]/90 text-lg leading-8 [text-shadow:0_1px_10px_rgba(13,17,15,0.45)]`}
+                >
                   {introText ??
                     'We can’t wait to celebrate our love with you in the city that stole our hearts.'}
                 </p>
