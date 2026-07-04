@@ -170,7 +170,8 @@ function WeekendItinerary({ events }: { events: WeddingEvent[] }) {
   )
 }
 
-/** The light "Let's Celebrate" card that floats over the hero photograph. */
+/** The light "Let's Celebrate" card that floats over the hero photograph. Hidden for now — see its call site below. */
+// biome-ignore lint/correctness/noUnusedVariables: kept for when the hero card is re-enabled
 function HeroCelebrationCard({
   dateLabel,
   location,
@@ -241,6 +242,7 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
   const weddingEvent =
     weddingData.events.find((event) => event.name === 'Wedding Day') ?? weddingData.events[0]
   const location = destination?.content.location ?? null
+  // biome-ignore lint/correctness/noUnusedVariables: kept for the hero card, which is hidden for now
   const venue = destination?.content.venueName ?? weddingEvent?.venue ?? null
 
   const galleryUrls = website.coupleImageUrls ?? []
@@ -338,7 +340,9 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
                 </div>
               </div>
 
+              {/* Hidden for now — re-enable by uncommenting when ready.
               <HeroCelebrationCard dateLabel={dateLabel} location={location} venue={venue} />
+              */}
             </div>
           </div>
         </div>
