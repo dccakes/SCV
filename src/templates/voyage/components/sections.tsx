@@ -21,6 +21,7 @@ import type {
   TimelineSectionContent,
   TravelSectionContent,
   WebsiteSection,
+  WeddingPartyMember,
   WeddingPartySectionContent,
 } from '~/server/domains/website-section/website-section.types'
 import { splitParagraphs } from '~/templates/shared/prose'
@@ -39,6 +40,7 @@ import {
   IconBed,
   IconCamera,
   IconCar,
+  IconClose,
   IconCompass,
   IconConcierge,
   IconCuisine,
@@ -358,14 +360,112 @@ export function VoyageExperiences({ content }: { content: ExperiencesSectionCont
 }
 
 /**
- * The wedding party. Each portrait sits in a tall editorial frame; on hover a
- * champagne overlay fades in the member's blurb. On touch screens (no hover)
- * the blurb is shown beneath the portrait so it is never lost.
+ * One wedding-party portrait card. Members with a blurb are wrapped in a
+ * fragment-link that opens a pure-CSS lightbox (via the `:target` pseudo-
+ * class — no client JS) showing the full portrait beside the complete blurb,
+ * so long bios never have to be truncated or squeezed into the card itself.
+ * The card grid stays a uniform height either way.
+ */
+function WeddingPartyCard({ member, anchorId }: { member: WeddingPartyMember; anchorId: string }) {
+  const initial = member.name?.[0] ?? '·'
+  const card = (
+    <div className='flex h-full w-full flex-col items-center gap-1.5 rounded-[3px] border border-[#DDD2C0] bg-[#FBF8F2] p-2 pb-4 text-center transition-colors group-hover:border-[#B15C41]/50'>
+      <div className='relative aspect-[4/5] w-full overflow-hidden rounded-[2px] bg-[#EFE7DA]'>
+        {member.imageUrl ? (
+          <Image
+            src={member.imageUrl}
+            alt={member.name}
+            fill
+            sizes='(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 220px'
+            className='object-cover'
+          />
+        ) : (
+          <div className='flex h-full items-center justify-center'>
+            <span className={`${headingFont} text-5xl text-[#B15C41]`}>{initial}</span>
+          </div>
+        )}
+      </div>
+      <p className={`${labelFont} mt-2 text-[#1D2320] text-[0.66rem] uppercase tracking-[0.22em]`}>
+        {member.name}
+      </p>
+      <p className={`${bodyFont} text-[#6F675D] text-sm italic`}>{member.role}</p>
+      {member.blurb ? (
+        <span
+          className={`${labelFont} mt-0.5 text-[#B15C41] text-[0.56rem] uppercase tracking-[0.18em]`}
+        >
+          Read more
+        </span>
+      ) : null}
+    </div>
+  )
+
+  if (!member.blurb) {
+    return card
+  }
+
+  return (
+    <>
+      <a
+        href={`#${anchorId}`}
+        className='group block h-full rounded-[3px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B15C41]/60'
+      >
+        {card}
+      </a>
+      <div
+        id={anchorId}
+        className='fixed inset-0 z-50 hidden items-start justify-center overflow-y-auto bg-[#1D2320]/75 p-4 py-10 target:flex sm:items-center'
+      >
+        <a href='#wedding-party' className='absolute inset-0'>
+          <span className='sr-only'>Close</span>
+        </a>
+        <div className='relative flex w-full max-w-2xl flex-col overflow-hidden rounded-[3px] bg-[#FBF8F2] shadow-2xl sm:flex-row'>
+          <a
+            href='#wedding-party'
+            aria-label='Close'
+            className='absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[#1D2320]/70 text-[#F7F3EC] transition-colors hover:bg-[#1D2320]'
+          >
+            <IconClose className='h-4 w-4' />
+          </a>
+          <div className='relative h-56 w-full shrink-0 overflow-hidden bg-[#EFE7DA] sm:h-auto sm:w-64'>
+            {member.imageUrl ? (
+              <Image
+                src={member.imageUrl}
+                alt={member.name}
+                fill
+                sizes='(max-width: 640px) 100vw, 256px'
+                className='object-cover'
+              />
+            ) : (
+              <div className='flex h-full items-center justify-center'>
+                <span className={`${headingFont} text-6xl text-[#B15C41]`}>{initial}</span>
+              </div>
+            )}
+          </div>
+          <div className='flex flex-1 flex-col gap-3 p-7 text-left sm:p-8'>
+            <p className={`${headingFont} text-2xl text-[#1D2320]`}>{member.name}</p>
+            <p className={`${labelFont} text-[#B15C41] text-[0.62rem] uppercase tracking-[0.24em]`}>
+              {member.role}
+            </p>
+            <GoldRule className='self-start' />
+            <p className={`${bodyFont} text-[#6F675D] text-[0.98rem] leading-7`}>{member.blurb}</p>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+/**
+ * The wedding party: a true grid (not a wrapped flex row) so portraits stay
+ * aligned into even columns no matter how many members there are. Each card
+ * is a uniform height; a member's full blurb — which can run long — opens in
+ * a pure-CSS lightbox on click/tap instead of being squeezed into the card.
  */
 export function VoyageWeddingParty({ content }: { content: WeddingPartySectionContent }) {
   if (content.members.length === 0) {
     return null
   }
+  const midpoint = Math.ceil(content.members.length / 2)
   return (
     <Band id='wedding-party' tone='cream' className='relative overflow-hidden'>
       <Decor
@@ -384,61 +484,27 @@ export function VoyageWeddingParty({ content }: { content: WeddingPartySectionCo
       />
       <div className='relative flex flex-col items-center gap-12'>
         <CenteredHead eyebrow='Our People' heading={content.heading} />
-        <div className='flex w-full flex-wrap items-stretch justify-center gap-4'>
-          {content.members.map((member, index) => (
-            <Fragment key={`${member.name}-${member.role}`}>
-              {content.members.length >= 4 && index === Math.ceil(content.members.length / 2) ? (
-                <div className='hidden w-44 flex-col items-center justify-center gap-4 rounded-[3px] border border-[#DDD2C0] bg-[#FBF8F2] px-4 py-8 text-center lg:flex'>
-                  <p className={`${scriptFont} text-2xl text-[#B15C41] leading-snug`}>
-                    Thank you for being our people.
-                  </p>
-                  <Decor
-                    name='floralCorner'
-                    className='h-16 w-auto object-contain'
-                    fallback={<HeartRule />}
-                  />
-                </div>
-              ) : null}
-              <div className='flex w-40 flex-col items-center gap-1.5 rounded-[3px] border border-[#DDD2C0] bg-[#FBF8F2] p-2 pb-4 text-center sm:w-44'>
-                <div className='group relative aspect-[4/5] w-full overflow-hidden rounded-[2px] bg-[#EFE7DA]'>
-                  {member.imageUrl ? (
-                    <Image
-                      src={member.imageUrl}
-                      alt={member.name}
-                      fill
-                      sizes='176px'
-                      className='object-cover transition-transform duration-700 group-hover:scale-[1.04]'
+        <div className='grid w-full grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4'>
+          {content.members.map((member, index) => {
+            const anchorId = `party-${index}-${member.name.replace(/\s+/g, '-').toLowerCase()}`
+            return (
+              <Fragment key={`${member.name}-${member.role}`}>
+                {content.members.length >= 4 && index === midpoint ? (
+                  <div className='hidden flex-col items-center justify-center gap-4 rounded-[3px] border border-[#DDD2C0] bg-[#FBF8F2] px-4 py-8 text-center lg:flex'>
+                    <p className={`${scriptFont} text-2xl text-[#B15C41] leading-snug`}>
+                      Thank you for being our people.
+                    </p>
+                    <Decor
+                      name='floralCorner'
+                      className='h-16 w-auto object-contain'
+                      fallback={<HeartRule />}
                     />
-                  ) : (
-                    <div className='flex h-full items-center justify-center'>
-                      <span className={`${headingFont} text-5xl text-[#B15C41]`}>
-                        {member.name?.[0] ?? '·'}
-                      </span>
-                    </div>
-                  )}
-                  {member.blurb ? (
-                    <div className='absolute inset-0 flex flex-col items-center justify-center gap-2.5 bg-[#5A2C1E]/82 px-4 text-center opacity-0 backdrop-blur-[1px] transition-opacity duration-500 group-hover:opacity-100'>
-                      <IconHeart className='h-4 w-4 text-[#E7C4BB]' />
-                      <p className={`${bodyFont} text-[#F7F3EC] text-[0.82rem] leading-5`}>
-                        {member.blurb}
-                      </p>
-                    </div>
-                  ) : null}
-                </div>
-                <p
-                  className={`${labelFont} mt-2 text-[#1D2320] text-[0.66rem] uppercase tracking-[0.22em]`}
-                >
-                  {member.name}
-                </p>
-                <p className={`${bodyFont} text-[#6F675D] text-sm italic`}>{member.role}</p>
-                {member.blurb ? (
-                  <p className={`${bodyFont} px-1 text-[#6F675D] text-xs leading-5 lg:hidden`}>
-                    {member.blurb}
-                  </p>
+                  </div>
                 ) : null}
-              </div>
-            </Fragment>
-          ))}
+                <WeddingPartyCard member={member} anchorId={anchorId} />
+              </Fragment>
+            )
+          })}
         </div>
       </div>
     </Band>

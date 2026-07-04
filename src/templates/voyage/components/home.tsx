@@ -474,9 +474,9 @@ function VoyageFooter({
         ) : (
           <span className={`${headingFont} text-2xl text-[#B15C41] italic`}>{coupleNames}</span>
         )}
-        <p className={`${scriptFont} mt-1 flex items-center gap-3 text-3xl text-[#B15C41]`}>
+        <p className={`${scriptFont} mt-1 text-3xl text-[#B15C41]`}>
           Thank you for being part of our beginning
-          <IconHeart className='h-4 w-4 text-[#B15C41]' />
+          <IconHeart className='ml-3 inline-block h-4 w-4 align-middle text-[#B15C41]' />
         </p>
       </div>
     </footer>

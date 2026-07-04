@@ -314,6 +314,15 @@ export function IconPlus(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+/** A thin close mark, used to dismiss the wedding-party lightbox. */
+export function IconClose(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox='0 0 24 24' aria-hidden='true' {...iconBase} {...props}>
+      <path d='M6 6l12 12M18 6 6 18' />
+    </svg>
+  )
+}
+
 // — Botanical & landmark line illustrations ——————————————————————————
 
 /** A slender botanical sprig, used as a subtle editorial flourish. */
