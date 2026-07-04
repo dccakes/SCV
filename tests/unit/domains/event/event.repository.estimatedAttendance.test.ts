@@ -50,7 +50,6 @@ function expectFirstResult<T>(result: T | undefined): T {
   if (!result) {
     throw new Error('Expected repository to return at least one event')
   }
-
   return result
 }
 

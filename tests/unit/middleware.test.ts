@@ -148,6 +148,16 @@ describe('middleware', () => {
     )
   })
 
+  it('treats /checklist as a protected app route, not a website slug', async () => {
+    mockGetSessionCookie.mockReturnValue(null)
+
+    const response = await middleware(createRequest('/checklist'))
+
+    expect(response.headers.get('location')).toBe(
+      'https://example.com/auth/sign-in?callbackUrl=%2Fchecklist'
+    )
+  })
+
   it('allows authenticated users to access protected routes', async () => {
     mockGetSessionCookie.mockReturnValue('session-token')
     const response = await middleware(createRequest('/events', 'session-token'))

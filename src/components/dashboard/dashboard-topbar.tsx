@@ -3,16 +3,18 @@
 import { useEffect, useState } from 'react'
 
 import { useAuthenticatedSidebar } from '@/components/layout/authenticated-app-shell'
+import { dispatchDashboardAddTaskEvent } from '~/components/dashboard/task-dialog-events'
 import { ThemeToggle } from '~/components/theme-toggle'
 
 type DashboardTopbarProps = {
   title?: string
   showManagementActions?: boolean
   onMenuToggle?: () => void
+  onAddTask?: () => void
 }
 
 export default function DashboardTopbar(props: Readonly<DashboardTopbarProps>) {
-  const { title = 'Dashboard', showManagementActions = true, onMenuToggle } = props
+  const { title = 'Dashboard', showManagementActions = true, onMenuToggle, onAddTask } = props
   const { openSidebar } = useAuthenticatedSidebar()
   const [today, setToday] = useState('')
 
@@ -82,6 +84,7 @@ export default function DashboardTopbar(props: Readonly<DashboardTopbarProps>) {
             <button
               type='button'
               aria-label='Add task'
+              onClick={onAddTask ?? dispatchDashboardAddTaskEvent}
               className='flex min-h-[44px] items-center gap-1.5 rounded-sm bg-foreground px-3 py-1.5 font-mono text-[0.62rem] text-background uppercase tracking-widest transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
             >
               + Add task

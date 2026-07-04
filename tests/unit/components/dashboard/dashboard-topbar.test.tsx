@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
 import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
+import { DASHBOARD_ADD_TASK_EVENT } from '~/components/dashboard/task-dialog-events'
 
 jest.mock('~/components/theme-toggle', () => ({
   ThemeToggle: () => <button type='button'>Toggle theme</button>,
@@ -38,6 +39,27 @@ describe('DashboardTopbar', () => {
   it('renders the Add task button', () => {
     render(<DashboardTopbar />)
     expect(screen.getByRole('button', { name: /add task/i })).toBeInTheDocument()
+  })
+
+  it('dispatches the dashboard add-task event when the add-task button is clicked', () => {
+    const eventHandler = jest.fn()
+    window.addEventListener(DASHBOARD_ADD_TASK_EVENT, eventHandler)
+
+    render(<DashboardTopbar />)
+    fireEvent.click(screen.getByRole('button', { name: /add task/i }))
+
+    expect(eventHandler).toHaveBeenCalledTimes(1)
+
+    window.removeEventListener(DASHBOARD_ADD_TASK_EVENT, eventHandler)
+  })
+
+  it('uses an explicit add-task handler when provided', () => {
+    const onAddTask = jest.fn()
+
+    render(<DashboardTopbar onAddTask={onAddTask} />)
+    fireEvent.click(screen.getByRole('button', { name: /add task/i }))
+
+    expect(onAddTask).toHaveBeenCalledTimes(1)
   })
 
   it('opens sidebar when hamburger button is clicked', () => {

@@ -15,6 +15,7 @@ jest.mock('server/domains/wedding/wedding.repository')
 jest.mock('server/domains/event/event.service')
 jest.mock('server/domains/user/user.service')
 jest.mock('server/domains/guest-tag/guest-tag.service')
+jest.mock('~/server/domains/checklist')
 jest.mock('~/server/authz/permission-checker', () => ({
   requirePermission: jest.fn(),
 }))
@@ -49,6 +50,7 @@ import {
 } from 'server/domains/wedding/wedding.repository'
 import { WeddingService } from 'server/domains/wedding/wedding.service'
 import { requirePermission } from '~/server/authz/permission-checker'
+import { mockEnsureSeeded, resetMocks as resetChecklistMocks } from '~/server/domains/checklist'
 
 // Create typed aliases for mock functions
 const mockCreateFn = mockCreate as jest.Mock
@@ -60,6 +62,7 @@ const mockUpdateFn = mockUpdate as jest.Mock
 const mockCreateEventFn = mockCreateEventSystem as jest.Mock
 const mockUpdateProfileFn = mockUpdateProfile as jest.Mock
 const mockSeedInitialTagsFn = mockSeedInitialTags as jest.Mock
+const mockEnsureSeededFn = mockEnsureSeeded as jest.Mock
 const mockRequirePermission = requirePermission as jest.Mock
 
 describe('WeddingService', () => {
@@ -74,8 +77,15 @@ describe('WeddingService', () => {
     resetEventMocks()
     resetUserMocks()
     resetTagMocks()
+    resetChecklistMocks()
     mockRequirePermission.mockReset()
     mockRequirePermission.mockReturnValue({ organizationId: 'org-123', role: 'owner' })
+    mockEnsureSeededFn.mockResolvedValue({
+      eventId: 'event-123',
+      seededMilestoneCount: 13,
+      seededTaskCount: 58,
+      enabledAddOnsUpdated: false,
+    })
     const mockRepository = new WeddingRepository({})
     const mockEventSvc = new EventService({})
     const mockGuestTagService = new GuestTagService({})
@@ -104,7 +114,7 @@ describe('WeddingService', () => {
         groomLastName: 'Doe',
         brideFirstName: 'Jane',
         brideLastName: 'Smith',
-        enabledAddOns: [],
+        enabledAddOns: ['tasks'],
       })
     })
 
@@ -177,6 +187,7 @@ describe('WeddingService', () => {
         collectRsvp: false,
         allowTagAlongs: false,
       })
+      expect(mockEnsureSeededFn).toHaveBeenCalledWith('wedding-123')
     })
 
     it('should not create event when wedding details not provided', async () => {
@@ -195,6 +206,42 @@ describe('WeddingService', () => {
       })
 
       expect(mockCreateEventFn).not.toHaveBeenCalled()
+      expect(mockEnsureSeededFn).not.toHaveBeenCalled()
+    })
+
+    it('should preserve successful wedding creation when checklist seeding fails', async () => {
+      const weddingDate = '2025-06-15T00:00:00.000Z'
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+      mockExistsForUserFn.mockResolvedValue(false)
+      mockCreateFn.mockResolvedValue(mockWedding)
+      mockSeedInitialTagsFn.mockResolvedValue(undefined)
+      mockCreateEventFn.mockResolvedValue({
+        id: 'event-123',
+        name: 'Ceremony',
+        date: new Date(weddingDate),
+        venue: 'Beach Resort',
+      })
+      mockEnsureSeededFn.mockRejectedValue(new Error('seed failed'))
+
+      await expect(
+        weddingService.createWedding('user-123', {
+          userId: 'user-123',
+          groomFirstName: 'John',
+          groomLastName: 'Doe',
+          brideFirstName: 'Jane',
+          brideLastName: 'Smith',
+          hasWeddingDetails: true,
+          weddingDate,
+          weddingLocation: 'Beach Resort',
+        })
+      ).resolves.toEqual(mockWedding)
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        '[Checklist] Wedding create seeding failed:',
+        expect.any(Error)
+      )
+
+      consoleErrorSpy.mockRestore()
     })
   })
 
