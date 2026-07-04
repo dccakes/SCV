@@ -84,11 +84,21 @@ function eventDayLabel(event: WeddingEvent): string | null {
   return event.date ? WEEKDAY_FORMAT.format(event.date) : null
 }
 
+/** Calendar order: dated events first (by date, then start time), undated events last. */
+function compareEvents(a: WeddingEvent, b: WeddingEvent): number {
+  const aTime = a.date ? a.date.getTime() : Number.POSITIVE_INFINITY
+  const bTime = b.date ? b.date.getTime() : Number.POSITIVE_INFINITY
+  if (aTime !== bTime) {
+    return aTime - bTime
+  }
+  return (a.startTime ?? '').localeCompare(b.startTime ?? '')
+}
+
 function WeekendItinerary({ events }: { events: WeddingEvent[] }) {
   if (events.length === 0) {
     return null
   }
-  const items = events.slice(0, 6)
+  const items = [...events].sort(compareEvents).slice(0, 6)
   return (
     <section
       id='wedding-weekend'
@@ -115,14 +125,14 @@ function WeekendItinerary({ events }: { events: WeddingEvent[] }) {
             Let&rsquo;s Celebrate Together
           </h2>
         </div>
-        <ol className='relative grid gap-12 sm:grid-cols-2 lg:grid-cols-6 lg:gap-0 lg:divide-x lg:divide-[#DDD2C0]/80'>
+        <ol className='relative flex flex-wrap justify-center gap-x-10 gap-y-12 lg:flex-nowrap lg:justify-center lg:gap-x-0 lg:divide-x lg:divide-[#DDD2C0]/80'>
           {items.map((event, index) => {
             const Icon = WEEKEND_ICONS[index % WEEKEND_ICONS.length] ?? IconGlass
             const day = eventDayLabel(event)
             return (
               <li
                 key={event.id}
-                className='relative flex flex-col items-center gap-2 text-center lg:px-3'
+                className='relative flex w-32 flex-col items-center gap-2 text-center sm:w-40 lg:w-auto lg:flex-1 lg:px-3'
               >
                 <span className='flex h-14 w-14 items-center justify-center bg-[#F7F3EC] text-[#8A7A66] ring-4 ring-[#F7F3EC]'>
                   <Icon className='h-9 w-9' />
