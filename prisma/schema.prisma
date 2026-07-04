@@ -294,6 +294,13 @@ model Household {
   // General notes about the household
   notes String?
 
+  // Short opaque code for the household's save-the-date / invite link, e.g.
+  // "js-4f9k2c". Looked up directly instead of verifying a signed token so the
+  // link stays short; nullable because a code is only assigned the first time
+  // an invite link is generated.
+  inviteCode           String?   @unique
+  inviteCodeExpiresAt  DateTime?
+
   // Relations
   guests         Guest[]          @relation(name: "Household_Guests")
   gifts          Gift[]           @relation(name: "Household_Gifts")

@@ -206,10 +206,14 @@ test.describe('Quote Management', () => {
     await expect(dialog).toContainText(/\$4,200/)
     await expect(dialog).toContainText(/\$5,100/)
 
-    // Click "Remove" on one of the quotes
-    page.once('dialog', (d) => d.accept())
+    // Click "Remove" on one of the quotes — opens an AlertDialog for confirmation
     const removeButtons = dialog.getByRole('button', { name: /^remove$/i })
     await removeButtons.first().click()
+
+    // Confirm deletion in the AlertDialog
+    const alertDialog = page.getByRole('alertdialog')
+    await expect(alertDialog).toBeVisible()
+    await alertDialog.getByRole('button', { name: /remove quote/i }).click()
 
     // Wait for the quote to be removed — only one price should remain
     await expect(dialog).toContainText(/\$4,200|\$5,100/)

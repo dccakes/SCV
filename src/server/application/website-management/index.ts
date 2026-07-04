@@ -1,3 +1,4 @@
+import { householdInviteService } from '~/server/application/household-invite'
 import { WebsiteManagementService } from '~/server/application/website-management/website-management.service'
 import { EventRepository } from '~/server/domains/event/event.repository'
 import { WebsiteRepository } from '~/server/domains/website/website.repository'
@@ -17,7 +18,8 @@ export const websiteManagementService = new WebsiteManagementService(
   weddingRepository,
   eventRepository,
   websitePasswordService,
-  websiteSectionRepository
+  websiteSectionRepository,
+  householdInviteService
 )
 
 export { WebsiteManagementService } from '~/server/application/website-management/website-management.service'

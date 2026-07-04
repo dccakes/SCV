@@ -2,6 +2,7 @@ import { TRPCError } from '@trpc/server'
 
 import { calculateDaysRemaining, formatDateNumber } from '~/app/utils/helpers'
 import { deriveWeddingSubUrl } from '~/lib/website-slug'
+import type { HouseholdInviteService } from '~/server/application/household-invite/household-invite.service'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { EventRepository } from '~/server/domains/event/event.repository'
@@ -33,7 +34,8 @@ export class WebsiteManagementService {
     private websiteSectionRepository: Pick<
       WebsiteSectionRepository,
       'findByWebsiteId' | 'findByWebsiteIdAndType' | 'upsertHomeSection' | 'upsertByType'
-    >
+    >,
+    private householdInviteService: Pick<HouseholdInviteService, 'isInviteCodeValidForWedding'>
   ) {}
 
   async enableWebsite(
@@ -171,7 +173,8 @@ export class WebsiteManagementService {
 
   async fetchWeddingData(
     subUrl: string,
-    accessToken: string | undefined
+    accessToken: string | undefined,
+    inviteToken?: string | undefined
   ): Promise<WeddingPageData> {
     const website = await this.websiteRepository.findBySubUrlWithQuestions(subUrl)
     if (!website) {
@@ -182,13 +185,18 @@ export class WebsiteManagementService {
     }
 
     if (website.isPasswordEnabled) {
-      const hasAccess = this.websitePasswordService.verifyAccessToken(
+      const hasPasswordAccess = this.websitePasswordService.verifyAccessToken(
         accessToken,
         website.id,
         website.password
       )
 
-      if (!hasAccess) {
+      // Guests who arrived through a save-the-date / invite link already proved
+      // they belong to this wedding: a valid invite code for this wedding
+      // unlocks the site without the password prompt.
+      const hasInviteAccess = await this.hasValidInviteForWedding(inviteToken, website.weddingId)
+
+      if (!hasPasswordAccess && !hasInviteAccess) {
         throw new TRPCError({
           code: 'FORBIDDEN',
           message: 'Password access required for this wedding website',
@@ -283,6 +291,14 @@ export class WebsiteManagementService {
         questions: event.questions,
       })),
     }
+  }
+
+  /** Whether a household invite code is valid and scoped to this wedding. */
+  private hasValidInviteForWedding(
+    inviteToken: string | undefined,
+    weddingId: string
+  ): Promise<boolean> {
+    return this.householdInviteService.isInviteCodeValidForWedding(inviteToken, weddingId)
   }
 
   private toPublicWebsiteWithQuestions(

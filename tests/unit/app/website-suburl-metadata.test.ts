@@ -14,6 +14,11 @@ jest.mock('~/app/w/[websiteSubUrl]/_lib/load-wedding-by-suburl', () => ({
   loadWeddingBySubUrl: (...args: unknown[]) => mockLoadWeddingBySubUrl(...args),
 }))
 
+const mockResolveInvitedHousehold = jest.fn()
+jest.mock('~/app/w/[websiteSubUrl]/_lib/invited-household', () => ({
+  resolveInvitedHousehold: (...args: unknown[]) => mockResolveInvitedHousehold(...args),
+}))
+
 jest.mock('~/trpc/server', () => ({
   api: {
     website: {
@@ -44,6 +49,8 @@ describe('website suburl metadata + page wiring', () => {
     mockCookiesGet.mockReset()
     mockCookiesGet.mockReturnValue(undefined)
     mockWeddingWebsite.mockClear()
+    mockResolveInvitedHousehold.mockReset()
+    mockResolveInvitedHousehold.mockResolvedValue(null)
   })
 
   it('uses params.websiteSubUrl to build metadata title', async () => {
@@ -66,7 +73,7 @@ describe('website suburl metadata + page wiring', () => {
     })
 
     expect(metadata.title).toBe("John Doe and Jane Smith's Wedding Website")
-    expect(mockLoadWeddingBySubUrl).toHaveBeenCalledWith('john-and-jane', undefined)
+    expect(mockLoadWeddingBySubUrl).toHaveBeenCalledWith('john-and-jane', undefined, undefined)
   })
 
   it('passes params.websiteSubUrl into WeddingWebsite', async () => {
@@ -93,6 +100,7 @@ describe('website suburl metadata + page wiring', () => {
     expect(mockWeddingWebsite).toHaveBeenCalledWith({
       websiteSubUrl: 'john-and-jane',
       weddingData,
+      invitedHousehold: null,
     })
   })
 })

@@ -134,7 +134,11 @@ export const websiteRouter = createTRPCRouter({
    * Fetch complete wedding data for public website display
    */
   fetchWeddingData: publicProcedure.input(fetchWeddingDataSchema).query(async ({ input }) => {
-    return websiteManagementService.fetchWeddingData(input.subUrl, input.accessToken)
+    return websiteManagementService.fetchWeddingData(
+      input.subUrl,
+      input.accessToken,
+      input.inviteToken
+    )
   }),
 
   /**

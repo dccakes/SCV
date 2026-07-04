@@ -1,10 +1,31 @@
 import { cookies } from 'next/headers'
 
+import { householdInviteCookieName, websiteAccessCookieName } from '~/lib/website/cookies'
 import { api } from '~/trpc/server'
 
-/** Name of the per-website access cookie set after a successful password unlock. */
-export const websiteAccessCookieName = (websiteSubUrl: string): string =>
-  `wws_access_${websiteSubUrl}`
+export { websiteAccessCookieName } from '~/lib/website/cookies'
+
+/** Credentials a public website visitor may carry, read from their cookies. */
+export type WebsiteVisitorCookies = {
+  /** Token proving a previous password unlock for this site. */
+  accessToken: string | undefined
+  /** Household invite token from a save-the-date / invite link. */
+  inviteToken: string | undefined
+}
+
+/**
+ * Read both the password-access and household-invite cookies for a website in a
+ * single pass. Either (or both) may unlock a password-protected site.
+ */
+export async function readWebsiteVisitorCookies(
+  websiteSubUrl: string
+): Promise<WebsiteVisitorCookies> {
+  const cookieStore = await cookies()
+  return {
+    accessToken: cookieStore.get(websiteAccessCookieName(websiteSubUrl))?.value,
+    inviteToken: cookieStore.get(householdInviteCookieName(websiteSubUrl))?.value,
+  }
+}
 
 /**
  * Verify a guest-supplied website password and, on success, set the scoped

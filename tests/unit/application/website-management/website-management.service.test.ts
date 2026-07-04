@@ -61,14 +61,17 @@ describe('WebsiteManagementService', () => {
   let service: WebsiteManagementService
   const originalAppUrl = process.env.NEXT_PUBLIC_APP_URL
   const mockVerifyAccessToken = jest.fn()
+  const mockIsInviteCodeValidForWedding = jest.fn()
 
   beforeEach(() => {
     process.env.NEXT_PUBLIC_APP_URL = 'https://oswp.example'
+    process.env.BETTER_AUTH_SECRET = 'test-secret-for-website-management'
     resetWebsiteRepoMocks()
     resetWeddingRepoMocks()
     resetEventRepoMocks()
     resetWebsiteSectionRepoMocks()
     mockVerifyAccessToken.mockReset()
+    mockIsInviteCodeValidForWedding.mockReset().mockResolvedValue(false)
     mockRequirePermission.mockReset()
     mockRequirePermission.mockReturnValue({ organizationId: 'org-1', role: 'admin' })
 
@@ -84,7 +87,10 @@ describe('WebsiteManagementService', () => {
       {
         verifyAccessToken: mockVerifyAccessToken,
       } as never,
-      websiteSectionRepo
+      websiteSectionRepo,
+      {
+        isInviteCodeValidForWedding: mockIsInviteCodeValidForWedding,
+      }
     )
   })
 
@@ -303,6 +309,41 @@ describe('WebsiteManagementService', () => {
 
       await expect(
         service.fetchWeddingData('johndoeandjanesmith', undefined)
+      ).rejects.toMatchObject({
+        code: 'FORBIDDEN',
+      })
+    })
+
+    it('grants access to a protected site when a valid household invite code matches the wedding', async () => {
+      mockFindBySubUrlWithQuestionsFn.mockResolvedValue({
+        ...mockWebsiteWithQuestions,
+        isPasswordEnabled: true,
+        password: '$hashed-password',
+      })
+      // No valid password access token for this guest.
+      mockVerifyAccessToken.mockReturnValue(false)
+      mockFindWeddingByIdFn.mockResolvedValue(mockWedding)
+      mockFindByWeddingIdWithQuestionsFn.mockResolvedValue([mockEvent])
+      mockFindWebsiteSectionsFn.mockResolvedValue([])
+      mockIsInviteCodeValidForWedding.mockResolvedValue(true)
+
+      const result = await service.fetchWeddingData('johndoeandjanesmith', undefined, 'al-4f9k2c')
+
+      expect(result.groomFirstName).toBe('John')
+      expect(mockIsInviteCodeValidForWedding).toHaveBeenCalledWith('al-4f9k2c', 'wedding-123')
+    })
+
+    it('still forbids a protected site when the invite code belongs to another wedding', async () => {
+      mockFindBySubUrlWithQuestionsFn.mockResolvedValue({
+        ...mockWebsiteWithQuestions,
+        isPasswordEnabled: true,
+        password: '$hashed-password',
+      })
+      mockVerifyAccessToken.mockReturnValue(false)
+      mockIsInviteCodeValidForWedding.mockResolvedValue(false)
+
+      await expect(
+        service.fetchWeddingData('johndoeandjanesmith', undefined, 'other-wedding-code')
       ).rejects.toMatchObject({
         code: 'FORBIDDEN',
       })
