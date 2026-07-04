@@ -64,7 +64,9 @@ export async function uploadFiles(files: File[]): Promise<BlobUploadResult[]> {
       }
     }
     const messages = [
-      duplicates.length > 0 ? `A file with the same name already exists: ${duplicates.join(', ')}` : null,
+      duplicates.length > 0
+        ? `A file with the same name already exists: ${duplicates.join(', ')}`
+        : null,
       failed.length > 0 ? `Failed to upload: ${failed.join(', ')}` : null,
     ].filter(Boolean)
     throw new Error(messages.join('. '))
