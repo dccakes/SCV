@@ -37,6 +37,9 @@ type HouseholdInvitePageProps = {
 const formatGuestName = (guest: { firstName: string; lastName: string }) =>
   [guest.firstName, guest.lastName].filter(Boolean).join(' ')
 
+const TAG_ALONG_NOTE =
+  "We're so glad they get to join the trip! Guests marked “joining the trip” above travel with your household but aren't included in the wedding ceremony or dinner reception."
+
 // Event dates come from a `@db.Date` column (midnight UTC), so format in UTC to
 // show the day the couple entered regardless of the viewer's timezone.
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
@@ -139,6 +142,7 @@ export default async function HouseholdInvitePage({
   const formattedDate =
     firstEvent && lastEvent ? formatEventDateRange(firstEvent.date, lastEvent.date) : null
   const location = datedEvents.find((event) => event.venue)?.venue ?? null
+  const hasTagAlongs = inviteData.guests.some((guest) => guest.isTagAlong)
 
   const calendarLinks = buildSaveTheDateCalendarLinks({
     title: `${coupleNames} Wedding`,
@@ -245,9 +249,21 @@ export default async function HouseholdInvitePage({
                   </p>
                   <ul className='mt-3 space-y-2 text-xl'>
                     {inviteData.guests.map((guest) => (
-                      <li key={guest.id}>{formatGuestName(guest)}</li>
+                      <li key={guest.id}>
+                        {formatGuestName(guest)}
+                        {guest.isTagAlong ? (
+                          <span
+                            className={`ml-2 align-middle text-muted-foreground text-xs uppercase tracking-wider ${labelFont}`}
+                          >
+                            Joining the trip
+                          </span>
+                        ) : null}
+                      </li>
                     ))}
                   </ul>
+                  {hasTagAlongs ? (
+                    <p className='mt-3 text-muted-foreground text-sm leading-6'>{TAG_ALONG_NOTE}</p>
+                  ) : null}
                 </div>
 
                 {saveTheDateCopy?.message ? (
