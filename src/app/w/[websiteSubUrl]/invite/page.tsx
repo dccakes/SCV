@@ -230,9 +230,12 @@ export default async function HouseholdInvitePage({
                     'Formal invitation details will follow. For now, please make sure we have the correct names and mailing address for your household.'}
                 </p>
 
-                <div className='mt-10 flex justify-center sm:justify-start'>
+                <div className='mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-start'>
                   <Button asChild size='lg'>
                     <Link href={`/w/${websiteSubUrl}/invite/update`}>Update our details</Link>
+                  </Button>
+                  <Button asChild size='lg' variant='outline'>
+                    <Link href={`/w/${websiteSubUrl}`}>View our website</Link>
                   </Button>
                 </div>
               </CardContent>
