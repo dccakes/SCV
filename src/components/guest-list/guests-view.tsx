@@ -816,7 +816,17 @@ export default function GuestsView({
       <AlertDialog open={showDeleteHouseholdDialog} onOpenChange={setShowDeleteHouseholdDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Party?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {(() => {
+                const primary =
+                  selectedCanonicalHousehold?.guests.find((g) => g.isPrimaryContact) ??
+                  selectedCanonicalHousehold?.guests[0]
+                const name = primary
+                  ? `${primary.firstName} ${primary.lastName}`.trim()
+                  : 'this party'
+                return `Delete "${name}"?`
+              })()}
+            </AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently delete this party and all associated guests. This action cannot
               be undone.
