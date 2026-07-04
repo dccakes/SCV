@@ -17,7 +17,7 @@ import { useId, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '~/components/ui/button'
-import { isDuplicateBlobError } from '~/lib/blob'
+import { describeUploadFailures, isDuplicateBlobError, partitionUploadResults } from '~/lib/blob'
 import { MAX_FILE_SIZE } from '~/lib/upload-config'
 
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -176,26 +176,15 @@ export function ImageGalleryUpload({
     setIsUploading(true)
     try {
       const results = await Promise.allSettled(files.map(uploadImage))
-      const uploaded: string[] = []
-      const duplicates: string[] = []
-      const failed: string[] = []
-      for (const [i, result] of results.entries()) {
-        if (result.status === 'fulfilled') {
-          uploaded.push(result.value)
-        } else if (isDuplicateBlobError(result.reason)) {
-          duplicates.push(files[i]?.name ?? 'unknown')
-        } else {
-          failed.push(files[i]?.name ?? 'unknown')
-        }
+      const { fulfilled, duplicates, failed } = partitionUploadResults(
+        files.map((f) => f.name),
+        results
+      )
+      if (fulfilled.length > 0) {
+        onChange([...values, ...fulfilled])
       }
-      if (uploaded.length > 0) {
-        onChange([...values, ...uploaded])
-      }
-      if (duplicates.length > 0) {
-        toast.error(`A file with the same name already exists: ${duplicates.join(', ')}`)
-      }
-      if (failed.length > 0) {
-        toast.error(`Failed to upload: ${failed.join(', ')}`)
+      if (duplicates.length > 0 || failed.length > 0) {
+        toast.error(describeUploadFailures(duplicates, failed))
       }
     } finally {
       setIsUploading(false)

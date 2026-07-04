@@ -13,6 +13,49 @@ export function isDuplicateBlobError(error: unknown): boolean {
   return error instanceof Error && error.message.toLowerCase().includes('already exists')
 }
 
+export type PartitionedUploadResults<T> = {
+  fulfilled: T[]
+  duplicates: string[]
+  failed: string[]
+}
+
+/** Split settled per-file upload results into successes, name collisions, and other failures. */
+export function partitionUploadResults<T>(
+  fileNames: string[],
+  results: PromiseSettledResult<T>[]
+): PartitionedUploadResults<T> {
+  const fulfilled: T[] = []
+  const duplicates: string[] = []
+  const failed: string[] = []
+
+  for (const [i, result] of results.entries()) {
+    if (result.status === 'fulfilled') {
+      fulfilled.push(result.value)
+    } else {
+      const name = fileNames[i] ?? 'unknown'
+      if (isDuplicateBlobError(result.reason)) {
+        duplicates.push(name)
+      } else {
+        failed.push(name)
+      }
+    }
+  }
+
+  return { fulfilled, duplicates, failed }
+}
+
+/** Build a single human-readable error message from upload name collisions and failures. */
+export function describeUploadFailures(duplicates: string[], failed: string[]): string {
+  return [
+    duplicates.length > 0
+      ? `A file with the same name already exists: ${duplicates.join(', ')}`
+      : null,
+    failed.length > 0 ? `Failed to upload: ${failed.join(', ')}` : null,
+  ]
+    .filter(Boolean)
+    .join('. ')
+}
+
 /**
  * Upload files to Vercel Blob via client upload.
  *
@@ -37,22 +80,10 @@ export async function uploadFiles(files: File[]): Promise<BlobUploadResult[]> {
     })
   )
 
-  const fulfilled: BlobUploadResult[] = []
-  const failed: string[] = []
-  const duplicates: string[] = []
-
-  for (const [i, result] of results.entries()) {
-    if (result.status === 'fulfilled') {
-      fulfilled.push(result.value)
-    } else {
-      const name = files[i]?.name ?? 'unknown'
-      if (isDuplicateBlobError(result.reason)) {
-        duplicates.push(name)
-      } else {
-        failed.push(name)
-      }
-    }
-  }
+  const { fulfilled, duplicates, failed } = partitionUploadResults(
+    files.map((f) => f.name),
+    results
+  )
 
   if (failed.length > 0 || duplicates.length > 0) {
     // Clean up already-uploaded blobs to avoid orphans
@@ -63,13 +94,7 @@ export async function uploadFiles(files: File[]): Promise<BlobUploadResult[]> {
         // Best-effort cleanup — orphaned blobs are preferable to crashing here
       }
     }
-    const messages = [
-      duplicates.length > 0
-        ? `A file with the same name already exists: ${duplicates.join(', ')}`
-        : null,
-      failed.length > 0 ? `Failed to upload: ${failed.join(', ')}` : null,
-    ].filter(Boolean)
-    throw new Error(messages.join('. '))
+    throw new Error(describeUploadFailures(duplicates, failed))
   }
 
   return fulfilled
