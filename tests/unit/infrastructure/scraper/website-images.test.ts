@@ -1,6 +1,15 @@
 import * as dns from 'node:dns/promises'
 import { fetchWebsiteImages } from '~/server/infrastructure/scraper/website-images'
 
+// Prevent undici Agent from opening real sockets / timers — fetch is fully mocked so the
+// dispatcher is never actually used, but undici starts connection-pool background work on
+// construction that outlives individual tests and causes spurious Jest timeouts.
+jest.mock('undici', () => ({
+  Agent: jest.fn().mockImplementation(() => ({
+    close: jest.fn().mockResolvedValue(undefined),
+  })),
+}))
+
 // jsdom test environment does not provide fetch — install a stub so jest.spyOn can wrap it
 if (!global.fetch) {
   global.fetch = jest.fn()
@@ -70,6 +79,23 @@ function mockRedirectResponse(location: string, status = 302) {
 }
 
 describe('fetchWebsiteImages', () => {
+  // This suite exercises a multi-fetch async flow over mocked I/O. The accumulated
+  // microtask/promise-queue depth across ~60 sequential tests can push individual
+  // test wall-clock time past Jest's 5 s default. 15 s is a comfortable ceiling while
+  // still catching genuine hangs.
+  jest.setTimeout(15000)
+
+  // AbortSignal.timeout() creates real Node.js timers that accumulate across tests and cause
+  // spurious Jest timeouts. Returning a plain never-aborting signal is safe here because
+  // global.fetch is already fully mocked and never consults the signal.
+  beforeAll(() => {
+    jest.spyOn(AbortSignal, 'timeout').mockImplementation(() => new AbortController().signal)
+  })
+
+  afterAll(() => {
+    jest.restoreAllMocks()
+  })
+
   beforeEach(() => {
     mockFetch.mockReset()
     mockLookup.mockReset()
