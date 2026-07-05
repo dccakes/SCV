@@ -320,25 +320,65 @@ function BudgetCard() {
 }
 
 function VendorsCard() {
+  const { data: vendors = [], isLoading } = api.vendor.getAll.useQuery({})
+
+  const total = vendors.length
+  const confirmed = vendors.filter((v) => v.status === 'SELECTED').length
+  const inProgress = vendors.filter(
+    (v) => v.status === 'IN_REVIEW' || v.status === 'PRE_SELECTED' || v.status === 'IN_NEGOTIATION'
+  ).length
+
   return (
     <CardShell title='Vendors' icon='◐' action='Manage →' actionHref='/vendors'>
-      <div className='flex flex-col gap-3'>
-        <div className='flex items-baseline gap-2'>
-          <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
-          <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
-            No vendors added yet
-          </span>
+      {isLoading ? (
+        <div className='flex flex-col gap-3'>
+          <div className='h-10 animate-pulse rounded bg-border' />
+          <div className='h-4 w-3/4 animate-pulse rounded bg-border' />
         </div>
-        <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
-          Track quotes, contacts, and contracts in one place
+      ) : total === 0 ? (
+        <div className='flex flex-col gap-3'>
+          <div className='flex items-baseline gap-2'>
+            <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
+            <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
+              No vendors added yet
+            </span>
+          </div>
+          <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
+            Track quotes, contacts, and contracts in one place
+          </div>
+          <Link
+            href='/vendors'
+            className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+          >
+            Add your first vendor →
+          </Link>
         </div>
-        <Link
-          href='/vendors'
-          className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
-        >
-          Add your first vendor →
-        </Link>
-      </div>
+      ) : (
+        <div className='flex flex-col gap-3'>
+          <div className='grid grid-cols-3 divide-x divide-border'>
+            {[
+              { val: total, label: 'Total', color: 'text-foreground' },
+              { val: confirmed, label: 'Confirmed', color: 'text-success' },
+              { val: inProgress, label: 'In progress', color: 'text-foreground' },
+            ].map((s) => (
+              <div key={s.label} className='px-2 text-center first:pl-0 last:pr-0'>
+                <span className={`block font-serif text-[2rem] leading-none ${s.color}`}>
+                  {s.val}
+                </span>
+                <span className='font-mono text-[0.55rem] text-foreground/60 uppercase tracking-widest'>
+                  {s.label}
+                </span>
+              </div>
+            ))}
+          </div>
+          <Link
+            href='/vendors'
+            className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+          >
+            Manage vendors →
+          </Link>
+        </div>
+      )}
     </CardShell>
   )
 }
