@@ -28,15 +28,16 @@ const isPublicWebsitePath = (pathname: string): boolean => {
   const segments = pathname.split('/').filter(Boolean)
 
   // /w/[slug] (wedding website viewer), /w/[slug]/rsvp, and the household
-  // invite flow: /w/[slug]/invite, /w/[slug]/invite/[code], /w/[slug]/invite/update
+  // save-the-date flow: /w/[slug]/save-the-date, /w/[slug]/save-the-date/[code],
+  // /w/[slug]/save-the-date/update
   if (segments[0] === 'w') {
     if (segments.length < 2) return false
     const slug = segments[1]
     if (!slug || isReservedSlug(slug)) return false
     if (segments.length === 2) return true
     if (segments.length === 3 && segments[2] === 'rsvp') return true
-    if (segments.length === 3 && segments[2] === 'invite') return true
-    if (segments.length === 4 && segments[2] === 'invite') return true
+    if (segments.length === 3 && segments[2] === 'save-the-date') return true
+    if (segments.length === 4 && segments[2] === 'save-the-date') return true
     return false
   }
 

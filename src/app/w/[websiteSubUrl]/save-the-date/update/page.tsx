@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   },
 }
 
-type HouseholdInviteUpdatePageProps = {
+type HouseholdSaveTheDateUpdatePageProps = {
   params: Promise<{
     websiteSubUrl: string
   }>
@@ -60,7 +60,7 @@ const getErrorMessage = (errorCode: string | undefined) => {
   }
 
   if (errorCode === 'expired') {
-    return 'This invite link has expired or could not be verified. Please ask the couple for a fresh link.'
+    return 'This save-the-date link has expired or could not be verified. Please ask the couple for a fresh link.'
   }
 
   if (errorCode === 'save') {
@@ -70,10 +70,10 @@ const getErrorMessage = (errorCode: string | undefined) => {
   return null
 }
 
-export default async function HouseholdInviteUpdatePage({
+export default async function HouseholdSaveTheDateUpdatePage({
   params,
   searchParams,
-}: HouseholdInviteUpdatePageProps) {
+}: HouseholdSaveTheDateUpdatePageProps) {
   const { websiteSubUrl } = await params
   const resolvedSearchParams = await searchParams
   const cookieStore = await cookies()
@@ -95,16 +95,16 @@ export default async function HouseholdInviteUpdatePage({
       )
     } catch (error) {
       if (error instanceof TRPCError && error.code === 'FORBIDDEN') {
-        redirect(`/w/${websiteSubUrl}/invite/update?error=expired`)
+        redirect(`/w/${websiteSubUrl}/save-the-date/update?error=expired`)
       }
 
       if (error instanceof TRPCError && ['BAD_REQUEST', 'CONFLICT'].includes(error.code)) {
-        redirect(`/w/${websiteSubUrl}/invite/update?error=validation`)
+        redirect(`/w/${websiteSubUrl}/save-the-date/update?error=validation`)
       }
 
-      redirect(`/w/${websiteSubUrl}/invite/update?error=save`)
+      redirect(`/w/${websiteSubUrl}/save-the-date/update?error=save`)
     }
-    redirect(`/w/${websiteSubUrl}/invite?updated=1`)
+    redirect(`/w/${websiteSubUrl}/save-the-date?updated=1`)
   }
 
   return (
@@ -123,7 +123,7 @@ export default async function HouseholdInviteUpdatePage({
           inviteData={inviteData}
           action={updateHouseholdDetails}
           errorMessage={getErrorMessage(resolvedSearchParams?.error)}
-          inviteHref={`/w/${websiteSubUrl}/invite`}
+          inviteHref={`/w/${websiteSubUrl}/save-the-date`}
         />
       </section>
     </main>
