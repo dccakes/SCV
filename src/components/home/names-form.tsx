@@ -62,20 +62,22 @@ export default function NamesForm() {
   }
 
   return (
-    <main>
-      <div className='flex items-center justify-between bg-pink-300 p-4'>
-        <h1>{session.user?.name ?? session.user?.email}</h1>
+    <div className='flex min-h-screen flex-col bg-background'>
+      <header className='flex h-14 flex-shrink-0 items-center justify-between border-border/80 border-b bg-card/70 px-4 backdrop-blur-sm lg:px-6'>
+        <span className='font-serif text-foreground text-xl italic'>OSWP</span>
         <div className='flex items-center gap-2'>
           <ThemeToggle />
           <SignOutButton />
         </div>
-      </div>
-      <div className='flex min-h-screen items-center justify-center bg-background p-4'>
+      </header>
+      <main className='flex flex-1 items-center justify-center p-4'>
         <Card className='w-full max-w-2xl'>
           <CardHeader className='text-center'>
-            <CardTitle className='text-3xl'>Welcome, Lovebirds! 💕</CardTitle>
+            <CardTitle className='font-normal font-serif text-3xl italic tracking-normal'>
+              Let&apos;s plan your wedding
+            </CardTitle>
             <CardDescription>
-              Let&apos;s get started by adding your names to create your wedding plan
+              Add your names to get started. You can set the date and location later.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -269,7 +271,7 @@ export default function NamesForm() {
             </form>
           </CardContent>
         </Card>
-      </div>
-    </main>
+      </main>
+    </div>
   )
 }
