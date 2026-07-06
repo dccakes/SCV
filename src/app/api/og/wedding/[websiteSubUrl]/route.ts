@@ -1,4 +1,5 @@
 import sharp from 'sharp'
+
 import { loadWeddingBySubUrl } from '~/app/w/[websiteSubUrl]/_lib/load-wedding-by-suburl'
 
 const DEFAULT_OG_IMAGE_WIDTH = 1200
@@ -23,26 +24,27 @@ async function generateWeddingOgImage(
   const displayBrideName = brideName ? escapeXml(brideName) : 'Wedding'
   const displayGroomName = groomName ? escapeXml(groomName) : 'Website'
 
-  let baseImage = sharp({
-    create: {
-      width: DEFAULT_OG_IMAGE_WIDTH,
-      height: DEFAULT_OG_IMAGE_HEIGHT,
-      channels: 3,
-      background: { r: 245, g: 245, b: 245 },
-    },
-  })
+  const createDefaultImage = () =>
+    sharp({
+      create: {
+        width: DEFAULT_OG_IMAGE_WIDTH,
+        height: DEFAULT_OG_IMAGE_HEIGHT,
+        channels: 3,
+        background: { r: 245, g: 245, b: 245 },
+      },
+    })
+
+  let baseImage = createDefaultImage()
 
   if (headerImageUrl) {
     try {
       const response = await fetch(headerImageUrl, { signal: AbortSignal.timeout(5000) })
       if (response.ok) {
         const buffer = await response.arrayBuffer()
-        baseImage = sharp(buffer)
-          .resize(DEFAULT_OG_IMAGE_WIDTH, DEFAULT_OG_IMAGE_HEIGHT, {
-            fit: 'cover',
-            position: 'center',
-          })
-          .png()
+        baseImage = sharp(buffer).resize(DEFAULT_OG_IMAGE_WIDTH, DEFAULT_OG_IMAGE_HEIGHT, {
+          fit: 'cover',
+          position: 'center',
+        })
       }
     } catch {
       // If image fetch fails, use the default background
@@ -146,9 +148,7 @@ export async function GET({ params }: RouteProps) {
         'CDN-Cache-Control': 'max-age=86400',
       },
     })
-  } catch (error) {
-    console.error('Error generating OG image:', error)
-
+  } catch {
     // Return a basic image on error
     const errorImage = await sharp({
       create: {
