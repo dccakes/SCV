@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { voyageBody, voyageDisplay, voyageSans } from '~/templates/fonts'
+import { voyageBody, voyageDisplay, voyageSans, voyageScript } from '~/templates/fonts'
 import type { TemplateTheme } from '~/templates/types'
 
 /**
@@ -23,29 +23,30 @@ const cssVars: CSSProperties = {
   '--card-foreground': '0.2272 0.0081 84.59',
   '--popover': '0.9795 0.0098 87.47',
   '--popover-foreground': '0.2272 0.0081 84.59',
-  // Champagne gold primary; dark espresso text rides on it for contrast.
-  '--primary': '0.6863 0.0921 80.27',
-  '--primary-foreground': '0.2007 0.0101 88.81',
+  // Terracotta primary (the reference's rust red); warm ivory text rides on it.
+  '--primary': '0.5702 0.1178 38.30',
+  '--primary-foreground': '0.9653 0.0102 81.80',
   // Pale sand secondary.
   '--secondary': '0.9070 0.0212 79.09',
   '--secondary-foreground': '0.2272 0.0081 84.59',
   // Muted cream + taupe-grey muted text.
   '--muted': '0.9795 0.0098 87.47',
   '--muted-foreground': '0.5406 0.0169 80.66',
-  // Champagne accent.
-  '--accent': '0.6863 0.0921 80.27',
-  '--accent-foreground': '0.2007 0.0101 88.81',
-  // Warm beige borders and inputs; champagne focus ring.
+  // Terracotta accent.
+  '--accent': '0.5702 0.1178 38.30',
+  '--accent-foreground': '0.9653 0.0102 81.80',
+  // Warm beige borders and inputs; terracotta focus ring.
   '--border': '0.8736 0.0243 79.73',
   '--input': '0.8736 0.0243 79.73',
-  '--ring': '0.6863 0.0921 80.27',
+  '--ring': '0.5702 0.1178 38.30',
   '--tpl-heading-font': 'var(--tpl-voyage-display)',
   '--tpl-body-font': 'var(--tpl-voyage-body)',
   '--tpl-label-font': 'var(--tpl-voyage-sans)',
+  '--tpl-script-font': 'var(--tpl-voyage-script)',
 } as CSSProperties
 
 export const voyageTheme: TemplateTheme = {
-  fontClassName: `${voyageDisplay.variable} ${voyageBody.variable} ${voyageSans.variable}`,
+  fontClassName: `${voyageDisplay.variable} ${voyageBody.variable} ${voyageSans.variable} ${voyageScript.variable}`,
   rootClassName: 'bg-background text-foreground font-[family-name:var(--tpl-body-font)]',
   cssVars,
 }

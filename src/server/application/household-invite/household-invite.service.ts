@@ -78,6 +78,8 @@ export type HouseholdInviteData = {
     lastName: string
     email: string | null
     phone: string | null
+    /** Travels with the household but isn't formally invited to the ceremony or dinner reception. */
+    isTagAlong: boolean
   }>
 }
 
@@ -502,6 +504,7 @@ export class HouseholdInviteService {
               lastName: true,
               email: true,
               phone: true,
+              isTagAlong: true,
             },
           },
         },

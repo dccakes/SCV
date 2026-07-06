@@ -149,6 +149,8 @@ describe('household invite pages', () => {
     expect(screen.getByText('Hacienda')).toBeInTheDocument()
     expect(screen.getByText('Diego & Laura')).toBeInTheDocument()
     expect(screen.getByText('Ada Lovelace')).toBeInTheDocument()
+    // No tag-along guests in this household, so the "joining the trip" callout is absent.
+    expect(screen.queryByText(/joining the trip/i)).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: /update our details/i })).toHaveAttribute(
       'href',
       '/w/diego-and-laura/invite/update'
@@ -161,6 +163,39 @@ describe('household invite pages', () => {
     expect(googleLink).toHaveAttribute('href', expect.stringContaining('dates=20270530%2F20270601'))
     expect(screen.getByRole('link', { name: /outlook/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /apple calendar/i })).toBeInTheDocument()
+  })
+
+  it('flags tag-along guests and explains they are not part of the ceremony or reception', async () => {
+    mockCookieGet.mockReturnValue({ value: 'cookie-code' })
+    mockGetInviteData.mockResolvedValue({
+      ...inviteData,
+      guests: [
+        ...inviteData.guests,
+        {
+          id: 2,
+          firstName: 'Grace',
+          lastName: 'Hopper',
+          email: null,
+          phone: null,
+          isTagAlong: true,
+        },
+      ],
+    })
+    const InvitePage = (await import('~/app/w/[websiteSubUrl]/invite/page')).default
+
+    render(
+      await InvitePage({
+        params: Promise.resolve({ websiteSubUrl: 'diego-and-laura' }),
+        searchParams: Promise.resolve({}),
+      })
+    )
+
+    expect(screen.getByText('Grace Hopper')).toBeInTheDocument()
+    // The label on Grace's line and the explanatory callout both mention "joining the trip".
+    expect(screen.getAllByText(/joining the trip/i)).toHaveLength(2)
+    expect(
+      screen.getByText(/aren't included in the wedding ceremony or dinner reception/i)
+    ).toBeInTheDocument()
   })
 
   it('themes the invite card with the chosen template and the couple’s Save the Date copy', async () => {
