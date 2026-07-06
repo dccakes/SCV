@@ -160,6 +160,10 @@ describe('household invite pages', () => {
       'href',
       '/w/harry-and-hermione/save-the-date/update'
     )
+    expect(screen.getByRole('link', { name: /view our website/i })).toHaveAttribute(
+      'href',
+      '/w/harry-and-hermione'
+    )
     expect(screen.getByText('Your details were updated.')).toBeInTheDocument()
 
     // Calendar buttons span the day of the first event through the day of the
