@@ -5,12 +5,6 @@ import { loadWeddingBySubUrl } from '~/app/w/[websiteSubUrl]/_lib/load-wedding-b
 const DEFAULT_OG_IMAGE_WIDTH = 1200
 const DEFAULT_OG_IMAGE_HEIGHT = 630
 
-type RouteProps = {
-  params: Promise<{
-    websiteSubUrl: string
-  }>
-}
-
 async function generateWeddingOgImage(headerImageUrl: string | null): Promise<Buffer> {
   if (headerImageUrl) {
     try {
@@ -43,7 +37,10 @@ async function generateWeddingOgImage(headerImageUrl: string | null): Promise<Bu
     .toBuffer()
 }
 
-export async function GET({ params }: RouteProps) {
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ websiteSubUrl: string }> }
+) {
   try {
     const { websiteSubUrl } = await params
 
