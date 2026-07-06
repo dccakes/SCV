@@ -6,7 +6,7 @@ import { loadWeddingBySubUrl } from '~/app/w/[websiteSubUrl]/_lib/load-wedding-b
 const DEFAULT_OG_IMAGE_WIDTH = 1200
 const DEFAULT_OG_IMAGE_HEIGHT = 630
 
-async function generateWeddingOgImage(headerImageUrl: string | null): Promise<Uint8Array> {
+async function generateWeddingOgImage(headerImageUrl: string | null): Promise<Buffer> {
   if (headerImageUrl) {
     try {
       const response = await fetch(headerImageUrl, { signal: AbortSignal.timeout(5000) })
@@ -19,7 +19,7 @@ async function generateWeddingOgImage(headerImageUrl: string | null): Promise<Ui
           })
           .png()
           .toBuffer()
-        return new Uint8Array(imageBuffer)
+        return imageBuffer
       }
     } catch {
       // If image fetch fails, use default
@@ -37,7 +37,7 @@ async function generateWeddingOgImage(headerImageUrl: string | null): Promise<Ui
   })
     .png()
     .toBuffer()
-  return new Uint8Array(defaultBuffer)
+  return defaultBuffer
 }
 
 export async function GET(
@@ -56,7 +56,7 @@ export async function GET(
 
     const buffer = await generateWeddingOgImage(headerImageUrl)
 
-    return new Response(buffer, {
+    return new Response(new Blob([new Uint8Array(buffer)], { type: 'image/png' }), {
       headers: {
         'Content-Type': 'image/png',
         'Cache-Control': 'public, max-age=3600, s-maxage=86400',
@@ -76,7 +76,7 @@ export async function GET(
       .png()
       .toBuffer()
 
-    return new Response(new Uint8Array(errorImageBuffer), {
+    return new Response(new Blob([new Uint8Array(errorImageBuffer)], { type: 'image/png' }), {
       headers: {
         'Content-Type': 'image/png',
         'Cache-Control': 'public, max-age=300',
