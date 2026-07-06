@@ -21,8 +21,8 @@ async function generateWeddingOgImage(
   const brideName = brideFirstName && brideLastName ? `${brideFirstName} ${brideLastName}` : null
   const groomName = groomFirstName && groomLastName ? `${groomFirstName} ${groomLastName}` : null
 
-  const displayBrideName = brideName ? escapeXml(brideName) : 'Wedding'
-  const displayGroomName = groomName ? escapeXml(groomName) : 'Website'
+  const displayBrideName = brideName || 'Wedding'
+  const displayGroomName = groomName || 'Website'
 
   const createDefaultImage = () =>
     sharp({
@@ -51,7 +51,22 @@ async function generateWeddingOgImage(
     }
   }
 
-  const svgOverlay = `<svg width="${DEFAULT_OG_IMAGE_WIDTH}" height="${DEFAULT_OG_IMAGE_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
+  const svgOverlay = generateSvgOverlay(displayBrideName, displayGroomName)
+
+  return baseImage
+    .composite([
+      {
+        input: Buffer.from(svgOverlay),
+        top: 0,
+        left: 0,
+      },
+    ])
+    .png()
+    .toBuffer()
+}
+
+function generateSvgOverlay(brideName: string, groomName: string): string {
+  return `<svg width="${DEFAULT_OG_IMAGE_WIDTH}" height="${DEFAULT_OG_IMAGE_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <style>
         text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -65,7 +80,7 @@ async function generateWeddingOgImage(
       font-weight="bold"
       fill="white"
       text-anchor="middle"
-    >${displayBrideName}</text>
+    >${escapeXml(brideName)}</text>
     <text
       x="${DEFAULT_OG_IMAGE_WIDTH / 2}"
       y="${DEFAULT_OG_IMAGE_HEIGHT / 2 + 60}"
@@ -73,7 +88,7 @@ async function generateWeddingOgImage(
       font-weight="bold"
       fill="white"
       text-anchor="middle"
-    >${displayGroomName}</text>
+    >${escapeXml(groomName)}</text>
     <line
       x1="${DEFAULT_OG_IMAGE_WIDTH / 2 - 120}"
       y1="${DEFAULT_OG_IMAGE_HEIGHT / 2 + 15}"
@@ -84,17 +99,6 @@ async function generateWeddingOgImage(
       opacity="0.6"
     />
   </svg>`
-
-  return baseImage
-    .composite([
-      {
-        input: Buffer.from(svgOverlay),
-        top: 0,
-        left: 0,
-      },
-    ])
-    .png()
-    .toBuffer()
 }
 
 function escapeXml(str: string): string {
