@@ -145,7 +145,11 @@ export default async function SaveTheDatePage({ params, searchParams }: SaveTheD
         </div>
 
         <div className='mx-auto flex min-h-[calc(100vh-6rem)] w-full max-w-2xl items-center'>
-          <EnvelopeReveal coupleNames={coupleNames} websiteSubUrl={websiteSubUrl}>
+          <EnvelopeReveal
+            coupleNames={coupleNames}
+            coupleNameClassName={headingFont}
+            websiteSubUrl={websiteSubUrl}
+          >
             <Card className='w-full overflow-hidden border-border/70 shadow-foreground/5 shadow-xl'>
               {/* Slim accent band at the top of the card. */}
               <div className='h-1.5 w-full bg-gradient-to-r from-primary via-accent to-primary' />
