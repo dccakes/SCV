@@ -127,7 +127,7 @@ export default async function SaveTheDatePage({ params, searchParams }: SaveTheD
   const formattedDate =
     firstEvent && lastEvent ? formatEventDateRange(firstEvent.date, lastEvent.date) : null
   const ceremonyEvent = inviteData.events.find((event) => event.name === 'Ceremony')
-  const location = ceremonyEvent?.venue ?? null
+  const location = ceremonyEvent?.venue ?? datedEvents.find((event) => event.venue)?.venue ?? null
 
   const calendarLinks = buildSaveTheDateCalendarLinks({
     title: `${coupleNames} Wedding`,
