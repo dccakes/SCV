@@ -43,6 +43,10 @@ export default async () => {
     'libphonenumber-js',
     'posthog-node',
     'posthog-js',
+    // ESM-only env builder (@t3-oss/env-nextjs + @t3-oss/env-core). Transforming
+    // these lets `~/env` (src/env.js) be imported transitively in tests — e.g. a
+    // client component that pulls in `~/trpc/react` — without per-test mocking.
+    '@t3-oss',
   ]
   const pkg = esmPackages.join('|')
 

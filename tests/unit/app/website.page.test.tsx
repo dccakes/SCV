@@ -88,6 +88,11 @@ jest.mock('~/app/_components/website/template-picker', () => ({
   TemplatePicker: () => <div data-testid='template-picker'>Template picker</div>,
 }))
 
+jest.mock('~/app/_components/website/rsvp-toggle-card', () => ({
+  __esModule: true,
+  RsvpToggleCard: () => <div data-testid='rsvp-toggle-card'>RSVP toggle</div>,
+}))
+
 jest.mock('~/app/_components/website/sections-editor', () => ({
   __esModule: true,
   SectionsEditor: () => <div data-testid='sections-editor'>Sections editor</div>,
