@@ -23,8 +23,43 @@ export async function generateMetadata({ params }: RootRouteHandlerProps): Promi
     }
   }
 
+  const {
+    brideFirstName,
+    brideLastName,
+    groomFirstName,
+    groomLastName,
+    website: { introText },
+  } = loadResult.weddingData
+
+  const brideName = brideFirstName && brideLastName ? `${brideFirstName} ${brideLastName}` : ''
+  const groomName = groomFirstName && groomLastName ? `${groomFirstName} ${groomLastName}` : ''
+  const title = brideName && groomName ? `${brideName} & ${groomName} Wedding` : 'Wedding Website'
+  const description = introText || `Join us for the wedding of ${brideName} and ${groomName}.`
+
+  const ogImageUrl = `/api/og/wedding/${websiteSubUrl}`
+
   return {
-    title: `${loadResult.weddingData.groomFirstName} ${loadResult.weddingData.groomLastName} and ${loadResult.weddingData.brideFirstName} ${loadResult.weddingData.brideLastName}'s Wedding Website`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImageUrl],
+    },
   }
 }
 
