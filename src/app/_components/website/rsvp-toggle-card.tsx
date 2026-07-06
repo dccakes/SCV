@@ -21,9 +21,7 @@ export function RsvpToggleCard({ websiteId, initialIsRsvpEnabled }: RsvpToggleCa
 
   const updateIsRsvpEnabled = api.website.updateIsRsvpEnabled.useMutation({
     onSuccess: () => {
-      toast.success(
-        isRsvpEnabled ? 'RSVPs are now being accepted' : 'RSVPs are now disabled'
-      )
+      toast.success(isRsvpEnabled ? 'RSVPs are now being accepted' : 'RSVPs are now disabled')
       router.refresh()
     },
     onError: (error) => {
