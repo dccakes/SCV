@@ -38,12 +38,9 @@ async function generateWeddingOgImage(headerImageUrl: string | null): Promise<Bu
     .toBuffer()
 }
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ websiteSubUrl: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Record<string, string> }) {
   try {
-    const { websiteSubUrl } = await params
+    const { websiteSubUrl } = params as { websiteSubUrl: string }
 
     const loadResult = await loadWeddingBySubUrl(websiteSubUrl)
 
