@@ -67,6 +67,7 @@ const inviteData = {
       lastName: 'Lovelace',
       email: 'ada@example.com',
       phone: null,
+      isTagAlong: false,
     },
   ],
 }
@@ -288,5 +289,43 @@ describe('household invite pages', () => {
 
     expect(screen.getByText('We could not open this invitation.')).toBeInTheDocument()
     expect(screen.getByText(/ask the couple for a new one/i)).toBeInTheDocument()
+  })
+
+  it('hides tag-along guests from the invited household list', async () => {
+    mockCookieGet.mockReturnValue({ value: 'cookie-code' })
+    mockGetInviteData.mockResolvedValue({
+      ...inviteData,
+      guests: [
+        {
+          id: 1,
+          firstName: 'Ada',
+          lastName: 'Lovelace',
+          email: 'ada@example.com',
+          phone: null,
+          isTagAlong: false,
+        },
+        {
+          id: 2,
+          firstName: 'Baby',
+          lastName: 'Lovelace',
+          email: null,
+          phone: null,
+          isTagAlong: true,
+        },
+      ],
+    })
+    const InvitePage = (await import('~/app/w/[websiteSubUrl]/save-the-date/page')).default
+
+    render(
+      await InvitePage({
+        params: Promise.resolve({ websiteSubUrl: 'harry-and-hermione' }),
+        searchParams: Promise.resolve({}),
+      })
+    )
+
+    // Formally invited guest should be shown
+    expect(screen.getByText('Ada Lovelace')).toBeInTheDocument()
+    // Tag-along guest should be hidden from the invited household list
+    expect(screen.queryByText('Baby Lovelace')).not.toBeInTheDocument()
   })
 })
