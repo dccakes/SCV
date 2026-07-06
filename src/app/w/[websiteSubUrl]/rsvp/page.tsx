@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 
 import { loadVisitorWedding } from '~/app/w/[websiteSubUrl]/_lib/load-visitor-wedding'
 import { grantWebsiteAccess } from '~/app/w/[websiteSubUrl]/_lib/website-access'
+import RsvpNotAcceptingMessage from '~/components/website/rsvp-not-accepting-message'
 import { RsvpFormProvider } from '~/components/contexts/rsvp-form-context'
 import MainRsvpForm from '~/components/website/forms/main'
 import PasswordPage from '~/components/website/password-page'
@@ -39,9 +40,16 @@ export default async function RsvpPage({ params }: RsvpPageProps) {
   if (loadResult.status === 'password-required') {
     return <PasswordPage verifyWebsitePassword={verifyWebsitePassword} />
   }
-  if (!loadResult.weddingData.website.isRsvpEnabled) return notFound()
 
   const template = resolveTemplate(loadResult.weddingData.website.templateId)
+
+  if (!loadResult.weddingData.website.isRsvpEnabled) {
+    return (
+      <TemplateThemeProvider template={template}>
+        <RsvpNotAcceptingMessage weddingData={loadResult.weddingData} basePath={`/w/${websiteSubUrl}`} />
+      </TemplateThemeProvider>
+    )
+  }
 
   return (
     <TemplateThemeProvider template={template}>

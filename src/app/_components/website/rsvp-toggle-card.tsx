@@ -22,7 +22,7 @@ export function RsvpToggleCard({ websiteId, initialIsRsvpEnabled }: RsvpToggleCa
   const updateIsRsvpEnabled = api.website.updateIsRsvpEnabled.useMutation({
     onSuccess: () => {
       toast.success(
-        isRsvpEnabled ? 'RSVP buttons are now visible' : 'RSVP buttons are now hidden'
+        isRsvpEnabled ? 'RSVPs are now being accepted' : 'RSVPs are now disabled'
       )
       router.refresh()
     },
@@ -55,8 +55,8 @@ export function RsvpToggleCard({ websiteId, initialIsRsvpEnabled }: RsvpToggleCa
           RSVP buttons
         </CardTitle>
         <p className='max-w-2xl font-sans text-muted-foreground text-sm leading-6'>
-          Show or hide RSVP buttons on your templates. When disabled, guests won&apos;t see the
-          buttons to respond to your wedding on the website or invitations.
+          Allow guests to submit RSVPs. When disabled, RSVP buttons remain visible on your templates
+          but guests will see a message that you&apos;re not yet accepting responses.
         </p>
       </CardHeader>
       <CardContent className='space-y-3'>
@@ -74,8 +74,8 @@ export function RsvpToggleCard({ websiteId, initialIsRsvpEnabled }: RsvpToggleCa
 
         <p className='font-sans text-muted-foreground text-sm'>
           {isRsvpEnabled
-            ? 'Guests can see RSVP buttons on your website and invitations.'
-            : 'RSVP buttons are hidden from guests on your website and invitations.'}
+            ? 'Guests can submit RSVPs on your website and invitations.'
+            : 'Guests will see RSVP buttons but cannot submit responses yet.'}
         </p>
       </CardContent>
     </Card>
