@@ -47,8 +47,8 @@ describe('resolveInvitedHousehold', () => {
   it('builds the greeting from the household guest first names', async () => {
     mockGetInviteData.mockResolvedValue({
       guests: [
-        { id: 1, firstName: 'Alice', lastName: 'Stone', isTagAlong: false },
-        { id: 2, firstName: 'Bob', lastName: 'Stone', isTagAlong: false },
+        { id: 1, firstName: 'Alice', lastName: 'Stone' },
+        { id: 2, firstName: 'Bob', lastName: 'Stone' },
       ],
     })
 
@@ -61,7 +61,7 @@ describe('resolveInvitedHousehold', () => {
 
   it('ignores blank first names and returns null when none remain', async () => {
     mockGetInviteData.mockResolvedValue({
-      guests: [{ id: 1, firstName: '   ', lastName: 'Stone', isTagAlong: false }],
+      guests: [{ id: 1, firstName: '   ', lastName: 'Stone' }],
     })
 
     await expect(resolveInvitedHousehold('johnandjane', 'good-token')).resolves.toBeNull()

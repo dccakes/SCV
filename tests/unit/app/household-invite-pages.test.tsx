@@ -67,7 +67,6 @@ const inviteData = {
       lastName: 'Lovelace',
       email: 'ada@example.com',
       phone: null,
-      isTagAlong: false,
     },
   ],
 }
