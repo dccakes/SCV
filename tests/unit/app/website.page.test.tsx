@@ -98,6 +98,11 @@ jest.mock('~/app/_components/website/website-media-editor', () => ({
   WebsiteMediaEditor: () => <div data-testid='website-media-editor'>Media editor</div>,
 }))
 
+jest.mock('~/app/_components/website/rsvp-toggle-card', () => ({
+  __esModule: true,
+  RsvpToggleCard: () => <div data-testid='rsvp-toggle-card'>RSVP toggle</div>,
+}))
+
 describe('WebsitePage', () => {
   beforeEach(() => {
     mockGetRequiredWedding.mockReset()

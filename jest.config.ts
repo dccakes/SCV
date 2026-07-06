@@ -41,6 +41,8 @@ export default async () => {
     'jose',
     'react-phone-number-input',
     'libphonenumber-js',
+    '@t3-oss/env-nextjs',
+    '@t3-oss/env-core',
   ]
   const pkg = esmPackages.join('|')
 
