@@ -1,16 +1,11 @@
 import { Clock } from 'lucide-react'
 import { Button } from '~/components/ui/button'
-import type { WeddingPageData } from '~/server/domains/website/website.types'
 
 type RsvpNotAcceptingMessageProps = {
-  weddingData: WeddingPageData
   basePath: string
 }
 
-export default function RsvpNotAcceptingMessage({
-  weddingData,
-  basePath,
-}: RsvpNotAcceptingMessageProps) {
+export default function RsvpNotAcceptingMessage({ basePath }: RsvpNotAcceptingMessageProps) {
   return (
     <main className='relative flex min-h-screen items-center justify-center overflow-hidden bg-muted/30 px-6 py-12'>
       <div aria-hidden className='pointer-events-none absolute inset-0 -z-10'>
@@ -34,9 +29,7 @@ export default function RsvpNotAcceptingMessage({
           <p className='font-mono text-[0.6rem] text-muted-foreground uppercase tracking-[0.28em]'>
             Coming Soon
           </p>
-          <h1 className='font-serif text-2xl text-foreground sm:text-3xl'>
-            RSVPs not yet open
-          </h1>
+          <h1 className='font-serif text-2xl text-foreground sm:text-3xl'>RSVPs not yet open</h1>
           <p className='text-muted-foreground text-sm leading-6'>
             We&apos;re not quite ready to accept RSVPs yet. Check back soon!
           </p>
