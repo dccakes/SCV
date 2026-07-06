@@ -215,9 +215,11 @@ export default async function SaveTheDatePage({ params, searchParams }: SaveTheD
                     Invited household
                   </p>
                   <ul className='mt-3 space-y-2 text-xl'>
-                    {inviteData.guests.map((guest) => (
-                      <li key={guest.id}>{formatGuestName(guest)}</li>
-                    ))}
+                    {inviteData.guests
+                      .filter((guest) => !guest.isTagAlong)
+                      .map((guest) => (
+                        <li key={guest.id}>{formatGuestName(guest)}</li>
+                      ))}
                   </ul>
                 </div>
 
