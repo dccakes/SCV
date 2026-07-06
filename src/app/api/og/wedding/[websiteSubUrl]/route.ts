@@ -1,3 +1,4 @@
+import type { NextRequest } from 'next/server'
 import sharp from 'sharp'
 
 import { loadWeddingBySubUrl } from '~/app/w/[websiteSubUrl]/_lib/load-wedding-by-suburl'
@@ -38,7 +39,7 @@ async function generateWeddingOgImage(headerImageUrl: string | null): Promise<Bu
 }
 
 export async function GET(
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ websiteSubUrl: string }> }
 ) {
   try {
