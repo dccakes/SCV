@@ -52,10 +52,11 @@ model Wedding {
   vendorNotes     VendorNote[]
   vendorCategoryConfigs VendorCategoryConfig[]
 
-  // Messaging (Telegram bot, future: WhatsApp)
+  // Messaging (Telegram couple-bot + WhatsApp guest concierge)
   messagingIdentities    MessagingIdentity[]
   messagingPairingTokens MessagingPairingToken[]
   chatMessages           ChatMessage[]
+  whatsappNumber         WhatsAppNumber?
 
   @@index([selfFillToken, selfFillTokenGeneratedAt])
 }
@@ -302,11 +303,12 @@ model Household {
   inviteCodeExpiresAt  DateTime?
 
   // Relations
-  guests         Guest[]          @relation(name: "Household_Guests")
-  gifts          Gift[]           @relation(name: "Household_Gifts")
-  answers        Answer[]         @relation(name: "Household_Answers")
-  optionReponses OptionResponse[] @relation(name: "Household_OptionResponses")
-  householdNotes HouseholdNote[]
+  guests              Guest[]             @relation(name: "Household_Guests")
+  gifts               Gift[]              @relation(name: "Household_Gifts")
+  answers             Answer[]            @relation(name: "Household_Answers")
+  optionReponses      OptionResponse[]    @relation(name: "Household_OptionResponses")
+  householdNotes      HouseholdNote[]
+  messagingIdentities MessagingIdentity[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -356,10 +358,11 @@ model Guest {
   guestTagAssignments GuestTagAssignment[] @relation(name: "Guest_GuestTagAssignments")
 
   // Relations
-  invitations     Invitation[]     @relation(name: "Guest_Invitations")
-  optionResponses OptionResponse[] @relation(name: "Guest_OptionResponses")
-  answers         Answer[]         @relation(name: "Guest_Answers")
-  guestQuestions  GuestQuestion[]
+  invitations         Invitation[]        @relation(name: "Guest_Invitations")
+  optionResponses     OptionResponse[]    @relation(name: "Guest_OptionResponses")
+  answers             Answer[]            @relation(name: "Guest_Answers")
+  guestQuestions      GuestQuestion[]
+  messagingIdentities MessagingIdentity[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -951,25 +954,51 @@ model HouseholdNote {
   @@map("household_notes")
 }
 
-// ─── Messaging (Telegram bot; future: WhatsApp) ──────────────────────────────
+// ─── Messaging (Telegram couple-bot + WhatsApp guest concierge) ──────────────
 
-// Linked external chat (one per paired Telegram chat)
+// Platform-owned WhatsApp sender number. Each wedding claims a dedicated number
+// from the pool so attendees text "their" wedding directly; the inbound webhook
+// resolves the wedding from the `To` number.
+model WhatsAppNumber {
+  id          String    @id @default(uuid())
+  phoneNumber String    @unique @map("phone_number") // E.164, e.g. "+14155550123"
+  weddingId   String?   @unique @map("wedding_id")
+  wedding     Wedding?  @relation(fields: [weddingId], references: [id], onDelete: SetNull)
+  provider    String    @default("twilio")
+  status      String    @default("available") // 'available' | 'assigned' | 'disabled'
+  assignedAt  DateTime? @map("assigned_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("whatsapp_numbers")
+}
+
+// Linked external chat. Telegram: one per paired couple chat (serviceNumber '').
+// WhatsApp: one per attendee phone number texting the wedding's dedicated
+// number (serviceNumber = the wedding's WhatsApp number), linked to the
+// guest/household so Etta holds a distinct conversation per household member.
 model MessagingIdentity {
   id               String        @id @default(uuid())
   weddingId        String        @map("wedding_id")
   wedding          Wedding       @relation(fields: [weddingId], references: [id], onDelete: Cascade)
-  channel          String // 'telegram' (future: 'whatsapp')
-  externalChatId   String        @map("external_chat_id")
+  channel          String // 'telegram' | 'whatsapp'
+  serviceNumber    String        @default("") @map("service_number") // our WhatsApp number (E.164); '' for telegram
+  externalChatId   String        @map("external_chat_id") // telegram chat id, or attendee phone (E.164)
   externalUserId   String?       @map("external_user_id")
   displayName      String?       @map("display_name")
-  linkedByUserId   String        @map("linked_by_user_id") // app user who paired it; authz runs as this user
+  linkedByUserId   String?       @map("linked_by_user_id") // app user who paired it (telegram); authz runs as this user
+  householdId      String?       @map("household_id") // whatsapp: attendee's household
+  household        Household?    @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  guestId          Int?          @map("guest_id") // whatsapp: the matched guest record
+  guest            Guest?        @relation(fields: [guestId], references: [id], onDelete: SetNull)
   linkedAt         DateTime      @default(now()) @map("linked_at")
   revokedAt        DateTime?     @map("revoked_at")
   pendingInvokeSeq Int           @default(0) @map("pending_invoke_seq")
   messages         ChatMessage[]
 
-  @@unique([channel, externalChatId])
+  @@unique([channel, serviceNumber, externalChatId])
   @@index([weddingId])
+  @@index([householdId])
   @@map("messaging_identities")
 }
 

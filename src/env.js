@@ -51,6 +51,13 @@ export const env = createEnv({
     TELEGRAM_SESSION_GAP_MS: z.coerce.number().int().positive().optional(),
     TELEGRAM_SESSION_MAX_MESSAGES: z.coerce.number().int().positive().optional(),
     TELEGRAM_SESSION_MAX_CHARS: z.coerce.number().int().positive().optional(),
+    // Twilio WhatsApp (guest concierge channel)
+    TWILIO_ACCOUNT_SID: z.string().min(1).optional(),
+    TWILIO_AUTH_TOKEN: z.string().min(1).optional(),
+    // Public URL of the WhatsApp webhook as Twilio sees it (signature validation
+    // behind proxies); falls back to the request URL when unset.
+    WHATSAPP_WEBHOOK_URL: z.string().url().optional(),
+    WHATSAPP_DEBOUNCE_MS: z.coerce.number().int().positive().optional(),
     // Vercel Cron shared secret (protects /api/cron/* routes)
     CRON_SECRET: z.string().min(1).optional(),
     // Optional: PostHog server-side analytics. Falls back to the public key
@@ -116,6 +123,10 @@ export const env = createEnv({
     TELEGRAM_SESSION_GAP_MS: process.env.TELEGRAM_SESSION_GAP_MS,
     TELEGRAM_SESSION_MAX_MESSAGES: process.env.TELEGRAM_SESSION_MAX_MESSAGES,
     TELEGRAM_SESSION_MAX_CHARS: process.env.TELEGRAM_SESSION_MAX_CHARS,
+    TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID,
+    TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN,
+    WHATSAPP_WEBHOOK_URL: process.env.WHATSAPP_WEBHOOK_URL,
+    WHATSAPP_DEBOUNCE_MS: process.env.WHATSAPP_DEBOUNCE_MS,
     CRON_SECRET: process.env.CRON_SECRET,
     POSTHOG_KEY: process.env.POSTHOG_KEY,
     POSTHOG_HOST: process.env.POSTHOG_HOST,
