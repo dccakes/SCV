@@ -29,16 +29,33 @@ function createTextOverlaySvg(headline: string, accent: string): string {
   const escapedHeadline = escapeXml(headline)
   const escapedAccent = escapeXml(accent)
 
-  return `<svg width="${DEFAULT_OG_IMAGE_WIDTH}" height="${DEFAULT_OG_IMAGE_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
+  return `<svg width="${DEFAULT_OG_IMAGE_WIDTH}" height="${DEFAULT_OG_IMAGE_HEIGHT}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${DEFAULT_OG_IMAGE_WIDTH} ${DEFAULT_OG_IMAGE_HEIGHT}">
     <defs>
-      <style>
-        .headline { font-family: 'Georgia', serif; font-size: 56px; font-weight: bold; fill: white; text-anchor: middle; }
-        .accent { font-family: 'Georgia', serif; font-size: 56px; font-weight: bold; fill: white; text-anchor: middle; }
-      </style>
+      <filter id="textShadow">
+        <feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.5"/>
+      </filter>
     </defs>
-    <rect width="${DEFAULT_OG_IMAGE_WIDTH}" height="${DEFAULT_OG_IMAGE_HEIGHT}" fill="rgba(0,0,0,0.3)"/>
-    <text x="${DEFAULT_OG_IMAGE_WIDTH / 2}" y="300" class="headline">${escapedHeadline}</text>
-    <text x="${DEFAULT_OG_IMAGE_WIDTH / 2}" y="380" class="accent">${escapedAccent}</text>
+    <rect width="${DEFAULT_OG_IMAGE_WIDTH}" height="${DEFAULT_OG_IMAGE_HEIGHT}" fill="rgba(0,0,0,0.4)"/>
+    <text
+      x="${DEFAULT_OG_IMAGE_WIDTH / 2}"
+      y="280"
+      font-family="Georgia, serif"
+      font-size="72"
+      font-weight="bold"
+      fill="white"
+      text-anchor="middle"
+      filter="url(#textShadow)"
+    >${escapedHeadline}</text>
+    <text
+      x="${DEFAULT_OG_IMAGE_WIDTH / 2}"
+      y="380"
+      font-family="Georgia, serif"
+      font-size="72"
+      font-weight="bold"
+      fill="white"
+      text-anchor="middle"
+      filter="url(#textShadow)"
+    >${escapedAccent}</text>
   </svg>`
 }
 
