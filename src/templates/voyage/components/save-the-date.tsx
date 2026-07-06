@@ -31,37 +31,37 @@ export function VoyageSaveTheDate({ weddingData, path }: Readonly<TemplateSurfac
   return (
     <main className='w-full'>
       <HeroBackground url={heroUrl}>
-        <div className='mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-8 px-6 py-24 text-center text-[#F8F1E7]'>
-          <Eyebrow className='text-[#D1B879]'>{copy?.eyebrow ?? 'Save the Date'}</Eyebrow>
+        <div className='mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-8 px-6 py-24 text-center text-[#F7F3EC]'>
+          <Eyebrow className='text-[#D3BD8A]'>{copy?.eyebrow ?? 'Save the Date'}</Eyebrow>
           <h1 className={`${headingFont} font-light text-5xl italic sm:text-7xl`}>
             {weddingData.brideFirstName}
             <span className='mx-3 text-[#D1B879] not-italic'>&amp;</span>
             {weddingData.groomFirstName}
           </h1>
-          <GoldRule className='bg-[#D1B879]/70' />
+          <GoldRule className='bg-[#D3BD8A]/70' />
           <p
-            className={`${labelFont} text-[#F8F1E7]/90 text-[0.72rem] uppercase tracking-[0.32em]`}
+            className={`${labelFont} text-[#F7F3EC]/90 text-[0.72rem] uppercase tracking-[0.32em]`}
           >
             {dateLabel}
           </p>
           {venue ? (
             <p
-              className={`${labelFont} text-[#F8F1E7]/70 text-[0.66rem] uppercase tracking-[0.26em]`}
+              className={`${labelFont} text-[#F7F3EC]/70 text-[0.66rem] uppercase tracking-[0.26em]`}
             >
               {venue}
             </p>
           ) : null}
           {weddingData.daysRemaining > 0 ? (
-            <p className={`${bodyFont} text-[#F8F1E7]/70`}>
+            <p className={`${bodyFont} text-[#F7F3EC]/70`}>
               {weddingData.daysRemaining} days to go
             </p>
           ) : null}
           {copy?.message ? (
-            <p className={`${bodyFont} max-w-xl whitespace-pre-line text-[#F8F1E7]/85 leading-8`}>
+            <p className={`${bodyFont} max-w-xl whitespace-pre-line text-[#F7F3EC]/85 leading-8`}>
               {copy.message}
             </p>
           ) : null}
-          <p className={`${bodyFont} text-[#F8F1E7]/70 italic`}>
+          <p className={`${bodyFont} text-[#F7F3EC]/70 italic`}>
             {copy?.footnote ?? 'Formal invitation to follow.'}
           </p>
           {calendarLinks ? <AddToCalendarButtons {...calendarLinks} /> : null}
@@ -71,7 +71,7 @@ export function VoyageSaveTheDate({ weddingData, path }: Readonly<TemplateSurfac
           {website.isRsvpEnabled ? (
             <Link
               href={`${path}/rsvp`}
-              className={`${labelFont} text-[#D1B879] text-[0.66rem] uppercase tracking-[0.28em] underline-offset-4 hover:underline`}
+              className={`${labelFont} text-[#D3BD8A] text-[0.66rem] uppercase tracking-[0.28em] underline-offset-4 hover:underline`}
             >
               RSVP
             </Link>

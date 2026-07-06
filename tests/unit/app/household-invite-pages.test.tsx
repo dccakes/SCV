@@ -154,6 +154,8 @@ describe('household invite pages', () => {
     expect(screen.getByText('Hacienda')).toBeInTheDocument()
     expect(screen.getByText('Harry & Hermione')).toBeInTheDocument()
     expect(screen.getByText('Ada Lovelace')).toBeInTheDocument()
+    // No tag-along guests in this household, so the "joining the trip" callout is absent.
+    expect(screen.queryByText(/joining the trip/i)).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: /update our details/i })).toHaveAttribute(
       'href',
       '/w/harry-and-hermione/save-the-date/update'

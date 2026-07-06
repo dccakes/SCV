@@ -65,6 +65,7 @@ const inviteHousehold = {
       lastName: 'Weasley',
       email: 'ron@example.com',
       phone: null,
+      isTagAlong: false,
     },
   ],
 }
@@ -222,6 +223,33 @@ describe('HouseholdInviteService', () => {
 
     expect(inviteData?.templateId).toBeNull()
     expect(inviteData?.saveTheDate).toBeUndefined()
+  })
+
+  it('surfaces which household guests are tag-alongs', async () => {
+    const db = createDb()
+    db.website.findFirst.mockResolvedValue({ weddingId: 'wedding-123', templateId: null })
+    db.household.findFirst.mockResolvedValue({
+      ...inviteHousehold,
+      guests: [
+        ...inviteHousehold.guests,
+        {
+          id: 2,
+          firstName: 'Grace',
+          lastName: 'Hopper',
+          email: null,
+          phone: null,
+          isTagAlong: true,
+        },
+      ],
+    })
+    const service = new HouseholdInviteService(db as never)
+
+    const inviteData = await service.getInviteData('harry-and-hermione', INVITE_CODE)
+
+    expect(inviteData?.guests).toEqual([
+      expect.objectContaining({ firstName: 'Ron', isTagAlong: false }),
+      expect.objectContaining({ firstName: 'Grace', isTagAlong: true }),
+    ])
   })
 
   it('returns null when the invite code household is scoped to a different wedding', async () => {
