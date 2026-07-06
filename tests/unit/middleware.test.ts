@@ -77,9 +77,9 @@ describe('middleware', () => {
       joinResponse,
       websiteResponse,
       websiteRsvpResponse,
-      websiteInviteResponse,
-      websiteInviteCodeResponse,
-      websiteInviteUpdateResponse,
+      websiteSaveTheDateResponse,
+      websiteSaveTheDateCodeResponse,
+      websiteSaveTheDateUpdateResponse,
       authApiResponse,
       blobUploadResponse,
     ] = await Promise.all([
@@ -93,9 +93,9 @@ describe('middleware', () => {
       middleware(createRequest('/join/sample-token')),
       middleware(createRequest('/w/shrek-and-fiona')),
       middleware(createRequest('/w/shrek-and-fiona/rsvp')),
-      middleware(createRequest('/w/shrek-and-fiona/invite')),
-      middleware(createRequest('/w/shrek-and-fiona/invite/sf-4f9k2c')),
-      middleware(createRequest('/w/shrek-and-fiona/invite/update')),
+      middleware(createRequest('/w/shrek-and-fiona/save-the-date')),
+      middleware(createRequest('/w/shrek-and-fiona/save-the-date/sf-4f9k2c')),
+      middleware(createRequest('/w/shrek-and-fiona/save-the-date/update')),
       middleware(createRequest('/api/auth/session')),
       middleware(createRequest('/api/blob/upload')),
     ])
@@ -110,9 +110,9 @@ describe('middleware', () => {
     expect(joinResponse.headers.get('location')).toBeNull()
     expect(websiteResponse.headers.get('location')).toBeNull()
     expect(websiteRsvpResponse.headers.get('location')).toBeNull()
-    expect(websiteInviteResponse.headers.get('location')).toBeNull()
-    expect(websiteInviteCodeResponse.headers.get('location')).toBeNull()
-    expect(websiteInviteUpdateResponse.headers.get('location')).toBeNull()
+    expect(websiteSaveTheDateResponse.headers.get('location')).toBeNull()
+    expect(websiteSaveTheDateCodeResponse.headers.get('location')).toBeNull()
+    expect(websiteSaveTheDateUpdateResponse.headers.get('location')).toBeNull()
     expect(authApiResponse.headers.get('location')).toBeNull()
     expect(blobUploadResponse.headers.get('location')).toBeNull()
     expect(mockGetSessionCookie).not.toHaveBeenCalled()

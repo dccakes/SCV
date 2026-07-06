@@ -10,7 +10,7 @@ export function AureliaSaveTheDate({ weddingData, path }: Readonly<TemplateSurfa
   const weddingEvent = weddingData.events.find((event) => event.name === 'Wedding Day')
   const venue = weddingEvent?.venue
   const copy = weddingData.saveTheDate
-  const coupleNames = `${weddingData.groomFirstName} & ${weddingData.brideFirstName}`
+  const coupleNames = `${weddingData.brideFirstName} & ${weddingData.groomFirstName}`
   const calendarLinks = buildSaveTheDateCalendarLinks({
     title: `${coupleNames} Wedding`,
     description: `Save the date for the wedding of ${coupleNames}! Formal invitation to follow. ${weddingData.website.url}`,
@@ -29,9 +29,9 @@ export function AureliaSaveTheDate({ weddingData, path }: Readonly<TemplateSurfa
         {copy?.eyebrow ?? 'Save the Date'}
       </p>
       <h1 className={`${headingFont} text-6xl text-foreground italic sm:text-7xl`}>
-        {weddingData.groomFirstName}
-        <span className='mx-3 font-light text-primary not-italic'>&</span>
         {weddingData.brideFirstName}
+        <span className='mx-3 font-light text-primary not-italic'>&</span>
+        {weddingData.groomFirstName}
       </h1>
       <div className='flex items-center gap-4 text-muted-foreground'>
         <span className='h-px w-12 bg-border' />

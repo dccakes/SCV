@@ -52,19 +52,20 @@ const inviteHousehold = {
   zipCode: null,
   country: null,
   wedding: {
-    groomFirstName: 'Diego',
-    groomLastName: 'Carvallo',
-    brideFirstName: 'Laura',
-    brideLastName: 'Zurich',
-    events: [{ date: new Date('2027-05-30T12:00:00.000Z'), venue: 'Puebla, Mexico' }],
+    groomFirstName: 'Harry',
+    groomLastName: 'Potter',
+    brideFirstName: 'Hermione',
+    brideLastName: 'Granger',
+    events: [{ date: new Date('2027-05-30T12:00:00.000Z'), venue: 'Hogsmeade, Scotland' }],
   },
   guests: [
     {
       id: 1,
-      firstName: 'Ada',
-      lastName: 'Lovelace',
-      email: 'ada@example.com',
+      firstName: 'Ron',
+      lastName: 'Weasley',
+      email: 'ron@example.com',
       phone: null,
+      isTagAlong: false,
     },
   ],
 }
@@ -89,7 +90,7 @@ describe('HouseholdInviteService', () => {
       weddingId: 'wedding-123',
       guests: [{ firstName: 'Ada', lastName: 'Lovelace' }],
     })
-    db.website.findFirst.mockResolvedValue({ subUrl: 'diego-and-laura' })
+    db.website.findFirst.mockResolvedValue({ subUrl: 'harry-and-hermione' })
     const service = new HouseholdInviteService(db as never)
 
     const result = await service.generateInviteLink(authz, 'wedding-123', {
@@ -97,7 +98,9 @@ describe('HouseholdInviteService', () => {
       baseUrl: 'https://example.com/dashboard',
     })
 
-    expect(result.url).toMatch(/^https:\/\/example\.com\/w\/diego-and-laura\/invite\/al-[a-z0-9]+$/)
+    expect(result.url).toMatch(
+      /^https:\/\/example\.com\/w\/harry-and-hermione\/save-the-date\/al-[a-z0-9]+$/
+    )
     expect(result.expiresAt).toEqual(new Date('2027-06-18T12:00:00.000Z'))
     expect(db.household.findFirst).toHaveBeenCalledWith({
       where: { id: 'household-123', weddingId: 'wedding-123' },
@@ -132,14 +135,14 @@ describe('HouseholdInviteService', () => {
     })
     const service = new HouseholdInviteService(db as never)
 
-    await expect(service.getPublicWeddingSummary('diego-and-laura')).resolves.toEqual({
+    await expect(service.getPublicWeddingSummary('harry-and-hermione')).resolves.toEqual({
       groomFirstName: 'Diego',
       brideFirstName: 'Laura',
       date: weddingDate,
       venue: 'Puebla, Mexico',
     })
     expect(db.website.findFirst).toHaveBeenCalledWith({
-      where: { subUrl: 'diego-and-laura' },
+      where: { subUrl: 'harry-and-hermione' },
       select: {
         wedding: {
           select: {
@@ -164,7 +167,7 @@ describe('HouseholdInviteService', () => {
     })
     const service = new HouseholdInviteService(db as never)
 
-    await expect(service.getPublicWeddingSummary('diego-and-laura')).resolves.toEqual({
+    await expect(service.getPublicWeddingSummary('harry-and-hermione')).resolves.toEqual({
       groomFirstName: 'Diego',
       brideFirstName: 'Laura',
       date: null,
@@ -196,7 +199,7 @@ describe('HouseholdInviteService', () => {
     const service = new HouseholdInviteService(db as never)
     const code = INVITE_CODE
 
-    const inviteData = await service.getInviteData('diego-and-laura', code)
+    const inviteData = await service.getInviteData('harry-and-hermione', code)
 
     expect(inviteData?.templateId).toBe('aurelia')
     expect(inviteData?.saveTheDate).toEqual({
@@ -216,10 +219,37 @@ describe('HouseholdInviteService', () => {
     const service = new HouseholdInviteService(db as never)
     const code = INVITE_CODE
 
-    const inviteData = await service.getInviteData('diego-and-laura', code)
+    const inviteData = await service.getInviteData('harry-and-hermione', code)
 
     expect(inviteData?.templateId).toBeNull()
     expect(inviteData?.saveTheDate).toBeUndefined()
+  })
+
+  it('surfaces which household guests are tag-alongs', async () => {
+    const db = createDb()
+    db.website.findFirst.mockResolvedValue({ weddingId: 'wedding-123', templateId: null })
+    db.household.findFirst.mockResolvedValue({
+      ...inviteHousehold,
+      guests: [
+        ...inviteHousehold.guests,
+        {
+          id: 2,
+          firstName: 'Grace',
+          lastName: 'Hopper',
+          email: null,
+          phone: null,
+          isTagAlong: true,
+        },
+      ],
+    })
+    const service = new HouseholdInviteService(db as never)
+
+    const inviteData = await service.getInviteData('harry-and-hermione', INVITE_CODE)
+
+    expect(inviteData?.guests).toEqual([
+      expect.objectContaining({ firstName: 'Ron', isTagAlong: false }),
+      expect.objectContaining({ firstName: 'Grace', isTagAlong: true }),
+    ])
   })
 
   it('returns null when the invite code household is scoped to a different wedding', async () => {
@@ -232,7 +262,7 @@ describe('HouseholdInviteService', () => {
     db.website.findFirst.mockResolvedValue({ weddingId: 'different-wedding' })
     const service = new HouseholdInviteService(db as never)
 
-    await expect(service.getInviteData('diego-and-laura', INVITE_CODE)).resolves.toBeNull()
+    await expect(service.getInviteData('harry-and-hermione', INVITE_CODE)).resolves.toBeNull()
     expect(db.household.findFirst).toHaveBeenCalledTimes(1)
     expect(db.household.findFirst).toHaveBeenCalledWith({
       where: { inviteCode: INVITE_CODE },
@@ -245,14 +275,14 @@ describe('HouseholdInviteService', () => {
     const service = new HouseholdInviteService(db as never)
 
     db.household.findFirst.mockResolvedValueOnce(null)
-    await expect(service.getInviteData('diego-and-laura', 'no-such-code')).resolves.toBeNull()
+    await expect(service.getInviteData('harry-and-hermione', 'no-such-code')).resolves.toBeNull()
 
     db.household.findFirst.mockResolvedValueOnce({
       id: 'household-123',
       weddingId: 'wedding-123',
       inviteCodeExpiresAt: new Date('2026-06-18T11:59:59.000Z'),
     })
-    await expect(service.getInviteData('diego-and-laura', INVITE_CODE)).resolves.toBeNull()
+    await expect(service.getInviteData('harry-and-hermione', INVITE_CODE)).resolves.toBeNull()
 
     expect(db.website.findFirst).not.toHaveBeenCalled()
   })
@@ -261,7 +291,7 @@ describe('HouseholdInviteService', () => {
     const db = createDb()
     const service = new HouseholdInviteService(db as never)
 
-    await expect(service.getInviteData('diego-and-laura', undefined)).resolves.toBeNull()
+    await expect(service.getInviteData('harry-and-hermione', undefined)).resolves.toBeNull()
     expect(db.household.findFirst).not.toHaveBeenCalled()
   })
 
@@ -273,7 +303,7 @@ describe('HouseholdInviteService', () => {
     const code = INVITE_CODE
 
     await expect(
-      service.updateHouseholdDetails('diego-and-laura', code, {
+      service.updateHouseholdDetails('harry-and-hermione', code, {
         address1: '123 Main St',
         address2: null,
         city: 'Puebla',
@@ -309,7 +339,7 @@ describe('HouseholdInviteService', () => {
     const code = INVITE_CODE
 
     await expect(
-      service.updateHouseholdDetails('diego-and-laura', code, {
+      service.updateHouseholdDetails('harry-and-hermione', code, {
         address1: ' 123 Main St ',
         address2: '',
         city: ' Puebla ',
@@ -366,7 +396,7 @@ describe('HouseholdInviteService', () => {
     const code = INVITE_CODE
 
     await expect(
-      service.updateHouseholdDetails('diego-and-laura', code, {
+      service.updateHouseholdDetails('harry-and-hermione', code, {
         address1: null,
         address2: null,
         city: null,
@@ -407,7 +437,7 @@ describe('HouseholdInviteService', () => {
     const code = INVITE_CODE
 
     await expect(
-      service.updateHouseholdDetails('diego-and-laura', code, {
+      service.updateHouseholdDetails('harry-and-hermione', code, {
         address1: null,
         address2: null,
         city: null,

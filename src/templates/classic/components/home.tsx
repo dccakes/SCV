@@ -14,7 +14,7 @@ export function ClassicHome({ weddingData, path, introText }: Readonly<TemplateS
       <ClassicHeaderImage url={website.headerImageUrl} />
       <div className='text-center'>
         <h1 className='my-5 font-medium text-6xl tracking-widest'>
-          {weddingData.groomFirstName} & {weddingData.brideFirstName}
+          {weddingData.brideFirstName} & {weddingData.groomFirstName}
         </h1>
         <span className='text-lg'>
           {weddingData.date?.standardFormat ?? 'Date To Be Announced'}
@@ -73,7 +73,7 @@ export function ClassicHome({ weddingData, path, introText }: Readonly<TemplateS
 
       <div className='text-center'>
         <h2 className='border-black border-b px-5 pb-6 text-6xl'>
-          {weddingData.groomFirstName?.[0] ?? 'G'} & {weddingData.brideFirstName?.[0] ?? 'B'}
+          {weddingData.brideFirstName?.[0] ?? 'B'} & {weddingData.groomFirstName?.[0] ?? 'G'}
         </h2>
         <p className='mt-4 text-lg tracking-widest'>
           {weddingData.date.numberFormat?.toString() ?? 'Date To Be Announced'}
