@@ -62,7 +62,11 @@ describe('website suburl metadata + page wiring', () => {
           groomLastName: 'Doe',
           brideFirstName: 'Jane',
           brideLastName: 'Smith',
-          website: { introText: 'Join us for the wedding' },
+          website: {
+            introText: 'Join us for the wedding',
+            headline: 'Celebrate Love',
+            headlineAccent: 'With Us',
+          },
         },
       },
     })
@@ -86,7 +90,13 @@ describe('website suburl metadata + page wiring', () => {
       brideFirstName: 'Jane',
       brideLastName: 'Smith',
       websiteBuilderEnabled: true,
-      website: { id: 'website-1', subUrl: 'john-and-jane', introText: '' },
+      website: {
+        id: 'website-1',
+        subUrl: 'john-and-jane',
+        introText: '',
+        headline: 'Celebrate Love',
+        headlineAccent: 'With Us',
+      },
       events: [],
     }
     mockLoadVisitorWedding.mockResolvedValue({
