@@ -10,11 +10,13 @@ import { DashboardService } from '~/server/application/dashboard/dashboard.servi
 // Mock all repositories
 jest.mock('~/server/domains/household/household.repository')
 jest.mock('~/server/domains/invitation/invitation.repository')
+jest.mock('~/server/domains/milestone/milestone.repository')
 jest.mock('~/server/domains/event/event.repository')
 jest.mock('~/server/domains/user/user.repository')
 jest.mock('~/server/domains/website/website.repository')
 jest.mock('~/server/domains/guest/guest.repository')
 jest.mock('~/server/domains/question/question.repository')
+jest.mock('~/server/domains/task/task.repository')
 jest.mock('~/server/domains/wedding/wedding.repository')
 
 // @ts-expect-error - Importing mock functions from mocked module
@@ -43,10 +45,24 @@ import {
 } from '~/server/domains/invitation/invitation.repository'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
+  MilestoneRepository,
+  mockFindByWeddingIdWithEffectiveStatus,
+  mockMilestoneWithEffectiveStatus,
+  resetMocks as resetMilestoneMocks,
+} from '~/server/domains/milestone/milestone.repository'
+// @ts-expect-error - Importing mock functions from mocked module
+import {
   mockFindMostRecentAnswerByQuestionId,
   QuestionRepository,
   resetMocks as resetQuestionMocks,
 } from '~/server/domains/question/question.repository'
+// @ts-expect-error - Importing mock functions from mocked module
+import {
+  mockFindPriorityQueueCandidates,
+  mockTask,
+  resetMocks as resetTaskMocks,
+  TaskRepository,
+} from '~/server/domains/task/task.repository'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   mockFindById as mockUserFindById,
@@ -70,12 +86,15 @@ import {
 const mockHouseholdFindByWeddingIdWithGuestsAndGifts =
   mockFindByWeddingIdWithGuestsAndGifts as jest.Mock
 const mockInvitationFindByWeddingIdFn = mockInvitationFindByWeddingIdWithGuestTagAlong as jest.Mock
+const mockMilestoneFindByWeddingIdWithEffectiveStatusFn =
+  mockFindByWeddingIdWithEffectiveStatus as jest.Mock
 const mockEventFindByWeddingIdWithQuestionsFn = mockFindByWeddingIdWithQuestions as jest.Mock
 const mockUserFindByIdFn = mockUserFindById as jest.Mock
 const mockWebsiteFindByWeddingIdWithQuestionsFn =
   mockWebsiteFindByWeddingIdWithQuestions as jest.Mock
 const mockGuestCountByWeddingIdFn = mockCountByWeddingId as jest.Mock
 const mockQuestionFindMostRecentAnswerFn = mockFindMostRecentAnswerByQuestionId as jest.Mock
+const mockTaskFindPriorityQueueCandidatesFn = mockFindPriorityQueueCandidates as jest.Mock
 const mockWeddingFindByIdFn = mockWeddingFindById as jest.Mock
 
 // Mock data
@@ -385,6 +404,8 @@ describe('DashboardService', () => {
     resetWebsiteMocks()
     resetGuestMocks()
     resetQuestionMocks()
+    resetTaskMocks()
+    resetMilestoneMocks()
     resetWeddingMocks()
 
     // Create repository instances
@@ -396,6 +417,8 @@ describe('DashboardService', () => {
     const guestRepo = new GuestRepository({} as never)
     const questionRepo = new QuestionRepository({} as never)
     const weddingRepo = new WeddingRepository({} as never)
+    const taskRepo = new TaskRepository({} as never)
+    const milestoneRepo = new MilestoneRepository({} as never)
 
     // Setup default mock return values
     mockWeddingFindByIdFn.mockResolvedValue(mockWedding)
@@ -406,6 +429,25 @@ describe('DashboardService', () => {
     mockWebsiteFindByWeddingIdWithQuestionsFn.mockResolvedValue(mockWebsite)
     mockGuestCountByWeddingIdFn.mockResolvedValue(3)
     mockQuestionFindMostRecentAnswerFn.mockResolvedValue(mockAnswer)
+    mockTaskFindPriorityQueueCandidatesFn.mockResolvedValue([
+      {
+        ...mockTask,
+        id: 'task-overdue',
+        title: 'Follow up with venue',
+        dueDate: new Date('2025-06-10T00:00:00.000Z'),
+        monthsBeforeWedding: 6,
+      },
+      {
+        ...mockTask,
+        id: 'task-upcoming',
+        title: 'Order flowers',
+        dueDate: null,
+        monthsBeforeWedding: 0,
+      },
+    ])
+    mockMilestoneFindByWeddingIdWithEffectiveStatusFn.mockResolvedValue([
+      mockMilestoneWithEffectiveStatus,
+    ])
 
     // Create service with injected repositories
     service = new DashboardService(
@@ -416,7 +458,9 @@ describe('DashboardService', () => {
       websiteRepo,
       guestRepo,
       questionRepo,
-      weddingRepo
+      weddingRepo,
+      taskRepo,
+      milestoneRepo
     )
   })
 
@@ -450,6 +494,8 @@ describe('DashboardService', () => {
     const guestRepo = new GuestRepository({})
     const questionRepo = new QuestionRepository({})
     const weddingRepo = new WeddingRepository({})
+    const taskRepo = new TaskRepository({})
+    const milestoneRepo = new MilestoneRepository({})
     const service = new DashboardService(
       householdRepo,
       invitationRepo,
@@ -458,7 +504,9 @@ describe('DashboardService', () => {
       websiteRepo,
       guestRepo,
       questionRepo,
-      weddingRepo
+      weddingRepo,
+      taskRepo,
+      milestoneRepo
     )
 
     await service.getOverviewForScopedWedding('user-123', 'wedding-scoped')
@@ -503,6 +551,9 @@ describe('DashboardService', () => {
       expect(result?.weddingData).toBeDefined()
       expect(result?.totalGuests).toBe(3)
       expect(result?.totalEvents).toBe(2)
+      expect(result?.tasksDueThisMonth).toBe(1)
+      expect(result?.taskPriorityQueue.tasks).toHaveLength(2)
+      expect(result?.milestones).toHaveLength(1)
       expect(result?.households).toHaveLength(2)
       expect(result?.events).toHaveLength(2)
     })
@@ -590,6 +641,8 @@ describe('DashboardService', () => {
       expect(mockGuestCountByWeddingIdFn).toHaveBeenCalledWith('wedding-123', {
         excludeTagAlongs: true,
       })
+      expect(mockTaskFindPriorityQueueCandidatesFn).toHaveBeenCalledWith('wedding-123')
+      expect(mockMilestoneFindByWeddingIdWithEffectiveStatusFn).toHaveBeenCalledWith('wedding-123')
       expect(mockWebsiteFindByWeddingIdWithQuestionsFn).toHaveBeenCalledWith('wedding-123')
     })
 

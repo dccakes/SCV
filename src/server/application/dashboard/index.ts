@@ -9,7 +9,9 @@ import { EventRepository } from '~/server/domains/event/event.repository'
 import { GuestRepository } from '~/server/domains/guest/guest.repository'
 import { HouseholdRepository } from '~/server/domains/household/household.repository'
 import { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
+import { MilestoneRepository } from '~/server/domains/milestone/milestone.repository'
 import { QuestionRepository } from '~/server/domains/question/question.repository'
+import { TaskRepository } from '~/server/domains/task/task.repository'
 import { UserRepository } from '~/server/domains/user/user.repository'
 import { WebsiteRepository } from '~/server/domains/website/website.repository'
 import { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
@@ -24,7 +26,9 @@ export const dashboardService = new DashboardService(
   new WebsiteRepository(db),
   new GuestRepository(db),
   new QuestionRepository(db),
-  new WeddingRepository(db)
+  new WeddingRepository(db),
+  new TaskRepository(db),
+  new MilestoneRepository(db)
 )
 
 // Export router

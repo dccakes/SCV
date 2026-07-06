@@ -79,6 +79,25 @@ describe('household invite pages', () => {
     mockUpdateHouseholdDetails.mockReset()
     mockGetPublicWeddingSummary.mockReset()
     jest.useFakeTimers().setSystemTime(new Date('2026-06-18T12:00:00.000Z'))
+
+    // Skip the EnvelopeReveal intro so these tests assert the underlying page
+    // content deterministically (the intro is covered by envelope-reveal.test).
+    // A reduced-motion guest sees the card immediately without the animated
+    // envelope, which otherwise renders the couple names a second time.
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: jest.fn().mockImplementation((query: string) => ({
+        matches: query === '(prefers-reduced-motion: reduce)',
+        media: query,
+        onchange: null,
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+        addListener: jest.fn(),
+        removeListener: jest.fn(),
+        dispatchEvent: jest.fn(),
+      })),
+    })
   })
 
   afterEach(() => {

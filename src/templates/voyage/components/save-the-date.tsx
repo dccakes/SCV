@@ -20,7 +20,7 @@ export function VoyageSaveTheDate({ weddingData, path }: Readonly<TemplateSurfac
   const venue = weddingEvent?.venue ?? null
   const dateLabel = weddingData.date?.standardFormat ?? 'Date to be announced'
   const copy = weddingData.saveTheDate
-  const coupleNames = `${weddingData.groomFirstName} & ${weddingData.brideFirstName}`
+  const coupleNames = `${weddingData.brideFirstName} & ${weddingData.groomFirstName}`
   const calendarLinks = buildSaveTheDateCalendarLinks({
     title: `${coupleNames} Wedding`,
     description: `Save the date for the wedding of ${coupleNames}! Formal invitation to follow. ${website.url}`,
@@ -34,9 +34,9 @@ export function VoyageSaveTheDate({ weddingData, path }: Readonly<TemplateSurfac
         <div className='mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-8 px-6 py-24 text-center text-[#F7F3EC]'>
           <Eyebrow className='text-[#D3BD8A]'>{copy?.eyebrow ?? 'Save the Date'}</Eyebrow>
           <h1 className={`${headingFont} font-light text-5xl italic sm:text-7xl`}>
-            {weddingData.groomFirstName}
-            <span className='mx-3 text-[#D3BD8A] not-italic'>&amp;</span>
             {weddingData.brideFirstName}
+            <span className='mx-3 text-[#D1B879] not-italic'>&amp;</span>
+            {weddingData.groomFirstName}
           </h1>
           <GoldRule className='bg-[#D3BD8A]/70' />
           <p

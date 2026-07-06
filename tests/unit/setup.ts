@@ -19,6 +19,31 @@ global.ResizeObserver = class ResizeObserver {
   disconnect() {}
 }
 
+if (typeof window !== 'undefined') {
+  const matchMedia = jest.fn().mockImplementation((query: string) => ({
+    matches: query === '(min-width: 768px)',
+    media: query,
+    onchange: null,
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  }))
+
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    writable: true,
+    value: matchMedia,
+  })
+
+  Object.defineProperty(globalThis, 'matchMedia', {
+    configurable: true,
+    writable: true,
+    value: matchMedia,
+  })
+}
+
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(() => ({

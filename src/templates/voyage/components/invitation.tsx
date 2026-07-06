@@ -34,11 +34,11 @@ export function VoyageInvitation({ weddingData, path }: Readonly<TemplateSurface
         <div className='relative flex flex-col items-center gap-5'>
           <Eyebrow>{copy?.preface ?? 'Together with their families'}</Eyebrow>
           <h1 className={sectionHeadingClass}>
-            {weddingData.groomFirstName} {weddingData.groomLastName}
+            {weddingData.brideFirstName} {weddingData.brideLastName}
           </h1>
           <span className={`${headingFont} text-[#B15C41] text-xl italic`}>and</span>
           <h1 className={sectionHeadingClass}>
-            {weddingData.brideFirstName} {weddingData.brideLastName}
+            {weddingData.groomFirstName} {weddingData.groomLastName}
           </h1>
           <p className={`${bodyFont} text-[#6F675D]`}>
             {copy?.invitationLine ?? 'request the pleasure of your company'}
