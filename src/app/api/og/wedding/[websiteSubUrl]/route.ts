@@ -6,19 +6,20 @@ import { loadWeddingBySubUrl } from '~/app/w/[websiteSubUrl]/_lib/load-wedding-b
 const DEFAULT_OG_IMAGE_WIDTH = 1200
 const DEFAULT_OG_IMAGE_HEIGHT = 630
 
-async function generateWeddingOgImage(headerImageUrl: string | null): Promise<Buffer> {
+async function generateWeddingOgImage(headerImageUrl: string | null): Promise<Uint8Array> {
   if (headerImageUrl) {
     try {
       const response = await fetch(headerImageUrl, { signal: AbortSignal.timeout(5000) })
       if (response.ok) {
         const buffer = await response.arrayBuffer()
-        return sharp(buffer)
+        const imageBuffer = await sharp(buffer)
           .resize(DEFAULT_OG_IMAGE_WIDTH, DEFAULT_OG_IMAGE_HEIGHT, {
             fit: 'cover',
             position: 'center',
           })
           .png()
           .toBuffer()
+        return new Uint8Array(imageBuffer)
       }
     } catch {
       // If image fetch fails, use default
@@ -26,7 +27,7 @@ async function generateWeddingOgImage(headerImageUrl: string | null): Promise<Bu
   }
 
   // Default background
-  return sharp({
+  const defaultBuffer = await sharp({
     create: {
       width: DEFAULT_OG_IMAGE_WIDTH,
       height: DEFAULT_OG_IMAGE_HEIGHT,
@@ -36,11 +37,15 @@ async function generateWeddingOgImage(headerImageUrl: string | null): Promise<Bu
   })
     .png()
     .toBuffer()
+  return new Uint8Array(defaultBuffer)
 }
 
-export async function GET(_request: NextRequest, { params }: { params: Record<string, string> }) {
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<{ websiteSubUrl: string }> }
+) {
   try {
-    const { websiteSubUrl } = params as { websiteSubUrl: string }
+    const { websiteSubUrl } = await params
 
     const loadResult = await loadWeddingBySubUrl(websiteSubUrl)
 
@@ -60,7 +65,7 @@ export async function GET(_request: NextRequest, { params }: { params: Record<st
     })
   } catch {
     // Return a basic image on error
-    const errorImage = await sharp({
+    const errorImageBuffer = await sharp({
       create: {
         width: DEFAULT_OG_IMAGE_WIDTH,
         height: DEFAULT_OG_IMAGE_HEIGHT,
@@ -71,7 +76,7 @@ export async function GET(_request: NextRequest, { params }: { params: Record<st
       .png()
       .toBuffer()
 
-    return new Response(errorImage, {
+    return new Response(new Uint8Array(errorImageBuffer), {
       headers: {
         'Content-Type': 'image/png',
         'Cache-Control': 'public, max-age=300',
