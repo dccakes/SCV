@@ -34,8 +34,7 @@ export async function generateMetadata({ params }: RootRouteHandlerProps): Promi
   const brideName = brideFirstName && brideLastName ? `${brideFirstName} ${brideLastName}` : ''
   const groomName = groomFirstName && groomLastName ? `${groomFirstName} ${groomLastName}` : ''
   const title = brideName && groomName ? `${brideName} & ${groomName} Wedding` : 'Wedding Website'
-  const description =
-    introText || `Join us for the wedding of ${brideName} and ${groomName}.`
+  const description = introText || `Join us for the wedding of ${brideName} and ${groomName}.`
 
   const ogImageUrl = `/api/og/wedding/${websiteSubUrl}`
 

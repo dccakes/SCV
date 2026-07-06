@@ -11,9 +11,7 @@ type RouteProps = {
   }>
 }
 
-async function generateWeddingOgImage(
-  headerImageUrl: string | null
-): Promise<Buffer> {
+async function generateWeddingOgImage(headerImageUrl: string | null): Promise<Buffer> {
   if (headerImageUrl) {
     try {
       const response = await fetch(headerImageUrl, { signal: AbortSignal.timeout(5000) })
