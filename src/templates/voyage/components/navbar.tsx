@@ -8,7 +8,7 @@
  */
 
 import Link from 'next/link'
-import { labelFont } from '~/templates/voyage/components/primitives'
+import { headingFont, labelFont } from '~/templates/voyage/components/primitives'
 
 export type VoyageNavItem = {
   label: string
@@ -32,9 +32,7 @@ export function VoyageNavbar({ monogram, coupleNames, navItems, rsvpHref }: Voya
       className='relative z-20 mx-auto flex w-full max-w-6xl items-center justify-between gap-6 px-6 py-6 lg:px-10'
     >
       <Link href='#top' className='flex flex-col items-start gap-0.5 text-[#F7F3EC]'>
-        <span className='font-[family-name:var(--tpl-heading-font)] text-2xl tracking-[0.14em]'>
-          {monogram}
-        </span>
+        <span className={`${headingFont} text-2xl tracking-[0.14em]`}>{monogram}</span>
         <span
           className={`${labelFont} hidden text-[#F7F3EC]/85 text-[0.5rem] uppercase tracking-[0.32em] sm:block`}
         >

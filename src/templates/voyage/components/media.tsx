@@ -10,6 +10,7 @@ import type { ReactNode } from 'react'
 import {
   BotanicalSprig,
   bodyFont,
+  Eyebrow,
   headingFont,
   labelFont,
 } from '~/templates/voyage/components/primitives'
@@ -75,9 +76,7 @@ export function VoyageMoments({ moments }: { moments: VoyageMoment[] }) {
   return (
     <section id='moments' className='w-full scroll-mt-24 bg-[#F7F3EC] pb-4'>
       <div className='mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 pt-16 pb-8 text-center sm:pt-20 lg:px-10'>
-        <span className={`${labelFont} text-[#B15C41] text-[0.62rem] uppercase tracking-[0.42em]`}>
-          A Few of Our Favorite Moments
-        </span>
+        <Eyebrow>A Few of Our Favorite Moments</Eyebrow>
       </div>
       <div className='grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-6'>
         {shots.map((moment, index) => {

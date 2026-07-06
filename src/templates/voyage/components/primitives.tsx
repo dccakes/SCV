@@ -501,9 +501,7 @@ export function FloralCorner(props: SVGProps<SVGSVGElement>) {
 }
 
 /** The hacienda landmark, used as the hero card seal and around the RSVP band. */
-export function HaciendaSketch(props: SVGProps<SVGSVGElement>) {
-  return <SketchHacienda {...props} />
-}
+export { SketchHacienda as HaciendaSketch }
 
 function SketchBridge(props: SVGProps<SVGSVGElement>) {
   return (

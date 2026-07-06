@@ -170,54 +170,6 @@ function WeekendItinerary({ events }: { events: WeddingEvent[] }) {
   )
 }
 
-/** The light "Let's Celebrate" card that floats over the hero photograph. Hidden for now — see its call site below. */
-// biome-ignore lint/correctness/noUnusedVariables: kept for when the hero card is re-enabled
-function HeroCelebrationCard({
-  dateLabel,
-  location,
-  venue,
-}: {
-  dateLabel: string | null
-  location: string | null
-  venue: string | null
-}) {
-  if (!dateLabel && !location && !venue) {
-    return null
-  }
-  return (
-    <div className='lg:col-span-5 lg:justify-self-end'>
-      <div className='mx-auto max-w-sm rounded-[3px] border border-[#DDD2C0] bg-[#FBF8F2]/95 px-8 py-9 text-center shadow-[0_18px_50px_-25px_rgba(13,17,15,0.55)] backdrop-blur-sm'>
-        <p className={`${scriptFont} text-3xl text-[#B15C41]`}>Let&rsquo;s Celebrate</p>
-        {dateLabel ? (
-          <p className={`${headingFont} mt-4 text-2xl text-[#1D2320] uppercase tracking-[0.14em]`}>
-            {dateLabel}
-          </p>
-        ) : null}
-        {location ? (
-          <p
-            className={`${labelFont} mt-2 text-[#6F675D] text-[0.62rem] uppercase tracking-[0.28em]`}
-          >
-            {location}
-          </p>
-        ) : null}
-        <HeartRule className='mt-5' />
-        <Decor
-          name='churchSeal'
-          className='mx-auto mt-5 h-28 w-auto object-contain'
-          fallback={<HaciendaSketch className='mx-auto mt-5 h-14 w-auto text-[#7C7264]/80' />}
-        />
-        {venue ? (
-          <p
-            className={`${labelFont} mt-4 text-[#1D2320] text-[0.6rem] uppercase tracking-[0.26em]`}
-          >
-            {venue}
-          </p>
-        ) : null}
-      </div>
-    </div>
-  )
-}
-
 export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSurfaceProps>) {
   const { website } = weddingData
   const bride = weddingData.brideFirstName ?? ''
@@ -239,11 +191,7 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
   const faq = pick(weddingData.sections, 'FAQ')
   const registry = pick(weddingData.sections, 'REGISTRY')
 
-  const weddingEvent =
-    weddingData.events.find((event) => event.name === 'Wedding Day') ?? weddingData.events[0]
   const location = destination?.content.location ?? null
-  // biome-ignore lint/correctness/noUnusedVariables: kept for the hero card, which is hidden for now
-  const venue = destination?.content.venueName ?? weddingEvent?.venue ?? null
 
   const galleryUrls = website.coupleImageUrls ?? []
   const aboutImageUrl = galleryUrls[0] ?? null
@@ -339,10 +287,6 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
                   <GhostButtonOnDark href={firstAnchor}>View Details</GhostButtonOnDark>
                 </div>
               </div>
-
-              {/* Hidden for now — re-enable by uncommenting when ready.
-              <HeroCelebrationCard dateLabel={dateLabel} location={location} venue={venue} />
-              */}
             </div>
           </div>
         </div>

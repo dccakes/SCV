@@ -164,6 +164,10 @@ export function VoyageOurStory({
   )
 }
 
+/** Shared card chrome for the experiences and travel-stays grids. */
+const CARD_CLASS =
+  'group flex flex-col overflow-hidden rounded-[3px] border border-[#DDD2C0] bg-[#FBF8F2]'
+
 /** Watercolour vignettes for the story milestones, in narrative order. */
 const MILESTONE_DECOR: DecorName[] = ['coffee', 'mountains', 'ringBox', 'church']
 
@@ -324,10 +328,7 @@ export function VoyageExperiences({ content }: { content: ExperiencesSectionCont
         />
         <div className='grid w-full gap-6 sm:grid-cols-2 lg:grid-cols-4'>
           {content.items.map((item) => (
-            <article
-              key={`${item.title}`}
-              className='group flex flex-col overflow-hidden rounded-[3px] border border-[#DDD2C0] bg-[#FBF8F2]'
-            >
+            <article key={`${item.title}`} className={CARD_CLASS}>
               <div className='relative aspect-[4/5] overflow-hidden bg-[#EFE7DA]'>
                 {item.imageUrl ? (
                   <Image
@@ -591,20 +592,18 @@ function StaysGrid({ content }: { content: TravelSectionContent }) {
               </div>
             </>
           )
-          const cardClass =
-            'group flex flex-col overflow-hidden rounded-[3px] border border-[#DDD2C0] bg-[#FBF8F2]'
           return stay.url ? (
             <a
               key={`${stay.name}`}
               href={stay.url}
               target='_blank'
               rel='noreferrer'
-              className={`${cardClass} transition-colors hover:border-[#B15C41]`}
+              className={`${CARD_CLASS} transition-colors hover:border-[#B15C41]`}
             >
               {card}
             </a>
           ) : (
-            <div key={`${stay.name}`} className={cardClass}>
+            <div key={`${stay.name}`} className={CARD_CLASS}>
               {card}
             </div>
           )
