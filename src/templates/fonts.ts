@@ -12,6 +12,7 @@ import {
   Cormorant_Garamond,
   Crimson_Text,
   EB_Garamond,
+  Great_Vibes,
   Jost,
   Mulish,
   Playfair_Display,
@@ -69,5 +70,13 @@ export const voyageSans = Mulish({
   subsets: ['latin'],
   weight: ['300', '400', '500', '600'],
   variable: '--tpl-voyage-sans',
+  display: 'swap',
+})
+
+/** Voyage template — flowing calligraphy script for romantic flavour phrases. */
+export const voyageScript = Great_Vibes({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--tpl-voyage-script',
   display: 'swap',
 })

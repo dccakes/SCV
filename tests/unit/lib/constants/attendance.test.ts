@@ -4,6 +4,15 @@
 
 import { DEFAULT_LIKELIHOOD_WEIGHT, LIKELIHOOD_LABELS, LIKELIHOOD_WEIGHTS } from '~/lib/constants'
 
+function expectWeightForScale(scale: keyof typeof LIKELIHOOD_WEIGHTS) {
+  const weight = LIKELIHOOD_WEIGHTS[scale]
+  expect(weight).toBeDefined()
+  if (weight === undefined) {
+    throw new Error(`Expected a likelihood weight for scale ${scale}`)
+  }
+  return weight
+}
+
 describe('LIKELIHOOD_WEIGHTS', () => {
   it('should map all 5 scale values to probabilities', () => {
     expect(Object.keys(LIKELIHOOD_WEIGHTS)).toHaveLength(5)
@@ -19,16 +28,8 @@ describe('LIKELIHOOD_WEIGHTS', () => {
 
   it('should have weights that increase with scale value', () => {
     for (let i = 1; i < 5; i++) {
-      const currentWeight = LIKELIHOOD_WEIGHTS[i]
-      const nextWeight = LIKELIHOOD_WEIGHTS[i + 1]
-
-      expect(currentWeight).toBeDefined()
-      expect(nextWeight).toBeDefined()
-
-      if (currentWeight === undefined || nextWeight === undefined) {
-        throw new Error(`Expected weights for scale values ${i} and ${i + 1}`)
-      }
-
+      const currentWeight = expectWeightForScale(i as keyof typeof LIKELIHOOD_WEIGHTS)
+      const nextWeight = expectWeightForScale((i + 1) as keyof typeof LIKELIHOOD_WEIGHTS)
       expect(nextWeight).toBeGreaterThan(currentWeight)
     }
   })
@@ -47,16 +48,8 @@ describe('DEFAULT_LIKELIHOOD_WEIGHT', () => {
   })
 
   it('should fall between the Maybe and Likely weights', () => {
-    const maybeWeight = LIKELIHOOD_WEIGHTS[3]
-    const likelyWeight = LIKELIHOOD_WEIGHTS[4]
-
-    expect(maybeWeight).toBeDefined()
-    expect(likelyWeight).toBeDefined()
-
-    if (maybeWeight === undefined || likelyWeight === undefined) {
-      throw new Error('Expected Maybe and Likely weights to be defined')
-    }
-
+    const maybeWeight = expectWeightForScale(3)
+    const likelyWeight = expectWeightForScale(4)
     expect(DEFAULT_LIKELIHOOD_WEIGHT).toBeGreaterThan(maybeWeight)
     expect(DEFAULT_LIKELIHOOD_WEIGHT).toBeLessThan(likelyWeight)
   })

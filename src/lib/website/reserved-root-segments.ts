@@ -2,6 +2,7 @@ export const RESERVED_WEBSITE_ROOT_SEGMENTS = [
   '',
   'api',
   'auth',
+  'checklist',
   'dashboard',
   'design-system',
   'events',

@@ -291,7 +291,6 @@ describe('MessagingService', () => {
         if (!currentMessage || !previousMessage) {
           throw new Error(`Expected messages at indexes ${i - 1} and ${i}`)
         }
-
         expect(currentMessage.createdAt.getTime()).toBeGreaterThanOrEqual(
           previousMessage.createdAt.getTime()
         )

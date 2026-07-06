@@ -1,9 +1,21 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useMemo, useState } from 'react'
+import { toast } from 'sonner'
 
 import { formatDateStandard } from '~/app/utils/helpers'
 import type { DashboardData, EventWithResponses } from '~/app/utils/shared-types'
+import { TaskDialog } from '~/components/checklist/task-dialog'
+import { TaskListItem } from '~/components/dashboard/planning-overview/task-list-item'
+import { useTasksCardState } from '~/components/dashboard/planning-overview/use-tasks-card-state'
+import { DASHBOARD_ADD_TASK_EVENT } from '~/components/dashboard/task-dialog-events'
+import type { EventWithStats } from '~/server/domains/event'
+import { api } from '~/trpc/react'
+
+type DashboardOverview = NonNullable<DashboardData>
+
+const EMPTY_PRIORITY_TASKS: DashboardOverview['taskPriorityQueue']['tasks'] = []
 
 interface PlanningOverviewProps {
   dashboardData: DashboardData | null
@@ -54,6 +66,11 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
   const dateLabel = weddingData?.date?.standardFormat ?? ''
   const location = weddingData?.location ?? ''
 
+  const milestones = dashboardData?.milestones ?? []
+  const completedMilestones = milestones.filter((milestone) => milestone.effectiveStatus === 'done')
+  const planningPct =
+    milestones.length > 0 ? Math.round((completedMilestones.length / milestones.length) * 100) : 0
+
   return (
     <div className='relative overflow-hidden rounded-lg bg-sidebar-ink px-6 py-5'>
       {/* decorative glow */}
@@ -80,6 +97,15 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
               </Link>
             </p>
           )}
+          <div className='mt-3 h-[2px] w-full max-w-[200px] overflow-hidden rounded-full bg-white/[0.08]'>
+            <div
+              className='h-full rounded-full bg-gradient-to-r from-primary to-accent'
+              style={{ width: `${planningPct}%` }}
+            />
+          </div>
+          <p className='mt-1 font-mono text-[0.55rem] text-sidebar-cream/30 tracking-widest'>
+            {planningPct}% of planning complete
+          </p>
         </div>
 
         {hasDate ? (
@@ -125,7 +151,12 @@ function MiniStats({ dashboardData }: { dashboardData: DashboardData | null }) {
     { icon: '◉', val: total, label: 'Total guests', delta: null },
     { icon: '✓', val: confirmed, label: 'Confirmed', delta: `${pct}%` },
     { icon: '◐', val: pending, label: 'Awaiting reply', delta: null },
-    { icon: '◧', val: '—', label: 'Budget spent', delta: 'Set up budget' },
+    {
+      icon: '◧',
+      val: dashboardData?.tasksDueThisMonth ?? 0,
+      label: 'Tasks due this month',
+      delta: null,
+    },
   ]
 
   return (
@@ -228,20 +259,41 @@ function RsvpCard({ dashboardData }: { dashboardData: DashboardData | null }) {
   )
 }
 
-function TasksCard() {
+function TasksCard({ dashboardData }: { dashboardData: DashboardData | null }) {
+  const priorityQueue = dashboardData?.taskPriorityQueue
+  const { tasks, toggleTask } = useTasksCardState(priorityQueue?.tasks ?? EMPTY_PRIORITY_TASKS)
+  const completeTask = api.task.complete.useMutation({
+    onError: () => toast.error('Failed to update task'),
+  })
+
+  const handleToggle = (taskId: string) => {
+    toggleTask(taskId)
+    const targetTask = tasks.find((task) => task.id === taskId)
+
+    completeTask.mutate({
+      taskId,
+      completed: !(targetTask?.done ?? false),
+    })
+  }
+
   return (
-    <CardShell title='Upcoming tasks' icon='◈'>
-      <div className='flex flex-col gap-3'>
-        <div className='flex items-baseline gap-2'>
-          <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
-          <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
-            No tasks yet
-          </span>
-        </div>
-        <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
-          Task management is coming soon
-        </div>
-      </div>
+    <CardShell title='Upcoming tasks' icon='◈' action='View all →' actionHref='/checklist'>
+      {tasks.length > 0 ? (
+        <>
+          <div className='flex flex-col gap-1.5'>
+            {tasks.map((task) => (
+              <TaskListItem key={task.id} task={task} onToggle={handleToggle} />
+            ))}
+          </div>
+          <p className='mt-3 font-mono text-[0.56rem] text-foreground/50 tracking-wider'>
+            {tasks.length} of {priorityQueue?.totalActive ?? 0} active tasks shown
+          </p>
+        </>
+      ) : (
+        <p className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
+          No active tasks yet. Add your first item in the checklist.
+        </p>
+      )}
     </CardShell>
   )
 }
@@ -292,32 +344,17 @@ function VendorsCard() {
 }
 
 function MilestonesCard({ dashboardData }: { dashboardData: DashboardData | null }) {
-  const events = dashboardData?.events ?? []
-
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  const milestones = events.map((event) => {
-    const rawDate = event.date ? new Date(event.date) : null
-    if (rawDate) rawDate.setHours(0, 0, 0, 0)
-
-    let status: 'done' | 'today' | 'upcoming'
-    if (!rawDate) {
-      status = 'upcoming'
-    } else if (rawDate.getTime() < today.getTime()) {
-      status = 'done'
-    } else if (rawDate.getTime() === today.getTime()) {
-      status = 'today'
-    } else {
-      status = 'upcoming'
-    }
-
-    return {
-      title: event.name,
-      date: rawDate ? (formatDateStandard(rawDate) ?? '') : 'No date set',
-      status,
-    }
-  })
+  const weddingDateLabel = dashboardData?.weddingData?.date?.standardFormat ?? ''
+  const milestones = dashboardData?.milestones ?? []
+  const doneMilestones = milestones.filter((milestone) => milestone.effectiveStatus === 'done')
+  const pendingMilestones = milestones.filter(
+    (milestone) => milestone.effectiveStatus === 'pending'
+  )
+  const visibleMilestones = dedupeMilestones([
+    ...doneMilestones.slice(-2),
+    ...pendingMilestones.slice(0, 3),
+    ...milestones.filter((milestone) => milestone.key === 'wedding_day'),
+  ])
 
   const dotClass = {
     done: 'bg-success border-success',
@@ -326,74 +363,151 @@ function MilestonesCard({ dashboardData }: { dashboardData: DashboardData | null
   }
 
   return (
-    <CardShell title='Events' icon='▷' action='Manage →' actionHref='/events'>
-      {milestones.length === 0 ? (
-        <div className='flex flex-col gap-3 py-1'>
-          <p className='font-mono text-[0.62rem] text-foreground/50 tracking-wider'>
-            No events added yet
-          </p>
-          <Link
-            href='/events'
-            className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
-          >
-            Add your first event →
-          </Link>
-        </div>
-      ) : (
-        <div className='flex flex-col'>
-          {milestones.map((m, i) => (
-            <div key={m.title} className='relative flex gap-3 pb-3 last:pb-0'>
-              {i < milestones.length - 1 && (
+    <CardShell title='Milestones' icon='▷' action='Full timeline →' actionHref='/checklist'>
+      <div className='flex flex-col'>
+        {visibleMilestones.map((milestone, i) => {
+          const status = getMilestoneStatus(milestone, pendingMilestones[0]?.id)
+          const subtitle =
+            milestone.key === 'wedding_day' && weddingDateLabel
+              ? weddingDateLabel
+              : milestone.targetDate
+                ? new Intl.DateTimeFormat('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    timeZone: 'UTC',
+                  }).format(new Date(milestone.targetDate))
+                : status === 'done'
+                  ? 'Completed'
+                  : status === 'today'
+                    ? 'Current milestone'
+                    : 'Upcoming'
+
+          return (
+            <div key={milestone.id} className='relative flex gap-3 pb-3 last:pb-0'>
+              {i < visibleMilestones.length - 1 && (
                 <div className='absolute top-4 bottom-0 left-[5px] w-px bg-border' />
               )}
               <span
-                className={`relative z-10 mt-1 h-3 w-3 flex-shrink-0 rounded-full border-2 ${dotClass[m.status]}`}
+                className={`relative z-10 mt-1 h-3 w-3 flex-shrink-0 rounded-full border-2 ${dotClass[status]}`}
               />
               <div>
-                <p
-                  className={`font-serif text-[0.88rem] leading-tight ${
-                    m.status === 'done' ? 'text-foreground/50' : 'text-foreground'
-                  }`}
-                >
-                  {m.title}
+                <p className='font-serif text-[0.88rem] text-foreground leading-tight'>
+                  {milestone.title}
+                  {milestone.key === 'wedding_day' ? ' ✦' : ''}
+                  {hasMilestoneOverride(milestone) ? ' ⚠' : ''}
                 </p>
                 <p
                   className={`mt-0.5 font-mono text-[0.58rem] tracking-wider ${
-                    m.status === 'today' ? 'text-foreground/80' : 'text-foreground/60'
+                    status === 'today' ? 'text-foreground/80' : 'text-foreground/60'
                   }`}
                 >
-                  {m.date}
+                  {subtitle}
                 </p>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          )
+        })}
+      </div>
     </CardShell>
   )
 }
 
 export default function PlanningOverview({ dashboardData }: PlanningOverviewProps) {
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const utils = api.useUtils()
+  const events = useMemo(
+    () => (dashboardData?.events ?? []) as unknown as EventWithStats[],
+    [dashboardData?.events]
+  )
+  const createTask = api.task.create.useMutation({
+    onSuccess: () => {
+      setIsCreateDialogOpen(false)
+      void Promise.all([
+        utils.task.getPriorityQueue.invalidate(),
+        utils.dashboard.getForActiveWorkspace.invalidate(),
+      ])
+    },
+    onError: () => {
+      toast.error('Failed to add task')
+    },
+  })
+
+  useEffect(() => {
+    const handleOpenCreateTask = () => {
+      if (events.length === 0) {
+        toast.error('Add an event before creating a task')
+        return
+      }
+
+      setIsCreateDialogOpen(true)
+    }
+
+    window.addEventListener(DASHBOARD_ADD_TASK_EVENT, handleOpenCreateTask)
+    return () => window.removeEventListener(DASHBOARD_ADD_TASK_EVENT, handleOpenCreateTask)
+  }, [events])
+
   return (
-    <div className='flex flex-col gap-5'>
-      {/* Countdown hero */}
-      <CountdownHero dashboardData={dashboardData} />
+    <>
+      <div className='flex flex-col gap-5'>
+        {/* Countdown hero */}
+        <CountdownHero dashboardData={dashboardData} />
 
-      {/* Mini stats */}
-      <MiniStats dashboardData={dashboardData} />
+        {/* Mini stats */}
+        <MiniStats dashboardData={dashboardData} />
 
-      {/* Row: RSVP + Tasks */}
-      <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
-        <RsvpCard dashboardData={dashboardData} />
-        <TasksCard />
+        {/* Row: RSVP + Tasks */}
+        <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
+          <RsvpCard dashboardData={dashboardData} />
+          <TasksCard dashboardData={dashboardData} />
+        </div>
+
+        {/* Row: Budget + Vendors + Milestones */}
+        <div className='grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3'>
+          <BudgetCard />
+          <VendorsCard />
+          <MilestonesCard dashboardData={dashboardData} />
+        </div>
       </div>
 
-      {/* Row: Budget + Vendors + Milestones */}
-      <div className='grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3'>
-        <BudgetCard />
-        <VendorsCard />
-        <MilestonesCard dashboardData={dashboardData} />
-      </div>
-    </div>
+      <TaskDialog
+        mode='create'
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        events={events}
+        isSubmitting={createTask.isPending}
+        onSubmit={(data) => createTask.mutate(data)}
+      />
+    </>
   )
 }
+
+const dedupeMilestones = <T extends { id: string }>(milestones: T[]): T[] => {
+  const seen = new Set<string>()
+  return milestones.filter((milestone) => {
+    if (seen.has(milestone.id)) {
+      return false
+    }
+
+    seen.add(milestone.id)
+    return true
+  })
+}
+
+const getMilestoneStatus = (
+  milestone: DashboardOverview['milestones'][number],
+  currentPendingMilestoneId?: string
+): 'done' | 'today' | 'upcoming' => {
+  if (milestone.effectiveStatus === 'done') {
+    return 'done'
+  }
+
+  if (milestone.id === currentPendingMilestoneId) {
+    return 'today'
+  }
+
+  return 'upcoming'
+}
+
+const hasMilestoneOverride = (milestone: DashboardOverview['milestones'][number]): boolean =>
+  milestone.userOverrideStatus !== null && milestone.effectiveStatus !== milestone.derivedStatus

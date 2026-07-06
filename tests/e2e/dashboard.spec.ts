@@ -28,9 +28,12 @@ test.describe('Dashboard', () => {
   test('should show planning overview with event data', async ({ page }) => {
     await page.goto('/dashboard')
 
-    // Seed has 3 events: Swamp Ceremony, Welcome Feast, Morning-After Breakfast
-    // Dashboard should show event-related stats or names
+    // The planning overview derives the wedding date and location from the
+    // seeded primary event (Swamp Ceremony at "Old Oak Grove, The Swamp") and
+    // shows them in the countdown hero, so event data reaching the dashboard is
+    // observable even though the overview surfaces milestones rather than a raw
+    // event list.
     const body = page.locator('body')
-    await expect(body).toContainText(/ceremony|feast|breakfast/i)
+    await expect(body).toContainText(/old oak grove|the swamp/i)
   })
 })

@@ -18,11 +18,11 @@ export function ClassicInvitation({ weddingData, path }: Readonly<TemplateSurfac
               {copy?.preface ?? 'Together with their families'}
             </p>
             <h1 className='font-medium text-4xl text-card-foreground tracking-widest sm:text-6xl'>
-              {weddingData.groomFirstName} {weddingData.groomLastName}
+              {weddingData.brideFirstName} {weddingData.brideLastName}
             </h1>
             <p className='text-2xl italic'>and</p>
             <h1 className='font-medium text-4xl text-card-foreground tracking-widest sm:text-6xl'>
-              {weddingData.brideFirstName} {weddingData.brideLastName}
+              {weddingData.groomFirstName} {weddingData.groomLastName}
             </h1>
             <p className='mt-2 text-sm tracking-normal'>
               {copy?.invitationLine ?? 'request the pleasure of your company'}

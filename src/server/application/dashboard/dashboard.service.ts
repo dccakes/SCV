@@ -32,7 +32,10 @@ import type { HouseholdRepository } from '~/server/domains/household/household.r
 import type { HouseholdWithGuestsAndGifts } from '~/server/domains/household/household.types'
 import type { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
 import type { Invitation } from '~/server/domains/invitation/invitation.types'
+import type { MilestoneRepository } from '~/server/domains/milestone/milestone.repository'
 import type { QuestionRepository } from '~/server/domains/question/question.repository'
+import { buildTaskPriorityQueue, countTasksDueThisMonth } from '~/server/domains/task/task.priority'
+import type { TaskRepository } from '~/server/domains/task/task.repository'
 import type { UserRepository } from '~/server/domains/user/user.repository'
 import type { WebsiteRepository } from '~/server/domains/website/website.repository'
 import { computeWebsiteUrl } from '~/server/domains/website/website.utils'
@@ -47,7 +50,9 @@ export class DashboardService {
     private websiteRepo: WebsiteRepository,
     private guestRepo: GuestRepository,
     private questionRepo: QuestionRepository,
-    private weddingRepo: WeddingRepository
+    private weddingRepo: WeddingRepository,
+    private taskRepo: TaskRepository,
+    private milestoneRepo: MilestoneRepository
   ) {}
 
   /**
@@ -84,13 +89,16 @@ export class DashboardService {
     const weddingId = wedding.id
 
     // Fetch all data in parallel
-    const [households, invitations, events, currentUser, website] = await Promise.all([
-      this.fetchHouseholds(weddingId),
-      this.fetchInvitations(weddingId),
-      this.fetchEvents(weddingId),
-      this.fetchUser(userId),
-      this.fetchWebsite(weddingId),
-    ])
+    const [households, invitations, events, currentUser, website, taskCandidates, milestones] =
+      await Promise.all([
+        this.fetchHouseholds(weddingId),
+        this.fetchInvitations(weddingId),
+        this.fetchEvents(weddingId),
+        this.fetchUser(userId),
+        this.fetchWebsite(weddingId),
+        this.fetchTaskPriorityCandidates(weddingId),
+        this.fetchMilestones(weddingId),
+      ])
 
     if (!currentUser) {
       return null
@@ -116,6 +124,8 @@ export class DashboardService {
 
     // Build events with RSVP statistics
     const eventsWithStats = await this.buildEventsWithStats(events, invitations)
+    const taskPriorityQueue = buildTaskPriorityQueue(taskCandidates)
+    const tasksDueThisMonth = countTasksDueThisMonth(taskCandidates)
 
     // Get total guest count (excluding tag-alongs)
     const totalGuests = await this.guestRepo.countByWeddingId(weddingId, {
@@ -126,6 +136,9 @@ export class DashboardService {
       weddingData,
       totalGuests,
       totalEvents: events.length,
+      tasksDueThisMonth,
+      taskPriorityQueue,
+      milestones,
       households: householdsWithInvitations,
       events: eventsWithStats,
     }
@@ -166,6 +179,14 @@ export class DashboardService {
    */
   private async fetchWebsite(weddingId: string) {
     return this.websiteRepo.findByWeddingIdWithQuestions(weddingId)
+  }
+
+  private async fetchTaskPriorityCandidates(weddingId: string) {
+    return this.taskRepo.findPriorityQueueCandidates(weddingId)
+  }
+
+  private async fetchMilestones(weddingId: string) {
+    return this.milestoneRepo.findByWeddingIdWithEffectiveStatus(weddingId)
   }
 
   /**

@@ -17,8 +17,8 @@ export default function RsvpConfirmation({ basePath, setCurrentStep }: RsvpConfi
   return (
     <div className='flex flex-col pt-5 pb-8'>
       <h2 className='text-2xl tracking-widest'>
-        all set! here&apos;s what we sent {rsvpFormData.weddingData.groomFirstName} &{' '}
-        {rsvpFormData.weddingData.brideFirstName}
+        all set! here&apos;s what we sent {rsvpFormData.weddingData.brideFirstName} &{' '}
+        {rsvpFormData.weddingData.groomFirstName}
       </h2>
       <Link
         className={`my-5 bg-gray-700 py-3 text-center text-white text-xl tracking-wide`}
