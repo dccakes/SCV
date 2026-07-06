@@ -81,10 +81,13 @@ async function generateWeddingOgImage(
   if (headline || accent) {
     const textSvg = createTextOverlaySvg(headline || '', accent || '')
     const textBuffer = Buffer.from(textSvg)
+    // Convert SVG to PNG first
+    const textPng = await sharp(textBuffer, { density: 150 }).png().toBuffer()
+
     const composited = await sharp(baseImage)
       .composite([
         {
-          input: textBuffer,
+          input: textPng,
           top: 0,
           left: 0,
         },
