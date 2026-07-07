@@ -9,10 +9,6 @@ await import('./src/env.js')
 const config = {
   // Enable standalone output for Docker deployments
   output: 'standalone',
-  eslint: {
-    // Temporarily ignore ESLint during builds due to v9 config format issue
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     // Still type check during builds
     ignoreBuildErrors: false,

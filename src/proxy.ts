@@ -57,7 +57,7 @@ const getLegacyWebsiteRedirect = (req: NextRequest): URL | null => {
   return new URL(`/w/${slug}${req.nextUrl.search}`, req.url)
 }
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname
 
   if (isPublicPath(pathname)) {
