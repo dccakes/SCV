@@ -642,7 +642,11 @@ function StayCard({ stay, anchorId }: { stay: TravelStay; anchorId: string }) {
           <div className='flex flex-1 flex-col gap-3 p-7 text-left sm:p-8'>
             <p className={`${headingFont} text-2xl text-[#1D2320]`}>{stay.name}</p>
             <GoldRule className='self-start' />
-            <p className={`${bodyFont} text-[#6F675D] text-[0.98rem] leading-7`}>{stay.blurb}</p>
+            <p
+              className={`${bodyFont} whitespace-pre-line text-[#6F675D] text-[0.98rem] leading-7`}
+            >
+              {stay.blurb}
+            </p>
             {stay.url ? (
               <a
                 href={stay.url}
