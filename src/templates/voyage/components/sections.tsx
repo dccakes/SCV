@@ -11,7 +11,7 @@
  */
 
 import Image from 'next/image'
-import { Fragment } from 'react'
+import { Fragment, type ReactNode } from 'react'
 import type {
   DestinationSectionContent,
   ExperiencesSectionContent,
@@ -552,6 +552,48 @@ function TravelContent({ content }: { content: TravelSectionContent }) {
 }
 
 /**
+ * Matches either a markdown-style link `[label](url)` or a bare http(s)/mailto
+ * URL. Only these two safe schemes are linkified — arbitrary HTML is never
+ * rendered — so a couple can drop a link into a plain-text blurb (e.g. a Google
+ * Drive room list) without any markup knowledge.
+ */
+const BLURB_LINK =
+  /\[([^\]]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)|(https?:\/\/[^\s]+|mailto:[^\s]+)/g
+
+/** Render blurb text with any URLs/`[label](url)` turned into inline links. */
+function LinkifiedBlurb({ text, className = '' }: { text: string; className?: string }) {
+  const nodes: ReactNode[] = []
+  const regex = new RegExp(BLURB_LINK.source, 'g')
+  let lastIndex = 0
+  let key = 0
+  let match: RegExpExecArray | null = regex.exec(text)
+  while (match !== null) {
+    if (match.index > lastIndex) {
+      nodes.push(<Fragment key={key++}>{text.slice(lastIndex, match.index)}</Fragment>)
+    }
+    const url = match[2] ?? match[3] ?? ''
+    const isMail = url.startsWith('mailto:')
+    const label = match[1] ?? (isMail ? url.slice('mailto:'.length) : url)
+    nodes.push(
+      <a
+        key={key++}
+        href={url}
+        {...(isMail ? {} : { target: '_blank', rel: 'noreferrer' })}
+        className='text-[#B15C41] underline underline-offset-2 transition-colors hover:text-[#8A4530]'
+      >
+        {label}
+      </a>
+    )
+    lastIndex = regex.lastIndex
+    match = regex.exec(text)
+  }
+  if (lastIndex < text.length) {
+    nodes.push(<Fragment key={key++}>{text.slice(lastIndex)}</Fragment>)
+  }
+  return <p className={className}>{nodes}</p>
+}
+
+/**
  * One recommended-stay card. Clicking it opens a pure-CSS lightbox (via the
  * `:target` pseudo-class, same technique as `WeddingPartyCard`) showing the
  * full photo beside the stay's blurb and an optional customizable link
@@ -642,11 +684,10 @@ function StayCard({ stay, anchorId }: { stay: TravelStay; anchorId: string }) {
           <div className='flex flex-1 flex-col gap-3 p-7 text-left sm:p-8'>
             <p className={`${headingFont} text-2xl text-[#1D2320]`}>{stay.name}</p>
             <GoldRule className='self-start' />
-            <p
+            <LinkifiedBlurb
+              text={stay.blurb}
               className={`${bodyFont} whitespace-pre-line text-[#6F675D] text-[0.98rem] leading-7`}
-            >
-              {stay.blurb}
-            </p>
+            />
             {stay.url ? (
               <a
                 href={stay.url}
