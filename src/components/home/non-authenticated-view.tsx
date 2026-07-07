@@ -51,16 +51,28 @@ const features = [
 ]
 
 const stack = [
-  { layer: 'API Layer', name: 'Hono + TypeScript', detail: 'REST + Webhooks · Type-safe schemas' },
-  { layer: 'Database', name: 'PostgreSQL / Supabase', detail: 'Drizzle ORM · Bring your own host' },
+  {
+    layer: 'Framework',
+    name: 'Next.js 15 + React 19',
+    detail: 'App Router · Server Components · tRPC v11',
+  },
+  {
+    layer: 'Database',
+    name: 'PostgreSQL · Prisma v7',
+    detail: 'Type-safe ORM · Bring your own host',
+  },
   { layer: 'Etta / AI', name: 'Claude / OpenAI', detail: 'Tool use · Agentic actions · Pluggable' },
   {
     layer: 'Email & Invites',
-    name: 'Resend / Postmark',
-    detail: 'MJML templates · Tracking pixels',
+    name: 'Resend · React Email',
+    detail: 'Typed templates · Bring your own sender',
   },
   { layer: 'Auth', name: 'Better Auth', detail: 'Guest magic links · Admin OAuth' },
-  { layer: 'Deployment', name: 'Docker / Railway', detail: 'One-click · Self-hosted · Edge-ready' },
+  {
+    layer: 'Deployment',
+    name: 'Vercel · Docker · Self-hosted',
+    detail: 'One-click deploy · Edge-ready',
+  },
 ]
 
 const ettaExamples = [
@@ -390,8 +402,8 @@ export default function NonAuthenticatedView() {
               </h2>
             </div>
             <p className='font-light font-serif text-[0.95rem] text-muted-foreground leading-[1.75]'>
-              OSWP is a self-hosted TypeScript backend with a clean REST API. Bring your own
-              database, cloud, and AI provider. Everything is modular, documented, and ready to
+              OSWP is a self-hosted Next.js 15 application with a type-safe tRPC API. Bring your
+              own database, cloud, and AI provider. Everything is modular, documented, and ready to
               extend.
             </p>
           </div>
