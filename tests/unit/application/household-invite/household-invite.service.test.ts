@@ -1,5 +1,10 @@
 jest.mock('~/lib/auth-permissions', () => require('~/lib/__mocks__/auth-permissions'))
 
+const mockCaptureServerEvent = jest.fn()
+jest.mock('~/server/infrastructure/analytics/capture', () => ({
+  captureServerEvent: (...args: unknown[]) => mockCaptureServerEvent(...args),
+}))
+
 import { HouseholdInviteService } from '~/server/application/household-invite/household-invite.service'
 
 const authz = {
@@ -385,6 +390,63 @@ describe('HouseholdInviteService', () => {
         email: 'ada@example.com',
         phone: '+1 555 0100',
       },
+    })
+  })
+
+  it('captures an analytics event with the submitted household + guest responses', async () => {
+    const db = createDb()
+    db.website.findFirst.mockResolvedValue({ weddingId: 'wedding-123' })
+    db.household.findFirst.mockResolvedValue(inviteHousehold)
+    const service = new HouseholdInviteService(db as never)
+    const code = INVITE_CODE
+
+    mockCaptureServerEvent.mockClear()
+
+    await service.updateHouseholdDetails('harry-and-hermione', code, {
+      address1: ' 123 Main St ',
+      address2: '',
+      city: ' Puebla ',
+      state: 'Puebla',
+      zipCode: '72000',
+      country: 'Mexico',
+      guests: [
+        {
+          guestId: 1,
+          firstName: ' Ada ',
+          lastName: ' Lovelace ',
+          email: ' ADA@EXAMPLE.COM ',
+          phone: ' +1 555 0100 ',
+        },
+      ],
+    })
+
+    expect(mockCaptureServerEvent).toHaveBeenCalledTimes(1)
+    const call = mockCaptureServerEvent.mock.calls[0][0]
+    expect(call.event).toBe('guest_list.household_details.updated')
+    expect(call.context).toMatchObject({
+      weddingId: 'wedding-123',
+      householdId: 'household-123',
+      subUrl: 'harry-and-hermione',
+      token: code,
+    })
+    // The normalized (trimmed/lowercased) guest responses actually submitted
+    // must be present on the event, not just a count.
+    expect(call.properties.payload).toEqual({
+      address1: '123 Main St',
+      address2: null,
+      city: 'Puebla',
+      state: 'Puebla',
+      zipCode: '72000',
+      country: 'Mexico',
+      guests: [
+        {
+          guestId: 1,
+          firstName: 'Ada',
+          lastName: 'Lovelace',
+          email: 'ada@example.com',
+          phone: '+1 555 0100',
+        },
+      ],
     })
   })
 

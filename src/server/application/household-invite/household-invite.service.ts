@@ -13,6 +13,7 @@ import {
 } from '~/server/domains/website-section/website-section.types'
 import { saveTheDateSectionContentSchema } from '~/server/domains/website-section/website-section.validator'
 import { captureServerEvent } from '~/server/infrastructure/analytics/capture'
+import { sanitizePayload } from '~/server/infrastructure/analytics/payload'
 
 type HouseholdInviteDb = Pick<PrismaClient, 'household' | 'website' | 'guest' | '$transaction'>
 
@@ -430,7 +431,7 @@ export class HouseholdInviteService {
       },
       properties: {
         num_guests: normalizedInput.guests.length,
-        payload: normalizedInput,
+        payload: sanitizePayload(normalizedInput),
       },
     })
 
