@@ -402,8 +402,8 @@ export default function NonAuthenticatedView() {
               </h2>
             </div>
             <p className='font-light font-serif text-[0.95rem] text-muted-foreground leading-[1.75]'>
-              OSWP is a self-hosted Next.js 15 application with a type-safe tRPC API. Bring your
-              own database, cloud, and AI provider. Everything is modular, documented, and ready to
+              OSWP is a self-hosted Next.js 15 application with a type-safe tRPC API. Bring your own
+              database, cloud, and AI provider. Everything is modular, documented, and ready to
               extend.
             </p>
           </div>
