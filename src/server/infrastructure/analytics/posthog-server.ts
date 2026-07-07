@@ -10,7 +10,7 @@ import 'server-only'
 
 import { PostHog } from 'posthog-node'
 
-const DEFAULT_HOST = 'https://us.i.posthog.com'
+const ENABLE_EXCEPTION_AUTOCAPTURE = true
 
 /*
  * NOTE: we intentionally read `process.env` directly here rather than importing
@@ -28,11 +28,11 @@ let initialized = false
  * reuse the public project key (same PostHog project).
  */
 function resolveKey(): string | undefined {
-  return process.env.POSTHOG_KEY ?? process.env.NEXT_PUBLIC_POSTHOG_KEY ?? undefined
+  return process.env.POSTHOG_KEY ?? process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN ?? undefined
 }
 
-function resolveHost(): string {
-  return process.env.POSTHOG_HOST ?? process.env.NEXT_PUBLIC_POSTHOG_HOST ?? DEFAULT_HOST
+function resolveHost(): string | undefined {
+  return process.env.POSTHOG_HOST ?? process.env.NEXT_PUBLIC_POSTHOG_HOST ?? undefined
 }
 
 /**
@@ -52,6 +52,7 @@ export function getPostHogServer(): PostHog | null {
 
   client = new PostHog(key, {
     host: resolveHost(),
+    enableExceptionAutocapture: ENABLE_EXCEPTION_AUTOCAPTURE,
     // Flush eagerly: serverless invocations are short-lived, so we don't want
     // events queued in memory that never get sent.
     flushAt: 1,

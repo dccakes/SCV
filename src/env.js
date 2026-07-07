@@ -76,7 +76,7 @@ export const env = createEnv({
       )
       .pipe(z.string().url().optional()),
     // Optional: PostHog client-side analytics (product + template instrumentation).
-    NEXT_PUBLIC_POSTHOG_KEY: z.string().min(1).optional(),
+    NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: z.string().min(1).optional(),
     NEXT_PUBLIC_POSTHOG_HOST: z.string().url().optional(),
   },
 
@@ -119,7 +119,7 @@ export const env = createEnv({
     CRON_SECRET: process.env.CRON_SECRET,
     POSTHOG_KEY: process.env.POSTHOG_KEY,
     POSTHOG_HOST: process.env.POSTHOG_HOST,
-    NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+    NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN,
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
   },
   /**

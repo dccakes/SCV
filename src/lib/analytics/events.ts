@@ -34,6 +34,7 @@ export const ANALYTICS_SCOPES = {
   selfFill: 'self_fill',
   dashboard: 'dashboard',
   template: 'template',
+  asset: 'asset',
 } as const
 
 export type AnalyticsScope = (typeof ANALYTICS_SCOPES)[keyof typeof ANALYTICS_SCOPES]
@@ -66,6 +67,7 @@ export const ANALYTICS_ACTIONS = {
   revoked: 'revoked',
   sent: 'sent',
   rated: 'rated',
+  received: 'received',
   triggered: 'triggered',
 } as const
 
