@@ -582,6 +582,13 @@ function StayCard({ stay, anchorId }: { stay: TravelStay; anchorId: string }) {
         {stay.description ? (
           <p className={`${bodyFont} text-[#6F675D] text-sm leading-6`}>{stay.description}</p>
         ) : null}
+        {stay.blurb ? (
+          <span
+            className={`${labelFont} mt-1 text-[#B15C41] text-[0.56rem] uppercase tracking-[0.18em]`}
+          >
+            Read more
+          </span>
+        ) : null}
       </div>
     </>
   )
