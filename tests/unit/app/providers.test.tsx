@@ -4,6 +4,7 @@ import { Providers } from '~/app/providers'
 
 jest.mock('~/lib/auth-client', () => ({
   authClient: {},
+  useSession: () => ({ data: null, isPending: false }),
 }))
 
 jest.mock('~/components/theme-provider', () => ({

@@ -12,12 +12,17 @@ no-op, so the app runs identically with or without it.
 
 | Variable | Side | Purpose |
 | --- | --- | --- |
-| `NEXT_PUBLIC_POSTHOG_KEY` | client | Public project key (`phc_…`). Enables the browser SDK. |
-| `NEXT_PUBLIC_POSTHOG_HOST` | client | API host (default `https://us.i.posthog.com`). |
-| `POSTHOG_KEY` | server | Optional dedicated server key. Falls back to the public key (same project). |
+| `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` | client | Public project token (`phc_…`). Enables the browser SDK. |
+| `NEXT_PUBLIC_POSTHOG_HOST` | client | PostHog app/UI host (e.g. `https://us.posthog.com`). |
+| `POSTHOG_KEY` | server | Optional dedicated server key. Falls back to the public project token (same project). |
 | `POSTHOG_HOST` | server | Optional server API host. |
 
 See `.env.example` for the full block.
+
+The client SDK initializes in `instrumentation-client.ts` (the Next.js App
+Router client-instrumentation convention) and talks to PostHog through the
+`/oswp-pHsc1` reverse proxy configured in `next.config.js`, so requests
+aren't blocked by ad-blockers.
 
 ## Event naming
 
@@ -78,15 +83,21 @@ The one guest-facing flow that does not go through tRPC (the household invite
 
 ## Front-end instrumentation
 
-`src/lib/analytics/posthog-client.tsx` mounts once in the root layout (covering
-both the authenticated product and the public wedding templates). It:
+`instrumentation-client.ts` initializes `posthog-js` once, browser-side, before
+the app hydrates (the Next.js App Router client-instrumentation convention).
+It captures pageviews/pageleaves and exceptions via PostHog's bundled
+`defaults`, so no manual pageview wiring is needed.
 
-- initializes `posthog-js` only when a key is present,
-- captures `$pageview` on every App Router navigation,
-- disables DOM autocapture in favor of the explicit, standardized events, and
-- injects no visible DOM, so it never affects layout or centering.
+`src/lib/analytics/posthog-client.tsx` (`PostHogProvider`, mounted once in the
+root layout, covering both the authenticated product and the public wedding
+templates) does **not** initialize the client — it only syncs PostHog identity
+with the auth session: `posthog.identify(...)` on sign-in, `posthog.reset()` on
+sign-out. It injects no visible DOM, so it never affects layout or centering.
 
 Use the `track()` helper from `src/lib/analytics/track.ts` for explicit
 template/product events. It mirrors the backend property keys and is a no-op when
 PostHog is disabled. Public templates already emit `rsvp.public_submission.started`
 on RSVP submission (with wedding id, token, household, and the response payload).
+
+Unhandled exceptions are captured via `posthog.captureException` in
+`src/app/error.tsx` and `src/app/global-error.tsx`.
