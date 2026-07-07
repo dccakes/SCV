@@ -706,7 +706,7 @@ function TravelFields({
 
   const updateStay = (
     index: number,
-    key: 'name' | 'description' | 'imageUrl' | 'url',
+    key: 'name' | 'description' | 'imageUrl' | 'url' | 'blurb' | 'buttonLabel',
     value: string | undefined
   ) => {
     onChange({ ...content, stays: updateAt(stays, index, key, value) })
@@ -795,12 +795,6 @@ function TravelFields({
                 updateStay(index, 'description', event.target.value || undefined)
               }
             />
-            <Input
-              value={stay.url ?? ''}
-              maxLength={500}
-              placeholder='https://…'
-              onChange={(event) => updateStay(index, 'url', event.target.value || undefined)}
-            />
             <div className='space-y-1.5'>
               <span className={labelClass}>Photo (optional)</span>
               <SingleImageUpload
@@ -808,6 +802,29 @@ function TravelFields({
                 onChange={(url) => updateStay(index, 'imageUrl', url ?? undefined)}
                 aspectClassName='aspect-[4/3] max-w-[12rem]'
                 label='Add photo'
+              />
+            </div>
+            <Textarea
+              value={stay.blurb ?? ''}
+              maxLength={1000}
+              rows={3}
+              placeholder='A longer blurb shown when guests click the card, e.g. why you recommend this stay (optional)'
+              onChange={(event) => updateStay(index, 'blurb', event.target.value || undefined)}
+            />
+            <div className='flex items-center gap-2'>
+              <Input
+                value={stay.url ?? ''}
+                maxLength={500}
+                placeholder='https://…'
+                onChange={(event) => updateStay(index, 'url', event.target.value || undefined)}
+              />
+              <Input
+                value={stay.buttonLabel ?? ''}
+                maxLength={60}
+                placeholder='Button text (e.g. Visit Website)'
+                onChange={(event) =>
+                  updateStay(index, 'buttonLabel', event.target.value || undefined)
+                }
               />
             </div>
           </div>
