@@ -14,7 +14,15 @@ import QuestionMultipleChoice from '~/components/website/forms/steps/question-mu
 import QuestionShortAnswer from '~/components/website/forms/steps/question-short-answer'
 import SendRsvp from '~/components/website/forms/steps/send-rsvp'
 import RsvpConfirmation from '~/components/website/rsvp-confirmation'
+import { ANALYTICS_ACTIONS, ANALYTICS_SCOPES, buildEventName } from '~/lib/analytics/events'
+import { track } from '~/lib/analytics/track'
 import { api } from '~/trpc/react'
+
+const RSVP_SUBMISSION_EVENT = buildEventName({
+  scope: ANALYTICS_SCOPES.rsvp,
+  object: 'public_submission',
+  action: ANALYTICS_ACTIONS.started,
+})
 
 type MainRsvpFormProps = {
   weddingData: RsvpPageData
@@ -135,6 +143,28 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
             setSubmitError('Invalid or expired RSVP link. Please request a new invitation link.')
             return
           }
+
+          // Analytics: record the guest's RSVP submission from the template.
+          // The backend also captures the persisted outcome; this frontend event
+          // carries the rich client context (household, response payload) that we
+          // keep as a temporary backup while the app is being tested.
+          track(
+            RSVP_SUBMISSION_EVENT,
+            {
+              weddingId: weddingData.events?.[0]?.weddingId,
+              token,
+              householdId: rsvpFormData.selectedHousehold?.id,
+              subUrl,
+            },
+            {
+              num_event_responses: rsvpFormData.rsvpResponses.length,
+              num_question_answers: rsvpFormData.answersToQuestions.length,
+              payload: {
+                rsvpResponses: rsvpFormData.rsvpResponses,
+                answersToQuestions: rsvpFormData.answersToQuestions,
+              },
+            }
+          )
 
           submitRsvpForm.mutate({
             subUrl,

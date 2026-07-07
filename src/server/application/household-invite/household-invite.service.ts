@@ -3,6 +3,7 @@ import { Prisma, type PrismaClient } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 
+import { ANALYTICS_ACTIONS, ANALYTICS_SCOPES, buildEventName } from '~/lib/analytics/events'
 import { createHouseholdInviteCode } from '~/server/application/household-invite/household-invite-code'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
@@ -11,6 +12,8 @@ import {
   WebsiteSectionType,
 } from '~/server/domains/website-section/website-section.types'
 import { saveTheDateSectionContentSchema } from '~/server/domains/website-section/website-section.validator'
+import { captureServerEvent } from '~/server/infrastructure/analytics/capture'
+import { sanitizePayload } from '~/server/infrastructure/analytics/payload'
 
 type HouseholdInviteDb = Pick<PrismaClient, 'household' | 'website' | 'guest' | '$transaction'>
 
@@ -409,6 +412,28 @@ export class HouseholdInviteService {
       }
       throw error
     }
+
+    // Analytics: guest self-service info update via the public invite link. This
+    // flow uses a server action (not tRPC), so it is instrumented directly here.
+    captureServerEvent({
+      event: buildEventName({
+        scope: ANALYTICS_SCOPES.guestList,
+        object: 'household_details',
+        action: ANALYTICS_ACTIONS.updated,
+      }),
+      context: {
+        distinctId: code ?? inviteData.household.id,
+        isAuthenticated: false,
+        weddingId: inviteData.weddingId,
+        householdId: inviteData.household.id,
+        subUrl,
+        ...(code ? { token: code } : {}),
+      },
+      properties: {
+        num_guests: normalizedInput.guests.length,
+        payload: sanitizePayload(normalizedInput),
+      },
+    })
 
     return { success: true }
   }
