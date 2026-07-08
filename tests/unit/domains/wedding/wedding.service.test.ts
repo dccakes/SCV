@@ -22,6 +22,9 @@ jest.mock('~/server/authz/permission-checker', () => ({
 jest.mock('~/lib/etta/provision', () => ({
   provisionEtta: jest.fn().mockResolvedValue(undefined),
 }))
+jest.mock('~/server/domains/email', () => ({
+  emailService: { ensureInbox: jest.fn().mockResolvedValue(undefined) },
+}))
 
 // @ts-expect-error - Importing mock functions from mocked module
 import {

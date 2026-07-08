@@ -37,6 +37,11 @@ export const env = createEnv({
     // Optional: Resend email service (required for OTP login, password reset, email verification)
     RESEND_API_KEY: z.string().min(1).optional(),
     EMAIL_FROM: z.string().min(1).default('noreply@oswp.app'),
+    // Per-wedding inbound email domain (Resend inbound). Each wedding gets
+    // {bride}-and-{groom}@<domain>. Defaults to the production domain.
+    WEDDING_EMAIL_DOMAIN: z.string().min(1).default('w.oswp.carvallo.io'),
+    // Svix signing secret (whsec_...) for verifying Resend inbound webhooks.
+    RESEND_INBOUND_SIGNING_SECRET: z.string().min(1).optional(),
     // Etta AI Agent
     AI_GATEWAY_API_KEY: z.string().min(1).optional(), // Vercel AI Gateway API key
     ANTHROPIC_API_KEY: z.string().min(1).optional(),
@@ -104,6 +109,8 @@ export const env = createEnv({
     BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_FROM: process.env.EMAIL_FROM,
+    WEDDING_EMAIL_DOMAIN: process.env.WEDDING_EMAIL_DOMAIN,
+    RESEND_INBOUND_SIGNING_SECRET: process.env.RESEND_INBOUND_SIGNING_SECRET,
     AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY,
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
