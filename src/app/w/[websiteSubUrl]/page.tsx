@@ -17,9 +17,17 @@ export async function generateMetadata({ params }: RootRouteHandlerProps): Promi
   const { websiteSubUrl } = await params
   const { loadResult } = await loadVisitorWedding(websiteSubUrl)
 
+  // Nested `icon.tsx` route conventions are silently dropped whenever an
+  // ancestor layout (the root layout, here) sets `metadata.icons` explicitly —
+  // Next.js then stops auto-merging file-based icons for the whole subtree.
+  // Re-declaring `icons` at this segment reclaims it and points back at our
+  // per-website favicon route.
+  const iconUrl = `/w/${websiteSubUrl}/icon`
+
   if (loadResult.status !== 'ready') {
     return {
       title: 'Wedding Website',
+      icons: [{ rel: 'icon', url: iconUrl, type: 'image/png', sizes: '32x32' }],
     }
   }
 
@@ -41,6 +49,7 @@ export async function generateMetadata({ params }: RootRouteHandlerProps): Promi
   return {
     title,
     description,
+    icons: [{ rel: 'icon', url: iconUrl, type: 'image/png', sizes: '32x32' }],
     openGraph: {
       title,
       description,
