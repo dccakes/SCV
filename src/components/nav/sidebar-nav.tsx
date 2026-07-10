@@ -16,6 +16,7 @@ const SIDEBAR_SECTIONS: readonly SidebarSection[] = [
       { label: 'Events', href: '/events', icon: '☷' },
       { label: 'Wedding Website', href: '/website', icon: '◌' },
       { label: 'Vendors', href: '/vendors', icon: '◐' },
+      { label: 'Inbox', href: '/inbox', icon: '✉' },
     ],
   },
   {

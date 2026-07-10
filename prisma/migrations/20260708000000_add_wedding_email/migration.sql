@@ -25,6 +25,7 @@ CREATE TABLE "email_threads" (
     "subject" TEXT NOT NULL,
     "counterparty_email" TEXT NOT NULL,
     "counterparty_name" TEXT,
+    "provider_conversation_id" TEXT,
     "category" TEXT NOT NULL DEFAULT 'other',
     "status" TEXT NOT NULL DEFAULT 'open',
     "vendor_id" TEXT,
@@ -37,6 +38,7 @@ CREATE TABLE "email_threads" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "email_threads_wedding_id_counterparty_email_key" ON "email_threads"("wedding_id", "counterparty_email");
+CREATE UNIQUE INDEX "email_threads_wedding_id_provider_conversation_id_key" ON "email_threads"("wedding_id", "provider_conversation_id");
 CREATE INDEX "email_threads_wedding_id_last_message_at_idx" ON "email_threads"("wedding_id", "last_message_at" DESC);
 CREATE INDEX "email_threads_wedding_id_status_idx" ON "email_threads"("wedding_id", "status");
 

@@ -1056,6 +1056,9 @@ model EmailThread {
   subject           String
   counterpartyEmail String         @map("counterparty_email") // normalized, lower-cased
   counterpartyName  String?        @map("counterparty_name")
+  // Resend conversation id when available; preferred over counterparty email for
+  // grouping a reply chain. Null threads fall back to per-counterparty grouping.
+  providerConversationId String?   @map("provider_conversation_id")
   // Latest triage classification for the thread (see EmailTriage for per-message detail).
   category          String         @default("other") // guest_rsvp | guest_question | vendor_contract | vendor_quote | vendor_general | logistics | spam | other
   status            String         @default("open") // open | closed
@@ -1066,6 +1069,7 @@ model EmailThread {
   messages          EmailMessage[]
 
   @@unique([weddingId, counterpartyEmail])
+  @@unique([weddingId, providerConversationId])
   @@index([weddingId, lastMessageAt(sort: Desc)])
   @@index([weddingId, status])
   @@map("email_threads")

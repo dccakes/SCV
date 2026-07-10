@@ -34,6 +34,7 @@ export class InboundEmailHandler {
     const { thread, message, isNew } = await this.email.recordInbound({
       weddingId,
       inboxId: inbox.id,
+      conversationId: inbound.conversationId,
       fromAddress: inbound.fromAddress,
       fromName: inbound.fromName,
       toAddresses: inbound.to,

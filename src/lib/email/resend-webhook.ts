@@ -26,6 +26,12 @@ export interface InboundAttachment {
 export interface InboundEmail {
   /** Stable provider id used for idempotency. */
   providerId: string
+  /**
+   * Resend conversation id, when present. Preferred over the sender address for
+   * grouping a reply chain into one thread (a vendor may reply from a different
+   * address than they were first contacted on).
+   */
+  conversationId?: string
   fromAddress: string
   fromName?: string
   to: string[]
@@ -104,6 +110,8 @@ const inboundDataSchema = z
   .object({
     email_id: z.string().optional().nullable(),
     id: z.string().optional().nullable(),
+    conversation_id: z.string().optional().nullable(),
+    conversationId: z.string().optional().nullable(),
     from: addressFieldSchema.optional().nullable(),
     to: addressFieldSchema.optional().nullable(),
     cc: addressFieldSchema.optional().nullable(),
@@ -197,6 +205,7 @@ export function normalizeInboundEmail(payload: ResendWebhookPayload): InboundEma
 
   return {
     providerId,
+    conversationId: data.conversation_id ?? data.conversationId ?? undefined,
     fromAddress: from.address,
     fromName: from.name,
     to: parseAddressList(data.to).map((a) => a.address),

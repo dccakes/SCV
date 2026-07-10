@@ -22,6 +22,7 @@ export interface EmailThread {
   subject: string
   counterpartyEmail: string
   counterpartyName: string | null
+  providerConversationId: string | null
   category: string
   status: string
   vendorId: string | null
@@ -50,9 +51,24 @@ export interface EmailMessage {
   createdAt: Date
 }
 
+export interface EmailMessageTriage {
+  category: string
+  intent: string
+  summary: string
+  priority: string
+  suggestedActions: { type: string; reason: string; to?: string }[]
+  confidence: number
+  status: string
+}
+
+export interface EmailMessageWithTriage extends EmailMessage {
+  triage: EmailMessageTriage | null
+}
+
 export interface RecordInboundInput {
   weddingId: string
   inboxId: string
+  conversationId?: string
   fromAddress: string
   fromName?: string
   toAddresses: string[]

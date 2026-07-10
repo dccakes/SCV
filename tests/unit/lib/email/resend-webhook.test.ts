@@ -180,4 +180,31 @@ describe('normalizeInboundEmail', () => {
     })
     expect(normalizeInboundEmail(parsed)).toBeNull()
   })
+
+  it('captures the Resend conversation id for thread grouping', () => {
+    const parsed = resendWebhookSchema.parse({
+      type: 'email.received',
+      data: {
+        email_id: 'in_jkl',
+        conversation_id: 'conv_789',
+        from: 'hello@acmeflorals.com',
+        to: 'jane-and-john@w.oswp.carvallo.io',
+        subject: 'Re: Your floral contract',
+      },
+    })
+    expect(normalizeInboundEmail(parsed)?.conversationId).toBe('conv_789')
+  })
+
+  it('leaves conversationId undefined when absent', () => {
+    const parsed = resendWebhookSchema.parse({
+      type: 'email.received',
+      data: {
+        email_id: 'in_mno',
+        from: 'hello@acmeflorals.com',
+        to: 'jane-and-john@w.oswp.carvallo.io',
+        subject: 'Hello',
+      },
+    })
+    expect(normalizeInboundEmail(parsed)?.conversationId).toBeUndefined()
+  })
 })

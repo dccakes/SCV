@@ -23,6 +23,7 @@ import { requirePermission } from '~/server/authz/permission-checker'
 import type { EmailRepository } from '~/server/domains/email/email.repository'
 import type {
   EmailMessage,
+  EmailMessageWithTriage,
   EmailThread,
   RecordInboundInput,
   RecordOutboundInput,
@@ -119,6 +120,7 @@ export class EmailService {
       counterpartyEmail: input.fromAddress,
       counterpartyName: input.fromName,
       subject: input.subject,
+      conversationId: input.conversationId,
     })
 
     const message = await this.repo.recordInbound({ ...input, threadId: thread.id })
@@ -228,13 +230,13 @@ export class EmailService {
     ctx: AuthzContext,
     weddingId: string,
     threadId: string
-  ): Promise<{ thread: EmailThread; messages: EmailMessage[] }> {
+  ): Promise<{ thread: EmailThread; messages: EmailMessageWithTriage[] }> {
     requirePermission(ctx, { wedding: ['read'] })
     const thread = await this.repo.findThreadById(threadId)
     if (!thread || thread.weddingId !== weddingId) {
       throw new TRPCError({ code: 'NOT_FOUND', message: 'Thread not found' })
     }
-    const messages = await this.repo.listMessages(threadId)
+    const messages = await this.repo.listMessagesWithTriage(threadId)
     return { thread, messages }
   }
 

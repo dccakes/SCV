@@ -6,6 +6,8 @@ import type { PrismaClient } from '@prisma/client'
 import type { InboundAttachment } from '~/lib/email/resend-webhook'
 import type {
   EmailMessage,
+  EmailMessageTriage,
+  EmailMessageWithTriage,
   EmailThread,
   PersistTriageInput,
   RecordInboundInput,
@@ -76,12 +78,51 @@ export class EmailRepository {
     return this.db.emailThread.findUnique({ where: { id: threadId } })
   }
 
+  async findThreadByConversationId(
+    weddingId: string,
+    conversationId: string
+  ): Promise<EmailThread | null> {
+    return this.db.emailThread.findUnique({
+      where: {
+        weddingId_providerConversationId: {
+          weddingId,
+          providerConversationId: conversationId,
+        },
+      },
+    })
+  }
+
+  /** Group by Resend conversation id when present, else by counterparty email. */
   async upsertThread(input: {
     weddingId: string
     counterpartyEmail: string
     counterpartyName?: string
     subject: string
+    conversationId?: string
   }): Promise<EmailThread> {
+    if (input.conversationId) {
+      return this.db.emailThread.upsert({
+        where: {
+          weddingId_providerConversationId: {
+            weddingId: input.weddingId,
+            providerConversationId: input.conversationId,
+          },
+        },
+        create: {
+          weddingId: input.weddingId,
+          counterpartyEmail: input.counterpartyEmail,
+          counterpartyName: input.counterpartyName,
+          providerConversationId: input.conversationId,
+          subject: input.subject,
+          lastMessageAt: new Date(),
+        },
+        update: {
+          lastMessageAt: new Date(),
+          ...(input.counterpartyName ? { counterpartyName: input.counterpartyName } : {}),
+        },
+      })
+    }
+
     return this.db.emailThread.upsert({
       where: {
         weddingId_counterpartyEmail: {
@@ -186,6 +227,30 @@ export class EmailRepository {
       orderBy: { createdAt: 'asc' },
     })
     return rows.map(mapMessage)
+  }
+
+  async listMessagesWithTriage(threadId: string): Promise<EmailMessageWithTriage[]> {
+    const rows = await this.db.emailMessage.findMany({
+      where: { threadId },
+      orderBy: { createdAt: 'asc' },
+      include: { triage: true },
+    })
+    return rows.map((row) => ({
+      ...mapMessage(row),
+      triage: row.triage
+        ? {
+            category: row.triage.category,
+            intent: row.triage.intent,
+            summary: row.triage.summary,
+            priority: row.triage.priority,
+            suggestedActions: (Array.isArray(row.triage.suggestedActions)
+              ? row.triage.suggestedActions
+              : []) as EmailMessageTriage['suggestedActions'],
+            confidence: row.triage.confidence,
+            status: row.triage.status,
+          }
+        : null,
+    }))
   }
 
   // ── Triage ───────────────────────────────────────────────────────────────────
