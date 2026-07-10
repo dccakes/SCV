@@ -15,8 +15,8 @@ export default async function Icon({ params }: IconRouteProps) {
   const loadResult = await loadWeddingBySubUrl(websiteSubUrl)
 
   let initials = 'W'
-  let background = '#f6efe6'
-  let color = '#52525b'
+  let background = '#d98a6a'
+  const color = '#ffffff'
 
   if (loadResult.status === 'ready') {
     const { brideFirstName, groomFirstName, website } = loadResult.weddingData
@@ -26,11 +26,8 @@ export default async function Icon({ params }: IconRouteProps) {
 
     const template =
       TEMPLATE_CATALOG.find((meta) => meta.id === website.templateId) ?? TEMPLATE_CATALOG[0]
-    if (template) {
-      const [bg, , accent] = template.swatches
-      background = bg ?? background
-      color = accent ?? color
-    }
+    const [, accent] = template?.swatches ?? []
+    background = accent ?? background
   }
 
   return new ImageResponse(
