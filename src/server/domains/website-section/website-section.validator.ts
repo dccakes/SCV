@@ -59,7 +59,7 @@ const optionalImageUrlSchema = z
 const optionalLinkUrlSchema = z
   .string()
   .url('Enter a valid URL')
-  .max(500, 'URL must be 500 characters or fewer')
+  .max(1000, 'URL must be 1000 characters or fewer')
   .optional()
 
 export const timelineSectionContentSchema = z.object({

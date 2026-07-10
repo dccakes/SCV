@@ -594,7 +594,7 @@ function DestinationFields({
         <TextField
           label='Button URL (optional)'
           value={content.ctaUrl ?? ''}
-          maxLength={500}
+          maxLength={1000}
           placeholder='https://…'
           onChange={(ctaUrl) => onChange({ ...content, ctaUrl: ctaUrl || undefined })}
         />
@@ -814,7 +814,7 @@ function TravelFields({
             <div className='flex items-center gap-2'>
               <Input
                 value={stay.url ?? ''}
-                maxLength={500}
+                maxLength={1000}
                 placeholder='https://…'
                 onChange={(event) => updateStay(index, 'url', event.target.value || undefined)}
               />
