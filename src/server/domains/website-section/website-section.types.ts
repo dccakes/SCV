@@ -120,6 +120,10 @@ export type TravelStay = {
   description?: string
   imageUrl?: string
   url?: string
+  /** Optional longer blurb shown in the detail modal, in addition to the short card description. */
+  blurb?: string
+  /** Optional custom label for the link button (defaults to "Visit Website"). */
+  buttonLabel?: string
 }
 
 export type TravelSectionContent = {

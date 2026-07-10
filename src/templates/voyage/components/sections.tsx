@@ -11,7 +11,7 @@
  */
 
 import Image from 'next/image'
-import { Fragment } from 'react'
+import { Fragment, type ReactNode } from 'react'
 import type {
   DestinationSectionContent,
   ExperiencesSectionContent,
@@ -20,6 +20,7 @@ import type {
   RegistrySectionContent,
   TimelineSectionContent,
   TravelSectionContent,
+  TravelStay,
   WebsiteSection,
   WeddingPartyMember,
   WeddingPartySectionContent,
@@ -550,6 +551,160 @@ function TravelContent({ content }: { content: TravelSectionContent }) {
   )
 }
 
+/**
+ * Matches either a markdown-style link `[label](url)` or a bare http(s)/mailto
+ * URL. Only these two safe schemes are linkified — arbitrary HTML is never
+ * rendered — so a couple can drop a link into a plain-text blurb (e.g. a Google
+ * Drive room list) without any markup knowledge.
+ */
+const BLURB_LINK =
+  /\[([^\]]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)|(https?:\/\/[^\s]+|mailto:[^\s]+)/g
+
+/** Render blurb text with any URLs/`[label](url)` turned into inline links. */
+function LinkifiedBlurb({ text, className = '' }: { text: string; className?: string }) {
+  const nodes: ReactNode[] = []
+  const regex = new RegExp(BLURB_LINK.source, 'g')
+  let lastIndex = 0
+  let key = 0
+  let match: RegExpExecArray | null = regex.exec(text)
+  while (match !== null) {
+    if (match.index > lastIndex) {
+      nodes.push(<Fragment key={key++}>{text.slice(lastIndex, match.index)}</Fragment>)
+    }
+    const url = match[2] ?? match[3] ?? ''
+    const isMail = url.startsWith('mailto:')
+    const label = match[1] ?? (isMail ? url.slice('mailto:'.length) : url)
+    nodes.push(
+      <a
+        key={key++}
+        href={url}
+        {...(isMail ? {} : { target: '_blank', rel: 'noreferrer' })}
+        className='text-[#B15C41] underline underline-offset-2 transition-colors hover:text-[#8A4530]'
+      >
+        {label}
+      </a>
+    )
+    lastIndex = regex.lastIndex
+    match = regex.exec(text)
+  }
+  if (lastIndex < text.length) {
+    nodes.push(<Fragment key={key++}>{text.slice(lastIndex)}</Fragment>)
+  }
+  return <p className={className}>{nodes}</p>
+}
+
+/**
+ * One recommended-stay card. Clicking it opens a pure-CSS lightbox (via the
+ * `:target` pseudo-class, same technique as `WeddingPartyCard`) showing the
+ * full photo beside the stay's blurb and an optional customizable link
+ * button, so the card grid stays a uniform height either way.
+ */
+function StayCard({ stay, anchorId }: { stay: TravelStay; anchorId: string }) {
+  const card = (
+    <>
+      <div className='relative aspect-[4/3] overflow-hidden bg-[#EFE7DA]'>
+        {stay.imageUrl ? (
+          <Image
+            src={stay.imageUrl}
+            alt={stay.name}
+            fill
+            sizes='(max-width: 1024px) 50vw, 25vw'
+            className='object-cover transition-transform duration-700 group-hover:scale-[1.05]'
+          />
+        ) : (
+          <div className='flex h-full items-center justify-center'>
+            <BotanicalSprig className='h-1/2 w-auto text-[#B15C41]/30' />
+          </div>
+        )}
+      </div>
+      <div className='flex flex-col gap-1 px-4 py-4'>
+        <p className={`${labelFont} text-[#1D2320] text-[0.62rem] uppercase tracking-[0.2em]`}>
+          {stay.name}
+        </p>
+        {stay.description ? (
+          <p className={`${bodyFont} text-[#6F675D] text-sm leading-6`}>{stay.description}</p>
+        ) : null}
+        {stay.blurb ? (
+          <span
+            className={`${labelFont} mt-1 text-[#B15C41] text-[0.56rem] uppercase tracking-[0.18em]`}
+          >
+            Read more
+          </span>
+        ) : null}
+      </div>
+    </>
+  )
+
+  if (!stay.blurb) {
+    return (
+      <div key={`${stay.name}`} className={CARD_CLASS}>
+        {card}
+      </div>
+    )
+  }
+
+  return (
+    <Fragment key={`${stay.name}`}>
+      <a
+        href={`#${anchorId}`}
+        className={`${CARD_CLASS} group block transition-colors hover:border-[#B15C41] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B15C41]/60`}
+      >
+        {card}
+      </a>
+      <div
+        id={anchorId}
+        className='fixed inset-0 z-50 hidden items-start justify-center overflow-y-auto bg-[#1D2320]/75 p-4 py-10 target:flex sm:items-center'
+      >
+        <a href='#travel' className='absolute inset-0'>
+          <span className='sr-only'>Close</span>
+        </a>
+        <div className='relative flex w-full max-w-2xl flex-col overflow-hidden rounded-[3px] bg-[#FBF8F2] shadow-2xl sm:flex-row'>
+          <a
+            href='#travel'
+            aria-label='Close'
+            className='absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[#1D2320]/70 text-[#F7F3EC] transition-colors hover:bg-[#1D2320]'
+          >
+            <IconClose className='h-4 w-4' />
+          </a>
+          <div className='relative h-56 w-full shrink-0 overflow-hidden bg-[#EFE7DA] sm:h-auto sm:w-64'>
+            {stay.imageUrl ? (
+              <Image
+                src={stay.imageUrl}
+                alt={stay.name}
+                fill
+                sizes='(max-width: 640px) 100vw, 256px'
+                className='object-cover'
+              />
+            ) : (
+              <div className='flex h-full items-center justify-center'>
+                <BotanicalSprig className='h-1/2 w-auto text-[#B15C41]/30' />
+              </div>
+            )}
+          </div>
+          <div className='flex flex-1 flex-col gap-3 p-7 text-left sm:p-8'>
+            <p className={`${headingFont} text-2xl text-[#1D2320]`}>{stay.name}</p>
+            <GoldRule className='self-start' />
+            <LinkifiedBlurb
+              text={stay.blurb}
+              className={`${bodyFont} whitespace-pre-line text-[#6F675D] text-[0.98rem] leading-7`}
+            />
+            {stay.url ? (
+              <a
+                href={stay.url}
+                target='_blank'
+                rel='noreferrer'
+                className={`${labelFont} mt-2 inline-flex w-fit items-center gap-2 rounded-[2px] bg-[#B15C41] px-5 py-2.5 text-[#FBF8F2] text-[0.62rem] uppercase tracking-[0.2em] transition-colors hover:bg-[#8A4530]`}
+              >
+                {stay.buttonLabel?.trim() || 'Visit Website'}
+              </a>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </Fragment>
+  )
+}
+
 /** Recommended-stay cards (no Band wrapper). */
 function StaysGrid({ content }: { content: TravelSectionContent }) {
   const stays = content.stays ?? []
@@ -560,53 +715,9 @@ function StaysGrid({ content }: { content: TravelSectionContent }) {
     <div className='mt-14 flex flex-col gap-5'>
       <Eyebrow>Recommended Stays</Eyebrow>
       <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-        {stays.map((stay) => {
-          const card = (
-            <>
-              <div className='relative aspect-[4/3] overflow-hidden bg-[#EFE7DA]'>
-                {stay.imageUrl ? (
-                  <Image
-                    src={stay.imageUrl}
-                    alt={stay.name}
-                    fill
-                    sizes='(max-width: 1024px) 50vw, 25vw'
-                    className='object-cover transition-transform duration-700 group-hover:scale-[1.05]'
-                  />
-                ) : (
-                  <div className='flex h-full items-center justify-center'>
-                    <BotanicalSprig className='h-1/2 w-auto text-[#B15C41]/30' />
-                  </div>
-                )}
-              </div>
-              <div className='flex flex-col gap-1 px-4 py-4'>
-                <p
-                  className={`${labelFont} text-[#1D2320] text-[0.62rem] uppercase tracking-[0.2em]`}
-                >
-                  {stay.name}
-                </p>
-                {stay.description ? (
-                  <p className={`${bodyFont} text-[#6F675D] text-sm leading-6`}>
-                    {stay.description}
-                  </p>
-                ) : null}
-              </div>
-            </>
-          )
-          return stay.url ? (
-            <a
-              key={`${stay.name}`}
-              href={stay.url}
-              target='_blank'
-              rel='noreferrer'
-              className={`${CARD_CLASS} transition-colors hover:border-[#B15C41]`}
-            >
-              {card}
-            </a>
-          ) : (
-            <div key={`${stay.name}`} className={CARD_CLASS}>
-              {card}
-            </div>
-          )
+        {stays.map((stay, index) => {
+          const anchorId = `stay-${index}-${stay.name.replace(/\s+/g, '-').toLowerCase()}`
+          return <StayCard key={`${stay.name}`} stay={stay} anchorId={anchorId} />
         })}
       </div>
     </div>
