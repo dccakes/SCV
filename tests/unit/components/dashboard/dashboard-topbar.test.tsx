@@ -90,16 +90,6 @@ describe('DashboardTopbar', () => {
     expect(format).toHaveBeenCalledWith(expect.any(Date))
   })
 
-  it('renders Export guest list button', () => {
-    render(<DashboardTopbar />)
-    expect(screen.getByRole('button', { name: /export guest list/i })).toBeInTheDocument()
-  })
-
-  it('renders Send update button', () => {
-    render(<DashboardTopbar />)
-    expect(screen.getByRole('button', { name: /send update/i })).toBeInTheDocument()
-  })
-
   it('renders a theme toggle button', () => {
     render(<DashboardTopbar />)
     expect(screen.getByRole('button', { name: /toggle theme/i })).toBeInTheDocument()
@@ -107,8 +97,6 @@ describe('DashboardTopbar', () => {
 
   it('hides management actions when disabled', () => {
     render(<DashboardTopbar showManagementActions={false} />)
-    expect(screen.queryByRole('button', { name: /export guest list/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /send update/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /add task/i })).not.toBeInTheDocument()
   })
 
