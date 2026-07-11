@@ -71,12 +71,12 @@ test.describe('Guest List Drawer - Viewing Details', () => {
     await expect(page.getByText(/Needs high-chair seating for dragonlets/i)).toBeVisible()
   })
 
-  test('should display Seating & Event section', async ({ page }) => {
+  test('should display Event Invitations & RSVP section', async ({ page }) => {
     await page.getByRole('button', { name: /select donkey.*household/i }).click()
 
-    await expect(page.getByText('Seating & Event')).toBeVisible()
-    // Should show the "Manage RSVPs in Events" link
-    await expect(page.getByText(/Manage RSVPs in Events/i)).toBeVisible()
+    await expect(page.getByText('Event Invitations & RSVP')).toBeVisible()
+    // Should show the "Manage in Events" link
+    await expect(page.getByText(/Manage in Events/i)).toBeVisible()
   })
 
   test('should display Communication Log section', async ({ page }) => {

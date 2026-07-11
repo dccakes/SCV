@@ -371,7 +371,9 @@ function EventInvitationsSection(props: Readonly<EventInvitationsSectionProps>) 
       }
     >
       {eventsToShow.length === 0 ? (
-        <p className='text-foreground/55 text-sm'>No events yet. Create an event to invite guests.</p>
+        <p className='text-foreground/55 text-sm'>
+          No events yet. Create an event to invite guests.
+        </p>
       ) : (
         <ul className='space-y-3'>
           {eventsToShow.map((event) => (

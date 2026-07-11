@@ -68,6 +68,11 @@ jest.mock('~/trpc/react', () => ({
           invalidate: (...args: unknown[]) => mockDashboardInvalidate(...args),
         },
       },
+      event: {
+        getAllByUserIdWithStats: {
+          invalidate: jest.fn(),
+        },
+      },
       communicationLog: {
         getByHouseholdId: {
           invalidate: jest.fn(),
@@ -136,6 +141,11 @@ jest.mock('~/trpc/react', () => ({
           },
           isPending: false,
         }),
+      },
+    },
+    invitation: {
+      update: {
+        useMutation: () => ({ mutate: jest.fn(), isPending: false }),
       },
     },
     householdInvite: {
