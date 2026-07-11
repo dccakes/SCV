@@ -53,9 +53,12 @@ test.describe('Guest List Drawer - Viewing Details', () => {
     await expect(page.getByText('Party Members')).toBeVisible()
 
     // Donkey household has 2 members: Donkey (ADULT) and Dragon (ADULT)
-    // Use locator scoped to the party members list to avoid strict mode violations
-    // (name appears in card, drawer heading, AND member list)
-    const membersList = page.locator('ul').filter({ hasText: 'Donkey The Donkey' })
+    // Scope to the Party Members section to avoid strict mode violations
+    // (name appears in card, drawer heading, member list, AND the RSVP section)
+    const membersList = page
+      .locator('section')
+      .filter({ has: page.getByRole('heading', { name: 'Party Members' }) })
+      .locator('ul')
     await expect(membersList.locator('span', { hasText: 'Donkey The Donkey' })).toBeVisible()
     await expect(membersList.locator('span', { hasText: 'Dragon The Dragon' })).toBeVisible()
 
@@ -113,10 +116,11 @@ test.describe('Guest List Drawer - Viewing Details', () => {
     await page.getByRole('button', { name: /select papa.*household/i }).click()
 
     // Should show all 3 members in the party members list
+    // Scope to the Party Members section (names also appear in the RSVP section)
     const membersList = page
+      .locator('section')
+      .filter({ has: page.getByRole('heading', { name: 'Party Members' }) })
       .locator('ul')
-      .filter({ hasText: 'Papa Bear' })
-      .filter({ hasText: 'Mama Bear' })
     await expect(membersList.locator('span', { hasText: 'Papa Bear' })).toBeVisible()
     await expect(membersList.locator('span', { hasText: 'Mama Bear' })).toBeVisible()
     await expect(membersList.locator('span', { hasText: 'Baby Bear' })).toBeVisible()
