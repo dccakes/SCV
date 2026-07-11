@@ -275,7 +275,9 @@ export default function SelfFillPage() {
                     {...register('state')}
                     className={errors.state ? 'border-destructive' : ''}
                   />
-                  {errors.state && <p className='text-destructive text-sm'>{errors.state.message}</p>}
+                  {errors.state && (
+                    <p className='text-destructive text-sm'>{errors.state.message}</p>
+                  )}
                 </div>
               </div>
 
@@ -308,7 +310,9 @@ export default function SelfFillPage() {
             </div>
 
             {mutationError && (
-              <div className='rounded-md bg-destructive/10 p-3 text-destructive text-sm'>{mutationError}</div>
+              <div className='rounded-md bg-destructive/10 p-3 text-destructive text-sm'>
+                {mutationError}
+              </div>
             )}
 
             <Button
