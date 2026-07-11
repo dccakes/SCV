@@ -1,6 +1,7 @@
 import { Check, Copy } from 'lucide-react'
 import Link from 'next/link'
-import { type Dispatch, type SetStateAction, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { type Dispatch, type SetStateAction, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import type { Event } from '~/app/utils/shared-types'
 import {
@@ -420,30 +421,46 @@ type InvitationRsvpSelectProps = {
 function InvitationRsvpSelect(props: Readonly<InvitationRsvpSelectProps>) {
   const { guestId, eventId, rsvp } = props
   const utils = api.useUtils()
+  const router = useRouter()
+
+  // The guest list is hydrated from a server-fetched prop, so cache
+  // invalidation alone will not re-render this control. Track the value
+  // locally for instant feedback and refresh the server data on success.
+  const [value, setValue] = useState(rsvp)
+
+  useEffect(() => {
+    setValue(rsvp)
+  }, [rsvp])
 
   const updateInvitation = api.invitation.update.useMutation({
     onSuccess: () => {
       void utils.dashboard.getForActiveWorkspace.invalidate()
       void utils.event.getAllByUserIdWithStats.invalidate()
+      router.refresh()
     },
     onError: () => {
+      setValue(rsvp)
       toast.error('Failed to update RSVP. Please try again.')
     },
   })
 
   return (
     <Select
-      value={rsvp}
+      value={value}
       disabled={updateInvitation.isPending}
-      onValueChange={(value) => {
-        if (value === rsvp) return
-        updateInvitation.mutate({ guestId, eventId, rsvp: value })
+      onValueChange={(nextValue) => {
+        if (nextValue === value) return
+        setValue(nextValue)
+        updateInvitation.mutate({ guestId, eventId, rsvp: nextValue })
       }}
     >
-      <SelectTrigger className='h-7 w-36 shrink-0 text-xs'>
+      <SelectTrigger
+        className='h-7 w-36 shrink-0 text-xs'
+        onClick={(clickEvent) => clickEvent.stopPropagation()}
+      >
         <SelectValue />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent onClick={(clickEvent) => clickEvent.stopPropagation()}>
         {RSVP_STATUS_VALUES.map((status) => (
           <SelectItem key={status} value={status}>
             {status}
