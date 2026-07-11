@@ -17,7 +17,6 @@ import type { HouseholdFormData } from '~/components/forms/guest-form.schema'
 import {
   type DrawerDraft,
   GuestDetailPanelContent,
-  type RsvpSummary,
 } from '~/components/guest-list/guest-detail-panel-content'
 import GuestSearchFilter from '~/components/guest-list/guest-search-filter'
 import type { HouseholdMemberDraft } from '~/components/guest-list/household-members-modal'
@@ -571,30 +570,6 @@ export default function GuestsView({
     },
   })
 
-  const allEventRsvpSummary = useMemo(() => {
-    if (!selectedHousehold || selectedEventId !== 'all') return new Map<string, RsvpSummary>()
-
-    const summaryByEventId = new Map<string, RsvpSummary>()
-
-    selectedHousehold.guests.forEach((guest) => {
-      guest.invitations.forEach((invitation) => {
-        const current = summaryByEventId.get(invitation.eventId) ?? {
-          attending: 0,
-          invited: 0,
-          declined: 0,
-        }
-
-        if (invitation.rsvp === 'Attending') current.attending += 1
-        else if (invitation.rsvp === 'Invited') current.invited += 1
-        else if (invitation.rsvp === 'Declined') current.declined += 1
-
-        summaryByEventId.set(invitation.eventId, current)
-      })
-    })
-
-    return summaryByEventId
-  }, [selectedEventId, selectedHousehold])
-
   const handleSelectHousehold = useCallback((household: HouseholdWithGuests) => {
     setSelectedHouseholdId(household.id)
     setEditingSections(new Set())
@@ -769,7 +744,6 @@ export default function GuestsView({
             events={events}
             selectedEventResponses={selectedEventResponses}
             communicationLog={communicationLog}
-            allEventRsvpSummary={allEventRsvpSummary}
             editingSections={editingSections}
             toggleEditingSection={toggleEditingSection}
             drawerDraft={drawerDraft}

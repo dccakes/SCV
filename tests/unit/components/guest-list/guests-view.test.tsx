@@ -990,7 +990,7 @@ describe('GuestsView', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
 
-    const manageLink = screen.getByRole('link', { name: 'Manage RSVPs in Events' })
+    const manageLink = screen.getByRole('link', { name: 'Manage in Events' })
     expect(manageLink).toHaveAttribute('href', '/events?eventId=event-1&tab=rsvps')
   })
 
