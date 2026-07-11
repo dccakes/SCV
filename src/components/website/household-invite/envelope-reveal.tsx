@@ -8,6 +8,8 @@ type EnvelopeRevealProps = {
   websiteSubUrl: string
   /** Couple names shown on the letter peeking out of the envelope. */
   coupleNames: string
+  /** Font classes for the couple names, matched to the template (heading font, or a script font when the template defines one). */
+  coupleNameClassName: string
   /** The real invite card, rendered on the server and revealed after the intro. */
   children: ReactNode
 }
@@ -30,6 +32,7 @@ const storageKeyFor = (websiteSubUrl: string) => `household_invite_envelope_${we
 export function EnvelopeReveal({
   websiteSubUrl,
   coupleNames,
+  coupleNameClassName,
   children,
 }: Readonly<EnvelopeRevealProps>) {
   const [phase, setPhase] = useState<Phase>('pending')
@@ -74,7 +77,9 @@ export function EnvelopeReveal({
       <div className={`w-full ${phase === 'playing' ? 'envelope-reveal-card' : ''}`}>
         {children}
       </div>
-      {phase === 'playing' ? <EnvelopeIntro coupleNames={coupleNames} /> : null}
+      {phase === 'playing' ? (
+        <EnvelopeIntro coupleNames={coupleNames} coupleNameClassName={coupleNameClassName} />
+      ) : null}
     </>
   )
 }
@@ -84,7 +89,10 @@ export function EnvelopeReveal({
  * meeting at the centre — the top one is the flap that opens, the other three
  * form the pocket and fully cover the letter while the envelope is closed.
  */
-function EnvelopeIntro({ coupleNames }: Readonly<{ coupleNames: string }>) {
+function EnvelopeIntro({
+  coupleNames,
+  coupleNameClassName,
+}: Readonly<{ coupleNames: string; coupleNameClassName: string }>) {
   return (
     <div
       aria-hidden='true'
@@ -97,7 +105,7 @@ function EnvelopeIntro({ coupleNames }: Readonly<{ coupleNames: string }>) {
         {/* The letter, tucked inside and rising out at the centre seam. */}
         <div className='envelope-letter absolute inset-x-6 top-5 bottom-4 z-[5] flex flex-col items-center justify-center gap-3 rounded-sm border border-border bg-card px-6 text-center shadow-md'>
           <span className='block h-px w-10 bg-border' />
-          <span className='font-[family-name:var(--tpl-heading-font)] text-2xl text-card-foreground italic leading-tight'>
+          <span className={`text-2xl text-card-foreground leading-tight ${coupleNameClassName}`}>
             {coupleNames}
           </span>
           <span className='font-[family-name:var(--tpl-label-font,var(--tpl-body-font))] text-[0.6rem] text-muted-foreground uppercase tracking-[0.28em]'>

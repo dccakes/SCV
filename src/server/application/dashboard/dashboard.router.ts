@@ -12,7 +12,9 @@ import { EventRepository } from '~/server/domains/event/event.repository'
 import { GuestRepository } from '~/server/domains/guest/guest.repository'
 import { HouseholdRepository } from '~/server/domains/household/household.repository'
 import { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
+import { MilestoneRepository } from '~/server/domains/milestone/milestone.repository'
 import { QuestionRepository } from '~/server/domains/question/question.repository'
+import { TaskRepository } from '~/server/domains/task/task.repository'
 import { UserRepository } from '~/server/domains/user/user.repository'
 import { WebsiteRepository } from '~/server/domains/website/website.repository'
 import { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
@@ -27,6 +29,8 @@ const websiteRepo = new WebsiteRepository(db)
 const guestRepo = new GuestRepository(db)
 const questionRepo = new QuestionRepository(db)
 const weddingRepo = new WeddingRepository(db)
+const taskRepo = new TaskRepository(db)
+const milestoneRepo = new MilestoneRepository(db)
 
 // Initialize service with all repositories
 const dashboardService = new DashboardService(
@@ -37,7 +41,9 @@ const dashboardService = new DashboardService(
   websiteRepo,
   guestRepo,
   questionRepo,
-  weddingRepo
+  weddingRepo,
+  taskRepo,
+  milestoneRepo
 )
 const dashboardOverviewUseCase = new DashboardOverviewUseCase(dashboardService)
 

@@ -10,6 +10,7 @@ import { TRPCError } from '@trpc/server'
 import { provisionEtta } from '~/lib/etta/provision'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
+import { checklistSeedingService } from '~/server/domains/checklist'
 import type { EventService } from '~/server/domains/event/event.service'
 import type { GuestTagService } from '~/server/domains/guest-tag/guest-tag.service'
 import type { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
@@ -71,7 +72,7 @@ export class WeddingService {
       groomLastName,
       brideFirstName,
       brideLastName,
-      enabledAddOns: [], // Core features only on creation
+      enabledAddOns: ['tasks'],
     })
 
     // Seed default tags for the wedding
@@ -86,6 +87,13 @@ export class WeddingService {
         collectRsvp: false,
         allowTagAlongs: false,
       })
+
+      try {
+        await checklistSeedingService.ensureSeeded(wedding.id)
+      } catch (error) {
+        // biome-ignore lint/suspicious/noConsole: preserve successful wedding creation if checklist seeding fails post-commit
+        console.error('[Checklist] Wedding create seeding failed:', error)
+      }
     }
 
     // Provision Etta AI agent actor — fire-and-forget (idempotent)

@@ -17,7 +17,7 @@ export async function GET(request: Request, { params }: HouseholdInviteCodeRoute
   const { websiteSubUrl, code } = await params
   const inviteData = await householdInviteService.getInviteData(websiteSubUrl, code)
 
-  const redirectUrl = new URL(`/w/${websiteSubUrl}/invite`, request.url)
+  const redirectUrl = new URL(`/w/${websiteSubUrl}/save-the-date`, request.url)
   const response = NextResponse.redirect(redirectUrl)
   response.headers.set('X-Robots-Tag', 'noindex, nofollow')
 

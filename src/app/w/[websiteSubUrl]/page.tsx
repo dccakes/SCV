@@ -17,14 +17,58 @@ export async function generateMetadata({ params }: RootRouteHandlerProps): Promi
   const { websiteSubUrl } = await params
   const { loadResult } = await loadVisitorWedding(websiteSubUrl)
 
+  // Nested `icon.tsx` route conventions are silently dropped whenever an
+  // ancestor layout (the root layout, here) sets `metadata.icons` explicitly —
+  // Next.js then stops auto-merging file-based icons for the whole subtree.
+  // Re-declaring `icons` at this segment reclaims it and points back at our
+  // per-website favicon route.
+  const iconUrl = `/w/${websiteSubUrl}/icon`
+
   if (loadResult.status !== 'ready') {
     return {
       title: 'Wedding Website',
+      icons: [{ rel: 'icon', url: iconUrl, type: 'image/png', sizes: '32x32' }],
     }
   }
 
+  const {
+    brideFirstName,
+    brideLastName,
+    groomFirstName,
+    groomLastName,
+    website: { introText },
+  } = loadResult.weddingData
+
+  const brideName = brideFirstName && brideLastName ? `${brideFirstName} ${brideLastName}` : ''
+  const groomName = groomFirstName && groomLastName ? `${groomFirstName} ${groomLastName}` : ''
+  const title = brideName && groomName ? `${brideName} & ${groomName} Wedding` : 'Wedding Website'
+  const description = introText || `Join us for the wedding of ${brideName} and ${groomName}.`
+
+  const ogImageUrl = `/api/og/wedding/${websiteSubUrl}`
+
   return {
-    title: `${loadResult.weddingData.groomFirstName} ${loadResult.weddingData.groomLastName} and ${loadResult.weddingData.brideFirstName} ${loadResult.weddingData.brideLastName}'s Wedding Website`,
+    title,
+    description,
+    icons: [{ rel: 'icon', url: iconUrl, type: 'image/png', sizes: '32x32' }],
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImageUrl],
+    },
   }
 }
 

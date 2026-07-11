@@ -35,8 +35,10 @@ model Wedding {
   guestTags   GuestTag[]
 
   // Add-on relationships
-  website Website?
-  vendors Vendor[]
+  website    Website?
+  vendors    Vendor[]
+  tasks      Task[]
+  milestones Milestone[]
 
   // Etta AI agent
   ettaActor       EttaActor?
@@ -390,11 +392,13 @@ model Event {
   invitations Invitation[] @relation(name: "Event_Invitations")
   gifts       Gift[]       @relation(name: "Event_Gifts")
   questions   Question[]   @relation(name: "Event_Questions")
+  tasks       Task[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // subEvents   SubEvent[]   @relation(name: "Event_SubEvent")
 
+  @@unique([weddingId, id])
   @@index([weddingId])
 }
 
@@ -567,6 +571,34 @@ enum VendorCategory {
   OTHER
 }
 
+enum TaskCategory {
+  VENUE
+  VENDORS
+  ATTIRE
+  STATIONERY
+  GUESTS
+  LEGAL
+  CEREMONY
+  RECEPTION
+  BEAUTY
+  HONEYMOON
+  BUDGET
+  OTHER
+}
+
+enum MilestoneCategory {
+  SETUP
+  VENDORS
+  INVITATIONS
+  LEGAL
+  FINALE
+}
+
+enum MilestoneOverrideStatus {
+  attested
+  dismissed
+}
+
 // Enum: Vendor selection lifecycle status
 enum VendorStatus {
   NOT_AVAILABLE
@@ -604,6 +636,7 @@ model Vendor {
   customFields Json?
 
   quotes      VendorQuote[]
+  tasks       Task[]
   ratings     VendorRating[]
   vendorNotes VendorNote[]
   images      VendorImage[]
@@ -611,9 +644,72 @@ model Vendor {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([weddingId, id])
   @@index([weddingId])
   @@index([weddingId, category])
   @@index([weddingId, category, createdAt])
+}
+
+model Milestone {
+  id                 String                   @id @default(uuid())
+  weddingId          String
+  wedding            Wedding                  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  key                String
+  title              String
+  category           MilestoneCategory
+  position           Int
+  targetDate         DateTime?                @db.Date
+  userOverrideStatus MilestoneOverrideStatus?
+  attestedAt         DateTime?
+  dismissedAt        DateTime?
+  tasks              Task[]
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+
+  @@unique([weddingId, key])
+  @@unique([weddingId, id])
+  @@index([weddingId])
+  @@index([weddingId, category, position])
+  @@index([weddingId, userOverrideStatus])
+  @@index([weddingId, targetDate])
+}
+
+model Task {
+  id                  String       @id @default(uuid())
+  weddingId           String
+  wedding             Wedding      @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  eventId             String
+  event               Event        @relation(fields: [weddingId, eventId], references: [weddingId, id], onDelete: NoAction)
+  vendorId            String?
+  vendor              Vendor?      @relation(fields: [weddingId, vendorId], references: [weddingId, id], onDelete: NoAction)
+  milestoneId         String?
+  milestone           Milestone?   @relation(fields: [weddingId, milestoneId], references: [weddingId, id], onDelete: NoAction)
+  seedKey             String?
+  title               String
+  category            TaskCategory
+  monthsBeforeWedding Int
+  dueDate             DateTime?    @db.Date
+  description         String?
+  notes               String?
+  isDefault           Boolean      @default(false)
+  position            Int          @default(0)
+  completed           Boolean      @default(false)
+  completedAt         DateTime?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  @@unique([weddingId, seedKey])
+  @@index([weddingId])
+  @@index([eventId])
+  @@index([weddingId, eventId])
+  @@index([vendorId])
+  @@index([weddingId, vendorId])
+  @@index([milestoneId])
+  @@index([weddingId, milestoneId])
+  @@index([weddingId, category, completed, position])
+  @@index([weddingId, eventId, completed, dueDate])
+  @@index([weddingId, monthsBeforeWedding, position])
+  @@index([weddingId, completed, completedAt])
 }
 
 // Per-user star rating for a vendor (nullable presence: missing row == unrated)

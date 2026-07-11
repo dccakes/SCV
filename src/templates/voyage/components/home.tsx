@@ -2,52 +2,59 @@
  * VoyageHome
  *
  * The long-scroll luxury destination-wedding landing page. It composes a
- * cinematic hero (with the nav overlaid), then lays out the enabled content
- * sections in a bespoke editorial order — interleaving the weekend itinerary
- * (built from the couple's events) and the gallery strip, which are not
- * themselves sections — and closes on a combined registry / RSVP invitation and
- * a dark footer.
+ * cinematic hero (with the nav overlaid and a light "Let's Celebrate" card),
+ * then lays out the enabled content sections in a bespoke editorial order —
+ * About Us, the story timeline, the destination feature, the weekend itinerary,
+ * our people, a favourite-moments fotowall, travel & questions and flights —
+ * and closes on a combined registry / RSVP invitation and a dark footer.
  *
  * Every image is optional; each block degrades to an elegant typographic or
- * line-illustrated state when a photo is absent.
+ * line-illustrated state when a photo is absent. The single responsive layout
+ * serves both desktop and mobile.
  */
 
-import { formatDateStandard } from '~/app/utils/helpers'
+import { formatDateHTML5 } from '~/app/utils/helpers'
 import type { WeddingPageData } from '~/server/domains/website/website.types'
 import type {
   WebsiteSection,
   WebsiteSectionType,
 } from '~/server/domains/website-section/website-section.types'
 import type { TemplateSurfaceProps } from '~/templates/types'
-import { HeroBackground, VoyageGalleryStrip } from '~/templates/voyage/components/media'
+import { Decor } from '~/templates/voyage/components/decor'
+import { VoyageFlightSearch } from '~/templates/voyage/components/flight-search'
+import {
+  HeroBackground,
+  type VoyageMoment,
+  VoyageMoments,
+} from '~/templates/voyage/components/media'
 import { VoyageNavbar, type VoyageNavItem } from '~/templates/voyage/components/navbar'
 import {
-  BotanicalSprig,
   bodyFont,
   Eyebrow,
+  FloralCorner,
+  FloralSpray,
   GhostButtonOnDark,
   GoldRule,
+  HaciendaSketch,
+  HeartRule,
   headingFont,
-  IconCalendar,
   IconCoffee,
   IconDinner,
   IconGlass,
-  IconMusic,
-  IconPin,
+  IconHeart,
   IconRings,
-  IconVenue,
+  IconSparkle,
   labelFont,
   PrimaryButton,
+  scriptFont,
   sectionHeadingClass,
 } from '~/templates/voyage/components/primitives'
 import {
   VoyageDestination,
-  VoyageExperiences,
-  VoyageFaq,
   VoyageOurStory,
   VoyageRegistry,
   VoyageTimeline,
-  VoyageTravel,
+  VoyageTravelFaq,
   VoyageWeddingParty,
 } from '~/templates/voyage/components/sections'
 
@@ -62,64 +69,95 @@ function pick<T extends WebsiteSectionType>(
   return sections.find((section): section is Extract<Section, { type: T }> => section.type === type)
 }
 
-const WEEKEND_ICONS = [IconGlass, IconRings, IconDinner, IconMusic, IconCoffee]
+const WEEKEND_ICONS = [IconGlass, IconRings, IconGlass, IconDinner, IconSparkle, IconCoffee]
 
-function eventWhenLabel(event: WeddingEvent): string | null {
-  const formatted = event.date ? formatDateStandard(event.date) : undefined
-  if (formatted && event.startTime) {
-    return `${formatted} · ${event.startTime}`
+function addDays(date: Date, days: number): Date {
+  const result = new Date(date)
+  result.setDate(result.getDate() + days)
+  return result
+}
+
+const WEEKDAY_FORMAT = new Intl.DateTimeFormat('en-US', { weekday: 'long' })
+
+/** Day-of-week ("Saturday") when the event has a date, else null. */
+function eventDayLabel(event: WeddingEvent): string | null {
+  return event.date ? WEEKDAY_FORMAT.format(event.date) : null
+}
+
+/** Calendar order: dated events first (by date, then start time), undated events last. */
+function compareEvents(a: WeddingEvent, b: WeddingEvent): number {
+  const aTime = a.date ? a.date.getTime() : Number.POSITIVE_INFINITY
+  const bTime = b.date ? b.date.getTime() : Number.POSITIVE_INFINITY
+  if (aTime !== bTime) {
+    return aTime - bTime
   }
-  return formatted ?? event.startTime ?? null
+  return (a.startTime ?? '').localeCompare(b.startTime ?? '')
 }
 
 function WeekendItinerary({ events }: { events: WeddingEvent[] }) {
   if (events.length === 0) {
     return null
   }
-  const items = events.slice(0, 5)
+  const items = [...events].sort(compareEvents).slice(0, 6)
   return (
     <section
       id='wedding-weekend'
-      className='w-full scroll-mt-24 bg-[#F7F3EA] px-6 py-20 sm:py-24 lg:px-10'
+      className='relative w-full scroll-mt-24 overflow-hidden bg-[#F7F3EC] px-6 py-20 sm:py-24 lg:px-10'
     >
-      <div className='mx-auto max-w-6xl'>
+      <Decor
+        name='floralSpray2'
+        className='pointer-events-none absolute top-1/2 -left-10 hidden h-[22rem] w-auto -translate-y-1/2 -scale-x-100 lg:block'
+        fallback={
+          <FloralCorner className='pointer-events-none absolute top-8 left-3 hidden h-24 w-auto -scale-x-100 opacity-70 lg:block' />
+        }
+      />
+      <Decor
+        name='floralSpray2'
+        className='pointer-events-none absolute top-1/2 -right-10 hidden h-[22rem] w-auto -translate-y-1/2 lg:block'
+        fallback={
+          <FloralCorner className='pointer-events-none absolute right-3 bottom-8 hidden h-24 w-auto -scale-y-100 opacity-70 lg:block' />
+        }
+      />
+      <div className='relative mx-auto max-w-6xl'>
         <div className='mb-14 flex flex-col items-center gap-4 text-center'>
           <Eyebrow>Wedding Weekend</Eyebrow>
-          <h2 className={sectionHeadingClass}>A Weekend to Remember</h2>
-          <GoldRule />
+          <h2 className={`${scriptFont} text-5xl text-[#B15C41] sm:text-6xl`}>
+            Let&rsquo;s Celebrate Together
+          </h2>
         </div>
-        <ol className='relative grid gap-12 sm:grid-cols-2 lg:grid-cols-5 lg:gap-6'>
-          <span
-            aria-hidden='true'
-            className='absolute top-7 right-[10%] left-[10%] hidden h-px bg-[#B89455]/40 lg:block'
-          />
+        <ol className='relative flex flex-wrap justify-center gap-x-10 gap-y-12 lg:flex-nowrap lg:justify-center lg:gap-x-0 lg:divide-x lg:divide-[#DDD2C0]/80'>
           {items.map((event, index) => {
             const Icon = WEEKEND_ICONS[index % WEEKEND_ICONS.length] ?? IconGlass
-            const when = eventWhenLabel(event)
+            const day = eventDayLabel(event)
             return (
-              <li key={event.id} className='relative flex flex-col items-center gap-3 text-center'>
-                <span className='flex h-14 w-14 items-center justify-center rounded-full border border-[#B89455]/60 bg-[#F7F3EA] text-[#B89455] ring-4 ring-[#F7F3EA]'>
-                  <Icon className='h-6 w-6' />
+              <li
+                key={event.id}
+                className='relative flex w-32 flex-col items-center gap-2 text-center sm:w-40 lg:w-auto lg:flex-1 lg:px-3'
+              >
+                <span className='flex h-14 w-14 items-center justify-center bg-[#F7F3EC] text-[#8A7A66] ring-4 ring-[#F7F3EC]'>
+                  <Icon className='h-9 w-9' />
                 </span>
-                {when ? (
+                {day ? (
                   <span
-                    className={`${labelFont} text-[#B89455] text-[0.58rem] uppercase tracking-[0.22em]`}
+                    className={`${labelFont} mt-1 text-[#B15C41] text-[0.58rem] uppercase tracking-[0.24em]`}
                   >
-                    {when}
+                    {day}
                   </span>
                 ) : null}
-                <span className={`${headingFont} text-2xl text-[#1E1C18] italic`}>
+                <span
+                  className={`${labelFont} font-semibold text-[#1D2320] text-[0.74rem] uppercase tracking-[0.2em]`}
+                >
                   {event.name}
                 </span>
-                {event.venue ? (
+                {event.startTime ? (
                   <span
-                    className={`${labelFont} text-[#746E64] text-[0.58rem] uppercase tracking-[0.2em]`}
+                    className={`${labelFont} text-[#6F675D] text-[0.62rem] uppercase tracking-[0.2em]`}
                   >
-                    {event.venue}
+                    {event.startTime}
                   </span>
                 ) : null}
                 {event.description ? (
-                  <p className={`${bodyFont} max-w-[15rem] text-[#746E64] text-sm leading-6`}>
+                  <p className={`${bodyFont} mt-1 max-w-[15rem] text-[#6F675D] text-sm leading-6`}>
                     {event.description}
                   </p>
                 ) : null}
@@ -132,25 +170,12 @@ function WeekendItinerary({ events }: { events: WeddingEvent[] }) {
   )
 }
 
-function HeroInfoRow({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <div className='flex items-center gap-4'>
-      <span className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#F8F1E7]/25 text-[#D1B879]'>
-        {icon}
-      </span>
-      <span className={`${labelFont} text-[#F8F1E7]/90 text-[0.66rem] uppercase tracking-[0.24em]`}>
-        {children}
-      </span>
-    </div>
-  )
-}
-
 export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSurfaceProps>) {
   const { website } = weddingData
-  const groom = weddingData.groomFirstName ?? ''
   const bride = weddingData.brideFirstName ?? ''
-  const monogram = `${groom?.[0] ?? 'A'} | ${bride?.[0] ?? 'B'}`.toUpperCase()
-  const coupleNames = [groom, bride].filter(Boolean).join(' & ') || 'Our Wedding'
+  const groom = weddingData.groomFirstName ?? ''
+  const monogram = `${bride?.[0] ?? 'B'} | ${groom?.[0] ?? 'G'}`.toUpperCase()
+  const coupleNames = [bride, groom].filter(Boolean).join(' & ') || 'Our Wedding'
 
   const heroUrl = website.headerImageUrl ?? website.coverPhotoUrl ?? null
   const dateLabel = weddingData.date?.standardFormat ?? null
@@ -166,25 +191,51 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
   const faq = pick(weddingData.sections, 'FAQ')
   const registry = pick(weddingData.sections, 'REGISTRY')
 
-  const weddingEvent =
-    weddingData.events.find((event) => event.name === 'Wedding Day') ?? weddingData.events[0]
   const location = destination?.content.location ?? null
-  const venue = destination?.content.venueName ?? weddingEvent?.venue ?? null
+
+  const galleryUrls = website.coupleImageUrls ?? []
+  const aboutImageUrl = galleryUrls[0] ?? null
+
+  // Favourite-moments fotowall: prefer captioned experiences, else the gallery.
+  const moments: VoyageMoment[] = experiences?.content.items.some((item) => item.imageUrl)
+    ? experiences.content.items
+        .filter((item) => item.imageUrl)
+        .map((item) => ({
+          imageUrl: item.imageUrl as string,
+          title: item.title,
+          description: item.description,
+        }))
+    : galleryUrls.map((url) => ({ imageUrl: url }))
+
+  const eventDates = weddingData.events
+    .map((event) => event.date)
+    .filter((date): date is Date => date !== null)
+    .sort((a, b) => a.getTime() - b.getTime())
+  const firstEventDate = eventDates[0] ?? null
+  const lastEventDate = eventDates[eventDates.length - 1] ?? null
+  const flightDepartPlaceholder = firstEventDate
+    ? (formatDateHTML5(addDays(firstEventDate, -1)) ?? null)
+    : null
+  const flightReturnPlaceholder = lastEventDate
+    ? (formatDateHTML5(addDays(lastEventDate, 1)) ?? null)
+    : null
 
   // Build the in-page nav from what actually exists, in editorial order.
   const navItems: VoyageNavItem[] = []
-  if (story || ourStory) navItems.push({ label: 'Our Story', href: '#our-story' })
-  if (destination) navItems.push({ label: 'The Destination', href: '#destination' })
+  if (ourStory) navItems.push({ label: 'About Us', href: '#our-story' })
+  if (story) navItems.push({ label: 'Our Story', href: '#timeline' })
   if (weddingData.events.length > 0)
     navItems.push({ label: 'Wedding Weekend', href: '#wedding-weekend' })
-  if (travel) navItems.push({ label: 'Travel & Stay', href: '#travel' })
-  if (registry) navItems.push({ label: 'Registry', href: '#registry' })
+  if (destination) navItems.push({ label: 'The Destination', href: '#destination' })
+  if (weddingParty) navItems.push({ label: 'Wedding Party', href: '#wedding-party' })
+  if (travel) navItems.push({ label: 'Travel', href: '#travel' })
+  if (faq) navItems.push({ label: 'FAQ', href: '#faq' })
 
   const firstAnchor = navItems[0]?.href ?? '#registry'
   const rsvpHref = website.isRsvpEnabled ? `${path}/rsvp` : undefined
 
   return (
-    <main id='top' className='w-full bg-[#F7F3EA]'>
+    <main id='top' className='w-full bg-[#F7F3EC]'>
       <HeroBackground url={heroUrl}>
         <div className='flex min-h-[92vh] flex-col'>
           <VoyageNavbar
@@ -193,109 +244,126 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
             navItems={navItems}
             rsvpHref={rsvpHref}
           />
-          <div className='mx-auto flex w-full max-w-6xl flex-1 items-end px-6 pt-10 pb-16 lg:px-10'>
-            <div className='grid w-full items-end gap-12 lg:grid-cols-12'>
+          <div className='mx-auto flex w-full max-w-6xl flex-1 items-center px-6 pt-10 pb-16 lg:items-end lg:px-10'>
+            <div className='grid w-full items-center gap-12 lg:grid-cols-12 lg:items-end'>
               <div className='flex flex-col gap-7 lg:col-span-7'>
-                <Eyebrow className='text-[#D1B879]'>{coupleNames}</Eyebrow>
                 <h1
-                  className={`${headingFont} font-light text-5xl text-[#F8F1E7] leading-[1.04] sm:text-6xl lg:text-7xl`}
+                  className={`${headingFont} font-light text-5xl text-[#F7F3EC] leading-[1.08] [text-shadow:0_2px_16px_rgba(13,17,15,0.5)] sm:text-6xl lg:text-7xl`}
                 >
                   {heroHeadline ? (
                     <>
                       <span className='whitespace-pre-line'>{heroHeadline}</span>
                       {heroHeadlineAccent ? (
-                        <span className='text-[#D1B879] italic'> {heroHeadlineAccent}</span>
+                        <span
+                          className={`${scriptFont} mt-2 block text-[#EFE0D2] text-[1.15em] leading-[1.2]`}
+                        >
+                          {heroHeadlineAccent}
+                          <IconHeart className='ml-4 inline-block h-[0.32em] w-[0.32em] align-middle' />
+                        </span>
                       ) : null}
                     </>
                   ) : (
                     <>
-                      Our Greatest
+                      Our Forever
                       <br />
-                      Adventure
-                      <br />
-                      Begins <span className='text-[#D1B879] italic'>Here.</span>
+                      Begins in
+                      <span
+                        className={`${scriptFont} mt-2 block text-[#EFE0D2] text-[1.15em] leading-[1.2]`}
+                      >
+                        {(location ?? 'Paradise').split(',')[0]}
+                        <IconHeart className='ml-4 inline-block h-[0.32em] w-[0.32em] align-middle' />
+                      </span>
                     </>
                   )}
                 </h1>
-                <p className={`${bodyFont} max-w-xl text-[#F8F1E7]/85 text-lg leading-8`}>
+                <p
+                  className={`${bodyFont} max-w-xl text-[#F7F3EC]/90 text-lg leading-8 [text-shadow:0_1px_10px_rgba(13,17,15,0.45)]`}
+                >
                   {introText ??
-                    'Join us as we embark on a journey across cities, cultures, and moments — celebrating a love story years in the making.'}
+                    'We can’t wait to celebrate our love with you in the city that stole our hearts.'}
                 </p>
                 <div className='flex flex-wrap items-center gap-4 pt-1'>
-                  <PrimaryButton href={firstAnchor}>Begin the Journey</PrimaryButton>
-                  {rsvpHref ? (
-                    <GhostButtonOnDark href={rsvpHref}>RSVP Now</GhostButtonOnDark>
-                  ) : null}
+                  {rsvpHref ? <PrimaryButton href={rsvpHref}>RSVP Now</PrimaryButton> : null}
+                  <GhostButtonOnDark href={firstAnchor}>View Details</GhostButtonOnDark>
                 </div>
               </div>
-
-              {dateLabel || location || venue ? (
-                <div className='lg:col-span-5 lg:justify-self-end'>
-                  <div className='flex flex-col gap-5 rounded-[3px] border border-[#F8F1E7]/20 bg-[#0c0b09]/45 px-7 py-7 backdrop-blur-sm'>
-                    {dateLabel ? (
-                      <HeroInfoRow icon={<IconCalendar className='h-4 w-4' />}>
-                        {dateLabel}
-                      </HeroInfoRow>
-                    ) : null}
-                    {location ? (
-                      <HeroInfoRow icon={<IconPin className='h-4 w-4' />}>{location}</HeroInfoRow>
-                    ) : null}
-                    {venue ? (
-                      <HeroInfoRow icon={<IconVenue className='h-4 w-4' />}>{venue}</HeroInfoRow>
-                    ) : null}
-                  </div>
-                </div>
-              ) : null}
             </div>
           </div>
         </div>
       </HeroBackground>
 
       {/* Editorial composition, in the order the design intends. */}
+      {ourStory ? <VoyageOurStory content={ourStory.content} imageUrl={aboutImageUrl} /> : null}
       {story ? <VoyageTimeline content={story.content} /> : null}
-      {ourStory ? <VoyageOurStory content={ourStory.content} /> : null}
       {destination ? <VoyageDestination content={destination.content} /> : null}
       <WeekendItinerary events={weddingData.events} />
-      {experiences ? <VoyageExperiences content={experiences.content} /> : null}
       {weddingParty ? <VoyageWeddingParty content={weddingParty.content} /> : null}
-      {travel ? <VoyageTravel content={travel.content} /> : null}
-      <VoyageGalleryStrip urls={website.coupleImageUrls} />
+      <VoyageMoments moments={moments} />
+      <VoyageTravelFaq travel={travel?.content ?? null} faq={faq?.content ?? null} />
+      <VoyageFlightSearch
+        departPlaceholder={flightDepartPlaceholder}
+        returnPlaceholder={flightReturnPlaceholder}
+      />
 
-      {/* Registry + RSVP invitation. */}
+      {/* Registry + RSVP invitation, framed with botanical line art. */}
       {registry || rsvpHref ? (
         <section
           id='registry'
-          className='w-full scroll-mt-24 bg-[#F7F3EA] px-6 py-20 sm:py-24 lg:px-10'
+          className='relative w-full scroll-mt-24 overflow-hidden bg-[#FBF8F2] px-6 py-20 sm:py-24 lg:px-10'
         >
-          <div className='mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16'>
+          <Decor
+            name='floralCorner'
+            className='pointer-events-none absolute -top-6 -left-8 hidden h-56 w-auto -scale-x-100 -scale-y-100 lg:block'
+            fallback={
+              <div className='pointer-events-none absolute top-1/2 left-0 hidden -translate-y-1/2 items-end gap-2 lg:flex'>
+                <HaciendaSketch className='h-24 w-auto text-[#7C7264]/50' />
+                <FloralSpray className='h-[24rem] w-auto opacity-90' />
+              </div>
+            }
+          />
+          <Decor
+            name='floralCorner'
+            className='pointer-events-none absolute -right-8 -bottom-6 hidden h-56 w-auto lg:block'
+            fallback={
+              <FloralSpray className='pointer-events-none absolute top-1/2 right-0 hidden h-[26rem] w-auto -translate-y-1/2 -scale-x-100 opacity-90 lg:block' />
+            }
+          />
+          <div className='relative mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16'>
             {registry ? (
               <VoyageRegistry content={registry.content} />
             ) : (
               <div className='flex flex-col gap-6'>
-                <Eyebrow>RSVP</Eyebrow>
-                <h2 className={`${sectionHeadingClass} leading-tight`}>Will You Join Us?</h2>
+                <Eyebrow>Kindly RSVP</Eyebrow>
+                <h2 className={`${sectionHeadingClass} italic leading-tight`}>
+                  We can&rsquo;t wait to celebrate with you!
+                </h2>
                 <GoldRule className='self-start' />
-                <p className={`${bodyFont} max-w-xl text-[#746E64] text-lg leading-8`}>
+                <p className={`${bodyFont} max-w-xl text-[#6F675D] text-lg leading-8`}>
                   We would be honored to celebrate with you. Let us know if you can make the
                   journey.
                 </p>
+                <Decor
+                  name='hacienda'
+                  className='mt-2 hidden h-64 w-auto object-contain lg:block'
+                />
               </div>
             )}
             {rsvpHref ? (
-              <div className='rounded-[3px] border border-[#DED4C4] bg-[#FBF8F1] px-8 py-10 text-center'>
+              <div className='rounded-[3px] border border-[#DDD2C0] bg-[#F7F3EC] px-8 py-10 text-center'>
                 <Eyebrow>Your Invitation</Eyebrow>
-                <p className={`${headingFont} mt-4 text-3xl text-[#1E1C18]`}>{coupleNames}</p>
+                <p className={`${headingFont} mt-4 text-3xl text-[#1D2320]`}>{coupleNames}</p>
                 {dateLabel ? (
                   <p
-                    className={`${labelFont} mt-2 text-[#746E64] text-[0.66rem] uppercase tracking-[0.24em]`}
+                    className={`${labelFont} mt-2 text-[#6F675D] text-[0.66rem] uppercase tracking-[0.24em]`}
                   >
                     {dateLabel}
                     {location ? ` · ${location}` : ''}
                   </p>
                 ) : null}
-                <div className='mt-7 flex justify-center'>
+                <HeartRule className='mt-6' />
+                <div className='mt-6 flex justify-center'>
                   <PrimaryButton href={rsvpHref} className='w-full max-w-xs'>
-                    Confirm Your Journey
+                    Send RSVP
                   </PrimaryButton>
                 </div>
               </div>
@@ -303,8 +371,6 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
           </div>
         </section>
       ) : null}
-
-      {faq ? <VoyageFaq content={faq.content} /> : null}
 
       <VoyageFooter
         monogram={monogram}
@@ -330,28 +396,36 @@ function VoyageFooter({
   location: string | null
 }) {
   return (
-    <footer className='w-full bg-[#11110F] px-6 py-16 text-[#F8F1E7] lg:px-10'>
-      <div className='mx-auto grid max-w-6xl items-center gap-10 text-center md:grid-cols-3 md:text-left'>
-        <div className='flex justify-center md:justify-start'>
-          <span className={`${headingFont} text-2xl tracking-[0.2em]`}>{monogram}</span>
-        </div>
-        <div className='flex flex-col items-center gap-3'>
-          <p className={`${bodyFont} max-w-md text-[#F8F1E7]/75 text-sm leading-7`}>
-            Thank you for being part of our story. Every destination is more meaningful when shared
-            with those you love.
-          </p>
-          <span className={`${headingFont} text-2xl text-[#D1B879] italic`}>{coupleNames}</span>
-          {dateLabel || location ? (
-            <span
-              className={`${labelFont} text-[#F8F1E7]/60 text-[0.6rem] uppercase tracking-[0.28em]`}
-            >
-              {[location, dateLabel].filter(Boolean).join(' · ')}
-            </span>
-          ) : null}
-        </div>
-        <div className='flex justify-center md:justify-end'>
-          <BotanicalSprig className='h-20 w-auto text-[#B89455]/50' />
-        </div>
+    <footer className='relative w-full overflow-hidden border-[#DDD2C0] border-t bg-[#F7F3EC] px-6 py-16 lg:px-10'>
+      <Decor
+        name='floralBranch'
+        className='pointer-events-none absolute -top-4 -left-6 hidden h-40 w-auto -scale-x-100 opacity-80 lg:block'
+        fallback={
+          <FloralCorner className='pointer-events-none absolute top-6 left-4 hidden h-20 w-auto -scale-x-100 opacity-60 lg:block' />
+        }
+      />
+      <Decor
+        name='floralBranch'
+        className='pointer-events-none absolute -top-4 -right-6 hidden h-40 w-auto opacity-80 lg:block'
+        fallback={
+          <FloralCorner className='pointer-events-none absolute top-6 right-4 hidden h-20 w-auto opacity-60 lg:block' />
+        }
+      />
+      <div className='relative mx-auto flex max-w-6xl flex-col items-center gap-4 text-center'>
+        <span className={`${headingFont} text-3xl text-[#1D2320] tracking-[0.2em]`}>
+          {monogram}
+        </span>
+        {dateLabel || location ? (
+          <span className={`${labelFont} text-[#6F675D] text-[0.6rem] uppercase tracking-[0.28em]`}>
+            {[coupleNames, dateLabel, location].filter(Boolean).join(' · ')}
+          </span>
+        ) : (
+          <span className={`${headingFont} text-2xl text-[#B15C41] italic`}>{coupleNames}</span>
+        )}
+        <p className={`${scriptFont} mt-1 text-3xl text-[#B15C41]`}>
+          Thank you for being part of our beginning
+          <IconHeart className='ml-3 inline-block h-4 w-4 align-middle text-[#B15C41]' />
+        </p>
       </div>
     </footer>
   )

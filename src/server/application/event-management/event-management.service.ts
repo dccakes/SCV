@@ -16,6 +16,7 @@ import { TRPCError } from '@trpc/server'
 import { RSVP_STATUS } from '~/lib/constants'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
+import { checklistSeedingService } from '~/server/domains/checklist'
 import type { EventRepository } from '~/server/domains/event/event.repository'
 import type { Event } from '~/server/domains/event/event.types'
 import type { CreateEventInput, UpdateEventInput } from '~/server/domains/event/event.validator'
@@ -78,6 +79,8 @@ export class EventManagementService {
           })),
         })
       }
+
+      await checklistSeedingService.ensureSeeded(weddingId, tx)
 
       return newEvent as Event
     })

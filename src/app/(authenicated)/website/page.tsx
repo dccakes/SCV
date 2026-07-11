@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { RsvpToggleCard } from '~/app/_components/website/rsvp-toggle-card'
 import { SectionsEditor } from '~/app/_components/website/sections-editor'
 import { TemplatePicker } from '~/app/_components/website/template-picker'
 import { WebsiteDisabledCallout } from '~/app/_components/website/website-disabled-callout'
@@ -83,6 +84,10 @@ export default async function WebsitePage() {
             <>
               <WebsitePasswordCard
                 initialIsPasswordEnabled={existingWebsite?.isPasswordEnabled ?? false}
+              />
+              <RsvpToggleCard
+                websiteId={websiteId}
+                initialIsRsvpEnabled={existingWebsite?.isRsvpEnabled ?? true}
               />
               <TemplatePicker
                 templates={listTemplateSummaries()}

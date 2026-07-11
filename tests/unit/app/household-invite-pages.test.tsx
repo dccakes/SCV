@@ -40,12 +40,12 @@ const inviteData = {
   weddingId: 'wedding-123',
   expiresAt: new Date('2027-06-18T12:00:00.000Z'),
   wedding: {
-    groomFirstName: 'Diego',
-    groomLastName: 'Carvallo',
-    brideFirstName: 'Laura',
-    brideLastName: 'Zurich',
+    groomFirstName: 'Harry',
+    groomLastName: 'Potter',
+    brideFirstName: 'Hermione',
+    brideLastName: 'Granger',
     date: new Date('2027-05-30T12:00:00.000Z'),
-    venue: 'Puebla, Mexico',
+    venue: 'Hogsmeade, Scotland',
   },
   events: [
     { name: 'Ceremony', date: new Date('2027-05-30T00:00:00.000Z'), venue: 'Hacienda' },
@@ -67,6 +67,7 @@ const inviteData = {
       lastName: 'Lovelace',
       email: 'ada@example.com',
       phone: null,
+      isTagAlong: false,
     },
   ],
 }
@@ -79,6 +80,25 @@ describe('household invite pages', () => {
     mockUpdateHouseholdDetails.mockReset()
     mockGetPublicWeddingSummary.mockReset()
     jest.useFakeTimers().setSystemTime(new Date('2026-06-18T12:00:00.000Z'))
+
+    // Skip the EnvelopeReveal intro so these tests assert the underlying page
+    // content deterministically (the intro is covered by envelope-reveal.test).
+    // A reduced-motion guest sees the card immediately without the animated
+    // envelope, which otherwise renders the couple names a second time.
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: jest.fn().mockImplementation((query: string) => ({
+        matches: query === '(prefers-reduced-motion: reduce)',
+        media: query,
+        onchange: null,
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+        addListener: jest.fn(),
+        removeListener: jest.fn(),
+        dispatchEvent: jest.fn(),
+      })),
+    })
   })
 
   afterEach(() => {
@@ -87,38 +107,43 @@ describe('household invite pages', () => {
 
   it('validates the code route, sets a code-matched household invite cookie, and redirects', async () => {
     mockGetInviteData.mockResolvedValue(inviteData)
-    const { GET } = await import('~/app/w/[websiteSubUrl]/invite/[code]/route')
+    const { GET } = await import('~/app/w/[websiteSubUrl]/save-the-date/[code]/route')
 
-    const response = await GET(new Request('https://example.com/w/diego-and-laura/invite/code'), {
-      params: Promise.resolve({
-        websiteSubUrl: 'diego-and-laura',
-        code: 'ab-4f9k2c',
-      }),
-    })
+    const response = await GET(
+      new Request('https://example.com/w/harry-and-hermione/save-the-date/code'),
+      {
+        params: Promise.resolve({
+          websiteSubUrl: 'harry-and-hermione',
+          code: 'ab-4f9k2c',
+        }),
+      }
+    )
 
-    expect(mockGetInviteData).toHaveBeenCalledWith('diego-and-laura', 'ab-4f9k2c')
+    expect(mockGetInviteData).toHaveBeenCalledWith('harry-and-hermione', 'ab-4f9k2c')
     expect(response.status).toBe(307)
-    expect(response.headers.get('location')).toBe('https://example.com/w/diego-and-laura/invite')
+    expect(response.headers.get('location')).toBe(
+      'https://example.com/w/harry-and-hermione/save-the-date'
+    )
     expect(response.headers.get('x-robots-tag')).toBe('noindex, nofollow')
     expect(response.headers.get('set-cookie')).toEqual(
-      expect.stringContaining('household_invite_diego-and-laura=ab-4f9k2c')
+      expect.stringContaining('household_invite_harry-and-hermione=ab-4f9k2c')
     )
     expect(response.headers.get('set-cookie')).toEqual(expect.stringContaining('Max-Age=31536000'))
     // Scoped to `/w/<slug>` so the same cookie is sent on the website routes,
     // letting recognised guests skip the password prompt.
     expect(response.headers.get('set-cookie')).toEqual(
-      expect.stringContaining('Path=/w/diego-and-laura;')
+      expect.stringContaining('Path=/w/harry-and-hermione;')
     )
   })
 
   it('renders the authenticated save-the-date page with household names and wedding details', async () => {
     mockCookieGet.mockReturnValue({ value: 'cookie-code' })
     mockGetInviteData.mockResolvedValue(inviteData)
-    const InvitePage = (await import('~/app/w/[websiteSubUrl]/invite/page')).default
+    const InvitePage = (await import('~/app/w/[websiteSubUrl]/save-the-date/page')).default
 
     render(
       await InvitePage({
-        params: Promise.resolve({ websiteSubUrl: 'diego-and-laura' }),
+        params: Promise.resolve({ websiteSubUrl: 'harry-and-hermione' }),
         searchParams: Promise.resolve({ updated: '1' }),
       })
     )
@@ -128,11 +153,17 @@ describe('household invite pages', () => {
     // the two events span May 30–31, and the first event's venue is the location.
     expect(screen.getByText('May 30, 2027 – May 31, 2027')).toBeInTheDocument()
     expect(screen.getByText('Hacienda')).toBeInTheDocument()
-    expect(screen.getByText('Diego & Laura')).toBeInTheDocument()
+    expect(screen.getByText('Harry & Hermione')).toBeInTheDocument()
     expect(screen.getByText('Ada Lovelace')).toBeInTheDocument()
+    // No tag-along guests in this household, so the "joining the trip" callout is absent.
+    expect(screen.queryByText(/joining the trip/i)).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: /update our details/i })).toHaveAttribute(
       'href',
-      '/w/diego-and-laura/invite/update'
+      '/w/harry-and-hermione/save-the-date/update'
+    )
+    expect(screen.getByRole('link', { name: /view our website/i })).toHaveAttribute(
+      'href',
+      '/w/harry-and-hermione'
     )
     expect(screen.getByText('Your details were updated.')).toBeInTheDocument()
 
@@ -154,11 +185,11 @@ describe('household invite pages', () => {
         message: 'Join us in Puebla for the celebration.',
       },
     })
-    const InvitePage = (await import('~/app/w/[websiteSubUrl]/invite/page')).default
+    const InvitePage = (await import('~/app/w/[websiteSubUrl]/save-the-date/page')).default
 
     const { container } = render(
       await InvitePage({
-        params: Promise.resolve({ websiteSubUrl: 'diego-and-laura' }),
+        params: Promise.resolve({ websiteSubUrl: 'harry-and-hermione' }),
         searchParams: Promise.resolve({}),
       })
     )
@@ -175,11 +206,11 @@ describe('household invite pages', () => {
   it('falls back to the default template and copy when none are customised', async () => {
     mockCookieGet.mockReturnValue({ value: 'cookie-token' })
     mockGetInviteData.mockResolvedValue({ ...inviteData, templateId: null })
-    const InvitePage = (await import('~/app/w/[websiteSubUrl]/invite/page')).default
+    const InvitePage = (await import('~/app/w/[websiteSubUrl]/save-the-date/page')).default
 
     const { container } = render(
       await InvitePage({
-        params: Promise.resolve({ websiteSubUrl: 'diego-and-laura' }),
+        params: Promise.resolve({ websiteSubUrl: 'harry-and-hermione' }),
         searchParams: Promise.resolve({}),
       })
     )
@@ -191,49 +222,49 @@ describe('household invite pages', () => {
 
   it('builds save-the-date open graph metadata from the wedding date and venue', async () => {
     mockGetPublicWeddingSummary.mockResolvedValue({
-      groomFirstName: 'Diego',
-      brideFirstName: 'Holly',
+      groomFirstName: 'Ronald',
+      brideFirstName: 'Ginny',
       date: new Date('2027-05-30T12:00:00.000Z'),
-      venue: 'Puebla, Mexico',
+      venue: 'Hogsmeade, Scotland',
     })
-    const { generateMetadata } = await import('~/app/w/[websiteSubUrl]/invite/page')
+    const { generateMetadata } = await import('~/app/w/[websiteSubUrl]/save-the-date/page')
 
     const metadata = await generateMetadata({
-      params: Promise.resolve({ websiteSubUrl: 'holly-and-diego' }),
+      params: Promise.resolve({ websiteSubUrl: 'ronald-and-ginny' }),
     })
 
-    expect(mockGetPublicWeddingSummary).toHaveBeenCalledWith('holly-and-diego')
-    const expectedTitle = "Save the Date — Diego & Holly's Wedding"
+    expect(mockGetPublicWeddingSummary).toHaveBeenCalledWith('ronald-and-ginny')
+    const expectedTitle = "Save the Date — Ronald & Ginny's Wedding"
     expect(metadata.title).toBe(expectedTitle)
     expect(metadata.openGraph?.title).toBe(expectedTitle)
     expect(metadata.twitter?.title).toBe(expectedTitle)
     expect(metadata.openGraph?.description).toContain('May 30, 2027')
-    expect(metadata.openGraph?.description).toContain('Puebla, Mexico')
+    expect(metadata.openGraph?.description).toContain('Hogsmeade, Scotland')
     expect(metadata.robots).toEqual({ index: false, follow: false })
   })
 
   it('omits the date and venue from metadata when the wedding has neither yet', async () => {
     mockGetPublicWeddingSummary.mockResolvedValue({
-      groomFirstName: 'Diego',
-      brideFirstName: 'Holly',
+      groomFirstName: 'Ronald',
+      brideFirstName: 'Ginny',
       date: null,
       venue: null,
     })
-    const { generateMetadata } = await import('~/app/w/[websiteSubUrl]/invite/page')
+    const { generateMetadata } = await import('~/app/w/[websiteSubUrl]/save-the-date/page')
 
     const metadata = await generateMetadata({
-      params: Promise.resolve({ websiteSubUrl: 'holly-and-diego' }),
+      params: Promise.resolve({ websiteSubUrl: 'ronald-and-ginny' }),
     })
 
-    expect(metadata.title).toBe("Save the Date — Diego & Holly's Wedding")
+    expect(metadata.title).toBe("Save the Date — Ronald & Ginny's Wedding")
     expect(metadata.openGraph?.description).toBe(
-      'Diego & Holly are getting married. Open your household invitation to confirm your details.'
+      'Ronald & Ginny are getting married. Open your household save the date to confirm your details.'
     )
   })
 
   it('falls back to noindex-only metadata when the slug has no wedding', async () => {
     mockGetPublicWeddingSummary.mockResolvedValue(null)
-    const { generateMetadata } = await import('~/app/w/[websiteSubUrl]/invite/page')
+    const { generateMetadata } = await import('~/app/w/[websiteSubUrl]/save-the-date/page')
 
     const metadata = await generateMetadata({
       params: Promise.resolve({ websiteSubUrl: 'unknown-slug' }),
@@ -247,11 +278,11 @@ describe('household invite pages', () => {
   it('renders a guest-friendly invalid invite page without a valid household cookie', async () => {
     mockCookieGet.mockReturnValue(undefined)
     mockGetInviteData.mockResolvedValue(null)
-    const InvitePage = (await import('~/app/w/[websiteSubUrl]/invite/page')).default
+    const InvitePage = (await import('~/app/w/[websiteSubUrl]/save-the-date/page')).default
 
     render(
       await InvitePage({
-        params: Promise.resolve({ websiteSubUrl: 'diego-and-laura' }),
+        params: Promise.resolve({ websiteSubUrl: 'harry-and-hermione' }),
         searchParams: Promise.resolve({ invalid: '1' }),
       })
     )

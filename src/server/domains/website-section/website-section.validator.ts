@@ -59,7 +59,7 @@ const optionalImageUrlSchema = z
 const optionalLinkUrlSchema = z
   .string()
   .url('Enter a valid URL')
-  .max(500, 'URL must be 500 characters or fewer')
+  .max(1000, 'URL must be 1000 characters or fewer')
   .optional()
 
 export const timelineSectionContentSchema = z.object({
@@ -121,6 +121,8 @@ export const travelSectionContentSchema = z.object({
         description: z.string().max(300, 'Description must be 300 characters or fewer').optional(),
         imageUrl: optionalImageUrlSchema,
         url: optionalLinkUrlSchema,
+        blurb: z.string().max(1000, 'Blurb must be 1000 characters or fewer').optional(),
+        buttonLabel: z.string().max(60, 'Button text must be 60 characters or fewer').optional(),
       })
     )
     .max(8, 'You can add up to 8 stays')

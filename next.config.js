@@ -9,10 +9,6 @@ await import('./src/env.js')
 const config = {
   // Enable standalone output for Docker deployments
   output: 'standalone',
-  eslint: {
-    // Temporarily ignore ESLint during builds due to v9 config format issue
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     // Still type check during builds
     ignoreBuildErrors: false,
@@ -36,6 +32,23 @@ const config = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/oswp-pHsc1/static/:path*',
+        destination: 'https://us-assets.i.posthog.com/static/:path*',
+      },
+      {
+        source: '/oswp-pHsc1/array/:path*',
+        destination: 'https://us-assets.i.posthog.com/array/:path*',
+      },
+      {
+        source: '/oswp-pHsc1/:path*',
+        destination: 'https://us.i.posthog.com/:path*',
+      },
+    ]
+  },
+  skipTrailingSlashRedirect: true,
   env: {
     // Resolve app URL: explicit env var → Vercel branch URL → localhost fallback
     NEXT_PUBLIC_APP_URL:
