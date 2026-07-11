@@ -13,6 +13,25 @@ import type {
   HouseholdWithGuestsAndGifts,
 } from '~/server/domains/household/household.types'
 
+/**
+ * Shape returned to the guest-facing RSVP flow: the household with each guest's
+ * invitations and tag assignments. Shared by name-search and invite-code
+ * recognition so both paths hand the RSVP form identical data.
+ */
+export const rsvpHouseholdSelect = {
+  id: true,
+  guests: {
+    include: {
+      invitations: true,
+      guestTagAssignments: {
+        select: {
+          guestTagId: true,
+        },
+      },
+    },
+  },
+} satisfies Prisma.HouseholdSelect
+
 export class HouseholdRepository {
   constructor(private db: PrismaClient | Prisma.TransactionClient) {}
 
@@ -273,19 +292,7 @@ export class HouseholdRepository {
           },
         ],
       },
-      select: {
-        id: true,
-        guests: {
-          include: {
-            invitations: true,
-            guestTagAssignments: {
-              select: {
-                guestTagId: true,
-              },
-            },
-          },
-        },
-      },
+      select: rsvpHouseholdSelect,
     })
   }
 

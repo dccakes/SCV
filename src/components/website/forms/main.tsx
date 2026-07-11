@@ -50,7 +50,9 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
   const rsvpFormData = useRsvpForm()
   const numSteps = useRef(NUM_STATIC_STEPS)
   const updateRsvpForm = useUpdateRsvpForm()
-  const [currentStep, setCurrentStep] = useState<number>(1)
+  // A recognized guest (identified by their save-the-date invite) skips the name
+  // search and lands on the confirm step (step 2).
+  const [currentStep, setCurrentStep] = useState<number>(rsvpFormData.recognized ? 2 : 1)
   const [submitError, setSubmitError] = useState<string | null>(null)
   useConfirmReloadPage(currentStep > 1 && currentStep < numSteps.current)
   useEffect(() => {
