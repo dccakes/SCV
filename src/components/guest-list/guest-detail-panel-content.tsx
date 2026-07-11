@@ -1,6 +1,7 @@
 import { Check, Copy } from 'lucide-react'
 import Link from 'next/link'
-import { type Dispatch, type SetStateAction, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { type Dispatch, type SetStateAction, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import type { Event } from '~/app/utils/shared-types'
 import {
@@ -13,8 +14,16 @@ import {
 } from '~/components/guest-list/v2/drawer/guest-detail-sections'
 import { Badge } from '~/components/ui/badge'
 import { PhoneInput } from '~/components/ui/phone-input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/ui/select'
 import { Slider } from '~/components/ui/slider'
 import { LIKELIHOOD_LABELS } from '~/lib/constants'
+import { RSVP_STATUS_VALUES } from '~/lib/constants/rsvp'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 import type { CommunicationLogEntry } from '~/server/domains/communication-log/communication-log.types'
 import { api } from '~/trpc/react'
@@ -30,12 +39,6 @@ export type DrawerDraft = {
   country: string
   notes: string
   likelihoodOfAttending: number | null
-}
-
-export type RsvpSummary = {
-  attending: number
-  invited: number
-  declined: number
 }
 
 type SelectedEventResponse = {
@@ -102,7 +105,6 @@ type GuestDetailPanelContentProps = {
   events: Event[]
   selectedEventResponses?: SelectedEventResponse[]
   communicationLog: CommunicationLogEntry[]
-  allEventRsvpSummary: Map<string, RsvpSummary>
   editingSections: Set<'contactAddress' | 'notes'>
   toggleEditingSection: (section: 'contactAddress' | 'notes') => void
   drawerDraft: DrawerDraft
@@ -121,7 +123,6 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
     events,
     selectedEventResponses,
     communicationLog,
-    allEventRsvpSummary,
     editingSections,
     toggleEditingSection,
     drawerDraft,
@@ -300,89 +301,12 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
           onChange={(val) => updateDraft('likelihoodOfAttending', val)}
         />
 
-        {selectedEventId === 'all' ? (
-          <GuestDetailSection
-            title='Seating & Event'
-            contentClassName='space-y-2'
-            action={
-              <Link
-                href={rsvpManageHref}
-                className='rounded-md border border-border/70 px-2 py-1 font-medium text-primary text-xs hover:bg-primary/5'
-              >
-                Manage RSVPs in Events
-              </Link>
-            }
-          >
-            <ul className='space-y-2'>
-              {events.map((event) => {
-                const rsvpSummary = allEventRsvpSummary.get(event.id) ?? {
-                  attending: 0,
-                  invited: 0,
-                  declined: 0,
-                }
-
-                return (
-                  <li key={event.id} className='border-border/50 border-b py-2 last:border-b-0'>
-                    <p className='mb-1 font-medium text-foreground text-sm'>{event.name}</p>
-                    <div className='flex flex-wrap gap-1.5 text-xs'>
-                      {rsvpSummary.attending > 0 && (
-                        <Badge
-                          variant='outline'
-                          className='border-success/35 bg-success/12 text-success'
-                        >
-                          {rsvpSummary.attending} attending
-                        </Badge>
-                      )}
-                      {rsvpSummary.invited > 0 && (
-                        <Badge
-                          variant='outline'
-                          className='border-foreground/20 bg-accent/12 text-foreground/80'
-                        >
-                          {rsvpSummary.invited} invited
-                        </Badge>
-                      )}
-                      {rsvpSummary.declined > 0 && (
-                        <Badge
-                          variant='outline'
-                          className='border-destructive/30 bg-destructive/10 text-destructive'
-                        >
-                          {rsvpSummary.declined} declined
-                        </Badge>
-                      )}
-                    </div>
-                  </li>
-                )
-              })}
-            </ul>
-          </GuestDetailSection>
-        ) : (
-          <GuestDetailSection
-            title='Seating & Event'
-            contentClassName='space-y-2'
-            action={
-              <Link
-                href={rsvpManageHref}
-                className='rounded-md border border-border/70 px-2 py-1 font-medium text-primary text-xs hover:bg-primary/5'
-              >
-                Manage RSVPs in Events
-              </Link>
-            }
-          >
-            <ul className='space-y-2'>
-              {selectedEventResponses?.map((response) => (
-                <li
-                  key={response.id}
-                  className='flex items-center justify-between border-border/50 border-b py-2 last:border-b-0'
-                >
-                  <span>{response.name}</span>
-                  <Badge variant='outline' className={getRsvpBadgeClassName(response.rsvp)}>
-                    {response.rsvp}
-                  </Badge>
-                </li>
-              ))}
-            </ul>
-          </GuestDetailSection>
-        )}
+        <EventInvitationsSection
+          selectedHousehold={selectedHousehold}
+          selectedEventId={selectedEventId}
+          events={events}
+          rsvpManageHref={rsvpManageHref}
+        />
 
         <NotesSection
           isEditing={editingSections.has('notes')}
@@ -418,6 +342,132 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
         </div>
       ) : null}
     </div>
+  )
+}
+
+type EventInvitationsSectionProps = {
+  selectedHousehold: HouseholdWithGuests
+  selectedEventId: string
+  events: Event[]
+  rsvpManageHref: string
+}
+
+function EventInvitationsSection(props: Readonly<EventInvitationsSectionProps>) {
+  const { selectedHousehold, selectedEventId, events, rsvpManageHref } = props
+
+  const eventsToShow =
+    selectedEventId === 'all' ? events : events.filter((event) => event.id === selectedEventId)
+
+  return (
+    <GuestDetailSection
+      title='Event Invitations & RSVP'
+      contentClassName='space-y-2'
+      action={
+        <Link
+          href={rsvpManageHref}
+          className='rounded-md border border-border/70 px-2 py-1 font-medium text-primary text-xs hover:bg-primary/5'
+        >
+          Manage in Events
+        </Link>
+      }
+    >
+      {eventsToShow.length === 0 ? (
+        <p className='text-foreground/55 text-sm'>
+          No events yet. Create an event to invite guests.
+        </p>
+      ) : (
+        <ul className='space-y-3'>
+          {eventsToShow.map((event) => (
+            <li key={event.id} className='border-border/50 border-b pb-3 last:border-b-0'>
+              <p className='mb-2 font-medium text-foreground text-sm'>{event.name}</p>
+              <ul className='space-y-1.5'>
+                {selectedHousehold.guests.map((guest) => {
+                  const invitation = guest.invitations.find((inv) => inv.eventId === event.id)
+
+                  return (
+                    <li key={guest.id} className='flex items-center justify-between gap-2'>
+                      <span className='truncate text-foreground/85 text-sm'>
+                        {guest.firstName} {guest.lastName}
+                      </span>
+                      {invitation ? (
+                        <InvitationRsvpSelect
+                          guestId={guest.id}
+                          eventId={event.id}
+                          rsvp={invitation.rsvp ?? 'Not Invited'}
+                        />
+                      ) : (
+                        <Badge variant='outline' className={getRsvpBadgeClassName('Not Invited')}>
+                          Not Invited
+                        </Badge>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      )}
+    </GuestDetailSection>
+  )
+}
+
+type InvitationRsvpSelectProps = {
+  guestId: number
+  eventId: string
+  rsvp: string
+}
+
+function InvitationRsvpSelect(props: Readonly<InvitationRsvpSelectProps>) {
+  const { guestId, eventId, rsvp } = props
+  const utils = api.useUtils()
+  const router = useRouter()
+
+  // The guest list is hydrated from a server-fetched prop, so cache
+  // invalidation alone will not re-render this control. Track the value
+  // locally for instant feedback and refresh the server data on success.
+  const [value, setValue] = useState(rsvp)
+
+  useEffect(() => {
+    setValue(rsvp)
+  }, [rsvp])
+
+  const updateInvitation = api.invitation.update.useMutation({
+    onSuccess: () => {
+      void utils.dashboard.getForActiveWorkspace.invalidate()
+      void utils.event.getAllByUserIdWithStats.invalidate()
+      router.refresh()
+    },
+    onError: () => {
+      setValue(rsvp)
+      toast.error('Failed to update RSVP. Please try again.')
+    },
+  })
+
+  return (
+    <Select
+      value={value}
+      disabled={updateInvitation.isPending}
+      onValueChange={(nextValue) => {
+        if (nextValue === value) return
+        setValue(nextValue)
+        updateInvitation.mutate({ guestId, eventId, rsvp: nextValue })
+      }}
+    >
+      <SelectTrigger
+        className='h-7 w-36 shrink-0 text-xs'
+        onClick={(clickEvent) => clickEvent.stopPropagation()}
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent onClick={(clickEvent) => clickEvent.stopPropagation()}>
+        {RSVP_STATUS_VALUES.map((status) => (
+          <SelectItem key={status} value={status}>
+            {status}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   )
 }
 
