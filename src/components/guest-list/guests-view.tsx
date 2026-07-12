@@ -598,6 +598,12 @@ export default function GuestsView({
     return undefined
   }, [nameSort, partySort])
 
+  const activeSort = useMemo(() => {
+    if (nameSort !== 'none') return { field: 'name' as const, direction: nameSort }
+    if (partySort !== 'none') return { field: 'partySize' as const, direction: partySort }
+    return undefined
+  }, [nameSort, partySort])
+
   const handleDrawerOpenChange = useCallback(
     (open: boolean) => {
       if (!open && isDrawerDirty) {
@@ -663,6 +669,7 @@ export default function GuestsView({
           workflowMode={workflowMode}
           onWorkflowModeChange={setWorkflowMode}
           sortStateLabel={sortStateLabel}
+          activeSort={activeSort}
         />
         {sortedHouseholds.length === 0 ? (
           <AsyncState isEmpty emptyText='No households yet' />

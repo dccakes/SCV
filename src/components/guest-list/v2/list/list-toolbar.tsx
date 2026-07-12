@@ -1,9 +1,16 @@
-import { ArrowUpDown, LayoutGrid, Table2, Users } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpDown, LayoutGrid, Table2, Users } from 'lucide-react'
 
 import { Button } from '~/components/ui/button'
 
 export type ViewMode = 'cards' | 'table'
 export type WorkflowMode = 'households' | 'personAudit'
+
+type SortDirection = 'ascending' | 'descending'
+
+type ActiveSort = {
+  field: 'name' | 'partySize'
+  direction: SortDirection
+}
 
 type ListToolbarProps = {
   totalHouseholds: number
@@ -14,6 +21,13 @@ type ListToolbarProps = {
   workflowMode?: WorkflowMode
   onWorkflowModeChange?: (mode: WorkflowMode) => void
   sortStateLabel?: string
+  activeSort?: ActiveSort
+}
+
+function SortIcon({ active, direction }: { active: boolean; direction?: SortDirection }) {
+  if (!active) return <ArrowUpDown className='mr-2 h-3 w-3' aria-hidden='true' />
+  if (direction === 'ascending') return <ArrowUp className='mr-2 h-3 w-3' aria-hidden='true' />
+  return <ArrowDown className='mr-2 h-3 w-3' aria-hidden='true' />
 }
 
 export function ListToolbar({
@@ -25,6 +39,7 @@ export function ListToolbar({
   workflowMode = 'households',
   onWorkflowModeChange,
   sortStateLabel,
+  activeSort,
 }: Readonly<ListToolbarProps>) {
   return (
     <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
@@ -49,22 +64,22 @@ export function ListToolbar({
         ) : null}
         <Button
           type='button'
-          variant='outline'
+          variant={activeSort?.field === 'name' ? 'default' : 'outline'}
           size='sm'
           onClick={onSortByName}
           className='font-sans text-sm normal-case tracking-normal'
         >
-          <ArrowUpDown className='mr-2 h-3 w-3' aria-hidden='true' />
+          <SortIcon active={activeSort?.field === 'name'} direction={activeSort?.direction} />
           Sort by Name
         </Button>
         <Button
           type='button'
-          variant='outline'
+          variant={activeSort?.field === 'partySize' ? 'default' : 'outline'}
           size='sm'
           onClick={onSortByPartySize}
           className='font-sans text-sm normal-case tracking-normal'
         >
-          <ArrowUpDown className='mr-2 h-3 w-3' aria-hidden='true' />
+          <SortIcon active={activeSort?.field === 'partySize'} direction={activeSort?.direction} />
           Sort by Party Size
         </Button>
         {onViewModeChange && workflowMode === 'households' && (
