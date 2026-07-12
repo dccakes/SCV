@@ -320,24 +320,65 @@ function BudgetCard() {
 }
 
 function VendorsCard() {
+  const { data: vendors } = api.vendor.getAll.useQuery({})
+
+  const vendorCount = vendors?.length ?? 0
+  const selected = vendors?.filter((v) => v.status === 'SELECTED').length ?? 0
+  const inProgress =
+    vendors?.filter((v) => v.status === 'IN_NEGOTIATION' || v.status === 'PRE_SELECTED').length ?? 0
+  const inReview = vendors?.filter((v) => v.status === 'IN_REVIEW').length ?? 0
+
+  if (vendorCount === 0) {
+    return (
+      <CardShell title='Vendors' icon='◐' action='Manage →' actionHref='/vendors'>
+        <div className='flex flex-col gap-3'>
+          <div className='flex items-baseline gap-2'>
+            <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
+            <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
+              No vendors added yet
+            </span>
+          </div>
+          <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
+            Track quotes, contacts, and contracts in one place
+          </div>
+          <Link
+            href='/vendors'
+            className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+          >
+            Add your first vendor →
+          </Link>
+        </div>
+      </CardShell>
+    )
+  }
+
   return (
     <CardShell title='Vendors' icon='◐' action='Manage →' actionHref='/vendors'>
       <div className='flex flex-col gap-3'>
         <div className='flex items-baseline gap-2'>
-          <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
+          <span className='font-serif text-[2.2rem] text-foreground leading-none'>
+            {vendorCount}
+          </span>
           <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
-            No vendors added yet
+            vendor{vendorCount !== 1 ? 's' : ''} tracked
           </span>
         </div>
-        <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
-          Track quotes, contacts, and contracts in one place
+        <div className='grid grid-cols-3 divide-x divide-border text-center'>
+          {[
+            { val: selected, label: 'Selected', color: 'text-success' },
+            { val: inProgress, label: 'In Progress', color: 'text-foreground' },
+            { val: inReview, label: 'In Review', color: 'text-foreground/60' },
+          ].map((s) => (
+            <div key={s.label} className='px-2 first:pl-0 last:pr-0'>
+              <span className={`block font-serif text-[1.6rem] leading-none ${s.color}`}>
+                {s.val}
+              </span>
+              <span className='font-mono text-[0.52rem] text-foreground/55 uppercase tracking-widest'>
+                {s.label}
+              </span>
+            </div>
+          ))}
         </div>
-        <Link
-          href='/vendors'
-          className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
-        >
-          Add your first vendor →
-        </Link>
       </div>
     </CardShell>
   )
