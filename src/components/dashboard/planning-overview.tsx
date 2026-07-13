@@ -320,24 +320,62 @@ function BudgetCard() {
 }
 
 function VendorsCard() {
+  const { data: vendors } = api.vendor.getAll.useQuery({})
+  const total = vendors?.length ?? 0
+  const booked = vendors?.filter((v) => v.status === 'SELECTED').length ?? 0
+  const hasVendors = total > 0
+
   return (
     <CardShell title='Vendors' icon='◐' action='Manage →' actionHref='/vendors'>
       <div className='flex flex-col gap-3'>
-        <div className='flex items-baseline gap-2'>
-          <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
-          <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
-            No vendors added yet
-          </span>
-        </div>
-        <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
-          Track quotes, contacts, and contracts in one place
-        </div>
-        <Link
-          href='/vendors'
-          className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
-        >
-          Add your first vendor →
-        </Link>
+        {hasVendors ? (
+          <>
+            <div className='mb-1 grid grid-cols-2 gap-4'>
+              <div>
+                <span className='block font-serif text-[2rem] text-foreground leading-none'>
+                  {total}
+                </span>
+                <span className='font-mono text-[0.55rem] text-foreground/60 uppercase tracking-widest'>
+                  Total
+                </span>
+              </div>
+              <div>
+                <span
+                  className={`block font-serif text-[2rem] leading-none ${booked > 0 ? 'text-success' : 'text-foreground/30'}`}
+                >
+                  {booked}
+                </span>
+                <span className='font-mono text-[0.55rem] text-foreground/60 uppercase tracking-widest'>
+                  Booked
+                </span>
+              </div>
+            </div>
+            <Link
+              href='/vendors'
+              className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+            >
+              Manage vendors →
+            </Link>
+          </>
+        ) : (
+          <>
+            <div className='flex items-baseline gap-2'>
+              <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
+              <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
+                No vendors added yet
+              </span>
+            </div>
+            <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
+              Track quotes, contacts, and contracts in one place
+            </div>
+            <Link
+              href='/vendors'
+              className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+            >
+              Add your first vendor →
+            </Link>
+          </>
+        )}
       </div>
     </CardShell>
   )
