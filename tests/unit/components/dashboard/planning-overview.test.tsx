@@ -61,6 +61,11 @@ jest.mock('~/trpc/react', () => ({
         }),
       },
     },
+    vendor: {
+      getAll: {
+        useQuery: () => ({ data: [] }),
+      },
+    },
   },
 }))
 
