@@ -314,36 +314,33 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
         />
       ) : null}
 
-      <AlertDialog
-        open={!!deletingEvent}
-        onOpenChange={(open) => !open && setDeletingEvent(undefined)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Event?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete &quot;{deletingEvent?.name}&quot; and all associated
-              invitations, questions, and responses. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteEvent.isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault()
-                if (deletingEvent) {
+      {deletingEvent ? (
+        <AlertDialog open onOpenChange={(open) => !open && setDeletingEvent(undefined)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Event?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete &quot;{deletingEvent.name}&quot; and all associated
+                invitations, questions, and responses. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleteEvent.isPending}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
+                  e.preventDefault()
                   deleteEvent.mutate({ eventId: deletingEvent.id })
-                }
-              }}
-              disabled={deleteEvent.isPending}
-              className='flex items-center gap-2 bg-red-600 hover:bg-red-700'
-            >
-              {deleteEvent.isPending && <Loader2 className='h-4 w-4 animate-spin' />}
-              {deleteEvent.isPending ? 'Deleting...' : 'Delete Event'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+                }}
+                disabled={deleteEvent.isPending}
+                className='flex items-center gap-2 bg-red-600 hover:bg-red-700'
+              >
+                {deleteEvent.isPending && <Loader2 className='h-4 w-4 animate-spin' />}
+                {deleteEvent.isPending ? 'Deleting...' : 'Delete Event'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      ) : null}
 
       {managingGuestsEvent ? (
         <ManageEventGuestsDialog
