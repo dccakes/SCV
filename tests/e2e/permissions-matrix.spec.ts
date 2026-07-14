@@ -117,11 +117,11 @@ test.describe('Permissions Matrix Smoke', () => {
     await context.close()
   })
 
-  test('dashboard renders invite collaborators CTA for planning follow-up', async ({ page }) => {
+  test('dashboard renders manage RSVPs CTA on the RSVP card', async ({ page }) => {
     await page.goto('/dashboard')
-    await expect(page.getByRole('link', { name: 'Invite collaborators' })).toHaveAttribute(
+    await expect(page.getByRole('link', { name: 'Manage RSVPs →' })).toHaveAttribute(
       'href',
-      '/settings'
+      '/guest-list'
     )
   })
 })
