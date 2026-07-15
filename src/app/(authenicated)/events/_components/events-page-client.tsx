@@ -225,8 +225,8 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
           <div className='max-w-sm'>
             <p className='font-serif text-xl text-foreground'>No events yet</p>
             <p className='mt-2 font-mono text-[0.65rem] text-foreground/55 leading-relaxed tracking-wider'>
-              Get started by creating your first wedding event. Add ceremonies, receptions, rehearsal
-              dinners, and more.
+              Get started by creating your first wedding event. Add ceremonies, receptions,
+              rehearsal dinners, and more.
             </p>
           </div>
           <Button
