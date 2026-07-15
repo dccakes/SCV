@@ -36,6 +36,8 @@ jest.mock('~/components/ui/select', () => ({
   ),
 }))
 
+const mockVendorGetAll = jest.fn()
+
 jest.mock('~/trpc/react', () => ({
   api: {
     useUtils: () => ({
@@ -59,6 +61,11 @@ jest.mock('~/trpc/react', () => ({
             options?.onSuccess?.()
           },
         }),
+      },
+    },
+    vendor: {
+      getAll: {
+        useQuery: () => mockVendorGetAll(),
       },
     },
   },
@@ -217,6 +224,7 @@ const mockDashboardData = {
 describe('PlanningOverview', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockVendorGetAll.mockReturnValue({ data: undefined })
   })
 
   it('renders the real planning completion percentage from milestones', () => {
@@ -328,6 +336,26 @@ describe('PlanningOverview', () => {
   it('renders an add vendor CTA link in the vendors empty state', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
     expect(screen.getByText('Add your first vendor →')).toBeInTheDocument()
+  })
+
+  it('renders real vendor count and status breakdown when vendors exist', () => {
+    mockVendorGetAll.mockReturnValue({
+      data: [
+        { id: 'v1', status: 'SELECTED' },
+        { id: 'v2', status: 'IN_NEGOTIATION' },
+        { id: 'v3', status: 'PRE_SELECTED' },
+        { id: 'v4', status: 'IN_REVIEW' },
+      ],
+    })
+
+    render(<PlanningOverview dashboardData={mockDashboardData} />)
+
+    expect(screen.getByText('4')).toBeInTheDocument()
+    expect(screen.getByText('vendors tracked')).toBeInTheDocument()
+    expect(screen.getByText('Selected')).toBeInTheDocument()
+    expect(screen.getByText('In Progress')).toBeInTheDocument()
+    expect(screen.getByText('In Review')).toBeInTheDocument()
+    expect(screen.queryByText('No vendors added yet')).not.toBeInTheDocument()
   })
 
   // ── Edge Cases ─────────────────────────────────────────────────────────────
