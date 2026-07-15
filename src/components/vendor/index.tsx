@@ -76,20 +76,41 @@ export default function VendorList({ initialVendors }: VendorListProps) {
   const vendorsByCategory = (category: VendorCategory): VendorWithQuotes[] =>
     allVendors.filter((v) => v.category === category)
 
+  const populatedCategories = CATEGORY_ORDER.filter(
+    (category) => vendorsByCategory(category).length > 0
+  )
+
   return (
     <div>
       {allVendors.length === 0 ? (
         <VendorEmptyState onAdd={() => setShowAddForm(true)} />
       ) : (
-        CATEGORY_ORDER.map((category) => (
-          <VendorCategorySection
-            key={category}
-            category={category}
-            vendors={vendorsByCategory(category)}
-            onViewDetails={handleViewDetails}
-            onRefresh={() => refetch()}
-          />
-        ))
+        <>
+          <div className='mb-6 flex items-center justify-between'>
+            <p className='font-mono text-[0.62rem] text-muted-foreground uppercase tracking-widest'>
+              {allVendors.length} {allVendors.length === 1 ? 'vendor' : 'vendors'}
+            </p>
+            <Button
+              type='button'
+              size='sm'
+              variant='outline'
+              onClick={() => setShowAddForm(true)}
+              data-testid='add-vendor-btn'
+              className='rounded-sm border-primary/30 border-dashed font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:border-primary hover:bg-primary/5'
+            >
+              + Add Vendor
+            </Button>
+          </div>
+          {populatedCategories.map((category) => (
+            <VendorCategorySection
+              key={category}
+              category={category}
+              vendors={vendorsByCategory(category)}
+              onViewDetails={handleViewDetails}
+              onRefresh={() => refetch()}
+            />
+          ))}
+        </>
       )}
 
       <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
