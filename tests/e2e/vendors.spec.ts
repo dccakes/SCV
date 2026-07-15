@@ -100,7 +100,7 @@ test.describe('Vendor CRUD', () => {
     await page.goto('/vendors')
 
     // Click the top-level "+ Add Vendor" button (empty category sections are hidden)
-    await page.getByRole('button', { name: /\+ add vendor/i }).click()
+    await page.getByTestId('add-vendor-btn').click()
 
     // Fill in the vendor form
     const dialog = page.getByRole('dialog')
@@ -117,7 +117,7 @@ test.describe('Vendor CRUD', () => {
     await page.goto('/vendors')
 
     // First create a vendor to delete
-    await page.getByRole('button', { name: /\+ add vendor/i }).click()
+    await page.getByTestId('add-vendor-btn').click()
 
     const dialog = page.getByRole('dialog')
     await dialog.getByLabel(/name/i).first().fill('Vendor To Delete')
@@ -136,7 +136,7 @@ test.describe('Vendor CRUD', () => {
     await page.goto('/vendors')
 
     // Create a dedicated vendor so we don't permanently mutate seed data
-    await page.getByRole('button', { name: /\+ add vendor/i }).click()
+    await page.getByTestId('add-vendor-btn').click()
     const createDialog = page.getByRole('dialog')
     await createDialog.getByLabel(/name/i).first().fill('Details Edit Test')
     await createDialog.getByRole('button', { name: /add vendor/i }).click()
@@ -389,7 +389,7 @@ test.describe('XSS Injection Prevention', () => {
     }
 
     // Create a vendor with XSS in the name
-    await page.getByRole('button', { name: /\+ add vendor/i }).click()
+    await page.getByTestId('add-vendor-btn').click()
 
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
@@ -437,7 +437,7 @@ test.describe('XSS Injection Prevention', () => {
       leftoverCount = await locationRemoveBtns.count()
     }
 
-    await page.getByRole('button', { name: /\+ add vendor/i }).click()
+    await page.getByTestId('add-vendor-btn').click()
 
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()

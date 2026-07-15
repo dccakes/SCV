@@ -95,6 +95,7 @@ export default function VendorList({ initialVendors }: VendorListProps) {
               size='sm'
               variant='outline'
               onClick={() => setShowAddForm(true)}
+              data-testid='add-vendor-btn'
               className='rounded-sm border-primary/30 border-dashed font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:border-primary hover:bg-primary/5'
             >
               + Add Vendor
