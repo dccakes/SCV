@@ -147,23 +147,25 @@ function MiniStats({ dashboardData }: { dashboardData: DashboardData | null }) {
   const pct = total > 0 ? Math.round((confirmed / total) * 100) : 0
 
   const stats = [
-    { icon: '◉', val: total, label: 'Total guests', delta: null },
-    { icon: '✓', val: confirmed, label: 'Confirmed', delta: `${pct}%` },
-    { icon: '◐', val: pending, label: 'Awaiting reply', delta: null },
+    { icon: '◉', val: total, label: 'Total guests', delta: null, href: '/guest-list' },
+    { icon: '✓', val: confirmed, label: 'Confirmed', delta: `${pct}%`, href: '/guest-list' },
+    { icon: '◐', val: pending, label: 'Awaiting reply', delta: null, href: '/guest-list' },
     {
       icon: '◧',
       val: dashboardData?.tasksDueThisMonth ?? 0,
       label: 'Tasks due this month',
       delta: null,
+      href: '/checklist',
     },
   ]
 
   return (
     <div className='grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border/90 bg-border lg:grid-cols-4'>
       {stats.map((s) => (
-        <div
+        <Link
           key={s.label}
-          className='flex items-center gap-3 bg-card/90 px-4 py-3 transition-colors hover:bg-secondary'
+          href={s.href}
+          className='flex items-center gap-3 bg-card/90 px-4 py-3 transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-foreground/50'
         >
           <span className='text-xl opacity-55'>{s.icon}</span>
           <div className='min-w-0'>
@@ -177,7 +179,7 @@ function MiniStats({ dashboardData }: { dashboardData: DashboardData | null }) {
               {s.delta}
             </span>
           )}
-        </div>
+        </Link>
       ))}
     </div>
   )
