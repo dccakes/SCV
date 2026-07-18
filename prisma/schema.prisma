@@ -40,6 +40,11 @@ model Wedding {
   tasks      Task[]
   milestones Milestone[]
 
+  // Budgeting
+  budget           Budget?
+  budgetCategories BudgetCategory[]
+  budgetExpenses   BudgetExpense[]
+
   // Etta AI agent
   ettaActor       EttaActor?
   ettaSuggestions EttaSuggestion[]
@@ -814,6 +819,78 @@ model VendorImage {
 
   @@index([vendorId])
   @@index([vendorId, isPrimary])
+}
+
+// ─── Budgeting ───────────────────────────────────────────────────────────────
+
+// Singleton per wedding: holds the couple's overall target budget.
+// Categories and expenses are tracked separately so the target can differ
+// from the sum of per-section budgets.
+model Budget {
+  id          String  @id @default(uuid())
+  weddingId   String  @unique @map("wedding_id")
+  wedding     Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
+  // Overall target budget for the whole wedding
+  targetTotal Decimal @default(0) @db.Decimal(12, 2) @map("target_total")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([weddingId])
+  @@map("budgets")
+}
+
+// A budget "section" (e.g. Venue, Catering). Holds the planned amount for the
+// section; actual spend is derived from its expenses.
+model BudgetCategory {
+  id        String  @id @default(uuid())
+  weddingId String  @map("wedding_id")
+  wedding   Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
+  name          String
+  plannedAmount Decimal @default(0) @db.Decimal(12, 2) @map("planned_amount")
+  position      Int     @default(0)
+
+  expenses BudgetExpense[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([weddingId])
+  @@index([weddingId, position])
+  @@map("budget_categories")
+}
+
+// An actual spend line item within a category. Deposits that are refundable
+// after the event are flagged so net cost can be computed separately from
+// gross spend.
+model BudgetExpense {
+  id         String         @id @default(uuid())
+  weddingId  String         @map("wedding_id")
+  wedding    Wedding        @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  categoryId String         @map("category_id")
+  category   BudgetCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  description String
+  // Amount actually paid (money out of pocket)
+  amount     Decimal @default(0) @db.Decimal(12, 2)
+
+  // Deposit tracking. A refundable deposit is expected back after the event;
+  // refundedAt is set once the refund has been received.
+  isDeposit    Boolean   @default(false) @map("is_deposit")
+  isRefundable Boolean   @default(false) @map("is_refundable")
+  refundedAt   DateTime? @map("refunded_at")
+
+  paidAt DateTime? @db.Date @map("paid_at")
+  notes  String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([weddingId])
+  @@index([categoryId])
+  @@map("budget_expenses")
 }
 
 // ─── Etta AI Agent ───────────────────────────────────────────────────────────

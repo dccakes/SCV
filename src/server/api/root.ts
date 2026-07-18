@@ -6,6 +6,7 @@ import { dashboardRouter } from '~/server/application/dashboard/dashboard.router
 import { householdInviteRouter } from '~/server/application/household-invite'
 import { rsvpSubmissionRouter } from '~/server/application/rsvp-submission/rsvp-submission.router'
 import { selfFillRegistrationService } from '~/server/application/self-fill-registration'
+import { budgetRouter } from '~/server/domains/budget/budget.router'
 import { communicationLogRouter } from '~/server/domains/communication-log/communication-log.router'
 import { eventRouter } from '~/server/domains/event/event.router'
 import { giftRouter } from '~/server/domains/gift/gift.router'
@@ -65,6 +66,9 @@ export const appRouter = createTRPCRouter({
   vendor: vendorRouter,
   milestone: milestoneRouter,
   task: taskRouter,
+
+  // Budgeting
+  budget: budgetRouter,
 
   // Communication log (household outreach timeline)
   communicationLog: communicationLogRouter,
