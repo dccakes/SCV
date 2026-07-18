@@ -109,17 +109,17 @@ function EventCardBase({
               {event.collectRsvp && totalInvited > 0 && (
                 <div className='mt-1.5 flex gap-3 text-xs'>
                   <div className='flex items-center gap-1'>
-                    <div className='h-2 w-2 rounded-full bg-green-500' />
+                    <div className='h-2 w-2 rounded-full bg-success' />
                     <span className='font-medium'>{guestResponses.attending}</span>
                     <span className='text-muted-foreground'>Attending</span>
                   </div>
                   <div className='flex items-center gap-1'>
-                    <div className='h-2 w-2 rounded-full bg-yellow-500' />
+                    <div className='h-2 w-2 rounded-full bg-primary/50' />
                     <span className='font-medium'>{guestResponses.invited}</span>
                     <span className='text-muted-foreground'>Pending</span>
                   </div>
                   <div className='flex items-center gap-1'>
-                    <div className='h-2 w-2 rounded-full bg-red-500' />
+                    <div className='h-2 w-2 rounded-full bg-destructive/70' />
                     <span className='font-medium'>{guestResponses.declined}</span>
                     <span className='text-muted-foreground'>Declined</span>
                   </div>
@@ -127,7 +127,7 @@ function EventCardBase({
               )}
               {totalInvited > 0 && (
                 <div className='mt-1.5 flex items-center gap-1 border-border/50 border-t pt-1.5 text-xs'>
-                  <div className='h-2 w-2 rounded-full bg-blue-500' />
+                  <div className='h-2 w-2 rounded-full bg-foreground/40' />
                   <span className='font-medium'>~{event.estimatedAttendance}</span>
                   <span className='text-muted-foreground'>
                     of {totalInvited} estimated to attend
@@ -170,7 +170,7 @@ function EventCardBase({
                   Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className='text-red-600 focus:text-red-600'
+                  className='text-destructive focus:text-destructive'
                   onClick={() => onDelete(event.id)}
                 >
                   <Trash2 className='mr-2 h-3.5 w-3.5' />
