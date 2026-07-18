@@ -1,18 +1,26 @@
+import type { Metadata } from 'next'
+
 import DashboardTopbar from '@/components/dashboard/dashboard-topbar'
 import PlanningOverview from '@/components/dashboard/planning-overview'
+import { PageContent } from '~/components/layout/page-content'
 import { getRequiredDashboardOverview } from '~/server/application/authenticated-route/authenticated-route-data'
 
 export const dynamic = 'force-dynamic'
 
-export default async function MePage() {
+export const metadata: Metadata = {
+  title: 'Dashboard | Your Wedding Website',
+  description: 'Your wedding planning overview — track RSVPs, tasks, vendors, and milestones.',
+}
+
+export default async function DashboardPage() {
   const dashboardData = await getRequiredDashboardOverview()
 
   return (
     <>
       <DashboardTopbar />
-      <div className='min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-6 lg:py-6'>
+      <PageContent>
         <PlanningOverview dashboardData={dashboardData} />
-      </div>
+      </PageContent>
     </>
   )
 }

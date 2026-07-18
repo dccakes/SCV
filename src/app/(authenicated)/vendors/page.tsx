@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 
 import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
+import { PageContent } from '~/components/layout/page-content'
 import VendorList from '~/components/vendor'
 import { getRequiredWedding } from '~/server/application/authenticated-route/authenticated-route-data'
 import { api } from '~/trpc/server'
@@ -30,9 +31,9 @@ export default async function VendorsPage() {
   return (
     <>
       <DashboardTopbar title='Vendors' showManagementActions={false} />
-      <main className='min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-6 lg:py-6'>
+      <PageContent>
         <VendorList initialVendors={vendors} />
-      </main>
+      </PageContent>
     </>
   )
 }

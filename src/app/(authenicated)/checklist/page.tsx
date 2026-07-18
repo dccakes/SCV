@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 
 import { ChecklistPageClient } from '@/app/(authenicated)/checklist/_components/checklist-page-client'
 import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
+import { PageContent } from '~/components/layout/page-content'
 import { getRequiredWedding } from '~/server/application/authenticated-route/authenticated-route-data'
 import { api } from '~/trpc/server'
 
@@ -25,13 +26,13 @@ export default async function ChecklistPage(_props: {
   return (
     <>
       <DashboardTopbar title='Checklist' showManagementActions={false} />
-      <main className='min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-6 lg:py-6'>
+      <PageContent>
         <ChecklistPageClient
           initialTasks={initialTasks}
           initialMilestones={initialMilestones}
           initialEvents={initialEvents ?? []}
         />
-      </main>
+      </PageContent>
     </>
   )
 }
