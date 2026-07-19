@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import {
   bucketTasks,
   filterTasks,
@@ -94,6 +95,9 @@ export function ChecklistPageClient({
         utils.dashboard.getForActiveWorkspace.invalidate(),
       ])
     },
+    onError: () => {
+      toast.error('Failed to update task')
+    },
   })
   const createTask = api.task.create.useMutation({
     onSuccess: () => {
@@ -104,6 +108,9 @@ export function ChecklistPageClient({
         utils.dashboard.getForActiveWorkspace.invalidate(),
       ])
     },
+    onError: () => {
+      toast.error('Failed to create task')
+    },
   })
   const updateTask = api.task.update.useMutation({
     onSuccess: () => {
@@ -113,6 +120,9 @@ export function ChecklistPageClient({
         utils.task.getPriorityQueue.invalidate(),
         utils.dashboard.getForActiveWorkspace.invalidate(),
       ])
+    },
+    onError: () => {
+      toast.error('Failed to save task')
     },
   })
   const deleteTask = api.task.delete.useMutation({
@@ -125,6 +135,9 @@ export function ChecklistPageClient({
         utils.dashboard.getForActiveWorkspace.invalidate(),
       ])
     },
+    onError: () => {
+      toast.error('Failed to delete task')
+    },
   })
 
   const attestMilestone = api.milestone.attest.useMutation({
@@ -134,6 +147,9 @@ export function ChecklistPageClient({
         utils.dashboard.getForActiveWorkspace.invalidate(),
       ])
     },
+    onError: () => {
+      toast.error('Failed to update milestone')
+    },
   })
   const dismissMilestone = api.milestone.dismiss.useMutation({
     onSuccess: () => {
@@ -142,6 +158,9 @@ export function ChecklistPageClient({
         utils.dashboard.getForActiveWorkspace.invalidate(),
       ])
     },
+    onError: () => {
+      toast.error('Failed to dismiss milestone')
+    },
   })
   const clearMilestoneOverride = api.milestone.clearOverride.useMutation({
     onSuccess: () => {
@@ -149,6 +168,9 @@ export function ChecklistPageClient({
         utils.milestone.getAll.invalidate(),
         utils.dashboard.getForActiveWorkspace.invalidate(),
       ])
+    },
+    onError: () => {
+      toast.error('Failed to clear milestone override')
     },
   })
 
