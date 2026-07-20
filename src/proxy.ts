@@ -3,6 +3,29 @@ import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
 const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/join', '/blog', '/api/webhooks', '/api/cron']
+
+// Guest-facing tRPC procedures that must be reachable without a session. The
+// wedding-website RSVP flow calls these from the browser; gating them would
+// redirect the request to the sign-in HTML page, which the tRPC client can't
+// parse as JSON. Everything else under /api/trpc stays behind the session gate,
+// and each procedure still enforces its own authorization server-side.
+const PUBLIC_TRPC_PROCEDURES = new Set([
+  'household.findBySearchPublic',
+  'website.submitPublicRsvpForm',
+])
+
+const TRPC_PREFIX = '/api/trpc/'
+
+// The tRPC client batches calls, so the path may carry several comma-separated
+// procedure names (e.g. /api/trpc/a,b). Allow the request through only when
+// every batched procedure is public.
+const isPublicTrpcPath = (pathname: string): boolean => {
+  if (!pathname.startsWith(TRPC_PREFIX)) return false
+  const procedures = pathname.slice(TRPC_PREFIX.length).split(',').filter(Boolean)
+  return (
+    procedures.length > 0 && procedures.every((procedure) => PUBLIC_TRPC_PROCEDURES.has(procedure))
+  )
+}
 const PUBLIC_EXACT_PATHS = ['/', '/api/blob/upload', '/pricing', '/open-source']
 const RESERVED_ROOT_SEGMENTS = new Set([
   '',
@@ -47,6 +70,7 @@ const isPublicWebsitePath = (pathname: string): boolean => {
 const isPublicPath = (pathname: string): boolean =>
   PUBLIC_EXACT_PATHS.includes(pathname) ||
   PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)) ||
+  isPublicTrpcPath(pathname) ||
   isPublicWebsitePath(pathname)
 
 const getLegacyWebsiteRedirect = (req: NextRequest): URL | null => {
