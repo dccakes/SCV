@@ -7,7 +7,7 @@
  * Client component to enable interactivity (create/edit/delete).
  */
 
-import { Calendar, Loader2, Plus } from 'lucide-react'
+import { Loader2, Plus } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { toast } from 'sonner'
 import { EventCard } from '@/app/(authenicated)/events/_components/event-card'
@@ -29,7 +29,6 @@ import {
   AlertDialogTitle,
 } from '~/components/ui/alert-dialog'
 import { Button } from '~/components/ui/button'
-import { Card, CardContent } from '~/components/ui/card'
 import type { Event, EventWithStats } from '~/server/domains/event/event.types'
 import { api } from '~/trpc/react'
 
@@ -217,22 +216,27 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
   if (events.length === 0) {
     return (
       <>
-        <Card>
-          <CardContent className='flex flex-col items-center justify-center py-8 text-center md:py-12'>
-            <div className='mb-4 rounded-full bg-muted p-4 md:p-6'>
-              <Calendar className='h-10 w-10 text-muted-foreground md:h-12 md:w-12' />
-            </div>
-            <h2 className='mb-2 font-semibold text-xl md:text-2xl'>No events yet</h2>
-            <p className='mb-6 max-w-md px-4 text-muted-foreground text-sm md:text-base'>
-              Get started by creating your first wedding event. You can add ceremonies, receptions,
+        <div className='flex flex-col items-center gap-5 py-20 text-center'>
+          <div className='flex h-16 w-16 items-center justify-center rounded-full border border-border/80 bg-muted/50'>
+            <span className='text-2xl opacity-50' aria-hidden='true'>
+              ☷
+            </span>
+          </div>
+          <div className='max-w-sm'>
+            <p className='font-serif text-xl text-foreground'>No events yet</p>
+            <p className='mt-2 font-mono text-[0.65rem] text-foreground/55 leading-relaxed tracking-wider'>
+              Get started by creating your first wedding event. Add ceremonies, receptions,
               rehearsal dinners, and more.
             </p>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className='mr-2 h-4 w-4' />
-              Create Event
-            </Button>
-          </CardContent>
-        </Card>
+          </div>
+          <Button
+            type='button'
+            onClick={() => setIsCreateDialogOpen(true)}
+            className='font-mono text-[0.65rem] uppercase tracking-widest'
+          >
+            Create your first event
+          </Button>
+        </div>
 
         {isCreateDialogOpen ? (
           <ModernEventForm

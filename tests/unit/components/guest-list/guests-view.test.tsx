@@ -68,6 +68,11 @@ jest.mock('~/trpc/react', () => ({
           invalidate: (...args: unknown[]) => mockDashboardInvalidate(...args),
         },
       },
+      event: {
+        getAllByUserIdWithStats: {
+          invalidate: jest.fn(),
+        },
+      },
       communicationLog: {
         getByHouseholdId: {
           invalidate: jest.fn(),
@@ -136,6 +141,11 @@ jest.mock('~/trpc/react', () => ({
           },
           isPending: false,
         }),
+      },
+    },
+    invitation: {
+      update: {
+        useMutation: () => ({ mutate: jest.fn(), isPending: false }),
       },
     },
     householdInvite: {
@@ -990,7 +1000,7 @@ describe('GuestsView', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
 
-    const manageLink = screen.getByRole('link', { name: 'Manage RSVPs in Events' })
+    const manageLink = screen.getByRole('link', { name: 'Manage in Events' })
     expect(manageLink).toHaveAttribute('href', '/events?eventId=event-1&tab=rsvps')
   })
 
