@@ -637,14 +637,14 @@ export default function GuestsView({
           setPrefillEvent={setPrefillEvent}
         />
       )}
-      <div className='mb-4 flex justify-between'>
+      <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
         <GuestSearchFilter
           setFilteredHouseholds={setFilteredHouseholds}
           households={households}
           events={events}
           selectedEventId={selectedEventId}
         />
-        <div className='flex gap-3'>
+        <div className='flex shrink-0 gap-3'>
           <Button type='button' variant='outline' onClick={onImportClick}>
             Import Guests
           </Button>
