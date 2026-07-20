@@ -202,9 +202,33 @@ function RsvpCard({ dashboardData }: { dashboardData: DashboardData | null }) {
   const declined = rsvpSummary.declined
   const total = attending + pending + declined
 
-  const confirmedPct = total > 0 ? (attending / total) * 100 : 0
-  const pendingPct = total > 0 ? (pending / total) * 100 : 0
-  const declinedPct = total > 0 ? (declined / total) * 100 : 0
+  if (total === 0) {
+    return (
+      <CardShell title='RSVP Status' icon='◉'>
+        <div className='flex flex-col gap-3'>
+          <div className='flex items-baseline gap-2'>
+            <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
+            <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
+              No RSVPs collected yet
+            </span>
+          </div>
+          <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
+            Enable RSVP collection on one of your events to start tracking responses
+          </div>
+          <Link
+            href='/events'
+            className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+          >
+            Set up RSVPs →
+          </Link>
+        </div>
+      </CardShell>
+    )
+  }
+
+  const confirmedPct = (attending / total) * 100
+  const pendingPct = (pending / total) * 100
+  const declinedPct = (declined / total) * 100
 
   return (
     <CardShell title='RSVP Status' icon='◉' action='View all →' actionHref='/guest-list'>
