@@ -50,7 +50,9 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
   const rsvpFormData = useRsvpForm()
   const numSteps = useRef(NUM_STATIC_STEPS)
   const updateRsvpForm = useUpdateRsvpForm()
-  const [currentStep, setCurrentStep] = useState<number>(1)
+  // A recognized guest (identified by their save-the-date invite) skips the name
+  // search and lands on the confirm step (step 2).
+  const [currentStep, setCurrentStep] = useState<number>(rsvpFormData.recognized ? 2 : 1)
   const [submitError, setSubmitError] = useState<string | null>(null)
   useConfirmReloadPage(currentStep > 1 && currentStep < numSteps.current)
   useEffect(() => {
@@ -136,13 +138,18 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
           e.preventDefault()
           setSubmitError(null)
 
-          const token = new URLSearchParams(window.location.search).get('token')
           const subUrl = weddingData.website?.subUrl
 
-          if (!token || !subUrl) {
-            setSubmitError('Invalid or expired RSVP link. Please request a new invitation link.')
+          if (!subUrl) {
+            setSubmitError('Something went wrong. Please refresh the page and try again.')
             return
           }
+
+          // The guest reaches this page from the wedding website (or their
+          // save-the-date link), so the submission is scoped by subUrl. An
+          // optional ?token= from a shared self-fill link is still forwarded when
+          // present.
+          const token = new URLSearchParams(window.location.search).get('token') ?? undefined
 
           // Analytics: record the guest's RSVP submission from the template.
           // The backend also captures the persisted outcome; this frontend event
@@ -168,7 +175,7 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
 
           submitRsvpForm.mutate({
             subUrl,
-            token,
+            ...(token ? { token } : {}),
             rsvpResponses: rsvpFormData.rsvpResponses,
             answersToQuestions: rsvpFormData.answersToQuestions,
           })

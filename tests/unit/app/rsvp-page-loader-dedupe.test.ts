@@ -20,6 +20,15 @@ jest.mock('~/trpc/server', () => ({
   },
 }))
 
+// The page resolves the guest's recognized household through the invite service.
+// Mock it so importing the page doesn't pull the server tRPC/auth stack (and its
+// ESM-only better-auth dependency) into the jest module graph.
+jest.mock('~/server/application/household-invite', () => ({
+  householdInviteService: {
+    getRecognizedRsvpHousehold: jest.fn(),
+  },
+}))
+
 jest.mock('~/components/contexts/rsvp-form-context', () => ({
   RsvpFormProvider: ({ children }: { children: ReactNode }) => createElement('div', null, children),
 }))

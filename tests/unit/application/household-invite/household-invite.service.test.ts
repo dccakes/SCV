@@ -526,4 +526,70 @@ describe('HouseholdInviteService', () => {
     ).rejects.toHaveProperty('code', 'BAD_REQUEST')
     expect(db.$transaction).not.toHaveBeenCalled()
   })
+
+  describe('getRecognizedRsvpHousehold', () => {
+    const rsvpHousehold = {
+      id: 'household-123',
+      guests: [
+        {
+          id: 1,
+          firstName: 'Ron',
+          lastName: 'Weasley',
+          isPrimaryContact: true,
+          isTagAlong: false,
+          invitations: [],
+          guestTagAssignments: [],
+        },
+      ],
+    }
+
+    it('returns the household in RSVP shape for a valid code scoped to the website', async () => {
+      const db = createDb()
+      db.household.findFirst
+        .mockResolvedValueOnce({
+          id: 'household-123',
+          weddingId: 'wedding-123',
+          inviteCodeExpiresAt: INVITE_CODE_EXPIRES_AT,
+        })
+        .mockResolvedValueOnce(rsvpHousehold)
+      db.website.findFirst.mockResolvedValue({ weddingId: 'wedding-123' })
+      const service = new HouseholdInviteService(db as never)
+
+      const result = await service.getRecognizedRsvpHousehold('harry-and-hermione', INVITE_CODE)
+
+      expect(result).toEqual(rsvpHousehold)
+      expect(db.household.findFirst).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          where: { id: 'household-123', weddingId: 'wedding-123' },
+        })
+      )
+    })
+
+    it('returns null when the code belongs to a different wedding than the website', async () => {
+      const db = createDb()
+      db.household.findFirst.mockResolvedValue({
+        id: 'household-123',
+        weddingId: 'wedding-123',
+        inviteCodeExpiresAt: INVITE_CODE_EXPIRES_AT,
+      })
+      db.website.findFirst.mockResolvedValue({ weddingId: 'different-wedding' })
+      const service = new HouseholdInviteService(db as never)
+
+      await expect(
+        service.getRecognizedRsvpHousehold('harry-and-hermione', INVITE_CODE)
+      ).resolves.toBeNull()
+      // Only the invite-scope lookup runs; the RSVP household fetch is skipped.
+      expect(db.household.findFirst).toHaveBeenCalledTimes(1)
+    })
+
+    it('returns null without any lookups when no code is present', async () => {
+      const db = createDb()
+      const service = new HouseholdInviteService(db as never)
+
+      await expect(
+        service.getRecognizedRsvpHousehold('harry-and-hermione', undefined)
+      ).resolves.toBeNull()
+      expect(db.household.findFirst).not.toHaveBeenCalled()
+    })
+  })
 })

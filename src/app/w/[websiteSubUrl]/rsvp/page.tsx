@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
 import { loadVisitorWedding } from '~/app/w/[websiteSubUrl]/_lib/load-visitor-wedding'
+import { resolveRecognizedRsvpHousehold } from '~/app/w/[websiteSubUrl]/_lib/recognized-rsvp-household'
 import { grantWebsiteAccess } from '~/app/w/[websiteSubUrl]/_lib/website-access'
 import { RsvpFormProvider } from '~/components/contexts/rsvp-form-context'
 import MainRsvpForm from '~/components/website/forms/main'
@@ -29,7 +30,7 @@ export async function generateMetadata({ params }: RsvpPageProps): Promise<Metad
 
 export default async function RsvpPage({ params }: RsvpPageProps) {
   const { websiteSubUrl } = await params
-  const { loadResult } = await loadVisitorWedding(websiteSubUrl)
+  const { loadResult, inviteToken } = await loadVisitorWedding(websiteSubUrl)
 
   const verifyWebsitePassword = async (passwordInput: string) => {
     'use server'
@@ -51,9 +52,13 @@ export default async function RsvpPage({ params }: RsvpPageProps) {
     )
   }
 
+  // The guest cleared the gate — if we recognize their save-the-date invite,
+  // skip the name search and drop them straight onto the confirm step.
+  const recognizedHousehold = await resolveRecognizedRsvpHousehold(websiteSubUrl, inviteToken)
+
   return (
     <TemplateThemeProvider template={template}>
-      <RsvpFormProvider>
+      <RsvpFormProvider recognizedHousehold={recognizedHousehold}>
         <MainRsvpForm weddingData={loadResult.weddingData} basePath={`/w/${websiteSubUrl}`} />
       </RsvpFormProvider>
     </TemplateThemeProvider>

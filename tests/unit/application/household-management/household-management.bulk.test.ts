@@ -12,6 +12,7 @@ jest.mock('~/server/domains/household/household.repository')
 jest.mock('~/server/domains/guest/guest.repository')
 jest.mock('~/server/domains/invitation/invitation.repository')
 jest.mock('~/server/domains/gift/gift.repository')
+jest.mock('~/server/domains/website/website.repository')
 
 import { HouseholdManagementService } from '~/server/application/household-management/household-management.service'
 import { requirePermission } from '~/server/authz/permission-checker'
@@ -33,6 +34,7 @@ import {
   mockEventBelongsToWedding,
   resetMocks as resetInvitationMocks,
 } from '~/server/domains/invitation/invitation.repository'
+import { WebsiteRepository } from '~/server/domains/website/website.repository'
 
 const mockRequirePermission = requirePermission as jest.Mock
 const mockGuestBelongsToWeddingFn = mockGuestBelongsToWedding as jest.Mock
@@ -134,12 +136,14 @@ describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
     const mockGuestRepo = new GuestRepository({} as never)
     const mockInvitationRepo = new InvitationRepository({} as never)
     const mockGiftRepo = new GiftRepository({} as never)
+    const mockWebsiteRepo = new WebsiteRepository({} as never)
 
     service = new HouseholdManagementService(
       mockHouseholdRepo,
       mockGuestRepo,
       mockInvitationRepo,
       mockGiftRepo,
+      mockWebsiteRepo,
       mockDb as never
     )
   })

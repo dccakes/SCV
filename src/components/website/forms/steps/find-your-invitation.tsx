@@ -11,8 +11,10 @@ export default function FindYourInvitationForm({ goNext }: StepFormProps) {
   const [name, setName] = useState<string>('')
   const [showError, setShowError] = useState<boolean>(false)
 
-  const { refetch, isFetching } = api.household.findBySearch.useQuery(
-    { searchText: name },
+  const subUrl = weddingData.website?.subUrl ?? ''
+
+  const { refetch, isFetching } = api.household.findBySearchPublic.useQuery(
+    { subUrl, searchText: name },
     {
       enabled: false,
       retry: false,

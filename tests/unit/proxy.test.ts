@@ -118,6 +118,50 @@ describe('proxy', () => {
     expect(mockGetSessionCookie).not.toHaveBeenCalled()
   })
 
+  it('allows the guest-facing public tRPC procedures, including batched together', async () => {
+    mockGetSessionCookie.mockReturnValue(null)
+
+    // The RSVP name search and submit are client-side public tRPC calls; gating
+    // them would redirect to the sign-in HTML page, which the tRPC client can't
+    // parse as JSON.
+    const [searchResponse, submitResponse, batchedResponse] = await Promise.all([
+      proxy(createRequest('/api/trpc/household.findBySearchPublic', undefined, '?batch=1')),
+      proxy(createRequest('/api/trpc/website.submitPublicRsvpForm', undefined, '?batch=1')),
+      proxy(
+        createRequest(
+          '/api/trpc/household.findBySearchPublic,website.submitPublicRsvpForm',
+          undefined,
+          '?batch=1'
+        )
+      ),
+    ])
+
+    expect(searchResponse.headers.get('location')).toBeNull()
+    expect(submitResponse.headers.get('location')).toBeNull()
+    expect(batchedResponse.headers.get('location')).toBeNull()
+  })
+
+  it('still gates non-public tRPC procedures behind the session', async () => {
+    mockGetSessionCookie.mockReturnValue(null)
+
+    // A protected procedure — or a batch that mixes in one — is not exempt.
+    const [protectedResponse, mixedBatchResponse] = await Promise.all([
+      proxy(createRequest('/api/trpc/household.create', undefined, '?batch=1')),
+      proxy(
+        createRequest(
+          '/api/trpc/household.findBySearchPublic,household.create',
+          undefined,
+          '?batch=1'
+        )
+      ),
+    ])
+
+    expect(protectedResponse.headers.get('location')).toBe(
+      'https://example.com/auth/sign-in?callbackUrl=%2Fapi%2Ftrpc%2Fhousehold.create%3Fbatch%3D1'
+    )
+    expect(mixedBatchResponse.headers.get('location')).toContain('/auth/sign-in')
+  })
+
   it('does not treat the legacy root-level invite path as public anymore', async () => {
     mockGetSessionCookie.mockReturnValue(null)
 

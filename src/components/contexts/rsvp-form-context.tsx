@@ -24,6 +24,12 @@ type RsvpFormState = {
   rsvpResponses: RsvpFormResponse[]
   answersToQuestions: AnswerWithType[]
   weddingData: Partial<RsvpPageData>
+  /**
+   * True when the guest was identified from their save-the-date invite cookie,
+   * so the flow starts on the confirm step (skipping the name search) and offers
+   * a "Not you" escape back to search.
+   */
+  recognized?: boolean
 }
 
 const INITIAL_STATE: RsvpFormState = {
@@ -52,6 +58,11 @@ const RsvpFormUpdateContext = createContext((_fields: Partial<RsvpFormState>) =>
 
 interface RsvpFormProviderProps {
   children?: ReactNode
+  /**
+   * Household resolved from the guest's save-the-date invite cookie. When
+   * present, the flow pre-fills the match and starts on the confirm step.
+   */
+  recognizedHousehold?: HouseholdSearch[number] | null
 }
 
 export const useRsvpForm = () => {
@@ -62,8 +73,12 @@ export const useUpdateRsvpForm = () => {
   return useContext(RsvpFormUpdateContext)
 }
 
-export const RsvpFormProvider = ({ children }: RsvpFormProviderProps) => {
-  const [rsvpFormData, setRsvpFormData] = useState<RsvpFormState>(INITIAL_STATE)
+export const RsvpFormProvider = ({ children, recognizedHousehold }: RsvpFormProviderProps) => {
+  const [rsvpFormData, setRsvpFormData] = useState<RsvpFormState>(() =>
+    recognizedHousehold
+      ? { ...INITIAL_STATE, matchedHouseholds: [recognizedHousehold], recognized: true }
+      : INITIAL_STATE
+  )
 
   const updateFields = (fields: Partial<RsvpFormState>) => {
     setRsvpFormData((prev) => {
