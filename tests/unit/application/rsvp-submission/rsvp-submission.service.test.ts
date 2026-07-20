@@ -54,6 +54,9 @@ const createMockDb = () => ({
   $transaction: jest.fn().mockImplementation(async (fn: (tx: unknown) => unknown) => {
     return fn({ __tx: true })
   }),
+  website: {
+    findFirst: jest.fn().mockResolvedValue({ weddingId: 'wedding-123', isRsvpEnabled: true }),
+  },
 })
 
 describe('RsvpSubmissionService', () => {
@@ -281,7 +284,25 @@ describe('RsvpSubmissionService', () => {
     )
   })
 
-  it('accepts valid public token and submits rsvp', async () => {
+  it('resolves the wedding from the subUrl and submits (no token needed)', async () => {
+    const result = await service.submitPublicRsvp({
+      subUrl: 'ash-and-jamie',
+      rsvpResponses: [{ eventId: 'event-123', guestId: 1, rsvp: 'Attending' }],
+      answersToQuestions: [],
+    })
+
+    expect(result).toEqual({ success: true })
+    expect(mockDb.website.findFirst).toHaveBeenCalledWith({
+      where: { subUrl: 'ash-and-jamie' },
+      select: { weddingId: true, isRsvpEnabled: true },
+    })
+    // subUrl resolution succeeded, so the token path is not used.
+    expect(mockFindWeddingIdByValidTokenAndSubUrl).not.toHaveBeenCalled()
+  })
+
+  it('falls back to a valid token when the site has RSVP disabled', async () => {
+    mockDb.website.findFirst.mockResolvedValue({ weddingId: 'wedding-123', isRsvpEnabled: false })
+
     const result = await service.submitPublicRsvp({
       subUrl: 'ash-and-jamie',
       token: 'a'.repeat(32),
@@ -296,7 +317,23 @@ describe('RsvpSubmissionService', () => {
     )
   })
 
-  it('rejects invalid or expired token', async () => {
+  it('rejects when the site is unknown or RSVP is disabled and no token is supplied', async () => {
+    mockDb.website.findFirst.mockResolvedValue(null)
+
+    await expect(
+      service.submitPublicRsvp({
+        subUrl: 'ash-and-jamie',
+        rsvpResponses: [],
+        answersToQuestions: [],
+      })
+    ).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+      message: 'RSVP is not available for this wedding',
+    })
+  })
+
+  it('rejects a fallback token that is invalid or expired', async () => {
+    mockDb.website.findFirst.mockResolvedValue({ weddingId: 'wedding-123', isRsvpEnabled: false })
     mockFindWeddingIdByValidTokenAndSubUrl.mockResolvedValue(null)
 
     await expect(
