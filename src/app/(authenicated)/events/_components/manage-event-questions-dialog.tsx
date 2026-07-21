@@ -195,7 +195,7 @@ export function ManageEventQuestionsDialog({
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleteQuestion.isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className='bg-red-600 hover:bg-red-700'
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
               disabled={deleteQuestion.isPending}
               onClick={(eventAction) => {
                 eventAction.preventDefault()
