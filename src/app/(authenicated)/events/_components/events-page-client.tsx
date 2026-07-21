@@ -340,7 +340,7 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
                 }
               }}
               disabled={deleteEvent.isPending}
-              className='flex items-center gap-2 bg-red-600 hover:bg-red-700'
+              className='flex items-center gap-2 bg-destructive text-destructive-foreground hover:bg-destructive/90'
             >
               {deleteEvent.isPending && <Loader2 className='h-4 w-4 animate-spin' />}
               {deleteEvent.isPending ? 'Deleting...' : 'Delete Event'}
