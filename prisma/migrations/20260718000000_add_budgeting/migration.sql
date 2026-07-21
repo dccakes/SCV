@@ -3,6 +3,7 @@ CREATE TABLE "budgets" (
     "id" TEXT NOT NULL,
     "wedding_id" TEXT NOT NULL,
     "target_total" DECIMAL(12,2) NOT NULL DEFAULT 0,
+    "currency" TEXT NOT NULL DEFAULT 'USD',
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
