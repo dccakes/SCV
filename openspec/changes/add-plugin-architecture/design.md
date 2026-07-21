@@ -21,12 +21,15 @@ Scope per maintainer direction: prioritize **full-feature plugins** (own route +
 - Define the three-tier enablement model and a single resolver.
 - Fold the existing `website_builder` feature and the theme system into the contract as reference implementations, proving it against shipping code with zero user-facing change.
 - Define the public author surface: an SDK barrel, a scaffold, a `docs/plugins/` guide, and the design/acceptance contract for open-source contributions.
+- Define how plugins extend the UI (named slots + keyed section/editor registries within the RSC boundary) and how they react to each other (a typed, decoupled, after-commit event system).
 
 **Non-Goals (this change):**
 - Fully runtime-dynamic third-party plugins (no rebuild) — explicitly rejected below; documented as a non-goal, not a deferred goal.
 - Splitting `prisma/schema.prisma` into per-plugin schema files — deferred (Decision 5); plugin models stay central in V1.
 - Public-site block plugins and integration plugins as concrete subtypes — the manifest is designed to admit them later, but they are not specced here.
 - A plugin marketplace / installer UI, plugin sandboxing, or per-plugin billing implementation (platform-admin gating is specced; billing is out).
+- A transactional outbox / durable queue / guaranteed (at-least-once) event delivery — V1 event delivery is after-commit best-effort; the outbox is a documented future upgrade (Decision 9).
+- A mandatory global client-state store (e.g. zustand) — client reactivity stays on react-query invalidation with a declarative event→query-key map (Decision 9).
 - Implementation itself — this is a spec-only change; `tasks.md` is the phased plan for follow-up changes.
 
 ## Decisions
@@ -151,12 +154,52 @@ isPluginEnabledForWedding(pluginId, { registry, policy, wedding }): boolean
 
 **Rationale:** "easy to build addons, and open source" is a documentation-and-contract problem as much as a code one. A stable SDK boundary + a scaffold that starts green + a written design/acceptance bar is what lets outside contributors succeed without reading the whole app.
 
+### Decision 8: UI extension via named slots + a keyed section registry (not props across RSC)
+
+**Choice:** Plugins inject UI through **named slots**. A slot registry holds contributions `{ slot, order, gate, Component }`; a `<Slot name="...">` primitive renders the active contributions for the current wedding. Initial slots: `dashboard.widgets`, `settings.cards`, `sidebar.nav` (nav is a slot specialization of the plugin-navigation capability), with an open set for later regions (`guest-list.toolbar`, `event.detail`, …). Separately, the per-template `switch(section.type)` renderers and the editor's `SectionFields` switch are replaced by keyed registries: a section type ships a **default renderer** and an **Editor**, and a template MAY register an **override renderer** to restyle it.
+
+**Why:** today the template registry is the only real component registry; dashboard, settings, and the section renderers are hardcoded (dashboard is 7 functions in one 570-line file; settings is a fixed JSX sequence; sections are a switch duplicated across `classic`/`aurelia`/`voyage`). Slots turn each of those into a projection of the registry — the same "add a folder, nothing else changes" property. Keying section rendering (with a shared default) removes the "edit all three templates to add a section type" tax while preserving the intentional design property that swapping a template restructures the page (a template opts into an override when it wants bespoke layout).
+
+**RSC constraint (the load-bearing detail):** slot components MUST be resolved as **module references through the registry at build time**, never passed as component functions across the server→client boundary. This reuses the theme registry's React-free-metadata (`catalog.ts`) / runtime-components (`registry.ts`) split, so the server can *list and gate* contributions while the components render on the correct side of the boundary.
+
+**Editing:** a content plugin registers a **Display + Editor pair** plus a shared Zod schema and its own mutation. The host renders the Editor in the right surface (website manager, a settings card, or the plugin's route), replacing the hardcoded `SectionFields` switch. Editors build on the SDK's react-hook-form + Zod + UI-kit primitives so they match `DESIGN.md` automatically.
+
+**Alternatives considered:**
+- *Portals / passing components as props from server to client* — rejected: breaks under RSC serialization.
+- *A single "extra components" escape hatch on each page* — rejected: unordered, ungated, and doesn't compose; named slots give ordering + per-wedding gating for free.
+- *Keep section rendering as switches* — rejected: forces every template edit per new section type, the exact coupling plugins must remove.
+
+### Decision 9: Typed in-process event bus, after-commit best-effort (no outbox in V1)
+
+**Choice:** Introduce a typed domain-event system so plugins react **without importing each other**. Events reuse the existing `{scope}.{object}.{action}` taxonomy (`src/lib/analytics/events.ts`), promoted to a `DomainEvent` union with typed payloads. Plugins declare `emit`/`subscribe` in their manifest. A dispatcher in `src/server/infrastructure/events/` fans out to active subscribers with the **never-throw** contract already used by `captureServerEvent`. **Delivery is after-commit, async, best-effort (at-most-once)** in V1; subscribers must be idempotent and off the critical path. **No transactional outbox is built in V1** — it is the documented upgrade for effects that later need at-least-once.
+
+**Why an event bus at all:** in a modular monolith, if plugin A calls plugin B directly, A depends on B and neither can be optional — reintroducing the coupling the whole plugin system exists to remove. An event bus is the decoupling seam: `rsvp.submitted` fires and a Notifications plugin, a Song-Requests plugin, and Etta can each react, none known to RSVP.
+
+**Why this delivery model:** it matches the timing and failure-isolation of the existing `analyticsMiddleware` (post-resolver, swallow errors, never fail the request), so it's a small, well-understood step rather than a queueing subsystem. At-most-once is honest and adequate for the first subscribers (notifications, suggestions, unlocks); nothing in V1 needs guaranteed delivery. The outbox — staging events on the orchestrator's `tx` and relaying after commit — is feasible later precisely because orchestrators already own the transaction boundary and construct `tx`-scoped repositories, but building it now would be speculative.
+
+**Two emit seams:**
+- *Automatic:* generalize `analyticsMiddleware` (`trpc.ts`) so every successful mutation also dispatches its canonical event to the bus. Free coverage of all tRPC mutations; after-commit; mutation-only.
+- *Explicit:* `emit()` inside application-layer orchestrators (e.g. `RsvpSubmissionService`) with rich semantic payloads, and at the non-tRPC entrypoints the middleware can't see (Telegram webhook, cron, Etta agent tools).
+
+**Reference subscriber:** wire `rsvp.*.submitted → Notification`, activating the currently-unused `Notification` model — proving the path end to end.
+
+**Client reactivity:** kept separate and minimal. Today it's react-query invalidation via per-mutation `onSuccess`. Plugins declare (via the SDK) which query keys to invalidate on which events, so cross-plugin UI reactions don't require the emitting component to know the subscriber — no mandatory global client store.
+
+**Alternatives considered:**
+- *Transactional outbox in V1* — rejected as premature: adds a table, a relay/worker, and emitter threading through tx-scoped repos for delivery guarantees nothing in V1 requires.
+- *Direct service-to-service calls (status quo)* — rejected: couples plugins and defeats optionality.
+- *An external queue (SQS/Kafka/etc.)* — rejected for a single-process modular monolith; in-process dispatch matches the deployment model and the never-throw analytics precedent.
+- *Derive-at-read-time only (today's `CommunicationLogService` approach)* — kept where it fits (read models), but it cannot trigger side effects, which is the whole point of the bus.
+
 ## Risks / Trade-offs
 
 - **Schema is still central (Decision 5)** — the biggest gap between this and "true" plugins. Mitigation: honest docs, `Wedding` extension-point block, Tier-2 path defined.
 - **Registry import remains explicit** — one line per plugin. Accepted: explicitness beats fragile globbing under Next/tRPC.
 - **Router/permission derivation refactor touches hot paths** (`root.ts`, `auth-permissions.ts`). Mitigation: phased tasks, behavior-preserving, `website_builder` + themes as regression oracles; each phase independently shippable.
 - **Route injection is convention, not runtime** — a plugin owns a filesystem segment. Mitigation: manifest declares `routeSegment`; build-time validation that it exists.
+- **Slot rendering must not cross the RSC boundary as props** (Decision 8) — the single easiest way to get this wrong. Mitigation: registry resolves module references at build time; metadata/runtime split enforced; lint/review guidance in the author docs.
+- **After-commit best-effort events are at-most-once** (Decision 9) — a crash between commit and dispatch drops the event. Mitigation: documented contract, idempotent subscribers, outbox as the named upgrade; no critical-path effect may depend on the bus in V1.
+- **Section default-renderer vs per-template design intent** — a shared default could look generic in a bespoke template. Mitigation: templates opt into overrides where they care; the default keeps new section types drop-in.
 
 ## Migration / Rollout
 
@@ -166,6 +209,8 @@ Phased, behavior-preserving (detailed in `tasks.md`):
 3. Derive nav + Settings > Plugins from the registry; migrate `website_builder`'s toggle/nav/gating onto the resolver.
 4. Derive authz statement/roles from permission fragments.
 5. Fold the theme registry under the manifest.
-6. Ship SDK barrel, scaffold, and `docs/plugins/*`; convert `website_builder` and one theme into the two reference plugins.
+6. Introduce the `<Slot>` primitive + slot registry; refactor dashboard and settings to render slots; key the section render + editor registries (default renderer + overrides), keeping every current widget/section byte-identical in output.
+7. Introduce the event dispatcher; generalize `analyticsMiddleware` to dispatch; add explicit `emit()` in orchestrators + non-tRPC entrypoints; wire the `Notification` reference subscriber; add the client event→query-key map.
+8. Ship SDK barrel, scaffold, and `docs/plugins/*`; convert `website_builder` and one theme into the two reference plugins; build one brand-new example plugin (feature + slot widget + event subscriber) as the living tutorial.
 
 Each phase keeps existing behavior green (the `website-builder-plugin` spec's graceful-degradation scenarios are the acceptance oracle) and is independently revertable.
