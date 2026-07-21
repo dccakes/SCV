@@ -70,6 +70,8 @@ export type BudgetSummary = {
 
 export type BudgetOverview = {
   targetTotal: number
+  /** ISO 4217 currency code every amount on this budget is tracked in. */
+  currency: string
   categories: BudgetCategoryWithExpenses[]
   summary: BudgetSummary
 }

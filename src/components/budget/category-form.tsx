@@ -10,6 +10,7 @@ import type { BudgetCategoryWithExpenses } from '~/server/domains/budget/budget.
 import { api } from '~/trpc/react'
 
 type CategoryFormBaseProps = {
+  currency: string
   onSuccess: () => void
   onCancel: () => void
 }
@@ -19,7 +20,7 @@ type CategoryFormProps =
   | (CategoryFormBaseProps & { mode: 'edit'; category: BudgetCategoryWithExpenses })
 
 export function CategoryForm(props: Readonly<CategoryFormProps>) {
-  const { mode, onSuccess, onCancel } = props
+  const { mode, currency, onSuccess, onCancel } = props
   const isEditing = mode === 'edit'
   const category = mode === 'edit' ? props.category : undefined
   const utils = api.useUtils()
@@ -82,7 +83,7 @@ export function CategoryForm(props: Readonly<CategoryFormProps>) {
         />
       </div>
       <div className='space-y-1.5'>
-        <Label htmlFor='category-planned'>Planned budget (USD)</Label>
+        <Label htmlFor='category-planned'>Planned budget ({currency})</Label>
         <Input
           id='category-planned'
           type='number'

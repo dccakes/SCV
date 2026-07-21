@@ -12,6 +12,7 @@ import type {
   PrismaClient,
 } from '@prisma/client'
 
+import { DEFAULT_CURRENCY } from '~/lib/budget/currency'
 import type { BudgetCategoryData, BudgetExpense } from '~/server/domains/budget/budget.types'
 
 type PrismaCategoryWithExpenses = PrismaBudgetCategory & {
@@ -24,11 +25,15 @@ export class BudgetRepository {
   // ─── Target budget ──────────────────────────────────────────────────────────
 
   /**
-   * Get the target total for a wedding, creating a default Budget row lazily.
+   * Get the target total and currency for a wedding. Returns defaults when the
+   * singleton Budget row has not been created yet.
    */
-  async getTargetTotal(weddingId: string): Promise<number> {
+  async getSettings(weddingId: string): Promise<{ targetTotal: number; currency: string }> {
     const budget = await this.db.budget.findUnique({ where: { weddingId } })
-    return budget ? this.toNumber(budget.targetTotal) : 0
+    return {
+      targetTotal: budget ? this.toNumber(budget.targetTotal) : 0,
+      currency: budget?.currency ?? DEFAULT_CURRENCY,
+    }
   }
 
   /**
@@ -41,6 +46,18 @@ export class BudgetRepository {
       update: { targetTotal },
     })
     return this.toNumber(budget.targetTotal)
+  }
+
+  /**
+   * Set the tracking currency for a wedding (upserts the singleton row).
+   */
+  async setCurrency(weddingId: string, currency: string): Promise<string> {
+    const budget = await this.db.budget.upsert({
+      where: { weddingId },
+      create: { weddingId, currency },
+      update: { currency },
+    })
+    return budget.currency
   }
 
   // ─── Categories ───────────────────────────────────────────────────────────────

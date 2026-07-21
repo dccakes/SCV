@@ -14,11 +14,20 @@ import {
 } from '~/components/ui/dialog'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/ui/select'
+import { SUPPORTED_CURRENCIES } from '~/lib/budget/currency'
 import type { BudgetSummary as BudgetSummaryData } from '~/server/domains/budget/budget.types'
 import { api } from '~/trpc/react'
 
 type BudgetSummaryProps = {
   summary: BudgetSummaryData
+  currency: string
 }
 
 function StatTile({
@@ -49,28 +58,48 @@ function StatTile({
   )
 }
 
-function TargetBudgetDialog({ current }: { current: number }) {
+function BudgetSettingsDialog({
+  currentTarget,
+  currentCurrency,
+}: {
+  currentTarget: number
+  currentCurrency: string
+}) {
   const [open, setOpen] = useState(false)
-  const [value, setValue] = useState(current ? String(current) : '')
+  const [value, setValue] = useState(currentTarget ? String(currentTarget) : '')
+  const [currency, setCurrency] = useState(currentCurrency)
   const utils = api.useUtils()
 
-  const setTarget = api.budget.setTarget.useMutation({
-    onSuccess: async () => {
-      await utils.budget.getOverview.invalidate()
-      toast.success('Target budget updated')
-      setOpen(false)
-    },
-    onError: (err) => toast.error(err.message || 'Could not update target budget'),
-  })
+  const resetFields = () => {
+    setValue(currentTarget ? String(currentTarget) : '')
+    setCurrency(currentCurrency)
+  }
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const setTarget = api.budget.setTarget.useMutation()
+  const setCurrencyMutation = api.budget.setCurrency.useMutation()
+  const isPending = setTarget.isPending || setCurrencyMutation.isPending
+
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     const parsed = value ? Number.parseFloat(value) : 0
     if (!Number.isFinite(parsed) || parsed < 0) {
       toast.error('Enter a valid amount')
       return
     }
-    setTarget.mutate({ targetTotal: parsed })
+
+    try {
+      if (currency !== currentCurrency) {
+        await setCurrencyMutation.mutateAsync({ currency })
+      }
+      if (parsed !== currentTarget) {
+        await setTarget.mutateAsync({ targetTotal: parsed })
+      }
+      await utils.budget.getOverview.invalidate()
+      toast.success('Budget settings updated')
+      setOpen(false)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not update budget settings')
+    }
   }
 
   return (
@@ -78,7 +107,7 @@ function TargetBudgetDialog({ current }: { current: number }) {
       open={open}
       onOpenChange={(next) => {
         setOpen(next)
-        if (next) setValue(current ? String(current) : '')
+        if (next) resetFields()
       }}
     >
       <DialogTrigger asChild>
@@ -88,16 +117,35 @@ function TargetBudgetDialog({ current }: { current: number }) {
           variant='outline'
           className='font-mono text-[0.62rem] uppercase tracking-widest'
         >
-          {current > 0 ? 'Edit target' : 'Set target'}
+          {currentTarget > 0 ? 'Budget settings' : 'Set budget'}
         </Button>
       </DialogTrigger>
       <DialogContent className='sm:max-w-sm'>
         <DialogHeader>
-          <DialogTitle className='font-display text-xl italic'>Target budget</DialogTitle>
+          <DialogTitle className='font-display text-xl italic'>Budget settings</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className='space-y-4'>
           <div className='space-y-1.5'>
-            <Label htmlFor='target-total'>Overall target (USD)</Label>
+            <Label htmlFor='budget-currency'>Currency</Label>
+            <Select value={currency} onValueChange={setCurrency}>
+              <SelectTrigger id='budget-currency'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SUPPORTED_CURRENCIES.map((option) => (
+                  <SelectItem key={option.code} value={option.code}>
+                    {option.code} — {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className='text-muted-foreground text-xs'>
+              All targets, section budgets, and expenses are tracked in this currency. Changing it
+              does not convert existing amounts.
+            </p>
+          </div>
+          <div className='space-y-1.5'>
+            <Label htmlFor='target-total'>Overall target ({currency})</Label>
             <Input
               id='target-total'
               type='number'
@@ -107,7 +155,6 @@ function TargetBudgetDialog({ current }: { current: number }) {
               value={value}
               onChange={(e) => setValue(e.target.value)}
               placeholder='0.00'
-              autoFocus
             />
           </div>
           <div className='flex justify-end gap-2'>
@@ -115,11 +162,11 @@ function TargetBudgetDialog({ current }: { current: number }) {
               type='button'
               variant='outline'
               onClick={() => setOpen(false)}
-              disabled={setTarget.isPending}
+              disabled={isPending}
             >
               Cancel
             </Button>
-            <Button type='submit' disabled={setTarget.isPending}>
+            <Button type='submit' disabled={isPending}>
               Save
             </Button>
           </div>
@@ -129,7 +176,7 @@ function TargetBudgetDialog({ current }: { current: number }) {
   )
 }
 
-export function BudgetSummary({ summary }: Readonly<BudgetSummaryProps>) {
+export function BudgetSummary({ summary, currency }: Readonly<BudgetSummaryProps>) {
   const { targetTotal, totalPlanned, actualSpend, outstandingDeposits, netSpend, remaining } =
     summary
 
@@ -146,14 +193,14 @@ export function BudgetSummary({ summary }: Readonly<BudgetSummaryProps>) {
             Net spend excludes refundable deposits since that money comes back to you.
           </p>
         </div>
-        <TargetBudgetDialog current={targetTotal} />
+        <BudgetSettingsDialog currentTarget={targetTotal} currentCurrency={currency} />
       </div>
 
       {targetTotal > 0 ? (
         <div className='mb-5'>
           <div className='mb-1.5 flex items-center justify-between font-mono text-[0.62rem] text-muted-foreground uppercase tracking-widest'>
             <span>
-              {formatCurrency(netSpend)} of {formatCurrency(targetTotal)}
+              {formatCurrency(netSpend, currency)} of {formatCurrency(targetTotal, currency)}
             </span>
             <span className={overBudget ? 'text-destructive' : undefined}>{pctOfTarget}%</span>
           </div>
@@ -171,26 +218,26 @@ export function BudgetSummary({ summary }: Readonly<BudgetSummaryProps>) {
       <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
         <StatTile
           label='Target budget'
-          value={targetTotal > 0 ? formatCurrency(targetTotal) : '—'}
-          hint={`Planned across sections: ${formatCurrency(totalPlanned)}`}
+          value={targetTotal > 0 ? formatCurrency(targetTotal, currency) : '—'}
+          hint={`Planned across sections: ${formatCurrency(totalPlanned, currency)}`}
         />
         <StatTile
           label='Actual spend'
-          value={formatCurrency(actualSpend)}
+          value={formatCurrency(actualSpend, currency)}
           hint='Gross of all payments'
         />
         <StatTile
           label='Net spend'
-          value={formatCurrency(netSpend)}
+          value={formatCurrency(netSpend, currency)}
           hint={
             outstandingDeposits > 0
-              ? `${formatCurrency(outstandingDeposits)} in deposits still to return`
+              ? `${formatCurrency(outstandingDeposits, currency)} in deposits still to return`
               : 'After refundable deposits'
           }
         />
         <StatTile
           label='Remaining'
-          value={formatCurrency(remaining)}
+          value={formatCurrency(remaining, currency)}
           tone={remaining < 0 ? 'negative' : 'positive'}
           hint={remaining < 0 ? 'Over target budget' : 'Left under target'}
         />

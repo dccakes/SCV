@@ -13,6 +13,7 @@ import {
   createExpenseSchema,
   deleteCategorySchema,
   deleteExpenseSchema,
+  setCurrencySchema,
   setTargetSchema,
   updateCategorySchema,
   updateExpenseSchema,
@@ -34,6 +35,14 @@ export const budgetRouter = createTRPCRouter({
   setTarget: protectedProcedure.input(setTargetSchema).mutation(async ({ ctx, input }) => {
     const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return budgetService.setTarget(ctx.authz, weddingId, input.targetTotal)
+  }),
+
+  /**
+   * Set the currency the whole budget is tracked in (no conversion performed).
+   */
+  setCurrency: protectedProcedure.input(setCurrencySchema).mutation(async ({ ctx, input }) => {
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+    return budgetService.setCurrency(ctx.authz, weddingId, input.currency)
   }),
 
   /**

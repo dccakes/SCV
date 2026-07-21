@@ -70,8 +70,9 @@ function makeCategory(overrides: Partial<BudgetCategoryWithExpenses>): BudgetCat
 
 function createService(overrides: Partial<BudgetRepository> = {}) {
   const repository = {
-    getTargetTotal: jest.fn(),
+    getSettings: jest.fn(),
     setTargetTotal: jest.fn(),
+    setCurrency: jest.fn(),
     findCategoriesWithExpenses: jest.fn(),
     findCategoryById: jest.fn(),
     nextCategoryPosition: jest.fn(),
@@ -108,12 +109,13 @@ describe('BudgetService.getOverview', () => {
     })
 
     const { service } = createService({
-      getTargetTotal: jest.fn().mockResolvedValue(20000),
+      getSettings: jest.fn().mockResolvedValue({ targetTotal: 20000, currency: 'USD' }),
       findCategoriesWithExpenses: jest.fn().mockResolvedValue([category]),
     })
 
     const overview = await service.getOverview(ctx, WEDDING_ID)
 
+    expect(overview.currency).toBe('USD')
     const totals = overview.categories[0].totals
     expect(totals.actualSpend).toBe(8500)
     expect(totals.refundableDeposits).toBe(2000)
@@ -142,7 +144,7 @@ describe('BudgetService.getOverview', () => {
     })
 
     const { service } = createService({
-      getTargetTotal: jest.fn().mockResolvedValue(0),
+      getSettings: jest.fn().mockResolvedValue({ targetTotal: 0, currency: 'GBP' }),
       findCategoriesWithExpenses: jest.fn().mockResolvedValue([category]),
     })
 
@@ -168,7 +170,7 @@ describe('BudgetService.getOverview', () => {
     ]
 
     const { service } = createService({
-      getTargetTotal: jest.fn().mockResolvedValue(5000),
+      getSettings: jest.fn().mockResolvedValue({ targetTotal: 5000, currency: 'USD' }),
       findCategoriesWithExpenses: jest.fn().mockResolvedValue(categories),
     })
 
@@ -181,11 +183,25 @@ describe('BudgetService.getOverview', () => {
 
   it('requires read permission', async () => {
     const { service } = createService({
-      getTargetTotal: jest.fn().mockResolvedValue(0),
+      getSettings: jest.fn().mockResolvedValue({ targetTotal: 0, currency: 'USD' }),
       findCategoriesWithExpenses: jest.fn().mockResolvedValue([]),
     })
     await service.getOverview(ctx, WEDDING_ID)
     expect(mockRequirePermission).toHaveBeenCalledWith(ctx, { budget: ['read'] })
+  })
+})
+
+describe('BudgetService.setCurrency', () => {
+  it('requires update permission and persists the currency', async () => {
+    const { service, repository } = createService({
+      setCurrency: jest.fn().mockResolvedValue('GBP'),
+    })
+
+    const result = await service.setCurrency(ctx, WEDDING_ID, 'GBP')
+
+    expect(mockRequirePermission).toHaveBeenCalledWith(ctx, { budget: ['update'] })
+    expect(repository.setCurrency).toHaveBeenCalledWith(WEDDING_ID, 'GBP')
+    expect(result).toBe('GBP')
   })
 })
 

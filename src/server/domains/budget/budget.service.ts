@@ -38,17 +38,18 @@ export class BudgetService {
   async getOverview(ctx: AuthzContext, weddingId: string): Promise<BudgetOverview> {
     this.requireBudgetPermission(ctx, 'read')
 
-    const [targetTotal, categories] = await Promise.all([
-      this.repository.getTargetTotal(weddingId),
+    const [settings, categories] = await Promise.all([
+      this.repository.getSettings(weddingId),
       this.repository.findCategoriesWithExpenses(weddingId),
     ])
 
     const categoriesWithTotals = categories.map((category) => this.withTotals(category))
 
     return {
-      targetTotal,
+      targetTotal: settings.targetTotal,
+      currency: settings.currency,
       categories: categoriesWithTotals,
-      summary: this.computeSummary(targetTotal, categoriesWithTotals),
+      summary: this.computeSummary(settings.targetTotal, categoriesWithTotals),
     }
   }
 
@@ -57,6 +58,11 @@ export class BudgetService {
   async setTarget(ctx: AuthzContext, weddingId: string, targetTotal: number): Promise<number> {
     this.requireBudgetPermission(ctx, 'update')
     return this.repository.setTargetTotal(weddingId, targetTotal)
+  }
+
+  async setCurrency(ctx: AuthzContext, weddingId: string, currency: string): Promise<string> {
+    this.requireBudgetPermission(ctx, 'update')
+    return this.repository.setCurrency(weddingId, currency)
   }
 
   // ─── Categories ───────────────────────────────────────────────────────────────

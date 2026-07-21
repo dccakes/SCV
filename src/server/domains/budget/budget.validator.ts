@@ -7,6 +7,8 @@
 
 import { z } from 'zod'
 
+import { SUPPORTED_CURRENCY_CODES } from '~/lib/budget/currency'
+
 export const MAX_BUDGET_AMOUNT = 100_000_000
 export const MAX_BUDGET_DESCRIPTION_LENGTH = 200
 export const MAX_BUDGET_CATEGORY_NAME_LENGTH = 100
@@ -22,6 +24,15 @@ const moneySchema = z
 
 export const setTargetSchema = z.object({
   targetTotal: moneySchema,
+})
+
+export const currencyCodeSchema = z.enum(
+  SUPPORTED_CURRENCY_CODES as [string, ...string[]],
+  'Unsupported currency'
+)
+
+export const setCurrencySchema = z.object({
+  currency: currencyCodeSchema,
 })
 
 // ─── Categories ───────────────────────────────────────────────────────────────
@@ -88,6 +99,7 @@ export const deleteExpenseSchema = z.object({
 })
 
 export type SetTargetInput = z.infer<typeof setTargetSchema>
+export type SetCurrencyInput = z.infer<typeof setCurrencySchema>
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>
 export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>
 export type DeleteCategoryInput = z.infer<typeof deleteCategorySchema>

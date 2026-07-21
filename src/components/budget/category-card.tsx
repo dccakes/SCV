@@ -27,14 +27,17 @@ import { api } from '~/trpc/react'
 
 type CategoryCardProps = {
   category: BudgetCategoryWithExpenses
+  currency: string
 }
 
 function ExpenseRow({
   expense,
+  currency,
   onEdit,
   onDelete,
 }: {
   expense: BudgetExpense
+  currency: string
   onEdit: () => void
   onDelete: () => void
 }) {
@@ -70,7 +73,7 @@ function ExpenseRow({
       </div>
       <div className='flex shrink-0 items-center gap-2'>
         <span className='font-mono text-foreground text-sm tabular-nums'>
-          {formatCurrency(expense.amount)}
+          {formatCurrency(expense.amount, currency)}
         </span>
         <button
           type='button'
@@ -91,7 +94,7 @@ function ExpenseRow({
   )
 }
 
-export function CategoryCard({ category }: Readonly<CategoryCardProps>) {
+export function CategoryCard({ category, currency }: Readonly<CategoryCardProps>) {
   const [showAddExpense, setShowAddExpense] = useState(false)
   const [editExpense, setEditExpense] = useState<BudgetExpense | null>(null)
   const [showEditCategory, setShowEditCategory] = useState(false)
@@ -133,8 +136,8 @@ export function CategoryCard({ category }: Readonly<CategoryCardProps>) {
           <h3 className='font-serif text-foreground text-lg'>{category.name}</h3>
           <p className='mt-0.5 font-mono text-[0.62rem] text-muted-foreground uppercase tracking-widest'>
             {hasPlanned
-              ? `${formatCurrency(totals.netSpend)} net of ${formatCurrency(totals.plannedAmount)}`
-              : `${formatCurrency(totals.netSpend)} spent · no budget set`}
+              ? `${formatCurrency(totals.netSpend, currency)} net of ${formatCurrency(totals.plannedAmount, currency)}`
+              : `${formatCurrency(totals.netSpend, currency)} spent · no budget set`}
           </p>
         </div>
         <div className='flex items-center gap-2'>
@@ -166,8 +169,8 @@ export function CategoryCard({ category }: Readonly<CategoryCardProps>) {
           <div className='mt-1.5 flex justify-between font-mono text-[0.6rem] text-muted-foreground uppercase tracking-widest'>
             <span>
               {overBudget
-                ? `${formatCurrency(totals.netSpend - totals.plannedAmount)} over`
-                : `${formatCurrency(totals.remaining)} left`}
+                ? `${formatCurrency(totals.netSpend - totals.plannedAmount, currency)} over`
+                : `${formatCurrency(totals.remaining, currency)} left`}
             </span>
             <span>{pct}%</span>
           </div>
@@ -176,10 +179,10 @@ export function CategoryCard({ category }: Readonly<CategoryCardProps>) {
 
       {totals.actualSpend !== totals.netSpend ? (
         <p className='mt-3 rounded-md bg-muted/40 px-3 py-2 text-muted-foreground text-xs'>
-          {formatCurrency(totals.actualSpend)} paid · {formatCurrency(totals.refundableDeposits)}{' '}
-          refundable
+          {formatCurrency(totals.actualSpend, currency)} paid ·{' '}
+          {formatCurrency(totals.refundableDeposits, currency)} refundable
           {totals.outstandingDeposits > 0
-            ? ` (${formatCurrency(totals.outstandingDeposits)} still to return)`
+            ? ` (${formatCurrency(totals.outstandingDeposits, currency)} still to return)`
             : ''}
         </p>
       ) : null}
@@ -191,6 +194,7 @@ export function CategoryCard({ category }: Readonly<CategoryCardProps>) {
               <ExpenseRow
                 key={expense.id}
                 expense={expense}
+                currency={currency}
                 onEdit={() => setEditExpense(expense)}
                 onDelete={() => setDeleteExpenseId(expense.id)}
               />
@@ -222,6 +226,7 @@ export function CategoryCard({ category }: Readonly<CategoryCardProps>) {
           <ExpenseForm
             mode='create'
             categoryId={category.id}
+            currency={currency}
             onSuccess={() => setShowAddExpense(false)}
             onCancel={() => setShowAddExpense(false)}
           />
@@ -238,6 +243,7 @@ export function CategoryCard({ category }: Readonly<CategoryCardProps>) {
             <ExpenseForm
               mode='edit'
               expense={editExpense}
+              currency={currency}
               onSuccess={() => setEditExpense(null)}
               onCancel={() => setEditExpense(null)}
             />
@@ -254,6 +260,7 @@ export function CategoryCard({ category }: Readonly<CategoryCardProps>) {
           <CategoryForm
             mode='edit'
             category={category}
+            currency={currency}
             onSuccess={() => setShowEditCategory(false)}
             onCancel={() => setShowEditCategory(false)}
           />

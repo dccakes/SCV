@@ -5,6 +5,7 @@
 import {
   createCategorySchema,
   createExpenseSchema,
+  setCurrencySchema,
   setTargetSchema,
   updateExpenseSchema,
 } from '~/server/domains/budget/budget.validator'
@@ -17,6 +18,18 @@ describe('setTargetSchema', () => {
 
   it('rejects negative amounts', () => {
     expect(setTargetSchema.safeParse({ targetTotal: -1 }).success).toBe(false)
+  })
+})
+
+describe('setCurrencySchema', () => {
+  it('accepts supported currencies', () => {
+    expect(setCurrencySchema.safeParse({ currency: 'USD' }).success).toBe(true)
+    expect(setCurrencySchema.safeParse({ currency: 'GBP' }).success).toBe(true)
+  })
+
+  it('rejects unsupported currencies', () => {
+    expect(setCurrencySchema.safeParse({ currency: 'EUR' }).success).toBe(false)
+    expect(setCurrencySchema.safeParse({ currency: 'usd' }).success).toBe(false)
   })
 })
 

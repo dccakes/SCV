@@ -49,10 +49,11 @@ export default function BudgetOverview({ initialOverview }: Readonly<BudgetOverv
 
   const current = overview ?? initialOverview
   const categories = current.categories
+  const currency = current.currency
 
   return (
     <div>
-      <BudgetSummary summary={current.summary} />
+      <BudgetSummary summary={current.summary} currency={currency} />
 
       <div className='mb-4 flex items-center justify-between'>
         <p className='font-mono text-[0.62rem] text-muted-foreground tracking-wider'>
@@ -75,7 +76,7 @@ export default function BudgetOverview({ initialOverview }: Readonly<BudgetOverv
       ) : (
         <div className='space-y-4'>
           {categories.map((category) => (
-            <CategoryCard key={category.id} category={category} />
+            <CategoryCard key={category.id} category={category} currency={currency} />
           ))}
         </div>
       )}
@@ -87,6 +88,7 @@ export default function BudgetOverview({ initialOverview }: Readonly<BudgetOverv
           </DialogHeader>
           <CategoryForm
             mode='create'
+            currency={currency}
             onSuccess={() => setShowAddCategory(false)}
             onCancel={() => setShowAddCategory(false)}
           />

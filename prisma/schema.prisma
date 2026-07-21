@@ -834,6 +834,10 @@ model Budget {
   // Overall target budget for the whole wedding
   targetTotal Decimal @default(0) @db.Decimal(12, 2) @map("target_total")
 
+  // ISO 4217 currency code every amount on this wedding is tracked in.
+  // No conversion is supported yet.
+  currency String @default("USD")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

@@ -12,6 +12,7 @@ import type { BudgetExpense } from '~/server/domains/budget/budget.types'
 import { api } from '~/trpc/react'
 
 type ExpenseFormBaseProps = {
+  currency: string
   onSuccess: () => void
   onCancel: () => void
 }
@@ -26,7 +27,7 @@ function toDateInputValue(date: Date | null): string {
 }
 
 export function ExpenseForm(props: Readonly<ExpenseFormProps>) {
-  const { mode, onSuccess, onCancel } = props
+  const { mode, currency, onSuccess, onCancel } = props
   const isEditing = mode === 'edit'
   const expense = mode === 'edit' ? props.expense : undefined
   const utils = api.useUtils()
@@ -111,7 +112,7 @@ export function ExpenseForm(props: Readonly<ExpenseFormProps>) {
 
       <div className='grid grid-cols-2 gap-3'>
         <div className='space-y-1.5'>
-          <Label htmlFor='expense-amount'>Amount (USD)</Label>
+          <Label htmlFor='expense-amount'>Amount ({currency})</Label>
           <Input
             id='expense-amount'
             type='number'
