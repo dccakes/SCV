@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import type { TaskCategoryValue } from '~/lib/constants/task-categories'
+import { TASK_CATEGORY_LABELS } from '~/lib/constants/task-categories'
 import type { Task } from '~/server/domains/task'
 
 const EMPTY_TASKS: Task[] = []
@@ -116,19 +117,4 @@ const endOfUtcWeek = (date: Date): Date => {
   const daysUntilSunday = (7 - end.getUTCDay()) % 7
   end.setUTCDate(end.getUTCDate() + daysUntilSunday)
   return end
-}
-
-const TASK_CATEGORY_LABELS: Record<TaskCategoryValue, string> = {
-  VENUE: 'Venue',
-  VENDORS: 'Vendor',
-  ATTIRE: 'Attire',
-  STATIONERY: 'Stationery',
-  GUESTS: 'Guests',
-  LEGAL: 'Legal',
-  CEREMONY: 'Ceremony',
-  RECEPTION: 'Reception',
-  BEAUTY: 'Beauty',
-  HONEYMOON: 'Honeymoon',
-  BUDGET: 'Budget',
-  OTHER: 'Task',
 }

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import {
   bucketTasks,
   filterTasks,
@@ -26,7 +27,7 @@ import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Checkbox } from '~/components/ui/checkbox'
-import { TASK_CATEGORIES } from '~/lib/constants/task-categories'
+import { TASK_CATEGORIES, TASK_CATEGORY_LABELS } from '~/lib/constants/task-categories'
 import type { EventWithStats } from '~/server/domains/event'
 import type { MilestoneWithEffectiveStatus } from '~/server/domains/milestone'
 import type { Task } from '~/server/domains/task'
@@ -94,6 +95,7 @@ export function ChecklistPageClient({
         utils.dashboard.getForActiveWorkspace.invalidate(),
       ])
     },
+    onError: () => toast.error('Failed to update task'),
   })
   const createTask = api.task.create.useMutation({
     onSuccess: () => {
@@ -104,6 +106,7 @@ export function ChecklistPageClient({
         utils.dashboard.getForActiveWorkspace.invalidate(),
       ])
     },
+    onError: () => toast.error('Failed to create task'),
   })
   const updateTask = api.task.update.useMutation({
     onSuccess: () => {
@@ -114,6 +117,7 @@ export function ChecklistPageClient({
         utils.dashboard.getForActiveWorkspace.invalidate(),
       ])
     },
+    onError: () => toast.error('Failed to update task'),
   })
   const deleteTask = api.task.delete.useMutation({
     onSuccess: () => {
@@ -125,6 +129,7 @@ export function ChecklistPageClient({
         utils.dashboard.getForActiveWorkspace.invalidate(),
       ])
     },
+    onError: () => toast.error('Failed to delete task'),
   })
 
   const attestMilestone = api.milestone.attest.useMutation({
@@ -134,6 +139,7 @@ export function ChecklistPageClient({
         utils.dashboard.getForActiveWorkspace.invalidate(),
       ])
     },
+    onError: () => toast.error('Failed to update milestone'),
   })
   const dismissMilestone = api.milestone.dismiss.useMutation({
     onSuccess: () => {
@@ -142,6 +148,7 @@ export function ChecklistPageClient({
         utils.dashboard.getForActiveWorkspace.invalidate(),
       ])
     },
+    onError: () => toast.error('Failed to update milestone'),
   })
   const clearMilestoneOverride = api.milestone.clearOverride.useMutation({
     onSuccess: () => {
@@ -150,6 +157,7 @@ export function ChecklistPageClient({
         utils.dashboard.getForActiveWorkspace.invalidate(),
       ])
     },
+    onError: () => toast.error('Failed to update milestone'),
   })
 
   const updateFilter = (key: 'category' | 'eventId' | 'status', value: string) => {
@@ -387,7 +395,7 @@ export function ChecklistPageClient({
                               {task.title}
                             </span>
                             <span className='font-mono text-[0.56rem] text-muted-foreground uppercase tracking-[0.12em]'>
-                              {task.category}
+                              {TASK_CATEGORY_LABELS[task.category]}
                             </span>
                             <Button
                               type='button'

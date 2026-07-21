@@ -14,3 +14,18 @@ export const TASK_CATEGORIES = [
 ] as const
 
 export type TaskCategoryValue = (typeof TASK_CATEGORIES)[number]
+
+export const TASK_CATEGORY_LABELS: Record<TaskCategoryValue, string> = {
+  VENUE: 'Venue',
+  VENDORS: 'Vendor',
+  ATTIRE: 'Attire',
+  STATIONERY: 'Stationery',
+  GUESTS: 'Guests',
+  LEGAL: 'Legal',
+  CEREMONY: 'Ceremony',
+  RECEPTION: 'Reception',
+  BEAUTY: 'Beauty',
+  HONEYMOON: 'Honeymoon',
+  BUDGET: 'Budget',
+  OTHER: 'Other',
+}
