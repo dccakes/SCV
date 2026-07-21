@@ -17,6 +17,7 @@ export { BudgetRepository } from '~/server/domains/budget/budget.repository'
 export { BudgetService } from '~/server/domains/budget/budget.service'
 // Export types
 export type {
+  BudgetCategoryData,
   BudgetCategoryWithExpenses,
   BudgetExpense,
   BudgetOverview,

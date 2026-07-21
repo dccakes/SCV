@@ -837,7 +837,7 @@ model Budget {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@index([weddingId])
+  // weddingId is already @unique, which provides its own index.
   @@map("budgets")
 }
 

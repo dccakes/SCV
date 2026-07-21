@@ -38,7 +38,8 @@ export type BudgetTotals = {
   remaining: number
 }
 
-export type BudgetCategoryWithExpenses = {
+/** Raw category data as returned by the repository (no derived totals). */
+export type BudgetCategoryData = {
   id: string
   weddingId: string
   name: string
@@ -47,6 +48,10 @@ export type BudgetCategoryWithExpenses = {
   createdAt: Date
   updatedAt: Date
   expenses: BudgetExpense[]
+}
+
+/** Category enriched with derived totals by the service. */
+export type BudgetCategoryWithExpenses = BudgetCategoryData & {
   totals: BudgetTotals
 }
 

@@ -44,9 +44,6 @@ CREATE TABLE "budget_expenses" (
 CREATE UNIQUE INDEX "budgets_wedding_id_key" ON "budgets"("wedding_id");
 
 -- CreateIndex
-CREATE INDEX "budgets_wedding_id_idx" ON "budgets"("wedding_id");
-
--- CreateIndex
 CREATE INDEX "budget_categories_wedding_id_idx" ON "budget_categories"("wedding_id");
 
 -- CreateIndex

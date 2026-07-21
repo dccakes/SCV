@@ -12,10 +12,7 @@ import type {
   PrismaClient,
 } from '@prisma/client'
 
-import type {
-  BudgetCategoryWithExpenses,
-  BudgetExpense,
-} from '~/server/domains/budget/budget.types'
+import type { BudgetCategoryData, BudgetExpense } from '~/server/domains/budget/budget.types'
 
 type PrismaCategoryWithExpenses = PrismaBudgetCategory & {
   expenses: PrismaBudgetExpense[]
@@ -51,7 +48,7 @@ export class BudgetRepository {
   /**
    * Fetch every category for a wedding with its expenses, ordered for display.
    */
-  async findCategoriesWithExpenses(weddingId: string): Promise<BudgetCategoryWithExpenses[]> {
+  async findCategoriesWithExpenses(weddingId: string): Promise<BudgetCategoryData[]> {
     const rows = await this.db.budgetCategory.findMany({
       where: { weddingId },
       include: { expenses: { orderBy: { createdAt: 'asc' } } },
@@ -81,7 +78,7 @@ export class BudgetRepository {
     name: string
     plannedAmount: number
     position: number
-  }): Promise<BudgetCategoryWithExpenses> {
+  }): Promise<BudgetCategoryData> {
     const row = await this.db.budgetCategory.create({
       data,
       include: { expenses: { orderBy: { createdAt: 'asc' } } },
@@ -92,7 +89,7 @@ export class BudgetRepository {
   async updateCategory(
     id: string,
     data: { name?: string; plannedAmount?: number }
-  ): Promise<BudgetCategoryWithExpenses> {
+  ): Promise<BudgetCategoryData> {
     const row = await this.db.budgetCategory.update({
       where: { id },
       data,
@@ -151,7 +148,7 @@ export class BudgetRepository {
 
   // ─── Serialization ────────────────────────────────────────────────────────────
 
-  private serializeCategory(row: PrismaCategoryWithExpenses): BudgetCategoryWithExpenses {
+  private serializeCategory(row: PrismaCategoryWithExpenses): BudgetCategoryData {
     return {
       id: row.id,
       weddingId: row.weddingId,
@@ -161,15 +158,6 @@ export class BudgetRepository {
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       expenses: row.expenses.map((expense) => this.serializeExpense(expense)),
-      // Totals are computed by the service so this stays a pure data mapper.
-      totals: {
-        plannedAmount: this.toNumber(row.plannedAmount),
-        actualSpend: 0,
-        refundableDeposits: 0,
-        outstandingDeposits: 0,
-        netSpend: 0,
-        remaining: 0,
-      },
     }
   }
 
@@ -191,6 +179,6 @@ export class BudgetRepository {
   }
 
   private toNumber(value: PrismaBudget['targetTotal']): number {
-    return Number.parseFloat(value.toString())
+    return value.toNumber()
   }
 }

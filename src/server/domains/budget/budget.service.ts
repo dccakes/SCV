@@ -12,6 +12,7 @@ import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { BudgetRepository } from '~/server/domains/budget/budget.repository'
 import type {
+  BudgetCategoryData,
   BudgetCategoryWithExpenses,
   BudgetExpense,
   BudgetOverview,
@@ -42,10 +43,7 @@ export class BudgetService {
       this.repository.findCategoriesWithExpenses(weddingId),
     ])
 
-    const categoriesWithTotals = categories.map((category) => ({
-      ...category,
-      totals: this.computeTotals(category.plannedAmount, category.expenses),
-    }))
+    const categoriesWithTotals = categories.map((category) => this.withTotals(category))
 
     return {
       targetTotal,
@@ -76,7 +74,7 @@ export class BudgetService {
       plannedAmount: input.plannedAmount ?? 0,
       position,
     })
-    return { ...category, totals: this.computeTotals(category.plannedAmount, category.expenses) }
+    return this.withTotals(category)
   }
 
   async updateCategory(
@@ -90,7 +88,7 @@ export class BudgetService {
       ...(input.name !== undefined ? { name: input.name } : {}),
       ...(input.plannedAmount !== undefined ? { plannedAmount: input.plannedAmount } : {}),
     })
-    return { ...category, totals: this.computeTotals(category.plannedAmount, category.expenses) }
+    return this.withTotals(category)
   }
 
   async deleteCategory(ctx: AuthzContext, weddingId: string, categoryId: string): Promise<void> {
@@ -139,6 +137,14 @@ export class BudgetService {
   }
 
   // ─── Derived totals ────────────────────────────────────────────────────────────
+
+  /** Enrich a raw repository category with its derived totals. */
+  private withTotals(category: BudgetCategoryData): BudgetCategoryWithExpenses {
+    return {
+      ...category,
+      totals: this.computeTotals(category.plannedAmount, category.expenses),
+    }
+  }
 
   private computeTotals(plannedAmount: number, expenses: BudgetExpense[]): BudgetTotals {
     let actualSpend = 0
