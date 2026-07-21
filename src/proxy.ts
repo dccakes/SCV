@@ -8,6 +8,7 @@ const RESERVED_ROOT_SEGMENTS = new Set([
   '',
   'api',
   'auth',
+  'budget',
   'checklist',
   'dashboard',
   'design-system',
