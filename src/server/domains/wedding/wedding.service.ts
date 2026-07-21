@@ -11,6 +11,7 @@ import { provisionEtta } from '~/lib/etta/provision'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import { checklistSeedingService } from '~/server/domains/checklist'
+import { emailService } from '~/server/domains/email'
 import type { EventService } from '~/server/domains/event/event.service'
 import type { GuestTagService } from '~/server/domains/guest-tag/guest-tag.service'
 import type { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
@@ -100,6 +101,12 @@ export class WeddingService {
     provisionEtta(wedding.id).catch(
       // biome-ignore lint/suspicious/noConsole: intentional error logging for fire-and-forget
       (err) => console.error('[Etta] Background provision failed:', err)
+    )
+
+    // Provision the wedding's inbound email address — fire-and-forget (idempotent)
+    emailService.ensureInbox(wedding.id).catch(
+      // biome-ignore lint/suspicious/noConsole: intentional error logging for fire-and-forget
+      (err) => console.error('[Email] Background inbox provision failed:', err)
     )
 
     return wedding

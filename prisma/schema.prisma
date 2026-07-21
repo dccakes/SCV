@@ -57,6 +57,11 @@ model Wedding {
   messagingPairingTokens MessagingPairingToken[]
   chatMessages           ChatMessage[]
 
+  // Inbound/outbound email (Resend inbound triage)
+  emailInbox    WeddingEmailInbox?
+  emailThreads  EmailThread[]
+  emailMessages EmailMessage[]
+
   @@index([selfFillToken, selfFillTokenGeneratedAt])
 }
 
@@ -1023,4 +1028,98 @@ model RateLimitBucket {
 
   @@index([windowStart])
   @@map("rate_limit_buckets")
+}
+
+// ─── Wedding Email (Resend inbound triage) ───────────────────────────────────
+
+// One dedicated inbound address per wedding, e.g. jane-and-john@w.oswp.carvallo.io.
+// Resend routes every message for the wedding domain to a single webhook; the
+// localPart is how we map an inbound recipient back to a wedding.
+model WeddingEmailInbox {
+  id            String    @id @default(uuid())
+  weddingId     String    @unique @map("wedding_id")
+  wedding       Wedding   @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  localPart     String    @unique @map("local_part") // e.g. "jane-and-john"
+  address       String    @unique // full address, lower-cased
+  provisionedAt DateTime  @default(now()) @map("provisioned_at")
+  disabledAt    DateTime? @map("disabled_at")
+
+  @@map("wedding_email_inboxes")
+}
+
+// A conversation thread with a single counterparty (vendor or guest). Grouped
+// by the normalized counterparty address so replies stay in one place.
+model EmailThread {
+  id                String         @id @default(uuid())
+  weddingId         String         @map("wedding_id")
+  wedding           Wedding        @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  subject           String
+  counterpartyEmail String         @map("counterparty_email") // normalized, lower-cased
+  counterpartyName  String?        @map("counterparty_name")
+  // Resend conversation id when available; preferred over counterparty email for
+  // grouping a reply chain. Null threads fall back to per-counterparty grouping.
+  providerConversationId String?   @map("provider_conversation_id")
+  // Latest triage classification for the thread (see EmailTriage for per-message detail).
+  category          String         @default("other") // guest_rsvp | guest_question | vendor_contract | vendor_quote | vendor_general | logistics | spam | other
+  status            String         @default("open") // open | closed
+  vendorId          String?        @map("vendor_id")
+  lastMessageAt     DateTime       @default(now()) @map("last_message_at")
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @updatedAt @map("updated_at")
+  messages          EmailMessage[]
+
+  @@unique([weddingId, counterpartyEmail])
+  @@unique([weddingId, providerConversationId])
+  @@index([weddingId, lastMessageAt(sort: Desc)])
+  @@index([weddingId, status])
+  @@map("email_threads")
+}
+
+// Every inbound or outbound message, stored verbatim for the conversation record.
+model EmailMessage {
+  id                String       @id @default(uuid())
+  threadId          String       @map("thread_id")
+  thread            EmailThread  @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  // Denormalized from thread.weddingId for wedding-wide queries and cascade deletes.
+  weddingId         String       @map("wedding_id")
+  wedding           Wedding      @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  direction         String // 'inbound' | 'outbound'
+  fromAddress       String       @map("from_address")
+  fromName          String?      @map("from_name")
+  toAddresses       String[]     @default([]) @map("to_addresses")
+  ccAddresses       String[]     @default([]) @map("cc_addresses")
+  subject           String
+  text              String?
+  html              String?
+  // Provider identifiers for idempotency + RFC-5322 threading.
+  providerId        String?      @unique @map("provider_id") // Resend inbound id or outbound email id
+  messageIdHeader   String?      @map("message_id_header") // RFC-5322 Message-ID
+  inReplyTo         String?      @map("in_reply_to")
+  references        String[]     @default([])
+  attachments       Json         @default("[]") // [{ filename, contentType, size, url? }]
+  createdAt         DateTime     @default(now()) @map("created_at")
+  triage            EmailTriage?
+
+  @@index([threadId, createdAt])
+  @@index([weddingId, createdAt(sort: Desc)])
+  @@map("email_messages")
+}
+
+// AI triage verdict for a single inbound message: what it is and what to do.
+model EmailTriage {
+  id               String       @id @default(uuid())
+  messageId        String       @unique @map("message_id")
+  message          EmailMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  weddingId        String       @map("wedding_id")
+  category         String // guest_rsvp | guest_question | vendor_contract | vendor_quote | vendor_general | logistics | spam | other
+  intent           String // one-line description of what the sender wants
+  summary          String // short summary of the message
+  priority         String       @default("normal") // low | normal | high | urgent
+  suggestedActions Json         @default("[]") @map("suggested_actions") // [{ type, reason, ... }]
+  confidence       Float        @default(0)
+  status           String       @default("pending") // pending | reviewed
+  createdAt        DateTime     @default(now()) @map("created_at")
+
+  @@index([weddingId, status])
+  @@map("email_triage")
 }

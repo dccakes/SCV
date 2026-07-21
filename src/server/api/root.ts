@@ -7,6 +7,7 @@ import { householdInviteRouter } from '~/server/application/household-invite'
 import { rsvpSubmissionRouter } from '~/server/application/rsvp-submission/rsvp-submission.router'
 import { selfFillRegistrationService } from '~/server/application/self-fill-registration'
 import { communicationLogRouter } from '~/server/domains/communication-log/communication-log.router'
+import { emailRouter } from '~/server/domains/email/email.router'
 import { eventRouter } from '~/server/domains/event/event.router'
 import { giftRouter } from '~/server/domains/gift/gift.router'
 import { guestRouter } from '~/server/domains/guest/guest.router'
@@ -71,6 +72,9 @@ export const appRouter = createTRPCRouter({
 
   // Messaging (Telegram couple-bot)
   messaging: messagingRouter,
+
+  // Wedding email (Resend inbound triage)
+  email: emailRouter,
 })
 
 // export type definition of API
