@@ -379,15 +379,17 @@ describe('PlanningOverview', () => {
     expect(screen.getAllByText('0').length).toBeGreaterThanOrEqual(1)
   })
 
-  it('shows zero RSVP counts when no events are provided', () => {
+  it('shows RSVP empty state when no RSVP data exists', () => {
     const noEventsData = { ...mockDashboardData, events: [] } as unknown as DashboardData
     render(<PlanningOverview dashboardData={noEventsData} />)
-    // RSVP bar should have 0/0 → all zeroes, no crash
-    const bar = screen.getByRole('img', { name: /RSVP breakdown/i })
-    expect(bar).toHaveAttribute(
-      'aria-label',
-      'RSVP breakdown: 0% confirmed, 0% pending, 0% declined'
-    )
+    // Empty state should render instead of the zero-count bar
+    expect(screen.getByText('No RSVPs collected yet')).toBeInTheDocument()
+    expect(
+      screen.getByText('Enable RSVP collection on one of your events to start tracking responses')
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Set up RSVPs →' })).toHaveAttribute('href', '/events')
+    // The RSVP bar should not render
+    expect(screen.queryByRole('img', { name: /RSVP breakdown/i })).not.toBeInTheDocument()
   })
 
   it('renders real milestones including override and wedding-day indicators', () => {
