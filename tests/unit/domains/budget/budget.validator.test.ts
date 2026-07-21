@@ -67,7 +67,7 @@ describe('createExpenseSchema', () => {
     }
   })
 
-  it('requires a description and amount', () => {
+  it('requires a description and rejects negative amounts', () => {
     expect(
       createExpenseSchema.safeParse({ categoryId: 'category-1', description: '', amount: 10 })
         .success
@@ -76,6 +76,27 @@ describe('createExpenseSchema', () => {
       createExpenseSchema.safeParse({ categoryId: 'category-1', description: 'x', amount: -5 })
         .success
     ).toBe(false)
+    expect(
+      createExpenseSchema.safeParse({
+        categoryId: 'category-1',
+        description: 'x',
+        estimatedAmount: -1,
+      }).success
+    ).toBe(false)
+  })
+
+  it('accepts an estimate-only line with a due date and no actual amount', () => {
+    const result = createExpenseSchema.safeParse({
+      categoryId: 'category-1',
+      description: 'Photographer balance',
+      estimatedAmount: 1500,
+      dueAt: '2026-08-01',
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.dueAt).toBeInstanceOf(Date)
+      expect(result.data.amount).toBeUndefined()
+    }
   })
 
   it('coerces a date string for refundedAt', () => {

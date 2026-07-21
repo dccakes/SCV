@@ -2,9 +2,12 @@
 
 import { useState } from 'react'
 
+import { AllocationBar } from '~/components/budget/allocation-bar'
 import { BudgetSummary } from '~/components/budget/budget-summary'
 import { CategoryCard } from '~/components/budget/category-card'
 import { CategoryForm } from '~/components/budget/category-form'
+import { UpcomingPayments } from '~/components/budget/upcoming-payments'
+import type { ExpenseView } from '~/components/budget/view'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 import type { BudgetOverview as BudgetOverviewData } from '~/server/domains/budget/budget.types'
@@ -40,8 +43,37 @@ function BudgetEmptyState({ onAdd }: { onAdd: () => void }) {
   )
 }
 
+function ViewToggle({
+  view,
+  onChange,
+}: {
+  view: ExpenseView
+  onChange: (view: ExpenseView) => void
+}) {
+  return (
+    <div className='inline-flex rounded-md border border-border/70 p-0.5'>
+      {(['list', 'table'] as const).map((option) => (
+        <button
+          key={option}
+          type='button'
+          onClick={() => onChange(option)}
+          aria-pressed={view === option}
+          className={`rounded px-2.5 py-1 font-mono text-[0.6rem] uppercase tracking-widest transition-colors ${
+            view === option
+              ? 'bg-primary text-primary-foreground'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          {option}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export default function BudgetOverview({ initialOverview }: Readonly<BudgetOverviewProps>) {
   const [showAddCategory, setShowAddCategory] = useState(false)
+  const [view, setView] = useState<ExpenseView>('list')
 
   const { data: overview } = api.budget.getOverview.useQuery(undefined, {
     initialData: initialOverview,
@@ -50,35 +82,46 @@ export default function BudgetOverview({ initialOverview }: Readonly<BudgetOverv
   const current = overview ?? initialOverview
   const categories = current.categories
   const currency = current.currency
+  const hasCategories = categories.length > 0
 
   return (
     <div>
       <BudgetSummary summary={current.summary} currency={currency} />
 
-      <div className='mb-4 flex items-center justify-between'>
+      {hasCategories ? (
+        <>
+          <AllocationBar categories={categories} currency={currency} />
+          <UpcomingPayments categories={categories} currency={currency} />
+        </>
+      ) : null}
+
+      <div className='mb-4 flex items-center justify-between gap-3'>
         <p className='font-mono text-[0.62rem] text-muted-foreground tracking-wider'>
           {categories.length} {categories.length === 1 ? 'section' : 'sections'}
         </p>
-        {categories.length > 0 ? (
-          <Button
-            type='button'
-            size='sm'
-            onClick={() => setShowAddCategory(true)}
-            className='font-mono text-[0.62rem] uppercase tracking-widest'
-          >
-            + Add Section
-          </Button>
+        {hasCategories ? (
+          <div className='flex items-center gap-2'>
+            <ViewToggle view={view} onChange={setView} />
+            <Button
+              type='button'
+              size='sm'
+              onClick={() => setShowAddCategory(true)}
+              className='font-mono text-[0.62rem] uppercase tracking-widest'
+            >
+              + Add Section
+            </Button>
+          </div>
         ) : null}
       </div>
 
-      {categories.length === 0 ? (
-        <BudgetEmptyState onAdd={() => setShowAddCategory(true)} />
-      ) : (
+      {hasCategories ? (
         <div className='space-y-4'>
           {categories.map((category) => (
-            <CategoryCard key={category.id} category={category} currency={currency} />
+            <CategoryCard key={category.id} category={category} currency={currency} view={view} />
           ))}
         </div>
+      ) : (
+        <BudgetEmptyState onAdd={() => setShowAddCategory(true)} />
       )}
 
       <Dialog open={showAddCategory} onOpenChange={setShowAddCategory}>
