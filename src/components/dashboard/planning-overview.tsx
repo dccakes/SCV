@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
 import type { DashboardData, EventWithResponses } from '~/app/utils/shared-types'
+import { formatCurrency } from '~/components/budget/format'
 import { TaskDialog } from '~/components/checklist/task-dialog'
 import { TaskListItem } from '~/components/dashboard/planning-overview/task-list-item'
 import { useTasksCardState } from '~/components/dashboard/planning-overview/use-tasks-card-state'
@@ -316,21 +317,72 @@ function TasksCard({ dashboardData }: { dashboardData: DashboardData | null }) {
 }
 
 function BudgetCard() {
+  const { data: overview } = api.budget.getOverview.useQuery()
+
+  const hasTarget = (overview?.summary.targetTotal ?? 0) > 0
+  const hasActivity = (overview?.summary.actualSpend ?? 0) > 0
+  const isSetUp = hasTarget || hasActivity
+  const currency = overview?.currency ?? 'USD'
+  const netSpend = overview?.summary.netSpend ?? 0
+  const targetTotal = overview?.summary.targetTotal ?? 0
+  const remaining = overview?.summary.remaining ?? 0
+  const overBudget = hasTarget && netSpend > targetTotal
+  const pct = hasTarget ? Math.min(100, Math.round((netSpend / targetTotal) * 100)) : 0
+
+  if (!isSetUp) {
+    return (
+      <CardShell title='Budget' icon='◧' action='Set up →' actionHref='/budget'>
+        <div className='flex flex-col gap-3'>
+          <div className='flex items-baseline gap-2'>
+            <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
+            <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
+              No budget set up yet
+            </span>
+          </div>
+          <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
+            Set a total target, add sections, and track every payment
+          </div>
+          <Link
+            href='/budget'
+            className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+          >
+            Set up budget →
+          </Link>
+        </div>
+      </CardShell>
+    )
+  }
+
   return (
-    <CardShell title='Budget' icon='◧'>
+    <CardShell title='Budget' icon='◧' action='Manage →' actionHref='/budget'>
       <div className='flex flex-col gap-3'>
         <div className='flex items-baseline gap-2'>
-          <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
+          <span className='font-serif text-[2.2rem] text-foreground leading-none'>
+            {formatCurrency(netSpend, currency)}
+          </span>
           <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
-            No budget set up yet
+            net spent
           </span>
         </div>
-        <div className='h-2 overflow-hidden rounded-full bg-border'>
-          <div className='h-full w-0 rounded-full bg-gradient-to-r from-success to-accent' />
-        </div>
-        <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
-          Budget tracking coming soon — set up your budget to track spending
-        </div>
+        {hasTarget ? (
+          <>
+            <div className='h-1.5 overflow-hidden rounded-full bg-border'>
+              <div
+                className={`h-full rounded-full transition-all ${overBudget ? 'bg-destructive' : 'bg-gradient-to-r from-success to-accent'}`}
+                style={{ width: `${Math.max(2, pct)}%` }}
+              />
+            </div>
+            <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
+              {overBudget
+                ? `${formatCurrency(Math.abs(remaining), currency)} over target`
+                : `${formatCurrency(remaining, currency)} of ${formatCurrency(targetTotal, currency)} remaining`}
+            </div>
+          </>
+        ) : (
+          <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
+            No target set · go to budget to add one
+          </div>
+        )}
       </div>
     </CardShell>
   )
