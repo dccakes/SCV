@@ -7,6 +7,7 @@ import { DASHBOARD_ADD_TASK_EVENT } from '~/components/dashboard/task-dialog-eve
 const mockMutate = jest.fn()
 const mockCreateMutate = jest.fn()
 const mockInvalidate = jest.fn()
+const mockBudgetGetOverview = jest.fn()
 
 jest.mock('~/components/ui/select', () => ({
   Select: ({
@@ -66,6 +67,11 @@ jest.mock('~/trpc/react', () => ({
     vendor: {
       getAll: {
         useQuery: () => mockVendorGetAll(),
+      },
+    },
+    budget: {
+      getOverview: {
+        useQuery: () => mockBudgetGetOverview(),
       },
     },
   },
@@ -225,6 +231,7 @@ describe('PlanningOverview', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockVendorGetAll.mockReturnValue({ data: undefined })
+    mockBudgetGetOverview.mockReturnValue({ data: undefined })
   })
 
   it('renders the real planning completion percentage from milestones', () => {
@@ -309,7 +316,10 @@ describe('PlanningOverview', () => {
   it('renders the budget empty state', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
     expect(screen.getByText('No budget set up yet')).toBeInTheDocument()
-    expect(screen.getByText(/Budget tracking coming soon/)).toBeInTheDocument()
+    expect(
+      screen.getByText('Set a total target, add sections, and track every payment')
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Set up budget →' })).toHaveAttribute('href', '/budget')
   })
 
   it('does not render fake budget category names', () => {
