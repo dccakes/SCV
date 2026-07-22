@@ -17,28 +17,27 @@ type Segment = {
 }
 
 /**
- * Segmented "where the money goes" bar plus legend. Visualizes each section's
- * share of net spend; when nothing has been spent yet it falls back to the
- * planned allocation so couples can still see the intended split.
+ * Segmented "where the money goes" bar plus legend. Sizes each section by the
+ * larger of its planned budget or its net spend, so a section appears as soon
+ * as it has a budget *or* any spend — and the bar keeps updating as sections
+ * are added or spent against, rather than collapsing to only the ones that
+ * happen to have spend recorded.
  */
 export function AllocationBar({ categories, currency }: Readonly<AllocationBarProps>) {
-  const spendSegments = toSegments(categories, (c) => c.totals.netSpend)
-  const spendTotal = sum(spendSegments)
+  const hasSpend = categories.some((category) => category.totals.netSpend > 0)
+  const segments = toSegments(categories, (category) =>
+    Math.max(category.totals.plannedAmount, category.totals.netSpend)
+  )
+  const total = sum(segments)
 
-  const usePlanned = spendTotal <= 0
-  const segments = usePlanned
-    ? toSegments(categories, (c) => c.totals.plannedAmount)
-    : spendSegments
-  const total = usePlanned ? sum(segments) : spendTotal
-
-  // Nothing to show until there's either spend or a planned split.
+  // Nothing to allocate until at least one section has a budget or some spend.
   if (total <= 0) return null
 
   return (
     <section className='mb-8 rounded-lg border border-border/70 bg-card p-4 md:p-5'>
       <div className='mb-3 flex items-center justify-between'>
         <p className='font-mono text-[0.6rem] text-muted-foreground uppercase tracking-widest'>
-          {usePlanned ? 'Planned allocation' : 'Where it’s going'}
+          {hasSpend ? 'Where it’s going' : 'Planned allocation'}
         </p>
         <p className='font-mono text-[0.6rem] text-muted-foreground uppercase tracking-widest'>
           {formatCurrency(total, currency)}
