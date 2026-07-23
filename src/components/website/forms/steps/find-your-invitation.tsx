@@ -24,7 +24,11 @@ export default function FindYourInvitationForm({ goNext }: StepFormProps) {
   const handleOnSearch = () => {
     // the method to conditionally execute client db queries?
     void refetch().then((res) => {
-      if (res.error ?? res.data?.length === 0) {
+      // Only advance when the search actually returned households. Guarding on
+      // presence (not just length) keeps an errored or empty response on this
+      // step showing the retry hint, instead of dropping the guest onto a blank
+      // confirm screen with no names to pick.
+      if (res.error || !res.data || res.data.length === 0) {
         setShowError(true)
       } else {
         updateRsvpForm({ matchedHouseholds: res.data })

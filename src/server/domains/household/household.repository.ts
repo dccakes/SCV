@@ -241,56 +241,54 @@ export class HouseholdRepository {
   }
 
   /**
-   * Search households by guest name
+   * Search households by guest name.
+   *
+   * The search text is split on whitespace and every term must match some
+   * guest's first or last name in the household. First and last names live in
+   * separate columns, so a guest typing their full name ("Betum Adobo") — as the
+   * "Full Name" field prompts them to — would never match a plain `contains`
+   * against either column alone. Tokenising lets "Betum", "Adobo", and
+   * "Betum Adobo" all find the household. Mirrors the coordinator-side guest
+   * filter (see guest-search-filter.tsx), which already matches the full name.
+   *
+   * Households are gated to those with at least one invited guest so the public
+   * RSVP flow never surfaces people who were never invited. The gate is applied
+   * at the household level (not per matched guest) to stay consistent with the
+   * invite-token path, which returns the whole household regardless of any
+   * single guest's status.
    */
   async search(searchText: string, weddingId: string): Promise<HouseholdSearchResult[]> {
+    const terms = searchText.trim().split(/\s+/).filter(Boolean)
+
+    // An empty/whitespace-only search must not return every household.
+    if (terms.length === 0) return []
+
+    const nameConditions: Prisma.HouseholdWhereInput[] = terms.map((term) => ({
+      guests: {
+        some: {
+          OR: [
+            { firstName: { contains: term, mode: 'insensitive' } },
+            { lastName: { contains: term, mode: 'insensitive' } },
+          ],
+        },
+      },
+    }))
+
     return this.db.household.findMany({
       where: {
         weddingId,
-        OR: [
-          {
-            guests: {
+        guests: {
+          some: {
+            invitations: {
               some: {
-                firstName: {
-                  contains: searchText,
-                  mode: 'insensitive',
+                rsvp: {
+                  in: ['Invited', 'Attending', 'Declined'],
                 },
-                AND: [
-                  {
-                    invitations: {
-                      some: {
-                        rsvp: {
-                          in: ['Invited', 'Attending', 'Declined'],
-                        },
-                      },
-                    },
-                  },
-                ],
               },
             },
           },
-          {
-            guests: {
-              some: {
-                lastName: {
-                  contains: searchText,
-                  mode: 'insensitive',
-                },
-                AND: [
-                  {
-                    invitations: {
-                      some: {
-                        rsvp: {
-                          in: ['Invited', 'Attending', 'Declined'],
-                        },
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
-        ],
+        },
+        AND: nameConditions,
       },
       select: rsvpHouseholdSelect,
     })
