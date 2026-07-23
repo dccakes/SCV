@@ -5,6 +5,8 @@
  * This is a thin layer that handles input validation and delegates to the service.
  */
 
+import { z } from 'zod'
+
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
 import { requireActiveWeddingId } from '~/server/authz/active-wedding'
 
@@ -42,4 +44,28 @@ export const questionRouter = createTRPCRouter({
       data: input,
     })
   }),
+
+  /**
+   * Get the website-level general questions (asked of every household that RSVPs),
+   * plus the website id and RSVP-enabled gate, for the authoring UI.
+   */
+  getWebsiteQuestions: protectedProcedure.query(async ({ ctx }) => {
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+
+    return questionService.getWebsiteQuestions(weddingId)
+  }),
+
+  /**
+   * Get every RSVP answer a household submitted, grouped by question, for display.
+   */
+  getAnswersByHousehold: protectedProcedure
+    .input(z.object({ householdId: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+
+      return questionService.getAnswersByHousehold({
+        weddingId,
+        householdId: input.householdId,
+      })
+    }),
 })

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { type Dispatch, type SetStateAction, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import type { Event } from '~/app/utils/shared-types'
+import { AnswersSection } from '~/components/guest-list/answers-section'
 import {
   type HouseholdMemberDraft,
   HouseholdMembersModal,
@@ -27,6 +28,7 @@ import { RSVP_STATUS_VALUES } from '~/lib/constants/rsvp'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 import type { CommunicationLogEntry } from '~/server/domains/communication-log/communication-log.types'
 import { api } from '~/trpc/react'
+import type { RouterOutputs } from '~/trpc/shared'
 
 export type DrawerDraft = {
   email: string
@@ -105,6 +107,8 @@ type GuestDetailPanelContentProps = {
   events: Event[]
   selectedEventResponses?: SelectedEventResponse[]
   communicationLog: CommunicationLogEntry[]
+  householdAnswers: RouterOutputs['question']['getAnswersByHousehold']
+  isLoadingAnswers?: boolean
   editingSections: Set<'contactAddress' | 'notes'>
   toggleEditingSection: (section: 'contactAddress' | 'notes') => void
   drawerDraft: DrawerDraft
@@ -123,6 +127,8 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
     events,
     selectedEventResponses,
     communicationLog,
+    householdAnswers,
+    isLoadingAnswers,
     editingSections,
     toggleEditingSection,
     drawerDraft,
@@ -307,6 +313,8 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
           events={events}
           rsvpManageHref={rsvpManageHref}
         />
+
+        <AnswersSection answers={householdAnswers} isLoading={isLoadingAnswers} />
 
         <NotesSection
           isEditing={editingSections.has('notes')}

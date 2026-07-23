@@ -216,6 +216,68 @@ export class QuestionRepository {
   }
 
   /**
+   * Find the website for a wedding, with just the fields needed to author
+   * general questions (id + RSVP-enabled gate).
+   */
+  async findWebsiteByWeddingId(
+    weddingId: string
+  ): Promise<{ id: string; isRsvpEnabled: boolean } | null> {
+    return this.db.website.findFirst({
+      where: { weddingId },
+      select: { id: true, isRsvpEnabled: true },
+    })
+  }
+
+  async householdBelongsToWedding(householdId: string, weddingId: string): Promise<boolean> {
+    const household = await this.db.household.findFirst({
+      where: { id: householdId, weddingId },
+      select: { id: true },
+    })
+
+    return household !== null
+  }
+
+  /**
+   * Find every answer (text + multiple choice) submitted by a household, with the
+   * question (and chosen option) each one belongs to.
+   *
+   * Reads by householdId so that household-level answers (guestId sentinel `-1`)
+   * are included alongside per-guest answers.
+   */
+  async findAnswersByHouseholdId(householdId: string) {
+    const questionSelect = {
+      id: true,
+      text: true,
+      type: true,
+      eventId: true,
+      websiteId: true,
+    } as const
+
+    const [answers, optionResponses] = await Promise.all([
+      this.db.answer.findMany({
+        where: { householdId },
+        orderBy: { createdAt: 'asc' },
+        include: { question: { select: questionSelect } },
+      }),
+      this.db.optionResponse.findMany({
+        where: { householdId },
+        orderBy: { createdAt: 'asc' },
+        include: {
+          option: {
+            select: {
+              id: true,
+              text: true,
+              question: { select: questionSelect },
+            },
+          },
+        },
+      }),
+    ])
+
+    return { answers, optionResponses }
+  }
+
+  /**
    * Find a single option response by question + guest/household composite key.
    */
   async findOptionResponse(

@@ -544,6 +544,12 @@ export default function GuestsView({
     { enabled: !!selectedHousehold }
   )
 
+  const { data: householdAnswers = [], isLoading: isLoadingAnswers } =
+    api.question.getAnswersByHousehold.useQuery(
+      { householdId: selectedHousehold?.id ?? '' },
+      { enabled: !!selectedHousehold }
+    )
+
   const addNoteMutation = api.communicationLog.addNote.useMutation({
     onSuccess: (_data, variables) => {
       toast.success('Note added')
@@ -751,6 +757,8 @@ export default function GuestsView({
             events={events}
             selectedEventResponses={selectedEventResponses}
             communicationLog={communicationLog}
+            householdAnswers={householdAnswers}
+            isLoadingAnswers={isLoadingAnswers}
             editingSections={editingSections}
             toggleEditingSection={toggleEditingSection}
             drawerDraft={drawerDraft}

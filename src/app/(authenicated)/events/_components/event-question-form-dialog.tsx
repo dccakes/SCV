@@ -27,7 +27,9 @@ type QuestionDraftOption = {
 type EventQuestionFormDialogProps = Readonly<{
   open: boolean
   onOpenChange: (open: boolean) => void
-  eventId: string
+  /** Provide exactly one of eventId (per-event question) or websiteId (general question). */
+  eventId?: string
+  websiteId?: string
   initialQuestion?: Question
   onSaved: () => Promise<void> | void
 }>
@@ -51,6 +53,7 @@ export function EventQuestionFormDialog({
   open,
   onOpenChange,
   eventId,
+  websiteId,
   initialQuestion,
   onSaved,
 }: EventQuestionFormDialogProps) {
@@ -132,7 +135,7 @@ export function EventQuestionFormDialog({
 
     upsertQuestion.mutate({
       questionId: initialQuestion?.id,
-      eventId,
+      ...(websiteId ? { websiteId } : { eventId }),
       text: questionText.trim(),
       type: questionType,
       isRequired: questionType === 'Option',
