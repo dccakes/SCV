@@ -325,8 +325,22 @@ describe('PlanningOverview', () => {
         targetTotal: 20000,
         currency: 'USD',
         categories: [
-          { id: 'cat-1', name: 'Flowers', plannedAmount: 2000, position: 0, expenses: [], totals: {} },
-          { id: 'cat-2', name: 'Photography', plannedAmount: 5000, position: 1, expenses: [], totals: {} },
+          {
+            id: 'cat-1',
+            name: 'Flowers',
+            plannedAmount: 2000,
+            position: 0,
+            expenses: [],
+            totals: {},
+          },
+          {
+            id: 'cat-2',
+            name: 'Photography',
+            plannedAmount: 5000,
+            position: 1,
+            expenses: [],
+            totals: {},
+          },
         ],
         summary: {
           targetTotal: 20000,
