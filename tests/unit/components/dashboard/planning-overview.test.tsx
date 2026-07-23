@@ -316,7 +316,7 @@ describe('PlanningOverview', () => {
   it('renders the budget empty state', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
     expect(screen.getByText('No budget set up yet')).toBeInTheDocument()
-    expect(screen.getByText(/Budget tracking coming soon/)).toBeInTheDocument()
+    expect(screen.getByText('Track your wedding spending against a target budget')).toBeInTheDocument()
   })
 
   it('does not render fake budget category names', () => {
