@@ -97,6 +97,12 @@ jest.mock('~/trpc/react', () => ({
           isPending: false,
         }),
       },
+      getWebsiteQuestions: {
+        useQuery: () => ({
+          data: null,
+          isLoading: false,
+        }),
+      },
     },
     dashboard: {
       getForActiveWorkspace: {

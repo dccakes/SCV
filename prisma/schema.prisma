@@ -877,6 +877,8 @@ model BudgetExpense {
   category   BudgetCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   description String
+  // Estimated/quoted cost for this line, used for planning before it is paid.
+  estimatedAmount Decimal @default(0) @db.Decimal(12, 2) @map("estimated_amount")
   // Amount actually paid (money out of pocket)
   amount     Decimal @default(0) @db.Decimal(12, 2)
 
@@ -886,6 +888,8 @@ model BudgetExpense {
   isRefundable Boolean   @default(false) @map("is_refundable")
   refundedAt   DateTime? @map("refunded_at")
 
+  // When this payment is due (drives the upcoming-payments schedule).
+  dueAt  DateTime? @db.Date @map("due_at")
   paidAt DateTime? @db.Date @map("paid_at")
   notes  String?
 

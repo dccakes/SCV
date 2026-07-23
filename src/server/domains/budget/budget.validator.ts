@@ -70,10 +70,12 @@ export const createExpenseSchema = z.object({
     .trim()
     .min(1, 'Description is required')
     .max(MAX_BUDGET_DESCRIPTION_LENGTH, 'Description is too long'),
-  amount: moneySchema,
+  estimatedAmount: moneySchema.optional(),
+  amount: moneySchema.optional(),
   isDeposit: z.boolean().optional(),
   isRefundable: z.boolean().optional(),
   refundedAt: z.coerce.date().nullable().optional(),
+  dueAt: z.coerce.date().nullable().optional(),
   paidAt: z.coerce.date().nullable().optional(),
   notes: z.string().trim().max(MAX_BUDGET_NOTES_LENGTH, 'Notes are too long').nullable().optional(),
 })
@@ -86,10 +88,12 @@ export const updateExpenseSchema = z.object({
     .min(1, 'Description is required')
     .max(MAX_BUDGET_DESCRIPTION_LENGTH, 'Description is too long')
     .optional(),
+  estimatedAmount: moneySchema.optional(),
   amount: moneySchema.optional(),
   isDeposit: z.boolean().optional(),
   isRefundable: z.boolean().optional(),
   refundedAt: z.coerce.date().nullable().optional(),
+  dueAt: z.coerce.date().nullable().optional(),
   paidAt: z.coerce.date().nullable().optional(),
   notes: z.string().trim().max(MAX_BUDGET_NOTES_LENGTH, 'Notes are too long').nullable().optional(),
 })

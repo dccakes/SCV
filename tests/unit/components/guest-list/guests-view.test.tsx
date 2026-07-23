@@ -163,6 +163,11 @@ jest.mock('~/trpc/react', () => ({
         useQuery: () => ({ data: { subUrl: 'janeandjohn' } }),
       },
     },
+    question: {
+      getAnswersByHousehold: {
+        useQuery: () => ({ data: [], isLoading: false }),
+      },
+    },
   },
 }))
 

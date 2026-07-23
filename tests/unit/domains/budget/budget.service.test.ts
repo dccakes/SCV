@@ -28,6 +28,7 @@ const OTHER_WEDDING_ID = 'wedding-2'
 
 const emptyTotals = {
   plannedAmount: 0,
+  estimatedTotal: 0,
   actualSpend: 0,
   refundableDeposits: 0,
   outstandingDeposits: 0,
@@ -41,10 +42,12 @@ function makeExpense(overrides: Partial<BudgetExpense>): BudgetExpense {
     weddingId: WEDDING_ID,
     categoryId: 'category-1',
     description: 'Test expense',
+    estimatedAmount: 0,
     amount: 0,
     isDeposit: false,
     isRefundable: false,
     refundedAt: null,
+    dueAt: null,
     paidAt: null,
     notes: null,
     createdAt: new Date('2026-01-01'),
@@ -181,6 +184,30 @@ describe('BudgetService.getOverview', () => {
     expect(summary.remaining).toBe(3100)
   })
 
+  it('sums estimated amounts per category and across the budget', async () => {
+    const categories = [
+      makeCategory({
+        id: 'c1',
+        expenses: [makeExpense({ id: 'e1', estimatedAmount: 1200, amount: 1000 })],
+      }),
+      makeCategory({
+        id: 'c2',
+        expenses: [makeExpense({ id: 'e2', estimatedAmount: 800, amount: 0 })],
+      }),
+    ]
+
+    const { service } = createService({
+      getSettings: jest.fn().mockResolvedValue({ targetTotal: 0, currency: 'USD' }),
+      findCategoriesWithExpenses: jest.fn().mockResolvedValue(categories),
+    })
+
+    const overview = await service.getOverview(ctx, WEDDING_ID)
+    expect(overview.categories[0].totals.estimatedTotal).toBe(1200)
+    expect(overview.categories[1].totals.estimatedTotal).toBe(800)
+    expect(overview.summary.estimatedTotal).toBe(2000)
+    expect(overview.summary.actualSpend).toBe(1000)
+  })
+
   it('requires read permission', async () => {
     const { service } = createService({
       getSettings: jest.fn().mockResolvedValue({ targetTotal: 0, currency: 'USD' }),
@@ -279,10 +306,12 @@ describe('BudgetService expense ownership', () => {
       expect.objectContaining({
         weddingId: WEDDING_ID,
         categoryId: 'category-1',
+        estimatedAmount: 0,
         amount: 100,
         isDeposit: false,
         isRefundable: false,
         refundedAt: null,
+        dueAt: null,
         paidAt: null,
         notes: null,
       })

@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 import { EventCard } from '@/app/(authenicated)/events/_components/event-card'
 import { ManageEventGuestsDialog } from '@/app/(authenicated)/events/_components/manage-event-guests-dialog'
 import { ManageEventQuestionsDialog } from '@/app/(authenicated)/events/_components/manage-event-questions-dialog'
+import { ManageGeneralQuestionsDialog } from '@/app/(authenicated)/events/_components/manage-general-questions-dialog'
 import {
   type EventFormData,
   transformToServerInput,
@@ -45,6 +46,7 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
     undefined
   )
   const [managingQuestionsEventId, setManagingQuestionsEventId] = useState<string | null>(null)
+  const [managingGeneralQuestions, setManagingGeneralQuestions] = useState(false)
   const [togglingRsvpEventId, setTogglingRsvpEventId] = useState<string | null>(null)
   const utils = api.useUtils()
 
@@ -56,6 +58,11 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
       staleTime: 30_000,
     }
   )
+
+  // Website-level general questions (note to couple, children, etc.)
+  const { data: websiteQuestions = null } = api.question.getWebsiteQuestions.useQuery(undefined, {
+    staleTime: 30_000,
+  })
 
   const createEvent = api.event.create.useMutation({
     onSuccess: async () => {
@@ -204,6 +211,29 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
     [updateCollectRsvp]
   )
 
+  const generalQuestionsButton = (
+    <Button
+      type='button'
+      variant='outline'
+      size='sm'
+      onClick={() => setManagingGeneralQuestions(true)}
+      disabled={websiteQuestions === null}
+    >
+      General RSVP questions
+    </Button>
+  )
+
+  const generalQuestionsDialog =
+    managingGeneralQuestions && websiteQuestions ? (
+      <ManageGeneralQuestionsDialog
+        websiteId={websiteQuestions.websiteId}
+        isRsvpEnabled={websiteQuestions.isRsvpEnabled}
+        questions={websiteQuestions.questions}
+        open
+        onOpenChange={(open) => !open && setManagingGeneralQuestions(false)}
+      />
+    ) : null
+
   // Show loading state
   if (isLoading && initialEvents.length === 0) {
     return (
@@ -229,13 +259,16 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
               rehearsal dinners, and more.
             </p>
           </div>
-          <Button
-            type='button'
-            onClick={() => setIsCreateDialogOpen(true)}
-            className='font-mono text-[0.65rem] uppercase tracking-widest'
-          >
-            Create your first event
-          </Button>
+          <div className='flex flex-wrap items-center justify-center gap-2'>
+            <Button
+              type='button'
+              onClick={() => setIsCreateDialogOpen(true)}
+              className='font-mono text-[0.65rem] uppercase tracking-widest'
+            >
+              Create your first event
+            </Button>
+            {generalQuestionsButton}
+          </div>
         </div>
 
         {isCreateDialogOpen ? (
@@ -247,6 +280,8 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
             isSubmitting={createEvent.isPending}
           />
         ) : null}
+
+        {generalQuestionsDialog}
       </>
     )
   }
@@ -276,10 +311,13 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
         <p className='text-muted-foreground text-sm'>
           {events.length} {events.length === 1 ? 'event' : 'events'}
         </p>
-        <Button onClick={() => setIsCreateDialogOpen(true)} size='sm'>
-          <Plus className='mr-2 h-4 w-4' />
-          Create Event
-        </Button>
+        <div className='flex items-center gap-2'>
+          {generalQuestionsButton}
+          <Button onClick={() => setIsCreateDialogOpen(true)} size='sm'>
+            <Plus className='mr-2 h-4 w-4' />
+            Create Event
+          </Button>
+        </div>
       </div>
 
       <div className='grid gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3'>
@@ -364,6 +402,8 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
           onOpenChange={(open) => !open && setManagingQuestionsEventId(null)}
         />
       ) : null}
+
+      {generalQuestionsDialog}
     </>
   )
 }

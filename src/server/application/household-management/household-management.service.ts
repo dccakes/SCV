@@ -318,7 +318,7 @@ export class HouseholdManagementService {
       })
     }
 
-    return this.householdRepo.search(searchText, website.weddingId)
+    return this.householdRepo.searchPublicByName(searchText, website.weddingId)
   }
 
   /**
