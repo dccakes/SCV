@@ -20,11 +20,19 @@ export async function generateMetadata({ params }: RsvpPageProps): Promise<Metad
   const { websiteSubUrl } = await params
   const { loadResult } = await loadVisitorWedding(websiteSubUrl)
 
+  // Nested `icon.tsx` route conventions are silently dropped whenever an
+  // ancestor layout (the root layout, here) sets `metadata.icons` explicitly —
+  // Next.js then stops auto-merging file-based icons for the whole subtree.
+  // Re-declaring `icons` at this segment reclaims it and points back at our
+  // per-website favicon route, matching the wedding page.
+  const iconUrl = `/w/${websiteSubUrl}/icon`
+
   return {
     title:
       loadResult.status === 'ready'
         ? `${loadResult.weddingData.groomFirstName} ${loadResult.weddingData.groomLastName} and ${loadResult.weddingData.brideFirstName} ${loadResult.weddingData.brideLastName}'s Wedding Website`
         : 'Wedding Website',
+    icons: [{ rel: 'icon', url: iconUrl, type: 'image/png', sizes: '32x32' }],
   }
 }
 

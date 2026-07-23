@@ -103,7 +103,7 @@ export default function QuestionMultipleChoice({
       </ul>
       {isOtherSelected && (
         <textarea
-          className='w-full rounded-lg border border-gray-700 p-3 text-left text-base'
+          className='w-full rounded-lg border border-gray-700 bg-white p-3 text-left text-base text-black placeholder:text-gray-500'
           placeholder='Please share your answer'
           value={otherResponse}
           onChange={(event) => setOtherResponse(event.target.value)}
