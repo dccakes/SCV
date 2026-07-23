@@ -43,7 +43,7 @@ export default function QuestionShortAnswer({
       <textarea
         value={answer}
         onChange={(e) => setAnswer(e.target.value)}
-        className='h-40 border p-3'
+        className='h-40 border bg-white p-3 text-black placeholder:text-gray-500'
       />
       <button
         className={`mt-3 bg-stone-400 py-3 text-white text-xl tracking-wide ${answer.length === 0 ? 'cursor-not-allowed bg-stone-400' : 'bg-stone-700'}`}
