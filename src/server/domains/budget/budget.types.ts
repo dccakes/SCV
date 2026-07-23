@@ -10,10 +10,14 @@ export type BudgetExpense = {
   weddingId: string
   categoryId: string
   description: string
+  /** Estimated/quoted cost, for planning before the line is paid. */
+  estimatedAmount: number
   amount: number
   isDeposit: boolean
   isRefundable: boolean
   refundedAt: Date | null
+  /** When this payment is due (drives the upcoming-payments schedule). */
+  dueAt: Date | null
   paidAt: Date | null
   notes: string | null
   createdAt: Date
@@ -26,6 +30,8 @@ export type BudgetExpense = {
 export type BudgetTotals = {
   /** Planned/target budget for the section */
   plannedAmount: number
+  /** Sum of every expense's estimated cost */
+  estimatedTotal: number
   /** Gross money paid out (sum of every expense amount) */
   actualSpend: number
   /** All refundable deposits, expected back after the event (refunded or not) */
@@ -60,6 +66,8 @@ export type BudgetSummary = {
   targetTotal: number
   /** Sum of every category's planned amount */
   totalPlanned: number
+  /** Sum of every expense's estimated cost across all sections */
+  estimatedTotal: number
   actualSpend: number
   refundableDeposits: number
   outstandingDeposits: number

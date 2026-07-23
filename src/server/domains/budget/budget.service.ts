@@ -116,10 +116,12 @@ export class BudgetService {
       weddingId,
       categoryId: input.categoryId,
       description: input.description,
-      amount: input.amount,
+      estimatedAmount: input.estimatedAmount ?? 0,
+      amount: input.amount ?? 0,
       isDeposit: input.isDeposit ?? false,
       isRefundable: input.isRefundable ?? false,
       refundedAt: input.refundedAt ?? null,
+      dueAt: input.dueAt ?? null,
       paidAt: input.paidAt ?? null,
       notes: input.notes ?? null,
     })
@@ -153,11 +155,13 @@ export class BudgetService {
   }
 
   private computeTotals(plannedAmount: number, expenses: BudgetExpense[]): BudgetTotals {
+    let estimatedTotal = 0
     let actualSpend = 0
     let refundableDeposits = 0
     let outstandingDeposits = 0
 
     for (const expense of expenses) {
+      estimatedTotal += expense.estimatedAmount
       actualSpend += expense.amount
       if (expense.isRefundable) {
         refundableDeposits += expense.amount
@@ -171,6 +175,7 @@ export class BudgetService {
 
     return {
       plannedAmount,
+      estimatedTotal: round2(estimatedTotal),
       actualSpend: round2(actualSpend),
       refundableDeposits: round2(refundableDeposits),
       outstandingDeposits: round2(outstandingDeposits),
@@ -186,6 +191,7 @@ export class BudgetService {
     const summary = categories.reduce(
       (acc, category) => {
         acc.totalPlanned += category.totals.plannedAmount
+        acc.estimatedTotal += category.totals.estimatedTotal
         acc.actualSpend += category.totals.actualSpend
         acc.refundableDeposits += category.totals.refundableDeposits
         acc.outstandingDeposits += category.totals.outstandingDeposits
@@ -194,6 +200,7 @@ export class BudgetService {
       },
       {
         totalPlanned: 0,
+        estimatedTotal: 0,
         actualSpend: 0,
         refundableDeposits: 0,
         outstandingDeposits: 0,
@@ -204,6 +211,7 @@ export class BudgetService {
     return {
       targetTotal,
       totalPlanned: round2(summary.totalPlanned),
+      estimatedTotal: round2(summary.estimatedTotal),
       actualSpend: round2(summary.actualSpend),
       refundableDeposits: round2(summary.refundableDeposits),
       outstandingDeposits: round2(summary.outstandingDeposits),

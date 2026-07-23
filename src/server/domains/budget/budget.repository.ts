@@ -132,10 +132,12 @@ export class BudgetRepository {
     weddingId: string
     categoryId: string
     description: string
+    estimatedAmount: number
     amount: number
     isDeposit: boolean
     isRefundable: boolean
     refundedAt: Date | null
+    dueAt: Date | null
     paidAt: Date | null
     notes: string | null
   }): Promise<BudgetExpense> {
@@ -147,10 +149,12 @@ export class BudgetRepository {
     id: string,
     data: {
       description?: string
+      estimatedAmount?: number
       amount?: number
       isDeposit?: boolean
       isRefundable?: boolean
       refundedAt?: Date | null
+      dueAt?: Date | null
       paidAt?: Date | null
       notes?: string | null
     }
@@ -184,10 +188,12 @@ export class BudgetRepository {
       weddingId: row.weddingId,
       categoryId: row.categoryId,
       description: row.description,
+      estimatedAmount: this.toNumber(row.estimatedAmount),
       amount: this.toNumber(row.amount),
       isDeposit: row.isDeposit,
       isRefundable: row.isRefundable,
       refundedAt: row.refundedAt,
+      dueAt: row.dueAt,
       paidAt: row.paidAt,
       notes: row.notes,
       createdAt: row.createdAt,

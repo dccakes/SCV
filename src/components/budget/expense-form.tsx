@@ -33,10 +33,14 @@ export function ExpenseForm(props: Readonly<ExpenseFormProps>) {
   const utils = api.useUtils()
 
   const [description, setDescription] = useState(expense?.description ?? '')
-  const [amount, setAmount] = useState(expense ? String(expense.amount) : '')
+  const [estimatedAmount, setEstimatedAmount] = useState(
+    expense?.estimatedAmount ? String(expense.estimatedAmount) : ''
+  )
+  const [amount, setAmount] = useState(expense?.amount ? String(expense.amount) : '')
   const [isDeposit, setIsDeposit] = useState(expense?.isDeposit ?? false)
   const [isRefundable, setIsRefundable] = useState(expense?.isRefundable ?? false)
   const [refundReceived, setRefundReceived] = useState(Boolean(expense?.refundedAt))
+  const [dueAt, setDueAt] = useState(toDateInputValue(expense?.dueAt ?? null))
   const [paidAt, setPaidAt] = useState(toDateInputValue(expense?.paidAt ?? null))
   const [notes, setNotes] = useState(expense?.notes ?? '')
 
@@ -65,13 +69,22 @@ export function ExpenseForm(props: Readonly<ExpenseFormProps>) {
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault()
 
-    const parsedAmount = Number.parseFloat(amount)
+    const parsedEstimated = estimatedAmount ? Number.parseFloat(estimatedAmount) : 0
+    const parsedAmount = amount ? Number.parseFloat(amount) : 0
     if (!description.trim()) {
       toast.error('Description is required')
       return
     }
+    if (!Number.isFinite(parsedEstimated) || parsedEstimated < 0) {
+      toast.error('Enter a valid estimated amount')
+      return
+    }
     if (!Number.isFinite(parsedAmount) || parsedAmount < 0) {
       toast.error('Enter a valid amount')
+      return
+    }
+    if (parsedEstimated === 0 && parsedAmount === 0) {
+      toast.error('Enter an estimated or actual amount')
       return
     }
 
@@ -81,10 +94,12 @@ export function ExpenseForm(props: Readonly<ExpenseFormProps>) {
 
     const shared = {
       description: description.trim(),
+      estimatedAmount: parsedEstimated,
       amount: parsedAmount,
       isDeposit,
       isRefundable: refundable,
       refundedAt,
+      dueAt: dueAt ? new Date(dueAt) : null,
       paidAt: paidAt ? new Date(paidAt) : null,
       notes: notes.trim() ? notes.trim() : null,
     }
@@ -112,7 +127,20 @@ export function ExpenseForm(props: Readonly<ExpenseFormProps>) {
 
       <div className='grid grid-cols-2 gap-3'>
         <div className='space-y-1.5'>
-          <Label htmlFor='expense-amount'>Amount ({currency})</Label>
+          <Label htmlFor='expense-estimated'>Estimated ({currency})</Label>
+          <Input
+            id='expense-estimated'
+            type='number'
+            inputMode='decimal'
+            min='0'
+            step='0.01'
+            value={estimatedAmount}
+            onChange={(e) => setEstimatedAmount(e.target.value)}
+            placeholder='0.00'
+          />
+        </div>
+        <div className='space-y-1.5'>
+          <Label htmlFor='expense-amount'>Actual paid ({currency})</Label>
           <Input
             id='expense-amount'
             type='number'
@@ -122,7 +150,18 @@ export function ExpenseForm(props: Readonly<ExpenseFormProps>) {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder='0.00'
-            required
+          />
+        </div>
+      </div>
+
+      <div className='grid grid-cols-2 gap-3'>
+        <div className='space-y-1.5'>
+          <Label htmlFor='expense-due-at'>Due date</Label>
+          <Input
+            id='expense-due-at'
+            type='date'
+            value={dueAt}
+            onChange={(e) => setDueAt(e.target.value)}
           />
         </div>
         <div className='space-y-1.5'>
