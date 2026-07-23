@@ -24,9 +24,16 @@ export default function QuestionShortAnswer({
   const rsvpFormData = useRsvpForm()
   const updateRsvpForm = useUpdateRsvpForm()
   const questionId = question.id ?? '-1'
+  // General/website questions are asked once for the whole household and have no
+  // specific guest. Attribute them to the household's primary contact (falling
+  // back to any household guest) so the answer references a real Guest and
+  // satisfies the Answer_guestId foreign key.
+  const householdGuestId =
+    rsvpFormData.selectedHousehold?.primaryContact?.id ??
+    rsvpFormData.selectedHousehold?.guests?.[0]?.id
   const answerTarget = {
     questionId,
-    guestId: guest?.id,
+    guestId: guest?.id ?? householdGuestId,
     householdId: rsvpFormData.selectedHousehold?.id,
   }
   const existingAnswer = findExistingAnswer(rsvpFormData.answersToQuestions, answerTarget)
