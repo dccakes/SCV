@@ -90,6 +90,28 @@ describe('rsvp page loader', () => {
     })
   })
 
+  it('reclaims the per-website favicon so the RSVP page inherits the wedding icon', async () => {
+    mockFetchWeddingData.mockResolvedValue({
+      groomFirstName: 'John',
+      groomLastName: 'Doe',
+      brideFirstName: 'Jane',
+      brideLastName: 'Smith',
+      website: {
+        isRsvpEnabled: true,
+      },
+    })
+
+    const metadata = await (
+      generateMetadata as (props: {
+        params: Promise<{ websiteSubUrl: string }>
+      }) => Promise<{ icons?: Array<{ url: string }> }>
+    )({ params: Promise.resolve({ websiteSubUrl: 'john-and-jane' }) })
+
+    expect(metadata.icons).toEqual([
+      { rel: 'icon', url: '/w/john-and-jane/icon', type: 'image/png', sizes: '32x32' },
+    ])
+  })
+
   it('renders the password page when RSVP access requires a website password', async () => {
     mockFetchWeddingData.mockRejectedValue({ code: 'FORBIDDEN' })
 
