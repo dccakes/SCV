@@ -1,5 +1,6 @@
 'use client'
 
+import { ChevronDown } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -233,6 +234,7 @@ function ExpenseTable({
 }
 
 export function CategoryCard({ category, currency, view }: Readonly<CategoryCardProps>) {
+  const [expanded, setExpanded] = useState(false)
   const [showAddExpense, setShowAddExpense] = useState(false)
   const [editExpense, setEditExpense] = useState<BudgetExpense | null>(null)
   const [showEditCategory, setShowEditCategory] = useState(false)
@@ -267,105 +269,152 @@ export function CategoryCard({ category, currency, view }: Readonly<CategoryCard
     : 0
   const overBudget = hasPlanned && totals.netSpend > totals.plannedAmount
 
+  const expenseCount = category.expenses.length
+  const contentId = `budget-section-${category.id}`
+
   return (
-    <div className='rounded-lg border border-border/70 bg-card p-4 md:p-5'>
-      <div className='flex flex-wrap items-start justify-between gap-3'>
-        <div>
-          <h3 className='font-serif text-foreground text-lg'>{category.name}</h3>
-          <p className='mt-0.5 font-mono text-[0.62rem] text-muted-foreground uppercase tracking-widest'>
-            {hasPlanned
-              ? `${formatCurrency(totals.netSpend, currency)} net of ${formatCurrency(totals.plannedAmount, currency)}`
-              : `${formatCurrency(totals.netSpend, currency)} spent · no budget set`}
+    <div className='rounded-lg border border-border/70 bg-card'>
+      <button
+        type='button'
+        onClick={() => setExpanded((prev) => !prev)}
+        aria-expanded={expanded}
+        aria-controls={contentId}
+        className='flex w-full items-center gap-3 rounded-lg p-4 text-left transition-colors hover:bg-muted/40 md:p-5'
+      >
+        <ChevronDown
+          aria-hidden='true'
+          className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${
+            expanded ? 'rotate-0' : '-rotate-90'
+          }`}
+        />
+        <div className='min-w-0 flex-1'>
+          <h3 className='truncate font-serif text-foreground text-lg'>{category.name}</h3>
+          <p className='mt-0.5 font-mono text-[0.6rem] text-muted-foreground uppercase tracking-widest'>
+            {expenseCount} {expenseCount === 1 ? 'item' : 'items'}
           </p>
         </div>
-        <div className='flex items-center gap-2'>
-          <button
-            type='button'
-            onClick={() => setShowEditCategory(true)}
-            className='text-muted-foreground text-xs underline-offset-2 hover:text-foreground hover:underline'
-          >
-            Edit
-          </button>
-          <button
-            type='button'
-            onClick={() => setConfirmDeleteCategory(true)}
-            className='text-muted-foreground text-xs underline-offset-2 hover:text-destructive hover:underline'
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-
-      {hasPlanned ? (
-        <div className='mt-3'>
-          <div className='h-1.5 w-full overflow-hidden rounded-full bg-muted'>
-            <div
-              className={`h-full rounded-full ${overBudget ? 'bg-destructive' : 'bg-primary'}`}
-              style={{ width: `${Math.max(2, pct)}%` }}
-            />
+        <div className='flex shrink-0 items-center gap-5 sm:gap-8'>
+          <div className='text-right'>
+            <p className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
+              Budget
+            </p>
+            <p className='mt-0.5 font-mono text-foreground text-sm tabular-nums'>
+              {hasPlanned ? formatCurrency(totals.plannedAmount, currency) : '—'}
+            </p>
           </div>
-          <div className='mt-1.5 flex justify-between font-mono text-[0.6rem] text-muted-foreground uppercase tracking-widest'>
-            <span>
-              {overBudget
-                ? `${formatCurrency(totals.netSpend - totals.plannedAmount, currency)} over`
-                : `${formatCurrency(totals.remaining, currency)} left`}
-            </span>
-            <span>{pct}%</span>
+          <div className='text-right'>
+            <p className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
+              Paid
+            </p>
+            <p
+              className={`mt-0.5 font-mono text-sm tabular-nums ${
+                overBudget ? 'text-destructive' : 'text-foreground'
+              }`}
+            >
+              {formatCurrency(totals.actualSpend, currency)}
+            </p>
           </div>
         </div>
-      ) : null}
+      </button>
 
-      {totals.estimatedTotal > 0 || totals.actualSpend !== totals.netSpend ? (
-        <p className='mt-3 rounded-md bg-muted/40 px-3 py-2 text-muted-foreground text-xs'>
-          {totals.estimatedTotal > 0
-            ? `${formatCurrency(totals.estimatedTotal, currency)} estimated · `
-            : ''}
-          {formatCurrency(totals.actualSpend, currency)} paid
-          {totals.refundableDeposits > 0
-            ? ` · ${formatCurrency(totals.refundableDeposits, currency)} refundable${
-                totals.outstandingDeposits > 0
-                  ? ` (${formatCurrency(totals.outstandingDeposits, currency)} still to return)`
-                  : ''
-              }`
-            : ''}
-        </p>
-      ) : null}
+      {expanded ? (
+        <div id={contentId} className='border-border/60 border-t px-4 pb-4 md:px-5 md:pb-5'>
+          <div className='mt-4 flex flex-wrap items-center justify-between gap-3'>
+            <p className='font-mono text-[0.62rem] text-muted-foreground uppercase tracking-widest'>
+              {hasPlanned
+                ? `${formatCurrency(totals.netSpend, currency)} net of ${formatCurrency(totals.plannedAmount, currency)}`
+                : `${formatCurrency(totals.netSpend, currency)} spent · no budget set`}
+            </p>
+            <div className='flex items-center gap-2'>
+              <button
+                type='button'
+                onClick={() => setShowEditCategory(true)}
+                className='text-muted-foreground text-xs underline-offset-2 hover:text-foreground hover:underline'
+              >
+                Edit
+              </button>
+              <button
+                type='button'
+                onClick={() => setConfirmDeleteCategory(true)}
+                className='text-muted-foreground text-xs underline-offset-2 hover:text-destructive hover:underline'
+              >
+                Delete
+              </button>
+            </div>
+          </div>
 
-      <div className='mt-3'>
-        {category.expenses.length === 0 ? (
-          <p className='py-2 text-muted-foreground text-sm'>No expenses recorded yet.</p>
-        ) : view === 'table' ? (
-          <ExpenseTable
-            expenses={category.expenses}
-            currency={currency}
-            totals={totals}
-            onEdit={(expense) => setEditExpense(expense)}
-            onDelete={(id) => setDeleteExpenseId(id)}
-          />
-        ) : (
-          <div>
-            {category.expenses.map((expense) => (
-              <ExpenseRow
-                key={expense.id}
-                expense={expense}
+          {hasPlanned ? (
+            <div className='mt-3'>
+              <div className='h-1.5 w-full overflow-hidden rounded-full bg-muted'>
+                <div
+                  className={`h-full rounded-full ${overBudget ? 'bg-destructive' : 'bg-primary'}`}
+                  style={{ width: `${Math.max(2, pct)}%` }}
+                />
+              </div>
+              <div className='mt-1.5 flex justify-between font-mono text-[0.6rem] text-muted-foreground uppercase tracking-widest'>
+                <span>
+                  {overBudget
+                    ? `${formatCurrency(totals.netSpend - totals.plannedAmount, currency)} over`
+                    : `${formatCurrency(totals.remaining, currency)} left`}
+                </span>
+                <span>{pct}%</span>
+              </div>
+            </div>
+          ) : null}
+
+          {totals.estimatedTotal > 0 || totals.actualSpend !== totals.netSpend ? (
+            <p className='mt-3 rounded-md bg-muted/40 px-3 py-2 text-muted-foreground text-xs'>
+              {totals.estimatedTotal > 0
+                ? `${formatCurrency(totals.estimatedTotal, currency)} estimated · `
+                : ''}
+              {formatCurrency(totals.actualSpend, currency)} paid
+              {totals.refundableDeposits > 0
+                ? ` · ${formatCurrency(totals.refundableDeposits, currency)} refundable${
+                    totals.outstandingDeposits > 0
+                      ? ` (${formatCurrency(totals.outstandingDeposits, currency)} still to return)`
+                      : ''
+                  }`
+                : ''}
+            </p>
+          ) : null}
+
+          <div className='mt-3'>
+            {category.expenses.length === 0 ? (
+              <p className='py-2 text-muted-foreground text-sm'>No expenses recorded yet.</p>
+            ) : view === 'table' ? (
+              <ExpenseTable
+                expenses={category.expenses}
                 currency={currency}
-                onEdit={() => setEditExpense(expense)}
-                onDelete={() => setDeleteExpenseId(expense.id)}
+                totals={totals}
+                onEdit={(expense) => setEditExpense(expense)}
+                onDelete={(id) => setDeleteExpenseId(id)}
               />
-            ))}
+            ) : (
+              <div>
+                {category.expenses.map((expense) => (
+                  <ExpenseRow
+                    key={expense.id}
+                    expense={expense}
+                    currency={currency}
+                    onEdit={() => setEditExpense(expense)}
+                    onDelete={() => setDeleteExpenseId(expense.id)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      <Button
-        type='button'
-        size='sm'
-        variant='outline'
-        onClick={() => setShowAddExpense(true)}
-        className='mt-3 font-mono text-[0.62rem] uppercase tracking-widest'
-      >
-        + Add expense
-      </Button>
+          <Button
+            type='button'
+            size='sm'
+            variant='outline'
+            onClick={() => setShowAddExpense(true)}
+            className='mt-3 font-mono text-[0.62rem] uppercase tracking-widest'
+          >
+            + Add expense
+          </Button>
+        </div>
+      ) : null}
 
       {/* Add expense */}
       <Dialog open={showAddExpense} onOpenChange={setShowAddExpense}>
