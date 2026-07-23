@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 
 import type { DashboardData, EventWithResponses } from '~/app/utils/shared-types'
 import { TaskDialog } from '~/components/checklist/task-dialog'
+import { formatCurrency } from '~/components/budget/format'
 import { TaskListItem } from '~/components/dashboard/planning-overview/task-list-item'
 import { useTasksCardState } from '~/components/dashboard/planning-overview/use-tasks-card-state'
 import { DASHBOARD_ADD_TASK_EVENT } from '~/components/dashboard/task-dialog-events'
@@ -316,20 +317,88 @@ function TasksCard({ dashboardData }: { dashboardData: DashboardData | null }) {
 }
 
 function BudgetCard() {
+  const { data: overview } = api.budget.getOverview.useQuery()
+
+  const hasData = overview && (overview.targetTotal > 0 || overview.categories.length > 0)
+
+  if (!hasData) {
+    return (
+      <CardShell title='Budget' icon='◧'>
+        <div className='flex flex-col gap-3'>
+          <div className='flex items-baseline gap-2'>
+            <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
+            <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
+              No budget set up yet
+            </span>
+          </div>
+          <div className='h-2 overflow-hidden rounded-full bg-border'>
+            <div className='h-full w-0 rounded-full bg-gradient-to-r from-success to-accent' />
+          </div>
+          <Link
+            href='/budget'
+            className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+          >
+            Set up budget →
+          </Link>
+        </div>
+      </CardShell>
+    )
+  }
+
+  const { summary, currency, targetTotal } = overview
+  const { netSpend, remaining, actualSpend } = summary
+  const pctOfTarget =
+    targetTotal > 0 ? Math.min(100, Math.round((netSpend / targetTotal) * 100)) : 0
+  const overBudget = targetTotal > 0 && netSpend > targetTotal
+
   return (
-    <CardShell title='Budget' icon='◧'>
+    <CardShell title='Budget' icon='◧' action='View all →' actionHref='/budget'>
       <div className='flex flex-col gap-3'>
         <div className='flex items-baseline gap-2'>
-          <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
+          <span className='font-serif text-[2.2rem] text-foreground leading-none'>
+            {formatCurrency(targetTotal > 0 ? netSpend : actualSpend, currency)}
+          </span>
           <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
-            No budget set up yet
+            {targetTotal > 0 ? `of ${formatCurrency(targetTotal, currency)}` : 'spent'}
           </span>
         </div>
+
         <div className='h-2 overflow-hidden rounded-full bg-border'>
-          <div className='h-full w-0 rounded-full bg-gradient-to-r from-success to-accent' />
+          <div
+            className={`h-full rounded-full transition-all ${
+              overBudget ? 'bg-destructive' : 'bg-gradient-to-r from-success to-accent'
+            }`}
+            style={{ width: `${pctOfTarget}%` }}
+          />
         </div>
-        <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
-          Budget tracking coming soon — set up your budget to track spending
+
+        <div className='grid grid-cols-2 divide-x divide-border'>
+          {[
+            {
+              val: targetTotal > 0 ? formatCurrency(remaining, currency) : '—',
+              label: targetTotal > 0 && remaining < 0 ? 'Over budget' : 'Remaining',
+              color:
+                targetTotal === 0
+                  ? 'text-foreground/30'
+                  : remaining < 0
+                    ? 'text-destructive'
+                    : 'text-success',
+            },
+            {
+              val: String(overview.categories.length),
+              label: `Categor${overview.categories.length !== 1 ? 'ies' : 'y'}`,
+              color: 'text-foreground',
+            },
+          ].map((s) => (
+            <div key={s.label} className='px-2 first:pl-0 last:pr-0'>
+              <span className={`block font-serif text-[1.6rem] leading-none ${s.color}`}>
+                {s.val}
+              </span>
+              <span className='font-mono text-[0.52rem] text-foreground/55 uppercase tracking-widest'>
+                {s.label}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </CardShell>
