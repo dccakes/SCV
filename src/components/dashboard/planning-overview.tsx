@@ -379,7 +379,11 @@ function BudgetCard() {
         )}
         <div className='grid grid-cols-3 divide-x divide-border text-center'>
           {[
-            { val: formatCurrency(actualSpend, currency), label: 'Spent', color: 'text-foreground' },
+            {
+              val: formatCurrency(actualSpend, currency),
+              label: 'Spent',
+              color: 'text-foreground',
+            },
             {
               val: target > 0 ? formatCurrency(remaining, currency) : String(categoryCount),
               label: target > 0 ? 'Remaining' : `Section${categoryCount !== 1 ? 's' : ''}`,
