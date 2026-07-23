@@ -37,6 +37,7 @@ jest.mock('~/components/ui/select', () => ({
 }))
 
 const mockVendorGetAll = jest.fn()
+const mockBudgetGetOverview = jest.fn()
 
 jest.mock('~/trpc/react', () => ({
   api: {
@@ -66,6 +67,11 @@ jest.mock('~/trpc/react', () => ({
     vendor: {
       getAll: {
         useQuery: () => mockVendorGetAll(),
+      },
+    },
+    budget: {
+      getOverview: {
+        useQuery: () => mockBudgetGetOverview(),
       },
     },
   },
@@ -225,6 +231,7 @@ describe('PlanningOverview', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockVendorGetAll.mockReturnValue({ data: undefined })
+    mockBudgetGetOverview.mockReturnValue({ data: undefined })
   })
 
   it('renders the real planning completion percentage from milestones', () => {
@@ -309,7 +316,9 @@ describe('PlanningOverview', () => {
   it('renders the budget empty state', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
     expect(screen.getByText('No budget set up yet')).toBeInTheDocument()
-    expect(screen.getByText(/Budget tracking coming soon/)).toBeInTheDocument()
+    expect(
+      screen.getByText('Track your wedding spending against a target budget')
+    ).toBeInTheDocument()
   })
 
   it('does not render fake budget category names', () => {
