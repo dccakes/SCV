@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
 import type { DashboardData, EventWithResponses } from '~/app/utils/shared-types'
+import { formatCurrency } from '~/components/budget/format'
 import { TaskDialog } from '~/components/checklist/task-dialog'
 import { TaskListItem } from '~/components/dashboard/planning-overview/task-list-item'
 import { useTasksCardState } from '~/components/dashboard/planning-overview/use-tasks-card-state'
@@ -316,20 +317,89 @@ function TasksCard({ dashboardData }: { dashboardData: DashboardData | null }) {
 }
 
 function BudgetCard() {
+  const { data: overview } = api.budget.getOverview.useQuery()
+
+  const hasTarget = (overview?.targetTotal ?? 0) > 0
+  const hasCategories = (overview?.categories.length ?? 0) > 0
+  const hasBudget = hasTarget || hasCategories
+
+  if (!hasBudget) {
+    return (
+      <CardShell title='Budget' icon='◧' action='Manage →' actionHref='/budget'>
+        <div className='flex flex-col gap-3'>
+          <div className='flex items-baseline gap-2'>
+            <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
+            <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
+              No budget set up yet
+            </span>
+          </div>
+          <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
+            Track your wedding spending against a target budget
+          </div>
+          <Link
+            href='/budget'
+            className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+          >
+            Set up your budget →
+          </Link>
+        </div>
+      </CardShell>
+    )
+  }
+
+  const currency = overview!.currency
+  const { netSpend, remaining, actualSpend } = overview!.summary
+  const target = overview!.targetTotal
+  const categoryCount = overview!.categories.length
+  const pct = target > 0 ? Math.min(100, Math.round((netSpend / target) * 100)) : 0
+  const overBudget = target > 0 && netSpend > target
+
   return (
-    <CardShell title='Budget' icon='◧'>
+    <CardShell title='Budget' icon='◧' action='Manage →' actionHref='/budget'>
       <div className='flex flex-col gap-3'>
         <div className='flex items-baseline gap-2'>
-          <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
+          <span className='font-serif text-[2.2rem] text-foreground leading-none'>
+            {formatCurrency(netSpend, currency)}
+          </span>
           <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
-            No budget set up yet
+            {target > 0 ? `of ${formatCurrency(target, currency)}` : 'net spend'}
           </span>
         </div>
-        <div className='h-2 overflow-hidden rounded-full bg-border'>
-          <div className='h-full w-0 rounded-full bg-gradient-to-r from-success to-accent' />
-        </div>
-        <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
-          Budget tracking coming soon — set up your budget to track spending
+        {target > 0 && (
+          <div
+            className='h-1.5 overflow-hidden rounded-full bg-border'
+            role='img'
+            aria-label={`${pct}% of budget used`}
+          >
+            <div
+              className={`h-full rounded-full transition-all ${overBudget ? 'bg-destructive' : 'bg-gradient-to-r from-success to-accent'}`}
+              style={{ width: `${pct > 0 ? Math.max(2, pct) : 0}%` }}
+            />
+          </div>
+        )}
+        <div className='grid grid-cols-3 divide-x divide-border text-center'>
+          {[
+            { val: formatCurrency(actualSpend, currency), label: 'Spent', color: 'text-foreground' },
+            {
+              val: target > 0 ? formatCurrency(remaining, currency) : String(categoryCount),
+              label: target > 0 ? 'Remaining' : `Section${categoryCount !== 1 ? 's' : ''}`,
+              color: overBudget ? 'text-destructive' : 'text-foreground',
+            },
+            {
+              val: target > 0 ? `${pct}%` : '—',
+              label: target > 0 ? 'Of target' : 'No target',
+              color: 'text-foreground/60',
+            },
+          ].map((s) => (
+            <div key={s.label} className='px-2 first:pl-0 last:pr-0'>
+              <span className={`block font-serif text-[1.1rem] leading-none ${s.color}`}>
+                {s.val}
+              </span>
+              <span className='font-mono text-[0.52rem] text-foreground/55 uppercase tracking-widest'>
+                {s.label}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </CardShell>
