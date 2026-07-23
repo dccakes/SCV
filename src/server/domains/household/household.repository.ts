@@ -32,6 +32,24 @@ export const rsvpHouseholdSelect = {
   },
 } satisfies Prisma.HouseholdSelect
 
+/**
+ * Fold a name to a comparable form for the public RSVP lookup: lowercased, with
+ * apostrophes dropped and hyphens/dashes treated as spaces. This makes
+ * "Sarah-Jane" and "Sarah Jane" compare equal (in either direction) and lets
+ * "O'Brien" match "OBrien", so a guest isn't blocked by how the couple happened
+ * to punctuate their name.
+ */
+export function normalizeNameForSearch(value: string): string {
+  return value.toLowerCase().replace(/['’]/g, '').replace(/[-–—]/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+/**
+ * Split a search string into normalized name terms (see normalizeNameForSearch).
+ */
+export function tokenizeNameForSearch(value: string): string[] {
+  return normalizeNameForSearch(value).split(' ').filter(Boolean)
+}
+
 export class HouseholdRepository {
   constructor(private db: PrismaClient | Prisma.TransactionClient) {}
 
@@ -292,6 +310,58 @@ export class HouseholdRepository {
       },
       select: rsvpHouseholdSelect,
     })
+  }
+
+  /**
+   * Public, guest-facing RSVP name lookup.
+   *
+   * Stricter than `search`, because this runs on an unauthenticated endpoint: a
+   * guest must be identified by a first AND last name (at least two terms) and
+   * every term must match the SAME guest. A lone common first name like "sarah",
+   * or an incidental substring, therefore no longer surfaces the whole guest
+   * list, and a query can't match two different household members at once.
+   *
+   * Matching is done in memory against each guest's full name so hyphens and
+   * spaces are interchangeable ("Sarah-Jane" == "Sarah Jane") while staying
+   * partial- and case-tolerant. The candidate set is a single wedding's invited
+   * households, so this stays small.
+   */
+  async searchPublicByName(
+    searchText: string,
+    weddingId: string
+  ): Promise<HouseholdSearchResult[]> {
+    const terms = tokenizeNameForSearch(searchText)
+
+    // Require a first and last name. A single term is too broad for a public
+    // lookup and would let anyone enumerate the couple's guest list.
+    if (terms.length < 2) return []
+
+    const households = await this.db.household.findMany({
+      where: {
+        weddingId,
+        guests: {
+          some: {
+            invitations: {
+              some: {
+                rsvp: {
+                  in: ['Invited', 'Attending', 'Declined'],
+                },
+              },
+            },
+          },
+        },
+      },
+      select: rsvpHouseholdSelect,
+    })
+
+    // Every term must appear in a single guest's full name, so the searcher has
+    // actually named a specific person rather than a household member each.
+    return households.filter((household) =>
+      household.guests.some((guest) => {
+        const fullName = normalizeNameForSearch(`${guest.firstName} ${guest.lastName}`)
+        return terms.every((term) => fullName.includes(term))
+      })
+    )
   }
 
   /**

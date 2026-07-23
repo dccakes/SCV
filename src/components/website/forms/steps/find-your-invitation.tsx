@@ -41,11 +41,11 @@ export default function FindYourInvitationForm({ goNext }: StepFormProps) {
     <div className='flex flex-col gap-5'>
       <h2 className='text-2xl tracking-widest'>{`${weddingData.brideFirstName} & ${weddingData.groomFirstName}'s wedding`}</h2>
       <p className='mb-3 font-thin'>
-        If you&apos;re responding for you and a guest (or for your family), you&apos;ll be able to
-        RSVP for your entire group.
+        Enter your first and last name to find your invitation. If you&apos;re responding for you
+        and a guest (or for your family), you&apos;ll be able to RSVP for your entire group.
       </p>
       <input
-        placeholder='Full Name'
+        placeholder='First and last name'
         className='border border-gray-400 p-3'
         onChange={(e) => {
           setShowError(false)
@@ -55,8 +55,8 @@ export default function FindYourInvitationForm({ goNext }: StepFormProps) {
       />
       {showError && (
         <p className='text-xs'>
-          Oops! We&apos;re having trouble finding your invite. Please try another spelling of your
-          name or contact the couple
+          Oops! We&apos;re having trouble finding your invite. Please enter your full first and last
+          name, try another spelling, or contact the couple.
         </p>
       )}
       <button
