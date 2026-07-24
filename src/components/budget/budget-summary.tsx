@@ -45,7 +45,7 @@ function StatTile({
     tone === 'negative'
       ? 'text-destructive'
       : tone === 'positive'
-        ? 'text-emerald-600 dark:text-emerald-400'
+        ? 'text-success'
         : 'text-foreground'
   return (
     <div className='rounded-lg border border-border/70 bg-card p-4'>
@@ -237,9 +237,9 @@ export function BudgetSummary({ summary, currency }: Readonly<BudgetSummaryProps
         />
         <StatTile
           label='Remaining'
-          value={formatCurrency(remaining, currency)}
-          tone={remaining < 0 ? 'negative' : 'positive'}
-          hint={remaining < 0 ? 'Over target budget' : 'Left under target'}
+          value={targetTotal > 0 ? formatCurrency(remaining, currency) : '—'}
+          tone={targetTotal > 0 ? (remaining < 0 ? 'negative' : 'positive') : 'default'}
+          hint={targetTotal > 0 ? (remaining < 0 ? 'Over target budget' : 'Left under target') : 'Set a target to track remaining'}
         />
       </div>
     </section>
