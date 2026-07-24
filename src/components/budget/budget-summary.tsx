@@ -239,7 +239,13 @@ export function BudgetSummary({ summary, currency }: Readonly<BudgetSummaryProps
           label='Remaining'
           value={targetTotal > 0 ? formatCurrency(remaining, currency) : '—'}
           tone={targetTotal > 0 ? (remaining < 0 ? 'negative' : 'positive') : 'default'}
-          hint={targetTotal > 0 ? (remaining < 0 ? 'Over target budget' : 'Left under target') : 'Set a target to track remaining'}
+          hint={
+            targetTotal > 0
+              ? remaining < 0
+                ? 'Over target budget'
+                : 'Left under target'
+              : 'Set a target to track remaining'
+          }
         />
       </div>
     </section>
