@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 
-import { ChecklistPageClient } from '@/app/(authenicated)/checklist/_components/checklist-page-client'
+import { ChecklistPageClient } from '~/app/(authenicated)/checklist/_components/checklist-page-client'
 import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
 import { getRequiredWedding } from '~/server/application/authenticated-route/authenticated-route-data'
 import { api } from '~/trpc/server'

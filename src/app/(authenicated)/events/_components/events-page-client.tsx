@@ -10,10 +10,10 @@
 import { Loader2, Plus } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { toast } from 'sonner'
-import { EventCard } from '@/app/(authenicated)/events/_components/event-card'
-import { ManageEventGuestsDialog } from '@/app/(authenicated)/events/_components/manage-event-guests-dialog'
-import { ManageEventQuestionsDialog } from '@/app/(authenicated)/events/_components/manage-event-questions-dialog'
-import { ManageGeneralQuestionsDialog } from '@/app/(authenicated)/events/_components/manage-general-questions-dialog'
+import { EventCard } from '~/app/(authenicated)/events/_components/event-card'
+import { ManageEventGuestsDialog } from '~/app/(authenicated)/events/_components/manage-event-guests-dialog'
+import { ManageEventQuestionsDialog } from '~/app/(authenicated)/events/_components/manage-event-questions-dialog'
+import { ManageGeneralQuestionsDialog } from '~/app/(authenicated)/events/_components/manage-general-questions-dialog'
 import {
   type EventFormData,
   transformToServerInput,

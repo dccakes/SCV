@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 
-import { useAuthenticatedSidebar } from '@/components/layout/authenticated-app-shell'
 import { dispatchDashboardAddTaskEvent } from '~/components/dashboard/task-dialog-events'
+import { useAuthenticatedSidebar } from '~/components/layout/authenticated-app-shell'
 import { ThemeToggle } from '~/components/theme-toggle'
 
 type DashboardTopbarProps = {

@@ -1,7 +1,7 @@
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { ReactNode } from 'react'
-import AuthenticatedAppShell from '@/components/layout/authenticated-app-shell'
+import AuthenticatedAppShell from '~/components/layout/authenticated-app-shell'
 import { auth } from '~/lib/auth'
 import { getUserFirstName, getUserInitials } from '~/lib/user-display'
 import { resolveWorkspaceScope } from '~/server/application/workspace/workspace-scope'

@@ -3,7 +3,7 @@
 import { Loader2, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { EventQuestionFormDialog } from '@/app/(authenicated)/events/_components/event-question-form-dialog'
+import { EventQuestionFormDialog } from '~/app/(authenicated)/events/_components/event-question-form-dialog'
 import type { Question } from '~/app/utils/shared-types'
 import {
   AlertDialog,

@@ -7,7 +7,7 @@
 
 import type { Metadata } from 'next'
 
-import { EventsPageClient } from '@/app/(authenicated)/events/_components/events-page-client'
+import { EventsPageClient } from '~/app/(authenicated)/events/_components/events-page-client'
 import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
 import { getRequiredWedding } from '~/server/application/authenticated-route/authenticated-route-data'
 import { api } from '~/trpc/server'
