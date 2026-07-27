@@ -15,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '~/components/ui/alert-dialog'
+import { formatCurrency } from '~/components/budget/format'
 import { StatusBadge } from '~/components/vendor/vendor-status-select'
 import type { VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
@@ -22,6 +23,7 @@ import { api } from '~/trpc/react'
 type VendorCardProps = {
   vendor: VendorWithQuotes
   quotePrices: number[]
+  currency: string
   onViewDetails: (vendorId: string) => void
   onDeleted: () => void
 }
@@ -29,6 +31,7 @@ type VendorCardProps = {
 export function VendorCard({
   vendor,
   quotePrices,
+  currency,
   onViewDetails,
   onDeleted,
 }: Readonly<VendorCardProps>) {
@@ -60,12 +63,7 @@ export function VendorCard({
     setShowDeleteDialog(true)
   }
 
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0,
-    }).format(price)
+  const formatPrice = (price: number) => formatCurrency(price, currency)
 
   const quoteCount = quotePrices.length
   const averageRating = vendor.ratingSummary.average

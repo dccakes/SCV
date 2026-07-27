@@ -33,6 +33,7 @@ export const STATUS_SORT_ORDER: Record<VendorWithQuotes['status'], number> = {
 type VendorCategorySectionProps = {
   category: VendorCategory
   vendors: VendorWithQuotes[]
+  currency: string
   onViewDetails: (vendorId: string) => void
   onRefresh: () => void
 }
@@ -40,6 +41,7 @@ type VendorCategorySectionProps = {
 export function VendorCategorySection({
   category,
   vendors,
+  currency,
   onViewDetails,
   onRefresh,
 }: VendorCategorySectionProps) {
@@ -100,6 +102,7 @@ export function VendorCategorySection({
             key={vendor.id}
             vendor={vendor}
             quotePrices={vendor.quotes.map((q) => q.price)}
+            currency={currency}
             onViewDetails={onViewDetails}
             onDeleted={onRefresh}
           />

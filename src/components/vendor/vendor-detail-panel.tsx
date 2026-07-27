@@ -11,6 +11,7 @@ import {
   SIDE_PANE_OVERLAY_CLASS,
   SIDE_PANE_SURFACE_CLASS,
 } from '~/components/layout/side-pane-styles'
+import { formatCurrency } from '~/components/budget/format'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,6 +65,7 @@ import { api } from '~/trpc/react'
 
 type VendorDetailPanelProps = {
   vendor: VendorWithQuotes | null
+  currency: string
   onClose: () => void
 }
 
@@ -102,7 +104,6 @@ type VendorApiWithEnrichment = typeof api.vendor & {
   }
 }
 
-const priceFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   year: 'numeric',
   month: 'short',
@@ -285,7 +286,7 @@ function QuoteFileUploader({
   )
 }
 
-export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
+export function VendorDetailPanel({ vendor, currency, onClose }: VendorDetailPanelProps) {
   const [showQuoteForm, setShowQuoteForm] = useState(false)
   const [showEditForm, setShowEditForm] = useState(false)
   const [editingQuoteId, setEditingQuoteId] = useState<string | null>(null)
@@ -370,7 +371,7 @@ export function VendorDetailPanel({ vendor, onClose }: VendorDetailPanelProps) {
     )
   }
 
-  const formatPrice = (price: number) => priceFormatter.format(price)
+  const formatPrice = (price: number) => formatCurrency(price, currency)
   const formatDate = (date: Date | string) => dateFormatter.format(new Date(date))
 
   const persistVendorUpdate = (
