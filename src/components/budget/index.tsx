@@ -92,34 +92,28 @@ export default function BudgetOverview({ initialOverview }: Readonly<BudgetOverv
         <>
           <AllocationBar categories={categories} currency={currency} />
           <UpcomingPayments categories={categories} currency={currency} />
-        </>
-      ) : null}
-
-      <div className='mb-4 flex items-center justify-between gap-3'>
-        <p className='font-mono text-[0.62rem] text-muted-foreground tracking-wider'>
-          {categories.length} {categories.length === 1 ? 'section' : 'sections'}
-        </p>
-        {hasCategories ? (
-          <div className='flex items-center gap-2'>
-            <ViewToggle view={view} onChange={setView} />
-            <Button
-              type='button'
-              size='sm'
-              onClick={() => setShowAddCategory(true)}
-              className='font-mono text-[0.62rem] uppercase tracking-widest'
-            >
-              + Add Section
-            </Button>
+          <div className='mb-4 flex items-center justify-between gap-3'>
+            <p className='font-mono text-[0.62rem] text-muted-foreground tracking-wider'>
+              {categories.length} {categories.length === 1 ? 'section' : 'sections'}
+            </p>
+            <div className='flex items-center gap-2'>
+              <ViewToggle view={view} onChange={setView} />
+              <Button
+                type='button'
+                size='sm'
+                onClick={() => setShowAddCategory(true)}
+                className='font-mono text-[0.62rem] uppercase tracking-widest'
+              >
+                + Add Section
+              </Button>
+            </div>
           </div>
-        ) : null}
-      </div>
-
-      {hasCategories ? (
-        <div className='space-y-4'>
-          {categories.map((category) => (
-            <CategoryCard key={category.id} category={category} currency={currency} view={view} />
-          ))}
-        </div>
+          <div className='space-y-4'>
+            {categories.map((category) => (
+              <CategoryCard key={category.id} category={category} currency={currency} view={view} />
+            ))}
+          </div>
+        </>
       ) : (
         <BudgetEmptyState onAdd={() => setShowAddCategory(true)} />
       )}
