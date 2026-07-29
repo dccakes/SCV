@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { formatCurrency } from '~/components/budget/format'
 import { Badge } from '~/components/ui/badge'
 import type { BudgetCategoryWithExpenses } from '~/server/domains/budget/budget.types'
@@ -26,10 +27,12 @@ const MAX_VISIBLE = 6
  * major planners lead with, built on the expense data we already track.
  */
 export function UpcomingPayments({ categories, currency }: Readonly<UpcomingPaymentsProps>) {
+  const [showAll, setShowAll] = useState(false)
   const payments = collectDuePayments(categories)
   if (payments.length === 0) return null
 
-  const visible = payments.slice(0, MAX_VISIBLE)
+  const hasMore = payments.length > MAX_VISIBLE
+  const visible = showAll ? payments : payments.slice(0, MAX_VISIBLE)
   const overdueCount = payments.filter((payment) => payment.overdue).length
 
   return (
@@ -67,10 +70,14 @@ export function UpcomingPayments({ categories, currency }: Readonly<UpcomingPaym
         ))}
       </ul>
 
-      {payments.length > visible.length ? (
-        <p className='mt-3 font-mono text-[0.6rem] text-muted-foreground uppercase tracking-widest'>
-          +{payments.length - visible.length} more scheduled
-        </p>
+      {hasMore ? (
+        <button
+          type='button'
+          onClick={() => setShowAll((prev) => !prev)}
+          className='mt-3 font-mono text-[0.6rem] text-muted-foreground uppercase tracking-widest transition-colors hover:text-foreground'
+        >
+          {showAll ? 'Show less' : `+${payments.length - MAX_VISIBLE} more — show all`}
+        </button>
       ) : null}
     </section>
   )
