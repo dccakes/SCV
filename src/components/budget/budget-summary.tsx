@@ -237,9 +237,15 @@ export function BudgetSummary({ summary, currency }: Readonly<BudgetSummaryProps
         />
         <StatTile
           label='Remaining'
-          value={formatCurrency(remaining, currency)}
-          tone={remaining < 0 ? 'negative' : 'positive'}
-          hint={remaining < 0 ? 'Over target budget' : 'Left under target'}
+          value={targetTotal > 0 ? formatCurrency(remaining, currency) : '—'}
+          tone={targetTotal > 0 ? (remaining < 0 ? 'negative' : 'positive') : 'default'}
+          hint={
+            targetTotal > 0
+              ? remaining < 0
+                ? 'Over target budget'
+                : 'Left under target'
+              : 'Set a target to track remaining'
+          }
         />
       </div>
     </section>
