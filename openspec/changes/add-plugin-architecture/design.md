@@ -32,6 +32,21 @@ Scope per maintainer direction: prioritize **full-feature plugins** (own route +
 - A mandatory global client-state store (e.g. zustand) — client reactivity stays on react-query invalidation with a declarative event→query-key map (Decision 9).
 - Implementation itself — this is a spec-only change; `tasks.md` is the phased plan for follow-up changes.
 
+## Scope & sequencing (the honest cost/benefit)
+
+A wedding app is a **bounded domain** — the realistic set of features couples want is enumerable, unlike an open-ended platform (VS Code, WordPress). That reframes the whole effort: the goal is **not** to build a general plugin platform on spec, but to *finish generalizing the registries the project already started* and let the speculative parts be demand-driven. Building framework ahead of demand is its own failure mode, and two pieces specced here are squarely at risk of it:
+
+- **An event bus with zero subscribers** (Decision 9) is textbook speculative complexity. Today *nothing* needs to react to another feature's events; cross-feature effects are direct calls and they work. The single concrete case (RSVP → notification) is a two-line direct call.
+- **Widget slots with zero injected widgets** (Decision 8, the `dashboard.widgets`/`settings.cards` half) are the same shape: infrastructure whose payoff is conditional on plugins that don't exist yet.
+
+So the work is **tiered**, and the rationale is explicitly YAGNI-gated:
+
+- **Tier 1 (do now).** Plugin-ready **themes** (Decision 6 — base template, token-only, partial override, scaffold), the **section-render/editor registry** (Decision 8's section half), **registry-driven nav** (Decision 3's nav projection), and the **couple/self-hoster enablement** (Decision 4's first two tiers) plus a **minimal registry** to carry them. These *remove existing duplication* — a hardcoded nav array, a hardcoded toggle enum, a `switch` triplicated across three templates, ~6 components of per-template boilerplate — so net complexity **drops**. They pay for themselves even if the ecosystem never materializes. **Themes lead** because they're the highest-value, lowest-risk, most self-contained slice and the one the maintainers explicitly want.
+- **Tier 2 (demand-gated).** The event bus (Decision 9), widget slots (Decision 8's widget half), router/permission derivation (Decision 3's remaining projections), and env-backed instance policy (Decision 4's third tier). Each is designed here so Tier 1 doesn't foreclose it, but is built only when a *second, concrete* case needs it.
+- **Tier 3 (deferred).** Installable packages (Decision 1 Tier B), runtime-dynamic (Decision 1 Tier C), the transactional outbox (Decision 9), the `PluginPolicy` table (Decision 4), and modular Prisma schema (Decision 5).
+
+The decisions below specify all tiers; the gating is a feature of the plan, not an afterthought. The point of designing Tiers 2–3 now is to make the Tier 1 seams forward-compatible **and** to have a written record that says "don't build this yet."
+
 ## Decisions
 
 ### Decision 1: Plugin model — modular monolith with a compile-time registry (recommended), with a staged path to installable packages
@@ -143,6 +158,15 @@ isPluginEnabledForWedding(pluginId, { registry, policy, wedding }): boolean
 **Choice:** A theme is a `ThemePlugin` (`kind: 'theme'`) wrapping the existing `WeddingTemplate` contract. The current `src/templates/registry.ts` becomes the theme-subtype projection of the general registry; `catalog.ts` metadata maps onto `PluginManifest`. Per-wedding selection stays on `Website.templateId`; themes are *available*-gated (not `enabledAddOns` toggled) since a wedding always has exactly one active theme.
 
 **Rationale:** the theme registry is the project's proven plugin pattern and must not regress. Wrapping (not rewriting) it validates the manifest against real code and gives theme authors the same SDK + acceptance contract as feature authors. Themes differ from features on the enablement axis (choose-one vs many-on), which the `kind` discriminator and the resolver's `coupleToggleable:false` path already express.
+
+**Fast authoring is the whole point of Tier 1 (the maintainers explicitly want "make templates quickly").** Today a new template means implementing **six surface components** (`Home`, `HomeMobile`, `Minimal`, `SaveTheDate`, `Invitation`, `Sections`) plus a per-template `switch(section.type)` — and `src/templates/shared/` contains only a `prose.ts` helper, so there's almost no reuse. Most authors want a new *look*, not a re-implementation. So:
+
+- **Base template with default surfaces.** Ship a base that renders every surface from `WeddingPageData` using semantic tokens. A new theme can then be **token-only**: metadata + `theme` (fonts + `cssVars`), inheriting all surfaces. This is the scaffold default and the ~20-minute path.
+- **Partial override with base fallback.** `resolveTemplate` merges a theme's provided `components` over the base defaults (the current full-bundle return becomes a merge), so an author overrides only the surfaces they care about. The existing default-template fallback for unknown `templateId` is preserved.
+- **Sections via the shared keyed registry** (Decision 8's section half): a theme inherits default section renderers and overrides only the types it wants to restyle — so a new section type needs no theme edits, killing the triplicated `switch`.
+- **Scaffold + preview.** `template:new <id>` generates a compiling, registered token-only theme; a preview path renders any theme against seed data so authors see all surfaces without a live wedding (the existing `design-system` route is the model).
+
+This keeps the intentional design property that a bespoke template *can* restructure the page (override the surfaces/sections it wants) while making the common case trivial. It is Tier 1 because it only *reduces* the current surface area and duplication.
 
 ### Decision 7: Public author surface — SDK barrel, scaffold, docs, design contract
 
