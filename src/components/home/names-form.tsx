@@ -75,10 +75,8 @@ export default function NamesForm() {
       <div className='flex min-h-[calc(100vh-3.5rem)] items-center justify-center p-4'>
         <Card className='w-full max-w-2xl'>
           <CardHeader className='text-center'>
-            <CardTitle className='text-3xl'>Welcome, Lovebirds! 💕</CardTitle>
-            <CardDescription>
-              Let&apos;s get started by adding your names to create your wedding plan
-            </CardDescription>
+            <CardTitle className='font-display text-3xl italic'>Plan Your Wedding</CardTitle>
+            <CardDescription>Add your names below to begin planning your day</CardDescription>
           </CardHeader>
           <CardContent>
             {createWedding.isPending && (
@@ -266,7 +264,7 @@ export default function NamesForm() {
 
               {/* Submit Button */}
               <Button type='submit' disabled={isSubmitting} className='w-full' size='lg'>
-                {isSubmitting ? 'Creating...' : 'Create Our Website!'}
+                {isSubmitting ? 'Creating plan…' : 'Get Started'}
               </Button>
             </form>
           </CardContent>
