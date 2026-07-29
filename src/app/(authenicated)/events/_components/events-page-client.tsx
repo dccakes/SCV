@@ -303,8 +303,8 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
       {initialRsvpEventId !== undefined ? (
         <div className='mb-4 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm md:mb-6'>
           {rsvpFocusEvent
-            ? `RSVP management context: ${rsvpFocusEvent.name}`
-            : 'RSVP management context from Guests drawer'}
+            ? `Managing RSVPs for "${rsvpFocusEvent.name}" — find the event card below.`
+            : 'Select an event below to manage RSVPs.'}
         </div>
       ) : null}
       <div className='mb-4 flex items-center justify-between md:mb-6'>
