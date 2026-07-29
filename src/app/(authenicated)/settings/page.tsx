@@ -1,5 +1,5 @@
-import DashboardTopbar from '@/components/dashboard/dashboard-topbar'
 import { PluginsSettingsCard } from '~/app/_components/settings/plugins-settings-card'
+import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
 import WeddingSettingsForm from '~/components/forms/wedding-settings-form'
 import { OrganizationMembersSettingsCard } from '~/components/settings/organization-members-settings-card'
 import { OrganizationOutstandingInvitesCard } from '~/components/settings/organization-outstanding-invites-card'
