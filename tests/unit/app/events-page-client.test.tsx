@@ -216,7 +216,9 @@ describe('EventsPageClient', () => {
   it('shows RSVP context banner when arriving from guest drawer link', () => {
     render(<EventsPageClient initialEvents={[baseEvent]} initialRsvpEventId='evt-1' />)
 
-    expect(screen.getByText('RSVP management context: Ceremony')).toBeInTheDocument()
+    expect(
+      screen.getByText('Managing RSVPs for "Ceremony" — find the event card below.')
+    ).toBeInTheDocument()
   })
 
   it('triggers collect RSVP mutation when event toggle is changed', () => {
