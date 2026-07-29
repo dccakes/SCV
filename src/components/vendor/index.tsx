@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/u
 import { VendorCategorySection } from '~/components/vendor/vendor-category-section'
 import { VendorDetailPanel } from '~/components/vendor/vendor-detail-panel'
 import { VendorForm } from '~/components/vendor/vendor-form'
+import { DEFAULT_CURRENCY } from '~/lib/budget/currency'
 import type { VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
 
@@ -58,6 +59,8 @@ export default function VendorList({ initialVendors }: VendorListProps) {
   const [showAddForm, setShowAddForm] = useState(false)
 
   const { data: vendors, refetch } = api.vendor.getAll.useQuery({}, { initialData: initialVendors })
+  const { data: budgetOverview } = api.budget.getOverview.useQuery()
+  const currency = budgetOverview?.currency ?? DEFAULT_CURRENCY
 
   const allVendors = vendors ?? []
 
@@ -106,6 +109,7 @@ export default function VendorList({ initialVendors }: VendorListProps) {
               key={category}
               category={category}
               vendors={vendorsByCategory(category)}
+              currency={currency}
               onViewDetails={handleViewDetails}
               onRefresh={() => refetch()}
             />
@@ -129,7 +133,7 @@ export default function VendorList({ initialVendors }: VendorListProps) {
         </DialogContent>
       </Dialog>
 
-      <VendorDetailPanel vendor={detailVendor} onClose={handleCloseDetail} />
+      <VendorDetailPanel vendor={detailVendor} currency={currency} onClose={handleCloseDetail} />
     </div>
   )
 }
