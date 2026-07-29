@@ -45,7 +45,7 @@ function StatTile({
     tone === 'negative'
       ? 'text-destructive'
       : tone === 'positive'
-        ? 'text-emerald-600 dark:text-emerald-400'
+        ? 'text-success'
         : 'text-foreground'
   return (
     <div className='rounded-lg border border-border/70 bg-card p-4'>

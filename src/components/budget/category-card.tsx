@@ -50,10 +50,7 @@ function StatusBadges({ expense }: { expense: BudgetExpense }) {
         </Badge>
       ) : null}
       {expense.isRefundable ? (
-        <Badge
-          variant='outline'
-          className='border-emerald-500/40 text-[0.6rem] text-emerald-600 dark:text-emerald-400'
-        >
+        <Badge variant='outline' className='border-success/40 text-[0.6rem] text-success'>
           {expense.refundedAt ? 'Refunded' : 'Refundable'}
         </Badge>
       ) : null}
