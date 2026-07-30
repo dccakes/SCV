@@ -31,7 +31,7 @@ describe('MilestoneDetail', () => {
     clearOverride.mockReset()
   })
 
-  it('renders effective and derived status and lets the user attest, dismiss, or clear the override', () => {
+  it('renders effective and derived status and lets the user attest or dismiss', () => {
     render(
       <MilestoneDetail
         milestone={milestone}
@@ -48,11 +48,30 @@ describe('MilestoneDetail', () => {
     expect(screen.getByText('Effective status: pending')).toBeInTheDocument()
     expect(screen.getByText('System status: pending')).toBeInTheDocument()
 
+    // milestone.userOverrideStatus is null → 'Use system status' is checked,
+    // so 'Mark as done' and 'Mark as not done' are unchecked and will trigger onChange
     fireEvent.click(screen.getByLabelText('Mark as done'))
     expect(attestMilestone).toHaveBeenCalledWith('milestone-1')
 
     fireEvent.click(screen.getByLabelText('Mark as not done'))
     expect(dismissMilestone).toHaveBeenCalledWith('milestone-1')
+  })
+
+  it('lets the user clear a milestone override', () => {
+    // An attested milestone has 'Mark as done' checked, so 'Use system status' is unchecked
+    const attestedMilestone = { ...milestone, userOverrideStatus: 'attested' as const }
+    render(
+      <MilestoneDetail
+        milestone={attestedMilestone}
+        trigger={<button type='button'>Open milestone</button>}
+        onAttest={attestMilestone}
+        onDismiss={dismissMilestone}
+        onClearOverride={clearOverride}
+        viewport='desktop'
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open milestone' }))
 
     fireEvent.click(screen.getByLabelText('Use system status'))
     expect(clearOverride).toHaveBeenCalledWith('milestone-1')
