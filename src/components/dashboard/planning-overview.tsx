@@ -308,9 +308,23 @@ function TasksCard({ dashboardData }: { dashboardData: DashboardData | null }) {
           </p>
         </>
       ) : (
-        <p className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
-          No active tasks yet. Add your first item in the checklist.
-        </p>
+        <div className='flex flex-col gap-3'>
+          <div className='flex items-baseline gap-2'>
+            <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
+            <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
+              No active tasks yet
+            </span>
+          </div>
+          <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
+            Create your first planning task to stay on top of wedding prep
+          </div>
+          <Link
+            href='/checklist'
+            className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+          >
+            Go to checklist →
+          </Link>
+        </div>
       )}
     </CardShell>
   )
