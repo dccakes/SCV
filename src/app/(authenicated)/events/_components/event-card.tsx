@@ -1,7 +1,15 @@
 'use client'
 
 import { format } from 'date-fns'
-import { Calendar, ClipboardList, MapPin, MoreHorizontal, Pencil, Trash2, Users } from 'lucide-react'
+import {
+  Calendar,
+  ClipboardList,
+  MapPin,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  Users,
+} from 'lucide-react'
 import { memo } from 'react'
 
 import { Badge } from '~/components/ui/badge'
