@@ -10,6 +10,7 @@ import { TaskDialog } from '~/components/checklist/task-dialog'
 import { TaskListItem } from '~/components/dashboard/planning-overview/task-list-item'
 import { useTasksCardState } from '~/components/dashboard/planning-overview/use-tasks-card-state'
 import { DASHBOARD_ADD_TASK_EVENT } from '~/components/dashboard/task-dialog-events'
+import { Skeleton } from '~/components/ui/skeleton'
 import type { EventWithStats } from '~/server/domains/event'
 import { api } from '~/trpc/react'
 
@@ -317,7 +318,29 @@ function TasksCard({ dashboardData }: { dashboardData: DashboardData | null }) {
 }
 
 function BudgetCard() {
-  const { data: overview } = api.budget.getOverview.useQuery()
+  const { data: overview, isLoading } = api.budget.getOverview.useQuery()
+
+  if (isLoading) {
+    return (
+      <CardShell title='Budget' icon='◧' action='Manage →' actionHref='/budget'>
+        <div className='flex flex-col gap-3'>
+          <div className='flex items-baseline gap-2'>
+            <Skeleton className='h-9 w-24' />
+            <Skeleton className='h-3 w-20' />
+          </div>
+          <Skeleton className='h-1.5 w-full' />
+          <div className='grid grid-cols-3 gap-2'>
+            {[0, 1, 2].map((i) => (
+              <div key={i} className='text-center'>
+                <Skeleton className='mx-auto h-5 w-10' />
+                <Skeleton className='mx-auto mt-1 h-2 w-12' />
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardShell>
+    )
+  }
 
   const hasTarget = (overview?.targetTotal ?? 0) > 0
   const hasCategories = (overview?.categories.length ?? 0) > 0
