@@ -17,7 +17,9 @@ type BudgetOverviewProps = {
   initialOverview: BudgetOverviewData
 }
 
-function BudgetEmptyState({ onAdd }: { onAdd: () => void }) {
+function BudgetEmptyState({ onAdd, targetTotal }: { onAdd: () => void; targetTotal: number }) {
+  const hasTarget = targetTotal > 0
+
   return (
     <div className='flex flex-col items-center gap-5 py-20 text-center'>
       <div className='flex h-16 w-16 items-center justify-center rounded-full border border-border/80 bg-muted/50'>
@@ -26,10 +28,13 @@ function BudgetEmptyState({ onAdd }: { onAdd: () => void }) {
         </span>
       </div>
       <div className='max-w-sm'>
-        <p className='font-serif text-foreground text-xl'>Start your budget</p>
+        <p className='font-serif text-foreground text-xl'>
+          {hasTarget ? 'Add your first section' : 'Start your budget'}
+        </p>
         <p className='mt-2 font-mono text-[0.65rem] text-foreground/55 leading-relaxed tracking-wider'>
-          Set a target, break it into sections like venue and catering, then track every payment —
-          including refundable deposits that come back after the event.
+          {hasTarget
+            ? 'Organize your budget into named sections like venue, catering, and florals. Each section gets its own planned amount and tracks every expense.'
+            : 'Set a target, break it into sections like venue and catering, then track every payment — including refundable deposits that come back after the event.'}
         </p>
       </div>
       <Button
@@ -82,6 +87,7 @@ export default function BudgetOverview({ initialOverview }: Readonly<BudgetOverv
   const current = overview ?? initialOverview
   const categories = current.categories
   const currency = current.currency
+  const targetTotal = current.targetTotal
   const hasCategories = categories.length > 0
 
   return (
@@ -115,7 +121,7 @@ export default function BudgetOverview({ initialOverview }: Readonly<BudgetOverv
           </div>
         </>
       ) : (
-        <BudgetEmptyState onAdd={() => setShowAddCategory(true)} />
+        <BudgetEmptyState onAdd={() => setShowAddCategory(true)} targetTotal={targetTotal} />
       )}
 
       <Dialog open={showAddCategory} onOpenChange={setShowAddCategory}>
