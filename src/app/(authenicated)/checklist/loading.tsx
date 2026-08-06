@@ -13,10 +13,7 @@ export default function ChecklistLoading() {
       </div>
 
       {/* Content area — matches page wrapper padding */}
-      <main
-        className='min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-6 lg:py-6'
-        aria-busy='true'
-      >
+      <main className='min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-6 lg:py-6' aria-busy='true'>
         <div className='space-y-6'>
           {/* Milestones card */}
           <div className='overflow-hidden rounded-lg border border-border/60 bg-card/95 shadow-sm'>
