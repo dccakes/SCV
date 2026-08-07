@@ -4,7 +4,7 @@ import { X } from 'lucide-react'
 import Image from 'next/image'
 import { useState } from 'react'
 import { toast } from 'sonner'
-
+import { formatCurrency } from '~/components/budget/format'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +15,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '~/components/ui/alert-dialog'
-import { formatCurrency } from '~/components/budget/format'
 import { StatusBadge } from '~/components/vendor/vendor-status-select'
 import type { VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
@@ -69,14 +68,14 @@ export function VendorCard({
   const averageRating = vendor.ratingSummary.average
   const ratingsPanelId = `vendor-ratings-${vendor.id}`
 
-  const priceDisplay = () => {
+  const priceLabel = (() => {
     if (quoteCount === 0) return null
     if (quoteCount === 1) return formatPrice(quotePrices[0] ?? 0)
     const min = Math.min(...quotePrices)
     const max = Math.max(...quotePrices)
     if (min === max) return formatPrice(min)
     return `${formatPrice(min)} – ${formatPrice(max)}`
-  }
+  })()
 
   return (
     <div
@@ -129,11 +128,6 @@ export function VendorCard({
             )}
           </div>
         </div>
-        {averageRating !== null && (
-          <span className='font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
-            {averageRating.toFixed(1)} avg
-          </span>
-        )}
       </div>
 
       <div className='pointer-events-none relative z-10 flex flex-wrap items-center gap-3'>
@@ -155,6 +149,11 @@ export function VendorCard({
             </button>
           ))}
         </div>
+        {averageRating !== null && (
+          <span className='font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
+            {averageRating.toFixed(1)} avg
+          </span>
+        )}
         {vendor.ratingSummary.ratings.length > 0 && (
           <div className='pointer-events-auto relative'>
             <button
@@ -187,8 +186,8 @@ export function VendorCard({
             </div>
           </div>
         )}
-        {priceDisplay() && (
-          <span className='font-medium font-mono text-foreground/80 text-xs'>{priceDisplay()}</span>
+        {priceLabel && (
+          <span className='font-medium font-mono text-foreground/80 text-xs'>{priceLabel}</span>
         )}
         <button
           type='button'
