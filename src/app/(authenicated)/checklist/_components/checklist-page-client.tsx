@@ -1,5 +1,6 @@
 'use client'
 
+import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useMemo, useState } from 'react'
@@ -100,6 +101,7 @@ export function ChecklistPageClient({
   const createTask = api.task.create.useMutation({
     onSuccess: () => {
       setIsCreateDialogOpen(false)
+      toast.success('Task created')
       void Promise.all([
         utils.task.list.invalidate(),
         utils.task.getPriorityQueue.invalidate(),
@@ -111,6 +113,7 @@ export function ChecklistPageClient({
   const updateTask = api.task.update.useMutation({
     onSuccess: () => {
       setEditingTask(null)
+      toast.success('Task updated')
       void Promise.all([
         utils.task.list.invalidate(),
         utils.task.getPriorityQueue.invalidate(),
@@ -123,6 +126,7 @@ export function ChecklistPageClient({
     onSuccess: () => {
       setDeletingTask(null)
       setEditingTask(null)
+      toast.success('Task deleted')
       void Promise.all([
         utils.task.list.invalidate(),
         utils.task.getPriorityQueue.invalidate(),
@@ -456,16 +460,18 @@ export function ChecklistPageClient({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteTask.isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                if (!deletingTask) {
-                  return
-                }
+              onClick={(e) => {
+                e.preventDefault()
+                if (!deletingTask) return
                 deleteTask.mutate({ taskId: deletingTask.id })
               }}
+              disabled={deleteTask.isPending}
+              className='flex items-center gap-2 bg-destructive text-destructive-foreground hover:bg-destructive/90'
             >
-              Confirm delete
+              {deleteTask.isPending && <Loader2 className='h-4 w-4 animate-spin' />}
+              {deleteTask.isPending ? 'Deleting...' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

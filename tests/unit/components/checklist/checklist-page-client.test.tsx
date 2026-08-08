@@ -448,7 +448,7 @@ describe('ChecklistPageClient', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit task Collect the marriage license' }))
     fireEvent.click(screen.getByRole('button', { name: 'Delete task' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm delete' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
 
     expect(mockTaskDeleteMutate).toHaveBeenCalledWith({
       taskId: 'task-legal',
