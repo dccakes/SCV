@@ -144,8 +144,11 @@ export default function GuestsView({
     if (nameSort !== 'none') {
       const direction = nameSort === 'ascending' ? 1 : -1
       return [...filteredHouseholds].sort((a, b) => {
-        const first = (a.guests[0]?.firstName ?? '').localeCompare(b.guests[0]?.firstName ?? '')
-        return first * direction
+        const aFirst =
+          a.guests.find((g) => g.isPrimaryContact)?.firstName ?? a.guests[0]?.firstName ?? ''
+        const bFirst =
+          b.guests.find((g) => g.isPrimaryContact)?.firstName ?? b.guests[0]?.firstName ?? ''
+        return aFirst.localeCompare(bFirst) * direction
       })
     }
 
@@ -700,11 +703,12 @@ export default function GuestsView({
       <GuestDetailDrawer
         open={isDrawerOpen && selectedHousehold !== undefined}
         onOpenChange={handleDrawerOpenChange}
-        title={
-          selectedHousehold?.guests[0]
-            ? `${selectedHousehold.guests[0].firstName} ${selectedHousehold.guests[0].lastName}`
-            : 'Guest details'
-        }
+        title={(() => {
+          const primary =
+            selectedHousehold?.guests.find((g) => g.isPrimaryContact) ??
+            selectedHousehold?.guests[0]
+          return primary ? `${primary.firstName} ${primary.lastName}` : 'Guest details'
+        })()}
         subtitle={selectedEventId === 'all' ? 'Across all events' : selectedEvent?.name}
         headerMeta={
           <div className='flex flex-wrap gap-1.5'>
