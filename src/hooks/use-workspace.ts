@@ -12,6 +12,7 @@ const fallbackWorkspace = {
     canSendInvites: false,
     canViewPlanning: false,
   },
+  enabledAddOns: [] as string[],
 }
 
 export function useWorkspace() {
