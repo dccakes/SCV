@@ -678,7 +678,7 @@ export default function GuestsView({
           activeSort={activeSort}
         />
         {sortedHouseholds.length === 0 ? (
-          <AsyncState isEmpty emptyText='No households yet' />
+          <AsyncState isEmpty emptyText='No guests match your current search or filters' />
         ) : workflowMode === 'personAudit' || viewMode === 'table' ? (
           <GuestIndividualTable
             households={sortedHouseholds}
