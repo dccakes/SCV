@@ -615,7 +615,7 @@ describe('GuestsView', () => {
       />
     )
 
-    expect(screen.getByRole('status')).toHaveTextContent('No households yet')
+    expect(screen.getByRole('status')).toHaveTextContent('No guests match your current search or filters')
   })
 
   it('should open drawer with section-level edit controls and no full-editor action', () => {
