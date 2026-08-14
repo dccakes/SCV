@@ -27,11 +27,18 @@ export async function generateMetadata({ params }: RsvpPageProps): Promise<Metad
   // per-website favicon route, matching the wedding page.
   const iconUrl = `/w/${websiteSubUrl}/icon`
 
+  let title = 'RSVP'
+  if (loadResult.status === 'ready') {
+    const { groomFirstName, groomLastName, brideFirstName, brideLastName } = loadResult.weddingData
+    const groomName = groomFirstName && groomLastName ? `${groomFirstName} ${groomLastName}` : ''
+    const brideName = brideFirstName && brideLastName ? `${brideFirstName} ${brideLastName}` : ''
+    const coupleName =
+      groomName && brideName ? `${groomName} & ${brideName}` : groomName || brideName
+    if (coupleName) title = `${coupleName} — RSVP`
+  }
+
   return {
-    title:
-      loadResult.status === 'ready'
-        ? `${loadResult.weddingData.groomFirstName} ${loadResult.weddingData.groomLastName} and ${loadResult.weddingData.brideFirstName} ${loadResult.weddingData.brideLastName}'s Wedding Website`
-        : 'Wedding Website',
+    title,
     icons: [{ rel: 'icon', url: iconUrl, type: 'image/png', sizes: '32x32' }],
   }
 }
