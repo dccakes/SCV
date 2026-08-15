@@ -246,23 +246,15 @@ export function ChecklistPageClient({
 
       <Card className='border-border/60 bg-card/95 shadow-sm'>
         <CardHeader className='gap-2'>
-          <p className='font-mono text-[0.62rem] text-muted-foreground uppercase tracking-[0.12em]'>
-            Checklist
-          </p>
-          <CardTitle className='flex items-center justify-between gap-3 font-display text-3xl italic'>
-            <span>Tasks by time horizon</span>
-            <div className='flex items-center gap-2'>
-              <Button type='button' size='sm' onClick={() => setIsCreateDialogOpen(true)}>
-                Add task
-              </Button>
-              <Link
-                href='/dashboard'
-                className='font-mono text-[0.62rem] uppercase tracking-[0.12em]'
-              >
-                Back to dashboard
-              </Link>
-            </div>
-          </CardTitle>
+          <div className='flex items-center justify-between gap-3'>
+            <p className='font-mono text-[0.62rem] text-muted-foreground uppercase tracking-[0.12em]'>
+              Checklist
+            </p>
+            <Button type='button' size='sm' onClick={() => setIsCreateDialogOpen(true)}>
+              Add task
+            </Button>
+          </div>
+          <CardTitle className='font-display text-3xl italic'>Tasks by time horizon</CardTitle>
         </CardHeader>
         <CardContent className='space-y-5'>
           <div className='space-y-3'>
