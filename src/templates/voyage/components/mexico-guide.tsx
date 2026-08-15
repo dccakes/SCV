@@ -5,6 +5,10 @@
  * the Zócalo — where the guests are staying — and where to go in the rest of the
  * country if they want to make a trip of the flight down.
  *
+ * The copy is written for a wedding at the end of May, so the seasonal notes
+ * (the volcano view, chiles en nogada, what to pack, the coast) describe late
+ * May and June. Re-check them if the template is ever reused for another date.
+ *
  * The copy is deliberately hard-coded. It is the same for every guest, it is not
  * editable from the website manager, and Voyage currently serves a single
  * wedding. If a second Puebla-less wedding ever picks this template, lift
@@ -144,7 +148,7 @@ const ZOCALO_TABLE: readonly Note[] = [
   },
   {
     title: 'Chiles en nogada',
-    body: 'The stuffed poblano under walnut cream is in season from late July to the end of September, when the nuez de Castilla comes in. If it is on the menu while you are here, order it — this is the city it was invented in.',
+    body: 'The dish Puebla is most famous for — a stuffed poblano under walnut cream — but it only appears once the nuez de Castilla is harvested, from late July. You will be two months early, so put it on the list for a return trip and eat mole instead.',
   },
   {
     title: 'Cemitas & tacos árabes',
@@ -155,12 +159,8 @@ const ZOCALO_TABLE: readonly Note[] = [
     body: '6 Oriente is lined with sweet shops — camotes, borrachitos and tortitas de Santa Clara, sold from the same doorways since before the revolution.',
   },
   {
-    title: 'Profética',
-    body: 'A bookshop and café in a colonial courtyard on 3 Sur, two blocks off the square. The best place in the Centro to lose an hour between events.',
-  },
-  {
     title: 'Sunset from a rooftop',
-    body: 'The terraces on the square look straight at the cathedral, and on a clear evening Popocatépetl and Iztaccíhuatl sit off to the west, to your right. Best between November and April — in the rainy months they hide. Mezcal, and stay for the light.',
+    body: 'The terraces on the square look straight at the cathedral, and on a clear evening Popocatépetl and Iztaccíhuatl sit off to the west, to your right. The end of May is the turn of the rainy season, so the volcanoes show themselves more often in the morning than at dusk. Either way: mezcal, and stay for the light.',
   },
 ]
 
@@ -176,11 +176,7 @@ const ZOCALO_NEARBY: readonly Note[] = [
   },
   {
     title: 'Atlixco — 45 minutes',
-    body: 'A flower-growing town with a painted village square and the Cerro de San Miguel viewpoint over the valley. Spectacular in late September for the Huey Atlixcáyotl, and again for the Villa Iluminada in December.',
-  },
-  {
-    title: 'Africam Safari — 30 minutes',
-    body: 'A drive-through safari park south of the city — an easy morning with children. You need a car or their shuttle; Ubers do not linger out there.',
+    body: 'A flower-growing town with a painted village square and the Cerro de San Miguel viewpoint over the valley. The nurseries are in full colour in late spring, and the drive out is half the pleasure.',
   },
 ]
 
@@ -208,7 +204,7 @@ const ZOCALO_PRACTICAL: readonly Note[] = [
   },
   {
     title: 'What to pack',
-    body: 'Warm afternoons and cold evenings, all year — bring a jacket even in August, and a rain layer between June and September. The Centro is cobbled, so flat shoes.',
+    body: 'The end of May is warm by day and cool once the sun goes down, and the rains are just beginning — a jacket for the evenings, a light rain layer for the afternoon storms, and flat shoes for the cobbles.',
   },
 ]
 
@@ -227,7 +223,7 @@ const MEXICO_TRIPS: readonly Trip[] = [
       'Frida Kahlo’s Casa Azul in Coyoacán — timed tickets sell out weeks ahead, so book online before you fly.',
       'Roma and Condesa for long lunches, tree-lined streets and cocktails afterwards.',
       'Teotihuacán, an hour north — arrive at opening, or float over the pyramids in a balloon.',
-      'A Sunday on the Xochimilco canals — Cuemanco for calm, Nativitas for the party, and the boat price is per boat, per hour — or lucha libre at Arena México on a Friday.',
+      'Lucha libre at Arena México on a Friday night — Super Viernes is the big card, and tickets are cheap.',
     ],
     Icon: IconPyramid,
   },
@@ -244,7 +240,7 @@ const MEXICO_TRIPS: readonly Trip[] = [
       'Monte Albán, the Zapotec city on the ridge, thirty minutes above town, with Mitla and the vast tree at El Tule out in the valley.',
       'The Sunday market at Tlacolula, and the rug weavers and mezcal palenques of Teotitlán del Valle on the way.',
       'Hierve el Agua’s petrified waterfalls, best as an early start — check it is open first, the community closes the road from time to time.',
-      'Book far ahead for Día de Muertos and the Guelaguetza in July; the whole city sells out months in advance.',
+      'Late May and June are the green season: the valleys turn after the first rains and the city is quiet, before the Guelaguetza crowds arrive in July.',
     ],
     Icon: IconAgave,
   },
@@ -257,10 +253,10 @@ const MEXICO_TRIPS: readonly Trip[] = [
       'An hour from Mexico City by air, or forty minutes from Oaxaca City in a twelve-seat prop plane — pack light, the bag limit is strict. The new highway has cut the drive down from Oaxaca to about three and a half hours.',
     highlights: [
       'Playa Carrizalillo for the calm swimming cove — there are a hundred and seventy steps down to it.',
-      'Zicatela for the surf and the sunset, but do not get in the water there: it is the Mexican Pipeline, and the rips are lethal.',
-      'Bioluminescence on the Manialtepec lagoon, on a moonless night.',
-      'A dawn boat trip for dolphins and turtles — and whales in winter.',
-      'Baby-turtle releases at Playa Bacocho most evenings in season.',
+      'Zicatela for the surf and the sunset, but do not get in the water there: it is the Mexican Pipeline, the summer swell is already running by June, and the rips are lethal.',
+      'Bioluminescence on the Manialtepec lagoon, best on a moonless night once the rains have started.',
+      'A dawn boat trip for dolphins and turtles — the whales have gone north by June, but the turtles are just beginning to nest.',
+      'Baby-turtle releases at Playa Bacocho, which start up again as the nesting season opens.',
       'Mazunte and Zipolite, ninety minutes east, if you want somewhere quieter still.',
     ],
     Icon: IconWave,
@@ -307,9 +303,10 @@ function NoteList({ eyebrow, notes }: { eyebrow: string; notes: readonly Note[] 
 }
 
 /**
- * "Around the Zócalo" — the walkable Centro Histórico guide for guests staying
- * on or beside Puebla's main square, plus where to eat, the short drives that
- * fit into a free afternoon, and the practical things worth knowing on arrival.
+ * "Welcome to Puebla" — the walkable Centro Histórico guide for guests staying
+ * on or beside the Zócalo, plus where to eat, the short drives that fit into a
+ * free afternoon, and the practical things worth knowing on arrival. Keeps the
+ * `#zocalo` anchor so existing links stay valid.
  */
 export function VoyageZocalo() {
   return (
@@ -322,14 +319,14 @@ export function VoyageZocalo() {
         }
       />
       <div className='relative flex flex-col items-center gap-12'>
-        <CenteredHead eyebrow='Your Neighbourhood' heading='Around the Zócalo' />
+        <CenteredHead eyebrow='Things to See and Do' heading='Welcome to Puebla' />
         <p
           className={`${bodyFont} max-w-3xl text-balance text-center text-[#6F675D] text-[1.06rem] leading-8`}
         >
-          Everyone is staying within a few blocks of the Zócalo, Puebla&rsquo;s main square, which
-          puts the whole of the Centro Histórico — a UNESCO World Heritage site — within a short
-          walk of your door. Here is what we would do with a free morning or an afternoon between
-          events.
+          We recommend everyone stays within a few blocks of the Zócalo, Puebla&rsquo;s main square,
+          which puts the whole of the Centro Histórico — a UNESCO World Heritage site — within a
+          short walk of your door. Here is what you could do with a free morning or an afternoon
+          between events.
         </p>
 
         <ul className='grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-3'>
@@ -438,9 +435,8 @@ export function VoyageExploreMexico() {
         <p
           className={`${bodyFont} max-w-3xl text-balance text-center text-[#6F675D] text-[0.98rem] leading-7`}
         >
-          And if you would rather not go far: the Puebla sierra is two and a half hours north, where
-          Cuetzalan and Zacatlán sit in cloud forest above the waterfalls, and hardly anyone makes
-          the trip.
+          And if you would rather not go far: Puebla and the surrounding towns make for great sights
+          and hikes.
         </p>
 
         <p className={`${scriptFont} text-center text-3xl text-[#B15C41]`}>

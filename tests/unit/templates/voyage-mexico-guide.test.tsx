@@ -25,7 +25,7 @@ describe('VoyageZocalo', () => {
   it('renders the walkable Centro Histórico sights with their walking distance', () => {
     render(<VoyageZocalo />)
 
-    expect(screen.getByRole('heading', { name: 'Around the Zócalo' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Welcome to Puebla' })).toBeInTheDocument()
     expect(screen.getByText('Catedral de Puebla')).toBeInTheDocument()
     expect(screen.getByText('Capilla del Rosario')).toBeInTheDocument()
     expect(screen.getByText('Biblioteca Palafoxiana')).toBeInTheDocument()
@@ -97,6 +97,6 @@ describe('VoyageHome Mexico guide', () => {
     expect(container.querySelector('#explore-mexico')).not.toBeNull()
     // Desktop nav + mobile drawer both render the item.
     expect(screen.getAllByRole('link', { name: 'Explore Mexico' })).toHaveLength(2)
-    expect(screen.getAllByRole('link', { name: 'The Zócalo' })).toHaveLength(2)
+    expect(screen.getAllByRole('link', { name: 'Things to Do' })).toHaveLength(2)
   })
 })

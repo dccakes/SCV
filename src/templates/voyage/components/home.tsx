@@ -232,7 +232,7 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
   if (weddingParty) navItems.push({ label: 'Wedding Party', href: '#wedding-party' })
   if (travel) navItems.push({ label: 'Travel', href: '#travel' })
   // The Mexico guide bands are hard-coded, so they are always in the nav.
-  navItems.push({ label: 'The Zócalo', href: '#zocalo' })
+  navItems.push({ label: 'Things to Do', href: '#zocalo' })
   navItems.push({ label: 'Explore Mexico', href: '#explore-mexico' })
   if (faq) navItems.push({ label: 'FAQ', href: '#faq' })
 
