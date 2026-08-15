@@ -598,7 +598,10 @@ export default function PlanningOverview({ dashboardData }: PlanningOverviewProp
         <div className='grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3'>
           <BudgetCard />
           <VendorsCard />
-          <MilestonesCard dashboardData={dashboardData} />
+          {/* Span full width at md so Milestones doesn't appear orphaned at half-width */}
+          <div className='md:col-span-2 lg:col-span-1'>
+            <MilestonesCard dashboardData={dashboardData} />
+          </div>
         </div>
       </div>
 
