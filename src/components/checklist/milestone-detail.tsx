@@ -117,8 +117,7 @@ function MilestoneDetailContent({
             name={`milestone-${milestone.id}-override`}
             aria-label='Mark as done'
             checked={selectedValue === 'attested'}
-            onClick={() => handleChange('attested')}
-            readOnly
+            onChange={() => handleChange('attested')}
           />
           <span>
             <span className='block font-sans text-foreground text-sm'>Mark as done</span>
@@ -134,8 +133,7 @@ function MilestoneDetailContent({
             name={`milestone-${milestone.id}-override`}
             aria-label='Mark as not done'
             checked={selectedValue === 'dismissed'}
-            onClick={() => handleChange('dismissed')}
-            readOnly
+            onChange={() => handleChange('dismissed')}
           />
           <span>
             <span className='block font-sans text-foreground text-sm'>Mark as not done</span>
@@ -151,8 +149,7 @@ function MilestoneDetailContent({
             name={`milestone-${milestone.id}-override`}
             aria-label='Use system status'
             checked={selectedValue === 'system'}
-            onClick={() => handleChange('system')}
-            readOnly
+            onChange={() => handleChange('system')}
           />
           <span>
             <span className='block font-sans text-foreground text-sm'>Use system status</span>

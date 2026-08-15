@@ -324,10 +324,12 @@ describe('ChecklistPageClient', () => {
   })
 
   it('opens the milestone detail and attests the milestone', () => {
+    // Use a milestone without an override so 'Mark as done' is unchecked and onChange fires on click
+    const unattested = [{ ...initialMilestones[0], userOverrideStatus: null }]
     render(
       <ChecklistPageClient
         initialTasks={initialTasks}
-        initialMilestones={initialMilestones}
+        initialMilestones={unattested}
         initialEvents={initialEvents}
       />
     )
