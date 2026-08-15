@@ -332,6 +332,16 @@ export function IconChurch(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+/** A crenellated fort gate — Loreto y Guadalupe, above the city. */
+export function IconFort(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox='0 0 24 24' aria-hidden='true' {...iconBase} {...props}>
+      <path d='M3 20h18M4.5 20V9h15v11M4.5 9V6H7v2h3V6h4v2h3V6h2.5v3' />
+      <path d='M9.5 20v-4.5a2.5 2.5 0 0 1 5 0V20' />
+    </svg>
+  )
+}
+
 /** A stepped pyramid — Teotihuacán, Monte Albán, Cholula. */
 export function IconPyramid(props: SVGProps<SVGSVGElement>) {
   return (

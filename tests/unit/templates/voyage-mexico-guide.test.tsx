@@ -41,6 +41,17 @@ describe('VoyageZocalo', () => {
     expect(screen.getByText(/^Cholula/)).toBeInTheDocument()
   })
 
+  it('renders the practical arrival notes, including the museum closing days', () => {
+    render(<VoyageZocalo />)
+
+    expect(screen.getByText('Good to Know')).toBeInTheDocument()
+    expect(screen.getByText('Getting here from the airport')).toBeInTheDocument()
+    expect(screen.getByText('A word on Mondays')).toBeInTheDocument()
+    // Museo Amparo is the exception to the Monday rule; guests need both facts.
+    expect(screen.getByText(/closes on Tuesday/)).toBeInTheDocument()
+    expect(screen.getByText(/Closed Tuesdays, not Mondays/)).toBeInTheDocument()
+  })
+
   it('exposes a #zocalo anchor for the nav', () => {
     const { container } = render(<VoyageZocalo />)
 
