@@ -52,6 +52,19 @@ describe('VoyageZocalo', () => {
     expect(screen.getByText(/Closed Tuesdays, not Mondays/)).toBeInTheDocument()
   })
 
+  // The side artwork is positioned against the section, so below 2xl it lands
+  // on top of the centred max-w-6xl copy column rather than in the margin.
+  it('keeps the decorative artwork out of the copy column below 2xl', () => {
+    const { container } = render(<VoyageZocalo />)
+
+    const decor = container.querySelector('[aria-hidden="true"][class*="absolute"]')
+    expect(decor).not.toBeNull()
+    expect(decor?.className).toContain('2xl:block')
+    expect(decor?.className).not.toContain('lg:block')
+    // And the copy is layered above it either way.
+    expect(container.querySelector('.z-10')).not.toBeNull()
+  })
+
   it('exposes a #zocalo anchor for the nav', () => {
     const { container } = render(<VoyageZocalo />)
 

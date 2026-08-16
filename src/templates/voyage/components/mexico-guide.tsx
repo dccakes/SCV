@@ -311,14 +311,19 @@ function NoteList({ eyebrow, notes }: { eyebrow: string; notes: readonly Note[] 
 export function VoyageZocalo() {
   return (
     <Band id='zocalo' className='relative overflow-hidden'>
+      {/*
+        Side artwork only appears from 2xl up. It is positioned against the
+        section, so anything narrower than that puts it on top of the centred
+        max-w-6xl copy column instead of in the margin beside it.
+      */}
       <Decor
         name='floralSpray2'
-        className='pointer-events-none absolute top-1/2 -left-12 hidden h-[24rem] w-auto -translate-y-1/2 -scale-x-100 lg:block'
+        className='pointer-events-none absolute top-1/2 -left-12 z-0 hidden h-[24rem] w-auto -translate-y-1/2 -scale-x-100 2xl:block'
         fallback={
-          <FloralCorner className='pointer-events-none absolute top-8 left-3 hidden h-24 w-auto -scale-x-100 opacity-70 lg:block' />
+          <FloralCorner className='pointer-events-none absolute top-8 left-3 z-0 hidden h-24 w-auto -scale-x-100 opacity-70 2xl:block' />
         }
       />
-      <div className='relative flex flex-col items-center gap-12'>
+      <div className='relative z-10 flex flex-col items-center gap-12'>
         <CenteredHead eyebrow='Things to See and Do' heading='Welcome to Puebla' />
         <p
           className={`${bodyFont} max-w-3xl text-balance text-center text-[#6F675D] text-[1.06rem] leading-8`}
@@ -378,14 +383,15 @@ export function VoyageZocalo() {
 export function VoyageExploreMexico() {
   return (
     <Band id='explore-mexico' tone='cream' className='relative overflow-hidden'>
+      {/* Same margin-only rule as the Puebla band above. */}
       <Decor
         name='floralBranch'
-        className='pointer-events-none absolute top-10 -right-10 hidden h-[24rem] w-auto lg:block xl:right-0'
+        className='pointer-events-none absolute top-10 -right-12 z-0 hidden h-[24rem] w-auto 2xl:block'
         fallback={
-          <FloralCorner className='pointer-events-none absolute top-6 right-3 hidden h-24 w-auto opacity-70 lg:block' />
+          <FloralCorner className='pointer-events-none absolute top-6 right-3 z-0 hidden h-24 w-auto opacity-70 2xl:block' />
         }
       />
-      <div className='relative flex flex-col items-center gap-12'>
+      <div className='relative z-10 flex flex-col items-center gap-12'>
         <CenteredHead eyebrow='Make a Trip of It' heading='Where to Go in Mexico' />
         <p
           className={`${bodyFont} max-w-3xl text-balance text-center text-[#6F675D] text-[1.06rem] leading-8`}
