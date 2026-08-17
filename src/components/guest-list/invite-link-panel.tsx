@@ -19,7 +19,10 @@ export function InviteLinkPanel() {
         Invite Link
       </Button>
       {open && (
-        <div id='invite-link-panel' className='w-full rounded-lg border border-border bg-muted/20 p-4'>
+        <div
+          id='invite-link-panel'
+          className='w-full rounded-lg border border-border bg-muted/20 p-4'
+        >
           <p className='mb-3 font-mono text-[0.58rem] text-foreground/60 uppercase tracking-widest'>
             Guest Self-Invite Link
           </p>
