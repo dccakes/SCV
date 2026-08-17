@@ -58,7 +58,7 @@ import {
 } from '~/templates/voyage/components/primitives'
 
 /** Wrapper that gives every section consistent vertical rhythm and width. */
-function Band({
+export function Band({
   id,
   tone = 'ivory',
   className = '',
@@ -81,7 +81,7 @@ function Band({
   )
 }
 
-function CenteredHead({ eyebrow, heading }: { eyebrow?: string; heading: string }) {
+export function CenteredHead({ eyebrow, heading }: { eyebrow?: string; heading: string }) {
   return (
     <div className='flex flex-col items-center gap-4 text-center'>
       {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
