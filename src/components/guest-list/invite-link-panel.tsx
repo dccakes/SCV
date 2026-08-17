@@ -9,12 +9,17 @@ export function InviteLinkPanel() {
   const [open, setOpen] = useState(false)
 
   return (
-    <>
-      <Button variant='outline' onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+    <div className='flex flex-col items-end gap-3'>
+      <Button
+        variant='outline'
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-controls='invite-link-panel'
+      >
         Invite Link
       </Button>
       {open && (
-        <div className='mb-6 rounded-lg border border-border bg-muted/20 p-4'>
+        <div id='invite-link-panel' className='w-full rounded-lg border border-border bg-muted/20 p-4'>
           <p className='mb-3 font-mono text-[0.58rem] text-foreground/60 uppercase tracking-widest'>
             Guest Self-Invite Link
           </p>
@@ -24,6 +29,6 @@ export function InviteLinkPanel() {
           <SelfInviteLinkManager />
         </div>
       )}
-    </>
+    </div>
   )
 }
