@@ -35,10 +35,7 @@ export default function WebsiteLoading() {
 
           {/* Stacked card skeletons for password, RSVP toggle, template, editor sections */}
           {['password', 'rsvp', 'template', 'editor'].map((section) => (
-            <div
-              key={section}
-              className='rounded-lg border border-border/70 bg-card/80 p-5'
-            >
+            <div key={section} className='rounded-lg border border-border/70 bg-card/80 p-5'>
               <Skeleton className='h-3 w-28' />
               <Skeleton className='mt-3 h-6 w-52' />
               <Skeleton className='mt-2 h-4 w-full' />
