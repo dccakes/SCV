@@ -1,6 +1,6 @@
 'use client'
 
-import { Check, Copy, ExternalLink, Lock } from 'lucide-react'
+import { Check, Copy, ExternalLink, Info } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -103,8 +103,8 @@ export function WebsiteEditor({
               Shape the first section of your guest-facing site.
             </CardTitle>
             <p className='max-w-2xl font-sans text-muted-foreground text-sm leading-6'>
-              Edit the HOME intro guests see on your public wedding page and save it directly to the
-              website section model.
+              The hero headline and intro text guests see when they first open your public wedding
+              page.
             </p>
           </div>
           <div className='flex flex-col gap-2 self-start'>
@@ -199,10 +199,10 @@ export function WebsiteEditor({
           </div>
           <div className='flex items-center justify-between gap-4 rounded-[8px] border border-border/80 border-dashed bg-muted/20 px-4 py-3'>
             <div className='flex items-start gap-3'>
-              <Lock aria-hidden='true' className='mt-0.5 h-4 w-4 text-foreground/55' />
+              <Info aria-hidden='true' className='mt-0.5 h-4 w-4 text-foreground/55' />
               <p className='font-sans text-muted-foreground text-sm leading-6'>
-                Saving updates the HOME section only. Additional editable website sections can slot
-                into this editor later without changing the route structure.
+                Only the hero and intro are saved here. Use the Sections card below to add your
+                story, travel info, registry links, and more.
               </p>
             </div>
             <Button disabled={!hasChanges || updateHomeSection.isPending} onClick={saveIntro}>
