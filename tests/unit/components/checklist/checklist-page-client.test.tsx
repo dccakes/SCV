@@ -324,10 +324,16 @@ describe('ChecklistPageClient', () => {
   })
 
   it('opens the milestone detail and attests the milestone', () => {
+    const pendingMilestone = {
+      ...initialMilestones[0],
+      userOverrideStatus: null,
+      attestedAt: null,
+      effectiveStatus: 'pending' as const,
+    }
     render(
       <ChecklistPageClient
         initialTasks={initialTasks}
-        initialMilestones={initialMilestones}
+        initialMilestones={[pendingMilestone]}
         initialEvents={initialEvents}
       />
     )

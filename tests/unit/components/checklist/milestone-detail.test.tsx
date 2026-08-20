@@ -31,7 +31,7 @@ describe('MilestoneDetail', () => {
     clearOverride.mockReset()
   })
 
-  it('renders effective and derived status and lets the user attest, dismiss, or clear the override', () => {
+  it('renders effective and derived status and lets the user attest or dismiss from the system default', () => {
     render(
       <MilestoneDetail
         milestone={milestone}
@@ -53,6 +53,21 @@ describe('MilestoneDetail', () => {
 
     fireEvent.click(screen.getByLabelText('Mark as not done'))
     expect(dismissMilestone).toHaveBeenCalledWith('milestone-1')
+  })
+
+  it('lets the user clear an existing override to fall back to the system status', () => {
+    render(
+      <MilestoneDetail
+        milestone={{ ...milestone, userOverrideStatus: 'attested' }}
+        trigger={<button type='button'>Open milestone</button>}
+        onAttest={attestMilestone}
+        onDismiss={dismissMilestone}
+        onClearOverride={clearOverride}
+        viewport='desktop'
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open milestone' }))
 
     fireEvent.click(screen.getByLabelText('Use system status'))
     expect(clearOverride).toHaveBeenCalledWith('milestone-1')
