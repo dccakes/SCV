@@ -1,7 +1,7 @@
 'use client'
 
 import { format } from 'date-fns'
-import { Calendar, MapPin, MoreHorizontal, Pencil, Trash2, Users } from 'lucide-react'
+import { Calendar, ClipboardList, MapPin, MoreHorizontal, Pencil, Trash2, Users } from 'lucide-react'
 import { memo } from 'react'
 
 import { Badge } from '~/components/ui/badge'
@@ -162,7 +162,7 @@ function EventCardBase({
               </DropdownMenuTrigger>
               <DropdownMenuContent align='end'>
                 <DropdownMenuItem onClick={() => onManageQuestions(event.id)}>
-                  <Pencil className='mr-2 h-3.5 w-3.5' />
+                  <ClipboardList className='mr-2 h-3.5 w-3.5' />
                   RSVP Questions
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onEdit(event.id)}>
