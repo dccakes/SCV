@@ -111,7 +111,12 @@ export default function SelfFillPage() {
       <div className='flex min-h-screen items-center justify-center bg-background p-4'>
         <Card className='w-full max-w-md'>
           <CardHeader className='text-center'>
-            <CardTitle className='text-2xl'>Link Not Found</CardTitle>
+            <p className='font-mono text-[0.6rem] uppercase tracking-widest text-muted-foreground'>
+              Guest Registration
+            </p>
+            <CardTitle className='mt-1 font-display text-2xl italic leading-snug text-foreground'>
+              Link Not Found
+            </CardTitle>
             <CardDescription>
               This registration link is invalid or has expired. Please contact the couple for a new
               link.
@@ -130,7 +135,12 @@ export default function SelfFillPage() {
             <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/10'>
               <CheckCircle2 className='h-10 w-10 text-success' />
             </div>
-            <CardTitle className='text-2xl text-success'>You&apos;re on the list!</CardTitle>
+            <p className='font-mono text-[0.6rem] uppercase tracking-widest text-muted-foreground'>
+              Guest Registration
+            </p>
+            <CardTitle className='mt-1 font-display text-3xl italic leading-snug text-foreground'>
+              You&apos;re on the list!
+            </CardTitle>
             <CardDescription className='text-base'>{successMessage}</CardDescription>
           </CardHeader>
           <CardContent className='text-center text-muted-foreground text-sm'>
@@ -147,12 +157,15 @@ export default function SelfFillPage() {
   return (
     <div className='flex min-h-screen items-center justify-center bg-background p-4'>
       <Card className='w-full max-w-md'>
-        <CardHeader className='text-center'>
-          <CardTitle className='text-2xl text-primary'>
-            {wedding.groomFirstName} & {wedding.brideFirstName}&apos;s Wedding
+        <CardHeader className='pb-2 text-center'>
+          <p className='font-mono text-[0.6rem] uppercase tracking-widest text-muted-foreground'>
+            Guest Registration
+          </p>
+          <CardTitle className='mt-1 font-display text-3xl italic leading-snug text-foreground'>
+            {wedding.groomFirstName} & {wedding.brideFirstName}
           </CardTitle>
-          <CardDescription>
-            Add yourself to the guest list by filling out the form below.
+          <CardDescription className='font-mono text-[0.6rem] uppercase tracking-widest'>
+            Add yourself to the guest list
           </CardDescription>
         </CardHeader>
         <CardContent>
