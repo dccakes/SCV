@@ -296,6 +296,80 @@ export function IconRosette(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+// — Guest-guide marks ——————————————————————————————————————————————
+// Used by the hard-coded Mexico guide bands (the Zócalo walk and the
+// where-to-go-next destinations).
+
+/** An open book — the Biblioteca Palafoxiana. */
+export function IconBook(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox='0 0 24 24' aria-hidden='true' {...iconBase} {...props}>
+      <path d='M12 7C10 5.5 7.5 5 4 5.5v13c3.5-.5 6 0 8 1.5 2-1.5 4.5-2 8-1.5v-13C16.5 5 14 5.5 12 7Z' />
+      <path d='M12 7v13' />
+    </svg>
+  )
+}
+
+/** A painter's palette — the Barrio del Artista. */
+export function IconPalette(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox='0 0 24 24' aria-hidden='true' {...iconBase} {...props}>
+      <path d='M12 20.5a8.5 8.5 0 1 1 8.5-8.5c0 2.1-1.7 2.8-3.2 2.8h-1.2a2 2 0 0 0-1.5 3.3c.5.7.2 2.4-2.6 2.4Z' />
+      <circle cx='8' cy='10' r='1' />
+      <circle cx='11.5' cy='7.3' r='1' />
+      <circle cx='15.5' cy='9' r='1' />
+    </svg>
+  )
+}
+
+/** A small church with a bell tower — San Miguel's parish church. */
+export function IconChurch(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox='0 0 24 24' aria-hidden='true' {...iconBase} {...props}>
+      <path d='M3 21h18M6 21V11l6-4.5 6 4.5v10' />
+      <path d='M12 6.5V3M10.5 4.5h3M10 21v-4.5a2 2 0 0 1 4 0V21' />
+    </svg>
+  )
+}
+
+/** A crenellated fort gate — Loreto y Guadalupe, above the city. */
+export function IconFort(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox='0 0 24 24' aria-hidden='true' {...iconBase} {...props}>
+      <path d='M3 20h18M4.5 20V9h15v11M4.5 9V6H7v2h3V6h4v2h3V6h2.5v3' />
+      <path d='M9.5 20v-4.5a2.5 2.5 0 0 1 5 0V20' />
+    </svg>
+  )
+}
+
+/** A stepped pyramid — Teotihuacán, Monte Albán, Cholula. */
+export function IconPyramid(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox='0 0 24 24' aria-hidden='true' {...iconBase} {...props}>
+      <path d='M2 20h20M3.5 20 9 7.5h6L20.5 20M6 14.5h12M7.5 11h9M11 20V7.5M13 20V7.5' />
+    </svg>
+  )
+}
+
+/** An agave rosette — Oaxaca and its mezcal valleys. */
+export function IconAgave(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox='0 0 24 24' aria-hidden='true' {...iconBase} {...props}>
+      <path d='M12 21v-8M12 13V4M12 13 6 5.5M12 13l6-7.5M12 13l-8.5 2M12 13l8.5 2M12 13l-4 7M12 13l4 7' />
+    </svg>
+  )
+}
+
+/** Swell and sun — the Oaxacan coast. */
+export function IconWave(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox='0 0 24 24' aria-hidden='true' {...iconBase} {...props}>
+      <circle cx='17' cy='6.5' r='2.5' />
+      <path d='M2.5 13.5c1.8-2 3.7-2 5.5 0s3.7 2 5.5 0 3.7-2 5.5 0M2.5 18c1.8-2 3.7-2 5.5 0s3.7 2 5.5 0 3.7-2 5.5 0' />
+    </svg>
+  )
+}
+
 /** Right-pointing arrow used as a thin link affordance. */
 export function IconArrow(props: SVGProps<SVGSVGElement>) {
   return (

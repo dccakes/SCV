@@ -246,23 +246,15 @@ export function ChecklistPageClient({
 
       <Card className='border-border/60 bg-card/95 shadow-sm'>
         <CardHeader className='gap-2'>
-          <p className='font-mono text-[0.62rem] text-muted-foreground uppercase tracking-[0.12em]'>
-            Checklist
-          </p>
-          <CardTitle className='flex items-center justify-between gap-3 font-display text-3xl italic'>
-            <span>Tasks by time horizon</span>
-            <div className='flex items-center gap-2'>
-              <Button type='button' size='sm' onClick={() => setIsCreateDialogOpen(true)}>
-                Add task
-              </Button>
-              <Link
-                href='/dashboard'
-                className='font-mono text-[0.62rem] uppercase tracking-[0.12em]'
-              >
-                Back to dashboard
-              </Link>
-            </div>
-          </CardTitle>
+          <div className='flex items-center justify-between gap-3'>
+            <p className='font-mono text-[0.62rem] text-muted-foreground uppercase tracking-[0.12em]'>
+              Checklist
+            </p>
+            <Button type='button' size='sm' onClick={() => setIsCreateDialogOpen(true)}>
+              Add task
+            </Button>
+          </div>
+          <CardTitle className='font-display text-3xl italic'>Tasks by time horizon</CardTitle>
         </CardHeader>
         <CardContent className='space-y-5'>
           <div className='space-y-3'>
@@ -346,7 +338,16 @@ export function ChecklistPageClient({
             ) : buckets.every((bucket) => bucket.tasks.length === 0) ? (
               <ChecklistEmptyState
                 title='Nothing in this view yet'
-                description='Adjust the filters or add a task to start shaping the checklist.'
+                description={
+                  hasDefaultFilters
+                    ? 'Adjust the filters or add a task to start shaping the checklist.'
+                    : 'No tasks match the current filters.'
+                }
+                action={
+                  hasDefaultFilters
+                    ? undefined
+                    : { label: 'Clear filters', onClick: () => router.replace(pathname) }
+                }
               />
             ) : (
               buckets

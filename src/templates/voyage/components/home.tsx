@@ -5,8 +5,9 @@
  * cinematic hero (with the nav overlaid and a light "Let's Celebrate" card),
  * then lays out the enabled content sections in a bespoke editorial order —
  * About Us, the story timeline, the destination feature, the weekend itinerary,
- * our people, a favourite-moments fotowall, travel & questions and flights —
- * and closes on a combined registry / RSVP invitation and a dark footer.
+ * our people, a favourite-moments fotowall, travel & questions, flights and the
+ * hard-coded Mexico guide (the Zócalo walk and where to go next) — and closes on
+ * a combined registry / RSVP invitation and a dark footer.
  *
  * Every image is optional; each block degrades to an elegant typographic or
  * line-illustrated state when a photo is absent. The single responsive layout
@@ -27,6 +28,7 @@ import {
   type VoyageMoment,
   VoyageMoments,
 } from '~/templates/voyage/components/media'
+import { VoyageExploreMexico, VoyageZocalo } from '~/templates/voyage/components/mexico-guide'
 import { VoyageNavbar, type VoyageNavItem } from '~/templates/voyage/components/navbar'
 import {
   bodyFont,
@@ -229,6 +231,9 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
   if (destination) navItems.push({ label: 'The Destination', href: '#destination' })
   if (weddingParty) navItems.push({ label: 'Wedding Party', href: '#wedding-party' })
   if (travel) navItems.push({ label: 'Travel', href: '#travel' })
+  // The Mexico guide bands are hard-coded, so they are always in the nav.
+  navItems.push({ label: 'Things to Do', href: '#zocalo' })
+  navItems.push({ label: 'Explore Mexico', href: '#explore-mexico' })
   if (faq) navItems.push({ label: 'FAQ', href: '#faq' })
 
   const firstAnchor = navItems[0]?.href ?? '#registry'
@@ -304,6 +309,8 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
         departPlaceholder={flightDepartPlaceholder}
         returnPlaceholder={flightReturnPlaceholder}
       />
+      <VoyageZocalo />
+      <VoyageExploreMexico />
 
       {/* Registry + RSVP invitation, framed with botanical line art. */}
       {registry || rsvpHref ? (
