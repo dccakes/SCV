@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
+import { computePublicWebsiteUrl } from '~/lib/website/public-url'
 import { isValidWeddingSubUrl } from '~/lib/website-slug'
 import type { WebsiteWithComputedUrl } from '~/server/domains/website/website.types'
 import { api } from '~/trpc/react'
@@ -48,10 +49,7 @@ export function WebsiteManager({ initialWebsite, userEmail, defaultSubUrl }: Web
   })
 
   if (website) {
-    const liveUrl =
-      typeof window !== 'undefined'
-        ? `${window.location.origin}/${website.subUrl}`
-        : `/${website.subUrl}`
+    const liveUrl = computePublicWebsiteUrl(website.subUrl)
 
     const handleCopy = async () => {
       const didCopy = await copyToClipboard(liveUrl)
@@ -130,7 +128,7 @@ export function WebsiteManager({ initialWebsite, userEmail, defaultSubUrl }: Web
           }`}
         >
           <span className='whitespace-nowrap border-input border-r bg-muted/40 px-3 py-2 font-mono text-foreground/55 text-xs'>
-            {previewHost}/
+            {previewHost}/w/
           </span>
           <Input
             id='website-suburl'
