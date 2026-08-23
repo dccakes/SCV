@@ -338,7 +338,16 @@ export function ChecklistPageClient({
             ) : buckets.every((bucket) => bucket.tasks.length === 0) ? (
               <ChecklistEmptyState
                 title='Nothing in this view yet'
-                description='Adjust the filters or add a task to start shaping the checklist.'
+                description={
+                  hasDefaultFilters
+                    ? 'Adjust the filters or add a task to start shaping the checklist.'
+                    : 'No tasks match the current filters.'
+                }
+                action={
+                  hasDefaultFilters
+                    ? undefined
+                    : { label: 'Clear filters', onClick: () => router.replace(pathname) }
+                }
               />
             ) : (
               buckets

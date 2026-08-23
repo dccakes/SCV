@@ -17,6 +17,28 @@ type MilestoneDetailProps = Readonly<{
 
 type MilestoneOverrideChoice = 'attested' | 'dismissed' | 'system'
 
+const OVERRIDE_OPTIONS: ReadonlyArray<{
+  value: MilestoneOverrideChoice
+  label: string
+  description: string
+}> = [
+  {
+    value: 'attested',
+    label: 'Mark as done',
+    description: 'Attest that this milestone is complete.',
+  },
+  {
+    value: 'dismissed',
+    label: 'Mark as not done',
+    description: 'Force the milestone back to pending.',
+  },
+  {
+    value: 'system',
+    label: 'Use system status',
+    description: 'Let the milestone follow the live wedding data again.',
+  },
+]
+
 export function MilestoneDetail({
   milestone,
   trigger,
@@ -111,56 +133,27 @@ function MilestoneDetailContent({
           Override
         </legend>
 
-        <label className='flex cursor-pointer items-start gap-3 rounded-lg border border-border/70 px-4 py-3 hover:bg-muted/30'>
-          <input
-            type='radio'
-            name={`milestone-${milestone.id}-override`}
-            aria-label='Mark as done'
-            checked={selectedValue === 'attested'}
-            onClick={() => handleChange('attested')}
-            readOnly
-          />
-          <span>
-            <span className='block font-sans text-foreground text-sm'>Mark as done</span>
-            <span className='block font-serif text-muted-foreground text-sm'>
-              Attest that this milestone is complete.
+        {OVERRIDE_OPTIONS.map((option) => (
+          <label
+            key={option.value}
+            className='flex cursor-pointer items-start gap-3 rounded-lg border border-border/70 px-4 py-3 hover:bg-muted/30'
+          >
+            <input
+              type='radio'
+              name={`milestone-${milestone.id}-override`}
+              aria-label={option.label}
+              value={option.value}
+              checked={selectedValue === option.value}
+              onChange={() => handleChange(option.value)}
+            />
+            <span>
+              <span className='block font-sans text-foreground text-sm'>{option.label}</span>
+              <span className='block font-serif text-muted-foreground text-sm'>
+                {option.description}
+              </span>
             </span>
-          </span>
-        </label>
-
-        <label className='flex cursor-pointer items-start gap-3 rounded-lg border border-border/70 px-4 py-3 hover:bg-muted/30'>
-          <input
-            type='radio'
-            name={`milestone-${milestone.id}-override`}
-            aria-label='Mark as not done'
-            checked={selectedValue === 'dismissed'}
-            onClick={() => handleChange('dismissed')}
-            readOnly
-          />
-          <span>
-            <span className='block font-sans text-foreground text-sm'>Mark as not done</span>
-            <span className='block font-serif text-muted-foreground text-sm'>
-              Force the milestone back to pending.
-            </span>
-          </span>
-        </label>
-
-        <label className='flex cursor-pointer items-start gap-3 rounded-lg border border-border/70 px-4 py-3 hover:bg-muted/30'>
-          <input
-            type='radio'
-            name={`milestone-${milestone.id}-override`}
-            aria-label='Use system status'
-            checked={selectedValue === 'system'}
-            onClick={() => handleChange('system')}
-            readOnly
-          />
-          <span>
-            <span className='block font-sans text-foreground text-sm'>Use system status</span>
-            <span className='block font-serif text-muted-foreground text-sm'>
-              Let the milestone follow the live wedding data again.
-            </span>
-          </span>
-        </label>
+          </label>
+        ))}
       </fieldset>
     </div>
   )
