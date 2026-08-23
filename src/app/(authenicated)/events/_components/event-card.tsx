@@ -1,7 +1,7 @@
 'use client'
 
 import { format } from 'date-fns'
-import { Calendar, MapPin, MoreHorizontal, Pencil, Trash2, Users } from 'lucide-react'
+import { Calendar, Clock, MapPin, MoreHorizontal, Pencil, Trash2, Users } from 'lucide-react'
 import { memo } from 'react'
 
 import { Badge } from '~/components/ui/badge'
@@ -89,9 +89,13 @@ function EventCardBase({
             </div>
           )}
 
-          {event.startTime && event.endTime && (
-            <div className='text-muted-foreground text-xs md:text-sm'>
-              {event.startTime} - {event.endTime}
+          {event.startTime && (
+            <div className='flex items-center gap-2 text-muted-foreground text-xs md:text-sm'>
+              <Clock className='h-4 w-4 shrink-0' />
+              <span>
+                {event.startTime}
+                {event.endTime ? ` – ${event.endTime}` : ''}
+              </span>
             </div>
           )}
 
