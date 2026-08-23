@@ -46,6 +46,14 @@ const getMutationErrorMessage = (error: unknown, fallback: string): string => {
 
 const NUM_STATIC_STEPS = 4 // find invitation step, confirm household step, final step, and confirmation
 
+export const shouldConfirmRsvpClose = ({
+  currentStep,
+  numSteps,
+}: {
+  currentStep: number
+  numSteps: number
+}) => currentStep > 1 && currentStep < numSteps
+
 export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProps) {
   const rsvpFormData = useRsvpForm()
   const numSteps = useRef(NUM_STATIC_STEPS)
@@ -213,8 +221,8 @@ const ProgressBar = ({
         className='absolute top-2 right-3 z-20 rounded-md text-foreground/70 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
         onClick={() => {
           if (
-            currentStep <= 1 ||
-            (currentStep > 1 && window.confirm('Are you sure? Your RSVP has not been sent.'))
+            !shouldConfirmRsvpClose({ currentStep, numSteps }) ||
+            window.confirm('Are you sure? Your RSVP has not been sent.')
           ) {
             window.location.href = basePath
           }
