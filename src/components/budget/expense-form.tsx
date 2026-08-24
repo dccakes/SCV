@@ -250,7 +250,7 @@ export function ExpenseForm(props: Readonly<ExpenseFormProps>) {
           Cancel
         </Button>
         <Button type='submit' disabled={isPending}>
-          {isEditing ? 'Save changes' : 'Add expense'}
+          {isPending ? 'Saving...' : isEditing ? 'Save changes' : 'Add expense'}
         </Button>
       </div>
     </form>
