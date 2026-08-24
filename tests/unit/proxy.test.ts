@@ -127,6 +127,7 @@ describe('proxy', () => {
       websiteSaveTheDateResponse,
       websiteSaveTheDateCodeResponse,
       websiteSaveTheDateUpdateResponse,
+      localeApiResponse,
       authApiResponse,
       blobUploadResponse,
     ] = await Promise.all([
@@ -143,6 +144,7 @@ describe('proxy', () => {
       proxy(createRequest('/w/shrek-and-fiona/save-the-date')),
       proxy(createRequest('/w/shrek-and-fiona/save-the-date/sf-4f9k2c')),
       proxy(createRequest('/w/shrek-and-fiona/save-the-date/update')),
+      proxy(createRequest('/api/locale')),
       proxy(createRequest('/api/auth/session')),
       proxy(createRequest('/api/blob/upload')),
     ])
@@ -160,6 +162,7 @@ describe('proxy', () => {
     expect(websiteSaveTheDateResponse.headers.get('location')).toBeNull()
     expect(websiteSaveTheDateCodeResponse.headers.get('location')).toBeNull()
     expect(websiteSaveTheDateUpdateResponse.headers.get('location')).toBeNull()
+    expect(localeApiResponse.headers.get('location')).toBeNull()
     expect(authApiResponse.headers.get('location')).toBeNull()
     expect(blobUploadResponse.headers.get('location')).toBeNull()
     expect(mockGetSessionCookie).not.toHaveBeenCalled()

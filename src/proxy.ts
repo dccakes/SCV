@@ -27,7 +27,7 @@ const isPublicTrpcPath = (pathname: string): boolean => {
     procedures.length > 0 && procedures.every((procedure) => PUBLIC_TRPC_PROCEDURES.has(procedure))
   )
 }
-const PUBLIC_EXACT_PATHS = ['/', '/api/blob/upload', '/pricing', '/open-source']
+const PUBLIC_EXACT_PATHS = ['/', '/api/blob/upload', '/api/locale', '/pricing', '/open-source']
 const RESERVED_ROOT_SEGMENTS = new Set([
   '',
   'api',
