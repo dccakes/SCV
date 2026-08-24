@@ -8,6 +8,9 @@
 import type { PrismaClient } from '@prisma/client'
 
 import type { Website, WebsiteWithQuestions } from '~/server/domains/website/website.types'
+import type { WebsiteSection } from '~/server/domains/website-section/website-section.types'
+import { WebsiteSectionType } from '~/server/domains/website-section/website-section.types'
+import { parseSectionContent } from '~/server/domains/website-section/website-section.validator'
 
 export class WebsiteRepository {
   constructor(private db: PrismaClient) {}
@@ -43,7 +46,7 @@ export class WebsiteRepository {
    * Find a website by sub URL with general questions included
    */
   async findBySubUrlWithQuestions(subUrl: string): Promise<WebsiteWithQuestions | null> {
-    return this.db.website.findFirst({
+    const website = await this.db.website.findFirst({
       where: { subUrl },
       include: {
         generalQuestions: {
@@ -55,15 +58,20 @@ export class WebsiteRepository {
             },
           },
         },
+        websiteSections: {
+          orderBy: { position: 'asc' },
+        },
       },
     })
+
+    return website ? this.toWebsiteWithQuestions(website) : null
   }
 
   /**
    * Find a website by wedding ID with general questions included
    */
   async findByWeddingIdWithQuestions(weddingId: string): Promise<WebsiteWithQuestions | null> {
-    return this.db.website.findFirst({
+    const website = await this.db.website.findFirst({
       where: { weddingId },
       include: {
         generalQuestions: {
@@ -75,19 +83,28 @@ export class WebsiteRepository {
             },
           },
         },
+        websiteSections: {
+          orderBy: { position: 'asc' },
+        },
       },
     })
+
+    return website ? this.toWebsiteWithQuestions(website) : null
   }
 
   /**
    * Create a new website with default general questions
    */
-  async create(data: { weddingId: string; url: string; subUrl: string }): Promise<Website> {
+  async create(data: {
+    weddingId: string
+    subUrl: string
+    templateId?: string | null
+  }): Promise<Website> {
     return this.db.website.create({
       data: {
         weddingId: data.weddingId,
-        url: data.url,
         subUrl: data.subUrl,
+        templateId: data.templateId,
         generalQuestions: {
           create: [
             {
@@ -97,6 +114,54 @@ export class WebsiteRepository {
             {
               text: 'Send a note to the couple?',
               type: 'Text',
+            },
+          ],
+        },
+        websiteSections: {
+          create: [
+            {
+              type: WebsiteSectionType.HOME,
+              isEnabled: true,
+              position: 0,
+              content: { introText: '' },
+            },
+          ],
+        },
+      },
+    })
+  }
+
+  async upsertByWeddingId(data: {
+    weddingId: string
+    subUrl: string
+    templateId?: string | null
+  }): Promise<Website> {
+    return this.db.website.upsert({
+      where: { weddingId: data.weddingId },
+      update: {},
+      create: {
+        weddingId: data.weddingId,
+        subUrl: data.subUrl,
+        templateId: data.templateId,
+        generalQuestions: {
+          create: [
+            {
+              text: 'Will you be bringing any children under the age of 10?',
+              type: 'Text',
+            },
+            {
+              text: 'Send a note to the couple?',
+              type: 'Text',
+            },
+          ],
+        },
+        websiteSections: {
+          create: [
+            {
+              type: WebsiteSectionType.HOME,
+              isEnabled: true,
+              position: 0,
+              content: { introText: '' },
             },
           ],
         },
@@ -113,7 +178,6 @@ export class WebsiteRepository {
       isPasswordEnabled?: boolean
       password?: string | null
       subUrl?: string
-      url?: string
     }
   ): Promise<Website> {
     return this.db.website.update({
@@ -122,7 +186,6 @@ export class WebsiteRepository {
         isPasswordEnabled: data.isPasswordEnabled,
         password: data.password ?? undefined,
         subUrl: data.subUrl,
-        url: data.url,
       },
     })
   }
@@ -144,6 +207,36 @@ export class WebsiteRepository {
     return this.db.website.update({
       where: { weddingId },
       data: { coverPhotoUrl },
+    })
+  }
+
+  /**
+   * Update the header/hero image URL
+   */
+  async updateHeaderImage(weddingId: string, headerImageUrl: string | null): Promise<Website> {
+    return this.db.website.update({
+      where: { weddingId },
+      data: { headerImageUrl },
+    })
+  }
+
+  /**
+   * Update the couple photo gallery
+   */
+  async updateCoupleImages(weddingId: string, coupleImageUrls: string[]): Promise<Website> {
+    return this.db.website.update({
+      where: { weddingId },
+      data: { coupleImageUrls },
+    })
+  }
+
+  /**
+   * Update the selected website template
+   */
+  async updateTemplate(weddingId: string, templateId: string): Promise<Website> {
+    return this.db.website.update({
+      where: { weddingId },
+      data: { templateId },
     })
   }
 
@@ -176,5 +269,42 @@ export class WebsiteRepository {
     })
 
     return website !== null
+  }
+
+  private toWebsiteWithQuestions(website: {
+    id: string
+    createdAt: Date
+    updatedAt: Date
+    weddingId: string
+    subUrl: string
+    templateId: string | null
+    isPasswordEnabled: boolean
+    password: string | null
+    isRsvpEnabled: boolean
+    coverPhotoUrl: string | null
+    headerImageUrl: string | null
+    coupleImageUrls: string[]
+    generalQuestions: WebsiteWithQuestions['generalQuestions']
+    websiteSections?: Array<{
+      id: string
+      createdAt: Date
+      updatedAt: Date
+      content: unknown
+      type: WebsiteSectionType
+      websiteId: string
+      isEnabled: boolean
+      position: number
+    }>
+  }): WebsiteWithQuestions {
+    return {
+      ...website,
+      websiteSections: website.websiteSections?.map(
+        (section) =>
+          ({
+            ...section,
+            content: parseSectionContent(section.type, section.content),
+          }) as WebsiteSection
+      ),
+    }
   }
 }

@@ -1,6 +1,87 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+
 import type { DashboardData } from '~/app/utils/shared-types'
 import PlanningOverview from '~/components/dashboard/planning-overview'
+import { DASHBOARD_ADD_TASK_EVENT } from '~/components/dashboard/task-dialog-events'
+
+const mockMutate = jest.fn()
+const mockCreateMutate = jest.fn()
+const mockInvalidate = jest.fn()
+
+jest.mock('~/components/ui/select', () => ({
+  Select: ({
+    value,
+    onValueChange,
+    children,
+  }: {
+    value: string
+    onValueChange: (value: string) => void
+    children: React.ReactNode
+  }) => (
+    <select
+      aria-label='mock-select'
+      value={value}
+      onChange={(event) => onValueChange(event.target.value)}
+    >
+      {children}
+    </select>
+  ),
+  SelectTrigger: ({ children }: React.HTMLAttributes<HTMLDivElement>) => <>{children}</>,
+  SelectValue: ({ placeholder }: { placeholder?: string }) => (
+    <option value=''>{placeholder}</option>
+  ),
+  SelectContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  SelectItem: ({ value, children }: { value: string; children: React.ReactNode }) => (
+    <option value={value}>{children}</option>
+  ),
+}))
+
+const mockVendorGetAll = jest.fn()
+const mockBudgetGetOverview = jest.fn()
+
+jest.mock('~/trpc/react', () => ({
+  api: {
+    useUtils: () => ({
+      task: {
+        getPriorityQueue: { invalidate: mockInvalidate },
+      },
+      dashboard: {
+        getForActiveWorkspace: { invalidate: mockInvalidate },
+      },
+    }),
+    task: {
+      complete: {
+        useMutation: () => ({
+          mutate: mockMutate,
+        }),
+      },
+      create: {
+        useMutation: (options?: { onSuccess?: () => void }) => ({
+          mutate: (input: unknown) => {
+            mockCreateMutate(input)
+            options?.onSuccess?.()
+          },
+        }),
+      },
+    },
+    vendor: {
+      getAll: {
+        useQuery: () => mockVendorGetAll(),
+      },
+    },
+    budget: {
+      getOverview: {
+        useQuery: () => mockBudgetGetOverview(),
+      },
+    },
+  },
+}))
+
+jest.mock('sonner', () => ({
+  toast: {
+    error: jest.fn(),
+  },
+}))
 
 const mockDashboardData = {
   weddingData: {
@@ -9,6 +90,7 @@ const mockDashboardData = {
     brideFirstName: 'Holly',
     brideLastName: 'Smith',
     daysRemaining: 440,
+    location: 'Hacienda Los Laureles',
     date: { standardFormat: '17 May 2027', numberFormat: '2027-05-17' },
     website: {
       id: 'site-1',
@@ -20,9 +102,107 @@ const mockDashboardData = {
       isPasswordEnabled: false,
       isRsvpEnabled: true,
       password: null,
+      generalQuestions: [],
     },
   },
   totalGuests: 127,
+  totalEvents: 1,
+  tasksDueThisMonth: 3,
+  taskPriorityQueue: {
+    totalActive: 7,
+    tasks: [
+      {
+        id: 'task-1',
+        weddingId: 'wedding-1',
+        eventId: 'evt1',
+        vendorId: null,
+        milestoneId: null,
+        seedKey: null,
+        title: 'Pay rehearsal dinner deposit',
+        category: 'BUDGET',
+        monthsBeforeWedding: 1,
+        dueDate: new Date('2026-04-20T00:00:00.000Z'),
+        description: null,
+        notes: null,
+        isDefault: false,
+        position: 0,
+        completed: false,
+        completedAt: null,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+      },
+      {
+        id: 'task-2',
+        weddingId: 'wedding-1',
+        eventId: 'evt1',
+        vendorId: null,
+        milestoneId: null,
+        seedKey: null,
+        title: 'Confirm catering headcount',
+        category: 'RECEPTION',
+        monthsBeforeWedding: 0,
+        dueDate: new Date('2026-04-29T00:00:00.000Z'),
+        description: null,
+        notes: null,
+        isDefault: false,
+        position: 1,
+        completed: false,
+        completedAt: null,
+        createdAt: new Date('2026-01-03T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-04T00:00:00.000Z'),
+      },
+    ],
+  },
+  milestones: [
+    {
+      id: 'milestone-1',
+      weddingId: 'wedding-1',
+      key: 'venue_booked',
+      title: 'Venue booked',
+      category: 'VENDORS',
+      position: 2,
+      targetDate: null,
+      userOverrideStatus: null,
+      attestedAt: null,
+      dismissedAt: null,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+      derivedStatus: 'done',
+      effectiveStatus: 'done',
+    },
+    {
+      id: 'milestone-2',
+      weddingId: 'wedding-1',
+      key: 'invitations_sent',
+      title: 'Invitations sent',
+      category: 'INVITATIONS',
+      position: 7,
+      targetDate: null,
+      userOverrideStatus: 'attested',
+      attestedAt: new Date('2026-02-01T00:00:00.000Z'),
+      dismissedAt: null,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+      derivedStatus: 'pending',
+      effectiveStatus: 'done',
+    },
+    {
+      id: 'milestone-3',
+      weddingId: 'wedding-1',
+      key: 'wedding_day',
+      title: 'Wedding day',
+      category: 'FINALE',
+      position: 12,
+      targetDate: null,
+      userOverrideStatus: null,
+      attestedAt: null,
+      dismissedAt: null,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+      derivedStatus: 'pending',
+      effectiveStatus: 'pending',
+    },
+  ],
   events: [
     {
       id: 'evt1',
@@ -44,71 +224,20 @@ const mockDashboardData = {
       },
     },
   ],
-} as unknown as DashboardData
-
-const mockDashboardDataWithoutPendingRsvps = {
-  ...mockDashboardData,
-  events: [
-    {
-      ...mockDashboardData.events[0],
-      guestResponses: {
-        ...mockDashboardData.events[0].guestResponses,
-        invited: 0,
-      },
-    },
-  ],
+  households: [],
 } as unknown as DashboardData
 
 describe('PlanningOverview', () => {
-  // ── Countdown Hero ─────────────────────────────────────────────────────────
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockVendorGetAll.mockReturnValue({ data: undefined })
+    mockBudgetGetOverview.mockReturnValue({ data: undefined })
+  })
 
-  it('renders the days remaining value in the countdown hero', () => {
+  it('renders the real planning completion percentage from milestones', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText('440')).toBeInTheDocument()
-    // "Days" label rendered uppercase alongside the number
-    expect(screen.getByText('Days')).toBeInTheDocument()
-  })
 
-  it('renders Hours and Mins labels in the countdown hero', () => {
-    render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText('Hours')).toBeInTheDocument()
-    expect(screen.getByText('Mins')).toBeInTheDocument()
-  })
-
-  it('renders current hours and minutes as zero-padded strings', () => {
-    // Fix the clock so the padded output is deterministic
-    jest.useFakeTimers()
-    jest.setSystemTime(new Date('2026-03-04T09:05:00'))
-    try {
-      render(<PlanningOverview dashboardData={mockDashboardData} />)
-      expect(screen.getByText('09')).toBeInTheDocument() // hours zero-padded
-      expect(screen.getByText('05')).toBeInTheDocument() // mins zero-padded
-    } finally {
-      jest.useRealTimers()
-    }
-  })
-
-  it('updates the minutes display when the 60-second interval fires', () => {
-    jest.useFakeTimers()
-    jest.setSystemTime(new Date('2026-03-04T14:07:00'))
-    try {
-      render(<PlanningOverview dashboardData={mockDashboardData} />)
-
-      // Initial state: 14 hours, 07 mins
-      expect(screen.getByText('14')).toBeInTheDocument()
-      expect(screen.getByText('07')).toBeInTheDocument()
-
-      // Advance one full minute — interval fires once
-      act(() => {
-        jest.advanceTimersByTime(60_000)
-      })
-
-      // 07 should be gone, 08 should appear (14:08)
-      expect(screen.queryByText('07')).not.toBeInTheDocument()
-      expect(screen.getByText('08')).toBeInTheDocument()
-    } finally {
-      jest.useRealTimers()
-    }
+    expect(screen.getByText(/67% of planning complete/i)).toBeInTheDocument()
   })
 
   it('renders couple names in the countdown hero', () => {
@@ -118,146 +247,84 @@ describe('PlanningOverview', () => {
 
   it('renders the wedding date in the hero', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
-    // Date appears at minimum in hero and milestones
-    const dateEls = screen.getAllByText('17 May 2027')
-    expect(dateEls.length).toBeGreaterThanOrEqual(2)
+    // standardFormat date string appears in the hero
+    expect(screen.getByText('17 May 2027')).toBeInTheDocument()
   })
 
-  it('renders the planning progress percentage', () => {
-    render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText(/67% of planning complete/i)).toBeInTheDocument()
-  })
-
-  // ── Mini Stats ─────────────────────────────────────────────────────────────
-
-  it('renders total guests count in the correct mini-stat cell', () => {
-    render(<PlanningOverview dashboardData={mockDashboardData} />)
-    // 127 is unique to the "Total guests" stat
-    expect(screen.getByText('127')).toBeInTheDocument()
-    expect(screen.getByText('Total guests')).toBeInTheDocument()
-  })
-
-  it('renders confirmed count in MiniStats and RsvpCard (appears exactly twice)', () => {
-    render(<PlanningOverview dashboardData={mockDashboardData} />)
-    // attending=89 appears in MiniStats and RSVP card
-    const allEightyNine = screen.getAllByText('89')
-    expect(allEightyNine).toHaveLength(2)
-  })
-
-  it('renders awaiting-reply count (pending) in the mini-stat cell', () => {
-    render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText('Awaiting reply')).toBeInTheDocument()
-    // "23" appears in MiniStats awaiting-reply cell and RSVP card pending cell
-    expect(screen.getAllByText('23').length).toBeGreaterThanOrEqual(1)
-  })
-
-  // ── RSVP Card ──────────────────────────────────────────────────────────────
-
-  it('renders the RSVP Status card title', () => {
-    render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText('RSVP Status')).toBeInTheDocument()
-  })
-
-  it('renders all four RSVP count labels', () => {
-    render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText('Pending')).toBeInTheDocument()
-    expect(screen.getByText('Declined')).toBeInTheDocument()
-    expect(screen.getByText('Invited')).toBeInTheDocument()
-  })
-
-  it('renders the RSVP bar with correct aria-label showing rounded percentages', () => {
-    render(<PlanningOverview dashboardData={mockDashboardData} />)
-    // attending=89, pending=23, declined=8 → total=120
-    // confirmedPct = round(89/120*100) = 74
-    // pendingPct   = round(23/120*100) = 19
-    // declinedPct  = round(8/120*100)  =  7
-    const bar = screen.getByRole('img', { name: /RSVP breakdown/i })
-    expect(bar).toHaveAttribute(
-      'aria-label',
-      'RSVP breakdown: 74% confirmed, 19% pending, 7% declined'
-    )
-  })
-
-  it('renders RSVP bar segments with correct inline width percentages', () => {
-    render(<PlanningOverview dashboardData={mockDashboardData} />)
-    const bar = screen.getByRole('img', { name: /RSVP breakdown/i })
-    const [confirmedSeg, pendingSeg, declinedSeg] = Array.from(bar.children) as HTMLElement[]
-
-    // attending=89/120 → 74.17%, pending=23/120 → 19.17%, declined=8/120 → 6.67%
-    expect(parseFloat(confirmedSeg?.style.width)).toBeCloseTo(74.17, 1)
-    expect(parseFloat(pendingSeg?.style.width)).toBeCloseTo(19.17, 1)
-    expect(parseFloat(declinedSeg?.style.width)).toBeCloseTo(6.67, 1)
-  })
-
-  it('shows pending nudge text with exact count when pending > 0', () => {
-    render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText(/Still waiting on 23/)).toBeInTheDocument()
-  })
-
-  it('renders invite collaborators CTA linking to settings', () => {
+  it('renders tasks due this month in mini stats', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
 
-    expect(screen.getByRole('link', { name: /invite collaborators/i })).toHaveAttribute(
-      'href',
-      '/settings'
-    )
+    expect(screen.getByText('Tasks due this month')).toBeInTheDocument()
+    expect(screen.getByText('3')).toBeInTheDocument()
   })
 
-  it('keeps invite collaborators CTA visible even when pending RSVPs are zero', () => {
-    render(<PlanningOverview dashboardData={mockDashboardDataWithoutPendingRsvps} />)
-
-    expect(screen.getByRole('link', { name: /invite collaborators/i })).toHaveAttribute(
-      'href',
-      '/settings'
-    )
-    expect(screen.queryByText(/Still waiting on/)).not.toBeInTheDocument()
-  })
-
-  // ── Tasks Card ─────────────────────────────────────────────────────────────
-
-  it('renders the Upcoming tasks card title', () => {
+  it('renders real priority queue tasks and the checklist link', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText('Upcoming tasks')).toBeInTheDocument()
-  })
 
-  it('renders specific placeholder task rows', () => {
-    render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText('Book ceremony venue')).toBeInTheDocument()
-    expect(screen.getByText('Confirm catering headcount')).toBeInTheDocument()
     expect(screen.getByText('Pay rehearsal dinner deposit')).toBeInTheDocument()
+    expect(screen.getByText('Confirm catering headcount')).toBeInTheDocument()
+    expect(
+      screen
+        .getAllByRole('link', { name: /view all/i })
+        .some((link) => link.getAttribute('href') === '/checklist')
+    ).toBe(true)
+    expect(screen.getByText('2 of 7 active tasks shown')).toBeInTheDocument()
   })
 
-  it('toggles task done state when a task row is clicked', () => {
+  it('toggles a task and calls the completion mutation', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
-    const taskBtn = screen.getByRole('button', { name: /confirm catering headcount/i })
-    const taskText = taskBtn.querySelectorAll('span')[1]
-    expect(taskText).not.toHaveClass('line-through')
-    fireEvent.click(taskBtn)
-    expect(taskText).toHaveClass('line-through')
+
+    const taskButton = screen.getByRole('button', { name: /confirm catering headcount/i })
+    fireEvent.click(taskButton)
+
+    expect(mockMutate).toHaveBeenCalledWith({
+      taskId: 'task-2',
+      completed: true,
+    })
   })
 
-  it('marks pre-done tasks with line-through from the start', () => {
+  it('opens the quick-add dialog from the dashboard event and creates a task', async () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
-    const taskBtn = screen.getByRole('button', { name: /book ceremony venue/i })
-    const taskText = taskBtn.querySelectorAll('span')[1]
-    expect(taskText).toHaveClass('line-through')
+
+    act(() => {
+      window.dispatchEvent(new CustomEvent(DASHBOARD_ADD_TASK_EVENT))
+    })
+
+    await waitFor(() => expect(screen.getByLabelText('Task title')).toBeInTheDocument())
+
+    fireEvent.change(screen.getByLabelText('Task title'), {
+      target: { value: 'Chase the final vendor invoice' },
+    })
+    fireEvent.change(screen.getAllByLabelText('mock-select')[0], {
+      target: { value: 'VENDORS' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save task' }))
+
+    await waitFor(() =>
+      expect(mockCreateMutate).toHaveBeenCalledWith({
+        title: 'Chase the final vendor invoice',
+        category: 'VENDORS',
+        eventId: 'evt1',
+        monthsBeforeWedding: 3,
+        dueDate: null,
+        description: null,
+        notes: null,
+      })
+    )
   })
 
-  // ── Budget Card ────────────────────────────────────────────────────────────
-
-  it('renders the Budget card title', () => {
+  it('renders the budget empty state', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText('Budget')).toBeInTheDocument()
+    expect(screen.getByText('No budget set up yet')).toBeInTheDocument()
+    expect(
+      screen.getByText('Track your wedding spending against a target budget')
+    ).toBeInTheDocument()
   })
 
-  it('renders all budget category names', () => {
+  it('does not render fake budget category names', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
-    // Venue/Catering/Photography/Flowers also appear as VendorsCard type labels — use getAllBy
-    expect(screen.getAllByText('Venue').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('Catering').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('Photography').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('Flowers').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByText('Other')).toBeInTheDocument()
+    expect(screen.queryByText('Flowers')).not.toBeInTheDocument()
+    expect(screen.queryByText('Photography')).not.toBeInTheDocument()
   })
 
   // ── Vendors Card ───────────────────────────────────────────────────────────
@@ -267,42 +334,37 @@ describe('PlanningOverview', () => {
     expect(screen.getByText('Vendors')).toBeInTheDocument()
   })
 
-  it('renders all placeholder vendor names', () => {
+  it('renders the vendors empty state when no vendors are added', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText('Ceremony Venue')).toBeInTheDocument()
-    expect(screen.getByText('Photographer')).toBeInTheDocument()
-    expect(screen.getByText('Caterer')).toBeInTheDocument()
-    expect(screen.getByText('Florist')).toBeInTheDocument()
-    expect(screen.getByText('Hair & Makeup')).toBeInTheDocument()
+    expect(screen.getByText('No vendors added yet')).toBeInTheDocument()
+    expect(
+      screen.getByText('Track quotes, contacts, and contracts in one place')
+    ).toBeInTheDocument()
   })
 
-  it('renders vendor status badges including non-Confirmed statuses', () => {
+  it('renders an add vendor CTA link in the vendors empty state', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText('Deposit due')).toBeInTheDocument()
-    expect(screen.getByText('Searching')).toBeInTheDocument()
+    expect(screen.getByText('Add your first vendor →')).toBeInTheDocument()
   })
 
-  // ── Milestones Card ────────────────────────────────────────────────────────
+  it('renders real vendor count and status breakdown when vendors exist', () => {
+    mockVendorGetAll.mockReturnValue({
+      data: [
+        { id: 'v1', status: 'SELECTED' },
+        { id: 'v2', status: 'IN_NEGOTIATION' },
+        { id: 'v3', status: 'PRE_SELECTED' },
+        { id: 'v4', status: 'IN_REVIEW' },
+      ],
+    })
 
-  it('renders the Milestones card title', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText('Milestones')).toBeInTheDocument()
-  })
 
-  it('renders all static milestone titles', () => {
-    render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText('Venue booked')).toBeInTheDocument()
-    expect(screen.getByText('Invitations sent')).toBeInTheDocument()
-    expect(screen.getByText('RSVP deadline')).toBeInTheDocument()
-    expect(screen.getByText('Final headcount to caterer')).toBeInTheDocument()
-    expect(screen.getByText('Seating plan finalised')).toBeInTheDocument()
-    expect(screen.getByText('Rehearsal dinner')).toBeInTheDocument()
-  })
-
-  it('renders the wedding event name as a highlighted milestone', () => {
-    render(<PlanningOverview dashboardData={mockDashboardData} />)
-    // events[0].name = 'Wedding', rendered with a ✦ marker
-    expect(screen.getByText('Wedding ✦')).toBeInTheDocument()
+    expect(screen.getByText('4')).toBeInTheDocument()
+    expect(screen.getByText('vendors tracked')).toBeInTheDocument()
+    expect(screen.getByText('Selected')).toBeInTheDocument()
+    expect(screen.getByText('In Progress')).toBeInTheDocument()
+    expect(screen.getByText('In Review')).toBeInTheDocument()
+    expect(screen.queryByText('No vendors added yet')).not.toBeInTheDocument()
   })
 
   // ── Edge Cases ─────────────────────────────────────────────────────────────
@@ -326,19 +388,43 @@ describe('PlanningOverview', () => {
     expect(screen.getAllByText('0').length).toBeGreaterThanOrEqual(1)
   })
 
-  it('shows zero RSVP counts when no events are provided', () => {
+  it('shows RSVP empty state when no RSVP data exists', () => {
     const noEventsData = { ...mockDashboardData, events: [] } as unknown as DashboardData
     render(<PlanningOverview dashboardData={noEventsData} />)
-    // RSVP bar should have 0/0 → all zeroes, no crash
-    const bar = screen.getByRole('img', { name: /RSVP breakdown/i })
-    expect(bar).toHaveAttribute(
-      'aria-label',
-      'RSVP breakdown: 0% confirmed, 0% pending, 0% declined'
+    // Empty state should render instead of the zero-count bar
+    expect(screen.getByText('No RSVPs collected yet')).toBeInTheDocument()
+    expect(
+      screen.getByText('Enable RSVP collection on one of your events to start tracking responses')
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Set up RSVPs →' })).toHaveAttribute('href', '/events')
+    // The RSVP bar should not render
+    expect(screen.queryByRole('img', { name: /RSVP breakdown/i })).not.toBeInTheDocument()
+  })
+
+  it('renders real milestones including override and wedding-day indicators', () => {
+    render(<PlanningOverview dashboardData={mockDashboardData} />)
+
+    expect(screen.getByText('Venue booked')).toBeInTheDocument()
+    expect(screen.getByText('Invitations sent ⚠')).toBeInTheDocument()
+    expect(screen.getByText('Wedding day ✦')).toBeInTheDocument()
+  })
+
+  it('renders empty-state task copy when there are no active tasks', () => {
+    render(
+      <PlanningOverview
+        dashboardData={{
+          ...mockDashboardData,
+          taskPriorityQueue: { tasks: [], totalActive: 0 },
+        }}
+      />
     )
+
+    expect(screen.getByText(/No active tasks yet/i)).toBeInTheDocument()
   })
 
   it('renders without crashing when dashboardData is null', () => {
     render(<PlanningOverview dashboardData={null} />)
+
     expect(screen.getByText('Your Wedding')).toBeInTheDocument()
     expect(screen.getByText('No date set')).toBeInTheDocument()
   })

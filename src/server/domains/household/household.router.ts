@@ -10,7 +10,7 @@
 
 import { TRPCError } from '@trpc/server'
 
-import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
+import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
 import { householdManagementService } from '~/server/application/household-management'
 import { requireActiveWeddingId } from '~/server/authz/active-wedding'
 import { eventService } from '~/server/domains/event'
@@ -18,6 +18,7 @@ import {
   bulkCreateHouseholdsSchema,
   createHouseholdSchema,
   deleteHouseholdSchema,
+  publicSearchHouseholdSchema,
   searchHouseholdSchema,
   updateHouseholdSchema,
 } from '~/server/domains/household/household.validator'
@@ -75,10 +76,22 @@ export const householdRouter = createTRPCRouter({
   }),
 
   /**
-   * Search households by guest name
+   * Search households by guest name (authenticated coordinator flow)
    */
   findBySearch: protectedProcedure.input(searchHouseholdSchema).query(async ({ ctx, input }) => {
     const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return householdManagementService.searchHouseholds(ctx.authz, weddingId, input.searchText)
   }),
+
+  /**
+   * Search households by guest name from the public guest-facing RSVP flow.
+   *
+   * Guests are not authenticated, so the search is scoped to the wedding that
+   * owns the website subUrl instead of an active wedding session.
+   */
+  findBySearchPublic: publicProcedure
+    .input(publicSearchHouseholdSchema)
+    .query(async ({ input }) => {
+      return householdManagementService.searchHouseholdsPublic(input.subUrl, input.searchText)
+    }),
 })

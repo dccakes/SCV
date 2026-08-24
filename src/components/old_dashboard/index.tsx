@@ -11,6 +11,7 @@ import HomeContent from '@/components/old_dashboard/section-content/home'
 import RsvpContent from '@/components/old_dashboard/section-content/rsvp'
 import SidebarPanel from '@/components/old_dashboard/sidebar-panel'
 import type { DashboardData, EventFormData } from '~/app/utils/shared-types'
+import { computePublicWebsiteUrl } from '~/app/utils/website'
 import { useEditRsvpSettingsForm } from '~/components/contexts/edit-rsvp-settings-form-context'
 import { useEventForm } from '~/components/contexts/event-form-context'
 import DashboardSettingsForm from '~/components/forms/dashboard-settings-form'
@@ -75,7 +76,11 @@ export default function Dashboard({
         <div id='website-editor' className='mt-8 border-border border-t pt-8'>
           <h2 className='mb-5 font-semibold font-serif text-foreground text-xl'>Website Editor</h2>
           <DashboardHeader
-            websiteUrl={dashboardData?.weddingData?.website?.url}
+            websiteUrl={
+              dashboardData?.weddingData?.website?.subUrl
+                ? computePublicWebsiteUrl(dashboardData.weddingData.website.subUrl)
+                : undefined
+            }
             setShowWebsiteSettings={setShowWebsiteSettings}
           />
           <div className='border-border border-t' />

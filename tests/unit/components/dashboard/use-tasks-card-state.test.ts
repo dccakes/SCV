@@ -1,16 +1,63 @@
 import { act, renderHook } from '@testing-library/react'
 
-import { useTasksCardState } from '~/components/dashboard/planning-overview/use-tasks-card-state'
+import {
+  createTaskCardItems,
+  type TaskItem,
+  useTasksCardState,
+} from '~/components/dashboard/planning-overview/use-tasks-card-state'
 
 describe('useTasksCardState', () => {
   it('toggles done state for one task without changing others', () => {
-    const { result } = renderHook(() => useTasksCardState())
+    const priorityTasks = [
+      {
+        id: 'task-1',
+        weddingId: 'wedding-1',
+        eventId: 'event-1',
+        vendorId: null,
+        milestoneId: null,
+        seedKey: null,
+        title: 'Confirm catering headcount',
+        category: 'RECEPTION',
+        monthsBeforeWedding: 0,
+        dueDate: new Date('2026-04-29T00:00:00.000Z'),
+        description: null,
+        notes: null,
+        isDefault: false,
+        position: 0,
+        completed: false,
+        completedAt: null,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+      },
+      {
+        id: 'task-2',
+        weddingId: 'wedding-1',
+        eventId: 'event-1',
+        vendorId: null,
+        milestoneId: null,
+        seedKey: null,
+        title: 'Order flowers',
+        category: 'VENDORS',
+        monthsBeforeWedding: 6,
+        dueDate: null,
+        description: null,
+        notes: null,
+        isDefault: false,
+        position: 1,
+        completed: false,
+        completedAt: null,
+        createdAt: new Date('2026-01-03T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-04T00:00:00.000Z'),
+      },
+    ] as Parameters<typeof useTasksCardState>[0]
+
+    const { result } = renderHook(() => useTasksCardState(priorityTasks))
 
     const before = result.current.tasks
-    const targetId = before[2]?.id
+    const targetId = before[0]?.id
 
     if (!targetId) {
-      throw new Error('Expected a third placeholder task')
+      throw new Error('Expected a first task')
     }
 
     act(() => {
@@ -18,14 +65,64 @@ describe('useTasksCardState', () => {
     })
 
     const after = result.current.tasks
-    expect(after).toHaveLength(before.length)
+    expect(after[0]?.done).toBe(true)
+    expect(after[1]).toBe(before[1])
+  })
 
-    const targetBefore = before.find((task) => task.id === targetId)
-    const targetAfter = after.find((task) => task.id === targetId)
+  it('does not affect other tasks when toggling one', () => {
+    const { result } = renderHook(() => useTasksCardState())
 
-    expect(targetBefore?.done).toBe(false)
-    expect(targetAfter?.done).toBe(true)
+    const tasks: TaskItem[] = [
+      { id: 'a', text: 'Task A', tag: 'Admin', due: 'Today', done: false, urgent: false },
+      { id: 'b', text: 'Task B', tag: 'Vendor', due: 'Tomorrow', done: false, urgent: false },
+    ]
 
-    expect(after[0]).toBe(before[0])
+    act(() => {
+      result.current.setTasks(tasks)
+    })
+
+    act(() => {
+      result.current.toggleTask('a')
+    })
+
+    expect(result.current.tasks.find((t) => t.id === 'a')?.done).toBe(true)
+    expect(result.current.tasks.find((t) => t.id === 'b')?.done).toBe(false)
+  })
+
+  it('maps real tasks into card labels and urgency', () => {
+    const items = createTaskCardItems(
+      [
+        {
+          id: 'task-1',
+          weddingId: 'wedding-1',
+          eventId: 'event-1',
+          vendorId: null,
+          milestoneId: null,
+          seedKey: null,
+          title: 'Follow up with venue',
+          category: 'VENUE',
+          monthsBeforeWedding: 6,
+          dueDate: new Date('2026-04-20T00:00:00.000Z'),
+          description: null,
+          notes: null,
+          isDefault: false,
+          position: 0,
+          completed: false,
+          completedAt: null,
+          createdAt: new Date('2026-01-01T00:00:00.000Z'),
+          updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+        },
+      ] as Parameters<typeof useTasksCardState>[0],
+      new Date('2026-04-27T12:00:00.000Z')
+    )
+
+    expect(items[0]).toEqual({
+      id: 'task-1',
+      text: 'Follow up with venue',
+      tag: 'Overdue',
+      due: 'Overdue',
+      done: false,
+      urgent: true,
+    })
   })
 })

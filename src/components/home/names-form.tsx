@@ -62,21 +62,21 @@ export default function NamesForm() {
   }
 
   return (
-    <main>
-      <div className='flex items-center justify-between bg-pink-300 p-4'>
-        <h1>{session.user?.name ?? session.user?.email}</h1>
+    <main className='min-h-screen bg-background'>
+      <header className='flex h-14 flex-shrink-0 items-center justify-between border-border/80 border-b bg-card/70 px-4 backdrop-blur-sm'>
+        <span className='font-mono text-[0.7rem] text-foreground/60 uppercase tracking-[0.2em]'>
+          OSWP
+        </span>
         <div className='flex items-center gap-2'>
           <ThemeToggle />
           <SignOutButton />
         </div>
-      </div>
-      <div className='flex min-h-screen items-center justify-center bg-background p-4'>
+      </header>
+      <div className='flex min-h-[calc(100vh-3.5rem)] items-center justify-center p-4'>
         <Card className='w-full max-w-2xl'>
           <CardHeader className='text-center'>
-            <CardTitle className='text-3xl'>Welcome, Lovebirds! 💕</CardTitle>
-            <CardDescription>
-              Let&apos;s get started by adding your names to create your wedding plan
-            </CardDescription>
+            <CardTitle className='font-display text-3xl italic'>Plan Your Wedding</CardTitle>
+            <CardDescription>Add your names below to begin planning your day</CardDescription>
           </CardHeader>
           <CardContent>
             {createWedding.isPending && (
@@ -264,7 +264,7 @@ export default function NamesForm() {
 
               {/* Submit Button */}
               <Button type='submit' disabled={isSubmitting} className='w-full' size='lg'>
-                {isSubmitting ? 'Creating...' : 'Create Our Website!'}
+                {isSubmitting ? 'Creating plan…' : 'Get Started'}
               </Button>
             </form>
           </CardContent>

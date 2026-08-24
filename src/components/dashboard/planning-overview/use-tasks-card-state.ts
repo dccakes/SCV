@@ -1,6 +1,12 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+
+import type { TaskCategoryValue } from '~/lib/constants/task-categories'
+import { TASK_CATEGORY_LABELS } from '~/lib/constants/task-categories'
+import type { Task } from '~/server/domains/task'
+
+const EMPTY_TASKS: Task[] = []
 
 export type TaskItem = {
   id: string
@@ -11,52 +17,12 @@ export type TaskItem = {
   urgent: boolean
 }
 
-export const PLACEHOLDER_TASKS: TaskItem[] = [
-  { id: '1', text: 'Book ceremony venue', tag: 'Vendor', due: 'Done', done: true, urgent: false },
-  {
-    id: '2',
-    text: 'Finalise guest list (first pass)',
-    tag: 'Admin',
-    due: 'Done',
-    done: true,
-    urgent: false,
-  },
-  {
-    id: '3',
-    text: 'Confirm catering headcount',
-    tag: 'Urgent',
-    due: 'This week',
-    done: false,
-    urgent: true,
-  },
-  {
-    id: '4',
-    text: 'Pay rehearsal dinner deposit',
-    tag: 'Overdue',
-    due: 'Overdue',
-    done: false,
-    urgent: true,
-  },
-  {
-    id: '5',
-    text: 'Book hair & makeup artist',
-    tag: 'Vendor',
-    due: 'Mar 20',
-    done: false,
-    urgent: false,
-  },
-  {
-    id: '6',
-    text: 'Finalise ceremony music playlist',
-    tag: 'Admin',
-    due: 'Apr 1',
-    done: false,
-    urgent: false,
-  },
-]
+export function useTasksCardState(priorityTasks: Task[] = EMPTY_TASKS) {
+  const [tasks, setTasks] = useState<TaskItem[]>(() => createTaskCardItems(priorityTasks))
 
-export function useTasksCardState() {
-  const [tasks, setTasks] = useState<TaskItem[]>(PLACEHOLDER_TASKS)
+  useEffect(() => {
+    setTasks(createTaskCardItems(priorityTasks))
+  }, [priorityTasks])
 
   const toggleTask = useCallback((taskId: string) => {
     setTasks((prev) =>
@@ -64,5 +30,91 @@ export function useTasksCardState() {
     )
   }, [])
 
-  return { tasks, toggleTask }
+  return { tasks, setTasks, toggleTask }
+}
+
+export function createTaskCardItems(tasks: Task[], now: Date = new Date()): TaskItem[] {
+  return tasks.map((task) => ({
+    id: task.id,
+    text: task.title,
+    tag: getTaskTag(task.category, task.dueDate, task.completed, now),
+    due: getTaskDueLabel(task, now),
+    done: task.completed,
+    urgent: isUrgentTask(task, now),
+  }))
+}
+
+const getTaskTag = (
+  category: TaskCategoryValue,
+  dueDate: Date | null,
+  completed: boolean,
+  now: Date
+): string => {
+  if (completed) {
+    return 'Done'
+  }
+
+  if (dueDate) {
+    const today = startOfUtcDay(now)
+    const normalizedDueDate = startOfUtcDay(dueDate)
+    if (normalizedDueDate < today) {
+      return 'Overdue'
+    }
+
+    if (normalizedDueDate <= endOfUtcWeek(today)) {
+      return 'Urgent'
+    }
+  }
+
+  return TASK_CATEGORY_LABELS[category] ?? 'Task'
+}
+
+const getTaskDueLabel = (task: Task, now: Date): string => {
+  if (task.completed) {
+    return 'Done'
+  }
+
+  if (task.dueDate) {
+    const today = startOfUtcDay(now)
+    const normalizedDueDate = startOfUtcDay(task.dueDate)
+    if (normalizedDueDate < today) {
+      return 'Overdue'
+    }
+
+    if (normalizedDueDate <= endOfUtcWeek(today)) {
+      return 'This week'
+    }
+
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      timeZone: 'UTC',
+    }).format(normalizedDueDate)
+  }
+
+  if (task.monthsBeforeWedding === 0) {
+    return 'Day of'
+  }
+
+  return `${task.monthsBeforeWedding} mo`
+}
+
+const isUrgentTask = (task: Task, now: Date): boolean => {
+  if (!task.dueDate || task.completed) {
+    return false
+  }
+
+  const today = startOfUtcDay(now)
+  const normalizedDueDate = startOfUtcDay(task.dueDate)
+  return normalizedDueDate <= endOfUtcWeek(today)
+}
+
+const startOfUtcDay = (date: Date): Date =>
+  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
+
+const endOfUtcWeek = (date: Date): Date => {
+  const end = startOfUtcDay(date)
+  const daysUntilSunday = (7 - end.getUTCDay()) % 7
+  end.setUTCDate(end.getUTCDate() + daysUntilSunday)
+  return end
 }

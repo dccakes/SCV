@@ -14,8 +14,11 @@ import type {
   PublicWebsite,
   UpdateWebsiteInput,
   Website,
+  WebsiteWithComputedUrl,
 } from '~/server/domains/website/website.types'
+import { computeWebsiteUrl } from '~/server/domains/website/website.utils'
 import { WebsitePasswordService } from '~/server/domains/website/website-password.service'
+import { isKnownTemplateId } from '~/templates/catalog'
 
 export class WebsiteService {
   constructor(
@@ -31,7 +34,7 @@ export class WebsiteService {
     weddingId: string,
     data: UpdateWebsiteInput
   ): Promise<Website> {
-    const updateRequiresContentPermission = data.subUrl !== undefined || data.basePath !== undefined
+    const updateRequiresContentPermission = data.subUrl !== undefined
     const updateRequiresPasswordPermission =
       data.password !== undefined || data.isPasswordEnabled !== undefined
 
@@ -50,7 +53,6 @@ export class WebsiteService {
       this.requireWebsitePermission(ctx, 'password_update')
     }
 
-    const url = data.subUrl !== undefined ? `${data.basePath}/${data.subUrl}` : undefined
     const password = data.password
       ? this.websitePasswordService.hashPassword(data.password)
       : undefined
@@ -59,7 +61,6 @@ export class WebsiteService {
       isPasswordEnabled: data.isPasswordEnabled,
       password,
       subUrl: data.subUrl,
-      url,
     })
   }
 
@@ -98,13 +99,60 @@ export class WebsiteService {
   }
 
   /**
+   * Update the header/hero image
+   */
+  async updateHeaderImage(
+    ctx: AuthzContext,
+    weddingId: string,
+    headerImageUrl: string | null
+  ): Promise<Website> {
+    this.requireWebsitePermission(ctx, 'update')
+    return this.websiteRepository.updateHeaderImage(weddingId, headerImageUrl)
+  }
+
+  /**
+   * Update the couple photo gallery
+   */
+  async updateCoupleImages(
+    ctx: AuthzContext,
+    weddingId: string,
+    coupleImageUrls: string[]
+  ): Promise<Website> {
+    this.requireWebsitePermission(ctx, 'update')
+    return this.websiteRepository.updateCoupleImages(weddingId, coupleImageUrls)
+  }
+
+  /**
+   * Update the selected website template.
+   *
+   * The id is validated against the template registry at the edge (validator),
+   * but we guard here too so the service is safe to call directly.
+   */
+  async updateTemplate(ctx: AuthzContext, weddingId: string, templateId: string): Promise<Website> {
+    this.requireWebsitePermission(ctx, 'update')
+
+    if (!isKnownTemplateId(templateId)) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Unknown wedding website template',
+      })
+    }
+
+    return this.websiteRepository.updateTemplate(weddingId, templateId)
+  }
+
+  /**
    * Get website by wedding ID
    */
-  async getByWeddingId(weddingId: string | null): Promise<Website | null> {
+  async getByWeddingId(weddingId: string | null): Promise<WebsiteWithComputedUrl | null> {
     if (!weddingId) {
       return null
     }
-    return this.websiteRepository.findByWeddingId(weddingId)
+    const website = await this.websiteRepository.findByWeddingId(weddingId)
+    if (!website) {
+      return null
+    }
+    return this.attachComputedUrl(website)
   }
 
   /**
@@ -159,7 +207,17 @@ export class WebsiteService {
 
   private toPublicWebsite(website: Website): PublicWebsite {
     const { password: _password, ...publicWebsite } = website
-    return publicWebsite
+    return {
+      ...publicWebsite,
+      url: computeWebsiteUrl(website.subUrl),
+    }
+  }
+
+  private attachComputedUrl(website: Website): WebsiteWithComputedUrl {
+    return {
+      ...website,
+      url: computeWebsiteUrl(website.subUrl),
+    }
   }
 
   private requireWebsitePermission(

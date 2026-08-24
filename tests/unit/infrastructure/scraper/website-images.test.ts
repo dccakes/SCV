@@ -1,13 +1,29 @@
 import * as dns from 'node:dns/promises'
 import { fetchWebsiteImages } from '~/server/infrastructure/scraper/website-images'
 
+// Prevent real undici Agent instances from creating open handles in the jsdom environment.
+// The implementation creates Agents for SSRF-safe dispatching, but tests mock global.fetch
+// so the dispatcher is never used — a lightweight stub is sufficient.
+jest.mock('undici', () => ({
+  Agent: jest.fn().mockImplementation(() => ({
+    close: jest.fn().mockResolvedValue(undefined),
+  })),
+}))
+
+// jest.spyOn on native Node.js built-ins is unreliable in Node 22 — the property descriptor
+// may be non-configurable, allowing real DNS I/O to escape and cause ~5-second timeouts.
+// jest.mock is hoisted before imports, so the production module gets the stub on load.
+jest.mock('node:dns/promises', () => ({
+  lookup: jest.fn(),
+}))
+
 // jsdom test environment does not provide fetch — install a stub so jest.spyOn can wrap it
 if (!global.fetch) {
   global.fetch = jest.fn()
 }
 
 const mockFetch = jest.spyOn(global, 'fetch')
-const mockLookup = jest.spyOn(dns, 'lookup')
+const mockLookup = dns.lookup as jest.MockedFunction<typeof dns.lookup>
 
 function mockHtmlResponse(html: string, status = 200) {
   mockFetch.mockResolvedValueOnce({

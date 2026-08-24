@@ -29,9 +29,16 @@ export default function QuestionMultipleChoice({
   const rsvpFormData = useRsvpForm()
   const updateRsvpForm = useUpdateRsvpForm()
   const questionId = question.id ?? '-1'
+  // General/website questions are asked once for the whole household and have no
+  // specific guest. Attribute them to the household's primary contact (falling
+  // back to any household guest) so the response references a real Guest and
+  // satisfies the OptionResponse_guestId foreign key.
+  const householdGuestId =
+    rsvpFormData.selectedHousehold?.primaryContact?.id ??
+    rsvpFormData.selectedHousehold?.guests?.[0]?.id
   const answerTarget = {
     questionId,
-    guestId: guest?.id,
+    guestId: guest?.id ?? householdGuestId,
     householdId: rsvpFormData.selectedHousehold?.id,
   }
   const existingAnswer = findExistingAnswer(rsvpFormData.answersToQuestions, answerTarget)
@@ -99,7 +106,7 @@ export default function QuestionMultipleChoice({
       </ul>
       {isOtherSelected && (
         <textarea
-          className='w-full rounded-lg border border-gray-700 p-3 text-left text-base'
+          className='w-full rounded-lg border border-gray-700 bg-white p-3 text-left text-base text-black placeholder:text-gray-500'
           placeholder={t('otherPlaceholder')}
           value={otherResponse}
           onChange={(event) => setOtherResponse(event.target.value)}

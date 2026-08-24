@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { label: 'Guest List', href: '/guest-list' },
   { label: 'Events', href: '/events' },
   { label: 'Vendors', href: '/vendors' },
+  { label: 'Budget', href: '/budget' },
 ]
 
 export default function NavLinks() {

@@ -10,10 +10,14 @@
 import { initTRPC, TRPCError } from '@trpc/server'
 import superjson from 'superjson'
 import { z } from 'zod'
+import { resolveTrpcEventName } from '~/lib/analytics/events'
 import { auth } from '~/lib/auth'
 import { resolveWorkspaceScope } from '~/server/application/workspace/workspace-scope'
 import type { ActiveOrganization, AuthzContext } from '~/server/authz/authorization.types'
 import { db } from '~/server/db'
+import { extractAnalyticsContext } from '~/server/infrastructure/analytics/analytics-context'
+import { captureServerEvent } from '~/server/infrastructure/analytics/capture'
+import { sanitizePayload } from '~/server/infrastructure/analytics/payload'
 
 /**
  * 1. CONTEXT
@@ -97,13 +101,60 @@ export const createTRPCRouter = t.router
 export const createCallerFactory = t.createCallerFactory
 
 /**
+ * Analytics middleware
+ *
+ * Auto-instruments every successful mutation with a standardized PostHog event
+ * (see `~/lib/analytics/events`). This is the primary backend instrumentation:
+ * because it wraps the base procedure, every mutation across every router emits
+ * a `{scope}.{object}.{action}` event with the wedding id, any guest token /
+ * household, and the (sanitized) payload attached — without per-endpoint work.
+ *
+ * Capture is best-effort and runs after the resolver so it can also read the
+ * result (public flows resolve the wedding id late). It never blocks or fails
+ * the request.
+ */
+const analyticsMiddleware = t.middleware(async ({ ctx, path, type, next, getRawInput }) => {
+  const result = await next()
+
+  if (type === 'mutation' && result.ok) {
+    try {
+      const rawInput = await getRawInput().catch(() => undefined)
+      const event = resolveTrpcEventName(path)
+      const context = extractAnalyticsContext({
+        ctx,
+        input: rawInput,
+        result: (result as { data?: unknown }).data,
+      })
+      captureServerEvent({
+        event,
+        context,
+        properties: {
+          trpc_path: path,
+          payload: sanitizePayload(rawInput),
+        },
+      })
+    } catch {
+      // Never let analytics break a request.
+    }
+  }
+
+  return result
+})
+
+/**
+ * Base procedure with analytics instrumentation applied. All public and
+ * protected procedures build on this so instrumentation is universal.
+ */
+const baseProcedure = t.procedure.use(analyticsMiddleware)
+
+/**
  * Public (unauthenticated) procedure
  *
  * This is the base piece you use to build new queries and mutations on your tRPC API. It does not
  * guarantee that a user querying is authorized, but you can still access user session data if they
  * are logged in.
  */
-export const publicProcedure = t.procedure
+export const publicProcedure = baseProcedure
 
 /**
  * Protected (authenticated) procedure
@@ -113,7 +164,7 @@ export const publicProcedure = t.procedure
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
+export const protectedProcedure = baseProcedure.use(({ ctx, next }) => {
   if (!ctx.auth?.userId) {
     throw new TRPCError({ code: 'UNAUTHORIZED' })
   }

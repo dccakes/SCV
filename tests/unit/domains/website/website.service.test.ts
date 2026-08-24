@@ -16,7 +16,9 @@ import {
   mockFindBySubUrl,
   mockFindByWeddingId,
   mockUpdate,
+  mockUpdateCoupleImages,
   mockUpdateCoverPhoto,
+  mockUpdateHeaderImage,
   mockUpdateRsvpEnabled,
   mockWebsite,
   resetMocks as resetWebsiteMocks,
@@ -29,11 +31,14 @@ const mockFindBySubUrlFn = mockFindBySubUrl as jest.Mock
 const mockUpdateFn = mockUpdate as jest.Mock
 const mockUpdateRsvpEnabledFn = mockUpdateRsvpEnabled as jest.Mock
 const mockUpdateCoverPhotoFn = mockUpdateCoverPhoto as jest.Mock
+const mockUpdateHeaderImageFn = mockUpdateHeaderImage as jest.Mock
+const mockUpdateCoupleImagesFn = mockUpdateCoupleImages as jest.Mock
 const mockRequirePermission = requirePermission as jest.Mock
 const mockBelongsToWeddingFn = mockBelongsToWedding as jest.Mock
 
 describe('WebsiteService', () => {
   let websiteService: WebsiteService
+  const originalAppUrl = process.env.NEXT_PUBLIC_APP_URL
   const actorContext = {
     userId: 'actor-1',
     activeOrganization: null,
@@ -44,6 +49,7 @@ describe('WebsiteService', () => {
   const mockVerifyAccessToken = jest.fn()
 
   beforeEach(() => {
+    process.env.NEXT_PUBLIC_APP_URL = 'https://oswp.example'
     resetWebsiteMocks()
     mockHashPassword.mockReset()
     mockVerifyPassword.mockReset()
@@ -62,13 +68,16 @@ describe('WebsiteService', () => {
     websiteService = new WebsiteService(mockRepository, mockPasswordService as never)
   })
 
+  afterAll(() => {
+    process.env.NEXT_PUBLIC_APP_URL = originalAppUrl
+  })
+
   describe('updateWebsite', () => {
     it('should update website settings', async () => {
       const updatedWebsite = { ...mockWebsite, subUrl: 'newsuburl' }
       mockUpdateFn.mockResolvedValue(updatedWebsite)
 
       const result = await websiteService.updateWebsite(actorContext, 'wedding-123', {
-        basePath: 'https://example.com',
         subUrl: 'newsuburl',
       })
 
@@ -77,7 +86,6 @@ describe('WebsiteService', () => {
         isPasswordEnabled: undefined,
         password: undefined,
         subUrl: 'newsuburl',
-        url: 'https://example.com/newsuburl',
       })
     })
 
@@ -95,7 +103,6 @@ describe('WebsiteService', () => {
         isPasswordEnabled: true,
         password: 'salt:hashed-password',
         subUrl: undefined,
-        url: undefined,
       })
       expect(mockHashPassword).toHaveBeenCalledWith('secret123')
     })
@@ -164,13 +171,64 @@ describe('WebsiteService', () => {
     })
   })
 
+  describe('updateHeaderImage', () => {
+    it('should update the header image URL', async () => {
+      const headerImageUrl = 'https://example.com/header.jpg'
+      mockUpdateHeaderImageFn.mockResolvedValue({ ...mockWebsite, headerImageUrl })
+
+      const result = await websiteService.updateHeaderImage(
+        actorContext,
+        'wedding-123',
+        headerImageUrl
+      )
+
+      expect(result.headerImageUrl).toBe(headerImageUrl)
+      expect(mockUpdateHeaderImageFn).toHaveBeenCalledWith('wedding-123', headerImageUrl)
+    })
+
+    it('should allow clearing the header image', async () => {
+      mockUpdateHeaderImageFn.mockResolvedValue({ ...mockWebsite, headerImageUrl: null })
+
+      await websiteService.updateHeaderImage(actorContext, 'wedding-123', null)
+
+      expect(mockUpdateHeaderImageFn).toHaveBeenCalledWith('wedding-123', null)
+    })
+  })
+
+  describe('updateCoupleImages', () => {
+    it('should update the couple photo gallery', async () => {
+      const coupleImageUrls = ['https://example.com/a.jpg', 'https://example.com/b.jpg']
+      mockUpdateCoupleImagesFn.mockResolvedValue({ ...mockWebsite, coupleImageUrls })
+
+      const result = await websiteService.updateCoupleImages(
+        actorContext,
+        'wedding-123',
+        coupleImageUrls
+      )
+
+      expect(result.coupleImageUrls).toEqual(coupleImageUrls)
+      expect(mockUpdateCoupleImagesFn).toHaveBeenCalledWith('wedding-123', coupleImageUrls)
+    })
+
+    it('should allow an empty gallery', async () => {
+      mockUpdateCoupleImagesFn.mockResolvedValue({ ...mockWebsite, coupleImageUrls: [] })
+
+      await websiteService.updateCoupleImages(actorContext, 'wedding-123', [])
+
+      expect(mockUpdateCoupleImagesFn).toHaveBeenCalledWith('wedding-123', [])
+    })
+  })
+
   describe('getByWeddingId', () => {
     it('should return website for valid weddingId', async () => {
       mockFindByWeddingIdFn.mockResolvedValue(mockWebsite)
 
       const result = await websiteService.getByWeddingId('wedding-123')
 
-      expect(result).toEqual(mockWebsite)
+      expect(result).toEqual({
+        ...mockWebsite,
+        url: 'https://oswp.example/w/johndoeandjanesmith',
+      })
       expect(mockFindByWeddingIdFn).toHaveBeenCalledWith('wedding-123')
     })
 
@@ -201,11 +259,14 @@ describe('WebsiteService', () => {
         createdAt: mockWebsite.createdAt,
         updatedAt: mockWebsite.updatedAt,
         weddingId: mockWebsite.weddingId,
-        url: mockWebsite.url,
+        templateId: mockWebsite.templateId,
         subUrl: mockWebsite.subUrl,
         isPasswordEnabled: mockWebsite.isPasswordEnabled,
         isRsvpEnabled: mockWebsite.isRsvpEnabled,
         coverPhotoUrl: mockWebsite.coverPhotoUrl,
+        headerImageUrl: mockWebsite.headerImageUrl,
+        coupleImageUrls: mockWebsite.coupleImageUrls,
+        url: 'https://oswp.example/w/johndoeandjanesmith',
       })
       expect(result).not.toHaveProperty('password')
       expect(mockFindBySubUrlFn).toHaveBeenCalledWith('johndoeandjanesmith')

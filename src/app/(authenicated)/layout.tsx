@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react'
-
-import { AuthenticatedLayoutFrame } from '@/components/layout/authenticated-layout-frame'
 import { EventFormProvider } from '~/components/contexts/event-form-context'
 import { GuestFormProvider } from '~/components/contexts/guest-form-context'
+import { AuthenticatedLayoutFrame } from '~/components/layout/authenticated-layout-frame'
 
 export const dynamic = 'force-dynamic'
 

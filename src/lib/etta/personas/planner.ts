@@ -6,6 +6,7 @@
  */
 
 import { getBudgetTools } from '~/lib/etta/tools/budget'
+import { getChecklistTools } from '~/lib/etta/tools/checklist'
 import { getCommunicationLogTools } from '~/lib/etta/tools/communication-log'
 import { getDocumentTools } from '~/lib/etta/tools/documents'
 import { getGuestTools } from '~/lib/etta/tools/guests'
@@ -24,6 +25,7 @@ export function getPlannerTools(ctx: EttaContext) {
     ...getVendorTools(ctx),
     ...getBudgetTools(ctx),
     ...getTimelineTools(ctx),
+    ...getChecklistTools(ctx),
     ...getSuggestionTools(ctx),
     ...getMemoryTools(ctx),
     ...getOutboundTools(ctx),

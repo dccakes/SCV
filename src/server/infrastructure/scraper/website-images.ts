@@ -124,39 +124,43 @@ async function fetchText(url: string): Promise<{ finalUrl: string; text: string 
       if (!resolvedAddresses) return null
 
       const dispatcher = createSafeDispatcher(resolvedAddresses)
-      const fetchOptions: FetchOptions = {
-        headers: { 'User-Agent': USER_AGENT },
-        redirect: 'manual',
-        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-        dispatcher,
-      }
-      const response = await fetch(currentUrl.href, fetchOptions)
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
 
-      if (isRedirectResponse(response)) {
-        await closeDispatcher(dispatcher)
-        const location = response.headers?.get('location')
-        const redirectUrl = resolveUrl(location ?? undefined, currentUrl.href)
-        if (!redirectUrl || !isSafeFetchUrl(redirectUrl) || redirectCount === MAX_REDIRECTS) {
+      try {
+        const fetchOptions: FetchOptions = {
+          headers: { 'User-Agent': USER_AGENT },
+          redirect: 'manual',
+          signal: controller.signal,
+          dispatcher,
+        }
+        const response = await fetch(currentUrl.href, fetchOptions)
+
+        if (isRedirectResponse(response)) {
+          const location = response.headers?.get('location')
+          const redirectUrl = resolveUrl(location ?? undefined, currentUrl.href)
+          if (!redirectUrl || !isSafeFetchUrl(redirectUrl) || redirectCount === MAX_REDIRECTS) {
+            return null
+          }
+          currentUrl = redirectUrl
+          continue
+        }
+
+        if (!response.ok) {
           return null
         }
-        currentUrl = redirectUrl
-        continue
-      }
 
-      if (!response.ok) {
+        const contentLength = response.headers?.get('content-length')
+        if (contentLength && parseInt(contentLength, 10) > MAX_SITEMAP_BYTES) {
+          return null
+        }
+
+        const text = await readBoundedResponseText(response)
+        return text === null ? null : { finalUrl: currentUrl.href, text }
+      } finally {
+        clearTimeout(timeoutId)
         await closeDispatcher(dispatcher)
-        return null
       }
-
-      const contentLength = response.headers?.get('content-length')
-      if (contentLength && parseInt(contentLength, 10) > MAX_SITEMAP_BYTES) {
-        await closeDispatcher(dispatcher)
-        return null
-      }
-
-      const text = await readBoundedResponseText(response)
-      await closeDispatcher(dispatcher)
-      return text === null ? null : { finalUrl: currentUrl.href, text }
     }
 
     return null

@@ -100,18 +100,18 @@ export default function SelfFillPage() {
 
   if (isLoadingWedding) {
     return (
-      <div className='flex min-h-screen items-center justify-center bg-gradient-to-b from-rose-50 to-white'>
-        <Loader2 className='h-8 w-8 animate-spin text-rose-500' />
+      <div className='flex min-h-screen items-center justify-center bg-background'>
+        <Loader2 className='h-8 w-8 animate-spin text-primary' />
       </div>
     )
   }
 
   if (!wedding) {
     return (
-      <div className='flex min-h-screen items-center justify-center bg-gradient-to-b from-rose-50 to-white p-4'>
+      <div className='flex min-h-screen items-center justify-center bg-background p-4'>
         <Card className='w-full max-w-md'>
           <CardHeader className='text-center'>
-            <CardTitle className='text-2xl text-rose-700'>Link Not Found</CardTitle>
+            <CardTitle className='text-2xl'>Link Not Found</CardTitle>
             <CardDescription>
               This registration link is invalid or has expired. Please contact the couple for a new
               link.
@@ -124,13 +124,13 @@ export default function SelfFillPage() {
 
   if (isSubmitted) {
     return (
-      <div className='flex min-h-screen items-center justify-center bg-gradient-to-b from-rose-50 to-white p-4'>
+      <div className='flex min-h-screen items-center justify-center bg-background p-4'>
         <Card className='w-full max-w-md'>
           <CardHeader className='text-center'>
-            <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100'>
-              <CheckCircle2 className='h-10 w-10 text-green-600' />
+            <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/10'>
+              <CheckCircle2 className='h-10 w-10 text-success' />
             </div>
-            <CardTitle className='text-2xl text-green-700'>You&apos;re on the list!</CardTitle>
+            <CardTitle className='text-2xl text-success'>You&apos;re on the list!</CardTitle>
             <CardDescription className='text-base'>{successMessage}</CardDescription>
           </CardHeader>
           <CardContent className='text-center text-muted-foreground text-sm'>
@@ -145,10 +145,10 @@ export default function SelfFillPage() {
   }
 
   return (
-    <div className='flex min-h-screen items-center justify-center bg-gradient-to-b from-rose-50 to-white p-4'>
+    <div className='flex min-h-screen items-center justify-center bg-background p-4'>
       <Card className='w-full max-w-md'>
         <CardHeader className='text-center'>
-          <CardTitle className='text-2xl text-rose-700'>
+          <CardTitle className='text-2xl text-primary'>
             {wedding.groomFirstName} & {wedding.brideFirstName}&apos;s Wedding
           </CardTitle>
           <CardDescription>
@@ -165,10 +165,10 @@ export default function SelfFillPage() {
                   id='firstName'
                   placeholder='John'
                   {...register('firstName')}
-                  className={errors.firstName ? 'border-red-500' : ''}
+                  className={errors.firstName ? 'border-destructive' : ''}
                 />
                 {errors.firstName && (
-                  <p className='text-red-500 text-sm'>{errors.firstName.message}</p>
+                  <p className='text-destructive text-sm'>{errors.firstName.message}</p>
                 )}
               </div>
               <div className='space-y-2'>
@@ -177,10 +177,10 @@ export default function SelfFillPage() {
                   id='lastName'
                   placeholder='Doe'
                   {...register('lastName')}
-                  className={errors.lastName ? 'border-red-500' : ''}
+                  className={errors.lastName ? 'border-destructive' : ''}
                 />
                 {errors.lastName && (
-                  <p className='text-red-500 text-sm'>{errors.lastName.message}</p>
+                  <p className='text-destructive text-sm'>{errors.lastName.message}</p>
                 )}
               </div>
             </div>
@@ -193,9 +193,9 @@ export default function SelfFillPage() {
                 type='email'
                 placeholder='john@example.com'
                 {...register('email')}
-                className={errors.email ? 'border-red-500' : ''}
+                className={errors.email ? 'border-destructive' : ''}
               />
-              {errors.email && <p className='text-red-500 text-sm'>{errors.email.message}</p>}
+              {errors.email && <p className='text-destructive text-sm'>{errors.email.message}</p>}
             </div>
 
             <div className='space-y-2'>
@@ -215,7 +215,7 @@ export default function SelfFillPage() {
                 )}
               />
               {errors.phone && (
-                <p id='phone-error' className='text-red-500 text-sm'>
+                <p id='phone-error' className='text-destructive text-sm'>
                   {errors.phone.message}
                 </p>
               )}
@@ -236,10 +236,10 @@ export default function SelfFillPage() {
                   id='address1'
                   placeholder='123 Main St'
                   {...register('address1')}
-                  className={errors.address1 ? 'border-red-500' : ''}
+                  className={errors.address1 ? 'border-destructive' : ''}
                 />
                 {errors.address1 && (
-                  <p className='text-red-500 text-sm'>{errors.address1.message}</p>
+                  <p className='text-destructive text-sm'>{errors.address1.message}</p>
                 )}
               </div>
 
@@ -249,10 +249,10 @@ export default function SelfFillPage() {
                   id='address2'
                   placeholder='Apt 4B'
                   {...register('address2')}
-                  className={errors.address2 ? 'border-red-500' : ''}
+                  className={errors.address2 ? 'border-destructive' : ''}
                 />
                 {errors.address2 && (
-                  <p className='text-red-500 text-sm'>{errors.address2.message}</p>
+                  <p className='text-destructive text-sm'>{errors.address2.message}</p>
                 )}
               </div>
 
@@ -263,9 +263,9 @@ export default function SelfFillPage() {
                     id='city'
                     placeholder='San Francisco'
                     {...register('city')}
-                    className={errors.city ? 'border-red-500' : ''}
+                    className={errors.city ? 'border-destructive' : ''}
                   />
-                  {errors.city && <p className='text-red-500 text-sm'>{errors.city.message}</p>}
+                  {errors.city && <p className='text-destructive text-sm'>{errors.city.message}</p>}
                 </div>
                 <div className='space-y-2'>
                   <Label htmlFor='state'>State</Label>
@@ -273,9 +273,11 @@ export default function SelfFillPage() {
                     id='state'
                     placeholder='CA'
                     {...register('state')}
-                    className={errors.state ? 'border-red-500' : ''}
+                    className={errors.state ? 'border-destructive' : ''}
                   />
-                  {errors.state && <p className='text-red-500 text-sm'>{errors.state.message}</p>}
+                  {errors.state && (
+                    <p className='text-destructive text-sm'>{errors.state.message}</p>
+                  )}
                 </div>
               </div>
 
@@ -286,10 +288,10 @@ export default function SelfFillPage() {
                     id='zipCode'
                     placeholder='94102'
                     {...register('zipCode')}
-                    className={errors.zipCode ? 'border-red-500' : ''}
+                    className={errors.zipCode ? 'border-destructive' : ''}
                   />
                   {errors.zipCode && (
-                    <p className='text-red-500 text-sm'>{errors.zipCode.message}</p>
+                    <p className='text-destructive text-sm'>{errors.zipCode.message}</p>
                   )}
                 </div>
                 <div className='space-y-2'>
@@ -298,22 +300,24 @@ export default function SelfFillPage() {
                     id='country'
                     placeholder='United States'
                     {...register('country')}
-                    className={errors.country ? 'border-red-500' : ''}
+                    className={errors.country ? 'border-destructive' : ''}
                   />
                   {errors.country && (
-                    <p className='text-red-500 text-sm'>{errors.country.message}</p>
+                    <p className='text-destructive text-sm'>{errors.country.message}</p>
                   )}
                 </div>
               </div>
             </div>
 
             {mutationError && (
-              <div className='rounded-md bg-red-50 p-3 text-red-700 text-sm'>{mutationError}</div>
+              <div className='rounded-md bg-destructive/10 p-3 text-destructive text-sm'>
+                {mutationError}
+              </div>
             )}
 
             <Button
               type='submit'
-              className='w-full bg-rose-600 hover:bg-rose-700'
+              className='w-full'
               disabled={isSubmitting || registerMutation.isPending}
             >
               {isSubmitting || registerMutation.isPending ? (

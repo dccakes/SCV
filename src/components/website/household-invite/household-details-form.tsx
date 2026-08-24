@@ -1,9 +1,13 @@
+'use client'
+
 import Link from 'next/link'
-import { getTranslations } from 'next-intl/server'
+import { useTranslations } from 'next-intl'
+import { useState } from 'react'
 
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
+import { PhoneInput } from '~/components/ui/phone-input'
 import { HouseholdSubmitButton } from '~/components/website/household-invite/household-submit-button'
 import type { HouseholdInviteData } from '~/server/application/household-invite/household-invite.service'
 
@@ -16,13 +20,17 @@ type HouseholdDetailsFormProps = {
 
 const valueOrEmpty = (value: string | null) => value ?? ''
 
-export async function HouseholdDetailsForm({
+export function HouseholdDetailsForm({
   inviteData,
   action,
   errorMessage,
   inviteHref,
 }: Readonly<HouseholdDetailsFormProps>) {
-  const t = await getTranslations('household')
+  const t = useTranslations('household')
+  const [phones, setPhones] = useState<Record<number, string>>(() =>
+    Object.fromEntries(inviteData.guests.map((guest) => [guest.id, valueOrEmpty(guest.phone)]))
+  )
+
   return (
     <form action={action} className='mt-10 space-y-10'>
       {errorMessage ? (
@@ -73,10 +81,18 @@ export async function HouseholdDetailsForm({
                 </div>
                 <div className='space-y-2'>
                   <Label htmlFor={`guest-${guest.id}-phone`}>{t('phone')}</Label>
-                  <Input
-                    id={`guest-${guest.id}-phone`}
+                  <input
+                    type='hidden'
                     name={`guest-${guest.id}-phone`}
-                    defaultValue={valueOrEmpty(guest.phone)}
+                    value={phones[guest.id] ?? ''}
+                  />
+                  <PhoneInput
+                    id={`guest-${guest.id}-phone`}
+                    value={phones[guest.id] || undefined}
+                    onChange={(nextValue) =>
+                      setPhones((current) => ({ ...current, [guest.id]: nextValue ?? '' }))
+                    }
+                    className='w-full'
                   />
                 </div>
               </div>

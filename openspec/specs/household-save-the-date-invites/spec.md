@@ -21,9 +21,9 @@ The system SHALL allow an authenticated dashboard user to generate a signed save
 The system SHALL validate household invite tokens and store a browser cookie that authenticates the invited household for one year.
 
 #### Scenario: Valid invite token sets browser cookie
-- **WHEN** a guest opens `/{websiteSubUrl}/invite/{token}` with a valid token for that website and household
+- **WHEN** a guest opens `/{websiteSubUrl}/save-the-date/{token}` with a valid token for that website and household
 - **THEN** the system sets an HTTP-only household invite cookie expiring in one year for that browser
-- **AND** redirects the guest to `/{websiteSubUrl}/invite`
+- **AND** redirects the guest to `/{websiteSubUrl}/save-the-date`
 
 #### Scenario: Invite link can be opened in multiple browsers
 - **WHEN** the same valid invite link is opened in a second browser before token expiry
@@ -43,14 +43,14 @@ The system SHALL validate household invite tokens and store a browser cookie tha
 The system SHALL show an authenticated invited household a guest-facing save-the-date page with the relevant wedding and household information.
 
 #### Scenario: Authenticated household sees save-the-date details
-- **WHEN** a guest with a valid household invite cookie opens `/{websiteSubUrl}/invite`
+- **WHEN** a guest with a valid household invite cookie opens `/{websiteSubUrl}/save-the-date`
 - **THEN** the page displays the couple names from the wedding record
 - **AND** displays the household guest names from the household record
 - **AND** displays May 30, 2027
 - **AND** displays Puebla, Mexico
 
 #### Scenario: Unauthenticated visitor cannot view household details
-- **WHEN** a visitor without a valid household invite cookie opens `/{websiteSubUrl}/invite`
+- **WHEN** a visitor without a valid household invite cookie opens `/{websiteSubUrl}/save-the-date`
 - **THEN** the system shows an invalid or unavailable invite state instead of household details
 
 ---

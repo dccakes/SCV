@@ -1,4 +1,5 @@
-import DashboardTopbar from '@/components/dashboard/dashboard-topbar'
+import { PluginsSettingsCard } from '~/app/_components/settings/plugins-settings-card'
+import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
 import WeddingSettingsForm from '~/components/forms/wedding-settings-form'
 import { OrganizationMembersSettingsCard } from '~/components/settings/organization-members-settings-card'
 import { OrganizationOutstandingInvitesCard } from '~/components/settings/organization-outstanding-invites-card'
@@ -9,7 +10,7 @@ import { api } from '~/trpc/server'
 export const dynamic = 'force-dynamic'
 
 export default async function SettingsPage() {
-  await getRequiredWedding()
+  const wedding = await getRequiredWedding()
 
   let details: Awaited<ReturnType<typeof api.wedding.getDetails>> | null = null
   let weddingDetailsLoadFailed = false
@@ -53,6 +54,15 @@ export default async function SettingsPage() {
                 No wedding found. Please complete onboarding first.
               </p>
             )}
+            <div className='space-y-3'>
+              <div>
+                <h3 className='font-serif text-foreground text-xl'>Plugins</h3>
+                <p className='mt-1 font-mono text-[0.62rem] text-foreground/55 tracking-wider'>
+                  Turn optional workspace features on and off for your wedding.
+                </p>
+              </div>
+              <PluginsSettingsCard enabledAddOns={wedding.enabledAddOns} />
+            </div>
             <div className='space-y-3'>
               <div>
                 <h3 className='font-serif text-foreground text-xl'>Organization Members</h3>

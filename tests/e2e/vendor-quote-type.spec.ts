@@ -61,7 +61,7 @@ test.describe
       await expect(page.getByText('/ guest').first()).toBeVisible()
 
       // Verify the price appears in the quote detail (use first() since prior runs may have added multiple $75 quotes)
-      await expect(page.getByText('$75.00').first()).toBeVisible()
+      await expect(page.getByText('$75').first()).toBeVisible()
     })
 
     test('should save a new quote with default "Flat Fee" type', async ({ page }) => {

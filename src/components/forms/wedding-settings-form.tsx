@@ -5,6 +5,7 @@ import { CalendarIcon, MapPin } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import type { z } from 'zod'
 
 import { LoadingSpinner } from '~/components/loaders'
@@ -34,9 +35,13 @@ export default function WeddingSettingsForm({ initialData }: WeddingSettingsForm
 
   const updateDetails = api.wedding.updateDetails.useMutation({
     onSuccess: () => {
+      toast.success('Names updated successfully.')
       void utils.dashboard.getForActiveWorkspace.invalidate()
       void utils.wedding.getDetails.invalidate()
       router.refresh()
+    },
+    onError: () => {
+      toast.error('Failed to update names. Please try again.')
     },
   })
 
@@ -74,19 +79,6 @@ export default function WeddingSettingsForm({ initialData }: WeddingSettingsForm
       })}
       className='flex flex-col gap-6'
     >
-      {updateDetails.isError && (
-        <div className='rounded-lg border border-destructive bg-destructive/10 p-4 text-destructive'>
-          <p className='font-semibold'>Error updating names</p>
-          <p className='text-sm'>{updateDetails.error?.message ?? 'Please try again'}</p>
-        </div>
-      )}
-
-      {updateDetails.isSuccess && (
-        <div className='rounded-lg border border-success bg-success/10 p-4 text-success'>
-          <p className='text-sm'>Names updated successfully.</p>
-        </div>
-      )}
-
       {/* Couple Names */}
       <div className='grid gap-6 md:grid-cols-2'>
         {/* Groom */}

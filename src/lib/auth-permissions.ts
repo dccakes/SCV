@@ -11,6 +11,7 @@ export const authzStatement = {
   guest: ['read', 'create', 'update', 'delete', 'import'],
   vendor: ['read', 'create', 'update', 'delete'],
   vendor_quote: ['read', 'create', 'update', 'delete'],
+  budget: ['read', 'create', 'update', 'delete'],
   website: ['read', 'update', 'publish', 'password_update'],
   wedding: ['read', 'update'],
 } as const
@@ -30,6 +31,7 @@ const owner = ac.newRole({
   guest: ['read', 'create', 'update', 'delete', 'import'],
   vendor: ['read', 'create', 'update', 'delete'],
   vendor_quote: ['read', 'create', 'update', 'delete'],
+  budget: ['read', 'create', 'update', 'delete'],
   website: ['read', 'update', 'publish', 'password_update'],
   wedding: ['read', 'update'],
 })
@@ -45,6 +47,7 @@ const admin = ac.newRole({
   guest: ['read', 'create', 'update', 'delete', 'import'],
   vendor: ['read', 'create', 'update', 'delete'],
   vendor_quote: ['read', 'create', 'update', 'delete'],
+  budget: ['read', 'create', 'update', 'delete'],
   website: ['read', 'update', 'publish', 'password_update'],
   wedding: ['read', 'update'],
 })
@@ -57,6 +60,7 @@ const member = ac.newRole({
   guest: ['read', 'create', 'update', 'delete', 'import'],
   vendor: ['read', 'create', 'update', 'delete'],
   vendor_quote: ['read', 'create', 'update', 'delete'],
+  budget: ['read', 'create', 'update', 'delete'],
   website: ['read', 'update', 'publish', 'password_update'],
   wedding: ['read', 'update'],
 })
@@ -72,6 +76,7 @@ const viewer = ac.newRole({
   guest: [],
   vendor: [],
   vendor_quote: [],
+  budget: [],
   website: [],
   wedding: [],
 })

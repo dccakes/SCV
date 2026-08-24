@@ -63,4 +63,32 @@ describe('ListToolbar', () => {
     render(<ListToolbar totalHouseholds={3} sortStateLabel='Name (A-Z)' />)
     expect(screen.getByText('Sorted by Name (A-Z)')).toBeInTheDocument()
   })
+
+  it('highlights the name sort button when name sort is active', () => {
+    render(
+      <ListToolbar totalHouseholds={3} activeSort={{ field: 'name', direction: 'ascending' }} />
+    )
+
+    expect(screen.getByRole('button', { name: 'Sort by Name' })).toHaveClass('bg-primary')
+    expect(screen.getByRole('button', { name: 'Sort by Party Size' })).not.toHaveClass('bg-primary')
+  })
+
+  it('highlights the party size sort button when party sort is active', () => {
+    render(
+      <ListToolbar
+        totalHouseholds={3}
+        activeSort={{ field: 'partySize', direction: 'descending' }}
+      />
+    )
+
+    expect(screen.getByRole('button', { name: 'Sort by Party Size' })).toHaveClass('bg-primary')
+    expect(screen.getByRole('button', { name: 'Sort by Name' })).not.toHaveClass('bg-primary')
+  })
+
+  it('shows no sort button highlighted when activeSort is not provided', () => {
+    render(<ListToolbar totalHouseholds={3} />)
+
+    expect(screen.getByRole('button', { name: 'Sort by Name' })).not.toHaveClass('bg-primary')
+    expect(screen.getByRole('button', { name: 'Sort by Party Size' })).not.toHaveClass('bg-primary')
+  })
 })

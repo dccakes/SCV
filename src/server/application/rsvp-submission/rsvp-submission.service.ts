@@ -48,12 +48,44 @@ export class RsvpSubmissionService {
   }
 
   async submitPublicRsvp(data: SubmitPublicRsvpSchemaInput): Promise<{ success: boolean }> {
-    const weddingId = await this.getWeddingIdFromValidToken(data.subUrl, data.token)
+    const weddingId = await this.resolvePublicSubmitWeddingId(data.subUrl, data.token)
     await this.ensureSubmissionBelongsToWedding(weddingId, data)
 
     return this.submitRsvp({
       rsvpResponses: data.rsvpResponses,
       answersToQuestions: data.answersToQuestions,
+    })
+  }
+
+  /**
+   * Resolve the wedding a public RSVP submission belongs to.
+   *
+   * Guests reach the RSVP form from the wedding website (name search or
+   * save-the-date recognition), so the submission is scoped by the website's
+   * subUrl — mirroring the public name search. A shared self-fill link may still
+   * carry a token, which is honored as a fallback. The submission is separately
+   * verified to belong to this wedding in `ensureSubmissionBelongsToWedding`.
+   */
+  private async resolvePublicSubmitWeddingId(
+    subUrl: string,
+    token: string | undefined
+  ): Promise<string> {
+    const website = await this.db.website.findFirst({
+      where: { subUrl },
+      select: { weddingId: true, isRsvpEnabled: true },
+    })
+
+    if (website?.isRsvpEnabled) {
+      return website.weddingId
+    }
+
+    if (token) {
+      return this.getWeddingIdFromValidToken(subUrl, token)
+    }
+
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'RSVP is not available for this wedding',
     })
   }
 

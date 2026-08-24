@@ -3,7 +3,7 @@
 import { Loader2, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { EventQuestionFormDialog } from '@/app/(authenicated)/events/_components/event-question-form-dialog'
+import { EventQuestionFormDialog } from '~/app/(authenicated)/events/_components/event-question-form-dialog'
 import type { Question } from '~/app/utils/shared-types'
 import {
   AlertDialog,
@@ -195,7 +195,7 @@ export function ManageEventQuestionsDialog({
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleteQuestion.isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className='bg-red-600 hover:bg-red-700'
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
               disabled={deleteQuestion.isPending}
               onClick={(eventAction) => {
                 eventAction.preventDefault()
