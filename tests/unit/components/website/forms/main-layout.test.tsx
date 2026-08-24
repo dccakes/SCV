@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import type { Dispatch, SetStateAction } from 'react'
 import { sharedStyles } from '~/app/utils/shared-styles'
+import RsvpPageSkeleton from '~/app/w/[websiteSubUrl]/rsvp/loading'
 import MainRsvpForm from '~/components/website/forms/main'
 
 const mockMutate = jest.fn()
@@ -130,6 +131,21 @@ describe('Main RSVP layout', () => {
     // otherwise the first step's copy renders underneath it.
     const wrapper = container.querySelector('form')?.parentElement
     expect(wrapper?.className.split(' ')).toContain('pt-24')
+  })
+
+  it('keeps loaded and loading close controls clear of the language toggle', () => {
+    const renderedForm = render(
+      <MainRsvpForm
+        weddingData={{ events: [], website: { generalQuestions: [] } } as never}
+        basePath='/wedding'
+      />
+    )
+
+    expect(screen.getByRole('button', { name: 'Close RSVP form' })).toHaveClass('right-20')
+    renderedForm.unmount()
+
+    const { container } = render(<RsvpPageSkeleton />)
+    expect(container.querySelector('svg')).toHaveClass('right-20')
   })
 
   it('uses responsive side pane footer widths for mobile screens', () => {
