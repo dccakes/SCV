@@ -44,8 +44,8 @@ export default function FindYourInvitationForm({ goNext }: StepFormProps) {
     <div className='flex flex-col gap-5'>
       <h2 className='text-2xl tracking-widest'>
         {t('weddingTitle', {
-          brideFirstName: weddingData.brideFirstName,
-          groomFirstName: weddingData.groomFirstName,
+          brideFirstName: weddingData.brideFirstName ?? '',
+          groomFirstName: weddingData.groomFirstName ?? '',
         })}
       </h2>
       <p className='mb-3 font-thin'>{t('groupNote')}</p>

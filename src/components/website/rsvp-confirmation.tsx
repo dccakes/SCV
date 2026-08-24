@@ -20,8 +20,8 @@ export default function RsvpConfirmation({ basePath, setCurrentStep }: RsvpConfi
     <div className='flex flex-col pt-5 pb-8'>
       <h2 className='text-2xl tracking-widest'>
         {t('confirmationTitle', {
-          groomFirstName: rsvpFormData.weddingData.groomFirstName,
-          brideFirstName: rsvpFormData.weddingData.brideFirstName,
+          groomFirstName: rsvpFormData.weddingData.groomFirstName ?? '',
+          brideFirstName: rsvpFormData.weddingData.brideFirstName ?? '',
         })}
       </h2>
       <Link
