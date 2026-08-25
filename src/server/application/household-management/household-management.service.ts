@@ -51,6 +51,17 @@ export class HouseholdManagementService {
       const txHouseholdRepo = new HouseholdRepository(tx)
       const txGuestRepo = new GuestRepository(tx)
 
+      let defaultEventIds: string[] | undefined
+      const getDefaultEventIds = async () => {
+        defaultEventIds ??= (
+          await tx.event.findMany({
+            where: { weddingId },
+            select: { id: true },
+          })
+        ).map((event) => event.id)
+        return defaultEventIds
+      }
+
       const eventIds = Object.keys(data.guestParty[0]?.invites ?? {})
 
       const household = await txHouseholdRepo.createWithGifts(
@@ -78,7 +89,12 @@ export class HouseholdManagementService {
       const guests = await Promise.all(
         data.guestParty.map(async (guest, index) => {
           const isTagAlong = guest.isTagAlong ?? false
-          const invitations = Object.entries(guest.invites).map(([eventId, rsvp]) => ({
+          const inviteEntries = Object.entries(guest.invites)
+          const defaultInviteEntries =
+            inviteEntries.length === 0
+              ? (await getDefaultEventIds()).map((eventId) => [eventId, 'Not Invited'] as const)
+              : inviteEntries
+          const invitations = defaultInviteEntries.map(([eventId, rsvp]) => ({
             eventId,
             rsvp,
             weddingId,
@@ -150,6 +166,16 @@ export class HouseholdManagementService {
       const txGuestRepo = new GuestRepository(tx)
       const txInvitationRepo = new InvitationRepository(tx)
       const txGiftRepo = new GiftRepository(tx)
+      let defaultEventIds: string[] | undefined
+      const getDefaultEventIds = async () => {
+        defaultEventIds ??= (
+          await tx.event.findMany({
+            where: { weddingId },
+            select: { id: true },
+          })
+        ).map((event) => event.id)
+        return defaultEventIds
+      }
 
       const updatedHousehold = await txHouseholdRepo.update(data.householdId, {
         address1: data.address1 ?? undefined,
@@ -171,7 +197,12 @@ export class HouseholdManagementService {
       const updatedGuests = await Promise.all(
         data.guestParty.map(async (guest) => {
           const isTagAlong = guest.isTagAlong ?? false
-          const invitations = Object.entries(guest.invites).map(([eventId, rsvp]) => ({
+          const inviteEntries = Object.entries(guest.invites)
+          const defaultInviteEntries =
+            !guest.guestId && inviteEntries.length === 0
+              ? (await getDefaultEventIds()).map((eventId) => [eventId, 'Not Invited'] as const)
+              : inviteEntries
+          const invitations = defaultInviteEntries.map(([eventId, rsvp]) => ({
             eventId,
             rsvp,
             weddingId,

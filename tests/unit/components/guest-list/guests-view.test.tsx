@@ -746,6 +746,50 @@ describe('GuestsView', () => {
     })
   })
 
+  it('should initialize newly added household members as not invited to every event', async () => {
+    render(
+      <GuestsView
+        events={events}
+        households={households}
+        selectedEventId='event-1'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+    fireEvent.click(screen.getByRole('button', { name: 'Manage members' }))
+
+    fireEvent.click(screen.getByRole('button', { name: /add guest/i }))
+    fireEvent.change(screen.getByLabelText('First name (member 3)'), {
+      target: { value: 'Taylor' },
+    })
+    fireEvent.change(screen.getByLabelText('Last name (member 3)'), {
+      target: { value: 'Rivera' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save members' }))
+
+    await waitFor(() => {
+      expect(mockHouseholdUpdateMutate).toHaveBeenCalled()
+    })
+
+    const payload = mockHouseholdUpdateMutate.mock.calls[0]?.[0] as {
+      guestParty: Array<{ guestId?: number; firstName: string; lastName: string; invites: unknown }>
+    }
+    const newGuest = payload.guestParty.find(
+      (guest) => guest.firstName === 'Taylor' && guest.lastName === 'Rivera'
+    )
+
+    expect(newGuest).toMatchObject({
+      guestId: undefined,
+      invites: {
+        'event-1': 'Not Invited',
+        'event-2': 'Not Invited',
+      },
+    })
+  })
+
   it('should keep modal open and preserve draft values when member save fails', async () => {
     shouldMutationFail = true
 

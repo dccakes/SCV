@@ -78,13 +78,21 @@ const mockGuestWithInvitations = {
   guestTagAssignments: [],
 }
 
-const createMockDb = () => ({
-  $transaction: jest
-    .fn()
-    .mockImplementation(async (callback: (tx: unknown) => Promise<unknown>) =>
-      callback({ __tx: true })
-    ),
-})
+const createMockDb = () => {
+  const tx = {
+    __tx: true,
+    event: {
+      findMany: jest.fn().mockResolvedValue([{ id: 'event-123' }]),
+    },
+  }
+
+  return {
+    tx,
+    $transaction: jest
+      .fn()
+      .mockImplementation(async (callback: (txArg: typeof tx) => unknown) => callback(tx)),
+  }
+}
 
 const SINGLE_GUEST_HOUSEHOLD = {
   guestParty: [

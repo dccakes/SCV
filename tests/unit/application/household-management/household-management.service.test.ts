@@ -74,11 +74,21 @@ const mockGuestWithInvitations = {
   guestTagAssignments: [],
 }
 
-const createMockDb = () => ({
-  $transaction: jest.fn().mockImplementation(async (fn: (tx: unknown) => unknown) => {
-    return fn({ __tx: true })
-  }),
-})
+const createMockDb = () => {
+  const tx = {
+    __tx: true,
+    event: {
+      findMany: jest.fn().mockResolvedValue([{ id: 'event-123' }, { id: 'event-456' }]),
+    },
+  }
+
+  return {
+    tx,
+    $transaction: jest.fn().mockImplementation(async (fn: (txArg: typeof tx) => unknown) => {
+      return fn(tx)
+    }),
+  }
+}
 
 describe('HouseholdManagementService', () => {
   let service: HouseholdManagementService
@@ -190,6 +200,28 @@ describe('HouseholdManagementService', () => {
     )
   })
 
+  it('creates default not-invited rows for a new household when invites are empty', async () => {
+    await service.createHouseholdWithGuests(actorContext, 'wedding-123', {
+      address1: '123 Main St',
+      guestParty: [{ firstName: 'Taylor', lastName: 'Doe', invites: {} }],
+    })
+
+    expect(mockDb.tx.event.findMany).toHaveBeenCalledWith({
+      where: { weddingId: 'wedding-123' },
+      select: { id: true },
+    })
+    expect(mockGuestCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        firstName: 'Taylor',
+        lastName: 'Doe',
+        invitations: [
+          { eventId: 'event-123', rsvp: 'Not Invited', weddingId: 'wedding-123' },
+          { eventId: 'event-456', rsvp: 'Not Invited', weddingId: 'wedding-123' },
+        ],
+      })
+    )
+  })
+
   it('updates household, guests, invitations, and gifts via repositories', async () => {
     await service.updateHouseholdWithGuests(actorContext, 'wedding-123', {
       householdId: 'household-123',
@@ -221,6 +253,38 @@ describe('HouseholdManagementService', () => {
       description: 'Toaster',
       thankyou: true,
     })
+  })
+
+  it('creates default not-invited rows for a new household member when invites are empty', async () => {
+    await service.updateHouseholdWithGuests(actorContext, 'wedding-123', {
+      householdId: 'household-123',
+      guestParty: [
+        {
+          firstName: 'Taylor',
+          lastName: 'Doe',
+          isTagAlong: false,
+          invites: {},
+        },
+      ],
+      gifts: [],
+    })
+
+    expect(mockDb.tx.event.findMany).toHaveBeenCalledWith({
+      where: { weddingId: 'wedding-123' },
+      select: { id: true },
+    })
+    expect(mockGuestUpsert).toHaveBeenCalledWith(
+      undefined,
+      expect.objectContaining({
+        firstName: 'Taylor',
+        lastName: 'Doe',
+        isTagAlong: false,
+      }),
+      [
+        { eventId: 'event-123', rsvp: 'Not Invited', weddingId: 'wedding-123' },
+        { eventId: 'event-456', rsvp: 'Not Invited', weddingId: 'wedding-123' },
+      ]
+    )
   })
 
   it('deletes household after scope check', async () => {
