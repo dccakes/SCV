@@ -1,6 +1,6 @@
 'use client'
 
-import { Lock } from 'lucide-react'
+import { Eye, EyeOff, Lock } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -27,6 +27,7 @@ export function WebsitePasswordCard({ initialIsPasswordEnabled }: WebsitePasswor
   const router = useRouter()
   const [isEnabled, setIsEnabled] = useState(initialIsPasswordEnabled)
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
   const updateWebsite = api.website.update.useMutation({
     onSuccess: (website) => {
@@ -99,16 +100,30 @@ export function WebsitePasswordCard({ initialIsPasswordEnabled }: WebsitePasswor
               {initialIsPasswordEnabled ? 'Update guest password' : 'Set a guest password'}
             </Label>
             <div className='flex flex-wrap items-center gap-2'>
-              <Input
-                id='website-password-input'
-                type='text'
-                autoComplete='off'
-                spellCheck={false}
-                placeholder='e.g. ForeverTogether'
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                className='max-w-xs'
-              />
+              <div className='relative max-w-xs'>
+                <Input
+                  id='website-password-input'
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete='off'
+                  spellCheck={false}
+                  placeholder='e.g. ForeverTogether'
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  className='pr-9'
+                />
+                <button
+                  type='button'
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className='absolute inset-y-0 right-2.5 flex items-center text-foreground/40 hover:text-foreground/70'
+                >
+                  {showPassword ? (
+                    <EyeOff aria-hidden='true' className='h-4 w-4' />
+                  ) : (
+                    <Eye aria-hidden='true' className='h-4 w-4' />
+                  )}
+                </button>
+              </div>
               <Button type='button' onClick={handleSavePassword} disabled={isSaving}>
                 {isSaving ? 'Saving…' : 'Save password'}
               </Button>
