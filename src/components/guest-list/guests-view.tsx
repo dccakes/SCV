@@ -668,6 +668,7 @@ export default function GuestsView({
       <div className='space-y-4'>
         <ListToolbar
           totalHouseholds={sortedHouseholds.length}
+          totalUnfilteredHouseholds={households.length}
           onSortByName={sortByName}
           onSortByPartySize={sortByParty}
           viewMode={viewMode}
