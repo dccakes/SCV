@@ -62,6 +62,9 @@ model Wedding {
   messagingPairingTokens MessagingPairingToken[]
   chatMessages           ChatMessage[]
 
+  // User feedback on Etta
+  feedback Feedback[]
+
   @@index([selfFillToken, selfFillTokenGeneratedAt])
 }
 
@@ -1097,6 +1100,28 @@ model ChatMessage {
   @@index([identityId, summarizedAt])
   @@index([weddingId])
   @@map("chat_messages")
+}
+
+// User feedback on Etta. Captures both open-ended text (e.g. /feedback in
+// Telegram) and reactions (positive/negative) on chat messages or suggestions.
+// One model so we can query the full feedback firehose by wedding/createdAt.
+model Feedback {
+  id                  String   @id @default(uuid())
+  weddingId           String   @map("wedding_id")
+  wedding             Wedding  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  userId              String?  @map("user_id") // app user, when known
+  messagingIdentityId String?  @map("messaging_identity_id") // set for telegram-sourced feedback
+  kind                String // 'open_ended' | 'reaction'
+  source              String // 'telegram_command' | 'etta_chat_message' | 'etta_suggestion'
+  reaction            String? // 'positive' | 'negative' (kind = 'reaction' only)
+  body                String? // free-text feedback (required for kind = 'open_ended')
+  chatMessageId       String?  @map("chat_message_id") // ChatMessage.id, when reacting to a message
+  ettaSuggestionId    String?  @map("etta_suggestion_id") // EttaSuggestion.id, when reacting to a suggestion
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  @@index([weddingId, createdAt])
+  @@index([kind, source])
+  @@map("feedback")
 }
 
 // Simple Postgres-backed rolling rate limit bucket (shared by all channels).

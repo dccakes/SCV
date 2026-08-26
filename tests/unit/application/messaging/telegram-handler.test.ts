@@ -59,6 +59,10 @@ function buildHandler(
   const blob = jest.fn()
   const runEtta = jest.fn()
   const summarizer = { summarizeSession: jest.fn(), sweepStale: jest.fn() }
+  const feedback = {
+    submitOpenEnded: jest.fn().mockResolvedValue({ id: 'fb-1' }),
+    submitReaction: jest.fn().mockResolvedValue({ id: 'fb-2' }),
+  }
   const sleep = jest.fn().mockResolvedValue(undefined)
 
   const handler = new TelegramHandler({
@@ -67,11 +71,12 @@ function buildHandler(
     blob: blob as never,
     runEtta: runEtta as never,
     summarizer: summarizer as never,
+    feedback: feedback as never,
     debounceMs: 100,
     sleep,
   })
 
-  return { handler, messaging, tg, blob, runEtta, summarizer, sleep }
+  return { handler, messaging, tg, blob, runEtta, summarizer, feedback, sleep }
 }
 
 describe('TelegramHandler', () => {
@@ -105,7 +110,7 @@ describe('TelegramHandler', () => {
   })
 
   describe('pairing', () => {
-    it('consumes a pairing token and confirms success', async () => {
+    it('consumes a pairing token and sends a personalized welcome message', async () => {
       const { handler, messaging, tg } = buildHandler()
       messaging.consumePairingToken.mockResolvedValue(baseIdentity)
       await handler.handle(makeUpdate(makeMessage({ text: '/start tok-abc-123' })))
@@ -116,7 +121,25 @@ describe('TelegramHandler', () => {
         externalUserId: '7',
         displayName: 'Alice',
       })
-      expect(tg.sendMessage).toHaveBeenCalledWith(42, expect.stringContaining('linked'))
+      const reply = (tg.sendMessage.mock.calls[0]?.[1] ?? '') as string
+      expect(reply).toContain('Hi Alice')
+      expect(reply).toContain("I'm Etta")
+      expect(reply).toContain('/feedback')
+    })
+
+    it('falls back to a generic greeting when first_name is missing', async () => {
+      const { handler, messaging, tg } = buildHandler()
+      messaging.consumePairingToken.mockResolvedValue(baseIdentity)
+      await handler.handle(
+        makeUpdate(
+          makeMessage({
+            text: '/start tok-abc-123',
+            from: { id: 7 },
+          })
+        )
+      )
+      const reply = (tg.sendMessage.mock.calls[0]?.[1] ?? '') as string
+      expect(reply).toContain('Hi there')
     })
 
     it('surfaces pairing errors to the user', async () => {
@@ -124,6 +147,44 @@ describe('TelegramHandler', () => {
       messaging.consumePairingToken.mockRejectedValue(new Error('Pairing token expired'))
       await handler.handle(makeUpdate(makeMessage({ text: '/start expired-tok' })))
       expect(tg.sendMessage).toHaveBeenCalledWith(42, expect.stringContaining('expired'))
+    })
+  })
+
+  describe('/feedback command', () => {
+    it('persists open-ended feedback for a linked chat and thanks the user', async () => {
+      const { handler, messaging, tg, feedback, runEtta } = buildHandler()
+      messaging.findWeddingForChat.mockResolvedValue({
+        identity: baseIdentity,
+        weddingId: 'wedding-123',
+      })
+      await handler.handle(
+        makeUpdate(makeMessage({ text: '/feedback the vendor summaries are great' }))
+      )
+      expect(feedback.submitOpenEnded).toHaveBeenCalledWith({
+        weddingId: 'wedding-123',
+        source: 'telegram_command',
+        body: 'the vendor summaries are great',
+        userId: 'user-1',
+        messagingIdentityId: 'identity-123',
+      })
+      expect(tg.sendMessage).toHaveBeenCalledWith(42, expect.stringContaining('Thanks'))
+      expect(runEtta).not.toHaveBeenCalled()
+    })
+
+    it('replies with a usage hint when /feedback is sent with no body', async () => {
+      const { handler, messaging, tg, feedback } = buildHandler()
+      await handler.handle(makeUpdate(makeMessage({ text: '/feedback' })))
+      expect(feedback.submitOpenEnded).not.toHaveBeenCalled()
+      expect(messaging.findWeddingForChat).not.toHaveBeenCalled()
+      expect(tg.sendMessage).toHaveBeenCalledWith(42, expect.stringContaining('/feedback'))
+    })
+
+    it('asks the user to pair when feedback comes from an unlinked chat', async () => {
+      const { handler, messaging, tg, feedback } = buildHandler()
+      messaging.findWeddingForChat.mockResolvedValue(null)
+      await handler.handle(makeUpdate(makeMessage({ text: '/feedback hi there' })))
+      expect(feedback.submitOpenEnded).not.toHaveBeenCalled()
+      expect(tg.sendMessage).toHaveBeenCalledWith(42, expect.stringContaining('Pair this chat'))
     })
   })
 
