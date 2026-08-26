@@ -58,6 +58,9 @@ export class SessionSummarizer {
 
     let summarized = 0
     for (const identity of identities) {
+      // Guest (WhatsApp) identities have no linked couple user to run as and
+      // are excluded from couple-memory summarisation.
+      if (!identity.linkedByUserId) continue
       const groups = await this.deps.messaging.findOrphanBlocks(identity.id, {
         sessionGapMs: opts.olderThanMs,
       })
