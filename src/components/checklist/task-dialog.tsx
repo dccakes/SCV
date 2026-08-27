@@ -35,8 +35,8 @@ const taskDialogSchema = z.object({
     .string()
     .trim()
     .min(1, 'Months before wedding is required')
-    .refine((value) => /^-?\d+$/.test(value), 'Months before wedding must be a whole number')
-    .refine((value) => Number(value) >= -1, 'Months before wedding must be -1 or greater'),
+    .refine((value) => value.length === 0 || /^-?\d+$/.test(value), 'Months before wedding must be a whole number')
+    .refine((value) => value.length === 0 || Number(value) >= -1, 'Months before wedding must be -1 or greater'),
   dueDate: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD')
