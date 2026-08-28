@@ -335,6 +335,7 @@ describe('PlanningOverview', () => {
   })
 
   it('renders the vendors empty state when no vendors are added', () => {
+    mockVendorGetAll.mockReturnValue({ data: [] })
     render(<PlanningOverview dashboardData={mockDashboardData} />)
     expect(screen.getByText('No vendors added yet')).toBeInTheDocument()
     expect(
@@ -343,6 +344,7 @@ describe('PlanningOverview', () => {
   })
 
   it('renders an add vendor CTA link in the vendors empty state', () => {
+    mockVendorGetAll.mockReturnValue({ data: [] })
     render(<PlanningOverview dashboardData={mockDashboardData} />)
     expect(screen.getByText('Add your first vendor →')).toBeInTheDocument()
   })
