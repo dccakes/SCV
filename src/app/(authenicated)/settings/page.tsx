@@ -1,3 +1,5 @@
+import type { Metadata } from 'next'
+
 import { PluginsSettingsCard } from '~/app/_components/settings/plugins-settings-card'
 import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
 import WeddingSettingsForm from '~/components/forms/wedding-settings-form'
@@ -6,6 +8,11 @@ import { OrganizationOutstandingInvitesCard } from '~/components/settings/organi
 import { TelegramConnectCard } from '~/components/settings/telegram-connect-card'
 import { getRequiredWedding } from '~/server/application/authenticated-route/authenticated-route-data'
 import { api } from '~/trpc/server'
+
+export const metadata: Metadata = {
+  title: 'Settings',
+  description: 'Manage your wedding details, plugins, members, and connected apps',
+}
 
 export const dynamic = 'force-dynamic'
 
