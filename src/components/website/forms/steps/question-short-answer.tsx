@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import type { Guest, Question, StepFormProps } from '~/app/utils/shared-types'
 import { useRsvpForm, useUpdateRsvpForm } from '~/components/contexts/rsvp-form-context'
@@ -21,6 +22,7 @@ export default function QuestionShortAnswer({
   guest,
   question,
 }: QuestionShortAnswerProps) {
+  const tCommon = useTranslations('common')
   const rsvpFormData = useRsvpForm()
   const updateRsvpForm = useUpdateRsvpForm()
   const questionId = question.id ?? '-1'
@@ -72,7 +74,7 @@ export default function QuestionShortAnswer({
           goNext?.()
         }}
       >
-        CONTINUE
+        {tCommon('continue')}
       </button>
       {!question.isRequired && (
         <button
@@ -85,7 +87,7 @@ export default function QuestionShortAnswer({
             goNext?.()
           }}
         >
-          SKIP
+          {tCommon('skip')}
         </button>
       )}
       <button
@@ -93,7 +95,7 @@ export default function QuestionShortAnswer({
         type='submit'
         onClick={() => goBack?.()}
       >
-        BACK
+        {tCommon('back')}
       </button>
     </div>
   )

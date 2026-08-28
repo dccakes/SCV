@@ -5,14 +5,17 @@ const mockRedirect = jest.fn((url: URL, init?: number | ResponseInit) => ({
   status: typeof init === 'number' ? init : (init?.status ?? 307),
 }))
 
+const mockSetCookie = jest.fn()
+
 const mockNext = jest.fn(() => ({
   headers: new Headers(),
+  cookies: { set: mockSetCookie },
 }))
 
 jest.mock('next/server', () => ({
   NextResponse: {
     redirect: (url: URL, init?: number | ResponseInit) => mockRedirect(url, init),
-    next: () => mockNext(),
+    next: (...args: unknown[]) => mockNext(...args),
   },
 }))
 
@@ -24,17 +27,33 @@ jest.mock('better-auth/cookies', () => ({
 
 import { proxy } from '~/proxy'
 
-const createRequest = (pathname: string, sessionToken?: string, search = ''): NextRequest => {
+const createRequest = (
+  pathname: string,
+  sessionToken?: string,
+  search = '',
+  countryCode?: string,
+  languageOverride?: string
+): NextRequest => {
   const url = `https://example.com${pathname}${search}`
   const headers = new Headers()
   if (sessionToken) {
     headers.set('cookie', `better-auth.session_token=${sessionToken}`)
+  }
+  if (countryCode) {
+    headers.set('x-vercel-ip-country', countryCode)
   }
 
   return {
     url,
     headers,
     nextUrl: { pathname, search },
+    cookies: {
+      get: jest.fn((name: string) =>
+        name === 'lang-override' && languageOverride
+          ? { name: 'lang-override', value: languageOverride }
+          : undefined
+      ),
+    },
   } as unknown as NextRequest
 }
 
@@ -42,7 +61,35 @@ describe('proxy', () => {
   beforeEach(() => {
     mockRedirect.mockClear()
     mockNext.mockClear()
+    mockSetCookie.mockClear()
     mockGetSessionCookie.mockReset()
+  })
+
+  it('passes the geo-detected locale to Next.js and persists it for public pages', async () => {
+    await proxy(createRequest('/w/shrek-and-fiona', undefined, '', 'MX'))
+
+    const nextOptions = mockNext.mock.calls[0]?.[0] as
+      | { request?: { headers?: Headers } }
+      | undefined
+    expect(nextOptions?.request?.headers?.get('X-Locale')).toBe('es')
+    expect(mockSetCookie).toHaveBeenCalledWith('locale', 'es', {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
+    })
+  })
+
+  it('prefers a valid language override over the geo-detected locale', async () => {
+    mockGetSessionCookie.mockReturnValue('session-token')
+    await proxy(createRequest('/events', 'session-token', '', 'MX', 'en'))
+
+    const nextOptions = mockNext.mock.calls[0]?.[0] as
+      | { request?: { headers?: Headers } }
+      | undefined
+    expect(nextOptions?.request?.headers?.get('X-Locale')).toBe('en')
+    expect(mockSetCookie).toHaveBeenCalledWith('locale', 'en', {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
+    })
   })
 
   it('redirects unauthenticated users from protected routes to /auth/sign-in with callbackUrl', async () => {
@@ -80,6 +127,7 @@ describe('proxy', () => {
       websiteSaveTheDateResponse,
       websiteSaveTheDateCodeResponse,
       websiteSaveTheDateUpdateResponse,
+      localeApiResponse,
       authApiResponse,
       blobUploadResponse,
     ] = await Promise.all([
@@ -96,6 +144,7 @@ describe('proxy', () => {
       proxy(createRequest('/w/shrek-and-fiona/save-the-date')),
       proxy(createRequest('/w/shrek-and-fiona/save-the-date/sf-4f9k2c')),
       proxy(createRequest('/w/shrek-and-fiona/save-the-date/update')),
+      proxy(createRequest('/api/locale')),
       proxy(createRequest('/api/auth/session')),
       proxy(createRequest('/api/blob/upload')),
     ])
@@ -113,6 +162,7 @@ describe('proxy', () => {
     expect(websiteSaveTheDateResponse.headers.get('location')).toBeNull()
     expect(websiteSaveTheDateCodeResponse.headers.get('location')).toBeNull()
     expect(websiteSaveTheDateUpdateResponse.headers.get('location')).toBeNull()
+    expect(localeApiResponse.headers.get('location')).toBeNull()
     expect(authApiResponse.headers.get('location')).toBeNull()
     expect(blobUploadResponse.headers.get('location')).toBeNull()
     expect(mockGetSessionCookie).not.toHaveBeenCalled()
@@ -218,7 +268,10 @@ describe('proxy', () => {
 
     expect(response.headers.get('location')).toBeNull()
     expect(mockNext).toHaveBeenCalledTimes(1)
-    expect(mockNext).toHaveBeenCalledWith()
+    const nextOptions = mockNext.mock.calls[0]?.[0] as
+      | { request?: { headers?: Headers } }
+      | undefined
+    expect(nextOptions?.request?.headers?.get('X-Locale')).toBe('en')
   })
 
   it('protects non-public routes by default', async () => {

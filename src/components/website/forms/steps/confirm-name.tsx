@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import type { HouseholdSearch, StepFormProps } from '~/app/utils/shared-types'
 import { useRsvpForm, useUpdateRsvpForm } from '~/components/contexts/rsvp-form-context'
@@ -8,6 +9,8 @@ type HouseholdSearchItem = HouseholdSearch[number]
 type GuestWithInvitations = HouseholdSearchItem['guests'][number]
 
 export default function ConfirmNameForm({ goNext, goBack }: StepFormProps) {
+  const t = useTranslations('rsvp')
+  const tCommon = useTranslations('common')
   const {
     matchedHouseholds,
     selectedHousehold: currentSelectedHousehold,
@@ -58,9 +61,7 @@ export default function ConfirmNameForm({ goNext, goBack }: StepFormProps) {
   return (
     <div className='flex flex-col gap-5'>
       <h2 className='text-2xl tracking-widest'>
-        {recognized
-          ? "we found your invitation. confirm it's you below to continue, or choose “not you” to search by name"
-          : 'we’ve found you in the guest list. please confirm your name below to continue with your rsvp'}
+        {recognized ? t('recognizedInvitation') : t('foundInGuestList')}
       </h2>
       {matchedHouseholds?.map((household: HouseholdSearchItem) => {
         return (
@@ -86,14 +87,14 @@ export default function ConfirmNameForm({ goNext, goBack }: StepFormProps) {
         disabled={selectedHouseholdId === undefined}
         onClick={onContinue}
       >
-        CONTINUE
+        {tCommon('continue')}
       </button>
       <button
         className={`mt-3 bg-gray-700 py-3 text-white text-xl tracking-wide`}
         type='button'
         onClick={recognized ? onNotYou : () => goBack?.()}
       >
-        {recognized ? 'NOT YOU?' : 'SEARCH AGAIN'}
+        {recognized ? t('notYou') : t('searchAgain')}
       </button>
     </div>
   )

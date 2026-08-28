@@ -1,10 +1,14 @@
+import { getTranslations } from 'next-intl/server'
 import { Card, CardContent } from '~/components/ui/card'
 
 type InvalidHouseholdInviteProps = {
   websiteSubUrl: string
 }
 
-export function InvalidHouseholdInvite({ websiteSubUrl }: InvalidHouseholdInviteProps) {
+export async function InvalidHouseholdInvite({
+  websiteSubUrl,
+}: Readonly<InvalidHouseholdInviteProps>) {
+  const t = await getTranslations('invite')
   return (
     <main className='relative min-h-screen overflow-hidden bg-background px-5 py-12 text-foreground sm:py-16'>
       <div aria-hidden className='pointer-events-none absolute inset-0 -z-10'>
@@ -17,14 +21,13 @@ export function InvalidHouseholdInvite({ websiteSubUrl }: InvalidHouseholdInvite
           <div className='h-1.5 w-full bg-gradient-to-r from-primary via-accent to-primary' />
           <CardContent className='px-6 py-12 text-center sm:px-12 sm:py-16'>
             <p className='font-mono text-muted-foreground text-xs uppercase tracking-[0.28em]'>
-              Save the date
+              {t('saveTheDate')}
             </p>
             <h1 className='mt-4 font-display text-4xl italic leading-tight sm:text-6xl'>
-              We could not open this invitation.
+              {t('couldNotOpen')}
             </h1>
             <p className='mx-auto mt-8 max-w-xl font-sans text-muted-foreground leading-7'>
-              This invite link may be expired, mistyped, or opened without the original household
-              link. Please use the save-the-date link you received, or ask the couple for a new one.
+              {t('invalidLinkDescription')}
             </p>
             <p className='mt-6 font-mono text-muted-foreground text-xs uppercase tracking-[0.22em]'>
               {websiteSubUrl}

@@ -1,6 +1,7 @@
 import { getSessionCookie } from 'better-auth/cookies'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
+import { getLocaleFromCountry, type Locale } from '~/lib/locale/locale-detection'
 
 const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/join', '/blog', '/api/webhooks', '/api/cron']
 
@@ -26,7 +27,7 @@ const isPublicTrpcPath = (pathname: string): boolean => {
     procedures.length > 0 && procedures.every((procedure) => PUBLIC_TRPC_PROCEDURES.has(procedure))
   )
 }
-const PUBLIC_EXACT_PATHS = ['/', '/api/blob/upload', '/pricing', '/open-source']
+const PUBLIC_EXACT_PATHS = ['/', '/api/blob/upload', '/api/locale', '/pricing', '/open-source']
 const RESERVED_ROOT_SEGMENTS = new Set([
   '',
   'api',
@@ -82,11 +83,29 @@ const getLegacyWebsiteRedirect = (req: NextRequest): URL | null => {
   return new URL(`/w/${slug}${req.nextUrl.search}`, req.url)
 }
 
+const buildLocaleResponse = (req: NextRequest, locale: Locale): NextResponse => {
+  const requestHeaders = new Headers(req.headers)
+  requestHeaders.set('X-Locale', locale)
+
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  })
+  response.cookies.set('locale', locale, { path: '/', maxAge: 60 * 60 * 24 * 365 })
+  return response
+}
+
 export async function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname
+  const langOverride = req.cookies.get('lang-override')?.value
+  const locale: Locale =
+    langOverride === 'en' || langOverride === 'es'
+      ? langOverride
+      : getLocaleFromCountry(req.headers.get('x-vercel-ip-country'))
 
   if (isPublicPath(pathname)) {
-    return NextResponse.next()
+    return buildLocaleResponse(req, locale)
   }
 
   const legacyWebsiteRedirect = getLegacyWebsiteRedirect(req)
@@ -104,7 +123,7 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  return NextResponse.next()
+  return buildLocaleResponse(req, locale)
 }
 
 export const config = {

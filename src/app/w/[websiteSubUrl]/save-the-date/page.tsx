@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import Link from 'next/link'
+import { getLocale, getTranslations } from 'next-intl/server'
 
 import { formatDateStandard } from '~/app/utils/helpers'
 import { Button } from '~/components/ui/button'
@@ -18,8 +19,6 @@ import { resolveTemplate, TemplateThemeProvider } from '~/templates'
 const headingFont = 'font-[family-name:var(--tpl-heading-font)]'
 const labelFont = 'font-[family-name:var(--tpl-label-font,var(--tpl-body-font))]'
 
-const DETAIL_FALLBACK = 'To be announced'
-
 type SaveTheDatePageProps = {
   params: Promise<{
     websiteSubUrl: string
@@ -33,20 +32,21 @@ type SaveTheDatePageProps = {
 const formatGuestName = (guest: { firstName: string; lastName: string }) =>
   [guest.firstName, guest.lastName].filter(Boolean).join(' ')
 
-// Event dates come from a `@db.Date` column (midnight UTC), so format in UTC to
-// show the day the couple entered regardless of the viewer's timezone.
-const dateFormatter = new Intl.DateTimeFormat('en-US', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-  timeZone: 'UTC',
-})
-
 /** Display the event span as a single day or an inclusive date range. */
-const formatEventDateRange = (first: Date, last: Date) =>
-  first.getTime() === last.getTime()
+const formatEventDateRange = (first: Date, last: Date, locale: string) => {
+  // Event dates come from a `@db.Date` column (midnight UTC), so format in UTC to
+  // show the day the couple entered regardless of the viewer's timezone.
+  const dateFormatter = new Intl.DateTimeFormat(locale === 'es' ? 'es' : 'en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC',
+  })
+
+  return first.getTime() === last.getTime()
     ? dateFormatter.format(first)
     : `${dateFormatter.format(first)} – ${dateFormatter.format(last)}`
+}
 
 const buildSaveTheDateDescription = (
   coupleNames: string,
@@ -105,6 +105,8 @@ export async function generateMetadata({ params }: SaveTheDatePageProps): Promis
 export default async function SaveTheDatePage({ params, searchParams }: SaveTheDatePageProps) {
   const { websiteSubUrl } = await params
   const resolvedSearchParams = await searchParams
+  const locale = await getLocale()
+  const t = await getTranslations('invite')
   const cookieStore = await cookies()
   const code = cookieStore.get(householdInviteCookieName(websiteSubUrl))?.value
   const inviteData = await householdInviteService.getInviteData(websiteSubUrl, code)
@@ -125,7 +127,7 @@ export default async function SaveTheDatePage({ params, searchParams }: SaveTheD
   const firstEvent = datedEvents[0]
   const lastEvent = datedEvents[datedEvents.length - 1]
   const formattedDate =
-    firstEvent && lastEvent ? formatEventDateRange(firstEvent.date, lastEvent.date) : null
+    firstEvent && lastEvent ? formatEventDateRange(firstEvent.date, lastEvent.date, locale) : null
   const ceremonyEvent = datedEvents.find((event) => event.name === 'Ceremony')
   const location = ceremonyEvent?.venue ?? firstEvent?.venue ?? null
 
@@ -160,7 +162,7 @@ export default async function SaveTheDatePage({ params, searchParams }: SaveTheD
                   <p
                     className={`mb-8 rounded-md border border-success/30 bg-success/10 px-4 py-3 text-center text-success text-xs uppercase tracking-wider ${labelFont}`}
                   >
-                    Your details were updated.
+                    {t('detailsUpdated')}
                   </p>
                 )}
 
@@ -168,7 +170,7 @@ export default async function SaveTheDatePage({ params, searchParams }: SaveTheD
                   <p
                     className={`text-muted-foreground text-xs uppercase tracking-[0.28em] ${labelFont}`}
                   >
-                    {saveTheDateCopy?.eyebrow ?? 'Save the date'}
+                    {saveTheDateCopy?.eyebrow ?? t('saveTheDate')}
                   </p>
                   <h1 className={`mt-4 text-5xl italic leading-none sm:text-7xl ${headingFont}`}>
                     {coupleNames}
@@ -181,17 +183,17 @@ export default async function SaveTheDatePage({ params, searchParams }: SaveTheD
                     <p
                       className={`text-muted-foreground text-xs uppercase tracking-[0.22em] ${labelFont}`}
                     >
-                      Date
+                      {t('date')}
                     </p>
-                    <p className='mt-2 text-2xl'>{formattedDate ?? DETAIL_FALLBACK}</p>
+                    <p className='mt-2 text-2xl'>{formattedDate ?? t('toBeAnnounced')}</p>
                   </div>
                   <div>
                     <p
                       className={`text-muted-foreground text-xs uppercase tracking-[0.22em] ${labelFont}`}
                     >
-                      Location
+                      {t('location')}
                     </p>
-                    <p className='mt-2 text-2xl'>{location ?? DETAIL_FALLBACK}</p>
+                    <p className='mt-2 text-2xl'>{location ?? t('toBeAnnounced')}</p>
                   </div>
                 </div>
 
@@ -200,7 +202,7 @@ export default async function SaveTheDatePage({ params, searchParams }: SaveTheD
                     <p
                       className={`mb-3 text-muted-foreground text-xs uppercase tracking-[0.22em] ${labelFont}`}
                     >
-                      Add to your calendar
+                      {t('addToCalendar')}
                     </p>
                     <div className='flex justify-center sm:justify-start'>
                       <AddToCalendarButtons {...calendarLinks} />
@@ -212,7 +214,7 @@ export default async function SaveTheDatePage({ params, searchParams }: SaveTheD
                   <p
                     className={`text-muted-foreground text-xs uppercase tracking-[0.22em] ${labelFont}`}
                   >
-                    Invited household
+                    {t('invitedHousehold')}
                   </p>
                   <ul className='mt-3 space-y-2 text-xl'>
                     {inviteData.guests
@@ -230,18 +232,17 @@ export default async function SaveTheDatePage({ params, searchParams }: SaveTheD
                 ) : null}
 
                 <p className='mt-8 text-muted-foreground leading-7'>
-                  {saveTheDateCopy?.footnote ??
-                    'Formal invitation details will follow. For now, please make sure we have the correct names and mailing address for your household.'}
+                  {saveTheDateCopy?.footnote ?? t('formalInvitationNote')}
                 </p>
 
                 <div className='mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-start'>
                   <Button asChild size='lg'>
                     <Link href={`/w/${websiteSubUrl}/save-the-date/update`}>
-                      Update our details
+                      {t('updateDetails')}
                     </Link>
                   </Button>
                   <Button asChild size='lg' variant='outline'>
-                    <Link href={`/w/${websiteSubUrl}`}>View our website</Link>
+                    <Link href={`/w/${websiteSubUrl}`}>{t('viewWebsite')}</Link>
                   </Button>
                 </div>
               </CardContent>
