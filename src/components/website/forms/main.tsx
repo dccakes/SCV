@@ -14,7 +14,15 @@ import QuestionMultipleChoice from '~/components/website/forms/steps/question-mu
 import QuestionShortAnswer from '~/components/website/forms/steps/question-short-answer'
 import SendRsvp from '~/components/website/forms/steps/send-rsvp'
 import RsvpConfirmation from '~/components/website/rsvp-confirmation'
+import { ANALYTICS_ACTIONS, ANALYTICS_SCOPES, buildEventName } from '~/lib/analytics/events'
+import { track } from '~/lib/analytics/track'
 import { api } from '~/trpc/react'
+
+const RSVP_SUBMISSION_EVENT = buildEventName({
+  scope: ANALYTICS_SCOPES.rsvp,
+  object: 'public_submission',
+  action: ANALYTICS_ACTIONS.started,
+})
 
 type MainRsvpFormProps = {
   weddingData: RsvpPageData
@@ -38,11 +46,21 @@ const getMutationErrorMessage = (error: unknown, fallback: string): string => {
 
 const NUM_STATIC_STEPS = 4 // find invitation step, confirm household step, final step, and confirmation
 
+export const shouldConfirmRsvpClose = ({
+  currentStep,
+  numSteps,
+}: {
+  currentStep: number
+  numSteps: number
+}) => currentStep > 1 && currentStep < numSteps
+
 export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProps) {
   const rsvpFormData = useRsvpForm()
   const numSteps = useRef(NUM_STATIC_STEPS)
   const updateRsvpForm = useUpdateRsvpForm()
-  const [currentStep, setCurrentStep] = useState<number>(1)
+  // A recognized guest (identified by their save-the-date invite) skips the name
+  // search and lands on the confirm step (step 2).
+  const [currentStep, setCurrentStep] = useState<number>(rsvpFormData.recognized ? 2 : 1)
   const [submitError, setSubmitError] = useState<string | null>(null)
   useConfirmReloadPage(currentStep > 1 && currentStep < numSteps.current)
   useEffect(() => {
@@ -113,7 +131,9 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
   }, [weddingData, rsvpFormData.selectedHousehold, rsvpFormData.rsvpResponses])
 
   return (
-    <div className='pb-20 font-serif'>
+    // pt-24 reserves space for the fixed ProgressBar so the first step's copy
+    // isn't hidden beneath it.
+    <div className='pt-24 pb-20 font-serif'>
       <ProgressBar
         currentStep={currentStep}
         progress={progress}
@@ -126,17 +146,44 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
           e.preventDefault()
           setSubmitError(null)
 
-          const token = new URLSearchParams(window.location.search).get('token')
           const subUrl = weddingData.website?.subUrl
 
-          if (!token || !subUrl) {
-            setSubmitError('Invalid or expired RSVP link. Please request a new invitation link.')
+          if (!subUrl) {
+            setSubmitError('Something went wrong. Please refresh the page and try again.')
             return
           }
 
+          // The guest reaches this page from the wedding website (or their
+          // save-the-date link), so the submission is scoped by subUrl. An
+          // optional ?token= from a shared self-fill link is still forwarded when
+          // present.
+          const token = new URLSearchParams(window.location.search).get('token') ?? undefined
+
+          // Analytics: record the guest's RSVP submission from the template.
+          // The backend also captures the persisted outcome; this frontend event
+          // carries the rich client context (household, response payload) that we
+          // keep as a temporary backup while the app is being tested.
+          track(
+            RSVP_SUBMISSION_EVENT,
+            {
+              weddingId: weddingData.events?.[0]?.weddingId,
+              token,
+              householdId: rsvpFormData.selectedHousehold?.id,
+              subUrl,
+            },
+            {
+              num_event_responses: rsvpFormData.rsvpResponses.length,
+              num_question_answers: rsvpFormData.answersToQuestions.length,
+              payload: {
+                rsvpResponses: rsvpFormData.rsvpResponses,
+                answersToQuestions: rsvpFormData.answersToQuestions,
+              },
+            }
+          )
+
           submitRsvpForm.mutate({
             subUrl,
-            token,
+            ...(token ? { token } : {}),
             rsvpResponses: rsvpFormData.rsvpResponses,
             answersToQuestions: rsvpFormData.answersToQuestions,
           })
@@ -171,11 +218,11 @@ const ProgressBar = ({
       <button
         type='button'
         aria-label='Close RSVP form'
-        className='absolute top-2 right-3 z-20 rounded-md text-foreground/70 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+        className='absolute top-2 right-20 z-20 rounded-md text-foreground/70 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
         onClick={() => {
           if (
-            currentStep <= 1 ||
-            (currentStep > 1 && window.confirm('Are you sure? Your RSVP has not been sent.'))
+            !shouldConfirmRsvpClose({ currentStep, numSteps }) ||
+            window.confirm('Are you sure? Your RSVP has not been sent.')
           ) {
             window.location.href = basePath
           }

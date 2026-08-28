@@ -6,6 +6,7 @@
 
 import { z } from 'zod'
 
+import { optionalPhoneSchema } from '~/lib/phone/phone-validator'
 import { guestPartySchema } from '~/server/domains/guest/guest.validator'
 
 /**
@@ -34,7 +35,7 @@ export const baseHouseholdFields = z.object({
   state: z.string().nullish().optional(),
   country: z.string().nullish().optional(),
   zipCode: z.string().nullish().optional(),
-  phone: z.string().nullish().optional(),
+  phone: optionalPhoneSchema,
   email: z.string().email({ message: 'Not a valid email' }).nullish().optional(),
   notes: z.string().nullish().optional(),
   likelihoodOfAttending: z.number().int().min(1).max(5).nullish().optional(),
@@ -98,6 +99,15 @@ export const searchHouseholdSchema = z.object({
 })
 
 /**
+ * Schema for searching households from the public guest-facing RSVP flow.
+ * Scoped to a wedding via the website's subUrl since the guest is unauthenticated.
+ */
+export const publicSearchHouseholdSchema = z.object({
+  subUrl: z.string().min(1, { message: 'Wedding website is required' }),
+  searchText: z.string().min(2, { message: 'Search input should be minimum 2 characters' }),
+})
+
+/**
  * Schema for household ID parameter
  */
 export const householdIdSchema = z.object({
@@ -121,5 +131,6 @@ export type CreateHouseholdSchemaInput = z.infer<typeof createHouseholdSchema>
 export type UpdateHouseholdSchemaInput = z.infer<typeof updateHouseholdSchema>
 export type DeleteHouseholdSchemaInput = z.infer<typeof deleteHouseholdSchema>
 export type SearchHouseholdSchemaInput = z.infer<typeof searchHouseholdSchema>
+export type PublicSearchHouseholdSchemaInput = z.infer<typeof publicSearchHouseholdSchema>
 export type HouseholdIdSchemaInput = z.infer<typeof householdIdSchema>
 export type BulkCreateHouseholdsSchemaInput = z.infer<typeof bulkCreateHouseholdsSchema>

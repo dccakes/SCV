@@ -4,10 +4,12 @@ jest.mock('~/server/authz/permission-checker', () => ({
   requirePermission: jest.fn(),
 }))
 
+jest.mock('~/server/domains/checklist')
 jest.mock('~/server/domains/event/event.repository')
 
 import { EventManagementService } from '~/server/application/event-management/event-management.service'
 import { requirePermission } from '~/server/authz/permission-checker'
+import { mockEnsureSeeded, resetMocks as resetChecklistMocks } from '~/server/domains/checklist'
 import {
   EventRepository,
   mockBelongsToWedding,
@@ -19,6 +21,7 @@ import {
 } from '~/server/domains/event/event.repository'
 
 const mockRequirePermission = requirePermission as jest.Mock
+const mockEnsureSeededFn = mockEnsureSeeded as jest.Mock
 const mockBelongsToWeddingFn = mockBelongsToWedding as jest.Mock
 const mockCreateFn = mockCreate as jest.Mock
 const mockUpdateFn = mockUpdate as jest.Mock
@@ -60,8 +63,15 @@ describe('EventManagementService', () => {
 
   beforeEach(() => {
     resetEventRepoMocks()
+    resetChecklistMocks()
     mockRequirePermission.mockReset()
     mockRequirePermission.mockReturnValue({ organizationId: 'org-123', role: 'owner' })
+    mockEnsureSeededFn.mockResolvedValue({
+      eventId: 'event-123',
+      seededMilestoneCount: 13,
+      seededTaskCount: 58,
+      enabledAddOnsUpdated: false,
+    })
 
     mockBelongsToWeddingFn.mockResolvedValue(true)
     mockCreateFn.mockResolvedValue(mockEvent)
@@ -77,10 +87,10 @@ describe('EventManagementService', () => {
     mockDb._tx.event.create.mockResolvedValue(mockEvent)
     mockDb._tx.guest.findMany.mockResolvedValue([])
     mockDb._tx.invitation.createMany.mockResolvedValue({ count: 0 })
-
     await service.createEvent(actorContext, 'wedding-123', { eventName: 'Ceremony' })
 
     expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { event: ['create'] })
+    expect(mockEnsureSeededFn).toHaveBeenCalledWith('wedding-123', mockDb._tx)
   })
 
   it('requires event update permission before updating', async () => {
@@ -141,5 +151,17 @@ describe('EventManagementService', () => {
     ).rejects.toMatchObject({ code: 'FORBIDDEN' })
 
     expect(mockDb.$transaction).not.toHaveBeenCalled()
+  })
+
+  it('bubbles seeding failures from inside the event transaction', async () => {
+    mockDb._tx.event.create.mockResolvedValue(mockEvent)
+    mockDb._tx.guest.findMany.mockResolvedValue([])
+    mockEnsureSeededFn.mockRejectedValue(new Error('seed failed'))
+
+    await expect(
+      service.createEvent(actorContext, 'wedding-123', {
+        eventName: 'Ceremony',
+      })
+    ).rejects.toThrow('seed failed')
   })
 })

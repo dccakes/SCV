@@ -16,6 +16,13 @@ import {
   DialogTitle,
 } from '~/components/ui/dialog'
 import { Input } from '~/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/ui/select'
 import { authClient } from '~/lib/auth-client'
 import {
   getOrganizationRoleLabel,
@@ -738,18 +745,21 @@ function InviteMemberDialog({
             >
               Role
             </label>
-            <select
-              className='flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm'
-              id='organization-invite-role'
-              onChange={(event) => setRole(event.target.value as OrganizationRoleOption)}
+            <Select
               value={role}
+              onValueChange={(value) => setRole(value as OrganizationRoleOption)}
             >
-              {organizationRoleOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger id='organization-invite-role' aria-label='Member role'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {organizationRoleOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className='flex justify-end gap-2'>
             <Button onClick={() => handleOpenChange(false)} type='button' variant='outline'>
@@ -836,18 +846,21 @@ function EditMemberRoleDialog({
             >
               Member Role
             </label>
-            <select
-              className='flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm'
-              id='organization-member-role'
-              onChange={(event) => setRole(event.target.value as OrganizationRoleOption)}
+            <Select
               value={role}
+              onValueChange={(value) => setRole(value as OrganizationRoleOption)}
             >
-              {organizationRoleOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger id='organization-member-role' aria-label='Member role'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {organizationRoleOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className='flex justify-end gap-2'>
             <Button onClick={() => onOpenChange(false)} type='button' variant='outline'>

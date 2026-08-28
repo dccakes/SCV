@@ -5,6 +5,7 @@
  * and updates status to approved/dismissed.
  */
 
+import { VendorCategory } from '@prisma/client'
 import { z } from 'zod'
 import { runApprovedSuggestion } from '~/lib/etta/execution/run-approved-suggestion'
 import { logAudit } from '~/lib/etta/utils/audit'
@@ -12,11 +13,68 @@ import { validateCoupleSession } from '~/lib/etta/utils/auth'
 import { inferEttaHttpStatus } from '~/lib/etta/utils/http'
 import { db } from '~/server/db'
 import { requireSuggestionReviewPermission } from '~/server/domains/etta-suggestion/etta-suggestion.auth'
+import { fieldDefinitionSchema, vendorService } from '~/server/domains/vendor'
 
 const bodySchema = z.object({
   action: z.enum(['approve', 'dismiss']),
 })
 
+const suggestVendorFieldPayloadSchema = z.object({
+  category: z.enum(VendorCategory),
+  key: z.string().min(1),
+  label: z.string().min(1),
+  type: z.enum(['text', 'number', 'boolean']),
+  reason: z.string().min(1),
+})
+
+class ApprovalRouteError extends Error {
+  constructor(
+    message: string,
+    readonly status: number
+  ) {
+    super(message)
+    this.name = 'ApprovalRouteError'
+  }
+}
+
+type SuggestionRecord = Awaited<ReturnType<typeof db.ettaSuggestion.findUnique>>
+
+async function executeApprovalAction(
+  suggestion: NonNullable<SuggestionRecord>,
+  authz: Awaited<ReturnType<typeof validateCoupleSession>>['authz'],
+  weddingId: string
+) {
+  if (suggestion.actionType !== 'SUGGEST_VENDOR_FIELD') {
+    return
+  }
+
+  const parsedPayload = suggestVendorFieldPayloadSchema.safeParse(suggestion.payload)
+  if (!parsedPayload.success) {
+    throw new ApprovalRouteError('Invalid suggestion payload for SUGGEST_VENDOR_FIELD', 400)
+  }
+
+  const { category, key, label, type } = parsedPayload.data
+  const config = await vendorService.getCategoryConfig(authz, weddingId, category)
+  const fieldDefinitions = z.array(fieldDefinitionSchema).parse(config.fieldDefinitions)
+
+  if (fieldDefinitions.some((field) => field.key === key)) {
+    return
+  }
+
+  const nextDisplayOrder =
+    fieldDefinitions.reduce((maxOrder, field) => Math.max(maxOrder, field.displayOrder), -1) + 1
+  // TODO(review-implementation): make approval-side config mutation and suggestion resolution atomic
+  // in a transaction-owned domain flow to avoid read-modify-write races across concurrent approvals.
+  await vendorService.upsertCategoryConfig(authz, weddingId, category, [
+    ...fieldDefinitions,
+    {
+      key,
+      label,
+      type,
+      displayOrder: nextDisplayOrder,
+    },
+  ])
+}
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ suggestionId: string }> }
@@ -59,7 +117,13 @@ export async function PATCH(
       return Response.json({ error: `Suggestion already ${suggestion.status}` }, { status: 409 })
     }
 
-    const newStatus = action === 'approve' ? 'approved' : 'dismissed'
+    if (action === 'approve') {
+      await executeApprovalAction(suggestion, authz, weddingId)
+    }
+
+    const executesInline = action === 'approve' && suggestion.actionType === 'SUGGEST_VENDOR_FIELD'
+    const newStatus =
+      action === 'approve' ? (executesInline ? 'actioned' : 'approved') : 'dismissed'
     const updatedCount = await db.ettaSuggestion.updateMany({
       where: {
         id: suggestionId,
@@ -72,7 +136,7 @@ export async function PATCH(
         resolvedBy: userId,
         ...(action === 'approve'
           ? {
-              executedAt: null,
+              executedAt: executesInline ? new Date() : null,
               failureReason: null,
             }
           : {}),
@@ -86,7 +150,7 @@ export async function PATCH(
       )
     }
 
-    if (action === 'approve') {
+    if (action === 'approve' && !executesInline) {
       // TODO(review-architect): replace in-process handoff with a durable execution queue/outbox.
       void runApprovedSuggestion({
         suggestion: {
@@ -120,7 +184,8 @@ export async function PATCH(
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error'
-    const status = inferEttaHttpStatus(error, message)
+    const status =
+      error instanceof ApprovalRouteError ? error.status : inferEttaHttpStatus(error, message)
 
     return Response.json({ error: message }, { status })
   }

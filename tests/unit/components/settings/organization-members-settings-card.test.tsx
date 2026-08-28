@@ -337,9 +337,8 @@ describe('OrganizationMembersSettingsCard', () => {
     fireEvent.change(screen.getByLabelText('Email'), {
       target: { value: 'donkey@swamp.wed' },
     })
-    fireEvent.change(screen.getByLabelText('Role'), {
-      target: { value: 'viewer' },
-    })
+    fireEvent.click(screen.getByRole('combobox', { name: 'Member role' }))
+    fireEvent.click(screen.getByRole('option', { name: 'Viewer' }))
     fireEvent.click(screen.getByRole('button', { name: 'Send Invite' }))
 
     await waitFor(() => {
@@ -416,9 +415,8 @@ describe('OrganizationMembersSettingsCard', () => {
     })
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit Role' }))
-    fireEvent.change(screen.getByLabelText('Member Role'), {
-      target: { value: 'admin' },
-    })
+    fireEvent.click(screen.getByRole('combobox', { name: 'Member role' }))
+    fireEvent.click(screen.getByRole('option', { name: 'Admin' }))
     fireEvent.click(screen.getByRole('button', { name: 'Save Role' }))
 
     await waitFor(() => {

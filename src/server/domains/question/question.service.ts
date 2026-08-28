@@ -15,10 +15,18 @@ import { requirePermission } from '~/server/authz/permission-checker'
 import type { QuestionRepository } from '~/server/domains/question/question.repository'
 import type {
   DeleteQuestionInput,
+  HouseholdAnswerGroup,
+  HouseholdAnswerResponse,
   Question,
   QuestionWithOptions,
   UpsertQuestionInput,
+  WebsiteQuestions,
 } from '~/server/domains/question/question.types'
+
+const buildGuestName = (firstName: string | null, lastName: string | null): string | null => {
+  const name = [firstName, lastName].filter((part) => part && part.trim().length > 0).join(' ')
+  return name.length > 0 ? name : null
+}
 
 export class QuestionService {
   constructor(private questionRepository: QuestionRepository) {}
@@ -198,6 +206,92 @@ export class QuestionService {
    */
   async getByWebsiteId(websiteId: string): Promise<QuestionWithOptions[]> {
     return this.questionRepository.findByWebsiteId(websiteId)
+  }
+
+  /**
+   * Get the website-level general questions for a wedding, plus the website id
+   * and RSVP-enabled gate, for the authoring UI. Returns null when the wedding
+   * has no website yet.
+   */
+  async getWebsiteQuestions(weddingId: string): Promise<WebsiteQuestions | null> {
+    const website = await this.questionRepository.findWebsiteByWeddingId(weddingId)
+    if (!website) return null
+
+    const questions = await this.questionRepository.findByWebsiteId(website.id)
+
+    return {
+      websiteId: website.id,
+      isRsvpEnabled: website.isRsvpEnabled,
+      questions,
+    }
+  }
+
+  /**
+   * Get every RSVP answer submitted by a household, grouped by question.
+   *
+   * Merges free-text answers and multiple-choice responses (which live in
+   * separate tables) into one per-question shape for display.
+   */
+  async getAnswersByHousehold(input: {
+    weddingId: string
+    householdId: string
+  }): Promise<HouseholdAnswerGroup[]> {
+    const { weddingId, householdId } = input
+
+    const inScope = await this.questionRepository.householdBelongsToWedding(householdId, weddingId)
+    if (!inScope) {
+      throw new TRPCError({ code: 'FORBIDDEN' })
+    }
+
+    const { answers, optionResponses } =
+      await this.questionRepository.findAnswersByHouseholdId(householdId)
+
+    const groups = new Map<string, HouseholdAnswerGroup>()
+
+    const ensureGroup = (question: {
+      id: string
+      text: string
+      type: string
+      eventId: string | null
+    }): HouseholdAnswerGroup => {
+      const existing = groups.get(question.id)
+      if (existing) return existing
+
+      const group: HouseholdAnswerGroup = {
+        questionId: question.id,
+        questionText: question.text,
+        type: question.type,
+        scope: question.eventId ? 'event' : 'website',
+        responses: [],
+      }
+      groups.set(question.id, group)
+      return group
+    }
+
+    const pushResponse = (group: HouseholdAnswerGroup, response: HouseholdAnswerResponse): void => {
+      if (response.answer.trim().length === 0) return
+      group.responses.push(response)
+    }
+
+    for (const answer of answers) {
+      const group = ensureGroup(answer.question)
+      pushResponse(group, {
+        key: `${answer.questionId}:${answer.guestId}:${answer.householdId}`,
+        guestName: buildGuestName(answer.guestFirstName, answer.guestLastName),
+        answer: answer.response,
+      })
+    }
+
+    for (const optionResponse of optionResponses) {
+      const group = ensureGroup(optionResponse.option.question)
+      pushResponse(group, {
+        key: `${optionResponse.questionId}:${optionResponse.guestId}:${optionResponse.householdId}`,
+        guestName: buildGuestName(optionResponse.guestFirstName, optionResponse.guestLastName),
+        answer: optionResponse.option.text,
+      })
+    }
+
+    return Array.from(groups.values()).filter((group) => group.responses.length > 0)
   }
 
   private requireQuestionPermission(ctx: AuthzContext, scope: 'event' | 'website'): void {

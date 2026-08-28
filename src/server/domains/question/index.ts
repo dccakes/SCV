@@ -21,12 +21,15 @@ export { QuestionService } from '~/server/domains/question/question.service'
 export type {
   Answer,
   DeleteQuestionInput,
+  HouseholdAnswerGroup,
+  HouseholdAnswerResponse,
   Option,
   OptionInput,
   OptionResponse,
   Question,
   QuestionWithOptions,
   UpsertQuestionInput,
+  WebsiteQuestions,
 } from '~/server/domains/question/question.types'
 // Export validators
 export {

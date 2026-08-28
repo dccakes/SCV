@@ -138,6 +138,7 @@ export const ETTA_DEFAULT_PERMISSIONS = [
   'write:memory',
   'write:suggestions',
   'write:milestone_status',
+  'write:tasks',
   'write:faq',
   'execute:approved_actions',
 ] as const

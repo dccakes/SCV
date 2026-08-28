@@ -13,6 +13,43 @@ import type {
   HouseholdWithGuestsAndGifts,
 } from '~/server/domains/household/household.types'
 
+/**
+ * Shape returned to the guest-facing RSVP flow: the household with each guest's
+ * invitations and tag assignments. Shared by name-search and invite-code
+ * recognition so both paths hand the RSVP form identical data.
+ */
+export const rsvpHouseholdSelect = {
+  id: true,
+  guests: {
+    include: {
+      invitations: true,
+      guestTagAssignments: {
+        select: {
+          guestTagId: true,
+        },
+      },
+    },
+  },
+} satisfies Prisma.HouseholdSelect
+
+/**
+ * Fold a name to a comparable form for the public RSVP lookup: lowercased, with
+ * apostrophes dropped and hyphens/dashes treated as spaces. This makes
+ * "Sarah-Jane" and "Sarah Jane" compare equal (in either direction) and lets
+ * "O'Brien" match "OBrien", so a guest isn't blocked by how the couple happened
+ * to punctuate their name.
+ */
+export function normalizeNameForSearch(value: string): string {
+  return value.toLowerCase().replace(/['’]/g, '').replace(/[-–—]/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+/**
+ * Split a search string into normalized name terms (see normalizeNameForSearch).
+ */
+export function tokenizeNameForSearch(value: string): string[] {
+  return normalizeNameForSearch(value).split(' ').filter(Boolean)
+}
+
 export class HouseholdRepository {
   constructor(private db: PrismaClient | Prisma.TransactionClient) {}
 
@@ -222,71 +259,109 @@ export class HouseholdRepository {
   }
 
   /**
-   * Search households by guest name
+   * Search households by guest name.
+   *
+   * The search text is split on whitespace and every term must match some
+   * guest's first or last name in the household. First and last names live in
+   * separate columns, so a guest typing their full name ("Betum Adobo") — as the
+   * "Full Name" field prompts them to — would never match a plain `contains`
+   * against either column alone. Tokenising lets "Betum", "Adobo", and
+   * "Betum Adobo" all find the household. Mirrors the coordinator-side guest
+   * filter (see guest-search-filter.tsx), which already matches the full name.
+   *
+   * Households are gated to those with at least one invited guest so the public
+   * RSVP flow never surfaces people who were never invited. The gate is applied
+   * at the household level (not per matched guest) to stay consistent with the
+   * invite-token path, which returns the whole household regardless of any
+   * single guest's status.
    */
   async search(searchText: string, weddingId: string): Promise<HouseholdSearchResult[]> {
+    const terms = searchText.trim().split(/\s+/).filter(Boolean)
+
+    // An empty/whitespace-only search must not return every household.
+    if (terms.length === 0) return []
+
+    const nameConditions: Prisma.HouseholdWhereInput[] = terms.map((term) => ({
+      guests: {
+        some: {
+          OR: [
+            { firstName: { contains: term, mode: 'insensitive' } },
+            { lastName: { contains: term, mode: 'insensitive' } },
+          ],
+        },
+      },
+    }))
+
     return this.db.household.findMany({
       where: {
         weddingId,
-        OR: [
-          {
-            guests: {
-              some: {
-                firstName: {
-                  contains: searchText,
-                  mode: 'insensitive',
-                },
-                AND: [
-                  {
-                    invitations: {
-                      some: {
-                        rsvp: {
-                          in: ['Invited', 'Attending', 'Declined'],
-                        },
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
-          {
-            guests: {
-              some: {
-                lastName: {
-                  contains: searchText,
-                  mode: 'insensitive',
-                },
-                AND: [
-                  {
-                    invitations: {
-                      some: {
-                        rsvp: {
-                          in: ['Invited', 'Attending', 'Declined'],
-                        },
-                      },
-                    },
-                  },
-                ],
-              },
-            },
-          },
-        ],
-      },
-      select: {
-        id: true,
         guests: {
-          include: {
-            invitations: true,
-            guestTagAssignments: {
-              select: {
-                guestTagId: true,
+          some: {
+            invitations: {
+              some: {
+                rsvp: {
+                  in: ['Invited', 'Attending', 'Declined'],
+                },
+              },
+            },
+          },
+        },
+        AND: nameConditions,
+      },
+      select: rsvpHouseholdSelect,
+    })
+  }
+
+  /**
+   * Public, guest-facing RSVP name lookup.
+   *
+   * Stricter than `search`, because this runs on an unauthenticated endpoint: a
+   * guest must be identified by a first AND last name (at least two terms) and
+   * every term must match the SAME guest. A lone common first name like "sarah",
+   * or an incidental substring, therefore no longer surfaces the whole guest
+   * list, and a query can't match two different household members at once.
+   *
+   * Matching is done in memory against each guest's full name so hyphens and
+   * spaces are interchangeable ("Sarah-Jane" == "Sarah Jane") while staying
+   * partial- and case-tolerant. The candidate set is a single wedding's invited
+   * households, so this stays small.
+   */
+  async searchPublicByName(
+    searchText: string,
+    weddingId: string
+  ): Promise<HouseholdSearchResult[]> {
+    const terms = tokenizeNameForSearch(searchText)
+
+    // Require a first and last name. A single term is too broad for a public
+    // lookup and would let anyone enumerate the couple's guest list.
+    if (terms.length < 2) return []
+
+    const households = await this.db.household.findMany({
+      where: {
+        weddingId,
+        guests: {
+          some: {
+            invitations: {
+              some: {
+                rsvp: {
+                  in: ['Invited', 'Attending', 'Declined'],
+                },
               },
             },
           },
         },
       },
+      select: rsvpHouseholdSelect,
     })
+
+    // Every term must appear in a single guest's full name, so the searcher has
+    // actually named a specific person rather than a household member each.
+    return households.filter((household) =>
+      household.guests.some((guest) => {
+        const fullName = normalizeNameForSearch(`${guest.firstName} ${guest.lastName}`)
+        return terms.every((term) => fullName.includes(term))
+      })
+    )
   }
 
   /**

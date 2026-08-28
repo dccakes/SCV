@@ -1,4 +1,7 @@
-import { expect, test } from '@playwright/test'
+import { expect, type Locator, test } from '@playwright/test'
+
+const getQuoteFileInput = (dialog: Locator) =>
+  dialog.locator('input[type="file"][accept*="application/pdf"]')
 
 test.describe('Vendors', () => {
   test('should load the vendors page', async ({ page }) => {
@@ -96,9 +99,11 @@ test.describe('Vendor CRUD', () => {
   test('should create a new vendor', async ({ page }) => {
     await page.goto('/vendors')
 
-    // Click "+ Add Vendor" button in the "Other" category section
-    const otherSection = page.locator('section').filter({ hasText: /^other/i })
-    await otherSection.getByRole('button', { name: /add vendor/i }).click()
+    // Click the top-level "+ Add Vendor" button (defaults to "Other" category)
+    await page
+      .getByRole('button', { name: /\+ add vendor/i })
+      .first()
+      .click()
 
     // Fill in the vendor form
     const dialog = page.getByRole('dialog')
@@ -114,18 +119,20 @@ test.describe('Vendor CRUD', () => {
   test('should delete a vendor', async ({ page }) => {
     await page.goto('/vendors')
 
-    // First create a vendor to delete
-    const otherSection = page.locator('section').filter({ hasText: /^other/i })
-    await otherSection.getByRole('button', { name: /add vendor/i }).click()
+    // First create a vendor to delete via the top-level "+ Add Vendor" button
+    await page
+      .getByRole('button', { name: /\+ add vendor/i })
+      .first()
+      .click()
 
     const dialog = page.getByRole('dialog')
     await dialog.getByLabel(/name/i).first().fill('Vendor To Delete')
     await dialog.getByRole('button', { name: /add vendor/i }).click()
     await expect(page.locator('body')).toContainText('Vendor To Delete')
 
-    // Now delete it using the remove button
-    page.once('dialog', (d) => d.accept())
+    // Now delete it using the remove button — confirm in the AlertDialog
     await page.getByLabel(/remove vendor to delete/i).click()
+    await page.getByRole('button', { name: /remove vendor/i }).click()
 
     // Vendor should be gone
     await expect(page.locator('body')).not.toContainText('Vendor To Delete')
@@ -135,8 +142,10 @@ test.describe('Vendor CRUD', () => {
     await page.goto('/vendors')
 
     // Create a dedicated vendor so we don't permanently mutate seed data
-    const otherSection = page.locator('section').filter({ hasText: /^other/i })
-    await otherSection.getByRole('button', { name: /add vendor/i }).click()
+    await page
+      .getByRole('button', { name: /\+ add vendor/i })
+      .first()
+      .click()
     const createDialog = page.getByRole('dialog')
     await createDialog.getByLabel(/name/i).first().fill('Details Edit Test')
     await createDialog.getByRole('button', { name: /add vendor/i }).click()
@@ -183,7 +192,7 @@ test.describe('Quote Management', () => {
     // Fill in quote form
     await dialog.getByLabel(/price/i).fill('2500')
     await dialog.getByLabel(/date/i).fill('2026-06-01')
-    await dialog.getByLabel(/notes/i).fill('E2E test quote')
+    await dialog.getByLabel('Notes', { exact: true }).fill('E2E test quote')
     await dialog.getByRole('button', { name: /add quote/i }).click()
 
     // New quote should appear
@@ -203,10 +212,14 @@ test.describe('Quote Management', () => {
     await expect(dialog).toContainText(/\$4,200/)
     await expect(dialog).toContainText(/\$5,100/)
 
-    // Click "Remove" on one of the quotes
-    page.once('dialog', (d) => d.accept())
+    // Click "Remove" on one of the quotes — opens an AlertDialog for confirmation
     const removeButtons = dialog.getByRole('button', { name: /^remove$/i })
     await removeButtons.first().click()
+
+    // Confirm deletion in the AlertDialog
+    const alertDialog = page.getByRole('alertdialog')
+    await expect(alertDialog).toBeVisible()
+    await alertDialog.getByRole('button', { name: /remove quote/i }).click()
 
     // Wait for the quote to be removed — only one price should remain
     await expect(dialog).toContainText(/\$4,200|\$5,100/)
@@ -268,7 +281,7 @@ test.describe('File Upload UI', () => {
     await dialog.getByRole('button', { name: /attach files/i }).click()
 
     // Simulate file selection via the hidden input
-    const fileInput = dialog.locator('input[type="file"]')
+    const fileInput = getQuoteFileInput(dialog)
 
     // Create a test PDF buffer
     const buffer = Buffer.from('%PDF-1.4 test content')
@@ -295,7 +308,7 @@ test.describe('File Upload UI', () => {
 
     await dialog.getByRole('button', { name: /attach files/i }).click()
 
-    const fileInput = dialog.locator('input[type="file"]')
+    const fileInput = getQuoteFileInput(dialog)
     const buffer = Buffer.from('%PDF-1.4 test content')
 
     await fileInput.setInputFiles({
@@ -378,15 +391,17 @@ test.describe('XSS Injection Prevention', () => {
     const removeBtns = page.getByLabel(new RegExp(`remove.*${escapedPayload}`, 'i'))
     let leftoverCount = await removeBtns.count()
     while (leftoverCount > 0) {
-      page.once('dialog', (d) => d.accept())
       await removeBtns.first().click()
+      await page.getByRole('button', { name: /remove vendor/i }).click()
       await page.waitForTimeout(300)
       leftoverCount = await removeBtns.count()
     }
 
-    // Create a vendor with XSS in the name
-    const otherSection = page.locator('section').filter({ hasText: /^other/i })
-    await otherSection.getByRole('button', { name: /add vendor/i }).click()
+    // Create a vendor with XSS in the name via the top-level "+ Add Vendor" button
+    await page
+      .getByRole('button', { name: /\+ add vendor/i })
+      .first()
+      .click()
 
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
@@ -412,8 +427,8 @@ test.describe('XSS Injection Prevention', () => {
     // Clean up — delete all XSS vendors created in this test
     let remaining = await removeBtns.count()
     while (remaining > 0) {
-      page.once('dialog', (d) => d.accept())
       await removeBtns.first().click()
+      await page.getByRole('button', { name: /remove vendor/i }).click()
       await page.waitForTimeout(300)
       remaining = await removeBtns.count()
     }
@@ -428,14 +443,16 @@ test.describe('XSS Injection Prevention', () => {
     const locationRemoveBtns = page.getByLabel(/remove.*xss location test/i)
     let leftoverCount = await locationRemoveBtns.count()
     while (leftoverCount > 0) {
-      page.once('dialog', (d) => d.accept())
       await locationRemoveBtns.first().click()
+      await page.getByRole('button', { name: /remove vendor/i }).click()
       await page.waitForTimeout(300)
       leftoverCount = await locationRemoveBtns.count()
     }
 
-    const otherSection = page.locator('section').filter({ hasText: /^other/i })
-    await otherSection.getByRole('button', { name: /add vendor/i }).click()
+    await page
+      .getByRole('button', { name: /\+ add vendor/i })
+      .first()
+      .click()
 
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
@@ -462,8 +479,8 @@ test.describe('XSS Injection Prevention', () => {
     await detailDialog.getByRole('button', { name: /close/i }).last().click()
     let remaining = await locationRemoveBtns.count()
     while (remaining > 0) {
-      page.once('dialog', (d) => d.accept())
       await locationRemoveBtns.first().click()
+      await page.getByRole('button', { name: /remove vendor/i }).click()
       await page.waitForTimeout(300)
       remaining = await locationRemoveBtns.count()
     }
@@ -482,7 +499,7 @@ test.describe('XSS Injection Prevention', () => {
     await dialog.getByRole('button', { name: /add quote/i }).click()
     await dialog.getByLabel(/price/i).fill('999')
     await dialog.getByLabel(/date/i).fill('2026-01-01')
-    await dialog.getByLabel(/notes/i).fill(xssPayload)
+    await dialog.getByLabel('Notes', { exact: true }).fill(xssPayload)
     await dialog.getByRole('button', { name: /add quote/i }).click()
 
     // Page should still be functional — if XSS executed it would replace the entire body
@@ -581,7 +598,7 @@ test.describe('File Upload Security', () => {
 
     await dialog.getByRole('button', { name: /attach files/i }).click()
 
-    const fileInput = dialog.locator('input[type="file"]')
+    const fileInput = getQuoteFileInput(dialog)
 
     // Try uploading an executable file — should be rejected by dropzone
     await fileInput.setInputFiles({
@@ -603,7 +620,7 @@ test.describe('File Upload Security', () => {
 
     await dialog.getByRole('button', { name: /attach files/i }).click()
 
-    const fileInput = dialog.locator('input[type="file"]')
+    const fileInput = getQuoteFileInput(dialog)
 
     // Try uploading an HTML file — could be used for stored XSS
     await fileInput.setInputFiles({
@@ -625,7 +642,7 @@ test.describe('File Upload Security', () => {
 
     await dialog.getByRole('button', { name: /attach files/i }).click()
 
-    const fileInput = dialog.locator('input[type="file"]')
+    const fileInput = getQuoteFileInput(dialog)
 
     // Create a buffer just over 8MB (allocUnsafe — contents irrelevant, only size matters)
     const oversizedBuffer = Buffer.allocUnsafe(8 * 1024 * 1024 + 1)
@@ -650,7 +667,7 @@ test.describe('File Upload Security', () => {
 
     await dialog.getByRole('button', { name: /add quote/i }).click()
 
-    const fileInput = dialog.locator('input[type="file"]')
+    const fileInput = getQuoteFileInput(dialog)
 
     // Upload 10 files (the maximum)
     const files = Array.from({ length: 10 }, (_, i) => ({
@@ -686,7 +703,7 @@ test.describe('File Upload Security', () => {
 
     await dialog.getByRole('button', { name: /attach files/i }).click()
 
-    const fileInput = dialog.locator('input[type="file"]')
+    const fileInput = getQuoteFileInput(dialog)
 
     // Upload a variety of valid file types
     await fileInput.setInputFiles([

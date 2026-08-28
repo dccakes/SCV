@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { IoIosCheckmarkCircleOutline } from 'react-icons/io'
 import type { Guest, Question, StepFormProps } from '~/app/utils/shared-types'
@@ -22,13 +23,22 @@ export default function QuestionMultipleChoice({
   guest,
   question,
 }: QuestionMultipleChoiceProps) {
+  const t = useTranslations('questions')
+  const tCommon = useTranslations('common')
   const OTHER_OPTION_ID = '__other__'
   const rsvpFormData = useRsvpForm()
   const updateRsvpForm = useUpdateRsvpForm()
   const questionId = question.id ?? '-1'
+  // General/website questions are asked once for the whole household and have no
+  // specific guest. Attribute them to the household's primary contact (falling
+  // back to any household guest) so the response references a real Guest and
+  // satisfies the OptionResponse_guestId foreign key.
+  const householdGuestId =
+    rsvpFormData.selectedHousehold?.primaryContact?.id ??
+    rsvpFormData.selectedHousehold?.guests?.[0]?.id
   const answerTarget = {
     questionId,
-    guestId: guest?.id,
+    guestId: guest?.id ?? householdGuestId,
     householdId: rsvpFormData.selectedHousehold?.id,
   }
   const existingAnswer = findExistingAnswer(rsvpFormData.answersToQuestions, answerTarget)
@@ -82,8 +92,8 @@ export default function QuestionMultipleChoice({
               className={`relative mb-3 w-full cursor-pointer rounded-lg border border-gray-700 p-5 text-left hover:bg-gray-700 hover:text-white ${isOtherSelected && 'bg-gray-700 text-white'}`}
             >
               <div className='flex flex-col gap-3'>
-                <h3>Other</h3>
-                <p>Enter your own answer</p>
+                <h3>{t('other')}</h3>
+                <p>{t('otherDescription')}</p>
               </div>
               {isOtherSelected && (
                 <div className='absolute top-1/2 right-5 -translate-y-1/2'>
@@ -96,8 +106,8 @@ export default function QuestionMultipleChoice({
       </ul>
       {isOtherSelected && (
         <textarea
-          className='w-full rounded-lg border border-gray-700 p-3 text-left text-base'
-          placeholder='Please share your answer'
+          className='w-full rounded-lg border border-gray-700 bg-white p-3 text-left text-base text-black placeholder:text-gray-500'
+          placeholder={t('otherPlaceholder')}
           value={otherResponse}
           onChange={(event) => setOtherResponse(event.target.value)}
           rows={3}
@@ -123,7 +133,7 @@ export default function QuestionMultipleChoice({
           goNext?.()
         }}
       >
-        CONTINUE
+        {tCommon('continue')}
       </button>
       {!question.isRequired && (
         <button
@@ -136,7 +146,7 @@ export default function QuestionMultipleChoice({
             goNext?.()
           }}
         >
-          SKIP
+          {tCommon('skip')}
         </button>
       )}
       <button
@@ -144,7 +154,7 @@ export default function QuestionMultipleChoice({
         type='submit'
         onClick={() => goBack?.()}
       >
-        BACK
+        {tCommon('back')}
       </button>
     </div>
   )

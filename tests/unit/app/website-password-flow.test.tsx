@@ -1,9 +1,8 @@
 import { render, screen } from '@testing-library/react'
 
-import RootRouteHandler from '~/app/[websiteSubUrl]/page'
+import RootRouteHandler from '~/app/w/[websiteSubUrl]/page'
 
-const mockGetBySubUrl = jest.fn()
-const mockHasPasswordAccess = jest.fn()
+const mockFetchWeddingData = jest.fn()
 const mockVerifyWebsitePassword = jest.fn()
 const mockCookieGet = jest.fn()
 const mockCookieSet = jest.fn()
@@ -21,12 +20,9 @@ const mockPasswordPage = jest.fn(
 
 jest.mock('~/trpc/server', () => ({
   api: {
-    user: {
-      get: jest.fn(),
-    },
     website: {
-      getBySubUrl: () => mockGetBySubUrl(),
-      hasPasswordAccess: () => mockHasPasswordAccess(),
+      fetchWeddingData: (input: { subUrl: string; accessToken?: string }) =>
+        mockFetchWeddingData(input),
       verifyWebsitePassword: (input: { subUrl: string; password: string }) =>
         mockVerifyWebsitePassword(input),
     },
@@ -52,29 +48,24 @@ jest.mock('~/components/website/wedding', () => ({
   default: () => <div data-testid='wedding-website'>Wedding Website</div>,
 }))
 
+const mockResolveInvitedHousehold = jest.fn()
+jest.mock('~/app/w/[websiteSubUrl]/_lib/invited-household', () => ({
+  resolveInvitedHousehold: (...args: unknown[]) => mockResolveInvitedHousehold(...args),
+}))
+
 describe('Website password flow', () => {
   beforeEach(() => {
-    mockGetBySubUrl.mockReset()
-    mockHasPasswordAccess.mockReset()
+    mockFetchWeddingData.mockReset()
     mockVerifyWebsitePassword.mockReset()
     mockCookieGet.mockReset()
     mockCookieSet.mockReset()
     mockPasswordPage.mockClear()
+    mockResolveInvitedHousehold.mockReset()
+    mockResolveInvitedHousehold.mockResolvedValue(null)
   })
 
   it('does not send website password to PasswordPage props', async () => {
-    mockGetBySubUrl.mockResolvedValue({
-      id: 'website-123',
-      weddingId: 'wedding-123',
-      url: 'https://example.com/johnandjane',
-      subUrl: 'johnandjane',
-      isPasswordEnabled: true,
-      isRsvpEnabled: true,
-      createdAt: new Date('2025-01-01'),
-      updatedAt: new Date('2025-01-01'),
-      coverPhotoUrl: null,
-    })
-    mockHasPasswordAccess.mockResolvedValue(false)
+    mockFetchWeddingData.mockRejectedValue({ code: 'FORBIDDEN' })
     mockCookieGet.mockReturnValue(undefined)
 
     const page = await RootRouteHandler({
@@ -88,19 +79,32 @@ describe('Website password flow', () => {
     expect(mockPasswordPage.mock.calls[0]?.[0]).not.toHaveProperty('password')
   })
 
-  it('verifies password on server action and sets secure httpOnly access cookie', async () => {
-    mockGetBySubUrl.mockResolvedValue({
-      id: 'website-123',
-      weddingId: 'wedding-123',
-      url: 'https://example.com/johnandjane',
-      subUrl: 'johnandjane',
-      isPasswordEnabled: true,
-      isRsvpEnabled: true,
-      createdAt: new Date('2025-01-01'),
-      updatedAt: new Date('2025-01-01'),
-      coverPhotoUrl: null,
+  it('skips the password page and forwards the invite token for a recognized guest', async () => {
+    mockFetchWeddingData.mockResolvedValue({
+      groomFirstName: 'John',
+      groomLastName: 'Doe',
+      brideFirstName: 'Jane',
+      brideLastName: 'Smith',
     })
-    mockHasPasswordAccess.mockResolvedValue(false)
+    mockCookieGet.mockImplementation((name: string) =>
+      name === 'household_invite_johnandjane' ? { value: 'invite-token-123' } : undefined
+    )
+
+    const page = await RootRouteHandler({
+      params: Promise.resolve({ websiteSubUrl: 'johnandjane' }),
+    })
+    render(page)
+
+    expect(screen.getByTestId('wedding-website')).toBeInTheDocument()
+    expect(screen.queryByTestId('password-page')).not.toBeInTheDocument()
+    expect(mockFetchWeddingData).toHaveBeenCalledWith(
+      expect.objectContaining({ subUrl: 'johnandjane', inviteToken: 'invite-token-123' })
+    )
+    expect(mockResolveInvitedHousehold).toHaveBeenCalledWith('johnandjane', 'invite-token-123')
+  })
+
+  it('verifies password on server action and sets secure httpOnly access cookie', async () => {
+    mockFetchWeddingData.mockRejectedValue({ code: 'FORBIDDEN' })
     mockCookieGet.mockReturnValue(undefined)
     mockVerifyWebsitePassword.mockResolvedValue('signed-token')
 
@@ -126,6 +130,7 @@ describe('Website password flow', () => {
       expect.objectContaining({
         httpOnly: true,
         sameSite: 'lax',
+        path: '/w/johnandjane',
       })
     )
   })

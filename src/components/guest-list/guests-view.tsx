@@ -18,7 +18,6 @@ import type { HouseholdFormData } from '~/components/forms/guest-form.schema'
 import {
   type DrawerDraft,
   GuestDetailPanelContent,
-  type RsvpSummary,
 } from '~/components/guest-list/guest-detail-panel-content'
 import GuestSearchFilter from '~/components/guest-list/guest-search-filter'
 import type { HouseholdMemberDraft } from '~/components/guest-list/household-members-modal'
@@ -44,6 +43,7 @@ import { AsyncState } from '~/components/ui/async-state'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import type { EttaSuggestionView } from '~/lib/etta/types'
+import { normalizePhoneToE164 } from '~/lib/phone/phone-validator'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 import { api } from '~/trpc/react'
 
@@ -193,7 +193,7 @@ export default function GuestsView({
     const primary = household.guests.find((guest) => guest.isPrimaryContact)
     return {
       email: primary?.email ?? '',
-      phone: primary?.phone ?? '',
+      phone: normalizePhoneToE164(primary?.phone) ?? '',
       address1: household.address1 ?? '',
       address2: household.address2 ?? '',
       city: household.city ?? '',
@@ -262,7 +262,9 @@ export default function GuestsView({
         firstName: guest.firstName,
         lastName: guest.lastName,
         email: guest.isPrimaryContact ? draftSnapshot.email || null : guest.email,
-        phone: guest.isPrimaryContact ? draftSnapshot.phone || null : guest.phone,
+        phone: guest.isPrimaryContact
+          ? (normalizePhoneToE164(draftSnapshot.phone) ?? null)
+          : (normalizePhoneToE164(guest.phone) ?? null),
         isPrimaryContact: guest.isPrimaryContact,
         ageGroup: guest.ageGroup ?? 'ADULT',
         isTagAlong: guest.isTagAlong ?? false,
@@ -311,7 +313,7 @@ export default function GuestsView({
                   return {
                     ...guest,
                     email: draftSnapshot.email || null,
-                    phone: draftSnapshot.phone || null,
+                    phone: normalizePhoneToE164(draftSnapshot.phone) ?? null,
                   }
                 }),
               }
@@ -354,7 +356,7 @@ export default function GuestsView({
           firstName: member.firstName,
           lastName: member.lastName,
           email: member.email,
-          phone: member.phone,
+          phone: normalizePhoneToE164(member.phone) ?? null,
           isPrimaryContact: member.isPrimaryContact,
           ageGroup: member.ageGroup,
           isTagAlong: member.isTagAlong,
@@ -381,7 +383,7 @@ export default function GuestsView({
             firstName: guest.firstName,
             lastName: guest.lastName,
             email: guest.email,
-            phone: guest.phone,
+            phone: normalizePhoneToE164(guest.phone) ?? null,
             isPrimaryContact: guest.isPrimaryContact,
             ageGroup: guest.ageGroup ?? 'ADULT',
             isTagAlong: guest.isTagAlong ?? false,
@@ -547,6 +549,12 @@ export default function GuestsView({
     { enabled: !!selectedHousehold }
   )
 
+  const { data: householdAnswers = [], isLoading: isLoadingAnswers } =
+    api.question.getAnswersByHousehold.useQuery(
+      { householdId: selectedHousehold?.id ?? '' },
+      { enabled: !!selectedHousehold }
+    )
+
   const addNoteMutation = api.communicationLog.addNote.useMutation({
     onSuccess: (_data, variables) => {
       toast.success('Note added')
@@ -573,30 +581,6 @@ export default function GuestsView({
     },
   })
 
-  const allEventRsvpSummary = useMemo(() => {
-    if (!selectedHousehold || selectedEventId !== 'all') return new Map<string, RsvpSummary>()
-
-    const summaryByEventId = new Map<string, RsvpSummary>()
-
-    selectedHousehold.guests.forEach((guest) => {
-      guest.invitations.forEach((invitation) => {
-        const current = summaryByEventId.get(invitation.eventId) ?? {
-          attending: 0,
-          invited: 0,
-          declined: 0,
-        }
-
-        if (invitation.rsvp === 'Attending') current.attending += 1
-        else if (invitation.rsvp === 'Invited') current.invited += 1
-        else if (invitation.rsvp === 'Declined') current.declined += 1
-
-        summaryByEventId.set(invitation.eventId, current)
-      })
-    })
-
-    return summaryByEventId
-  }, [selectedEventId, selectedHousehold])
-
   const handleSelectHousehold = useCallback((household: HouseholdWithGuests) => {
     setSelectedHouseholdId(household.id)
     setEditingSections(new Set())
@@ -622,6 +606,12 @@ export default function GuestsView({
     if (nameSort === 'descending') return 'Name (Z-A)'
     if (partySort === 'ascending') return 'Party Size (Low-High)'
     if (partySort === 'descending') return 'Party Size (High-Low)'
+    return undefined
+  }, [nameSort, partySort])
+
+  const activeSort = useMemo(() => {
+    if (nameSort !== 'none') return { field: 'name' as const, direction: nameSort }
+    if (partySort !== 'none') return { field: 'partySize' as const, direction: partySort }
     return undefined
   }, [nameSort, partySort])
 
@@ -658,14 +648,14 @@ export default function GuestsView({
           setPrefillEvent={setPrefillEvent}
         />
       )}
-      <div className='mb-4 flex justify-between'>
+      <div className='mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
         <GuestSearchFilter
           setFilteredHouseholds={setFilteredHouseholds}
           households={households}
           events={events}
           selectedEventId={selectedEventId}
         />
-        <div className='flex gap-3'>
+        <div className='flex shrink-0 gap-3'>
           <Button type='button' variant='outline' onClick={onImportClick}>
             Import Guests
           </Button>
@@ -683,6 +673,7 @@ export default function GuestsView({
       <div className='space-y-4'>
         <ListToolbar
           totalHouseholds={sortedHouseholds.length}
+          totalUnfilteredHouseholds={households.length}
           onSortByName={sortByName}
           onSortByPartySize={sortByParty}
           viewMode={viewMode}
@@ -690,6 +681,7 @@ export default function GuestsView({
           workflowMode={workflowMode}
           onWorkflowModeChange={setWorkflowMode}
           sortStateLabel={sortStateLabel}
+          activeSort={activeSort}
         />
         {sortedHouseholds.length === 0 ? (
           <AsyncState isEmpty emptyText='No households yet' />
@@ -773,7 +765,8 @@ export default function GuestsView({
             events={events}
             selectedEventResponses={selectedEventResponses}
             communicationLog={communicationLog}
-            allEventRsvpSummary={allEventRsvpSummary}
+            householdAnswers={householdAnswers}
+            isLoadingAnswers={isLoadingAnswers}
             editingSections={editingSections}
             toggleEditingSection={toggleEditingSection}
             drawerDraft={drawerDraft}
@@ -820,7 +813,17 @@ export default function GuestsView({
       <AlertDialog open={showDeleteHouseholdDialog} onOpenChange={setShowDeleteHouseholdDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Party?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {(() => {
+                const primary =
+                  selectedCanonicalHousehold?.guests.find((g) => g.isPrimaryContact) ??
+                  selectedCanonicalHousehold?.guests[0]
+                const name = primary
+                  ? `${primary.firstName} ${primary.lastName}`.trim()
+                  : 'this party'
+                return `Delete "${name}"?`
+              })()}
+            </AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently delete this party and all associated guests. This action cannot
               be undone.

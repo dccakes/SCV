@@ -39,10 +39,10 @@ test.describe('Guest List Drawer - Viewing Details', () => {
   test('should display contact information for Donkey household', async ({ page }) => {
     await page.getByRole('button', { name: /select donkey.*household/i }).click()
 
-    // Seed data: donkey@swamp.wed, +1-555-0101
+    // Seed data: donkey@swamp.wed, +12025550101
     await expect(page.getByText('Contact & Address')).toBeVisible()
     await expect(page.getByText('donkey@swamp.wed')).toBeVisible()
-    await expect(page.getByText('+1-555-0101')).toBeVisible()
+    await expect(page.getByText('+12025550101')).toBeVisible()
     // Address: 1 Mud Lane, Swampside, FFA, 10001, Far Far Away
     await expect(page.getByText(/1 Mud Lane/)).toBeVisible()
   })
@@ -53,9 +53,12 @@ test.describe('Guest List Drawer - Viewing Details', () => {
     await expect(page.getByText('Party Members')).toBeVisible()
 
     // Donkey household has 2 members: Donkey (ADULT) and Dragon (ADULT)
-    // Use locator scoped to the party members list to avoid strict mode violations
-    // (name appears in card, drawer heading, AND member list)
-    const membersList = page.locator('ul').filter({ hasText: 'Donkey The Donkey' })
+    // Scope to the Party Members section to avoid strict mode violations
+    // (name appears in card, drawer heading, member list, AND the RSVP section)
+    const membersList = page
+      .locator('section')
+      .filter({ has: page.getByRole('heading', { name: 'Party Members' }) })
+      .locator('ul')
     await expect(membersList.locator('span', { hasText: 'Donkey The Donkey' })).toBeVisible()
     await expect(membersList.locator('span', { hasText: 'Dragon The Dragon' })).toBeVisible()
 
@@ -71,12 +74,12 @@ test.describe('Guest List Drawer - Viewing Details', () => {
     await expect(page.getByText(/Needs high-chair seating for dragonlets/i)).toBeVisible()
   })
 
-  test('should display Seating & Event section', async ({ page }) => {
+  test('should display Event Invitations & RSVP section', async ({ page }) => {
     await page.getByRole('button', { name: /select donkey.*household/i }).click()
 
-    await expect(page.getByText('Seating & Event')).toBeVisible()
-    // Should show the "Manage RSVPs in Events" link
-    await expect(page.getByText(/Manage RSVPs in Events/i)).toBeVisible()
+    await expect(page.getByText('Event Invitations & RSVP')).toBeVisible()
+    // Should show the "Manage in Events" link
+    await expect(page.getByText(/Manage in Events/i)).toBeVisible()
   })
 
   test('should display Communication Log section', async ({ page }) => {
@@ -113,10 +116,11 @@ test.describe('Guest List Drawer - Viewing Details', () => {
     await page.getByRole('button', { name: /select papa.*household/i }).click()
 
     // Should show all 3 members in the party members list
+    // Scope to the Party Members section (names also appear in the RSVP section)
     const membersList = page
+      .locator('section')
+      .filter({ has: page.getByRole('heading', { name: 'Party Members' }) })
       .locator('ul')
-      .filter({ hasText: 'Papa Bear' })
-      .filter({ hasText: 'Mama Bear' })
     await expect(membersList.locator('span', { hasText: 'Papa Bear' })).toBeVisible()
     await expect(membersList.locator('span', { hasText: 'Mama Bear' })).toBeVisible()
     await expect(membersList.locator('span', { hasText: 'Baby Bear' })).toBeVisible()
@@ -157,7 +161,8 @@ test.describe('Guest List Drawer - Editing Contact & Address', () => {
 
     // Verify existing data is pre-filled
     await expect(page.locator('input[name="email"]')).toHaveValue('donkey@swamp.wed')
-    await expect(page.locator('input[name="phone"]')).toHaveValue('+1-555-0101')
+    await expect(page.getByRole('button', { name: 'Select country' })).toContainText('+1')
+    await expect(page.locator('input[name="phone"]')).toHaveValue(/202\D*555\D*0101/)
     await expect(page.locator('input[name="address1"]')).toHaveValue('1 Mud Lane')
     await expect(page.locator('input[name="city"]')).toHaveValue('Swampside')
     await expect(page.locator('input[name="state"]')).toHaveValue('FFA')
@@ -441,8 +446,8 @@ test.describe('Guest List Drawer - Delete Party', () => {
 
     await page.getByRole('button', { name: /delete party/i }).click()
 
-    // Confirmation dialog should appear
-    await expect(page.getByRole('heading', { name: /delete party\?/i })).toBeVisible()
+    // Confirmation dialog should appear with the party name in the title
+    await expect(page.getByRole('heading', { name: /delete "donkey the donkey"\?/i })).toBeVisible()
     await expect(
       page.getByText(/this will permanently delete this party and all associated guests/i)
     ).toBeVisible()

@@ -1,7 +1,15 @@
 'use client'
 
 import { format } from 'date-fns'
-import { Calendar, MapPin, MoreHorizontal, Pencil, Trash2, Users } from 'lucide-react'
+import {
+  Calendar,
+  ClipboardList,
+  MapPin,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  Users,
+} from 'lucide-react'
 import { memo } from 'react'
 
 import { Badge } from '~/components/ui/badge'
@@ -46,7 +54,7 @@ function EventCardBase({
   return (
     <Card className='transition-shadow hover:shadow-md'>
       <CardHeader className='pb-3'>
-        <div className='flex items-start justify-between gap-2'>
+        <div className='flex flex-wrap items-start justify-between gap-x-2 gap-y-2'>
           <div className='min-w-0 flex-1'>
             <CardTitle className='text-lg md:text-xl'>{event.name}</CardTitle>
             {event.date && (
@@ -56,7 +64,7 @@ function EventCardBase({
               </CardDescription>
             )}
           </div>
-          <div className='flex items-center gap-2'>
+          <div className='flex shrink-0 items-center gap-2'>
             {event.collectRsvp && (
               <Badge variant='secondary' className='shrink-0 text-xs'>
                 RSVPs
@@ -109,17 +117,17 @@ function EventCardBase({
               {event.collectRsvp && totalInvited > 0 && (
                 <div className='mt-1.5 flex gap-3 text-xs'>
                   <div className='flex items-center gap-1'>
-                    <div className='h-2 w-2 rounded-full bg-green-500' />
+                    <div className='h-2 w-2 rounded-full bg-success' />
                     <span className='font-medium'>{guestResponses.attending}</span>
                     <span className='text-muted-foreground'>Attending</span>
                   </div>
                   <div className='flex items-center gap-1'>
-                    <div className='h-2 w-2 rounded-full bg-yellow-500' />
+                    <div className='h-2 w-2 rounded-full bg-muted-foreground/60' />
                     <span className='font-medium'>{guestResponses.invited}</span>
                     <span className='text-muted-foreground'>Pending</span>
                   </div>
                   <div className='flex items-center gap-1'>
-                    <div className='h-2 w-2 rounded-full bg-red-500' />
+                    <div className='h-2 w-2 rounded-full bg-destructive' />
                     <span className='font-medium'>{guestResponses.declined}</span>
                     <span className='text-muted-foreground'>Declined</span>
                   </div>
@@ -127,7 +135,7 @@ function EventCardBase({
               )}
               {totalInvited > 0 && (
                 <div className='mt-1.5 flex items-center gap-1 border-border/50 border-t pt-1.5 text-xs'>
-                  <div className='h-2 w-2 rounded-full bg-blue-500' />
+                  <div className='h-2 w-2 rounded-full bg-muted-foreground/60' />
                   <span className='font-medium'>~{event.estimatedAttendance}</span>
                   <span className='text-muted-foreground'>
                     of {totalInvited} estimated to attend
@@ -162,7 +170,7 @@ function EventCardBase({
               </DropdownMenuTrigger>
               <DropdownMenuContent align='end'>
                 <DropdownMenuItem onClick={() => onManageQuestions(event.id)}>
-                  <Pencil className='mr-2 h-3.5 w-3.5' />
+                  <ClipboardList className='mr-2 h-3.5 w-3.5' />
                   RSVP Questions
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onEdit(event.id)}>
@@ -170,7 +178,7 @@ function EventCardBase({
                   Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className='text-red-600 focus:text-red-600'
+                  className='text-destructive focus:text-destructive'
                   onClick={() => onDelete(event.id)}
                 >
                   <Trash2 className='mr-2 h-3.5 w-3.5' />

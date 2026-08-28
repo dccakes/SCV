@@ -8,20 +8,15 @@ jest.mock('~/components/contexts/guest-form-context', () => ({
   useToggleGuestForm: () => mockToggleGuestForm,
 }))
 
-jest.mock('~/components/guest-list/example-table', () => ({
-  __esModule: true,
-  default: () => <div data-testid='example-table' />,
-}))
-
 describe('NoGuestsView', () => {
-  it('wires Add Guest and Import Guests controls with non-submit button semantics', () => {
+  it('wires Import from CSV and Add your first guest controls with non-submit button semantics', () => {
     const onImportClick = jest.fn()
     const setPrefillHousehold = jest.fn()
 
     render(<NoGuestsView onImportClick={onImportClick} setPrefillHousehold={setPrefillHousehold} />)
 
-    const importButton = screen.getByRole('button', { name: 'Import Guests' })
-    const addButton = screen.getByRole('button', { name: 'Add Guest' })
+    const importButton = screen.getByRole('button', { name: 'Import from CSV' })
+    const addButton = screen.getByRole('button', { name: 'Add your first guest' })
 
     fireEvent.click(importButton)
     fireEvent.click(addButton)

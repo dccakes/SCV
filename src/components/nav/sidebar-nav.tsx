@@ -14,9 +14,11 @@ const SIDEBAR_SECTIONS: readonly SidebarSection[] = [
     title: 'Planning',
     items: [
       { label: 'Dashboard', href: '/dashboard', icon: '◈' },
-      { label: 'RSVPs', href: '/guest-list', icon: '◉' },
       { label: 'Events', href: '/events', icon: '☷', suggestionDomain: 'events' },
+      { label: 'Checklist', href: '/checklist', icon: '▣' },
+      { label: 'Wedding Website', href: '/website', icon: '◌' },
       { label: 'Vendors', href: '/vendors', icon: '◐', suggestionDomain: 'vendors' },
+      { label: 'Budget', href: '/budget', icon: '▤' },
     ],
   },
   {

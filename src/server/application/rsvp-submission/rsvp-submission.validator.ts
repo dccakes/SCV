@@ -75,7 +75,13 @@ export type SubmitRsvpSchemaInput = z.infer<typeof submitRsvpSchema>
 
 export const submitPublicRsvpSchema = submitRsvpSchema.extend({
   subUrl: z.string().min(1, 'Sub URL is required'),
-  token: z.string().regex(/^[a-f0-9]{32}$/, 'Invalid RSVP token format'),
+  // The public RSVP submission is scoped by subUrl (the wedding website the guest
+  // is RSVPing on). A token is only present when the guest arrived via a shared
+  // self-fill link, so it's optional.
+  token: z
+    .string()
+    .regex(/^[a-f0-9]{32}$/, 'Invalid RSVP token format')
+    .optional(),
 })
 
 export type SubmitPublicRsvpSchemaInput = z.infer<typeof submitPublicRsvpSchema>

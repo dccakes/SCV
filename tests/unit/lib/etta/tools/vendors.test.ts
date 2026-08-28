@@ -22,11 +22,21 @@ jest.mock('~/server/application/vendor-insights', () => ({
   },
 }))
 
-jest.mock('~/server/domains/vendor', () => ({
-  vendorService: {
-    updateQuote: jest.fn(),
-  },
-}))
+jest.mock('~/server/domains/vendor', () => {
+  const validators = jest.requireActual('~/server/domains/vendor/vendor.validator')
+  return {
+    addVendorNoteSchema: validators.addVendorNoteSchema,
+    getCategoryConfigSchema: validators.getCategoryConfigSchema,
+    updateQuoteSchema: validators.updateQuoteSchema,
+    updateVendorSchema: validators.updateVendorSchema,
+    vendorService: {
+      addVendorNote: jest.fn(),
+      getCategoryConfig: jest.fn(),
+      updateVendor: jest.fn(),
+      updateQuote: jest.fn(),
+    },
+  }
+})
 
 jest.mock('~/server/db', () => ({
   db: {
@@ -37,6 +47,9 @@ jest.mock('~/server/db', () => ({
 }))
 
 const mockVendorService = vendorService as {
+  addVendorNote: jest.Mock
+  getCategoryConfig: jest.Mock
+  updateVendor: jest.Mock
   updateQuote: jest.Mock
 }
 
@@ -84,8 +97,24 @@ describe('getVendorTools', () => {
   describe('get_vendor_list', () => {
     it('returns vendors from service', async () => {
       const vendors = [
-        { id: 'v1', name: 'Photo Pro', category: 'PHOTOGRAPHER', quotes: [] },
-        { id: 'v2', name: 'DJ Mix', category: 'MUSIC', quotes: [] },
+        {
+          id: 'v1',
+          name: 'Photo Pro',
+          category: 'PHOTOGRAPHER',
+          contacted: true,
+          notes: 'Asked about travel fees',
+          customFields: { style: 'documentary' },
+          quotes: [],
+        },
+        {
+          id: 'v2',
+          name: 'DJ Mix',
+          category: 'MUSIC',
+          contacted: false,
+          notes: null,
+          customFields: null,
+          quotes: [],
+        },
       ]
       mockVendorInsightsService.listVendors.mockResolvedValue(vendors)
 
@@ -124,6 +153,39 @@ describe('getVendorTools', () => {
         toolsWithoutAuthz.get_vendor_list.execute(
           {},
           { toolCallId: 'tc2b', messages: [], abortSignal: undefined as never }
+        )
+      ).rejects.toThrow('Authorization context required')
+    })
+  })
+
+  describe('get_category_config', () => {
+    it('returns field definitions for a category', async () => {
+      const fieldDefinitions = [
+        { key: 'capacity', label: 'Capacity', type: 'number', displayOrder: 0 },
+        { key: 'allows_candles', label: 'Allows Candles', type: 'boolean', displayOrder: 1 },
+      ]
+      mockVendorService.getCategoryConfig.mockResolvedValue({ fieldDefinitions })
+
+      const result = await tools.get_category_config.execute(
+        { category: 'VENUE' },
+        { toolCallId: 'tc2c', messages: [], abortSignal: undefined as never }
+      )
+
+      expect(mockVendorService.getCategoryConfig).toHaveBeenCalledWith(
+        mockCtx.authz,
+        'wedding-123',
+        'VENUE'
+      )
+      expect(result).toEqual({ fieldDefinitions })
+    })
+
+    it('requires authz context', async () => {
+      const toolsWithoutAuthz = getVendorTools({ ...mockCtx, authz: undefined })
+
+      await expect(
+        toolsWithoutAuthz.get_category_config.execute(
+          { category: 'VENUE' },
+          { toolCallId: 'tc2d', messages: [], abortSignal: undefined as never }
         )
       ).rejects.toThrow('Authorization context required')
     })
@@ -241,6 +303,62 @@ describe('getVendorTools', () => {
     })
   })
 
+  describe('update_vendor', () => {
+    it('updates the full vendor field set directly', async () => {
+      const vendor = {
+        id: 'vendor-1',
+        name: 'Photo Pro',
+        category: 'PHOTOGRAPHER',
+        contactName: 'Pat Photographer',
+        contactEmail: 'pat@example.com',
+        contacted: true,
+        notes: 'Sent follow-up email',
+        customFields: { package_tier: 'premium' },
+      }
+      mockVendorService.updateVendor.mockResolvedValue(vendor)
+
+      const result = await tools.update_vendor.execute(
+        {
+          vendorId: 'vendor-1',
+          name: 'Photo Pro',
+          contactName: 'Pat Photographer',
+          contactEmail: 'pat@example.com',
+          contacted: true,
+          notes: 'Sent follow-up email',
+          customFields: { package_tier: 'premium' },
+        },
+        { toolCallId: 'tc6a', messages: [], abortSignal: undefined as never }
+      )
+
+      expect(mockVendorService.updateVendor).toHaveBeenCalledWith(
+        mockCtx.authz,
+        'vendor-1',
+        'wedding-123',
+        {
+          vendorId: 'vendor-1',
+          name: 'Photo Pro',
+          contactName: 'Pat Photographer',
+          contactEmail: 'pat@example.com',
+          contacted: true,
+          notes: 'Sent follow-up email',
+          customFields: { package_tier: 'premium' },
+        }
+      )
+      expect(result).toEqual({ vendor })
+    })
+
+    it('requires authz context', async () => {
+      const toolsWithoutAuthz = getVendorTools({ ...mockCtx, authz: undefined })
+
+      await expect(
+        toolsWithoutAuthz.update_vendor.execute(
+          { vendorId: 'vendor-1', contacted: true },
+          { toolCallId: 'tc6b', messages: [], abortSignal: undefined as never }
+        )
+      ).rejects.toThrow('Authorization context required')
+    })
+  })
+
   describe('update_vendor_quote', () => {
     it('updates a quote and returns files', async () => {
       const quote = {
@@ -302,6 +420,40 @@ describe('getVendorTools', () => {
         toolsWithoutAuthz.update_vendor_quote.execute(
           { vendorId: 'vendor-1', quoteId: 'quote-1', notes: 'Updated package' },
           { toolCallId: 'tc8', messages: [], abortSignal: undefined as never }
+        )
+      ).rejects.toThrow('Authorization context required')
+    })
+  })
+
+  describe('add_vendor_note', () => {
+    it('adds an etta-attributed vendor note', async () => {
+      mockVendorService.addVendorNote.mockResolvedValue({ id: 'note-1' })
+
+      const result = await tools.add_vendor_note.execute(
+        { vendorId: 'vendor-1', message: 'Called and left a voicemail.' },
+        { toolCallId: 'tc9', messages: [], abortSignal: undefined as never }
+      )
+
+      expect(mockVendorService.addVendorNote).toHaveBeenCalledWith(
+        mockCtx.authz,
+        'vendor-1',
+        'wedding-123',
+        'Called and left a voicemail.',
+        'etta'
+      )
+      expect(result).toEqual({
+        noteId: 'note-1',
+        message: 'Note added to vendor interaction log',
+      })
+    })
+
+    it('requires authz context', async () => {
+      const toolsWithoutAuthz = getVendorTools({ ...mockCtx, authz: undefined })
+
+      await expect(
+        toolsWithoutAuthz.add_vendor_note.execute(
+          { vendorId: 'vendor-1', message: 'Followed up by text.' },
+          { toolCallId: 'tc10', messages: [], abortSignal: undefined as never }
         )
       ).rejects.toThrow('Authorization context required')
     })

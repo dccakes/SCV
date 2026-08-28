@@ -35,7 +35,7 @@
     "groomLastName": "Ogre",
     "brideFirstName": "Fiona",
     "brideLastName": "Ogre",
-    "enabledAddOns": ["website", "tasks", "gifts", "vendors"],
+    "enabledAddOns": ["website", "tasks", "gifts", "vendors", "website_builder"],
     "selfFillToken": "swamp-join-portal",
     "selfFillTokenGeneratedAt": "2026-03-01T10:00:00.000Z"
   },
@@ -144,7 +144,7 @@
           "firstName": "Donkey",
           "lastName": "The Donkey",
           "email": "donkey@swamp.wed",
-          "phone": "+1-555-0101",
+          "phone": "+12025550101",
           "isPrimaryContact": true,
           "ageGroup": "ADULT",
           "tagSlugs": ["family", "bridal-party"],
@@ -163,7 +163,7 @@
           "firstName": "Dragon",
           "lastName": "The Dragon",
           "email": null,
-          "phone": "+1-555-0102",
+          "phone": "+12025550102",
           "isPrimaryContact": false,
           "ageGroup": "ADULT",
           "tagSlugs": ["family", "vip"],
@@ -259,7 +259,7 @@
           "firstName": "Fairy",
           "lastName": "Godmother",
           "email": "fairy.godmother@swamp.wed",
-          "phone": "+1-555-0104",
+          "phone": "+12025550104",
           "isPrimaryContact": true,
           "ageGroup": "ADULT",
           "tagSlugs": ["vip", "out-of-town"],
@@ -286,7 +286,7 @@
           "firstName": "Blind",
           "lastName": "Mouse One",
           "email": null,
-          "phone": "+1-555-0105",
+          "phone": "+12025550105",
           "isPrimaryContact": true,
           "ageGroup": "ADULT",
           "tagSlugs": ["family"],
@@ -328,7 +328,7 @@
           "firstName": "Pinocchio",
           "lastName": "Wooden",
           "email": "pinocchio@swamp.wed",
-          "phone": "+1-555-0106",
+          "phone": "+12025550106",
           "isPrimaryContact": true,
           "ageGroup": "TEEN",
           "tagSlugs": ["bridal-party", "kids"],
@@ -359,7 +359,7 @@
           "firstName": "Prince",
           "lastName": "Charming",
           "email": "prince.charming@swamp.wed",
-          "phone": "+1-555-0107",
+          "phone": "+12025550107",
           "isPrimaryContact": true,
           "ageGroup": "ADULT",
           "tagSlugs": ["vip", "out-of-town"],
@@ -386,7 +386,7 @@
           "firstName": "Captain",
           "lastName": "Hook",
           "email": null,
-          "phone": "+1-555-0108",
+          "phone": "+12025550108",
           "isPrimaryContact": true,
           "ageGroup": "ADULT",
           "tagSlugs": ["friends", "out-of-town"],
@@ -413,7 +413,7 @@
           "firstName": "Papa",
           "lastName": "Bear",
           "email": "papa.bear@swamp.wed",
-          "phone": "+1-555-0109",
+          "phone": "+12025550109",
           "isPrimaryContact": true,
           "ageGroup": "ADULT",
           "tagSlugs": ["family"],
@@ -481,7 +481,7 @@
       "status": "SELECTED",
       "contactName": "Lord Farquaad Assistant",
       "contactEmail": "venue@swamp.wed",
-      "contactPhone": "+1-555-0201",
+      "contactPhone": "+12025550201",
       "quotes": [
         { "price": "8500.00", "quoteDate": "2026-01-10", "notes": "Includes ceremony grove" }
       ]
@@ -496,7 +496,7 @@
       "status": "IN_REVIEW",
       "contactName": "Lodge Keeper",
       "contactEmail": "lodge@swamp.wed",
-      "contactPhone": "+1-555-0205",
+      "contactPhone": "+12025550205",
       "quotes": [{ "price": "6400.00", "quoteDate": "2026-01-15", "notes": "Feast hall only" }]
     },
     {
@@ -509,7 +509,7 @@
       "status": "IN_NEGOTIATION",
       "contactName": "Chef Maurice",
       "contactEmail": "chef@swamp.wed",
-      "contactPhone": "+1-555-0202",
+      "contactPhone": "+12025550202",
       "quotes": [
         { "price": "4200.00", "quoteDate": "2026-01-12", "notes": "Standard buffet" },
         { "price": "5100.00", "quoteDate": "2026-01-20", "notes": "Premium dessert stations" }
@@ -538,7 +538,7 @@
       "status": "IN_REVIEW",
       "contactName": "Piper",
       "contactEmail": "music@swamp.wed",
-      "contactPhone": "+1-555-0204",
+      "contactPhone": "+12025550204",
       "quotes": [
         { "price": "1800.00", "quoteDate": "2026-01-22", "notes": "Ceremony and feast set" }
       ]

@@ -103,3 +103,33 @@ export type UpsertQuestionInput = {
 export type DeleteQuestionInput = {
   questionId: string
 }
+
+/**
+ * A single guest/household response to a question, resolved for display.
+ */
+export type HouseholdAnswerResponse = {
+  /** Composite key [questionId:guestId:householdId] — Answer/OptionResponse have no scalar id */
+  key: string
+  guestName: string | null
+  answer: string
+}
+
+/**
+ * All responses to a single question for one household, grouped for display.
+ */
+export type HouseholdAnswerGroup = {
+  questionId: string
+  questionText: string
+  type: string // 'Text' | 'Option'
+  scope: 'event' | 'website'
+  responses: HouseholdAnswerResponse[]
+}
+
+/**
+ * Website-scoped general questions plus the RSVP-enabled gate, for authoring UI.
+ */
+export type WebsiteQuestions = {
+  websiteId: string
+  isRsvpEnabled: boolean
+  questions: QuestionWithOptions[]
+}

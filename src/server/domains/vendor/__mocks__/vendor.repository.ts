@@ -8,6 +8,10 @@ import { VendorCategory, VendorStatus } from '@prisma/client'
 
 import type {
   Vendor,
+  VendorCategoryConfig,
+  VendorFieldDefinition,
+  VendorImage,
+  VendorNote,
   VendorQuote,
   VendorQuoteFile,
   VendorWithQuotes,
@@ -25,8 +29,44 @@ export const mockVendor: Vendor = {
   contactName: 'Alice Smith',
   contactEmail: 'alice@alicephotos.com',
   contactPhone: '+1234567890',
+  notes: null,
+  contacted: false,
+  customFields: null,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
+}
+
+export const mockVendorNote: VendorNote = {
+  id: 'vendor-note-123',
+  vendorId: 'vendor-123',
+  weddingId: 'wedding-123',
+  message: 'Sent first outreach email',
+  actorType: 'couple',
+  createdAt: new Date('2026-02-01'),
+}
+
+export const mockFieldDefinitions: VendorFieldDefinition[] = [
+  {
+    key: 'capacity',
+    label: 'Capacity',
+    type: 'number',
+    displayOrder: 1,
+  },
+  {
+    key: 'outdoor',
+    label: 'Outdoor option',
+    type: 'boolean',
+    displayOrder: 2,
+  },
+]
+
+export const mockVendorCategoryConfig: VendorCategoryConfig = {
+  id: 'vendor-category-config-123',
+  weddingId: null,
+  category: VendorCategory.VENUE,
+  fieldDefinitions: mockFieldDefinitions,
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-01-01'),
 }
 
 export const mockQuoteFile: VendorQuoteFile = {
@@ -51,9 +91,29 @@ export const mockQuote: VendorQuote = {
   updatedAt: new Date('2026-01-15'),
 }
 
+export const mockVendorImage: VendorImage = {
+  id: 'image-123',
+  vendorId: 'vendor-123',
+  url: 'https://abc123.public.blob.vercel-storage.com/photo.jpg',
+  key: 'photo.jpg',
+  size: 204800,
+  name: 'photo.jpg',
+  isPrimary: false,
+  order: 0,
+  source: 'manual',
+  createdAt: new Date('2026-01-01'),
+  updatedAt: new Date('2026-01-01'),
+}
+
 export const mockVendorWithQuotes: VendorWithQuotes = {
   ...mockVendor,
   quotes: [mockQuote],
+  images: [mockVendorImage],
+  ratingSummary: {
+    average: null,
+    ratings: [],
+    currentUserRating: null,
+  },
 }
 
 export const mockFindAllByWeddingId = jest.fn()
@@ -74,11 +134,26 @@ export const mockFileBelongsToQuote = jest.fn()
 export const mockFindAllFileUrlsByVendorId = jest.fn()
 export const mockFindAllFileUrlsByQuoteId = jest.fn()
 export const mockCountFilesByQuoteId = jest.fn()
+export const mockSetRatingForUser = jest.fn()
+export const mockFindById = jest.fn()
+export const mockFindCustomFieldsById = jest.fn()
+export const mockFindNotesByVendorId = jest.fn()
+export const mockCreateVendorNote = jest.fn()
+export const mockFindWeddingCategoryConfig = jest.fn()
+export const mockFindSystemCategoryConfig = jest.fn()
+export const mockFindCategoryConfig = jest.fn()
+export const mockUpsertCategoryConfig = jest.fn()
+export const mockSaveImages = jest.fn()
+export const mockDeleteImage = jest.fn()
+export const mockSetCoverImage = jest.fn()
+export const mockGetVendorImageKeys = jest.fn()
 
 export const VendorRepository = jest.fn().mockImplementation(() => ({
   findAllByWeddingId: mockFindAllByWeddingId,
   findAllByUserId: mockFindAllByUserId,
   findByIdWithQuotes: mockFindByIdWithQuotes,
+  findById: mockFindById,
+  findCustomFieldsById: mockFindCustomFieldsById,
   create: mockCreate,
   update: mockUpdate,
   updateStatus: mockUpdateStatus,
@@ -94,12 +169,25 @@ export const VendorRepository = jest.fn().mockImplementation(() => ({
   findAllFileUrlsByVendorId: mockFindAllFileUrlsByVendorId,
   findAllFileUrlsByQuoteId: mockFindAllFileUrlsByQuoteId,
   countFilesByQuoteId: mockCountFilesByQuoteId,
+  setRatingForUser: mockSetRatingForUser,
+  findNotesByVendorId: mockFindNotesByVendorId,
+  createVendorNote: mockCreateVendorNote,
+  findWeddingCategoryConfig: mockFindWeddingCategoryConfig,
+  findSystemCategoryConfig: mockFindSystemCategoryConfig,
+  findCategoryConfig: mockFindCategoryConfig,
+  upsertCategoryConfig: mockUpsertCategoryConfig,
+  saveImages: mockSaveImages,
+  deleteImage: mockDeleteImage,
+  setCoverImage: mockSetCoverImage,
+  getVendorImageKeys: mockGetVendorImageKeys,
 }))
 
 export const resetMocks = (): void => {
   mockFindAllByWeddingId.mockReset()
   mockFindAllByUserId.mockReset()
   mockFindByIdWithQuotes.mockReset()
+  mockFindById.mockReset()
+  mockFindCustomFieldsById.mockReset()
   mockCreate.mockReset()
   mockUpdate.mockReset()
   mockUpdateStatus.mockReset()
@@ -115,5 +203,16 @@ export const resetMocks = (): void => {
   mockFindAllFileUrlsByVendorId.mockReset()
   mockFindAllFileUrlsByQuoteId.mockReset()
   mockCountFilesByQuoteId.mockReset()
+  mockSetRatingForUser.mockReset()
+  mockFindNotesByVendorId.mockReset()
+  mockCreateVendorNote.mockReset()
+  mockFindWeddingCategoryConfig.mockReset()
+  mockFindSystemCategoryConfig.mockReset()
+  mockFindCategoryConfig.mockReset()
+  mockUpsertCategoryConfig.mockReset()
+  mockSaveImages.mockReset()
+  mockDeleteImage.mockReset()
+  mockSetCoverImage.mockReset()
+  mockGetVendorImageKeys.mockReset()
   VendorRepository.mockClear()
 }

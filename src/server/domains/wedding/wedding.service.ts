@@ -10,6 +10,7 @@ import { TRPCError } from '@trpc/server'
 import { provisionEtta } from '~/lib/etta/provision'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
+import { checklistSeedingService } from '~/server/domains/checklist'
 import type { EventService } from '~/server/domains/event/event.service'
 import type { GuestTagService } from '~/server/domains/guest-tag/guest-tag.service'
 import type { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
@@ -71,7 +72,7 @@ export class WeddingService {
       groomLastName,
       brideFirstName,
       brideLastName,
-      enabledAddOns: [], // Core features only on creation
+      enabledAddOns: ['tasks'],
     })
 
     // Seed default tags for the wedding
@@ -86,6 +87,13 @@ export class WeddingService {
         collectRsvp: false,
         allowTagAlongs: false,
       })
+
+      try {
+        await checklistSeedingService.ensureSeeded(wedding.id)
+      } catch (error) {
+        // biome-ignore lint/suspicious/noConsole: preserve successful wedding creation if checklist seeding fails post-commit
+        console.error('[Checklist] Wedding create seeding failed:', error)
+      }
     }
 
     // Provision Etta AI agent actor — fire-and-forget (idempotent)
@@ -108,6 +116,32 @@ export class WeddingService {
     const { ctx, weddingId, data } = input
     requirePermission(ctx, { wedding: ['update'] })
     return this.weddingRepository.update(weddingId, data)
+  }
+
+  async toggleAddOn(input: {
+    ctx: AuthzContext
+    weddingId: string
+    addOn: string
+    enabled: boolean
+  }): Promise<Wedding> {
+    const { addOn, ctx, enabled, weddingId } = input
+    requirePermission(ctx, { wedding: ['update'] })
+
+    const wedding = await this.weddingRepository.findById(weddingId)
+    if (!wedding) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Wedding not found',
+      })
+    }
+
+    const enabledAddOns = enabled
+      ? Array.from(new Set([...wedding.enabledAddOns, addOn]))
+      : wedding.enabledAddOns.filter((currentAddOn) => currentAddOn !== addOn)
+
+    return this.weddingRepository.update(weddingId, {
+      enabledAddOns,
+    })
   }
 
   /**

@@ -156,7 +156,6 @@ type Website = {
   createdAt: Date
   updatedAt: Date
   weddingId: string
-  url: string
   subUrl: string
   isPasswordEnabled: boolean
   isRsvpEnabled: boolean

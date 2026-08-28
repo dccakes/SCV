@@ -1,11 +1,22 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { toast } from 'sonner'
 
 import type { DashboardData, EventWithResponses } from '~/app/utils/shared-types'
+import { formatCurrency } from '~/components/budget/format'
+import { TaskDialog } from '~/components/checklist/task-dialog'
 import { TaskListItem } from '~/components/dashboard/planning-overview/task-list-item'
 import { useTasksCardState } from '~/components/dashboard/planning-overview/use-tasks-card-state'
+import { DASHBOARD_ADD_TASK_EVENT } from '~/components/dashboard/task-dialog-events'
+import { Skeleton } from '~/components/ui/skeleton'
+import type { EventWithStats } from '~/server/domains/event'
+import { api } from '~/trpc/react'
+
+type DashboardOverview = NonNullable<DashboardData>
+
+const EMPTY_PRIORITY_TASKS: DashboardOverview['taskPriorityQueue']['tasks'] = []
 
 interface PlanningOverviewProps {
   dashboardData: DashboardData | null
@@ -56,16 +67,10 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
   const dateLabel = weddingData?.date?.standardFormat ?? ''
   const location = weddingData?.location ?? ''
 
-  const [now, setNow] = useState(() => new Date())
-  useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 60_000)
-    return () => clearInterval(timer)
-  }, [])
-  const hours = now.getHours()
-  const mins = now.getMinutes()
-
-  // Rough planning progress (placeholder — 67% until real task tracking exists)
-  const planningPct = 67
+  const milestones = dashboardData?.milestones ?? []
+  const completedMilestones = milestones.filter((milestone) => milestone.effectiveStatus === 'done')
+  const planningPct =
+    milestones.length > 0 ? Math.round((completedMilestones.length / milestones.length) * 100) : 0
 
   return (
     <div className='relative overflow-hidden rounded-lg bg-sidebar-ink px-6 py-5'>
@@ -105,39 +110,17 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
         </div>
 
         {hasDate ? (
-          <div className='flex items-end gap-3'>
-            <div className='text-center'>
-              <span className='block font-serif text-5xl text-sidebar-cream leading-none'>
-                {days}
-              </span>
-              <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
-                Days
-              </span>
-            </div>
-            <span className='pb-1 font-serif text-3xl text-sidebar-cream/15'>:</span>
-            <div className='text-center'>
-              <span className='block font-serif text-5xl text-sidebar-cream leading-none'>
-                {String(hours).padStart(2, '0')}
-              </span>
-              <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
-                Hours
-              </span>
-            </div>
-            <span className='pb-1 font-serif text-3xl text-sidebar-cream/15'>:</span>
-            <div className='text-center'>
-              <span className='block font-serif text-5xl text-sidebar-cream leading-none'>
-                {String(mins).padStart(2, '0')}
-              </span>
-              <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
-                Mins
-              </span>
-            </div>
+          <div className='text-center'>
+            <span className='block font-serif text-6xl text-sidebar-cream leading-none'>
+              {days}
+            </span>
+            <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
+              Days
+            </span>
           </div>
         ) : (
           <div className='text-center'>
-            <span className='block font-serif text-3xl text-sidebar-cream/30 leading-none'>
-              --:--:--
-            </span>
+            <span className='block font-serif text-5xl text-sidebar-cream/30 leading-none'>—</span>
             <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
               No date set
             </span>
@@ -166,18 +149,25 @@ function MiniStats({ dashboardData }: { dashboardData: DashboardData | null }) {
   const pct = total > 0 ? Math.round((confirmed / total) * 100) : 0
 
   const stats = [
-    { icon: '◉', val: total, label: 'Total guests', delta: null },
-    { icon: '✓', val: confirmed, label: 'Confirmed', delta: `${pct}%` },
-    { icon: '◐', val: pending, label: 'Awaiting reply', delta: null },
-    { icon: '◧', val: '—', label: 'Budget spent', delta: 'Set up budget' },
+    { icon: '◉', val: total, label: 'Total guests', delta: null, href: '/guest-list' },
+    { icon: '✓', val: confirmed, label: 'Confirmed', delta: `${pct}%`, href: '/guest-list' },
+    { icon: '◐', val: pending, label: 'Awaiting reply', delta: null, href: '/guest-list' },
+    {
+      icon: '◧',
+      val: dashboardData?.tasksDueThisMonth ?? 0,
+      label: 'Tasks due this month',
+      delta: null,
+      href: '/checklist',
+    },
   ]
 
   return (
     <div className='grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border/90 bg-border lg:grid-cols-4'>
       {stats.map((s) => (
-        <div
+        <Link
           key={s.label}
-          className='flex items-center gap-3 bg-card/90 px-4 py-3 transition-colors hover:bg-secondary'
+          href={s.href}
+          className='flex items-center gap-3 bg-card/90 px-4 py-3 transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-foreground/50'
         >
           <span className='text-xl opacity-55'>{s.icon}</span>
           <div className='min-w-0'>
@@ -191,7 +181,7 @@ function MiniStats({ dashboardData }: { dashboardData: DashboardData | null }) {
               {s.delta}
             </span>
           )}
-        </div>
+        </Link>
       ))}
     </div>
   )
@@ -214,9 +204,33 @@ function RsvpCard({ dashboardData }: { dashboardData: DashboardData | null }) {
   const declined = rsvpSummary.declined
   const total = attending + pending + declined
 
-  const confirmedPct = total > 0 ? (attending / total) * 100 : 0
-  const pendingPct = total > 0 ? (pending / total) * 100 : 0
-  const declinedPct = total > 0 ? (declined / total) * 100 : 0
+  if (total === 0) {
+    return (
+      <CardShell title='RSVP Status' icon='◉'>
+        <div className='flex flex-col gap-3'>
+          <div className='flex items-baseline gap-2'>
+            <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
+            <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
+              No RSVPs collected yet
+            </span>
+          </div>
+          <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
+            Enable RSVP collection on one of your events to start tracking responses
+          </div>
+          <Link
+            href='/events'
+            className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+          >
+            Set up RSVPs →
+          </Link>
+        </div>
+      </CardShell>
+    )
+  }
+
+  const confirmedPct = (attending / total) * 100
+  const pendingPct = (pending / total) * 100
+  const declinedPct = (declined / total) * 100
 
   return (
     <CardShell title='RSVP Status' icon='◉' action='View all →' actionHref='/guest-list'>
@@ -248,19 +262,11 @@ function RsvpCard({ dashboardData }: { dashboardData: DashboardData | null }) {
         <div className='bg-foreground/30' style={{ width: `${declinedPct}%` }} />
       </div>
 
-      <div className='mb-3 space-y-2'>
-        {pending > 0 ? (
-          <p className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
-            Still waiting on {pending} — check guest list for details
-          </p>
-        ) : null}
-        <Link
-          href='/settings'
-          className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
-        >
-          Invite collaborators
-        </Link>
-      </div>
+      {pending > 0 && (
+        <p className='mb-3 font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
+          Still waiting on {pending} — check guest list for details
+        </p>
+      )}
 
       <Link
         href='/guest-list'
@@ -272,157 +278,246 @@ function RsvpCard({ dashboardData }: { dashboardData: DashboardData | null }) {
   )
 }
 
-function TasksCard() {
-  const { tasks, toggleTask } = useTasksCardState()
+function TasksCard({ dashboardData }: { dashboardData: DashboardData | null }) {
+  const priorityQueue = dashboardData?.taskPriorityQueue
+  const { tasks, toggleTask } = useTasksCardState(priorityQueue?.tasks ?? EMPTY_PRIORITY_TASKS)
+  const completeTask = api.task.complete.useMutation({
+    onError: () => toast.error('Failed to update task'),
+  })
+
+  const handleToggle = (taskId: string) => {
+    toggleTask(taskId)
+    const targetTask = tasks.find((task) => task.id === taskId)
+
+    completeTask.mutate({
+      taskId,
+      completed: !(targetTask?.done ?? false),
+    })
+  }
 
   return (
-    <CardShell title='Upcoming tasks' icon='◈'>
-      <div className='flex flex-col gap-1.5'>
-        {tasks.map((task) => (
-          <TaskListItem key={task.id} task={task} onToggle={toggleTask} />
-        ))}
-      </div>
-      <p className='mt-3 font-mono text-[0.56rem] text-foreground/50 tracking-wider'>
-        Task tracking coming soon — these are placeholders
-      </p>
+    <CardShell title='Upcoming tasks' icon='◈' action='View all →' actionHref='/checklist'>
+      {tasks.length > 0 ? (
+        <>
+          <div className='flex flex-col gap-1.5'>
+            {tasks.map((task) => (
+              <TaskListItem key={task.id} task={task} onToggle={handleToggle} />
+            ))}
+          </div>
+          <p className='mt-3 font-mono text-[0.56rem] text-foreground/50 tracking-wider'>
+            {tasks.length} of {priorityQueue?.totalActive ?? 0} active tasks shown
+          </p>
+        </>
+      ) : (
+        <div className='flex flex-col gap-3'>
+          <p className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
+            No active tasks yet. Add your first task to start tracking your planning progress.
+          </p>
+          <Link
+            href='/checklist'
+            className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+          >
+            Go to checklist →
+          </Link>
+        </div>
+      )}
     </CardShell>
   )
 }
 
 function BudgetCard() {
-  const categories = [
-    { name: 'Venue', pct: 90, color: 'bg-success' },
-    { name: 'Catering', pct: 60, color: 'bg-accent' },
-    { name: 'Photography', pct: 45, color: 'bg-primary' },
-    { name: 'Flowers', pct: 30, color: 'bg-foreground/40' },
-    { name: 'Other', pct: 12, color: 'bg-border' },
-  ]
+  const { data: overview, isLoading } = api.budget.getOverview.useQuery()
 
-  return (
-    <CardShell title='Budget' icon='◧' action='Details →' actionHref='/dashboard#website-editor'>
-      <div className='mb-3 flex items-baseline gap-2'>
-        <span className='font-serif text-[2.2rem] text-foreground leading-none'>—</span>
-        <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
-          Budget tracking coming soon
-        </span>
-      </div>
-      <div className='mb-2 h-2 overflow-hidden rounded-full bg-border'>
-        <div className='h-full w-0 rounded-full bg-gradient-to-r from-success to-accent' />
-      </div>
-      <div className='mb-4 font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
-        Set up your budget to track spending
-      </div>
-      <div className='flex flex-col gap-2'>
-        {categories.map((c) => (
-          <div key={c.name} className='flex items-center gap-2'>
-            <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${c.color}`} />
-            <span className='flex-1 font-serif text-[0.85rem] text-foreground'>{c.name}</span>
-            <div className='h-[3px] w-14 overflow-hidden rounded-full bg-border'>
-              <div className={`h-full rounded-full ${c.color}`} style={{ width: `${c.pct}%` }} />
-            </div>
-            <span className='w-10 text-right font-mono text-[0.6rem] text-foreground/60 tracking-wider'>
-              —
+  if (isLoading) {
+    return (
+      <CardShell title='Budget' icon='◧' action='Manage →' actionHref='/budget'>
+        <div className='flex flex-col gap-3'>
+          <div className='flex items-baseline gap-2'>
+            <Skeleton className='h-9 w-24' />
+            <Skeleton className='h-3 w-20' />
+          </div>
+          <Skeleton className='h-1.5 w-full' />
+          <div className='grid grid-cols-3 gap-2'>
+            {[0, 1, 2].map((i) => (
+              <div key={i} className='text-center'>
+                <Skeleton className='mx-auto h-5 w-10' />
+                <Skeleton className='mx-auto mt-1 h-2 w-12' />
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardShell>
+    )
+  }
+
+  const hasTarget = (overview?.targetTotal ?? 0) > 0
+  const hasCategories = (overview?.categories.length ?? 0) > 0
+  const hasBudget = hasTarget || hasCategories
+
+  if (!hasBudget) {
+    return (
+      <CardShell title='Budget' icon='◧' action='Manage →' actionHref='/budget'>
+        <div className='flex flex-col gap-3'>
+          <div className='flex items-baseline gap-2'>
+            <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
+            <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
+              No budget set up yet
             </span>
           </div>
-        ))}
+          <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
+            Track your wedding spending against a target budget
+          </div>
+          <Link
+            href='/budget'
+            className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+          >
+            Set up your budget →
+          </Link>
+        </div>
+      </CardShell>
+    )
+  }
+
+  const currency = overview!.currency
+  const { netSpend, remaining, actualSpend } = overview!.summary
+  const target = overview!.targetTotal
+  const categoryCount = overview!.categories.length
+  const pct = target > 0 ? Math.min(100, Math.round((netSpend / target) * 100)) : 0
+  const overBudget = target > 0 && netSpend > target
+
+  return (
+    <CardShell title='Budget' icon='◧' action='Manage →' actionHref='/budget'>
+      <div className='flex flex-col gap-3'>
+        <div className='flex items-baseline gap-2'>
+          <span className='font-serif text-[2.2rem] text-foreground leading-none'>
+            {formatCurrency(netSpend, currency)}
+          </span>
+          <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
+            {target > 0 ? `of ${formatCurrency(target, currency)}` : 'net spend'}
+          </span>
+        </div>
+        {target > 0 && (
+          <div
+            className='h-1.5 overflow-hidden rounded-full bg-border'
+            role='img'
+            aria-label={`${pct}% of budget used`}
+          >
+            <div
+              className={`h-full rounded-full transition-all ${overBudget ? 'bg-destructive' : 'bg-gradient-to-r from-success to-accent'}`}
+              style={{ width: `${pct > 0 ? Math.max(2, pct) : 0}%` }}
+            />
+          </div>
+        )}
+        <div className='grid grid-cols-3 divide-x divide-border text-center'>
+          {[
+            {
+              val: formatCurrency(actualSpend, currency),
+              label: 'Spent',
+              color: 'text-foreground',
+            },
+            {
+              val: target > 0 ? formatCurrency(remaining, currency) : String(categoryCount),
+              label: target > 0 ? 'Remaining' : `Section${categoryCount !== 1 ? 's' : ''}`,
+              color: overBudget ? 'text-destructive' : 'text-foreground',
+            },
+            {
+              val: target > 0 ? `${pct}%` : '—',
+              label: target > 0 ? 'Of target' : 'No target',
+              color: 'text-foreground/60',
+            },
+          ].map((s) => (
+            <div key={s.label} className='px-2 first:pl-0 last:pr-0'>
+              <span className={`block font-serif text-[1.1rem] leading-none ${s.color}`}>
+                {s.val}
+              </span>
+              <span className='font-mono text-[0.52rem] text-foreground/55 uppercase tracking-widest'>
+                {s.label}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </CardShell>
   )
 }
 
-const PLACEHOLDER_VENDORS = [
-  {
-    initials: 'V1',
-    name: 'Ceremony Venue',
-    type: 'Venue',
-    status: 'Confirmed',
-    statusColor: 'bg-success/12 text-success',
-  },
-  {
-    initials: 'V2',
-    name: 'Photographer',
-    type: 'Photography',
-    status: 'Confirmed',
-    statusColor: 'bg-success/12 text-success',
-  },
-  {
-    initials: 'V3',
-    name: 'Caterer',
-    type: 'Catering',
-    status: 'Deposit due',
-    statusColor: 'bg-destructive/10 text-destructive',
-  },
-  {
-    initials: 'V4',
-    name: 'Florist',
-    type: 'Flowers',
-    status: 'Confirmed',
-    statusColor: 'bg-success/12 text-success',
-  },
-  {
-    initials: '—',
-    name: 'Hair & Makeup',
-    type: 'Beauty',
-    status: 'Searching',
-    statusColor: 'bg-accent/12 text-accent-foreground',
-  },
-]
-
 function VendorsCard() {
+  const { data: vendors } = api.vendor.getAll.useQuery({})
+
+  const vendorCount = vendors?.length ?? 0
+  const selected = vendors?.filter((v) => v.status === 'SELECTED').length ?? 0
+  const inProgress =
+    vendors?.filter((v) => v.status === 'IN_NEGOTIATION' || v.status === 'PRE_SELECTED').length ?? 0
+  const inReview = vendors?.filter((v) => v.status === 'IN_REVIEW').length ?? 0
+
+  if (vendorCount === 0) {
+    return (
+      <CardShell title='Vendors' icon='◐' action='Manage →' actionHref='/vendors'>
+        <div className='flex flex-col gap-3'>
+          <div className='flex items-baseline gap-2'>
+            <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
+            <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
+              No vendors added yet
+            </span>
+          </div>
+          <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
+            Track quotes, contacts, and contracts in one place
+          </div>
+          <Link
+            href='/vendors'
+            className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+          >
+            Add your first vendor →
+          </Link>
+        </div>
+      </CardShell>
+    )
+  }
+
   return (
     <CardShell title='Vendors' icon='◐' action='Manage →' actionHref='/vendors'>
-      <div className='flex flex-col gap-1'>
-        {PLACEHOLDER_VENDORS.map((v) => (
-          <Link
-            key={v.name}
-            href='/vendors'
-            className='flex min-h-[44px] items-center gap-2.5 rounded px-2 py-2 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
-          >
-            <span className='flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-muted font-medium font-mono text-[0.6rem] text-foreground/60 uppercase'>
-              {v.initials}
-            </span>
-            <div className='min-w-0 flex-1'>
-              <p className='truncate font-serif text-[0.88rem] text-foreground'>{v.name}</p>
-              <p className='font-mono text-[0.56rem] text-foreground/60 uppercase tracking-widest'>
-                {v.type}
-              </p>
+      <div className='flex flex-col gap-3'>
+        <div className='flex items-baseline gap-2'>
+          <span className='font-serif text-[2.2rem] text-foreground leading-none'>
+            {vendorCount}
+          </span>
+          <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
+            vendor{vendorCount !== 1 ? 's' : ''} tracked
+          </span>
+        </div>
+        <div className='grid grid-cols-3 divide-x divide-border text-center'>
+          {[
+            { val: selected, label: 'Selected', color: 'text-success' },
+            { val: inProgress, label: 'In Progress', color: 'text-foreground' },
+            { val: inReview, label: 'In Review', color: 'text-foreground/60' },
+          ].map((s) => (
+            <div key={s.label} className='px-2 first:pl-0 last:pr-0'>
+              <span className={`block font-serif text-[1.6rem] leading-none ${s.color}`}>
+                {s.val}
+              </span>
+              <span className='font-mono text-[0.52rem] text-foreground/55 uppercase tracking-widest'>
+                {s.label}
+              </span>
             </div>
-            <span
-              className={`flex-shrink-0 rounded-full px-2 py-0.5 font-mono text-[0.58rem] uppercase tracking-wider ${v.statusColor}`}
-            >
-              {v.status}
-            </span>
-          </Link>
-        ))}
+          ))}
+        </div>
       </div>
-      <p className='mt-3 font-mono text-[0.56rem] text-foreground/50 tracking-wider'>
-        Showing placeholder data — manage real vendors →
-      </p>
     </CardShell>
   )
 }
 
 function MilestonesCard({ dashboardData }: { dashboardData: DashboardData | null }) {
   const weddingDateLabel = dashboardData?.weddingData?.date?.standardFormat ?? ''
-  const events = dashboardData?.events ?? []
-
-  const staticMilestones = [
-    { title: 'Venue booked', date: 'Jan 2026', status: 'done' as const },
-    { title: 'Invitations sent', date: 'Feb 2026', status: 'done' as const },
-    { title: 'RSVP deadline', date: 'Mar 2026', status: 'today' as const },
-    { title: 'Final headcount to caterer', date: 'Apr 2026', status: 'upcoming' as const },
-    { title: 'Seating plan finalised', date: 'Jan 2027', status: 'upcoming' as const },
-    { title: 'Rehearsal dinner', date: 'Day before', status: 'upcoming' as const },
-  ]
-
-  const weddingMilestone = {
-    title: events[0]?.name ?? 'The wedding',
-    date: weddingDateLabel,
-    status: 'upcoming' as const,
-    highlight: true,
-  }
-
-  const allMilestones = [...staticMilestones, weddingMilestone]
+  const milestones = dashboardData?.milestones ?? []
+  const doneMilestones = milestones.filter((milestone) => milestone.effectiveStatus === 'done')
+  const pendingMilestones = milestones.filter(
+    (milestone) => milestone.effectiveStatus === 'pending'
+  )
+  const visibleMilestones = dedupeMilestones([
+    ...doneMilestones.slice(-2),
+    ...pendingMilestones.slice(0, 3),
+    ...milestones.filter((milestone) => milestone.key === 'wedding_day'),
+  ])
 
   const dotClass = {
     done: 'bg-success border-success',
@@ -431,63 +526,151 @@ function MilestonesCard({ dashboardData }: { dashboardData: DashboardData | null
   }
 
   return (
-    <CardShell title='Milestones' icon='▷' action='Full timeline →' actionHref='/dashboard'>
+    <CardShell title='Milestones' icon='▷' action='Full timeline →' actionHref='/checklist'>
       <div className='flex flex-col'>
-        {allMilestones.map((m, i) => (
-          <div key={m.title} className='relative flex gap-3 pb-3 last:pb-0'>
-            {i < allMilestones.length - 1 && (
-              <div className='absolute top-4 bottom-0 left-[5px] w-px bg-border' />
-            )}
-            <span
-              className={`relative z-10 mt-1 h-3 w-3 flex-shrink-0 rounded-full border-2 ${dotClass[m.status]}`}
-            />
-            <div>
-              <p
-                className={`font-serif text-[0.88rem] leading-tight ${
-                  'highlight' in m && m.highlight
-                    ? 'font-semibold text-foreground italic'
-                    : 'text-foreground'
-                }`}
-              >
-                {m.title}
-                {'highlight' in m && m.highlight ? ' ✦' : ''}
-              </p>
-              <p
-                className={`mt-0.5 font-mono text-[0.58rem] tracking-wider ${
-                  m.status === 'today' ? 'text-foreground/80' : 'text-foreground/60'
-                }`}
-              >
-                {m.date}
-              </p>
+        {visibleMilestones.map((milestone, i) => {
+          const status = getMilestoneStatus(milestone, pendingMilestones[0]?.id)
+          const subtitle =
+            milestone.key === 'wedding_day' && weddingDateLabel
+              ? weddingDateLabel
+              : milestone.targetDate
+                ? new Intl.DateTimeFormat('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    timeZone: 'UTC',
+                  }).format(new Date(milestone.targetDate))
+                : status === 'done'
+                  ? 'Completed'
+                  : status === 'today'
+                    ? 'Current milestone'
+                    : 'Upcoming'
+
+          return (
+            <div key={milestone.id} className='relative flex gap-3 pb-3 last:pb-0'>
+              {i < visibleMilestones.length - 1 && (
+                <div className='absolute top-4 bottom-0 left-[5px] w-px bg-border' />
+              )}
+              <span
+                className={`relative z-10 mt-1 h-3 w-3 flex-shrink-0 rounded-full border-2 ${dotClass[status]}`}
+              />
+              <div>
+                <p className='font-serif text-[0.88rem] text-foreground leading-tight'>
+                  {milestone.title}
+                  {milestone.key === 'wedding_day' ? ' ✦' : ''}
+                  {hasMilestoneOverride(milestone) ? ' ⚠' : ''}
+                </p>
+                <p
+                  className={`mt-0.5 font-mono text-[0.58rem] tracking-wider ${
+                    status === 'today' ? 'text-foreground/80' : 'text-foreground/60'
+                  }`}
+                >
+                  {subtitle}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </CardShell>
   )
 }
 
 export default function PlanningOverview({ dashboardData }: PlanningOverviewProps) {
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const utils = api.useUtils()
+  const events = useMemo(
+    () => (dashboardData?.events ?? []) as unknown as EventWithStats[],
+    [dashboardData?.events]
+  )
+  const createTask = api.task.create.useMutation({
+    onSuccess: () => {
+      setIsCreateDialogOpen(false)
+      void Promise.all([
+        utils.task.getPriorityQueue.invalidate(),
+        utils.dashboard.getForActiveWorkspace.invalidate(),
+      ])
+    },
+    onError: () => {
+      toast.error('Failed to add task')
+    },
+  })
+
+  useEffect(() => {
+    const handleOpenCreateTask = () => {
+      if (events.length === 0) {
+        toast.error('Add an event before creating a task')
+        return
+      }
+
+      setIsCreateDialogOpen(true)
+    }
+
+    window.addEventListener(DASHBOARD_ADD_TASK_EVENT, handleOpenCreateTask)
+    return () => window.removeEventListener(DASHBOARD_ADD_TASK_EVENT, handleOpenCreateTask)
+  }, [events])
+
   return (
-    <div className='flex flex-col gap-5'>
-      {/* Countdown hero */}
-      <CountdownHero dashboardData={dashboardData} />
+    <>
+      <div className='flex flex-col gap-5'>
+        {/* Countdown hero */}
+        <CountdownHero dashboardData={dashboardData} />
 
-      {/* Mini stats */}
-      <MiniStats dashboardData={dashboardData} />
+        {/* Mini stats */}
+        <MiniStats dashboardData={dashboardData} />
 
-      {/* Row: RSVP + Tasks */}
-      <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
-        <RsvpCard dashboardData={dashboardData} />
-        <TasksCard />
+        {/* Row: RSVP + Tasks */}
+        <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
+          <RsvpCard dashboardData={dashboardData} />
+          <TasksCard dashboardData={dashboardData} />
+        </div>
+
+        {/* Row: Budget + Vendors + Milestones */}
+        <div className='grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3'>
+          <BudgetCard />
+          <VendorsCard />
+          <MilestonesCard dashboardData={dashboardData} />
+        </div>
       </div>
 
-      {/* Row: Budget + Vendors + Milestones */}
-      <div className='grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3'>
-        <BudgetCard />
-        <VendorsCard />
-        <MilestonesCard dashboardData={dashboardData} />
-      </div>
-    </div>
+      <TaskDialog
+        mode='create'
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        events={events}
+        isSubmitting={createTask.isPending}
+        onSubmit={(data) => createTask.mutate(data)}
+      />
+    </>
   )
 }
+
+const dedupeMilestones = <T extends { id: string }>(milestones: T[]): T[] => {
+  const seen = new Set<string>()
+  return milestones.filter((milestone) => {
+    if (seen.has(milestone.id)) {
+      return false
+    }
+
+    seen.add(milestone.id)
+    return true
+  })
+}
+
+const getMilestoneStatus = (
+  milestone: DashboardOverview['milestones'][number],
+  currentPendingMilestoneId?: string
+): 'done' | 'today' | 'upcoming' => {
+  if (milestone.effectiveStatus === 'done') {
+    return 'done'
+  }
+
+  if (milestone.id === currentPendingMilestoneId) {
+    return 'today'
+  }
+
+  return 'upcoming'
+}
+
+const hasMilestoneOverride = (milestone: DashboardOverview['milestones'][number]): boolean =>
+  milestone.userOverrideStatus !== null && milestone.effectiveStatus !== milestone.derivedStatus

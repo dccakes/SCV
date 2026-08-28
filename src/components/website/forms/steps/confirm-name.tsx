@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import type { HouseholdSearch, StepFormProps } from '~/app/utils/shared-types'
 import { useRsvpForm, useUpdateRsvpForm } from '~/components/contexts/rsvp-form-context'
@@ -8,9 +9,32 @@ type HouseholdSearchItem = HouseholdSearch[number]
 type GuestWithInvitations = HouseholdSearchItem['guests'][number]
 
 export default function ConfirmNameForm({ goNext, goBack }: StepFormProps) {
-  const { matchedHouseholds, selectedHousehold: currentSelectedHousehold } = useRsvpForm()
+  const t = useTranslations('rsvp')
+  const tCommon = useTranslations('common')
+  const {
+    matchedHouseholds,
+    selectedHousehold: currentSelectedHousehold,
+    recognized,
+  } = useRsvpForm()
   const updateRsvpForm = useUpdateRsvpForm()
-  const [selectedHouseholdId, setSelectedHouseholdId] = useState<string>()
+  // Pre-select when there's only one match (always the case for a recognized
+  // guest), so they can confirm in a single tap.
+  const [selectedHouseholdId, setSelectedHouseholdId] = useState<string | undefined>(() =>
+    matchedHouseholds && matchedHouseholds.length === 1 ? matchedHouseholds[0]?.id : undefined
+  )
+
+  // "Not you" clears the invite-recognized match and sends the guest back to the
+  // name search, in case they opened someone else's save-the-date link.
+  const onNotYou = () => {
+    updateRsvpForm({
+      recognized: false,
+      matchedHouseholds: [],
+      selectedHousehold: undefined,
+      rsvpResponses: [],
+      answersToQuestions: [],
+    })
+    goBack?.()
+  }
 
   const onContinue = () => {
     const selectedHousehold = matchedHouseholds?.find(
@@ -37,8 +61,7 @@ export default function ConfirmNameForm({ goNext, goBack }: StepFormProps) {
   return (
     <div className='flex flex-col gap-5'>
       <h2 className='text-2xl tracking-widest'>
-        we&apos;ve found you in the guest list. please confirm your name below to continue with your
-        rsvp
+        {recognized ? t('recognizedInvitation') : t('foundInGuestList')}
       </h2>
       {matchedHouseholds?.map((household: HouseholdSearchItem) => {
         return (
@@ -64,14 +87,14 @@ export default function ConfirmNameForm({ goNext, goBack }: StepFormProps) {
         disabled={selectedHouseholdId === undefined}
         onClick={onContinue}
       >
-        CONTINUE
+        {tCommon('continue')}
       </button>
       <button
         className={`mt-3 bg-gray-700 py-3 text-white text-xl tracking-wide`}
         type='button'
-        onClick={() => goBack?.()}
+        onClick={recognized ? onNotYou : () => goBack?.()}
       >
-        SEARCH AGAIN
+        {recognized ? t('notYou') : t('searchAgain')}
       </button>
     </div>
   )

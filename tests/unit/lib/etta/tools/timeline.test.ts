@@ -9,12 +9,24 @@ jest.mock('~/server/authz/permission-checker', () => ({
 import { getTimelineTools } from '~/lib/etta/tools/timeline'
 import type { EttaContext } from '~/lib/etta/types'
 import { logAudit } from '~/lib/etta/utils/audit'
+import { milestoneService } from '~/server/domains/milestone'
 
 jest.mock('~/lib/etta/utils/audit', () => ({
   logAudit: jest.fn(),
 }))
 
+jest.mock('~/server/domains/milestone', () => ({
+  milestoneService: {
+    attestMilestone: jest.fn(),
+    getEffectiveMilestones: jest.fn(),
+  },
+}))
+
 const mockLogAudit = logAudit as jest.Mock
+const mockMilestoneService = milestoneService as {
+  attestMilestone: jest.Mock
+  getEffectiveMilestones: jest.Mock
+}
 
 const mockCtx: EttaContext = {
   weddingId: 'wedding-123',
@@ -40,35 +52,63 @@ describe('getTimelineTools', () => {
   const tools = getTimelineTools(mockCtx)
 
   describe('get_milestones', () => {
-    it('returns default milestones', async () => {
+    it('returns milestones from the milestone service', async () => {
+      mockMilestoneService.getEffectiveMilestones.mockResolvedValue([
+        {
+          id: 'milestone-1',
+          title: 'Venue booked',
+          derivedStatus: 'pending',
+          effectiveStatus: 'pending',
+        },
+      ])
+
       const result = await tools.get_milestones.execute(
         {},
         { toolCallId: 'tc1', messages: [], abortSignal: undefined as never }
       )
 
-      expect(result.milestones).toBeInstanceOf(Array)
-      expect(result.milestones.length).toBeGreaterThan(0)
-      expect(result.milestones[0]).toEqual(
-        expect.objectContaining({ title: expect.any(String), status: 'pending' })
+      expect(mockMilestoneService.getEffectiveMilestones).toHaveBeenCalledWith(
+        mockCtx.authz,
+        'wedding-123'
       )
+      expect(result.milestones).toEqual([
+        expect.objectContaining({ id: 'milestone-1', title: 'Venue booked' }),
+      ])
     })
   })
 
   describe('complete_milestone', () => {
-    it('returns success message with title', async () => {
+    it('returns success message for the attested milestone', async () => {
+      mockMilestoneService.attestMilestone.mockResolvedValue({
+        id: 'milestone-1',
+        title: 'Book venue',
+        derivedStatus: 'pending',
+        effectiveStatus: 'done',
+      })
+
       const result = await tools.complete_milestone.execute(
-        { title: 'Book venue' },
+        { milestoneId: 'milestone-1' },
         { toolCallId: 'tc2', messages: [], abortSignal: undefined as never }
       )
 
-      expect(result).toEqual({
-        message: 'Milestone marked as complete: Book venue',
-      })
+      expect(mockMilestoneService.attestMilestone).toHaveBeenCalledWith(
+        mockCtx.authz,
+        'milestone-1',
+        'wedding-123'
+      )
+      expect(result.message).toBe('Milestone marked as complete: Book venue')
     })
 
     it('calls logAudit with correct params', async () => {
+      mockMilestoneService.attestMilestone.mockResolvedValue({
+        id: 'milestone-2',
+        title: 'Send invitations',
+        derivedStatus: 'pending',
+        effectiveStatus: 'done',
+      })
+
       await tools.complete_milestone.execute(
-        { title: 'Send invitations' },
+        { milestoneId: 'milestone-2' },
         { toolCallId: 'tc3', messages: [], abortSignal: undefined as never }
       )
 
@@ -78,7 +118,8 @@ describe('getTimelineTools', () => {
         actorType: 'etta',
         action: 'complete_milestone',
         resourceType: 'milestone',
-        payload: { title: 'Send invitations' },
+        resourceId: 'milestone-2',
+        payload: { milestoneId: 'milestone-2', title: 'Send invitations' },
       })
     })
   })

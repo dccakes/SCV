@@ -7,12 +7,13 @@
  * Client component to enable interactivity (create/edit/delete).
  */
 
-import { Calendar, Loader2, Plus } from 'lucide-react'
+import { Loader2, Plus } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { toast } from 'sonner'
-import { EventCard } from '@/app/(authenicated)/events/_components/event-card'
-import { ManageEventGuestsDialog } from '@/app/(authenicated)/events/_components/manage-event-guests-dialog'
-import { ManageEventQuestionsDialog } from '@/app/(authenicated)/events/_components/manage-event-questions-dialog'
+import { EventCard } from '~/app/(authenicated)/events/_components/event-card'
+import { ManageEventGuestsDialog } from '~/app/(authenicated)/events/_components/manage-event-guests-dialog'
+import { ManageEventQuestionsDialog } from '~/app/(authenicated)/events/_components/manage-event-questions-dialog'
+import { ManageGeneralQuestionsDialog } from '~/app/(authenicated)/events/_components/manage-general-questions-dialog'
 import { SuggestionGhostItem } from '~/components/etta/SuggestionGhostItem'
 import { useDomainSuggestions } from '~/components/etta/use-domain-suggestions'
 import {
@@ -31,7 +32,6 @@ import {
   AlertDialogTitle,
 } from '~/components/ui/alert-dialog'
 import { Button } from '~/components/ui/button'
-import { Card, CardContent } from '~/components/ui/card'
 import type { EttaSuggestionView } from '~/lib/etta/types'
 import type { Event, EventWithStats } from '~/server/domains/event/event.types'
 import { api } from '~/trpc/react'
@@ -54,6 +54,7 @@ export function EventsPageClient({
     undefined
   )
   const [managingQuestionsEventId, setManagingQuestionsEventId] = useState<string | null>(null)
+  const [managingGeneralQuestions, setManagingGeneralQuestions] = useState(false)
   const [togglingRsvpEventId, setTogglingRsvpEventId] = useState<string | null>(null)
   const utils = api.useUtils()
 
@@ -66,6 +67,11 @@ export function EventsPageClient({
     }
   )
   const suggestions = useDomainSuggestions('events', initialSuggestions)
+
+  // Website-level general questions (note to couple, children, etc.)
+  const { data: websiteQuestions = null } = api.question.getWebsiteQuestions.useQuery(undefined, {
+    staleTime: 30_000,
+  })
 
   const createEvent = api.event.create.useMutation({
     onSuccess: async () => {
@@ -214,6 +220,29 @@ export function EventsPageClient({
     [updateCollectRsvp]
   )
 
+  const generalQuestionsButton = (
+    <Button
+      type='button'
+      variant='outline'
+      size='sm'
+      onClick={() => setManagingGeneralQuestions(true)}
+      disabled={websiteQuestions === null}
+    >
+      General RSVP questions
+    </Button>
+  )
+
+  const generalQuestionsDialog =
+    managingGeneralQuestions && websiteQuestions ? (
+      <ManageGeneralQuestionsDialog
+        websiteId={websiteQuestions.websiteId}
+        isRsvpEnabled={websiteQuestions.isRsvpEnabled}
+        questions={websiteQuestions.questions}
+        open
+        onOpenChange={(open) => !open && setManagingGeneralQuestions(false)}
+      />
+    ) : null
+
   // Show loading state
   if (isLoading && initialEvents.length === 0) {
     return (
@@ -226,25 +255,30 @@ export function EventsPageClient({
   if (events.length === 0) {
     return (
       <>
-        <Card>
-          <CardContent className='flex flex-col items-center justify-center py-8 text-center md:py-12'>
-            <div className='mb-4 rounded-full bg-muted p-4 md:p-6'>
-              <Calendar
-                aria-hidden='true'
-                className='h-10 w-10 text-muted-foreground md:h-12 md:w-12'
-              />
-            </div>
-            <h2 className='mb-2 font-semibold text-xl md:text-2xl'>No events yet</h2>
-            <p className='mb-6 max-w-md px-4 text-muted-foreground text-sm md:text-base'>
-              Get started by creating your first wedding event. You can add ceremonies, receptions,
+        <div className='flex flex-col items-center gap-5 py-20 text-center'>
+          <div className='flex h-16 w-16 items-center justify-center rounded-full border border-border/80 bg-muted/50'>
+            <span className='text-2xl opacity-50' aria-hidden='true'>
+              ☷
+            </span>
+          </div>
+          <div className='max-w-sm'>
+            <p className='font-serif text-foreground text-xl'>No events yet</p>
+            <p className='mt-2 font-mono text-[0.65rem] text-foreground/55 leading-relaxed tracking-wider'>
+              Get started by creating your first wedding event. Add ceremonies, receptions,
               rehearsal dinners, and more.
             </p>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus aria-hidden='true' className='mr-2 h-4 w-4' />
-              Create Event
+          </div>
+          <div className='flex flex-wrap items-center justify-center gap-2'>
+            <Button
+              type='button'
+              onClick={() => setIsCreateDialogOpen(true)}
+              className='font-mono text-[0.65rem] uppercase tracking-widest'
+            >
+              Create your first event
             </Button>
-          </CardContent>
-        </Card>
+            {generalQuestionsButton}
+          </div>
+        </div>
 
         {isCreateDialogOpen ? (
           <ModernEventForm
@@ -255,6 +289,8 @@ export function EventsPageClient({
             isSubmitting={createEvent.isPending}
           />
         ) : null}
+
+        {generalQuestionsDialog}
       </>
     )
   }
@@ -264,27 +300,37 @@ export function EventsPageClient({
       ? undefined
       : events.find((event) => event.id === initialRsvpEventId)
 
+  const sortedEvents = [...events].sort((a, b) => {
+    if (a.date === null && b.date === null) return 0
+    if (a.date === null) return 1
+    if (b.date === null) return -1
+    return new Date(a.date).getTime() - new Date(b.date).getTime()
+  })
+
   return (
     <>
       {initialRsvpEventId !== undefined ? (
         <div className='mb-4 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm md:mb-6'>
           {rsvpFocusEvent
-            ? `RSVP management context: ${rsvpFocusEvent.name}`
-            : 'RSVP management context from Guests drawer'}
+            ? `Managing RSVPs for "${rsvpFocusEvent.name}" — find the event card below.`
+            : 'Select an event below to manage RSVPs.'}
         </div>
       ) : null}
       <div className='mb-4 flex items-center justify-between md:mb-6'>
         <p className='text-muted-foreground text-sm'>
           {events.length} {events.length === 1 ? 'event' : 'events'}
         </p>
-        <Button onClick={() => setIsCreateDialogOpen(true)} size='sm'>
-          <Plus aria-hidden='true' className='mr-2 h-4 w-4' />
-          Create Event
-        </Button>
+        <div className='flex items-center gap-2'>
+          {generalQuestionsButton}
+          <Button onClick={() => setIsCreateDialogOpen(true)} size='sm'>
+            <Plus aria-hidden='true' className='mr-2 h-4 w-4' />
+            Create Event
+          </Button>
+        </div>
       </div>
 
-      <div className='grid gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3'>
-        {events.map((event) => (
+      <div className='grid gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3'>
+        {sortedEvents.map((event) => (
           <EventCard
             key={event.id}
             event={event}
@@ -344,7 +390,7 @@ export function EventsPageClient({
                 }
               }}
               disabled={deleteEvent.isPending}
-              className='flex items-center gap-2 bg-red-600 hover:bg-red-700'
+              className='flex items-center gap-2 bg-destructive text-destructive-foreground hover:bg-destructive/90'
             >
               {deleteEvent.isPending ? (
                 <Loader2 aria-hidden='true' className='h-4 w-4 animate-spin' />
@@ -370,6 +416,8 @@ export function EventsPageClient({
           onOpenChange={(open) => !open && setManagingQuestionsEventId(null)}
         />
       ) : null}
+
+      {generalQuestionsDialog}
     </>
   )
 }

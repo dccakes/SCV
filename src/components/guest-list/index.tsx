@@ -60,12 +60,15 @@ export default function GuestList({
     [selectedEventId, dashboardData?.households]
   )
 
-  // Calculate total guests - simplified to avoid React Compiler memoization issues
-  const totalGuests =
-    filteredHouseholdsByEvent?.reduce(
-      (acc: number, household) => acc + household.guests.length,
-      0
-    ) ?? 0
+  // True when the wedding has any guests regardless of the active event filter.
+  // Used to distinguish "no guests at all" from "no guests in this event".
+  const hasAnyGuests = (dashboardData?.households ?? []).some((h) => h.guests.length > 0)
+
+  // When an event tab is active, households whose guests were all filtered out are
+  // excluded so GuestsView never receives empty-shell household objects.
+  const householdsForView = filteredHouseholdsByEvent.filter(
+    (household) => household.guests.length > 0
+  )
 
   if (dashboardData === null) {
     return (
@@ -95,10 +98,10 @@ export default function GuestList({
       <div className={`${sharedStyles.desktopPaddingSidesGuestList} mb-4 flex justify-end`}>
         <InviteLinkPanel />
       </div>
-      {totalGuests > 0 ? (
+      {hasAnyGuests ? (
         <GuestsView
           events={dashboardData.events}
-          households={filteredHouseholdsByEvent}
+          households={householdsForView}
           allHouseholds={dashboardData.households}
           initialSuggestions={initialSuggestions ?? []}
           selectedEventId={selectedEventId}

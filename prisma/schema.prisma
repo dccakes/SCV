@@ -35,8 +35,15 @@ model Wedding {
   guestTags   GuestTag[]
 
   // Add-on relationships
-  website Website?
-  vendors Vendor[]
+  website    Website?
+  vendors    Vendor[]
+  tasks      Task[]
+  milestones Milestone[]
+
+  // Budgeting
+  budget           Budget?
+  budgetCategories BudgetCategory[]
+  budgetExpenses   BudgetExpense[]
 
   // Etta AI agent
   ettaActor       EttaActor?
@@ -47,6 +54,8 @@ model Wedding {
   faqs            Faq[]
   notifications   Notification[]
   householdNotes  HouseholdNote[]
+  vendorNotes     VendorNote[]
+  vendorCategoryConfigs VendorCategoryConfig[]
 
   // Messaging (Telegram bot, future: WhatsApp)
   messagingIdentities    MessagingIdentity[]
@@ -83,17 +92,49 @@ model Website {
   id                String     @id @default(uuid())
   weddingId         String     @unique
   wedding           Wedding    @relation(fields: [weddingId], references: [id], onDelete: Cascade)
-  url               String     @unique
   subUrl            String     @unique
+  templateId        String?
   isPasswordEnabled Boolean    @default(false)
   password          String?
   isRsvpEnabled     Boolean    @default(true)
   coverPhotoUrl     String?
+  headerImageUrl    String?
+  coupleImageUrls   String[]   @default([])
   generalQuestions  Question[] @relation(name: "Website_Questions")
+  websiteSections   WebsiteSection[]
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 
   @@index([weddingId])
+}
+
+enum WebsiteSectionType {
+  HOME
+  OUR_STORY
+  TIMELINE
+  DESTINATION
+  EXPERIENCES
+  WEDDING_PARTY
+  TRAVEL
+  FAQ
+  REGISTRY
+  SAVE_THE_DATE
+  INVITATION
+}
+
+model WebsiteSection {
+  id        String             @id @default(uuid())
+  websiteId String
+  website   Website            @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  type      WebsiteSectionType
+  isEnabled Boolean            @default(true)
+  position  Int
+  content   Json
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@unique([websiteId, type])
+  @@index([websiteId, position])
 }
 
 // model StoryItem {
@@ -139,6 +180,7 @@ model User {
   userWeddings                UserWedding[]
   members                     Member[]
   sentOrganizationInvitations OrganizationInvitation[] @relation("OrganizationInvitationInviter")
+  vendorRatings  VendorRating[]
 }
 
 model Session {
@@ -257,6 +299,13 @@ model Household {
   // General notes about the household
   notes String?
 
+  // Short opaque code for the household's save-the-date / invite link, e.g.
+  // "js-4f9k2c". Looked up directly instead of verifying a signed token so the
+  // link stays short; nullable because a code is only assigned the first time
+  // an invite link is generated.
+  inviteCode           String?   @unique
+  inviteCodeExpiresAt  DateTime?
+
   // Relations
   guests         Guest[]          @relation(name: "Household_Guests")
   gifts          Gift[]           @relation(name: "Household_Gifts")
@@ -348,11 +397,13 @@ model Event {
   invitations Invitation[] @relation(name: "Event_Invitations")
   gifts       Gift[]       @relation(name: "Event_Gifts")
   questions   Question[]   @relation(name: "Event_Questions")
+  tasks       Task[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // subEvents   SubEvent[]   @relation(name: "Event_SubEvent")
 
+  @@unique([weddingId, id])
   @@index([weddingId])
 }
 
@@ -521,7 +572,36 @@ enum VendorCategory {
   VIDEOGRAPHER
   MUSIC
   FLOWERS
+  ACCOMMODATION
   OTHER
+}
+
+enum TaskCategory {
+  VENUE
+  VENDORS
+  ATTIRE
+  STATIONERY
+  GUESTS
+  LEGAL
+  CEREMONY
+  RECEPTION
+  BEAUTY
+  HONEYMOON
+  BUDGET
+  OTHER
+}
+
+enum MilestoneCategory {
+  SETUP
+  VENDORS
+  INVITATIONS
+  LEGAL
+  FINALE
+}
+
+enum MilestoneOverrideStatus {
+  attested
+  dismissed
 }
 
 // Enum: Vendor selection lifecycle status
@@ -556,15 +636,104 @@ model Vendor {
   contactName  String?
   contactEmail String?
   contactPhone String?
+  notes        String?
+  contacted    Boolean @default(false)
+  customFields Json?
 
-  quotes VendorQuote[]
+  quotes      VendorQuote[]
+  tasks       Task[]
+  ratings     VendorRating[]
+  vendorNotes VendorNote[]
+  images      VendorImage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([weddingId, id])
   @@index([weddingId])
   @@index([weddingId, category])
   @@index([weddingId, category, createdAt])
+}
+
+model Milestone {
+  id                 String                   @id @default(uuid())
+  weddingId          String
+  wedding            Wedding                  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  key                String
+  title              String
+  category           MilestoneCategory
+  position           Int
+  targetDate         DateTime?                @db.Date
+  userOverrideStatus MilestoneOverrideStatus?
+  attestedAt         DateTime?
+  dismissedAt        DateTime?
+  tasks              Task[]
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+
+  @@unique([weddingId, key])
+  @@unique([weddingId, id])
+  @@index([weddingId])
+  @@index([weddingId, category, position])
+  @@index([weddingId, userOverrideStatus])
+  @@index([weddingId, targetDate])
+}
+
+model Task {
+  id                  String       @id @default(uuid())
+  weddingId           String
+  wedding             Wedding      @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  eventId             String
+  event               Event        @relation(fields: [weddingId, eventId], references: [weddingId, id], onDelete: NoAction)
+  vendorId            String?
+  vendor              Vendor?      @relation(fields: [weddingId, vendorId], references: [weddingId, id], onDelete: NoAction)
+  milestoneId         String?
+  milestone           Milestone?   @relation(fields: [weddingId, milestoneId], references: [weddingId, id], onDelete: NoAction)
+  seedKey             String?
+  title               String
+  category            TaskCategory
+  monthsBeforeWedding Int
+  dueDate             DateTime?    @db.Date
+  description         String?
+  notes               String?
+  isDefault           Boolean      @default(false)
+  position            Int          @default(0)
+  completed           Boolean      @default(false)
+  completedAt         DateTime?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  @@unique([weddingId, seedKey])
+  @@index([weddingId])
+  @@index([eventId])
+  @@index([weddingId, eventId])
+  @@index([vendorId])
+  @@index([weddingId, vendorId])
+  @@index([milestoneId])
+  @@index([weddingId, milestoneId])
+  @@index([weddingId, category, completed, position])
+  @@index([weddingId, eventId, completed, dueDate])
+  @@index([weddingId, monthsBeforeWedding, position])
+  @@index([weddingId, completed, completedAt])
+}
+
+// Per-user star rating for a vendor (nullable presence: missing row == unrated)
+model VendorRating {
+  id        String   @id @default(uuid())
+  vendorId  String
+  vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Star value: integer 1-5 enforced via DB CHECK constraint and app validators
+  stars     Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([vendorId, userId])
+  @@index([vendorId])
+  @@index([userId])
 }
 
 // Quotes submitted by a vendor for a wedding
@@ -586,6 +755,36 @@ model VendorQuote {
   @@index([vendorId])
 }
 
+model VendorNote {
+  id        String   @id @default(uuid())
+  vendorId  String   @map("vendor_id")
+  vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  weddingId String   @map("wedding_id")
+  wedding   Wedding  @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  message   String
+  actorType String   @default("couple") @map("actor_type")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([vendorId, createdAt(sort: Desc)])
+  @@index([weddingId])
+  @@map("vendor_notes")
+}
+
+model VendorCategoryConfig {
+  id               String         @id @default(uuid())
+  weddingId        String?        @map("wedding_id")
+  wedding          Wedding?       @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  category         VendorCategory
+  fieldDefinitions Json           @map("field_definitions")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  @@unique([weddingId, category])
+  @@index([category])
+  @@index([weddingId])
+  @@map("vendor_category_configs")
+}
+
 // Files attached to a vendor quote (stored via Vercel Blob)
 model VendorQuoteFile {
   id      String      @id @default(uuid())
@@ -600,6 +799,106 @@ model VendorQuoteFile {
   createdAt DateTime @default(now())
 
   @@index([quoteId])
+}
+
+model VendorImage {
+  id       String @id @default(uuid())
+  vendorId String
+  vendor   Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  url       String
+  key       String
+  size      Int
+  name      String
+  isPrimary Boolean @default(false)
+  order     Int     @default(0)
+  source    String  @default("manual")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([vendorId])
+  @@index([vendorId, isPrimary])
+}
+
+// ─── Budgeting ───────────────────────────────────────────────────────────────
+
+// Singleton per wedding: holds the couple's overall target budget.
+// Categories and expenses are tracked separately so the target can differ
+// from the sum of per-section budgets.
+model Budget {
+  id          String  @id @default(uuid())
+  weddingId   String  @unique @map("wedding_id")
+  wedding     Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
+  // Overall target budget for the whole wedding
+  targetTotal Decimal @default(0) @db.Decimal(12, 2) @map("target_total")
+
+  // ISO 4217 currency code every amount on this wedding is tracked in.
+  // No conversion is supported yet.
+  currency String @default("USD")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // weddingId is already @unique, which provides its own index.
+  @@map("budgets")
+}
+
+// A budget "section" (e.g. Venue, Catering). Holds the planned amount for the
+// section; actual spend is derived from its expenses.
+model BudgetCategory {
+  id        String  @id @default(uuid())
+  weddingId String  @map("wedding_id")
+  wedding   Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+
+  name          String
+  plannedAmount Decimal @default(0) @db.Decimal(12, 2) @map("planned_amount")
+  position      Int     @default(0)
+
+  expenses BudgetExpense[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([weddingId])
+  @@index([weddingId, position])
+  @@map("budget_categories")
+}
+
+// An actual spend line item within a category. Deposits that are refundable
+// after the event are flagged so net cost can be computed separately from
+// gross spend.
+model BudgetExpense {
+  id         String         @id @default(uuid())
+  weddingId  String         @map("wedding_id")
+  wedding    Wedding        @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  categoryId String         @map("category_id")
+  category   BudgetCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  description String
+  // Estimated/quoted cost for this line, used for planning before it is paid.
+  estimatedAmount Decimal @default(0) @db.Decimal(12, 2) @map("estimated_amount")
+  // Amount actually paid (money out of pocket)
+  amount     Decimal @default(0) @db.Decimal(12, 2)
+
+  // Deposit tracking. A refundable deposit is expected back after the event;
+  // refundedAt is set once the refund has been received.
+  isDeposit    Boolean   @default(false) @map("is_deposit")
+  isRefundable Boolean   @default(false) @map("is_refundable")
+  refundedAt   DateTime? @map("refunded_at")
+
+  // When this payment is due (drives the upcoming-payments schedule).
+  dueAt  DateTime? @db.Date @map("due_at")
+  paidAt DateTime? @db.Date @map("paid_at")
+  notes  String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([weddingId])
+  @@index([categoryId])
+  @@map("budget_expenses")
 }
 
 // ─── Etta AI Agent ───────────────────────────────────────────────────────────

@@ -16,8 +16,11 @@ import {
   fetchWeddingDataSchema,
   getBySubUrlSchema,
   hasPasswordAccessSchema,
+  updateCoupleImagesSchema,
   updateCoverPhotoSchema,
+  updateHeaderImageSchema,
   updateRsvpEnabledSchema,
+  updateTemplateSchema,
   updateWebsiteSchema,
   verifyWebsitePasswordSchema,
 } from '~/server/domains/website/website.validator'
@@ -69,6 +72,39 @@ export const websiteRouter = createTRPCRouter({
     }),
 
   /**
+   * Update header/hero image
+   */
+  updateHeaderImage: protectedProcedure
+    .input(updateHeaderImageSchema)
+    .mutation(async ({ ctx, input }) => {
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+
+      return websiteService.updateHeaderImage(ctx.authz, weddingId, input.headerImageUrl)
+    }),
+
+  /**
+   * Update couple photo gallery
+   */
+  updateCoupleImages: protectedProcedure
+    .input(updateCoupleImagesSchema)
+    .mutation(async ({ ctx, input }) => {
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+
+      return websiteService.updateCoupleImages(ctx.authz, weddingId, input.coupleImageUrls)
+    }),
+
+  /**
+   * Update the selected website template
+   */
+  updateTemplate: protectedProcedure
+    .input(updateTemplateSchema)
+    .mutation(async ({ ctx, input }) => {
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+
+      return websiteService.updateTemplate(ctx.authz, weddingId, input.templateId)
+    }),
+
+  /**
    * Get website for current user's wedding
    */
   getByUserId: protectedProcedure.query(async ({ ctx }) => {
@@ -98,7 +134,11 @@ export const websiteRouter = createTRPCRouter({
    * Fetch complete wedding data for public website display
    */
   fetchWeddingData: publicProcedure.input(fetchWeddingDataSchema).query(async ({ input }) => {
-    return websiteManagementService.fetchWeddingData(input.subUrl, input.accessToken)
+    return websiteManagementService.fetchWeddingData(
+      input.subUrl,
+      input.accessToken,
+      input.inviteToken
+    )
   }),
 
   /**

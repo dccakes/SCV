@@ -10,6 +10,7 @@ jest.mock('~/server/domains/household/household.repository')
 jest.mock('~/server/domains/guest/guest.repository')
 jest.mock('~/server/domains/invitation/invitation.repository')
 jest.mock('~/server/domains/gift/gift.repository')
+jest.mock('~/server/domains/website/website.repository')
 
 import { TRPCError } from '@trpc/server'
 import { HouseholdManagementService } from '~/server/application/household-management/household-management.service'
@@ -18,6 +19,7 @@ import { GiftRepository } from '~/server/domains/gift/gift.repository'
 import { GuestRepository } from '~/server/domains/guest/guest.repository'
 import { HouseholdRepository } from '~/server/domains/household/household.repository'
 import { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
+import { WebsiteRepository } from '~/server/domains/website/website.repository'
 
 const mockRequirePermission = requirePermission as jest.Mock
 
@@ -25,6 +27,7 @@ const householdRepo = new HouseholdRepository(null as never)
 const guestRepo = new GuestRepository(null as never)
 const invitationRepo = new InvitationRepository(null as never)
 const giftRepo = new GiftRepository(null as never)
+const websiteRepo = new WebsiteRepository(null as never)
 
 const mockHouseholdRepo = householdRepo as unknown as {
   update: jest.Mock
@@ -36,6 +39,7 @@ const service = new HouseholdManagementService(
   guestRepo,
   invitationRepo,
   giftRepo,
+  websiteRepo,
   null as never // db - not needed for this test
 )
 

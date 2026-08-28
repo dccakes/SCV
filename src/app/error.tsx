@@ -1,11 +1,21 @@
 'use client'
 
+import posthog from 'posthog-js'
+import { useEffect } from 'react'
+
 type AppErrorBoundaryProps = {
   error: Error & { digest?: string }
   reset: () => void
 }
 
 export default function AppErrorBoundary({ error, reset }: Readonly<AppErrorBoundaryProps>) {
+  useEffect(() => {
+    if (!posthog.__loaded) {
+      return
+    }
+    posthog.captureException(error)
+  }, [error])
+
   return (
     <div className='mx-auto flex min-h-[60vh] w-full max-w-2xl flex-col items-center justify-center gap-4 px-4 text-center md:px-6'>
       <h1 className='font-semibold text-2xl md:text-3xl'>Something went wrong</h1>
