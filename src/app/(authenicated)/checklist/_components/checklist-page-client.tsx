@@ -1,5 +1,6 @@
 'use client'
 
+import { ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useMemo, useState } from 'react'
@@ -357,9 +358,17 @@ export function ChecklistPageClient({
                     <button
                       type='button'
                       aria-label={`${bucket.title} bucket`}
-                      className='flex w-full items-center gap-3 text-left'
+                      aria-expanded={!collapsedBuckets.has(bucket.key)}
+                      aria-controls={`bucket-content-${bucket.key}`}
+                      className='flex w-full items-center gap-3 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-muted/40'
                       onClick={() => toggleBucket(bucket.key)}
                     >
+                      <ChevronDown
+                        aria-hidden='true'
+                        className={`h-3.5 w-3.5 shrink-0 text-muted-foreground/60 transition-transform ${
+                          collapsedBuckets.has(bucket.key) ? '-rotate-90' : 'rotate-0'
+                        }`}
+                      />
                       <h2 className='font-mono text-[0.62rem] text-muted-foreground uppercase tracking-[0.12em]'>
                         {bucket.title}
                       </h2>
@@ -370,7 +379,7 @@ export function ChecklistPageClient({
                     </button>
 
                     {collapsedBuckets.has(bucket.key) ? null : (
-                      <div className='space-y-1'>
+                      <div id={`bucket-content-${bucket.key}`} className='space-y-1'>
                         {bucket.tasks.map((task) => (
                           <div
                             key={task.id}
