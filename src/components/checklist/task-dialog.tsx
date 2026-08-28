@@ -35,8 +35,14 @@ const taskDialogSchema = z.object({
     .string()
     .trim()
     .min(1, 'Months before wedding is required')
-    .refine((value) => /^-?\d+$/.test(value), 'Months before wedding must be a whole number')
-    .refine((value) => Number(value) >= -1, 'Months before wedding must be -1 or greater'),
+    .refine(
+      (value) => value.length === 0 || /^-?\d+$/.test(value),
+      'Months before wedding must be a whole number'
+    )
+    .refine(
+      (value) => value.length === 0 || Number(value) >= -1,
+      'Months before wedding must be -1 or greater'
+    ),
   dueDate: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD')
@@ -86,32 +92,21 @@ export function TaskDialog({
       const result = taskDialogSchema.safeParse(values)
 
       if (result.success) {
-        return {
-          values: result.data,
-          errors: {},
-        }
+        return { values: result.data, errors: {} }
       }
 
       const errors = result.error.issues.reduce<Record<string, { type: string; message: string }>>(
         (current, issue) => {
           const fieldName = String(issue.path[0] ?? 'root')
-
           if (!current[fieldName]) {
-            current[fieldName] = {
-              type: issue.code,
-              message: issue.message,
-            }
+            current[fieldName] = { type: issue.code, message: issue.message }
           }
-
           return current
         },
         {}
       )
 
-      return {
-        values: {},
-        errors: toNestErrors(errors, options),
-      }
+      return { values: {}, errors: toNestErrors(errors, options) }
     },
     defaultValues: getDefaultValues(mode, primaryEventId, task),
   })
