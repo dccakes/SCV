@@ -88,7 +88,7 @@ export default function GuestList({ dashboardData }: { dashboardData: DashboardD
         />
       )}
       <EventsTabs events={dashboardData?.events} selectedEventId={selectedEventId} />
-      <div className={`${sharedStyles.desktopPaddingSidesGuestList} mb-4 flex justify-end`}>
+      <div className={`${sharedStyles.desktopPaddingSidesGuestList} mb-4`}>
         <InviteLinkPanel />
       </div>
       {hasAnyGuests ? (
