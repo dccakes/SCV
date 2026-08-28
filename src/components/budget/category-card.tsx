@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -267,6 +267,10 @@ export function CategoryCard({ category, currency, view }: Readonly<CategoryCard
   const overBudget = hasPlanned && totals.netSpend > totals.plannedAmount
 
   const expenseCount = category.expenses.length
+  const deletingExpense = deleteExpenseId
+    ? category.expenses.find((e) => e.id === deleteExpenseId)
+    : null
+
   const contentId = `budget-section-${category.id}`
 
   return (
@@ -483,8 +487,10 @@ export function CategoryCard({ category, currency, view }: Readonly<CategoryCard
                 deleteCategory.mutate({ categoryId: category.id })
               }}
               disabled={deleteCategory.isPending}
+              className='flex items-center gap-2'
             >
-              Delete
+              {deleteCategory.isPending && <Loader2 className='h-4 w-4 animate-spin' />}
+              {deleteCategory.isPending ? 'Deleting…' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -497,8 +503,12 @@ export function CategoryCard({ category, currency, view }: Readonly<CategoryCard
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this expense?</AlertDialogTitle>
-            <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
+            <AlertDialogTitle>
+              Delete &quot;{deletingExpense?.description ?? 'this expense'}&quot;?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the expense from {category.name}. This cannot be undone.
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleteExpense.isPending}>Cancel</AlertDialogCancel>
@@ -508,8 +518,10 @@ export function CategoryCard({ category, currency, view }: Readonly<CategoryCard
                 if (deleteExpenseId) deleteExpense.mutate({ expenseId: deleteExpenseId })
               }}
               disabled={deleteExpense.isPending}
+              className='flex items-center gap-2'
             >
-              Delete
+              {deleteExpense.isPending && <Loader2 className='h-4 w-4 animate-spin' />}
+              {deleteExpense.isPending ? 'Deleting…' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
