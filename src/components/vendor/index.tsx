@@ -58,9 +58,10 @@ export default function VendorList({ initialVendors }: VendorListProps) {
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
 
-  const { data: vendors, refetch } = api.vendor.getAll.useQuery({}, { initialData: initialVendors })
+  const { data: vendors } = api.vendor.getAll.useQuery({}, { initialData: initialVendors })
   const { data: budgetOverview } = api.budget.getOverview.useQuery()
   const currency = budgetOverview?.currency ?? DEFAULT_CURRENCY
+  const utils = api.useUtils()
 
   const allVendors = vendors ?? []
 
@@ -111,7 +112,7 @@ export default function VendorList({ initialVendors }: VendorListProps) {
               vendors={vendorsByCategory(category)}
               currency={currency}
               onViewDetails={handleViewDetails}
-              onRefresh={() => refetch()}
+              onRefresh={() => void utils.vendor.getAll.invalidate()}
             />
           ))}
         </>
@@ -126,7 +127,7 @@ export default function VendorList({ initialVendors }: VendorListProps) {
             mode='create'
             onSuccess={() => {
               setShowAddForm(false)
-              void refetch()
+              void utils.vendor.getAll.invalidate()
             }}
             onCancel={() => setShowAddForm(false)}
           />
