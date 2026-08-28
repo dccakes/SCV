@@ -100,7 +100,7 @@ export function CategoryForm(props: Readonly<CategoryFormProps>) {
           Cancel
         </Button>
         <Button type='submit' disabled={isPending}>
-          {isEditing ? 'Save changes' : 'Add section'}
+          {isPending ? 'Saving...' : isEditing ? 'Save changes' : 'Add section'}
         </Button>
       </div>
     </form>
