@@ -203,12 +203,9 @@ function GuestCardComponent({
               )}
           </div>
 
-          <div className='flex items-center justify-between border-border/80 border-t pt-2'>
+          <div className='flex items-center justify-end border-border/80 border-t pt-2'>
             <span className='font-mono text-[0.56rem] text-foreground/55 uppercase tracking-wider'>
-              {household.guests.length} people in party
-            </span>
-            <span className='font-mono text-[0.52rem] text-foreground/45 uppercase tracking-wider'>
-              Open details
+              View details →
             </span>
           </div>
         </CardContent>
