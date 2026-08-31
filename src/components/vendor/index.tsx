@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 import { VendorCategorySection } from '~/components/vendor/vendor-category-section'
+import { VENDOR_CATEGORIES } from '~/components/vendor/vendor-constants'
 import { VendorDetailPanel } from '~/components/vendor/vendor-detail-panel'
 import { VendorForm } from '~/components/vendor/vendor-form'
 import { DEFAULT_CURRENCY } from '~/lib/budget/currency'
@@ -12,17 +13,6 @@ import type { VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
 
 type VendorCategory = VendorWithQuotes['category']
-
-const CATEGORY_ORDER = [
-  'VENUE',
-  'CATERING',
-  'PHOTOGRAPHER',
-  'VIDEOGRAPHER',
-  'MUSIC',
-  'FLOWERS',
-  'ACCOMMODATION',
-  'OTHER',
-] satisfies VendorCategory[]
 
 type VendorListProps = {
   initialVendors: VendorWithQuotes[]
@@ -80,7 +70,7 @@ export default function VendorList({ initialVendors }: VendorListProps) {
   const vendorsByCategory = (category: VendorCategory): VendorWithQuotes[] =>
     allVendors.filter((v) => v.category === category)
 
-  const populatedCategories = CATEGORY_ORDER.filter(
+  const populatedCategories = VENDOR_CATEGORIES.filter(
     (category) => vendorsByCategory(category).length > 0
   )
 
