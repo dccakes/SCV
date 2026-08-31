@@ -13,33 +13,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+import { VENDOR_CATEGORIES, VENDOR_CATEGORY_LABELS } from '~/components/vendor/vendor-constants'
 import { normalizePhoneToE164 } from '~/lib/phone/phone-validator'
 import type { Vendor } from '~/server/domains/vendor/vendor.types'
 import { api } from '~/trpc/react'
 
 type VendorCategory = Vendor['category']
-
-const VENDOR_CATEGORIES = [
-  'VENUE',
-  'CATERING',
-  'PHOTOGRAPHER',
-  'VIDEOGRAPHER',
-  'MUSIC',
-  'FLOWERS',
-  'ACCOMMODATION',
-  'OTHER',
-] satisfies VendorCategory[]
-
-const CATEGORY_LABELS: Record<VendorCategory, string> = {
-  VENUE: 'Venue',
-  CATERING: 'Catering',
-  PHOTOGRAPHER: 'Photographer',
-  VIDEOGRAPHER: 'Videographer',
-  MUSIC: 'Music',
-  FLOWERS: 'Flowers',
-  ACCOMMODATION: 'Accommodation',
-  OTHER: 'Other',
-}
 
 type VendorFormBaseProps = {
   onSuccess: () => void
@@ -146,7 +125,7 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
             <SelectContent>
               {VENDOR_CATEGORIES.map((c) => (
                 <SelectItem key={c} value={c}>
-                  {CATEGORY_LABELS[c]}
+                  {VENDOR_CATEGORY_LABELS[c]}
                 </SelectItem>
               ))}
             </SelectContent>
