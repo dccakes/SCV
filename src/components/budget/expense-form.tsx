@@ -90,7 +90,7 @@ export function ExpenseForm(props: Readonly<ExpenseFormProps>) {
 
     // A refund only makes sense for a refundable deposit.
     const refundable = isDeposit && isRefundable
-    const refundedAt = refundable && refundReceived ? new Date() : null
+    const refundedAt = refundable && refundReceived ? (expense?.refundedAt ?? new Date()) : null
 
     const shared = {
       description: description.trim(),
