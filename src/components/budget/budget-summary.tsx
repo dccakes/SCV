@@ -252,7 +252,9 @@ export function BudgetSummary({ summary, currency }: Readonly<BudgetSummaryProps
 
       {overPlanned && (
         <div className='mt-4 flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2.5'>
-          <span className='mt-0.5 shrink-0 text-destructive text-sm' aria-hidden='true'>⚠</span>
+          <span className='mt-0.5 shrink-0 text-destructive text-sm' aria-hidden='true'>
+            ⚠
+          </span>
           <p className='text-destructive text-xs'>
             <span className='font-medium'>
               Section budgets total {formatCurrency(totalPlanned, currency)}
