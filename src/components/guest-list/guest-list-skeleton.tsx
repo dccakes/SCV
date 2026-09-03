@@ -2,7 +2,7 @@ import { Skeleton } from '~/components/ui/skeleton'
 
 export function GuestListSkeleton() {
   return (
-    <div className='flex flex-col gap-4 px-4 py-5 lg:px-6 lg:py-6' aria-busy='true'>
+    <div className='flex flex-col gap-4' aria-busy='true'>
       {/* Event filter tabs */}
       <div className='flex items-center gap-5 border-border border-b pb-px'>
         <Skeleton className='mb-3 h-5 w-20' />
