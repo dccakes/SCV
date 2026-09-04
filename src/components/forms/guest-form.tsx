@@ -245,7 +245,7 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
       <form className='flex h-full flex-col' onSubmit={handleSubmit(onSubmit)}>
         {/* Header */}
         <div className='flex items-center justify-between border-b bg-background p-6'>
-          <h1 className='mr-4 truncate font-bold text-2xl'>{getTitle()}</h1>
+          <h1 className='mr-4 truncate font-serif text-2xl italic'>{getTitle()}</h1>
           <button
             type='button'
             onClick={handleRequestClose}
@@ -281,7 +281,7 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
             className='w-full'
           >
             <AccordionItem value='guests' className='border-b-0'>
-              <AccordionTrigger className='px-6 py-4 font-semibold text-lg hover:no-underline'>
+              <AccordionTrigger className='px-6 py-4 font-mono text-xs text-foreground/70 uppercase tracking-widest hover:no-underline'>
                 Guest Party ({fields.length})
               </AccordionTrigger>
               <AccordionContent className='pb-0'>
@@ -311,7 +311,7 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
             </AccordionItem>
 
             <AccordionItem value='contact' className='border-b-0'>
-              <AccordionTrigger className='px-6 py-4 font-semibold text-lg hover:no-underline'>
+              <AccordionTrigger className='px-6 py-4 font-mono text-xs text-foreground/70 uppercase tracking-widest hover:no-underline'>
                 Mailing Address
               </AccordionTrigger>
               <AccordionContent className='px-6 pb-6'>
@@ -320,7 +320,7 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
             </AccordionItem>
 
             <AccordionItem value='notes' className='border-b-0'>
-              <AccordionTrigger className='px-6 py-4 font-semibold text-lg hover:no-underline'>
+              <AccordionTrigger className='px-6 py-4 font-mono text-xs text-foreground/70 uppercase tracking-widest hover:no-underline'>
                 Notes
               </AccordionTrigger>
               <AccordionContent className='px-6 pb-6'>
@@ -341,7 +341,7 @@ export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
 
             {isEditMode && (
               <AccordionItem value='gifts' className='border-b-0'>
-                <AccordionTrigger className='px-6 py-4 font-semibold text-lg hover:no-underline'>
+                <AccordionTrigger className='px-6 py-4 font-mono text-xs text-foreground/70 uppercase tracking-widest hover:no-underline'>
                   Gifts
                 </AccordionTrigger>
                 <AccordionContent className='px-6 pb-6'>
