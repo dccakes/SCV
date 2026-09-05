@@ -156,36 +156,43 @@ function EventCardBase({
               <span className='hidden md:inline'>Manage Guests</span>
               <span className='md:hidden'>Guests</span>
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  className='h-8 w-8 p-0'
-                  aria-label={`Event actions for ${event.name}`}
-                >
-                  <MoreHorizontal className='h-4 w-4' />
-                  <span className='sr-only'>Event actions</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align='end'>
-                <DropdownMenuItem onClick={() => onManageQuestions(event.id)}>
-                  <ClipboardList className='mr-2 h-3.5 w-3.5' />
-                  RSVP Questions
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onEdit(event.id)}>
-                  <Pencil className='mr-2 h-3.5 w-3.5' />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className='text-destructive focus:text-destructive'
-                  onClick={() => onDelete(event.id)}
-                >
-                  <Trash2 className='mr-2 h-3.5 w-3.5' />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className='flex items-center gap-1'>
+              <Button
+                variant='ghost'
+                size='sm'
+                className='h-8 w-8 p-0'
+                aria-label={`Manage RSVP questions for ${event.name}`}
+                onClick={() => onManageQuestions(event.id)}
+              >
+                <ClipboardList className='h-4 w-4' />
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    className='h-8 w-8 p-0'
+                    aria-label={`Event actions for ${event.name}`}
+                  >
+                    <MoreHorizontal className='h-4 w-4' />
+                    <span className='sr-only'>Event actions</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end'>
+                  <DropdownMenuItem onClick={() => onEdit(event.id)}>
+                    <Pencil className='mr-2 h-3.5 w-3.5' />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className='text-destructive focus:text-destructive'
+                    onClick={() => onDelete(event.id)}
+                  >
+                    <Trash2 className='mr-2 h-3.5 w-3.5' />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </CardContent>
