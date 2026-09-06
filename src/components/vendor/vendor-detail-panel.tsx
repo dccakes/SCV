@@ -702,6 +702,7 @@ export function VendorDetailPanel({ vendor, currency, onClose }: VendorDetailPan
                         <div className='mb-3'>
                           <QuoteForm
                             vendorId={enrichedVendor.id}
+                            currency={currency}
                             onSuccess={async () => {
                               await refetch()
                               setShowQuoteForm(false)
@@ -727,6 +728,7 @@ export function VendorDetailPanel({ vendor, currency, onClose }: VendorDetailPan
                               {editingQuoteId === quote.id ? (
                                 <QuoteForm
                                   vendorId={enrichedVendor.id}
+                                  currency={currency}
                                   mode='edit'
                                   quote={quote}
                                   onSuccess={async () => {
