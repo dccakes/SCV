@@ -20,6 +20,7 @@ function TaskListItemBase({ task, onToggle }: TaskListItemProps) {
   return (
     <button
       type='button'
+      aria-pressed={task.done}
       onClick={() => onToggle(task.id)}
       className='flex min-h-[44px] w-full items-center gap-2.5 rounded px-2 py-2.5 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
     >
