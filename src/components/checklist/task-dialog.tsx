@@ -266,7 +266,7 @@ export function TaskDialog({
               Cancel
             </Button>
             <Button type='submit' disabled={isSubmitting}>
-              {mode === 'create' ? 'Save task' : 'Save changes'}
+              {isSubmitting ? 'Saving…' : mode === 'create' ? 'Save task' : 'Save changes'}
             </Button>
           </DialogFooter>
         </form>
