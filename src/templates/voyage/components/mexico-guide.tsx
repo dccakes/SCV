@@ -280,7 +280,7 @@ const MEXICO_TRIPS: readonly Trip[] = [
   },
 ]
 
-const distanceClass = `${labelFont} text-[#B15C41] text-[0.56rem] uppercase tracking-[0.2em]`
+const distanceClass = `${labelFont} text-primary text-[0.56rem] uppercase tracking-[0.2em]`
 const cardBodyClass = `${bodyFont} text-[#6F675D] text-sm leading-6`
 const noteTitleClass = `${labelFont} font-semibold text-[#1D2320] text-[0.62rem] uppercase tracking-[0.2em]`
 
@@ -357,20 +357,7 @@ export function VoyageZocalo() {
           <NoteList eyebrow='Worth the Short Drive' notes={ZOCALO_NEARBY} />
         </div>
 
-        <div className='flex w-full flex-col gap-6 rounded-[3px] border border-[#DDD2C0] bg-[#FBF8F2] px-7 py-8 sm:px-9'>
-          <div className='flex flex-col gap-4'>
-            <Eyebrow>Good to Know</Eyebrow>
-            <GoldRule className='self-start' />
-          </div>
-          <ul className='grid gap-x-10 gap-y-6 sm:grid-cols-2 lg:grid-cols-3'>
-            {ZOCALO_PRACTICAL.map((note) => (
-              <li key={note.title} className='flex flex-col gap-1'>
-                <p className={noteTitleClass}>{note.title}</p>
-                <p className={cardBodyClass}>{note.body}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <VoyagePracticalInfo localOnly />
       </div>
     </Band>
   )
@@ -421,7 +408,7 @@ export function VoyageExploreMexico() {
                   <li key={highlight} className='flex items-start gap-3'>
                     <span
                       aria-hidden='true'
-                      className='mt-[0.6rem] h-1 w-1 shrink-0 rounded-full bg-[#B15C41]'
+                      className='mt-[0.6rem] h-1 w-1 shrink-0 rounded-full bg-primary'
                     />
                     <span className={cardBodyClass}>{highlight}</span>
                   </li>
@@ -445,10 +432,32 @@ export function VoyageExploreMexico() {
           and hikes.
         </p>
 
-        <p className={`${scriptFont} text-center text-3xl text-[#B15C41]`}>
+        <p className={`${scriptFont} text-center text-3xl text-primary`}>
           Come for the wedding, stay for the country.
         </p>
       </div>
     </Band>
+  )
+}
+
+/** Practical travel notes live on Travel, museum notes stay in the city guide. */
+export function VoyagePracticalInfo({ localOnly = false }: { localOnly?: boolean }) {
+  return (
+    <div className='flex w-full flex-col gap-6 rounded-[3px] border border-[#DDD2C0] bg-[#FBF8F2] px-7 py-8 sm:px-9'>
+      <div className='flex flex-col gap-4'>
+        <Eyebrow>Good to Know</Eyebrow>
+        <GoldRule className='self-start' />
+      </div>
+      <ul className='grid gap-x-10 gap-y-6 sm:grid-cols-2 lg:grid-cols-3'>
+        {ZOCALO_PRACTICAL.filter((note) =>
+          localOnly ? note.title === 'A word on Mondays' : note.title !== 'A word on Mondays'
+        ).map((note) => (
+          <li key={note.title} className='flex flex-col gap-1'>
+            <p className={noteTitleClass}>{note.title}</p>
+            <p className={cardBodyClass}>{note.body}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }

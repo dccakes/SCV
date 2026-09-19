@@ -1,7 +1,11 @@
 import { render, screen, within } from '@testing-library/react'
 
 import { VoyageHome } from '~/templates/voyage/components/home'
-import { VoyageExploreMexico, VoyageZocalo } from '~/templates/voyage/components/mexico-guide'
+import {
+  VoyageExploreMexico,
+  VoyagePracticalInfo,
+  VoyageZocalo,
+} from '~/templates/voyage/components/mexico-guide'
 
 const baseWedding = {
   groomFirstName: 'John',
@@ -41,11 +45,11 @@ describe('VoyageZocalo', () => {
     expect(screen.getByText(/^Cholula/)).toBeInTheDocument()
   })
 
-  it('renders the practical arrival notes, including the museum closing days', () => {
+  it('keeps museum notes local and moves airport advice to Travel', () => {
     render(<VoyageZocalo />)
 
     expect(screen.getByText('Good to Know')).toBeInTheDocument()
-    expect(screen.getByText('Getting here from the airport')).toBeInTheDocument()
+    expect(screen.queryByText('Getting here from the airport')).toBeNull()
     expect(screen.getByText('A word on Mondays')).toBeInTheDocument()
     // Museo Amparo is the exception to the Monday rule; guests need both facts.
     expect(screen.getByText(/closes on Tuesday/)).toBeInTheDocument()
@@ -103,13 +107,25 @@ describe('VoyageExploreMexico', () => {
 })
 
 describe('VoyageHome Mexico guide', () => {
-  it('renders both guide bands and links to them from the nav', () => {
+  it('links to focused guide pages instead of rendering both on home', () => {
     const { container } = render(<VoyageHome path='/w/x' weddingData={baseWedding as never} />)
 
-    expect(container.querySelector('#zocalo')).not.toBeNull()
-    expect(container.querySelector('#explore-mexico')).not.toBeNull()
-    // Desktop nav + mobile drawer both render the item.
-    expect(screen.getAllByRole('link', { name: 'Explore Mexico' })).toHaveLength(2)
-    expect(screen.getAllByRole('link', { name: 'Things to Do' })).toHaveLength(2)
+    expect(container.querySelector('#zocalo')).toBeNull()
+    expect(container.querySelector('#explore-mexico')).toBeNull()
+    expect(screen.getByRole('link', { name: /Explore Mexico.*bigger adventure/ })).toHaveAttribute(
+      'href',
+      '/w/x/mexico'
+    )
+    expect(screen.getByRole('link', { name: /Explore Puebla.*favourite sights/ })).toHaveAttribute(
+      'href',
+      '/w/x/puebla'
+    )
   })
+})
+
+it('renders airport and packing guidance on the Travel surface', () => {
+  render(<VoyagePracticalInfo />)
+  expect(screen.getByText('Getting here from the airport')).toBeInTheDocument()
+  expect(screen.getByText('What to pack')).toBeInTheDocument()
+  expect(screen.queryByText('A word on Mondays')).toBeNull()
 })

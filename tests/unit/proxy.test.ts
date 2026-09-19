@@ -141,6 +141,30 @@ describe('proxy', () => {
     expect(batchedResponse.headers.get('location')).toBeNull()
   })
 
+  it.each([
+    'weekend',
+    'stay',
+    'travel',
+    'puebla',
+    'mexico',
+    'story',
+    'faq',
+    'registry',
+  ])('lets guests reach the %s page without an application login', async (page) => {
+    const response = await proxy(createRequest(`/w/holly-and-diego/${page}`))
+    expect(response.headers.get('location')).toBeNull()
+    expect(mockGetSessionCookie).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    '/w/holly-and-diego/stay/admin',
+    '/w/holly-and-diego/manage',
+    '/w/settings/stay',
+  ])('does not broaden guest access to %s', async (path) => {
+    const response = await proxy(createRequest(path))
+    expect(response.headers.get('location')).toContain('/auth/sign-in')
+  })
+
   it('still gates non-public tRPC procedures behind the session', async () => {
     mockGetSessionCookie.mockReturnValue(null)
 

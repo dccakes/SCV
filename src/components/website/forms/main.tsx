@@ -27,6 +27,8 @@ const RSVP_SUBMISSION_EVENT = buildEventName({
 type MainRsvpFormProps = {
   weddingData: RsvpPageData
   basePath: string
+  /** Place progress below the surrounding site's persistent navigation. */
+  embedded?: boolean
 }
 
 const getMutationErrorMessage = (error: unknown, fallback: string): string => {
@@ -54,7 +56,11 @@ export const shouldConfirmRsvpClose = ({
   numSteps: number
 }) => currentStep > 1 && currentStep < numSteps
 
-export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProps) {
+export default function MainRsvpForm({
+  weddingData,
+  basePath,
+  embedded = false,
+}: MainRsvpFormProps) {
   const rsvpFormData = useRsvpForm()
   const numSteps = useRef(NUM_STATIC_STEPS)
   const updateRsvpForm = useUpdateRsvpForm()
@@ -133,12 +139,13 @@ export default function MainRsvpForm({ weddingData, basePath }: MainRsvpFormProp
   return (
     // pt-24 reserves space for the fixed ProgressBar so the first step's copy
     // isn't hidden beneath it.
-    <div className='pt-24 pb-20 font-serif'>
+    <div className={`${embedded ? 'pt-6' : 'pt-24'} pb-20 font-serif`}>
       <ProgressBar
         currentStep={currentStep}
         progress={progress}
         numSteps={numSteps.current}
         basePath={basePath}
+        embedded={embedded}
       />
       <form
         className='m-auto w-full max-w-[450px] px-4 py-5 md:px-0'
@@ -207,14 +214,18 @@ const ProgressBar = ({
   progress,
   numSteps,
   basePath,
+  embedded,
 }: {
   currentStep: number
   progress: number
   numSteps: number
   basePath: string
+  embedded: boolean
 }) => {
   return (
-    <div className='fixed top-0 z-10 w-full bg-white px-10 py-1 text-center'>
+    <div
+      className={`${embedded ? 'relative mx-auto max-w-xl bg-background' : 'fixed top-0 z-10 bg-white'} w-full px-10 py-1 text-center`}
+    >
       <button
         type='button'
         aria-label='Close RSVP form'

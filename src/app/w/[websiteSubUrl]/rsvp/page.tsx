@@ -9,6 +9,7 @@ import MainRsvpForm from '~/components/website/forms/main'
 import PasswordPage from '~/components/website/password-page'
 import RsvpNotAcceptingMessage from '~/components/website/rsvp-not-accepting-message'
 import { resolveTemplate, TemplateThemeProvider } from '~/templates'
+import { VoyageSiteShell } from '~/templates/voyage/components/site-shell'
 
 type RsvpPageProps = {
   params: Promise<{
@@ -71,11 +72,29 @@ export default async function RsvpPage({ params }: RsvpPageProps) {
   // skip the name search and drop them straight onto the confirm step.
   const recognizedHousehold = await resolveRecognizedRsvpHousehold(websiteSubUrl, inviteToken)
 
+  const form = (
+    <RsvpFormProvider recognizedHousehold={recognizedHousehold}>
+      <MainRsvpForm
+        weddingData={loadResult.weddingData}
+        basePath={`/w/${websiteSubUrl}`}
+        embedded={template.id === 'voyage' && loadResult.weddingData.websiteBuilderEnabled}
+      />
+    </RsvpFormProvider>
+  )
+
   return (
     <TemplateThemeProvider template={template}>
-      <RsvpFormProvider recognizedHousehold={recognizedHousehold}>
-        <MainRsvpForm weddingData={loadResult.weddingData} basePath={`/w/${websiteSubUrl}`} />
-      </RsvpFormProvider>
+      {template.id === 'voyage' && loadResult.weddingData.websiteBuilderEnabled ? (
+        <VoyageSiteShell
+          weddingData={loadResult.weddingData}
+          path={`/w/${websiteSubUrl}`}
+          current='rsvp'
+        >
+          {form}
+        </VoyageSiteShell>
+      ) : (
+        form
+      )}
     </TemplateThemeProvider>
   )
 }

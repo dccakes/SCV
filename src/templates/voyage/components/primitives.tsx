@@ -29,7 +29,7 @@ export const sectionHeadingClass = `${headingFont} font-light text-4xl text-[#1D
 export function Eyebrow({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <span
-      className={`${labelFont} text-[#B15C41] text-[0.62rem] uppercase tracking-[0.42em] ${className}`}
+      className={`${labelFont} text-[0.62rem] text-primary uppercase tracking-[0.42em] ${className}`}
     >
       {children}
     </span>
@@ -45,7 +45,7 @@ export function GoldRule({ className = '' }: { className?: string }) {
 export function HeartRule({ className = '' }: { className?: string }) {
   return (
     <span
-      className={`flex items-center justify-center gap-3 text-[#B15C41] ${className}`}
+      className={`flex items-center justify-center gap-3 text-primary ${className}`}
       aria-hidden='true'
     >
       <span className='block h-px w-10 bg-[#C9A87F]/70' />
@@ -66,7 +66,7 @@ const buttonBase = `${labelFont} inline-flex items-center justify-center gap-2 t
 
 /** Terracotta-filled primary action. */
 export function PrimaryButton({ href, children, external, className = '' }: ButtonProps) {
-  const cls = `${buttonBase} rounded-[2px] bg-[#B15C41] px-8 py-3.5 text-[#F7F3EC] hover:bg-[#92462F] ${className}`
+  const cls = `${buttonBase} rounded-[2px] bg-primary px-8 py-3.5 text-[#F7F3EC] hover:bg-[#92462F] ${className}`
   return external ? (
     <a href={href} target='_blank' rel='noreferrer' className={cls}>
       {children}

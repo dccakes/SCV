@@ -1,101 +1,173 @@
-/**
- * Voyage top navigation — a monogram lockup on the left, anchor links to the
- * page's enabled sections in the center, and an RSVP action on the right. It
- * overlays the cinematic hero, so it uses warm-ivory ink on the dark backdrop.
- *
- * On small screens the center links collapse into a pure-CSS `<details>` drawer
- * (no client JavaScript required) so the nav works in a server component.
- */
+'use client'
 
 import Link from 'next/link'
+import { useEffect, useId, useRef, useState } from 'react'
 import { headingFont, labelFont } from '~/templates/voyage/components/primitives'
+import {
+  explorePages,
+  primaryPages,
+  secondaryPages,
+  type VoyageLocation,
+  type VoyagePage,
+  voyagePages,
+} from '~/templates/voyage/site'
 
-export type VoyageNavItem = {
-  label: string
-  /** Same-page anchor (e.g. `#destination`) or a sub-path. */
-  href: string
-}
-
-type VoyageNavbarProps = {
+type Props = {
   monogram: string
   coupleNames: string
-  navItems: VoyageNavItem[]
-  rsvpHref?: string
+  path: string
+  current: VoyageLocation
+  rsvpEnabled: boolean
 }
+const linkClass = `${labelFont} flex min-h-11 items-center px-3 py-2 text-xs tracking-[0.08em] transition-colors hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary`
 
-const linkClass = `${labelFont} text-[#F7F3EC]/80 text-[0.6rem] uppercase tracking-[0.26em] transition-colors hover:text-[#D3BD8A]`
+export function VoyageNavbar({ monogram, coupleNames, path, current, rsvpEnabled }: Props) {
+  const [open, setOpen] = useState(false)
+  const [dropdown, setDropdown] = useState<'explore' | 'more' | null>(null)
+  const menuId = useId()
+  const menuButton = useRef<HTMLButtonElement>(null)
+  const header = useRef<HTMLElement>(null)
 
-export function VoyageNavbar({ monogram, coupleNames, navItems, rsvpHref }: VoyageNavbarProps) {
-  return (
-    <nav
-      aria-label='Wedding website'
-      className='relative z-20 mx-auto flex w-full max-w-6xl items-center justify-between gap-6 px-6 py-6 lg:px-10'
-    >
-      <Link href='#top' className='flex flex-col items-start gap-0.5 text-[#F7F3EC]'>
-        <span className={`${headingFont} text-2xl tracking-[0.14em]`}>{monogram}</span>
-        <span
-          className={`${labelFont} hidden text-[#F7F3EC]/85 text-[0.5rem] uppercase tracking-[0.32em] sm:block`}
-        >
-          {coupleNames}
-        </span>
+  useEffect(() => {
+    function dismiss(event: KeyboardEvent) {
+      if (event.key !== 'Escape') return
+      if (open) menuButton.current?.focus()
+      if (dropdown)
+        header.current?.querySelector<HTMLButtonElement>('[aria-expanded="true"]')?.focus()
+      setOpen(false)
+      setDropdown(null)
+    }
+    function outside(event: PointerEvent) {
+      if (!header.current?.contains(event.target as Node)) {
+        setOpen(false)
+        setDropdown(null)
+      }
+    }
+    document.addEventListener('keydown', dismiss)
+    document.addEventListener('pointerdown', outside)
+    return () => {
+      document.removeEventListener('keydown', dismiss)
+      document.removeEventListener('pointerdown', outside)
+    }
+  }, [open, dropdown])
+
+  const close = () => {
+    setOpen(false)
+    setDropdown(null)
+  }
+  function pageLink(page: VoyagePage) {
+    return (
+      <Link
+        key={page}
+        href={`${path}/${page}`}
+        onClick={close}
+        aria-current={current === page ? 'page' : undefined}
+        className={`${linkClass} ${current === page ? 'font-semibold text-primary underline underline-offset-4' : ''}`}
+      >
+        {voyagePages[page].title}
       </Link>
+    )
+  }
 
-      {navItems.length > 0 ? (
-        <ul className='hidden items-center gap-8 lg:flex'>
-          {navItems.map((item) => (
-            <li key={item.href}>
-              <Link href={item.href} className={linkClass}>
-                {item.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-
-      <div className='flex items-center gap-3'>
-        {rsvpHref ? (
-          <Link
-            href={rsvpHref}
-            className={`${labelFont} rounded-[2px] bg-[#B15C41] px-6 py-2.5 text-[#F7F3EC] text-[0.6rem] uppercase tracking-[0.26em] transition-colors hover:bg-[#92462F]`}
+  return (
+    <header
+      ref={header}
+      className='sticky top-0 z-40 border-border border-b bg-background/95 text-foreground backdrop-blur-md'
+    >
+      <a
+        href='#page-content'
+        className='sr-only focus:not-sr-only focus:absolute focus:bg-background focus:p-4'
+      >
+        Skip to content
+      </a>
+      <div className='mx-auto flex max-w-7xl items-center justify-between gap-3 px-6 py-3 lg:px-10'>
+        <Link
+          href={path}
+          onClick={close}
+          aria-label={`${coupleNames} — Home`}
+          className='flex min-h-11 shrink-0 flex-col justify-center'
+        >
+          <span className={`${headingFont} text-2xl tracking-[0.14em]`}>{monogram}</span>
+          <span
+            className={`${labelFont} hidden text-[0.6rem] uppercase tracking-[0.18em] sm:block`}
           >
-            RSVP
-          </Link>
-        ) : null}
-
-        {navItems.length > 0 ? (
-          <details className='group relative lg:hidden'>
-            <summary
-              aria-label='Open menu'
-              className='flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-[2px] border border-[#F7F3EC]/30 text-[#F7F3EC] [&::-webkit-details-marker]:hidden'
-            >
-              <svg
-                viewBox='0 0 24 24'
-                aria-hidden='true'
-                className='h-5 w-5'
-                fill='none'
-                stroke='currentColor'
-                strokeWidth={1.2}
-                strokeLinecap='round'
-              >
-                <path d='M4 7h16M4 12h16M4 17h16' className='group-open:hidden' />
-                <path d='M6 6l12 12M18 6 6 18' className='hidden group-open:block' />
-              </svg>
-            </summary>
-            <ul className='absolute right-0 z-30 mt-3 flex w-56 flex-col gap-1 rounded-[3px] border border-[#F7F3EC]/15 bg-[#1D2320]/95 p-4 backdrop-blur-sm'>
-              {navItems.map((item) => (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={`${labelFont} block px-2 py-2.5 text-[#F7F3EC]/85 text-[0.62rem] uppercase tracking-[0.24em] transition-colors hover:text-[#D3BD8A]`}
+            {coupleNames}
+          </span>
+        </Link>
+        <nav aria-label='Wedding navigation' className='hidden items-center xl:flex'>
+          {primaryPages.map(pageLink)}
+          {(['explore', 'more'] as const).map((group) => {
+            const pages = group === 'explore' ? explorePages : secondaryPages
+            return (
+              <div key={group} className='relative'>
+                <button
+                  type='button'
+                  aria-expanded={dropdown === group}
+                  aria-controls={`${menuId}-${group}`}
+                  onClick={() => setDropdown(dropdown === group ? null : group)}
+                  className={`${linkClass} gap-2 ${pages.some((page) => page === current) ? 'text-primary' : ''}`}
+                >
+                  {group === 'explore' ? 'Things to Do' : 'More'} <span aria-hidden='true'>⌄</span>
+                </button>
+                {dropdown === group ? (
+                  <div
+                    id={`${menuId}-${group}`}
+                    className='absolute top-full right-0 min-w-56 rounded-sm border border-border bg-background p-2 shadow-lg'
                   >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </details>
-        ) : null}
+                    {pages.map(pageLink)}
+                  </div>
+                ) : null}
+              </div>
+            )
+          })}
+        </nav>
+        <div className='flex items-center gap-2'>
+          {rsvpEnabled ? (
+            <Link
+              href={`${path}/rsvp`}
+              onClick={close}
+              aria-current={current === 'rsvp' ? 'page' : undefined}
+              className={`${labelFont} inline-flex min-h-11 items-center rounded-sm bg-primary px-5 text-primary-foreground text-xs tracking-widest hover:opacity-90`}
+            >
+              RSVP
+            </Link>
+          ) : null}
+          <button
+            ref={menuButton}
+            type='button'
+            aria-expanded={open}
+            aria-controls={menuId}
+            onClick={() => setOpen(!open)}
+            className={`${linkClass} gap-2 rounded-sm border border-border xl:hidden`}
+          >
+            Menu <span aria-hidden='true'>{open ? '×' : '☰'}</span>
+          </button>
+        </div>
       </div>
-    </nav>
+      {open ? (
+        <nav
+          id={menuId}
+          aria-label='Mobile wedding navigation'
+          className='max-h-[calc(100dvh-5rem)] overflow-y-auto border-border border-t px-6 py-4 xl:hidden'
+        >
+          <Link
+            href={path}
+            onClick={close}
+            className={linkClass}
+            aria-current={current === 'home' ? 'page' : undefined}
+          >
+            Home
+          </Link>
+          {primaryPages.map(pageLink)}
+          <p
+            className={`${labelFont} mt-4 px-3 text-muted-foreground text-xs uppercase tracking-widest`}
+          >
+            Things to Do
+          </p>
+          {explorePages.map(pageLink)}
+          <div className='mt-3 border-border border-t pt-3'>{secondaryPages.map(pageLink)}</div>
+        </nav>
+      ) : null}
+    </header>
   )
 }
