@@ -103,13 +103,11 @@ export function coupleIdentity(wedding: WeddingPageData) {
 export const legacyVoyageAnchors: Record<string, string> = {
   'our-story': 'story',
   timeline: 'story#timeline',
-  destination: 'weekend#destination',
   'wedding-weekend': 'weekend',
   'wedding-party': 'story#wedding-party',
   moments: 'story#moments',
   travel: 'travel',
   faq: 'faq',
-  flights: 'travel#flights',
   zocalo: 'puebla',
   'explore-mexico': 'mexico',
   registry: 'registry',

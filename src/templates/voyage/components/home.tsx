@@ -1,6 +1,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import type { TemplateSurfaceProps } from '~/templates/types'
+import { Decor } from '~/templates/voyage/components/decor'
+import { VoyageFlightSearch } from '~/templates/voyage/components/flight-search'
 import { VoyageLegacyLinks } from '~/templates/voyage/components/legacy-links'
 import { HeroBackground } from '~/templates/voyage/components/media'
 import {
@@ -17,10 +19,10 @@ import {
   PrimaryButton,
   scriptFont,
 } from '~/templates/voyage/components/primitives'
-import { Band } from '~/templates/voyage/components/sections'
+import { Band, VoyageDestination } from '~/templates/voyage/components/sections'
 import { VoyageSiteShell } from '~/templates/voyage/components/site-shell'
 import { VoyageWeekend } from '~/templates/voyage/components/weekend'
-import { coupleIdentity, eventDateRange, sectionOf } from '~/templates/voyage/site'
+import { coupleIdentity, eventDateRange, flightDates, sectionOf } from '~/templates/voyage/site'
 
 export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSurfaceProps>) {
   const { website } = weddingData
@@ -114,16 +116,19 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
             <Link
               key={item.href}
               href={`${path}${item.href}`}
-              className='group flex min-h-24 flex-col justify-center gap-2 rounded-sm border border-border p-4 transition-colors hover:border-primary sm:p-6'
+              className='group flex min-h-24 flex-col items-center justify-center gap-2 px-3 text-center transition-colors hover:text-primary'
             >
-              <span className={`${labelFont} text-primary text-xs tracking-wider`}>
-                {item.label} <span aria-hidden='true'>↗</span>
+              <span
+                className={`${labelFont} text-[0.62rem] text-primary uppercase tracking-[0.26em]`}
+              >
+                {item.label}
               </span>
               <span className={`${bodyFont} text-base text-muted-foreground`}>{item.detail}</span>
             </Link>
           ))}
         </div>
       </nav>
+      {destination ? <VoyageDestination content={destination.content} /> : null}
       <VoyageWeekend events={weddingData.events} path={path} summary />
       {story?.content.body ? (
         <Band tone='cream'>
@@ -154,12 +159,13 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
           </div>
         </Band>
       ) : null}
+      <VoyageFlightSearch {...flightDates(weddingData.events)} />
       <Band>
         <div className='mb-10 space-y-4 text-center'>
           <Eyebrow>Things to do</Eyebrow>
           <h2 className={`${headingFont} text-4xl sm:text-5xl`}>A little adventure awaits</h2>
         </div>
-        <div className='grid gap-6 md:grid-cols-2'>
+        <div className='grid gap-12 md:grid-cols-2 md:gap-16'>
           {[
             {
               title: 'Explore Puebla',
@@ -176,22 +182,18 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
               Icon: IconCompass,
             },
           ].map(({ title, href, description, Icon }) => (
-            <Link
-              key={href}
-              href={`${path}/${href}`}
-              className='group space-y-5 rounded-sm border border-border bg-card p-8 transition-colors hover:border-primary sm:p-10'
-            >
+            <div key={href} className='space-y-5 border-border border-t pt-8'>
               <Icon className='h-12 w-12 text-primary' />
-              <h3 className={`${headingFont} text-3xl`}>
-                {title} <span aria-hidden='true'>↗</span>
-              </h3>
+              <h3 className={`${headingFont} text-3xl`}>{title}</h3>
               <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>{description}</p>
-            </Link>
+              <OutlineButton href={`${path}/${href}`}>{title}</OutlineButton>
+            </div>
           ))}
         </div>
       </Band>
       <Band tone='cream'>
         <div className='mx-auto flex max-w-3xl flex-col items-center gap-6 text-center'>
+          <Decor name='hacienda' className='h-32 w-auto max-w-full object-contain' />
           <Eyebrow>Celebrate with us</Eyebrow>
           <h2 className={`${scriptFont} text-5xl text-primary`}>We can’t wait to see you</h2>
           {rsvpHref ? (

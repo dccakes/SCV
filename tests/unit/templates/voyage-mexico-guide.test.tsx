@@ -112,11 +112,11 @@ describe('VoyageHome Mexico guide', () => {
 
     expect(container.querySelector('#zocalo')).toBeNull()
     expect(container.querySelector('#explore-mexico')).toBeNull()
-    expect(screen.getByRole('link', { name: /Explore Mexico.*bigger adventure/ })).toHaveAttribute(
+    expect(screen.getAllByRole('link', { name: 'Explore Mexico' })[0]).toHaveAttribute(
       'href',
       '/w/x/mexico'
     )
-    expect(screen.getByRole('link', { name: /Explore Puebla.*favourite sights/ })).toHaveAttribute(
+    expect(screen.getAllByRole('link', { name: 'Explore Puebla' })[0]).toHaveAttribute(
       'href',
       '/w/x/puebla'
     )

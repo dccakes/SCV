@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Decor } from '~/templates/voyage/components/decor'
 import {
   bodyFont,
   Eyebrow,
@@ -21,8 +22,12 @@ export function VoyageWeekend({
 }) {
   const sorted = orderedEvents(events)
   return (
-    <Band id={summary ? 'weekend-preview' : 'schedule'}>
-      <div className='mb-10 flex flex-col items-center gap-4 text-center'>
+    <Band className='relative overflow-hidden' id={summary ? 'weekend-preview' : 'schedule'}>
+      <Decor
+        name='floralSpray2'
+        className='pointer-events-none absolute top-20 -left-14 hidden h-80 w-auto opacity-60 xl:block'
+      />
+      <div className='relative mb-10 flex flex-col items-center gap-4 text-center'>
         <Eyebrow>Wedding Weekend</Eyebrow>
         <h2 className={`${scriptFont} text-5xl text-primary sm:text-6xl`}>
           Let’s Celebrate Together
@@ -34,12 +39,15 @@ export function VoyageWeekend({
         ) : null}
       </div>
       {sorted.length ? (
-        <section aria-label='Schedule' className={`grid gap-5 ${summary ? 'md:grid-cols-3' : ''}`}>
+        <section
+          aria-label='Schedule'
+          className={`relative grid gap-8 ${summary ? 'md:grid-cols-3' : ''}`}
+        >
           {sorted.map((event) => (
             <article
               key={event.id}
               id={summary ? undefined : `event-${event.id}`}
-              className={`scroll-mt-24 rounded-sm border border-border bg-card p-6 sm:p-8 ${summary ? '' : 'grid gap-6 md:grid-cols-[15rem_1fr]'}`}
+              className={`scroll-mt-24 border-border border-t py-8 ${summary ? '' : 'grid gap-6 md:grid-cols-[15rem_1fr]'}`}
             >
               <div className='space-y-3'>
                 <p className={`${labelFont} text-primary text-xs uppercase tracking-widest`}>
@@ -128,7 +136,7 @@ export function VoyageDressCode({ events }: { events: VoyageEvent[] }) {
             </p>
           </div>
         ))}
-        <div className='rounded-sm border border-border border-dashed p-6'>
+        <div className='border-border border-t pt-6'>
           <p className={`${labelFont} mb-2 text-primary text-xs uppercase tracking-widest`}>
             More guidance coming soon
           </p>

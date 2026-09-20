@@ -6,10 +6,11 @@ import {
   Eyebrow,
   headingFont,
   labelFont,
+  primaryButtonClass,
 } from '~/templates/voyage/components/primitives'
 import { Band, LinkifiedBlurb } from '~/templates/voyage/components/sections'
 
-/** Booking instructions stay visible and URLs never depend on a blurb being present. */
+/** Consistent compact cards with booking actions visible and expandable full details. */
 export function VoyageStays({ content }: { content?: TravelSectionContent }) {
   return (
     <Band id='hotels' className='!py-10 sm:!py-14'>
@@ -25,15 +26,15 @@ export function VoyageStays({ content }: { content?: TravelSectionContent }) {
           Check each hotel’s instructions before booking to make sure you receive any wedding rates.
         </p>
       </div>
-      <div className='space-y-8'>
+      <div className='grid items-start gap-8 md:grid-cols-2 lg:grid-cols-3'>
         {content?.stays?.length ? (
           content.stays.map((stay, index) => (
             <article
               key={stay.name}
               id={`stay-${index}-${stay.name.replace(/\s+/g, '-').toLowerCase()}`}
-              className='grid scroll-mt-24 overflow-hidden rounded-sm border border-border bg-card md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]'
+              className='scroll-mt-24 overflow-hidden rounded-[3px] border border-border bg-card'
             >
-              <div className='relative aspect-[4/3] bg-secondary md:aspect-auto md:min-h-72'>
+              <div className='relative aspect-[4/3] bg-secondary'>
                 {stay.imageUrl ? (
                   <Image
                     src={stay.imageUrl}
@@ -46,10 +47,12 @@ export function VoyageStays({ content }: { content?: TravelSectionContent }) {
                   <BotanicalSprig className='absolute inset-0 m-auto h-40 w-24 text-primary/30' />
                 )}
               </div>
-              <div className='min-w-0 space-y-5 p-6 sm:p-9'>
-                <h2 className={`${headingFont} text-3xl sm:text-4xl`}>{stay.name}</h2>
+              <div className='flex h-64 min-w-0 flex-col items-start gap-4 p-6'>
+                <h2 className={`${headingFont} line-clamp-2 text-3xl`}>{stay.name}</h2>
                 {stay.description ? (
-                  <p className={`${bodyFont} text-xl`}>{stay.description}</p>
+                  <p className={`${bodyFont} line-clamp-2 text-lg text-muted-foreground leading-7`}>
+                    {stay.description}
+                  </p>
                 ) : null}
                 {stay.url ? (
                   <a
@@ -57,20 +60,42 @@ export function VoyageStays({ content }: { content?: TravelSectionContent }) {
                     {...(stay.url.startsWith('mailto:')
                       ? {}
                       : { target: '_blank', rel: 'noreferrer' })}
-                    className={`${labelFont} inline-flex min-h-11 items-center rounded-sm bg-primary px-6 py-3 text-primary-foreground text-xs tracking-widest hover:opacity-90`}
+                    className={`${primaryButtonClass} mt-auto max-w-full px-5`}
                   >
                     {stay.buttonLabel?.trim() || 'Visit Website'}
                   </a>
                 ) : (
-                  <p className={`${bodyFont} text-muted-foreground`}>Booking link coming soon.</p>
+                  <p className={`${bodyFont} mt-auto text-muted-foreground`}>
+                    Booking link coming soon.
+                  </p>
                 )}
-                {stay.blurb ? (
-                  <LinkifiedBlurb
-                    text={stay.blurb}
-                    className={`${bodyFont} whitespace-pre-line break-words text-lg text-muted-foreground leading-8`}
-                  />
-                ) : null}
               </div>
+              {stay.blurb || stay.description ? (
+                <details className='group border-border border-t px-6'>
+                  <summary
+                    className={`${labelFont} flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 text-[0.62rem] uppercase tracking-[0.2em] [&::-webkit-details-marker]:hidden`}
+                  >
+                    <span className='group-open:hidden'>View hotel details</span>
+                    <span className='hidden group-open:inline'>Close hotel details</span>
+                    <span aria-hidden='true' className='text-xl group-open:rotate-45'>
+                      +
+                    </span>
+                  </summary>
+                  <div className='space-y-4 pb-6'>
+                    {stay.description ? (
+                      <p className={`${bodyFont} text-lg leading-8`}>{stay.description}</p>
+                    ) : null}
+                    {stay.blurb ? (
+                      <LinkifiedBlurb
+                        text={stay.blurb}
+                        className={`${bodyFont} whitespace-pre-line break-words text-lg text-muted-foreground leading-8`}
+                      />
+                    ) : null}
+                  </div>
+                </details>
+              ) : (
+                <div aria-hidden='true' className='h-14 border-border border-t' />
+              )}
             </article>
           ))
         ) : (

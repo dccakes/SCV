@@ -51,7 +51,7 @@ export function VoyageSiteShell({
           >
             <Link
               href={path}
-              className={`${labelFont} inline-flex min-h-11 items-center text-xs hover:text-primary`}
+              className={`${labelFont} inline-flex min-h-11 items-center text-[0.62rem] uppercase tracking-[0.2em] hover:text-primary`}
             >
               Home
             </Link>
@@ -59,7 +59,7 @@ export function VoyageSiteShell({
               <Link
                 key={page}
                 href={`${path}/${page}`}
-                className={`${labelFont} inline-flex min-h-11 items-center text-xs hover:text-primary`}
+                className={`${labelFont} inline-flex min-h-11 items-center text-[0.62rem] uppercase tracking-[0.2em] hover:text-primary`}
               >
                 {title}
               </Link>
@@ -92,7 +92,7 @@ export function VoyagePageHeading({
   path: string
 }) {
   return (
-    <div className='relative overflow-hidden border-border border-b bg-card px-6 py-6 text-center sm:py-10'>
+    <div className='relative overflow-hidden border-border border-b bg-background px-6 py-8 text-center sm:py-12'>
       <Decor
         name='floralCorner'
         className='pointer-events-none absolute top-0 -right-8 hidden h-56 w-auto opacity-60 lg:block'
@@ -100,12 +100,12 @@ export function VoyagePageHeading({
       <div className='relative mx-auto flex max-w-3xl flex-col items-center gap-3'>
         <Link
           href={path}
-          className={`${labelFont} inline-flex min-h-11 items-center text-muted-foreground text-xs hover:text-primary`}
+          className={`${labelFont} inline-flex min-h-11 items-center text-[0.62rem] text-muted-foreground uppercase tracking-[0.2em] hover:text-primary`}
         >
           ← Home
         </Link>
 
-        <h1 className={`${headingFont} text-4xl sm:text-5xl`}>{title}</h1>
+        <h1 className={`${headingFont} font-light text-4xl italic sm:text-5xl`}>{title}</h1>
         <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>{description}</p>
         <HeartRule />
       </div>

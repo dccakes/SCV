@@ -2,7 +2,11 @@
 
 import Link from 'next/link'
 import { useEffect, useId, useRef, useState } from 'react'
-import { headingFont, labelFont } from '~/templates/voyage/components/primitives'
+import {
+  headingFont,
+  labelFont,
+  primaryButtonClass,
+} from '~/templates/voyage/components/primitives'
 import {
   explorePages,
   primaryPages,
@@ -19,7 +23,7 @@ type Props = {
   current: VoyageLocation
   rsvpEnabled: boolean
 }
-const linkClass = `${labelFont} flex min-h-11 items-center px-3 py-2 text-xs tracking-[0.08em] transition-colors hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary`
+const linkClass = `${labelFont} flex min-h-11 items-center px-3 py-2 text-[0.62rem] uppercase tracking-[0.24em] transition-colors hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary`
 
 export function VoyageNavbar({ monogram, coupleNames, path, current, rsvpEnabled }: Props) {
   const [open, setOpen] = useState(false)
@@ -127,7 +131,7 @@ export function VoyageNavbar({ monogram, coupleNames, path, current, rsvpEnabled
               href={`${path}/rsvp`}
               onClick={close}
               aria-current={current === 'rsvp' ? 'page' : undefined}
-              className={`${labelFont} inline-flex min-h-11 items-center rounded-sm bg-primary px-5 text-primary-foreground text-xs tracking-widest hover:opacity-90`}
+              className={`${primaryButtonClass} px-6`}
             >
               RSVP
             </Link>
@@ -138,7 +142,7 @@ export function VoyageNavbar({ monogram, coupleNames, path, current, rsvpEnabled
             aria-expanded={open}
             aria-controls={menuId}
             onClick={() => setOpen(!open)}
-            className={`${linkClass} gap-2 rounded-sm border border-border xl:hidden`}
+            className={`${linkClass} gap-2 rounded-[2px] border border-border xl:hidden`}
           >
             Menu <span aria-hidden='true'>{open ? '×' : '☰'}</span>
           </button>

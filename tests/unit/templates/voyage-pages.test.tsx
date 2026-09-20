@@ -58,7 +58,72 @@ describe('Voyage multi-page guest journeys', () => {
       '/w/couple/weekend#what-to-wear'
     )
     expect(container.querySelector('#zocalo')).toBeNull()
+    expect(container.querySelector('#flights')).not.toBeNull()
+  })
+
+  it('keeps the destination on home and travel guides on the travel page', () => {
+    const data = {
+      ...wedding,
+      sections: [
+        ...wedding.sections,
+        {
+          type: 'DESTINATION',
+          content: {
+            heading: 'Your Invitation',
+            body: 'Welcome to Puebla.',
+            location: 'Puebla, Mexico',
+          },
+        },
+      ],
+    } as unknown as WeddingPageData
+    const { container, rerender } = render(<VoyageHome weddingData={data} path='/w/couple' />)
+    expect(container.querySelector('#destination')).not.toBeNull()
+    rerender(<VoyageContentPage page='weekend' weddingData={data} path='/w/couple' />)
+    expect(container.querySelector('#destination')).toBeNull()
+    rerender(<VoyageContentPage page='travel' weddingData={data} path='/w/couple' />)
     expect(container.querySelector('#flights')).toBeNull()
+    const related = screen.getByRole('navigation', { name: 'Related information' })
+    expect(within(related).getByRole('link', { name: 'Explore Puebla' })).toHaveAttribute(
+      'href',
+      '/w/couple/puebla'
+    )
+    expect(within(related).getByRole('link', { name: 'Explore Mexico' })).toHaveAttribute(
+      'href',
+      '/w/couple/mexico'
+    )
+    expect(within(related).getByRole('link', { name: 'Flights' })).toHaveAttribute(
+      'href',
+      '/w/couple#flights'
+    )
+  })
+
+  it('omits the old travel services and keeps hotel details collapsed initially', () => {
+    const data = {
+      ...wedding,
+      sections: [
+        {
+          type: 'TRAVEL',
+          content: {
+            services: [{ title: 'Airport Transfers', description: 'Hourly buses.' }],
+            stays: [
+              {
+                name: 'Cartesiano',
+                url: 'https://example.com/book',
+                blurb: 'Detailed wedding booking instructions.',
+              },
+            ],
+          },
+        },
+      ],
+    } as unknown as WeddingPageData
+    const { container, rerender } = render(
+      <VoyageContentPage page='travel' weddingData={data} path='/w/couple' />
+    )
+    expect(screen.queryByText('Airport Transfers')).toBeNull()
+    rerender(<VoyageContentPage page='stay' weddingData={data} path='/w/couple' />)
+    expect(container.querySelector('details')).not.toHaveAttribute('open')
+    expect(screen.getByText('Detailed wedding booking instructions.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Visit Website' })).toBeVisible()
   })
 
   it('shows every registered event chronologically with complete details', () => {

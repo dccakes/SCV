@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import type { TemplateSurfaceProps } from '~/templates/types'
-import { VoyageFlightSearch } from '~/templates/voyage/components/flight-search'
 import { VoyageMoments } from '~/templates/voyage/components/media'
 import {
   VoyageExploreMexico,
@@ -17,7 +16,6 @@ import {
 import {
   Band,
   LinkifiedBlurb,
-  VoyageDestination,
   VoyageOurStory,
   VoyageRegistry,
   VoyageTimeline,
@@ -29,7 +27,6 @@ import { VoyageDressCode, VoyageWeekend } from '~/templates/voyage/components/we
 import {
   coupleIdentity,
   eventDateRange,
-  flightDates,
   sectionOf,
   type VoyagePage,
   voyagePages,
@@ -39,16 +36,16 @@ function PageLinks({ path, items }: { path: string; items: { label: string; href
   return (
     <nav
       aria-label='Related information'
-      className='flex flex-wrap justify-center gap-3 border-border border-b px-6 py-3'
+      className='mx-auto grid max-w-6xl grid-cols-2 justify-center gap-3 border-border border-b px-6 py-4 sm:flex sm:flex-wrap'
     >
       {items.map((item) => (
-        <Link
+        <OutlineButton
           key={item.href}
           href={`${path}${item.href}`}
-          className={`${labelFont} inline-flex min-h-11 items-center rounded-sm border border-border px-4 text-xs hover:border-primary hover:text-primary`}
+          className='px-4 py-3 text-center text-[0.6rem] tracking-[0.16em]'
         >
           {item.label}
-        </Link>
+        </OutlineButton>
       ))}
     </nav>
   )
@@ -66,7 +63,7 @@ export function VoyageContact({ weddingData }: Pick<TemplateSurfaceProps, 'weddi
             to help.
           </p>
         </div>
-        <div className='space-y-4 rounded-sm border border-border p-7'>
+        <div className='space-y-4 border-border border-t pt-8 md:border-t-0 md:border-l md:pt-0 md:pl-10'>
           <Eyebrow>Stay in the loop</Eyebrow>
           <h2 className={`${headingFont} text-3xl`}>Our WhatsApp community</h2>
           <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
@@ -99,7 +96,6 @@ function PageContent({ weddingData, path, page }: TemplateSurfaceProps & { page:
   const travel = sectionOf(sections, 'TRAVEL')
   switch (page) {
     case 'weekend': {
-      const destination = sectionOf(sections, 'DESTINATION')
       return (
         <>
           <PageLinks
@@ -112,7 +108,6 @@ function PageContent({ weddingData, path, page }: TemplateSurfaceProps & { page:
           />
           <VoyageWeekend events={events} path={path} />
           <VoyageDressCode events={events} />
-          {destination ? <VoyageDestination content={destination.content} /> : null}
         </>
       )
     }
@@ -136,10 +131,12 @@ function PageContent({ weddingData, path, page }: TemplateSurfaceProps & { page:
           <PageLinks
             path={path}
             items={[
-              { label: 'When to travel', href: '/travel#dates' },
-              { label: 'Flights', href: '/travel#flights' },
-              { label: 'Transfers & getting around', href: '/travel#transfers' },
+              { label: 'Travel dates', href: '/travel#dates' },
+              { label: 'Flights', href: '#flights' },
+              { label: 'Transfers', href: '/travel#transfers' },
               { label: 'Hotels', href: '/stay' },
+              { label: 'Explore Puebla', href: '/puebla' },
+              { label: 'Explore Mexico', href: '/mexico' },
             ]}
           />
           <Band id='dates'>
@@ -157,26 +154,9 @@ function PageContent({ weddingData, path, page }: TemplateSurfaceProps & { page:
               <OutlineButton href={`${path}/weekend`}>Check the schedule</OutlineButton>
             </div>
           </Band>
-          <VoyageFlightSearch {...flightDates(events)} />
           <Band id='transfers'>
             <VoyagePracticalInfo />
           </Band>
-          {travel?.content.services?.length ? (
-            <Band id='travel-notes' tone='cream'>
-              <Eyebrow>From us to you</Eyebrow>
-              <div className='mt-6 grid gap-8 md:grid-cols-2'>
-                {travel.content.services.map((service) => (
-                  <div key={service.title} className='space-y-3'>
-                    <h2 className={`${headingFont} text-3xl`}>{service.title}</h2>
-                    <LinkifiedBlurb
-                      text={service.description}
-                      className={`${bodyFont} whitespace-pre-line text-lg text-muted-foreground leading-8`}
-                    />
-                  </div>
-                ))}
-              </div>
-            </Band>
-          ) : null}
           <Band id='wedding-transport'>
             <div className='mx-auto max-w-3xl space-y-4'>
               <h2 className={`${headingFont} text-4xl`}>Getting to the celebrations</h2>
@@ -272,7 +252,7 @@ function PageContent({ weddingData, path, page }: TemplateSurfaceProps & { page:
                   return (
                     <details
                       key={item.question}
-                      className='rounded-sm border border-border bg-card px-5 py-4'
+                      className='border border-border bg-background px-5 py-4'
                     >
                       <summary className={`${headingFont} cursor-pointer text-xl`}>
                         {item.question}
