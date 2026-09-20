@@ -132,7 +132,6 @@ function PageContent({ weddingData, path, page }: TemplateSurfaceProps & { page:
             path={path}
             items={[
               { label: 'Travel dates', href: '/travel#dates' },
-              { label: 'Flights', href: '#flights' },
               { label: 'Transfers', href: '/travel#transfers' },
               { label: 'Hotels', href: '/stay' },
               { label: 'Explore Puebla', href: '/puebla' },
@@ -147,14 +146,59 @@ function PageContent({ weddingData, path, page }: TemplateSurfaceProps & { page:
                 {eventDateRange(events) || 'Event dates will be shared here once confirmed.'}
               </p>
               <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
-                Allow time to settle in before your first event. The flight search suggests arriving
-                the day before the first scheduled event and leaving the day after the last; adjust
-                these dates to suit your plans.
+                Allow time to settle in before your first event, and leave enough time for your
+                onward journey after the celebrations.
               </p>
               <OutlineButton href={`${path}/weekend`}>Check the schedule</OutlineButton>
             </div>
           </Band>
-          <Band id='transfers'>
+          <Band id='transfers' tone='cream'>
+            <div className='mx-auto max-w-4xl space-y-8'>
+              <div className='space-y-4'>
+                <Eyebrow>Getting to Puebla</Eyebrow>
+                <h2 className={`${headingFont} text-4xl sm:text-5xl`}>Mexico City to Puebla</h2>
+                <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
+                  If you’re arriving at Mexico City International Airport (MEX / AICM), you can
+                  continue directly to Puebla by bus or arrange a private transfer.
+                </p>
+              </div>
+              <div className='grid gap-10 md:grid-cols-2'>
+                <div className='space-y-4'>
+                  <h3 className={`${headingFont} text-3xl`}>By bus from the airport</h3>
+                  <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
+                    Estrella Roja runs direct services from Terminal 1 and Terminal 2 to Puebla.
+                    Choose your arrival terminal when booking and check the Puebla drop-off point
+                    before arranging the final journey to your hotel. Allow time for immigration,
+                    baggage collection and traffic when planning your connection.
+                  </p>
+                  <OutlineButton href='https://www.estrellaroja.com.mx' external>
+                    Bus schedules & tickets
+                  </OutlineButton>
+                  <a
+                    href='https://www.aicm.com.mx/passengers/services/service-providers/transportation/buses'
+                    target='_blank'
+                    rel='noreferrer'
+                    className={`${bodyFont} block text-primary underline underline-offset-4`}
+                  >
+                    Airport bus information
+                  </a>
+                </div>
+                <div className='space-y-4'>
+                  <h3 className={`${headingFont} text-3xl`}>Drivers & private transfers</h3>
+                  <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
+                    We’ll add known driver contacts and private transfer options here closer to the
+                    wedding, including how to book and arrange your pickup.
+                  </p>
+                  <p
+                    className={`${labelFont} text-[0.62rem] text-primary uppercase tracking-[0.2em]`}
+                  >
+                    Contacts coming soon
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Band>
+          <Band>
             <VoyagePracticalInfo />
           </Band>
           <Band id='wedding-transport'>

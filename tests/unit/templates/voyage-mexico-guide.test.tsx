@@ -123,9 +123,9 @@ describe('VoyageHome Mexico guide', () => {
   })
 })
 
-it('renders airport and packing guidance on the Travel surface', () => {
+it('keeps general packing guidance separate from the dedicated transfer section', () => {
   render(<VoyagePracticalInfo />)
-  expect(screen.getByText('Getting here from the airport')).toBeInTheDocument()
+  expect(screen.queryByText('Getting here from the airport')).toBeNull()
   expect(screen.getByText('What to pack')).toBeInTheDocument()
   expect(screen.queryByText('A word on Mondays')).toBeNull()
 })

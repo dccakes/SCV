@@ -5,10 +5,10 @@ import {
   bodyFont,
   Eyebrow,
   headingFont,
-  labelFont,
   primaryButtonClass,
 } from '~/templates/voyage/components/primitives'
 import { Band, LinkifiedBlurb } from '~/templates/voyage/components/sections'
+import { VoyageStayDetails } from '~/templates/voyage/components/stay-details'
 
 /** Consistent compact cards with booking actions visible and expandable full details. */
 export function VoyageStays({ content }: { content?: TravelSectionContent }) {
@@ -26,15 +26,15 @@ export function VoyageStays({ content }: { content?: TravelSectionContent }) {
           Check each hotel’s instructions before booking to make sure you receive any wedding rates.
         </p>
       </div>
-      <div className='grid items-start gap-8 md:grid-cols-2 lg:grid-cols-3'>
+      <div className='grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3'>
         {content?.stays?.length ? (
           content.stays.map((stay, index) => (
             <article
               key={stay.name}
               id={`stay-${index}-${stay.name.replace(/\s+/g, '-').toLowerCase()}`}
-              className='scroll-mt-24 overflow-hidden rounded-[3px] border border-border bg-card'
+              className='grid h-[36rem] min-w-0 scroll-mt-24 grid-rows-[14rem_minmax(0,1fr)_3.5rem] overflow-hidden rounded-[3px] border border-border bg-card'
             >
-              <div className='relative aspect-[4/3] bg-secondary'>
+              <div className='relative min-w-0 bg-secondary'>
                 {stay.imageUrl ? (
                   <Image
                     src={stay.imageUrl}
@@ -47,10 +47,14 @@ export function VoyageStays({ content }: { content?: TravelSectionContent }) {
                   <BotanicalSprig className='absolute inset-0 m-auto h-40 w-24 text-primary/30' />
                 )}
               </div>
-              <div className='flex h-64 min-w-0 flex-col items-start gap-4 p-6'>
-                <h2 className={`${headingFont} line-clamp-2 text-3xl`}>{stay.name}</h2>
+              <div className='flex min-h-0 min-w-0 flex-col items-start gap-4 overflow-hidden p-6'>
+                <h2 className={`${headingFont} line-clamp-2 shrink-0 break-words text-3xl`}>
+                  {stay.name}
+                </h2>
                 {stay.description ? (
-                  <p className={`${bodyFont} line-clamp-2 text-lg text-muted-foreground leading-7`}>
+                  <p
+                    className={`${bodyFont} line-clamp-2 shrink-0 break-words text-lg text-muted-foreground leading-7`}
+                  >
                     {stay.description}
                   </p>
                 ) : null}
@@ -60,9 +64,11 @@ export function VoyageStays({ content }: { content?: TravelSectionContent }) {
                     {...(stay.url.startsWith('mailto:')
                       ? {}
                       : { target: '_blank', rel: 'noreferrer' })}
-                    className={`${primaryButtonClass} mt-auto max-w-full px-5`}
+                    className={`${primaryButtonClass} mt-auto max-w-full shrink-0 px-5`}
                   >
-                    {stay.buttonLabel?.trim() || 'Visit Website'}
+                    <span className='line-clamp-2 break-words'>
+                      {stay.buttonLabel?.trim() || 'Visit Website'}
+                    </span>
                   </a>
                 ) : (
                   <p className={`${bodyFont} mt-auto text-muted-foreground`}>
@@ -70,32 +76,34 @@ export function VoyageStays({ content }: { content?: TravelSectionContent }) {
                   </p>
                 )}
               </div>
-              {stay.blurb || stay.description ? (
-                <details className='group border-border border-t px-6'>
-                  <summary
-                    className={`${labelFont} flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 text-[0.62rem] uppercase tracking-[0.2em] [&::-webkit-details-marker]:hidden`}
-                  >
-                    <span className='group-open:hidden'>View hotel details</span>
-                    <span className='hidden group-open:inline'>Close hotel details</span>
-                    <span aria-hidden='true' className='text-xl group-open:rotate-45'>
-                      +
-                    </span>
-                  </summary>
-                  <div className='space-y-4 pb-6'>
-                    {stay.description ? (
-                      <p className={`${bodyFont} text-lg leading-8`}>{stay.description}</p>
-                    ) : null}
-                    {stay.blurb ? (
-                      <LinkifiedBlurb
-                        text={stay.blurb}
-                        className={`${bodyFont} whitespace-pre-line break-words text-lg text-muted-foreground leading-8`}
-                      />
-                    ) : null}
-                  </div>
-                </details>
-              ) : (
-                <div aria-hidden='true' className='h-14 border-border border-t' />
-              )}
+              <VoyageStayDetails name={stay.name}>
+                <div className='space-y-5'>
+                  {stay.description ? (
+                    <p className={`${bodyFont} break-words text-lg leading-8`}>
+                      {stay.description}
+                    </p>
+                  ) : null}
+                  {stay.blurb ? (
+                    <LinkifiedBlurb
+                      text={stay.blurb}
+                      className={`${bodyFont} whitespace-pre-line break-words text-lg text-muted-foreground leading-8`}
+                    />
+                  ) : null}
+                  {stay.url ? (
+                    <a
+                      href={stay.url}
+                      {...(stay.url.startsWith('mailto:')
+                        ? {}
+                        : { target: '_blank', rel: 'noreferrer' })}
+                      className={`${primaryButtonClass} max-w-full text-center [overflow-wrap:anywhere]`}
+                    >
+                      {stay.buttonLabel?.trim() || 'Visit Website'}
+                    </a>
+                  ) : (
+                    <p className={`${bodyFont} text-muted-foreground`}>Booking link coming soon.</p>
+                  )}
+                </div>
+              </VoyageStayDetails>
             </article>
           ))
         ) : (

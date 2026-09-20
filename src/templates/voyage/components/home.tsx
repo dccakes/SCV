@@ -9,7 +9,11 @@ import {
   BotanicalSprig,
   bodyFont,
   Eyebrow,
+  FloralSpray,
   GhostButtonOnDark,
+  GoldRule,
+  HaciendaSketch,
+  HeartRule,
   headingFont,
   IconArch,
   IconCompass,
@@ -18,8 +22,9 @@ import {
   OutlineButton,
   PrimaryButton,
   scriptFont,
+  sectionHeadingClass,
 } from '~/templates/voyage/components/primitives'
-import { Band, VoyageDestination } from '~/templates/voyage/components/sections'
+import { Band, VoyageDestination, VoyageRegistry } from '~/templates/voyage/components/sections'
 import { VoyageSiteShell } from '~/templates/voyage/components/site-shell'
 import { VoyageWeekend } from '~/templates/voyage/components/weekend'
 import { coupleIdentity, eventDateRange, flightDates, sectionOf } from '~/templates/voyage/site'
@@ -29,6 +34,7 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
   const { coupleNames } = coupleIdentity(weddingData)
   const destination = sectionOf(weddingData.sections, 'DESTINATION')
   const story = sectionOf(weddingData.sections, 'OUR_STORY')
+  const registry = sectionOf(weddingData.sections, 'REGISTRY')
   const faq = sectionOf(weddingData.sections, 'FAQ')
   const deadline = faq?.content.items.find((item) =>
     /(?:when|deadline).*rsvp|rsvp.*(?:when|deadline)/i.test(item.question)
@@ -191,26 +197,77 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
           ))}
         </div>
       </Band>
-      <Band tone='cream'>
-        <div className='mx-auto flex max-w-3xl flex-col items-center gap-6 text-center'>
-          <Decor name='hacienda' className='h-32 w-auto max-w-full object-contain' />
-          <Eyebrow>Celebrate with us</Eyebrow>
-          <h2 className={`${scriptFont} text-5xl text-primary`}>We can’t wait to see you</h2>
-          {rsvpHref ? (
-            <>
-              {deadline ? <p className={`${bodyFont} text-lg`}>RSVP deadline: {deadline}</p> : null}
-              <PrimaryButton href={rsvpHref}>Send RSVP</PrimaryButton>
-            </>
-          ) : null}
-          <Link
-            href={`${path}/faq#contact`}
-            className={`${bodyFont} inline-flex min-h-11 items-center text-lg text-primary underline underline-offset-4`}
-          >
-            Questions? Contact us & WhatsApp community
-          </Link>
-          <p className={`${bodyFont} text-muted-foreground`}>WhatsApp invite link coming soon.</p>
-        </div>
-      </Band>
+      {/* Registry + RSVP invitation, framed with botanical line art. */}
+      {registry || rsvpHref ? (
+        <section
+          id='registry'
+          className='relative w-full scroll-mt-24 overflow-hidden bg-[#FBF8F2] px-6 py-20 sm:py-24 lg:px-10'
+        >
+          <Decor
+            name='floralCorner'
+            className='pointer-events-none absolute -top-6 -left-8 hidden h-56 w-auto -scale-x-100 -scale-y-100 lg:block'
+            fallback={
+              <div className='pointer-events-none absolute top-1/2 left-0 hidden -translate-y-1/2 items-end gap-2 lg:flex'>
+                <HaciendaSketch className='h-24 w-auto text-[#7C7264]/50' />
+                <FloralSpray className='h-[24rem] w-auto opacity-90' />
+              </div>
+            }
+          />
+          <Decor
+            name='floralCorner'
+            className='pointer-events-none absolute -right-8 -bottom-6 hidden h-56 w-auto lg:block'
+            fallback={
+              <FloralSpray className='pointer-events-none absolute top-1/2 right-0 hidden h-[26rem] w-auto -translate-y-1/2 -scale-x-100 opacity-90 lg:block' />
+            }
+          />
+          <div className='relative mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16'>
+            {registry ? (
+              <VoyageRegistry content={registry.content} />
+            ) : (
+              <div className='flex flex-col gap-6'>
+                <Eyebrow>Kindly RSVP</Eyebrow>
+                <h2 className={`${sectionHeadingClass} italic leading-tight`}>
+                  We can&rsquo;t wait to celebrate with you!
+                </h2>
+                <GoldRule className='self-start' />
+                <p className={`${bodyFont} max-w-xl text-[#6F675D] text-lg leading-8`}>
+                  We would be honored to celebrate with you. Let us know if you can make the
+                  journey.
+                </p>
+                <Decor
+                  name='hacienda'
+                  className='mt-2 hidden h-64 w-auto object-contain lg:block'
+                />
+              </div>
+            )}
+            {rsvpHref ? (
+              <div className='rounded-[3px] border border-[#DDD2C0] bg-[#F7F3EC] px-8 py-10 text-center'>
+                <Eyebrow>Your Invitation</Eyebrow>
+                <p className={`${headingFont} mt-4 text-3xl text-[#1D2320]`}>{coupleNames}</p>
+                {dateLabel ? (
+                  <p
+                    className={`${labelFont} mt-2 text-[#6F675D] text-[0.66rem] uppercase tracking-[0.24em]`}
+                  >
+                    {dateLabel}
+                    {location ? ` · ${location}` : ''}
+                  </p>
+                ) : null}
+                {deadline ? (
+                  <p className={`${bodyFont} mt-4 text-lg text-muted-foreground`}>
+                    RSVP deadline: {deadline}
+                  </p>
+                ) : null}
+                <HeartRule className='mt-6' />
+                <div className='mt-6 flex justify-center'>
+                  <PrimaryButton href={rsvpHref} className='w-full max-w-xs'>
+                    Send RSVP
+                  </PrimaryButton>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
     </VoyageSiteShell>
   )
 }

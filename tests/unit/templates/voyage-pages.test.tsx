@@ -91,10 +91,9 @@ describe('Voyage multi-page guest journeys', () => {
       'href',
       '/w/couple/mexico'
     )
-    expect(within(related).getByRole('link', { name: 'Flights' })).toHaveAttribute(
-      'href',
-      '/w/couple#flights'
-    )
+    expect(within(related).queryByRole('link', { name: 'Flights' })).toBeNull()
+    expect(screen.getByRole('heading', { name: 'Mexico City to Puebla' })).toBeInTheDocument()
+    expect(screen.getByText(/driver contacts and private transfer options/i)).toBeInTheDocument()
   })
 
   it('omits the old travel services and keeps hotel details collapsed initially', () => {
@@ -121,9 +120,41 @@ describe('Voyage multi-page guest journeys', () => {
     )
     expect(screen.queryByText('Airport Transfers')).toBeNull()
     rerender(<VoyageContentPage page='stay' weddingData={data} path='/w/couple' />)
-    expect(container.querySelector('details')).not.toHaveAttribute('open')
+    expect(container.querySelector('dialog')).not.toHaveAttribute('open')
+    expect(screen.getByRole('button', { name: /View hotel details/ })).toBeVisible()
     expect(screen.getByText('Detailed wedding booking instructions.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Visit Website' })).toBeVisible()
+  })
+
+  it('restores the configured registry alongside the homepage RSVP invitation', () => {
+    const data = {
+      ...wedding,
+      sections: [
+        ...wedding.sections,
+        {
+          type: 'REGISTRY',
+          content: {
+            heading: 'A gift for our beginning',
+            body: 'Your presence means so much.',
+            links: [{ label: 'Our registry', url: 'https://example.com/registry' }],
+          },
+        },
+      ],
+    } as unknown as WeddingPageData
+    const { container } = render(<VoyageHome weddingData={data} path='/w/couple' />)
+    const registry = container.querySelector('#registry') as HTMLElement
+    expect(registry).not.toBeNull()
+    expect(
+      within(registry).getByRole('heading', { name: 'A gift for our beginning' })
+    ).toBeInTheDocument()
+    expect(within(registry).getByRole('link', { name: 'Our registry' })).toHaveAttribute(
+      'href',
+      'https://example.com/registry'
+    )
+    expect(within(registry).getByRole('link', { name: 'Send RSVP' })).toHaveAttribute(
+      'href',
+      '/w/couple/rsvp'
+    )
   })
 
   it('shows every registered event chronologically with complete details', () => {

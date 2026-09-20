@@ -183,10 +183,6 @@ const ZOCALO_NEARBY: readonly Note[] = [
 /** The practical things nobody tells you until you are already here. */
 const ZOCALO_PRACTICAL: readonly Note[] = [
   {
-    title: 'Getting here from the airport',
-    body: 'Estrella Roja and ADO run direct buses from both Mexico City airport terminals to Puebla, roughly hourly, about two and a half hours, bookable online. They drop at CAPU or the 4 Poniente terminal — either is a fifteen-minute Uber from the square, and far less painful than driving.',
-  },
-  {
     title: 'A word on Mondays',
     body: 'Almost every museum in Mexico closes on Monday, the Palafoxiana and the Cholula pyramid included. Museo Amparo is the odd one out and closes on Tuesday. Churches are open every day.',
   },

@@ -110,5 +110,4 @@ export const legacyVoyageAnchors: Record<string, string> = {
   faq: 'faq',
   zocalo: 'puebla',
   'explore-mexico': 'mexico',
-  registry: 'registry',
 }
