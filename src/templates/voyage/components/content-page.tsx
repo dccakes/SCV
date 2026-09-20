@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { TemplateSurfaceProps } from '~/templates/types'
 import { VoyageMoments } from '~/templates/voyage/components/media'
+import { VoyageMexicoCity } from '~/templates/voyage/components/mexico-city'
 import {
   VoyageExploreMexico,
   VoyagePracticalInfo,
@@ -166,22 +167,12 @@ function PageContent({ weddingData, path, page }: TemplateSurfaceProps & { page:
                 <div className='space-y-4'>
                   <h3 className={`${headingFont} text-3xl`}>By bus from the airport</h3>
                   <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
-                    Estrella Roja runs direct services from Terminal 1 and Terminal 2 to Puebla.
-                    Choose your arrival terminal when booking and check the Puebla drop-off point
-                    before arranging the final journey to your hotel. Allow time for immigration,
-                    baggage collection and traffic when planning your connection.
+                    Estrella Roja runs hourly buses from Terminal 1 and Terminal 2 to Puebla.
+                    Tickets can be bought on site at the airport bus ticket counters. Check the
+                    Puebla drop-off point before arranging the final journey to your hotel. Allow
+                    time for immigration, baggage collection and traffic when planning your
+                    connection.
                   </p>
-                  <OutlineButton href='https://www.estrellaroja.com.mx' external>
-                    Bus schedules & tickets
-                  </OutlineButton>
-                  <a
-                    href='https://www.aicm.com.mx/passengers/services/service-providers/transportation/buses'
-                    target='_blank'
-                    rel='noreferrer'
-                    className={`${bodyFont} block text-primary underline underline-offset-4`}
-                  >
-                    Airport bus information
-                  </a>
                 </div>
                 <div className='space-y-4'>
                   <h3 className={`${headingFont} text-3xl`}>Drivers & private transfers</h3>
@@ -205,8 +196,12 @@ function PageContent({ weddingData, path, page }: TemplateSurfaceProps & { page:
             <div className='mx-auto max-w-3xl space-y-4'>
               <h2 className={`${headingFont} text-4xl`}>Getting to the celebrations</h2>
               <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
-                Venue details and directions are listed with each event. Any arranged wedding
-                transport and pickup times will be shared here once confirmed.
+                We’ll provide transport from Puebla city centre to the ceremony venue and back, so
+                you won’t need to arrange your own journey. Pickup locations and times will be
+                shared here closer to the wedding.
+              </p>
+              <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
+                All other events will be within walking distance of Puebla city centre.
               </p>
               <OutlineButton href={`${path}/weekend`}>Venues & directions</OutlineButton>
             </div>
@@ -232,11 +227,13 @@ function PageContent({ weddingData, path, page }: TemplateSurfaceProps & { page:
           <PageLinks
             path={path}
             items={[
+              { label: 'Mexico City guide', href: '/mexico#mexico-city' },
               { label: 'Staying nearby? Explore Puebla', href: '/puebla' },
               { label: 'Travel information', href: '/travel' },
             ]}
           />
           <VoyageExploreMexico />
+          <VoyageMexicoCity />
         </>
       )
     case 'story': {
