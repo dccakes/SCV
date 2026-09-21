@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 
 import { VoyageHome } from '~/templates/voyage/components/home'
+import { VoyageMexicoCity } from '~/templates/voyage/components/mexico-city'
 import {
   VoyageExploreMexico,
   VoyagePracticalInfo,
@@ -128,4 +129,41 @@ it('keeps general packing guidance separate from the dedicated transfer section'
   expect(screen.queryByText('Getting here from the airport')).toBeNull()
   expect(screen.getByText('What to pack')).toBeInTheDocument()
   expect(screen.queryByText('A word on Mondays')).toBeNull()
+})
+
+describe('VoyageMexicoCity', () => {
+  it('renders neighbourhood cards with collapsed culture and food recommendations', () => {
+    render(<VoyageMexicoCity />)
+
+    for (const name of [
+      'Chapultepec & Polanco',
+      'Centro Histórico',
+      'Paseo de la Reforma',
+      'Coyoacán',
+      'Teotihuacán',
+      'San Ángel',
+    ]) {
+      expect(screen.getByRole('heading', { name })).toBeInTheDocument()
+    }
+
+    const chapultepecCard = screen
+      .getByRole('heading', { name: 'Chapultepec & Polanco' })
+      .closest('article') as HTMLElement
+    const centroCard = screen
+      .getByRole('heading', { name: 'Centro Histórico' })
+      .closest('article') as HTMLElement
+    const culture = within(chapultepecCard).getByText('Culture').closest('details')
+    const food = within(centroCard).getByText('Food').closest('details')
+
+    expect(culture).not.toBeNull()
+    expect(food).not.toBeNull()
+    expect(culture).not.toHaveAttribute('open')
+    expect(food).not.toHaveAttribute('open')
+    expect(
+      within(culture as HTMLElement).getByText('Museo Tamayo — Contemporary art museum')
+    ).toBeInTheDocument()
+    expect(
+      within(food as HTMLElement).getByText('El Cardenal — Traditional Mexican restaurant')
+    ).toBeInTheDocument()
+  })
 })

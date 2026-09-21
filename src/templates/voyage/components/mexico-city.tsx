@@ -1,37 +1,131 @@
 import { Decor } from '~/templates/voyage/components/decor'
-import { bodyFont, Eyebrow, GoldRule, headingFont } from '~/templates/voyage/components/primitives'
+import {
+  bodyFont,
+  Eyebrow,
+  GoldRule,
+  headingFont,
+  labelFont,
+} from '~/templates/voyage/components/primitives'
 import { Band } from '~/templates/voyage/components/sections'
 
-// Adapted from Isabel & Andy’s neighbourhood guide, without their 2023 event logistics.
-const neighbourhoods = [
+type Recommendation = { name: string; description: string }
+
+type Neighbourhood = {
+  name: string
+  culture: Recommendation[]
+  food: Recommendation[]
+}
+
+const neighbourhoods: Neighbourhood[] = [
   {
     name: 'Chapultepec & Polanco',
-    body: 'Pair the Museo Nacional de Antropología with a walk through Bosque de Chapultepec. Add Chapultepec Castle, Museo Tamayo or Museo Soumaya if you have more time.',
+    culture: [
+      { name: 'Museo Nacional de Antropología', description: 'The finest museum in the country' },
+      { name: 'Bosque de Chapultepec', description: 'A leafy park for a long walk' },
+      { name: 'Chapultepec Castle', description: 'Hilltop history and city views' },
+      { name: 'Museo Tamayo', description: 'Contemporary art museum' },
+      { name: 'Museo Soumaya', description: 'Free art collection in a striking building' },
+    ],
+    food: [
+      { name: 'Pujol', description: 'Modern Mexican tasting menus in Polanco' },
+      { name: 'Contramar', description: 'Seafood lunch worth booking ahead' },
+    ],
   },
   {
     name: 'Centro Histórico',
-    body: 'Explore Bellas Artes, Alameda Central, Palacio Postal and the Zócalo. Walk along Madero to take in the architecture.',
-    food: 'El Cardenal for a traditional Mexican meal.',
+    culture: [
+      { name: 'Bellas Artes', description: 'Palace of murals, music and exhibitions' },
+      { name: 'Alameda Central', description: 'Mexico City’s oldest public park' },
+      { name: 'Palacio Postal', description: 'Ornate early twentieth-century post office' },
+      { name: 'Zócalo', description: 'The city’s vast central square' },
+      { name: 'Madero', description: 'Pedestrian street lined with architecture' },
+    ],
+    food: [
+      { name: 'El Cardenal', description: 'Traditional Mexican restaurant' },
+      { name: 'Café de Tacuba', description: 'Historic café for breakfast and lunch' },
+    ],
   },
   {
     name: 'Paseo de la Reforma',
-    body: 'Follow the boulevard towards Chapultepec, taking in the Ángel de la Independencia and Diana the Huntress fountain along the way.',
+    culture: [
+      { name: 'Ángel de la Independencia', description: 'The city’s iconic golden monument' },
+      { name: 'Diana the Huntress Fountain', description: 'A landmark bronze fountain' },
+      { name: 'Paseo de la Reforma', description: 'Grand boulevard for a city stroll' },
+    ],
+    food: [
+      { name: 'Café Nin', description: 'Pastries and an easy breakfast stop' },
+      { name: 'Torre Latinoamericana', description: 'Cocktails with a skyline view' },
+    ],
   },
   {
     name: 'Coyoacán',
-    body: 'Visit Frida Kahlo’s Casa Azul, then wander Jardín Hidalgo, Jardín Centenario and the neighbourhood markets. Reserve museum tickets ahead.',
-    food: 'Los Danzantes for a leisurely lunch.',
+    culture: [
+      { name: 'Casa Azul', description: 'Frida Kahlo’s former home and museum' },
+      { name: 'Jardín Hidalgo', description: 'The neighbourhood’s lively main square' },
+      { name: 'Jardín Centenario', description: 'A shady garden with the coyote fountain' },
+      { name: 'Coyoacán markets', description: 'Local crafts, colour and street life' },
+    ],
+    food: [
+      { name: 'Los Danzantes', description: 'Leisurely lunch with regional Mexican cooking' },
+      { name: 'Mercado de Coyoacán', description: 'Classic tostadas and market snacks' },
+    ],
   },
   {
     name: 'Teotihuacán',
-    body: 'Set aside a separate day for the archaeological site and its Pyramids of the Sun and Moon. Arrange your return transport before setting off.',
+    culture: [
+      { name: 'Pyramid of the Sun', description: 'The site’s monumental central pyramid' },
+      { name: 'Pyramid of the Moon', description: 'A ceremonial pyramid with a long view' },
+      { name: 'Avenue of the Dead', description: 'The ancient city’s central processional road' },
+    ],
+    food: [{ name: 'La Gruta', description: 'Cave restaurant near the archaeological site' }],
   },
   {
     name: 'San Ángel',
-    body: 'Spend a Saturday around Plaza San Jacinto and the art market, with time to wander the cobbled streets.',
-    food: 'Bistró 83 for breakfast or lunch.',
+    culture: [
+      { name: 'Plaza San Jacinto', description: 'The heart of the Saturday art market' },
+      { name: 'Bazar del Sábado', description: 'Handcrafts and artwork each Saturday' },
+      { name: 'Cobbled streets', description: 'A slower neighbourhood for wandering' },
+    ],
+    food: [
+      { name: 'Bistró 83', description: 'Breakfast or lunch in a leafy courtyard' },
+      { name: 'San Ángel Inn', description: 'Classic hacienda setting for a long meal' },
+    ],
   },
 ]
+
+function RecommendationDisclosure({
+  label,
+  recommendations,
+}: {
+  label: 'Culture' | 'Food'
+  recommendations: Recommendation[]
+}) {
+  if (recommendations.length === 0) return null
+
+  return (
+    <details className='group border-[#DDD2C0] border-t pt-3'>
+      <summary
+        className={`${labelFont} flex cursor-pointer list-none items-center justify-between text-[#B15C41] text-xs uppercase tracking-[0.2em] [&::-webkit-details-marker]:hidden`}
+      >
+        <span>{label}</span>
+        <span aria-hidden='true' className='text-lg leading-none'>
+          <span className='group-open:hidden'>+</span>
+          <span className='hidden group-open:inline'>×</span>
+        </span>
+      </summary>
+      <ul className={`${bodyFont} mt-3 space-y-2 text-base leading-7`}>
+        {recommendations.map(({ name, description }) => (
+          <li key={name} className='pl-1'>
+            <span className='mr-2 text-[#B15C41]'>•</span>
+            <span>
+              {name} — {description}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </details>
+  )
+}
 
 export function VoyageMexicoCity() {
   return (
@@ -47,17 +141,18 @@ export function VoyageMexicoCity() {
             Mexico City, neighbourhood by neighbourhood
           </h2>
           <GoldRule />
-          <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
-            A few ideas from Isabel and Andy’s Mexico City guide, for exploring before or after the
-            wedding.
-          </p>
         </div>
         <div className='grid gap-x-14 gap-y-10 md:grid-cols-2'>
-          {neighbourhoods.map(({ name, body, food }) => (
-            <article key={name} className='space-y-4 border-border border-t pt-6'>
+          {neighbourhoods.map(({ name, culture, food }) => (
+            <article
+              key={name}
+              className='flex flex-col gap-5 rounded-[3px] border border-[#DDD2C0] bg-[#FBF8F2] p-6 sm:p-8'
+            >
               <h3 className={`${headingFont} text-3xl italic`}>{name}</h3>
-              <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>{body}</p>
-              {food ? <p className={`${bodyFont} text-lg leading-8`}>{food}</p> : null}
+              <div className='space-y-4'>
+                <RecommendationDisclosure label='Culture' recommendations={culture} />
+                <RecommendationDisclosure label='Food' recommendations={food} />
+              </div>
             </article>
           ))}
         </div>
