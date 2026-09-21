@@ -105,7 +105,7 @@ function RecommendationDisclosure({
   return (
     <details className='group border-[#DDD2C0] border-t pt-3'>
       <summary
-        className={`${labelFont} flex cursor-pointer list-none items-center justify-between text-[#B15C41] text-xs uppercase tracking-[0.2em] [&::-webkit-details-marker]:hidden`}
+        className={`${labelFont} flex cursor-pointer list-none items-center justify-between text-primary text-xs uppercase tracking-[0.2em] [&::-webkit-details-marker]:hidden`}
       >
         <span>{label}</span>
         <span aria-hidden='true' className='text-lg leading-none'>
@@ -116,7 +116,7 @@ function RecommendationDisclosure({
       <ul className={`${bodyFont} mt-3 space-y-2 text-base leading-7`}>
         {recommendations.map(({ name, description }) => (
           <li key={name} className='pl-1'>
-            <span className='mr-2 text-[#B15C41]'>•</span>
+            <span className='mr-2 text-primary'>•</span>
             <span>
               {name} — {description}
             </span>

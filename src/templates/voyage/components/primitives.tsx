@@ -65,7 +65,7 @@ type ButtonProps = {
 
 export const buttonBase = `${labelFont} inline-flex items-center justify-center gap-2 text-[0.68rem] uppercase tracking-[0.28em] transition-colors duration-300`
 
-export const primaryButtonClass = `${buttonBase} min-h-11 rounded-[2px] bg-[#B15C41] px-8 py-3.5 text-[#F7F3EC] hover:bg-[#92462F]`
+export const primaryButtonClass = `${buttonBase} min-h-11 rounded-[2px] bg-primary px-8 py-3.5 text-primary-foreground hover:bg-primary/90`
 
 /** Terracotta-filled primary action. */
 export function PrimaryButton({ href, children, external, className = '' }: ButtonProps) {
