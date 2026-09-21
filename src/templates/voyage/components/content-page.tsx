@@ -104,10 +104,24 @@ function PageContent({ weddingData, path, page }: TemplateSurfaceProps & { page:
             items={[
               { label: 'Schedule', href: '/weekend#schedule' },
               { label: 'What to Wear', href: '/weekend#what-to-wear' },
-              { label: 'Wedding transport', href: '/travel#wedding-transport' },
+              { label: 'Wedding transport', href: '/weekend#wedding-transport' },
             ]}
           />
           <VoyageWeekend events={events} path={path} />
+          <Band id='wedding-transport' tone='cream'>
+            <div className='mx-auto max-w-3xl space-y-4'>
+              <h2 className={`${headingFont} text-4xl`}>Getting to the celebrations</h2>
+              <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
+                We’ll provide transport from Puebla city centre to the ceremony venue and back, so
+                you won’t need to arrange your own journey. Pickup locations and times will be
+                shared here closer to the wedding.
+              </p>
+              <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
+                All other events will be within walking distance of Puebla city centre.
+              </p>
+              <OutlineButton href={`${path}/weekend#schedule`}>Venues & directions</OutlineButton>
+            </div>
+          </Band>
           <VoyageDressCode events={events} />
         </>
       )
@@ -191,20 +205,6 @@ function PageContent({ weddingData, path, page }: TemplateSurfaceProps & { page:
           </Band>
           <Band>
             <VoyagePracticalInfo />
-          </Band>
-          <Band id='wedding-transport'>
-            <div className='mx-auto max-w-3xl space-y-4'>
-              <h2 className={`${headingFont} text-4xl`}>Getting to the celebrations</h2>
-              <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
-                We’ll provide transport from Puebla city centre to the ceremony venue and back, so
-                you won’t need to arrange your own journey. Pickup locations and times will be
-                shared here closer to the wedding.
-              </p>
-              <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
-                All other events will be within walking distance of Puebla city centre.
-              </p>
-              <OutlineButton href={`${path}/weekend`}>Venues & directions</OutlineButton>
-            </div>
           </Band>
         </>
       )

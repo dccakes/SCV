@@ -158,7 +158,9 @@ describe('Voyage multi-page guest journeys', () => {
   })
 
   it('shows every registered event chronologically with complete details', () => {
-    render(<VoyageContentPage page='weekend' weddingData={wedding} path='/w/couple' />)
+    const { rerender } = render(
+      <VoyageContentPage page='weekend' weddingData={wedding} path='/w/couple' />
+    )
     const schedule = screen.getByRole('region', { name: 'Schedule' })
     const events = within(schedule).getAllByRole('article')
     expect(events).toHaveLength(8)
@@ -171,6 +173,10 @@ describe('Voyage multi-page guest journeys', () => {
     expect(
       within(events[0] as HTMLElement).getByRole('link', { name: /directions/i })
     ).toHaveAttribute('href', expect.stringContaining('Venue%200'))
+    expect(screen.getByRole('heading', { name: 'Getting to the celebrations' })).toBeInTheDocument()
+
+    rerender(<VoyageContentPage page='travel' weddingData={wedding} path='/w/couple' />)
+    expect(screen.queryByRole('heading', { name: 'Getting to the celebrations' })).toBeNull()
   })
 
   it('does not invent missing event details or dress codes', () => {
