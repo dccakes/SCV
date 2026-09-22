@@ -120,4 +120,22 @@ describe('WeddingWebsite', () => {
 
     expect(screen.getByTestId('mobile-page')).toHaveTextContent('/w/shrek-and-fiona')
   })
+
+  it('keeps the personalized banner visible for a recognized household', async () => {
+    render(
+      await WeddingWebsite({
+        websiteSubUrl: 'shrek-and-fiona',
+        weddingData: createWeddingData({ websiteBuilderEnabled: true }),
+        invitedHousehold: {
+          guestFirstNames: ['Donkey', 'Dragon'],
+          greeting: 'Donkey & Dragon',
+        },
+      })
+    )
+
+    expect(screen.getByRole('complementary', { name: 'Personalized welcome' })).toHaveTextContent(
+      'Welcome, Donkey & Dragon'
+    )
+    expect(screen.getByTestId('full-page')).toBeInTheDocument()
+  })
 })

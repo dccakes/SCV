@@ -25,7 +25,7 @@ export function VoyageSiteShell({
 }) {
   const identity = coupleIdentity(weddingData)
   return (
-    <div className='min-h-screen bg-background text-foreground'>
+    <div className='relative min-h-screen bg-background text-foreground'>
       <VoyageNavbar
         {...identity}
         path={path}

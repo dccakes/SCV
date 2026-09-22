@@ -160,8 +160,9 @@ export function VoyageMexicoCity() {
           <div className='space-y-3'>
             <h3 className={`${headingFont} text-2xl`}>Getting around</h3>
             <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
-              Walk within each neighbourhood; use Uber or a hotel-arranged taxi between areas.
-              ECOBICI and Turibus are other ways to explore. Allow extra time for city traffic.
+              Walk within each neighbourhood; use Uber or a hotel-arranged taxi between areas. We do
+              not recommend using public transportation within Mexico City. Allow extra time for
+              city traffic.
             </p>
           </div>
           <div className='space-y-3'>

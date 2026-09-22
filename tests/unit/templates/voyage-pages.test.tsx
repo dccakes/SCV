@@ -47,6 +47,15 @@ const wedding = {
 } as unknown as WeddingPageData
 
 describe('Voyage multi-page guest journeys', () => {
+  it('overlays the home navigation on the hero image', () => {
+    const { rerender } = render(<VoyageHome weddingData={wedding} path='/w/couple' />)
+
+    expect(screen.getByRole('banner')).toHaveClass('absolute', 'bg-transparent')
+
+    rerender(<VoyageContentPage page='travel' weddingData={wedding} path='/w/couple' />)
+    expect(screen.getByRole('banner')).toHaveClass('sticky', 'bg-background/95')
+  })
+
   it('offers direct task links without putting destination guides on home', () => {
     const { container } = render(<VoyageHome weddingData={wedding} path='/w/couple' />)
     expect(screen.getByRole('link', { name: /Book Your Stay/i })).toHaveAttribute(
@@ -207,11 +216,13 @@ describe('Voyage multi-page guest journeys', () => {
     )
   })
 
-  it('provides contact copy and an inactive WhatsApp placeholder', () => {
+  it('provides contact copy and the WhatsApp community link', () => {
     render(<VoyageContentPage page='faq' weddingData={wedding} path='/w/couple' />)
     expect(screen.getByText(/contact Holly or Diego/)).toBeInTheDocument()
-    expect(screen.getByText('Invite link coming soon')).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /Join.*WhatsApp/i })).toBeNull()
+    expect(screen.getByRole('link', { name: /Join.*WhatsApp/i })).toHaveAttribute(
+      'href',
+      'https://chat.whatsapp.com/IOxwS7icvCoEclNlRBbvwa?mode=gi_t'
+    )
   })
 
   it('preserves configured FAQ answers alongside related page links', () => {

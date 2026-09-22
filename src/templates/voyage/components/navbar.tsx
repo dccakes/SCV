@@ -23,14 +23,18 @@ type Props = {
   current: VoyageLocation
   rsvpEnabled: boolean
 }
-const linkClass = `${labelFont} flex min-h-11 items-center px-3 py-2 text-[0.62rem] uppercase tracking-[0.24em] transition-colors hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary`
-
 export function VoyageNavbar({ monogram, coupleNames, path, current, rsvpEnabled }: Props) {
   const [open, setOpen] = useState(false)
   const [dropdown, setDropdown] = useState<'explore' | 'more' | null>(null)
   const menuId = useId()
   const menuButton = useRef<HTMLButtonElement>(null)
   const header = useRef<HTMLElement>(null)
+  const isHome = current === 'home'
+  const linkClass = `${labelFont} flex min-h-11 items-center px-3 py-2 text-[0.62rem] uppercase tracking-[0.24em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 ${
+    isHome
+      ? 'text-[#F7F3EC]/90 hover:text-[#EFE0D2] focus-visible:outline-[#F7F3EC]'
+      : 'hover:text-primary focus-visible:outline-primary'
+  }`
 
   useEffect(() => {
     function dismiss(event: KeyboardEvent) {
@@ -66,7 +70,11 @@ export function VoyageNavbar({ monogram, coupleNames, path, current, rsvpEnabled
         href={`${path}/${page}`}
         onClick={close}
         aria-current={current === page ? 'page' : undefined}
-        className={`${linkClass} ${current === page ? 'font-semibold text-primary underline underline-offset-4' : ''}`}
+        className={`${linkClass} ${
+          current === page
+            ? `font-semibold underline underline-offset-4 ${isHome ? 'text-[#EFE0D2]' : 'text-primary'}`
+            : ''
+        }`}
       >
         {voyagePages[page].title}
       </Link>
@@ -76,7 +84,11 @@ export function VoyageNavbar({ monogram, coupleNames, path, current, rsvpEnabled
   return (
     <header
       ref={header}
-      className='sticky top-0 z-40 border-border border-b bg-background/95 text-foreground backdrop-blur-md'
+      className={
+        isHome
+          ? 'absolute inset-x-0 top-0 z-40 border-transparent border-b bg-transparent text-[#F7F3EC]'
+          : 'sticky top-0 z-40 border-border border-b bg-background/95 text-foreground backdrop-blur-md'
+      }
     >
       <a
         href='#page-content'
@@ -109,14 +121,24 @@ export function VoyageNavbar({ monogram, coupleNames, path, current, rsvpEnabled
                   aria-expanded={dropdown === group}
                   aria-controls={`${menuId}-${group}`}
                   onClick={() => setDropdown(dropdown === group ? null : group)}
-                  className={`${linkClass} gap-2 ${pages.some((page) => page === current) ? 'text-primary' : ''}`}
+                  className={`${linkClass} gap-2 ${
+                    pages.some((page) => page === current)
+                      ? isHome
+                        ? 'text-[#EFE0D2]'
+                        : 'text-primary'
+                      : ''
+                  }`}
                 >
                   {group === 'explore' ? 'Things to Do' : 'More'} <span aria-hidden='true'>⌄</span>
                 </button>
                 {dropdown === group ? (
                   <div
                     id={`${menuId}-${group}`}
-                    className='absolute top-full right-0 min-w-56 rounded-sm border border-border bg-background p-2 shadow-lg'
+                    className={`absolute top-full right-0 min-w-56 rounded-sm border p-2 shadow-lg ${
+                      isHome
+                        ? 'border-[#F7F3EC]/20 bg-[#1D2320]/95 text-[#F7F3EC] backdrop-blur-md'
+                        : 'border-border bg-background'
+                    }`}
                   >
                     {pages.map(pageLink)}
                   </div>
@@ -142,7 +164,9 @@ export function VoyageNavbar({ monogram, coupleNames, path, current, rsvpEnabled
             aria-expanded={open}
             aria-controls={menuId}
             onClick={() => setOpen(!open)}
-            className={`${linkClass} gap-2 rounded-[2px] border border-border xl:hidden`}
+            className={`${linkClass} gap-2 rounded-[2px] border xl:hidden ${
+              isHome ? 'border-[#F7F3EC]/40' : 'border-border'
+            }`}
           >
             Menu <span aria-hidden='true'>{open ? '×' : '☰'}</span>
           </button>
@@ -152,7 +176,11 @@ export function VoyageNavbar({ monogram, coupleNames, path, current, rsvpEnabled
         <nav
           id={menuId}
           aria-label='Mobile wedding navigation'
-          className='max-h-[calc(100dvh-5rem)] overflow-y-auto border-border border-t px-6 py-4 xl:hidden'
+          className={`max-h-[calc(100dvh-5rem)] overflow-y-auto border-t px-6 py-4 xl:hidden ${
+            isHome
+              ? 'border-[#F7F3EC]/20 bg-[#1D2320]/95 text-[#F7F3EC] backdrop-blur-md'
+              : 'border-border'
+          }`}
         >
           <Link
             href={path}
@@ -164,12 +192,16 @@ export function VoyageNavbar({ monogram, coupleNames, path, current, rsvpEnabled
           </Link>
           {primaryPages.map(pageLink)}
           <p
-            className={`${labelFont} mt-4 px-3 text-muted-foreground text-xs uppercase tracking-widest`}
+            className={`${labelFont} mt-4 px-3 text-xs uppercase tracking-widest ${
+              isHome ? 'text-[#F7F3EC]/65' : 'text-muted-foreground'
+            }`}
           >
             Things to Do
           </p>
           {explorePages.map(pageLink)}
-          <div className='mt-3 border-border border-t pt-3'>{secondaryPages.map(pageLink)}</div>
+          <div className={`mt-3 border-t pt-3 ${isHome ? 'border-[#F7F3EC]/20' : 'border-border'}`}>
+            {secondaryPages.map(pageLink)}
+          </div>
         </nav>
       ) : null}
     </header>

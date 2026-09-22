@@ -50,7 +50,7 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
       <VoyageLegacyLinks path={path} />
       <HeroBackground url={heroUrl}>
         <div className='flex min-h-[75svh] flex-col'>
-          <div className='mx-auto flex w-full max-w-6xl flex-1 items-center px-6 pt-10 pb-16 lg:items-end lg:px-10'>
+          <div className='mx-auto flex w-full max-w-6xl flex-1 items-center px-6 pt-28 pb-16 lg:items-end lg:px-10'>
             <div className='grid w-full items-center gap-12 lg:grid-cols-12 lg:items-end'>
               <div className='flex flex-col gap-7 lg:col-span-7'>
                 <p className={`${labelFont} text-[#F7F3EC] text-sm tracking-widest`}>

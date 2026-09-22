@@ -70,9 +70,9 @@ export function VoyageContact({ weddingData }: Pick<TemplateSurfaceProps, 'weddi
           <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
             A place for wedding updates and questions as we get closer to the celebration.
           </p>
-          <p className={`${labelFont} text-primary text-xs uppercase tracking-widest`}>
-            Invite link coming soon
-          </p>
+          <OutlineButton external href='https://chat.whatsapp.com/IOxwS7icvCoEclNlRBbvwa?mode=gi_t'>
+            Join the WhatsApp community
+          </OutlineButton>
         </div>
       </div>
     </Band>
