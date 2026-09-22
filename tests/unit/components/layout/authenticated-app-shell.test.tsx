@@ -11,11 +11,6 @@ jest.mock('~/components/nav/sidebar-nav', () => ({
   ),
 }))
 
-jest.mock('@/components/old_dashboard/etta-panel', () => ({
-  __esModule: true,
-  default: () => <div data-testid='etta-panel' />,
-}))
-
 jest.mock('~/components/etta/EttaChat', () => ({
   EttaChat: (props: Record<string, unknown>) => {
     mockEttaChat(props)
