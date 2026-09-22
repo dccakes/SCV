@@ -41,14 +41,16 @@ export default function EventsTabs({ events, selectedEventId }: EventsTabsProps)
             </li>
           )
         })}
-        <Button
-          variant='ghost'
-          size='sm'
-          className='text-primary'
-          onClick={() => toggleEventForm()}
-        >
-          + New Event
-        </Button>
+        <li>
+          <Button
+            variant='ghost'
+            size='sm'
+            className='text-primary'
+            onClick={() => toggleEventForm()}
+          >
+            + New Event
+          </Button>
+        </li>
       </ul>
       <div className='border-border border-t' />
     </>
