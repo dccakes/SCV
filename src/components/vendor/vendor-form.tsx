@@ -186,10 +186,11 @@ export function VendorForm(props: Readonly<VendorFormProps>) {
           </span>
           <Input
             id='vendor-website'
-            type='url'
+            type='text'
+            inputMode='url'
             value={website}
             onChange={(e) => setWebsite(e.target.value)}
-            placeholder='https://...'
+            placeholder='https://example.com'
           />
         </label>
         <label className='space-y-1' htmlFor='vendor-instagram'>
