@@ -5,21 +5,11 @@ import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 import { VendorCard } from '~/components/vendor/vendor-card'
 import { VendorCategoryConfigEditor } from '~/components/vendor/vendor-category-config-editor'
+import { VENDOR_CATEGORY_LABELS } from '~/components/vendor/vendor-constants'
 import { VendorForm } from '~/components/vendor/vendor-form'
 import type { VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
 
 type VendorCategory = VendorWithQuotes['category']
-
-const CATEGORY_LABELS: Record<VendorCategory, string> = {
-  VENUE: 'Venue',
-  CATERING: 'Catering',
-  PHOTOGRAPHER: 'Photographer',
-  VIDEOGRAPHER: 'Videographer',
-  MUSIC: 'Music',
-  FLOWERS: 'Flowers',
-  ACCOMMODATION: 'Accommodation',
-  OTHER: 'Other',
-}
 
 export const STATUS_SORT_ORDER: Record<VendorWithQuotes['status'], number> = {
   SELECTED: 0,
@@ -69,7 +59,7 @@ export function VendorCategorySection({
       {/* Section label with hairline rule */}
       <div className='mb-3 flex items-center gap-3'>
         <h2 className='shrink-0 font-mono text-[0.62rem] text-muted-foreground uppercase tracking-widest'>
-          {CATEGORY_LABELS[category]}
+          {VENDOR_CATEGORY_LABELS[category]}
         </h2>
         <span className='h-px flex-1 bg-border' aria-hidden='true' />
         <Button
@@ -113,7 +103,7 @@ export function VendorCategorySection({
         <DialogContent className='max-h-[85vh] overflow-y-auto sm:max-w-lg'>
           <DialogHeader>
             <DialogTitle className='font-display text-xl italic'>
-              Add {CATEGORY_LABELS[category]}
+              Add {VENDOR_CATEGORY_LABELS[category]}
             </DialogTitle>
           </DialogHeader>
           <VendorForm
