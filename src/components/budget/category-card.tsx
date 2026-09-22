@@ -121,20 +121,18 @@ function ExpenseRow({
             </p>
           ) : null}
         </div>
-        <button
-          type='button'
-          onClick={onEdit}
-          className='text-muted-foreground text-xs underline-offset-2 hover:text-foreground hover:underline'
-        >
+        <Button type='button' variant='ghost' size='sm' onClick={onEdit}>
           Edit
-        </button>
-        <button
+        </Button>
+        <Button
           type='button'
+          variant='ghost'
+          size='sm'
           onClick={onDelete}
-          className='text-muted-foreground text-xs underline-offset-2 hover:text-destructive hover:underline'
+          className='hover:text-destructive'
         >
           Delete
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -193,21 +191,19 @@ function ExpenseTable({
                 <TimingLine expense={expense} />
               </td>
               <td className='py-2.5 align-top'>
-                <div className='flex items-center justify-end gap-2'>
-                  <button
-                    type='button'
-                    onClick={() => onEdit(expense)}
-                    className='text-muted-foreground text-xs underline-offset-2 hover:text-foreground hover:underline'
-                  >
+                <div className='flex items-center justify-end gap-1'>
+                  <Button type='button' variant='ghost' size='sm' onClick={() => onEdit(expense)}>
                     Edit
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type='button'
+                    variant='ghost'
+                    size='sm'
                     onClick={() => onDelete(expense.id)}
-                    className='text-muted-foreground text-xs underline-offset-2 hover:text-destructive hover:underline'
+                    className='hover:text-destructive'
                   >
                     Delete
-                  </button>
+                  </Button>
                 </div>
               </td>
             </tr>
@@ -323,20 +319,23 @@ export function CategoryCard({ category, currency, view }: Readonly<CategoryCard
                 : `${formatCurrency(totals.netSpend, currency)} spent · no budget set`}
             </p>
             <div className='flex items-center gap-2'>
-              <button
+              <Button
                 type='button'
+                variant='ghost'
+                size='sm'
                 onClick={() => setShowEditCategory(true)}
-                className='text-muted-foreground text-xs underline-offset-2 hover:text-foreground hover:underline'
               >
                 Edit
-              </button>
-              <button
+              </Button>
+              <Button
                 type='button'
+                variant='ghost'
+                size='sm'
                 onClick={() => setConfirmDeleteCategory(true)}
-                className='text-muted-foreground text-xs underline-offset-2 hover:text-destructive hover:underline'
+                className='hover:text-destructive'
               >
                 Delete
-              </button>
+              </Button>
             </div>
           </div>
 

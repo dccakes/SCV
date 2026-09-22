@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { useMemo, useState } from 'react'
 import { AiOutlineCalendar } from 'react-icons/ai'
 import { IoIosCheckmarkCircleOutline } from 'react-icons/io'
@@ -19,6 +20,7 @@ export default function EventRsvpForm({
   event,
   invitedGuests,
 }: EventRsvpFormProps) {
+  const tCommon = useTranslations('common')
   const rsvpFormData = useRsvpForm()
   const updateRsvpForm = useUpdateRsvpForm()
   const existingResponsesForEvent = useMemo(() => {
@@ -85,14 +87,14 @@ export default function EventRsvpForm({
           goNext?.()
         }}
       >
-        CONTINUE
+        {tCommon('continue')}
       </button>
       <button
         className={`mt-3 bg-gray-700 py-3 text-white text-xl tracking-wide`}
         type='submit'
         onClick={() => goBack?.()}
       >
-        BACK
+        {tCommon('back')}
       </button>
     </div>
   )
@@ -107,6 +109,7 @@ type RsvpSelectionProps = {
 }
 
 function RsvpSelection({ eventId, guestId, guestName, response, onSelect }: RsvpSelectionProps) {
+  const t = useTranslations('rsvp')
   const selectedRsvp = response?.rsvp
 
   const handleOnSelect = (selection: 'Attending' | 'Declined') => {
@@ -126,7 +129,7 @@ function RsvpSelection({ eventId, guestId, guestName, response, onSelect }: Rsvp
         onClick={() => handleOnSelect('Attending')}
       >
         {selectedRsvp === 'Attending' && <IoIosCheckmarkCircleOutline size={20} />}
-        Accept{selectedRsvp === 'Attending' && 'ed'}
+        {selectedRsvp === 'Attending' ? t('accepted') : t('accept')}
       </button>
       <button
         type='button'
@@ -134,7 +137,7 @@ function RsvpSelection({ eventId, guestId, guestName, response, onSelect }: Rsvp
         onClick={() => handleOnSelect('Declined')}
       >
         {selectedRsvp === 'Declined' && <IoIosCheckmarkCircleOutline size={20} />}
-        Decline{selectedRsvp === 'Declined' && 'd'}
+        {selectedRsvp === 'Declined' ? t('declined') : t('decline')}
       </button>
     </div>
   )

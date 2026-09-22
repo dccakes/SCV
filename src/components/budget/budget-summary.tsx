@@ -167,7 +167,7 @@ function BudgetSettingsDialog({
               Cancel
             </Button>
             <Button type='submit' disabled={isPending}>
-              Save
+              {isPending ? 'Saving...' : 'Save'}
             </Button>
           </div>
         </form>

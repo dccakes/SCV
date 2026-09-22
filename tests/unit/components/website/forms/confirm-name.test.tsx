@@ -2,6 +2,19 @@ import { fireEvent, render, screen } from '@testing-library/react'
 
 import ConfirmNameForm from '~/components/website/forms/steps/confirm-name'
 
+const translations: Record<string, string> = {
+  'common.continue': 'CONTINUE',
+  'rsvp.foundInGuestList': 'FOUND IN GUEST LIST',
+  'rsvp.notYou': 'NOT YOU?',
+  'rsvp.recognizedInvitation': 'RECOGNIZED INVITATION',
+  'rsvp.searchAgain': 'SEARCH AGAIN',
+}
+
+jest.mock('next-intl', () => ({
+  useTranslations: (namespace: string) => (key: string) =>
+    translations[`${namespace}.${key}`] ?? key,
+}))
+
 const mockUpdateRsvpForm = jest.fn()
 let mockFormState: {
   matchedHouseholds?: unknown[]

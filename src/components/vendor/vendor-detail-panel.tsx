@@ -5,13 +5,12 @@ import { Clock, Pencil, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { toast } from 'sonner'
-
+import { formatCurrency } from '~/components/budget/format'
 import {
   SIDE_PANE_DIALOG_WIDTH_CLASS,
   SIDE_PANE_OVERLAY_CLASS,
   SIDE_PANE_SURFACE_CLASS,
 } from '~/components/layout/side-pane-styles'
-import { formatCurrency } from '~/components/budget/format'
 import {
   AlertDialog,
   AlertDialogAction,

@@ -2,6 +2,26 @@ import { fireEvent, render, screen } from '@testing-library/react'
 
 import QuestionMultipleChoice from '~/components/website/forms/steps/question-multiple-choice'
 
+const questionsTranslations: Record<string, string> = {
+  other: 'Other',
+  otherDescription: 'Enter your own answer',
+  otherPlaceholder: 'Please share your answer',
+}
+
+const commonTranslations: Record<string, string> = {
+  continue: 'CONTINUE',
+  skip: 'SKIP',
+  back: 'BACK',
+}
+
+jest.mock('next-intl', () => ({
+  useTranslations: (namespace: string) => (key: string) => {
+    if (namespace === 'questions') return questionsTranslations[key] ?? key
+    if (namespace === 'common') return commonTranslations[key] ?? key
+    return key
+  },
+}))
+
 const mockUpdateRsvpForm = jest.fn()
 let mockRsvpFormData: {
   selectedHousehold: {

@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { generateTimes } from '~/app/utils/helpers'
 import { useOuterClick } from '~/components/hooks'
 
