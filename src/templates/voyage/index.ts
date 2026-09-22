@@ -3,9 +3,8 @@
  *
  * A refined luxury destination-wedding editorial: a cinematic hero over warm
  * ivory, soft-black ink, champagne-gold accents and a high-contrast display
- * serif. Its long-scroll home page composes the content sections into an
- * editorial layout — story timeline, destination feature, weekend itinerary,
- * curated experiences, travel & stay, gallery and a registry / RSVP close.
+ * serif. A concise editorial home links to dedicated wedding weekend, stay,
+ * travel, destination guide, story, FAQ and registry pages.
  *
  * Voyage's surfaces are responsive, so the same Home layout serves desktop and
  * mobile.

@@ -1,7 +1,12 @@
 import { render, screen, within } from '@testing-library/react'
 
 import { VoyageHome } from '~/templates/voyage/components/home'
-import { VoyageExploreMexico, VoyageZocalo } from '~/templates/voyage/components/mexico-guide'
+import { VoyageMexicoCity } from '~/templates/voyage/components/mexico-city'
+import {
+  VoyageExploreMexico,
+  VoyagePracticalInfo,
+  VoyageZocalo,
+} from '~/templates/voyage/components/mexico-guide'
 
 const baseWedding = {
   groomFirstName: 'John',
@@ -41,11 +46,11 @@ describe('VoyageZocalo', () => {
     expect(screen.getByText(/^Cholula/)).toBeInTheDocument()
   })
 
-  it('renders the practical arrival notes, including the museum closing days', () => {
+  it('keeps museum notes local and moves airport advice to Travel', () => {
     render(<VoyageZocalo />)
 
     expect(screen.getByText('Good to Know')).toBeInTheDocument()
-    expect(screen.getByText('Getting here from the airport')).toBeInTheDocument()
+    expect(screen.queryByText('Getting here from the airport')).toBeNull()
     expect(screen.getByText('A word on Mondays')).toBeInTheDocument()
     // Museo Amparo is the exception to the Monday rule; guests need both facts.
     expect(screen.getByText(/closes on Tuesday/)).toBeInTheDocument()
@@ -103,13 +108,62 @@ describe('VoyageExploreMexico', () => {
 })
 
 describe('VoyageHome Mexico guide', () => {
-  it('renders both guide bands and links to them from the nav', () => {
+  it('links to focused guide pages instead of rendering both on home', () => {
     const { container } = render(<VoyageHome path='/w/x' weddingData={baseWedding as never} />)
 
-    expect(container.querySelector('#zocalo')).not.toBeNull()
-    expect(container.querySelector('#explore-mexico')).not.toBeNull()
-    // Desktop nav + mobile drawer both render the item.
-    expect(screen.getAllByRole('link', { name: 'Explore Mexico' })).toHaveLength(2)
-    expect(screen.getAllByRole('link', { name: 'Things to Do' })).toHaveLength(2)
+    expect(container.querySelector('#zocalo')).toBeNull()
+    expect(container.querySelector('#explore-mexico')).toBeNull()
+    expect(screen.getAllByRole('link', { name: 'Explore Mexico' })[0]).toHaveAttribute(
+      'href',
+      '/w/x/mexico'
+    )
+    expect(screen.getAllByRole('link', { name: 'Explore Puebla' })[0]).toHaveAttribute(
+      'href',
+      '/w/x/puebla'
+    )
+  })
+})
+
+it('keeps general packing guidance separate from the dedicated transfer section', () => {
+  render(<VoyagePracticalInfo />)
+  expect(screen.queryByText('Getting here from the airport')).toBeNull()
+  expect(screen.getByText('What to pack')).toBeInTheDocument()
+  expect(screen.queryByText('A word on Mondays')).toBeNull()
+})
+
+describe('VoyageMexicoCity', () => {
+  it('renders neighbourhood cards with collapsed culture and food recommendations', () => {
+    render(<VoyageMexicoCity />)
+
+    for (const name of [
+      'Chapultepec & Polanco',
+      'Centro Histórico',
+      'Paseo de la Reforma',
+      'Coyoacán',
+      'Teotihuacán',
+      'San Ángel',
+    ]) {
+      expect(screen.getByRole('heading', { name })).toBeInTheDocument()
+    }
+
+    const chapultepecCard = screen
+      .getByRole('heading', { name: 'Chapultepec & Polanco' })
+      .closest('article') as HTMLElement
+    const centroCard = screen
+      .getByRole('heading', { name: 'Centro Histórico' })
+      .closest('article') as HTMLElement
+    const culture = within(chapultepecCard).getByText('Culture').closest('details')
+    const food = within(centroCard).getByText('Food').closest('details')
+
+    expect(culture).not.toBeNull()
+    expect(food).not.toBeNull()
+    expect(culture).not.toHaveAttribute('open')
+    expect(food).not.toHaveAttribute('open')
+    expect(
+      within(culture as HTMLElement).getByText('Museo Tamayo — Contemporary art museum')
+    ).toBeInTheDocument()
+    expect(
+      within(food as HTMLElement).getByText('El Cardenal — Traditional Mexican restaurant')
+    ).toBeInTheDocument()
   })
 })

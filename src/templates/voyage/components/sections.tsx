@@ -127,11 +127,11 @@ export function VoyageOurStory({
           <Eyebrow>About Us</Eyebrow>
           <h2 className={`${sectionHeadingClass} leading-tight`}>
             {content.heading}
-            <IconHeart className='ml-3 inline-block h-6 w-6 align-middle text-[#B15C41]' />
+            <IconHeart className='ml-3 inline-block h-6 w-6 align-middle text-primary' />
           </h2>
           <GoldRule className='self-start' />
           <Prose text={content.body} className='max-w-xl' />
-          <p className={`${scriptFont} text-3xl text-[#B15C41]`}>
+          <p className={`${scriptFont} text-3xl text-primary`}>
             Thank you for being part of our story.
           </p>
         </div>
@@ -155,7 +155,7 @@ export function VoyageOurStory({
               />
             ) : (
               <div className='absolute inset-0 flex items-center justify-center bg-[#EFE7DA]'>
-                <BotanicalSprig className='h-2/3 w-auto text-[#B15C41]/30' />
+                <BotanicalSprig className='h-2/3 w-auto text-primary/30' />
               </div>
             )}
           </div>
@@ -194,17 +194,17 @@ export function VoyageTimeline({ content }: { content: TimelineSectionContent })
               {index > 0 ? (
                 <IconHeart
                   aria-hidden='true'
-                  className='absolute top-[-0.2rem] -left-3 hidden h-4 w-4 -translate-x-1/2 text-[#B15C41]/80 lg:block'
+                  className='absolute top-[-0.2rem] -left-3 hidden h-4 w-4 -translate-x-1/2 text-primary/80 lg:block'
                 />
               ) : null}
               <span
                 aria-hidden='true'
                 className='h-2 w-2 rounded-full border border-[#B15C41] bg-[#FBF8F2] ring-4 ring-[#FBF8F2]'
               />
-              <span className={`${headingFont} font-light text-3xl text-[#B15C41]`}>
+              <span className={`${headingFont} font-light text-3xl text-primary`}>
                 {milestone.year}
               </span>
-              <span className={`${headingFont} text-[#B15C41] text-xl italic`}>
+              <span className={`${headingFont} text-primary text-xl italic`}>
                 {milestone.title}
               </span>
               <Decor
@@ -253,7 +253,7 @@ export function VoyageDestination({ content }: { content: DestinationSectionCont
             />
           ) : (
             <div className='absolute inset-0 flex items-center justify-center bg-[#EFE7DA]'>
-              <BotanicalSprig className='h-2/3 w-auto text-[#B15C41]/30' />
+              <BotanicalSprig className='h-2/3 w-auto text-primary/30' />
             </div>
           )}
         </div>
@@ -269,7 +269,7 @@ export function VoyageDestination({ content }: { content: DestinationSectionCont
           <Eyebrow>{content.eyebrow ?? 'The Destination'}</Eyebrow>
           <h2 className={`${sectionHeadingClass} leading-tight`}>
             {content.heading}
-            <IconHeart className='ml-3 inline-block h-6 w-6 align-middle text-[#B15C41]' />
+            <IconHeart className='ml-3 inline-block h-6 w-6 align-middle text-primary' />
             {content.location ? (
               <span className='mt-1 block text-[#6F675D] italic'>{content.location}</span>
             ) : null}
@@ -341,7 +341,7 @@ export function VoyageExperiences({ content }: { content: ExperiencesSectionCont
                   />
                 ) : (
                   <div className='flex h-full items-center justify-center'>
-                    <BotanicalSprig className='h-1/2 w-auto text-[#B15C41]/30' />
+                    <BotanicalSprig className='h-1/2 w-auto text-primary/30' />
                   </div>
                 )}
               </div>
@@ -383,7 +383,7 @@ function WeddingPartyCard({ member, anchorId }: { member: WeddingPartyMember; an
           />
         ) : (
           <div className='flex h-full items-center justify-center'>
-            <span className={`${headingFont} text-5xl text-[#B15C41]`}>{initial}</span>
+            <span className={`${headingFont} text-5xl text-primary`}>{initial}</span>
           </div>
         )}
       </div>
@@ -393,7 +393,7 @@ function WeddingPartyCard({ member, anchorId }: { member: WeddingPartyMember; an
       <p className={`${bodyFont} text-[#6F675D] text-sm italic`}>{member.role}</p>
       {member.blurb ? (
         <span
-          className={`${labelFont} mt-0.5 text-[#B15C41] text-[0.56rem] uppercase tracking-[0.18em]`}
+          className={`${labelFont} mt-0.5 text-[0.56rem] text-primary uppercase tracking-[0.18em]`}
         >
           Read more
         </span>
@@ -439,13 +439,13 @@ function WeddingPartyCard({ member, anchorId }: { member: WeddingPartyMember; an
               />
             ) : (
               <div className='flex h-full items-center justify-center'>
-                <span className={`${headingFont} text-6xl text-[#B15C41]`}>{initial}</span>
+                <span className={`${headingFont} text-6xl text-primary`}>{initial}</span>
               </div>
             )}
           </div>
           <div className='flex flex-1 flex-col gap-3 p-7 text-left sm:p-8'>
             <p className={`${headingFont} text-2xl text-[#1D2320]`}>{member.name}</p>
-            <p className={`${labelFont} text-[#B15C41] text-[0.62rem] uppercase tracking-[0.24em]`}>
+            <p className={`${labelFont} text-[0.62rem] text-primary uppercase tracking-[0.24em]`}>
               {member.role}
             </p>
             <GoldRule className='self-start' />
@@ -493,7 +493,7 @@ export function VoyageWeddingParty({ content }: { content: WeddingPartySectionCo
               <Fragment key={`${member.name}-${member.role}`}>
                 {content.members.length >= 4 && index === midpoint ? (
                   <div className='hidden flex-col items-center justify-center gap-4 rounded-[3px] border border-[#DDD2C0] bg-[#FBF8F2] px-4 py-8 text-center lg:flex'>
-                    <p className={`${scriptFont} text-2xl text-[#B15C41] leading-snug`}>
+                    <p className={`${scriptFont} text-2xl text-primary leading-snug`}>
                       Thank you for being our people.
                     </p>
                     <Decor
@@ -561,7 +561,7 @@ const BLURB_LINK =
   /\[([^\]]+)\]\((https?:\/\/[^\s)]+|mailto:[^\s)]+)\)|(https?:\/\/[^\s]+|mailto:[^\s]+)/g
 
 /** Render blurb text with any URLs/`[label](url)` turned into inline links. */
-function LinkifiedBlurb({ text, className = '' }: { text: string; className?: string }) {
+export function LinkifiedBlurb({ text, className = '' }: { text: string; className?: string }) {
   const nodes: ReactNode[] = []
   const regex = new RegExp(BLURB_LINK.source, 'g')
   let lastIndex = 0
@@ -579,7 +579,7 @@ function LinkifiedBlurb({ text, className = '' }: { text: string; className?: st
         key={key++}
         href={url}
         {...(isMail ? {} : { target: '_blank', rel: 'noreferrer' })}
-        className='text-[#B15C41] underline underline-offset-2 transition-colors hover:text-[#8A4530]'
+        className='text-primary underline underline-offset-2 transition-colors hover:text-[#8A4530]'
       >
         {label}
       </a>
@@ -613,7 +613,7 @@ function StayCard({ stay, anchorId }: { stay: TravelStay; anchorId: string }) {
           />
         ) : (
           <div className='flex h-full items-center justify-center'>
-            <BotanicalSprig className='h-1/2 w-auto text-[#B15C41]/30' />
+            <BotanicalSprig className='h-1/2 w-auto text-primary/30' />
           </div>
         )}
       </div>
@@ -626,7 +626,7 @@ function StayCard({ stay, anchorId }: { stay: TravelStay; anchorId: string }) {
         ) : null}
         {stay.blurb ? (
           <span
-            className={`${labelFont} mt-1 text-[#B15C41] text-[0.56rem] uppercase tracking-[0.18em]`}
+            className={`${labelFont} mt-1 text-[0.56rem] text-primary uppercase tracking-[0.18em]`}
           >
             Read more
           </span>
@@ -677,7 +677,7 @@ function StayCard({ stay, anchorId }: { stay: TravelStay; anchorId: string }) {
               />
             ) : (
               <div className='flex h-full items-center justify-center'>
-                <BotanicalSprig className='h-1/2 w-auto text-[#B15C41]/30' />
+                <BotanicalSprig className='h-1/2 w-auto text-primary/30' />
               </div>
             )}
           </div>
@@ -693,7 +693,7 @@ function StayCard({ stay, anchorId }: { stay: TravelStay; anchorId: string }) {
                 href={stay.url}
                 target='_blank'
                 rel='noreferrer'
-                className={`${labelFont} mt-2 inline-flex w-fit items-center gap-2 rounded-[2px] bg-[#B15C41] px-5 py-2.5 text-[#FBF8F2] text-[0.62rem] uppercase tracking-[0.2em] transition-colors hover:bg-[#8A4530]`}
+                className={`${labelFont} mt-2 inline-flex w-fit items-center gap-2 rounded-[2px] bg-primary px-5 py-2.5 text-[#FBF8F2] text-[0.62rem] uppercase tracking-[0.2em] transition-colors hover:bg-[#8A4530]`}
               >
                 {stay.buttonLabel?.trim() || 'Visit Website'}
               </a>
@@ -739,7 +739,7 @@ function FaqContent({ content }: { content: FaqSectionContent }) {
           >
             <summary className='flex cursor-pointer list-none items-center justify-between gap-4 [&::-webkit-details-marker]:hidden'>
               <span className={`${headingFont} text-[#1D2320] text-lg`}>{item.question}</span>
-              <IconPlus className='h-4 w-4 shrink-0 text-[#B15C41] transition-transform duration-300 group-open:rotate-45' />
+              <IconPlus className='h-4 w-4 shrink-0 text-primary transition-transform duration-300 group-open:rotate-45' />
             </summary>
             <p className={`${bodyFont} mt-2.5 text-[#6F675D] text-[0.98rem] leading-7`}>
               {item.answer}
@@ -847,7 +847,7 @@ export function VoyageRegistry({ content }: { content: RegistrySectionContent })
               href={link.url}
               target='_blank'
               rel='noreferrer'
-              className={`${labelFont} inline-flex items-center gap-2 rounded-[2px] border border-[#1D2320]/30 px-5 py-2.5 text-[#1D2320] text-[0.64rem] uppercase tracking-[0.22em] transition-colors hover:border-[#B15C41] hover:text-[#B15C41]`}
+              className={`${labelFont} inline-flex items-center gap-2 rounded-[2px] border border-[#1D2320]/30 px-5 py-2.5 text-[#1D2320] text-[0.64rem] uppercase tracking-[0.22em] transition-colors hover:border-[#B15C41] hover:text-primary`}
             >
               {link.label}
               <IconArrow className='h-4 w-4' />

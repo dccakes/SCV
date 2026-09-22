@@ -6,8 +6,9 @@ export function register() {
 }
 
 export const onRequestError: Instrumentation.onRequestError = async (err, request, context) => {
-  process.stderr.write(
-    `${JSON.stringify({
+  // biome-ignore lint/suspicious/noConsole: console.error is available in both Node.js and Edge runtimes.
+  console.error(
+    JSON.stringify({
       digest: (err as Error & { digest?: string }).digest,
       message: (err as Error).message,
       method: request.method,
@@ -16,6 +17,6 @@ export const onRequestError: Instrumentation.onRequestError = async (err, reques
       routeType: context.routeType,
       routerKind: context.routerKind,
       tag: 'scv:error',
-    })}\n`
+    })
   )
 }

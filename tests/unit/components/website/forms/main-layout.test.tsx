@@ -154,6 +154,19 @@ describe('Main RSVP layout', () => {
     expect(sharedStyles.sidebarFormWidth).not.toContain('w-[525px]')
   })
 
+  it('keeps progress in normal flow when embedded below wedding navigation', () => {
+    render(
+      <MainRsvpForm
+        weddingData={{ events: [], website: { generalQuestions: [] } } as never}
+        basePath='/wedding'
+        embedded
+      />
+    )
+    const progress = screen.getByRole('heading', { name: 'RSVP' }).parentElement
+    expect(progress).not.toHaveClass('fixed')
+    expect(progress).toHaveClass('relative')
+  })
+
   it('renders inline submit errors without using window alert', () => {
     const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => undefined)
 

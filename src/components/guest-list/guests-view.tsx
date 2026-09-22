@@ -342,9 +342,15 @@ export default function GuestsView({
         const canonicalGuest =
           member.id !== undefined ? canonicalGuestsById.get(member.id) : undefined
         const invites: FormInvites = {}
-        canonicalGuest?.invitations.forEach((invitation) => {
-          invites[invitation.eventId] = invitation.rsvp ?? 'Not Invited'
-        })
+        if (canonicalGuest) {
+          canonicalGuest.invitations.forEach((invitation) => {
+            invites[invitation.eventId] = invitation.rsvp ?? 'Not Invited'
+          })
+        } else {
+          events.forEach((event) => {
+            invites[event.id] = 'Not Invited'
+          })
+        }
 
         return {
           guestId: member.id,
@@ -467,7 +473,7 @@ export default function GuestsView({
         )
       })
     },
-    [selectedCanonicalHousehold, selectedHousehold, updateHouseholdMutation, utils]
+    [events, selectedCanonicalHousehold, selectedHousehold, updateHouseholdMutation, utils]
   )
 
   const selectedEvent = useMemo(

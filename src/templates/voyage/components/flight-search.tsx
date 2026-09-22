@@ -17,6 +17,7 @@ import {
   Eyebrow,
   GoldRule,
   labelFont,
+  primaryButtonClass,
   sectionHeadingClass,
 } from '~/templates/voyage/components/primitives'
 
@@ -119,7 +120,7 @@ export function VoyageFlightSearch({
                             {airport.city}, {airport.country}
                           </span>
                         </span>
-                        <span className={`${labelFont} text-[#B15C41] text-xs tracking-[0.1em]`}>
+                        <span className={`${labelFont} text-primary text-xs tracking-[0.1em]`}>
                           {airport.code}
                         </span>
                       </button>
@@ -155,7 +156,7 @@ export function VoyageFlightSearch({
               type='button'
               onClick={handleSearch}
               disabled={!canSearch}
-              className={`${labelFont} inline-flex items-center justify-center gap-2 rounded-[2px] bg-[#B15C41] px-8 py-3.5 text-[#F7F3EC] text-[0.68rem] uppercase tracking-[0.28em] transition-colors duration-300 hover:bg-[#92462F] disabled:cursor-not-allowed disabled:opacity-40`}
+              className={`${primaryButtonClass} disabled:cursor-not-allowed disabled:opacity-40`}
             >
               Search Flights
             </button>

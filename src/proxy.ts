@@ -2,6 +2,7 @@ import { getSessionCookie } from 'better-auth/cookies'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { getLocaleFromCountry, type Locale } from '~/lib/locale/locale-detection'
+import { isVoyagePage } from '~/templates/voyage/site'
 
 const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/join', '/blog', '/api/webhooks', '/api/cron']
 
@@ -60,6 +61,8 @@ const isPublicWebsitePath = (pathname: string): boolean => {
     const slug = segments[1]
     if (!slug || isReservedSlug(slug)) return false
     if (segments.length === 2) return true
+    // Each content route still enforces website password/invite access itself.
+    if (segments.length === 3 && segments[2] && isVoyagePage(segments[2])) return true
     if (segments.length === 3 && segments[2] === 'rsvp') return true
     if (segments.length === 3 && segments[2] === 'save-the-date') return true
     if (segments.length === 4 && segments[2] === 'save-the-date') return true
