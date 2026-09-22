@@ -28,9 +28,9 @@ test.describe('Public Wedding Website', () => {
   test('should return 404 for non-existent wedding website', async ({ page }) => {
     await page.goto('/non-existent-wedding-url')
 
-    // The app renders a custom "not found" page with "We can't find this page"
+    // The app renders a custom "not found" page
     const body = page.locator('body')
-    await expect(body).toContainText(/can't find this page/i)
+    await expect(body).toContainText(/page not found/i)
   })
 })
 
