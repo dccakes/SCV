@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { resolveInvitedHousehold } from '~/app/w/[websiteSubUrl]/_lib/invited-household'
 import { loadVisitorWedding } from '~/app/w/[websiteSubUrl]/_lib/load-visitor-wedding'
 import { grantWebsiteAccess } from '~/app/w/[websiteSubUrl]/_lib/website-access'
 import PasswordPage from '~/components/website/password-page'
+import { PersonalizedWelcome } from '~/components/website/personalized-welcome'
 import { resolveTemplate, TemplateThemeProvider } from '~/templates'
 import { VoyageContentPage } from '~/templates/voyage/components/content-page'
 import { coupleIdentity, isVoyagePage, voyagePages } from '~/templates/voyage/site'
@@ -31,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function VoyagePageRoute({ params }: Props) {
   const { websiteSubUrl, page } = await params
   if (!isVoyagePage(page)) return notFound()
-  const { loadResult } = await loadVisitorWedding(websiteSubUrl)
+  const { loadResult, inviteToken } = await loadVisitorWedding(websiteSubUrl)
   if (loadResult.status === 'not-found') return notFound()
   if (loadResult.status === 'password-required') {
     async function verifyWebsitePassword(password: string) {
@@ -43,8 +45,10 @@ export default async function VoyagePageRoute({ params }: Props) {
   const { weddingData } = loadResult
   const template = resolveTemplate(weddingData.website.templateId)
   if (template.id !== 'voyage' || !weddingData.websiteBuilderEnabled) return notFound()
+  const invitedHousehold = await resolveInvitedHousehold(websiteSubUrl, inviteToken)
   return (
     <TemplateThemeProvider template={template}>
+      {invitedHousehold ? <PersonalizedWelcome invitedHousehold={invitedHousehold} /> : null}
       <main>
         <VoyageContentPage weddingData={weddingData} path={`/w/${websiteSubUrl}`} page={page} />
       </main>

@@ -3,8 +3,12 @@ import Page, { generateMetadata } from '~/app/w/[websiteSubUrl]/[page]/page'
 
 const mockLoad = jest.fn()
 const mockGrant = jest.fn()
+const mockResolveInvitedHousehold = jest.fn()
 jest.mock('~/app/w/[websiteSubUrl]/_lib/load-visitor-wedding', () => ({
   loadVisitorWedding: (...args: unknown[]) => mockLoad(...args),
+}))
+jest.mock('~/app/w/[websiteSubUrl]/_lib/invited-household', () => ({
+  resolveInvitedHousehold: (...args: unknown[]) => mockResolveInvitedHousehold(...args),
 }))
 jest.mock('~/app/w/[websiteSubUrl]/_lib/website-access', () => ({
   grantWebsiteAccess: (...args: unknown[]) => mockGrant(...args),
@@ -17,6 +21,11 @@ jest.mock('next/navigation', () => ({
 jest.mock('~/components/website/password-page', () => ({
   __esModule: true,
   default: () => <div>Password required</div>,
+}))
+jest.mock('~/components/website/personalized-welcome', () => ({
+  PersonalizedWelcome: ({ invitedHousehold }: { invitedHousehold: { greeting: string } }) => (
+    <div>Welcome, {invitedHousehold.greeting}</div>
+  ),
 }))
 jest.mock('~/templates', () => ({
   resolveTemplate: (id: string) => ({ id }),
@@ -39,12 +48,22 @@ const params = (page = 'stay') => Promise.resolve({ websiteSubUrl: 'couple', pag
 
 beforeEach(() => {
   mockLoad.mockResolvedValue({ loadResult: ready, inviteToken: 'recognized-invite' })
+  mockResolveInvitedHousehold.mockResolvedValue({
+    guestFirstNames: ['Holly', 'Diego'],
+    greeting: 'Holly & Diego',
+  })
 })
 
 it('loads a deep-linked page through the shared visitor access gate', async () => {
   render(await Page({ params: params() }))
   expect(mockLoad).toHaveBeenCalledWith('couple')
   expect(screen.getByText('Page: stay')).toBeInTheDocument()
+})
+it('keeps the recognized household welcome on deep-linked pages', async () => {
+  render(await Page({ params: params('travel') }))
+
+  expect(mockResolveInvitedHousehold).toHaveBeenCalledWith('couple', 'recognized-invite')
+  expect(screen.getByText('Welcome, Holly & Diego')).toBeInTheDocument()
 })
 it('shows only the password gate when access is required', async () => {
   mockLoad.mockResolvedValue({ loadResult: { status: 'password-required' } })
