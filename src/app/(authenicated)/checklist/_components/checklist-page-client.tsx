@@ -395,6 +395,15 @@ export function ChecklistPageClient({
                             >
                               {task.title}
                             </span>
+                            {task.dueDate != null && !task.completed && (
+                              <span className='shrink-0 font-mono text-[0.56rem] text-muted-foreground/60 tracking-[0.12em]'>
+                                {new Intl.DateTimeFormat('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  timeZone: 'UTC',
+                                }).format(new Date(task.dueDate))}
+                              </span>
+                            )}
                             <span className='font-mono text-[0.56rem] text-muted-foreground uppercase tracking-[0.12em]'>
                               {TASK_CATEGORY_LABELS[task.category]}
                             </span>
