@@ -6,6 +6,10 @@ import { getConciergeTools } from '~/lib/etta/tools/concierge'
 import type { EttaContext } from '~/lib/etta/types'
 import { db } from '~/server/db'
 
+jest.mock('~/env', () => ({
+  env: { NEXT_PUBLIC_APP_URL: 'https://oswp.test' },
+}))
+
 jest.mock('~/server/db', () => ({
   db: {
     wedding: { findUnique: jest.fn() },
@@ -13,6 +17,9 @@ jest.mock('~/server/db', () => ({
     faq: { findMany: jest.fn() },
     guestQuestion: { create: jest.fn() },
     invitation: { updateMany: jest.fn() },
+    guest: { findUnique: jest.fn() },
+    household: { findUnique: jest.fn(), update: jest.fn() },
+    website: { findFirst: jest.fn() },
   },
 }))
 
@@ -22,6 +29,9 @@ const mockDb = db as {
   faq: { findMany: jest.Mock }
   guestQuestion: { create: jest.Mock }
   invitation: { updateMany: jest.Mock }
+  guest: { findUnique: jest.Mock }
+  household: { findUnique: jest.Mock; update: jest.Mock }
+  website: { findFirst: jest.Mock }
 }
 
 const mockCtx: EttaContext = {
@@ -114,6 +124,109 @@ describe('getConciergeTools', () => {
       await expect(
         noGuestTools.submit_rsvp.execute({ eventId: 'e1', rsvp: 'Attending' as const }, toolOpts)
       ).rejects.toThrow('Guest context required')
+    })
+  })
+
+  describe('get_my_household', () => {
+    it('returns household members with their RSVP statuses', async () => {
+      mockDb.guest.findUnique.mockResolvedValue({ householdId: 'household-1' })
+      mockDb.household.findUnique.mockResolvedValue({
+        id: 'household-1',
+        guests: [
+          {
+            id: 42,
+            firstName: 'Maria',
+            lastName: 'Lopez',
+            isPrimaryContact: true,
+            invitations: [{ eventId: 'e1', rsvp: 'Attending', event: { name: 'Ceremony' } }],
+          },
+        ],
+      })
+
+      const result = await tools.get_my_household.execute({}, toolOpts)
+
+      expect(result).toEqual({
+        householdId: 'household-1',
+        members: [
+          {
+            firstName: 'Maria',
+            lastName: 'Lopez',
+            isPrimaryContact: true,
+            rsvps: [{ event: 'Ceremony', rsvp: 'Attending' }],
+          },
+        ],
+      })
+    })
+
+    it('throws when no guestId in context', async () => {
+      const noGuestTools = getConciergeTools({ ...mockCtx, guestId: undefined })
+      await expect(noGuestTools.get_my_household.execute({}, toolOpts)).rejects.toThrow(
+        'Guest context required'
+      )
+    })
+  })
+
+  describe('get_invite_link', () => {
+    it('returns the existing invite link when the code is still valid', async () => {
+      mockDb.guest.findUnique.mockResolvedValue({ householdId: 'household-1' })
+      mockDb.household.findUnique.mockResolvedValue({
+        id: 'household-1',
+        weddingId: 'wedding-123',
+        inviteCode: 'ml-abc234',
+        inviteCodeExpiresAt: new Date(Date.now() + 86_400_000),
+        guests: [{ firstName: 'Maria', lastName: 'Lopez' }],
+      })
+      mockDb.website.findFirst.mockResolvedValue({ subUrl: 'maria-and-john' })
+
+      const result = await tools.get_invite_link.execute({}, toolOpts)
+
+      expect(result).toEqual(
+        expect.objectContaining({
+          url: 'https://oswp.test/w/maria-and-john/save-the-date/ml-abc234',
+        })
+      )
+      expect(mockDb.household.update).not.toHaveBeenCalled()
+    })
+
+    it('generates a fresh code when the household has none', async () => {
+      mockDb.guest.findUnique.mockResolvedValue({ householdId: 'household-1' })
+      mockDb.household.findUnique.mockResolvedValue({
+        id: 'household-1',
+        weddingId: 'wedding-123',
+        inviteCode: null,
+        inviteCodeExpiresAt: null,
+        guests: [{ firstName: 'Maria', lastName: 'Lopez' }],
+      })
+      mockDb.website.findFirst.mockResolvedValue({ subUrl: 'maria-and-john' })
+      mockDb.household.update.mockResolvedValue({})
+
+      const result = (await tools.get_invite_link.execute({}, toolOpts)) as { url: string }
+
+      expect(mockDb.household.update).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 'household-1' } })
+      )
+      expect(result.url).toMatch(
+        /^https:\/\/oswp\.test\/w\/maria-and-john\/save-the-date\/ml-[a-z0-9]{6}$/
+      )
+    })
+
+    it('explains when the couple has no published website yet', async () => {
+      mockDb.guest.findUnique.mockResolvedValue({ householdId: 'household-1' })
+      mockDb.household.findUnique.mockResolvedValue({
+        id: 'household-1',
+        weddingId: 'wedding-123',
+        inviteCode: null,
+        inviteCodeExpiresAt: null,
+        guests: [],
+      })
+      mockDb.website.findFirst.mockResolvedValue(null)
+
+      const result = await tools.get_invite_link.execute({}, toolOpts)
+
+      expect(result).toEqual({
+        status: 'unavailable',
+        message: expect.stringContaining('website'),
+      })
     })
   })
 

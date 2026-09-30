@@ -68,7 +68,7 @@ describe('getOutboundTools', () => {
           actorId: 'actor-123',
           actionType: 'send_whatsapp_blast',
           tier: 'T2',
-          summary: 'Send WhatsApp blast to guests',
+          summary: 'Send WhatsApp update to all households: "Save the date!"',
           payload: { message: 'Save the date!', recipientFilter: 'all' },
           status: 'pending',
         },
@@ -83,7 +83,8 @@ describe('getOutboundTools', () => {
       expect(result).toEqual({
         suggestionId: 'sug-wa-2',
         status: 'pending_approval',
-        message: 'WhatsApp blast draft created. Requires your approval before sending.',
+        message:
+          'WhatsApp update drafted. It will be sent to every reachable household once approved.',
       })
     })
 

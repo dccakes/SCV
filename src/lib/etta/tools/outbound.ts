@@ -8,7 +8,10 @@ import { db } from '~/server/db'
 export function getOutboundTools(ctx: EttaContext) {
   return {
     send_whatsapp_blast: tool({
-      description: 'T2: Creates a WhatsApp blast draft requiring approval',
+      description:
+        'T2: Drafts a WhatsApp update sent to every household on the guest list via the ' +
+        "wedding's dedicated WhatsApp number (one message per household, delivered into " +
+        'their conversation with Etta). Requires couple approval before sending.',
       inputSchema: zodSchema(
         z.object({
           message: z.string(),
@@ -17,13 +20,14 @@ export function getOutboundTools(ctx: EttaContext) {
       ),
       execute: async ({ message, recipientFilter }) => {
         requireEttaPermission(ctx, { guest_invitation: ['send'] })
+        const preview = message.length > 80 ? `${message.slice(0, 80)}…` : message
         const suggestion = await db.ettaSuggestion.create({
           data: {
             weddingId: ctx.weddingId,
             actorId: ctx.ettaActorId,
             actionType: 'send_whatsapp_blast',
             tier: 'T2',
-            summary: 'Send WhatsApp blast to guests',
+            summary: `Send WhatsApp update to all households: "${preview}"`,
             payload: { message, recipientFilter },
             status: 'pending',
           },
@@ -31,7 +35,8 @@ export function getOutboundTools(ctx: EttaContext) {
         return {
           suggestionId: suggestion.id,
           status: 'pending_approval',
-          message: 'WhatsApp blast draft created. Requires your approval before sending.',
+          message:
+            'WhatsApp update drafted. It will be sent to every reachable household once approved.',
         }
       },
     }),

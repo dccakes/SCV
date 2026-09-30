@@ -12,13 +12,19 @@ export const messagingService = new MessagingService(messagingRepository)
 export { MessagingRepository } from '~/server/domains/messaging/messaging.repository'
 export { MessagingService } from '~/server/domains/messaging/messaging.service'
 export type {
+  BroadcastRecipient,
   Channel,
   ChatMessage,
   ChatRole,
+  GuestPhoneMatch,
+  HouseholdWithGuestPhones,
+  InboundWhatsAppResolution,
   MessagingIdentity,
   MessagingPairingToken,
   RateLimitBucket,
   SessionOptions,
+  WhatsAppConversation,
+  WhatsAppNumber,
 } from '~/server/domains/messaging/messaging.types'
 export {
   type CreatePairingTokenInput,
