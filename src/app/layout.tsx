@@ -5,7 +5,6 @@ import { Cormorant_Garamond, DM_Mono, Instrument_Serif } from 'next/font/google'
 import { Toaster as SonnerToaster } from 'sonner'
 
 import { Providers } from '~/app/providers'
-import { Toaster } from '~/components/ui/toaster'
 import { TRPCReactProvider } from '~/trpc/react'
 
 // Design fonts matching the HTML prototype
@@ -94,7 +93,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <TRPCReactProvider>
             {children}
-            <Toaster />
             <SonnerToaster richColors position='top-right' />
           </TRPCReactProvider>
         </Providers>
