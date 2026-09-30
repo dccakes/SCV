@@ -95,7 +95,7 @@ describe('DashboardTopbar', () => {
     expect(screen.getByRole('button', { name: /toggle theme/i })).toBeInTheDocument()
   })
 
-  it('hides management actions when disabled', () => {
+  it('hides the add task button when management actions are disabled', () => {
     render(<DashboardTopbar showManagementActions={false} />)
     expect(screen.queryByRole('button', { name: /add task/i })).not.toBeInTheDocument()
   })
