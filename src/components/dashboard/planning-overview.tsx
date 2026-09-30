@@ -444,11 +444,33 @@ function BudgetCard() {
 function VendorsCard() {
   const { data: vendors } = api.vendor.getAll.useQuery({})
 
-  const vendorCount = vendors?.length ?? 0
-  const selected = vendors?.filter((v) => v.status === 'SELECTED').length ?? 0
-  const inProgress =
-    vendors?.filter((v) => v.status === 'IN_NEGOTIATION' || v.status === 'PRE_SELECTED').length ?? 0
-  const inReview = vendors?.filter((v) => v.status === 'IN_REVIEW').length ?? 0
+  if (vendors === undefined) {
+    return (
+      <CardShell title='Vendors' icon='◐'>
+        <div className='flex flex-col gap-3'>
+          <div className='flex items-baseline gap-2'>
+            <Skeleton className='h-9 w-8' />
+            <Skeleton className='h-4 w-28' />
+          </div>
+          <div className='grid grid-cols-3 divide-x divide-border text-center'>
+            {['selected', 'in-progress', 'in-review'].map((key) => (
+              <div key={key} className='px-2 first:pl-0 last:pr-0'>
+                <Skeleton className='mx-auto h-7 w-8' />
+                <Skeleton className='mx-auto mt-1 h-3 w-14' />
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardShell>
+    )
+  }
+
+  const vendorCount = vendors.length
+  const selected = vendors.filter((v) => v.status === 'SELECTED').length
+  const inProgress = vendors.filter(
+    (v) => v.status === 'IN_NEGOTIATION' || v.status === 'PRE_SELECTED'
+  ).length
+  const inReview = vendors.filter((v) => v.status === 'IN_REVIEW').length
 
   if (vendorCount === 0) {
     return (
