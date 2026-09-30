@@ -16,6 +16,7 @@ import type { runEttaAgent } from '~/lib/etta/agent'
 import type { TelegramClient } from '~/lib/telegram/client'
 import type { TelegramDocument, TelegramMessage, TelegramUpdate } from '~/lib/telegram/types'
 import type { SessionSummarizer } from '~/server/application/messaging/session-summarizer'
+import type { FeedbackService } from '~/server/domains/feedback/feedback.service'
 import type { MessagingService } from '~/server/domains/messaging/messaging.service'
 import type { MessagingIdentity } from '~/server/domains/messaging/messaging.types'
 import type { PutServerBlobArgs, PutServerBlobResult } from '~/server/infrastructure/storage'
@@ -23,12 +24,34 @@ import type { PutServerBlobArgs, PutServerBlobResult } from '~/server/infrastruc
 const MAX_PDF_BYTES = 20 * 1024 * 1024
 const DEFAULT_DEBOUNCE_MS = 4_000
 
+export const buildWelcomeMessage = (firstName?: string | null): string => {
+  const name = firstName?.trim() || 'there'
+  return [
+    `Hi ${name} — I'm Etta, your wedding planning co-pilot.`,
+    '',
+    'I can help you:',
+    '• Track guests, RSVPs, and dietary needs',
+    '• Compare vendor quotes (just forward me a PDF)',
+    '• Manage your budget and timeline',
+    '• Draft messages to vendors and guests',
+    "• Remember the small stuff so you don't have to",
+    '',
+    'Send me a message anytime to get started. Type "/feedback <your thoughts>" whenever you\'d like to share how I\'m doing.',
+  ].join('\n')
+}
+
+const FEEDBACK_USAGE_HINT = 'Send feedback like this: /feedback I love the vendor quote summaries.'
+const FEEDBACK_NOT_LINKED =
+  'Pair this chat first via OSWP → Settings → Connect Telegram, then send feedback.'
+const FEEDBACK_THANKS = "Thanks — feedback noted. I'll pass it along to the team."
+
 export interface TelegramHandlerDeps {
   messaging: MessagingService
   tg: TelegramClient
   blob: (args: PutServerBlobArgs) => Promise<PutServerBlobResult>
   runEtta: typeof runEttaAgent
   summarizer: SessionSummarizer
+  feedback: FeedbackService
   debounceMs?: number
   sleep?: (ms: number) => Promise<void>
 }
@@ -47,6 +70,7 @@ export class TelegramHandler {
   private readonly blob: (args: PutServerBlobArgs) => Promise<PutServerBlobResult>
   private readonly runEtta: typeof runEttaAgent
   private readonly summarizer: SessionSummarizer
+  private readonly feedback: FeedbackService
   private readonly debounceMs: number
   private readonly sleep: (ms: number) => Promise<void>
 
@@ -56,6 +80,7 @@ export class TelegramHandler {
     this.blob = deps.blob
     this.runEtta = deps.runEtta
     this.summarizer = deps.summarizer
+    this.feedback = deps.feedback
     this.debounceMs = deps.debounceMs ?? DEFAULT_DEBOUNCE_MS
     this.sleep = deps.sleep ?? defaultSleep
   }
@@ -67,6 +92,11 @@ export class TelegramHandler {
 
     if (typeof msg.text === 'string' && msg.text.startsWith('/start ')) {
       await this.handlePairing(msg)
+      return
+    }
+
+    if (typeof msg.text === 'string' && msg.text.startsWith('/feedback')) {
+      await this.handleFeedback(msg)
       return
     }
 
@@ -115,14 +145,34 @@ export class TelegramHandler {
           [msg.from?.first_name, msg.from?.last_name].filter(Boolean).join(' ') ||
           msg.from?.username,
       })
-      await this.tg.sendMessage(
-        msg.chat.id,
-        "You're linked. Ask me anything about your wedding, or forward a vendor quote PDF."
-      )
+      await this.tg.sendMessage(msg.chat.id, buildWelcomeMessage(msg.from?.first_name))
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to pair'
       await this.tg.sendMessage(msg.chat.id, `Pairing failed: ${message}`)
     }
+  }
+
+  private async handleFeedback(msg: TelegramMessage): Promise<void> {
+    const body = (msg.text ?? '').slice('/feedback'.length).trim()
+    if (body.length === 0) {
+      await this.tg.sendMessage(msg.chat.id, FEEDBACK_USAGE_HINT)
+      return
+    }
+
+    const found = await this.messaging.findWeddingForChat('telegram', String(msg.chat.id))
+    if (!found) {
+      await this.tg.sendMessage(msg.chat.id, FEEDBACK_NOT_LINKED)
+      return
+    }
+
+    await this.feedback.submitOpenEnded({
+      weddingId: found.weddingId,
+      source: 'telegram_command',
+      body,
+      userId: found.identity.linkedByUserId,
+      messagingIdentityId: found.identity.id,
+    })
+    await this.tg.sendMessage(msg.chat.id, FEEDBACK_THANKS)
   }
 
   private async ingestMessage(
