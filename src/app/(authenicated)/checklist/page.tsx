@@ -6,9 +6,8 @@ import { getRequiredWedding } from '~/server/application/authenticated-route/aut
 import { api } from '~/trpc/server'
 
 export const metadata: Metadata = {
-  title: 'Checklist | Your Wedding Website',
+  title: 'Checklist',
   description: 'Track tasks and milestones for your wedding planning.',
-  icons: [{ rel: 'icon', url: '/favicon.ico' }],
 }
 
 export default async function ChecklistPage(_props: {

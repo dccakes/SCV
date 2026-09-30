@@ -13,9 +13,8 @@ import { getRequiredWedding } from '~/server/application/authenticated-route/aut
 import { api } from '~/trpc/server'
 
 export const metadata: Metadata = {
-  title: 'Events | Your Wedding Website',
+  title: 'Events',
   description: 'Manage your wedding events and ceremonies',
-  icons: [{ rel: 'icon', url: '/favicon.ico' }],
 }
 
 type EventsPageSearchParams = {

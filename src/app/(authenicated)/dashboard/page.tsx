@@ -1,6 +1,13 @@
+import type { Metadata } from 'next'
+
 import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
 import PlanningOverview from '~/components/dashboard/planning-overview'
 import { getRequiredDashboardOverview } from '~/server/application/authenticated-route/authenticated-route-data'
+
+export const metadata: Metadata = {
+  title: 'Dashboard',
+  description: 'Overview of your wedding planning progress',
+}
 
 export const dynamic = 'force-dynamic'
 
