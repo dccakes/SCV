@@ -267,6 +267,7 @@ describe('weddingRouter', () => {
           canSendInvites: true,
           canViewPlanning: true,
         },
+        enabledAddOns: [],
       })
     })
 
@@ -283,6 +284,7 @@ describe('weddingRouter', () => {
           canSendInvites: false,
           canViewPlanning: false,
         },
+        enabledAddOns: [],
       })
     })
   })

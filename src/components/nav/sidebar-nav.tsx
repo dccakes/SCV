@@ -35,6 +35,7 @@ type WorkspaceSnapshot = {
   capabilities: {
     canViewPlanning: boolean
   }
+  enabledAddOns: string[]
 }
 
 function getSidebarSections(workspace: WorkspaceSnapshot): readonly SidebarSection[] {
@@ -44,6 +45,13 @@ function getSidebarSections(workspace: WorkspaceSnapshot): readonly SidebarSecti
 
   if (!workspace.capabilities.canViewPlanning) {
     return SIDEBAR_SECTIONS.filter((section) => section.title === 'Settings')
+  }
+
+  if (!workspace.enabledAddOns.includes('website_builder')) {
+    return SIDEBAR_SECTIONS.map((section) => ({
+      ...section,
+      items: section.items.filter((item) => item.href !== '/website'),
+    }))
   }
 
   return SIDEBAR_SECTIONS
@@ -219,6 +227,7 @@ export default function SidebarNavFrame(props: SidebarNavFrameProps) {
     capabilities: {
       canViewPlanning: workspace.capabilities.canViewPlanning,
     },
+    enabledAddOns: workspace.enabledAddOns,
   })
   // Start collapsed=false for SSR safety; sync from localStorage on client after mount
   const [isCollapsed, setIsCollapsed] = useState(false)
