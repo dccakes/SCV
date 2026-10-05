@@ -1,13 +1,12 @@
 'use client'
 
-import { ChevronDown } from 'lucide-react'
+import { MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { CategoryForm } from '~/components/budget/category-form'
 import { ExpenseForm } from '~/components/budget/expense-form'
 import { formatCurrency } from '~/components/budget/format'
-import type { ExpenseView } from '~/components/budget/view'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +20,12 @@ import {
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '~/components/ui/dropdown-menu'
 import type {
   BudgetCategoryWithExpenses,
   BudgetExpense,
@@ -30,195 +35,169 @@ import { api } from '~/trpc/react'
 type CategoryCardProps = {
   category: BudgetCategoryWithExpenses
   currency: string
-  view: ExpenseView
 }
 
-/** Whether a payment is still owed and past its due date. */
-function isOverdue(expense: BudgetExpense): boolean {
-  if (expense.paidAt || !expense.dueAt) return false
-  const startOfToday = new Date()
-  startOfToday.setHours(0, 0, 0, 0)
-  return new Date(expense.dueAt) < startOfToday
-}
-
-function StatusBadges({ expense }: { expense: BudgetExpense }) {
-  return (
-    <>
-      {expense.isDeposit ? (
-        <Badge variant='secondary' className='text-[0.6rem]'>
-          Deposit
-        </Badge>
-      ) : null}
-      {expense.isRefundable ? (
-        <Badge variant='outline' className='border-success/40 text-[0.6rem] text-success'>
-          {expense.refundedAt ? 'Refunded' : 'Refundable'}
-        </Badge>
-      ) : null}
-    </>
-  )
-}
-
-/** Timing sub-line: paid date, or (for unpaid items) the due/overdue date. */
 function TimingLine({ expense }: { expense: BudgetExpense }) {
   if (expense.paidAt) {
     return (
-      <p className='mt-0.5 text-muted-foreground text-xs'>
+      <p className='font-mono text-success text-xs'>
         Paid {new Date(expense.paidAt).toLocaleDateString()}
       </p>
     )
   }
   if (expense.dueAt) {
-    const overdue = isOverdue(expense)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const overdue = new Date(expense.dueAt) < today
     return (
-      <p className={`mt-0.5 text-xs ${overdue ? 'text-destructive' : 'text-muted-foreground'}`}>
+      <p className={`font-mono text-xs ${overdue ? 'text-destructive' : 'text-muted-foreground'}`}>
         {overdue ? 'Overdue · ' : 'Due '}
         {new Date(expense.dueAt).toLocaleDateString()}
       </p>
     )
   }
-  return null
-}
-
-function ExpenseRow({
-  expense,
-  currency,
-  onEdit,
-  onDelete,
-}: {
-  expense: BudgetExpense
-  currency: string
-  onEdit: () => void
-  onDelete: () => void
-}) {
-  const paid = expense.amount > 0
-  return (
-    <div className='flex items-start justify-between gap-3 border-border/50 border-t py-2.5 first:border-t-0'>
-      <div className='min-w-0'>
-        <div className='flex flex-wrap items-center gap-1.5'>
-          <span className='truncate font-medium text-foreground text-sm'>
-            {expense.description}
-          </span>
-          <StatusBadges expense={expense} />
-        </div>
-        <TimingLine expense={expense} />
-        {expense.notes ? (
-          <p className='mt-0.5 line-clamp-2 text-muted-foreground text-xs'>{expense.notes}</p>
-        ) : null}
-      </div>
-      <div className='flex shrink-0 items-center gap-2'>
-        <div className='text-right'>
-          <span className='font-mono text-foreground text-sm tabular-nums'>
-            {formatCurrency(paid ? expense.amount : expense.estimatedAmount, currency)}
-          </span>
-          {expense.estimatedAmount > 0 && paid && expense.estimatedAmount !== expense.amount ? (
-            <p className='font-mono text-[0.6rem] text-muted-foreground tabular-nums'>
-              est {formatCurrency(expense.estimatedAmount, currency)}
-            </p>
-          ) : null}
-          {!paid && expense.estimatedAmount > 0 ? (
-            <p className='font-mono text-[0.6rem] text-muted-foreground uppercase tracking-widest'>
-              estimate
-            </p>
-          ) : null}
-        </div>
-        <Button type='button' variant='ghost' size='sm' onClick={onEdit}>
-          Edit
-        </Button>
-        <Button
-          type='button'
-          variant='ghost'
-          size='sm'
-          onClick={onDelete}
-          className='hover:text-destructive'
-        >
-          Delete
-        </Button>
-      </div>
-    </div>
-  )
+  return <p className='font-mono text-muted-foreground text-xs'>Not scheduled</p>
 }
 
 function ExpenseTable({
-  expenses,
+  category,
   currency,
-  totals,
   onEdit,
   onDelete,
+  onAdd,
 }: {
-  expenses: BudgetExpense[]
+  category: BudgetCategoryWithExpenses
   currency: string
-  totals: BudgetCategoryWithExpenses['totals']
   onEdit: (expense: BudgetExpense) => void
   onDelete: (id: string) => void
+  onAdd: () => void
 }) {
   return (
-    <div className='overflow-x-auto'>
-      <table className='w-full border-collapse text-sm'>
+    <div className='relative min-w-0 overflow-x-auto'>
+      <table className='w-full min-w-[580px] border-collapse text-sm'>
+        <caption className='sr-only'>Expenses for {category.name}</caption>
         <thead>
-          <tr className='border-border/50 border-b text-left font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
-            <th className='py-2 pr-3 font-normal'>Item</th>
-            <th className='py-2 pr-3 text-right font-normal'>Estimated</th>
-            <th className='py-2 pr-3 text-right font-normal'>Actual</th>
-            <th className='py-2 pr-3 font-normal'>Due / Paid</th>
-            <th className='py-2 font-normal'>
+          <tr className='border-border/60 border-b bg-muted/40 text-left font-mono text-[0.6rem] text-muted-foreground uppercase tracking-widest'>
+            <th scope='col' className='px-5 py-4 font-normal'>
+              Expense
+            </th>
+            <th scope='col' className='px-3 py-4 text-right font-normal'>
+              Estimated
+            </th>
+            <th scope='col' className='px-3 py-4 text-right font-normal'>
+              Actual
+            </th>
+            <th scope='col' className='px-3 py-4 font-normal'>
+              Status / date
+            </th>
+            <th scope='col' className='px-3 py-4 font-normal'>
               <span className='sr-only'>Actions</span>
             </th>
           </tr>
         </thead>
         <tbody>
-          {expenses.map((expense) => (
-            <tr key={expense.id} className='border-border/40 border-b last:border-b-0'>
-              <td className='py-2.5 pr-3 align-top'>
-                <div className='flex flex-wrap items-center gap-1.5'>
-                  <span className='font-medium text-foreground'>{expense.description}</span>
-                  <StatusBadges expense={expense} />
-                </div>
-                {expense.notes ? (
-                  <p className='mt-0.5 line-clamp-1 text-muted-foreground text-xs'>
-                    {expense.notes}
-                  </p>
-                ) : null}
-              </td>
-              <td className='py-2.5 pr-3 text-right align-top font-mono text-muted-foreground tabular-nums'>
-                {expense.estimatedAmount > 0
-                  ? formatCurrency(expense.estimatedAmount, currency)
-                  : '—'}
-              </td>
-              <td className='py-2.5 pr-3 text-right align-top font-mono text-foreground tabular-nums'>
-                {expense.amount > 0 ? formatCurrency(expense.amount, currency) : '—'}
-              </td>
-              <td className='py-2.5 pr-3 align-top'>
-                <TimingLine expense={expense} />
-              </td>
-              <td className='py-2.5 align-top'>
-                <div className='flex items-center justify-end gap-1'>
-                  <Button type='button' variant='ghost' size='sm' onClick={() => onEdit(expense)}>
-                    Edit
-                  </Button>
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    size='sm'
-                    onClick={() => onDelete(expense.id)}
-                    className='hover:text-destructive'
-                  >
-                    Delete
-                  </Button>
-                </div>
+          {category.expenses.length === 0 ? (
+            <tr>
+              <td colSpan={5} className='px-5 py-12 text-center text-muted-foreground'>
+                No expenses recorded yet. Add your first expense below.
               </td>
             </tr>
-          ))}
+          ) : (
+            category.expenses.map((expense) => (
+              <tr
+                key={expense.id}
+                className='border-border/50 border-b transition-colors hover:bg-muted/30'
+              >
+                <td className='px-5 py-5'>
+                  <p className='break-words font-medium text-foreground'>{expense.description}</p>
+                  <div className='mt-1.5 flex flex-wrap gap-1'>
+                    {expense.isDeposit ? (
+                      <Badge variant='secondary' className='text-[0.55rem]'>
+                        Deposit
+                      </Badge>
+                    ) : null}
+                    {expense.isRefundable ? (
+                      <Badge
+                        variant='outline'
+                        className='border-success/40 text-[0.55rem] text-success'
+                      >
+                        {expense.refundedAt ? 'Refunded' : 'Refundable'}
+                      </Badge>
+                    ) : null}
+                  </div>
+                  {expense.notes ? (
+                    <p className='mt-1 line-clamp-2 text-muted-foreground text-xs'>
+                      {expense.notes}
+                    </p>
+                  ) : null}
+                </td>
+                <td className='whitespace-nowrap px-3 py-5 text-right font-mono text-muted-foreground text-xs tabular-nums'>
+                  {formatCurrency(expense.estimatedAmount, currency)}
+                </td>
+                <td className='whitespace-nowrap px-3 py-5 text-right font-mono text-foreground text-xs tabular-nums'>
+                  {formatCurrency(expense.amount, currency)}
+                </td>
+                <td className='px-3 py-5'>
+                  <TimingLine expense={expense} />
+                </td>
+                <td className='px-3 py-5'>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type='button'
+                        variant='ghost'
+                        size='icon'
+                        aria-label={`Actions for ${expense.description}`}
+                      >
+                        <MoreHorizontal className='h-4 w-4' aria-hidden='true' />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align='end'>
+                      <DropdownMenuItem onSelect={() => onEdit(expense)}>
+                        <Pencil aria-hidden='true' />
+                        Edit expense
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onSelect={() => onDelete(expense.id)}
+                        className='text-destructive'
+                      >
+                        <Trash2 aria-hidden='true' />
+                        Delete expense
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </td>
+              </tr>
+            ))
+          )}
+          <tr>
+            <td colSpan={5} className='border-border/60 border-b'>
+              <Button
+                type='button'
+                variant='ghost'
+                onClick={onAdd}
+                className='h-14 w-full justify-start gap-2 rounded-none px-5 text-primary hover:bg-primary/5 hover:text-primary'
+              >
+                <Plus className='h-4 w-4' aria-hidden='true' />
+                Add new expense
+              </Button>
+            </td>
+          </tr>
         </tbody>
         <tfoot>
-          <tr className='border-border/50 border-t font-mono text-[0.6rem] text-muted-foreground uppercase tracking-widest'>
-            <td className='py-2 pr-3'>Total</td>
-            <td className='py-2 pr-3 text-right text-foreground tabular-nums'>
-              {formatCurrency(totals.estimatedTotal, currency)}
+          <tr className='bg-muted/40 font-mono text-xs'>
+            <th scope='row' className='px-5 py-5 text-left font-normal'>
+              Section total
+            </th>
+            <td className='whitespace-nowrap px-3 py-5 text-right tabular-nums'>
+              {formatCurrency(category.totals.estimatedTotal, currency)}
             </td>
-            <td className='py-2 pr-3 text-right text-foreground tabular-nums'>
-              {formatCurrency(totals.actualSpend, currency)}
+            <td className='whitespace-nowrap px-3 py-5 text-right tabular-nums'>
+              {formatCurrency(category.totals.actualSpend, currency)}
             </td>
-            <td className='py-2' colSpan={2} />
+            <td colSpan={2} className='px-3 py-5 text-success'>
+              {formatCurrency(category.totals.netSpend, currency)} net spend
+            </td>
           </tr>
         </tfoot>
       </table>
@@ -226,8 +205,7 @@ function ExpenseTable({
   )
 }
 
-export function CategoryCard({ category, currency, view }: Readonly<CategoryCardProps>) {
-  const [expanded, setExpanded] = useState(false)
+export function CategoryCard({ category, currency }: Readonly<CategoryCardProps>) {
   const [showAddExpense, setShowAddExpense] = useState(false)
   const [editExpense, setEditExpense] = useState<BudgetExpense | null>(null)
   const [showEditCategory, setShowEditCategory] = useState(false)
@@ -258,160 +236,94 @@ export function CategoryCard({ category, currency, view }: Readonly<CategoryCard
   const { totals } = category
   const hasPlanned = totals.plannedAmount > 0
   const pct = hasPlanned
-    ? Math.min(100, Math.round((totals.netSpend / totals.plannedAmount) * 100))
+    ? Math.max(0, Math.min(100, Math.round((totals.netSpend / totals.plannedAmount) * 100)))
     : 0
   const overBudget = hasPlanned && totals.netSpend > totals.plannedAmount
 
-  const expenseCount = category.expenses.length
-  const contentId = `budget-section-${category.id}`
-
   return (
-    <div className='rounded-lg border border-border/70 bg-card'>
-      <button
-        type='button'
-        onClick={() => setExpanded((prev) => !prev)}
-        aria-expanded={expanded}
-        aria-controls={contentId}
-        className='flex w-full items-center gap-3 rounded-lg p-4 text-left transition-colors hover:bg-muted/40 md:p-5'
-      >
-        <ChevronDown
-          aria-hidden='true'
-          className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${
-            expanded ? 'rotate-0' : '-rotate-90'
-          }`}
-        />
-        <div className='min-w-0 flex-1'>
-          <h3 className='truncate font-serif text-foreground text-lg'>{category.name}</h3>
-          <p className='mt-0.5 font-mono text-[0.6rem] text-muted-foreground uppercase tracking-widest'>
-            {expenseCount} {expenseCount === 1 ? 'item' : 'items'}
-          </p>
-        </div>
-        <div className='flex shrink-0 items-center gap-5 sm:gap-8'>
-          <div className='text-right'>
-            <p className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
-              Budget
+    <section
+      id='budget-category-detail'
+      aria-labelledby={`budget-category-heading-${category.id}`}
+      className='min-w-0'
+    >
+      <header className='border-border/70 border-b bg-background/30 p-5 md:p-6'>
+        <div className='flex flex-wrap items-start justify-between gap-4'>
+          <div className='min-w-0'>
+            <p className='font-mono text-[0.6rem] text-muted-foreground uppercase tracking-widest'>
+              Selected section
             </p>
-            <p className='mt-0.5 font-mono text-foreground text-sm tabular-nums'>
-              {hasPlanned ? formatCurrency(totals.plannedAmount, currency) : '—'}
-            </p>
-          </div>
-          <div className='text-right'>
-            <p className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
-              Paid
-            </p>
-            <p
-              className={`mt-0.5 font-mono text-sm tabular-nums ${
-                overBudget ? 'text-destructive' : 'text-foreground'
-              }`}
+            <h3
+              id={`budget-category-heading-${category.id}`}
+              className='mt-1 break-words font-display text-3xl text-foreground italic'
             >
-              {formatCurrency(totals.actualSpend, currency)}
+              {category.name}
+            </h3>
+            <p className='mt-1 text-muted-foreground text-xs'>
+              {category.expenses.length} {category.expenses.length === 1 ? 'expense' : 'expenses'} ·{' '}
+              {formatCurrency(totals.actualSpend, currency)} paid so far
             </p>
           </div>
+          <div className='flex gap-2'>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={() => setShowEditCategory(true)}
+            >
+              Edit section
+            </Button>
+            <Button
+              type='button'
+              variant='ghost'
+              size='sm'
+              onClick={() => setConfirmDeleteCategory(true)}
+              className='text-muted-foreground hover:text-destructive'
+            >
+              Delete
+            </Button>
+          </div>
         </div>
-      </button>
-
-      {expanded ? (
-        <div id={contentId} className='border-border/60 border-t px-4 pb-4 md:px-5 md:pb-5'>
-          <div className='mt-4 flex flex-wrap items-center justify-between gap-3'>
-            <p className='font-mono text-[0.62rem] text-muted-foreground uppercase tracking-widest'>
+        <div className='mt-5'>
+          <div className='mb-2 flex flex-wrap justify-between gap-2 font-mono text-xs'>
+            <span className='text-muted-foreground'>
               {hasPlanned
                 ? `${formatCurrency(totals.netSpend, currency)} net of ${formatCurrency(totals.plannedAmount, currency)}`
-                : `${formatCurrency(totals.netSpend, currency)} spent · no budget set`}
-            </p>
-            <div className='flex items-center gap-2'>
-              <Button
-                type='button'
-                variant='ghost'
-                size='sm'
-                onClick={() => setShowEditCategory(true)}
-              >
-                Edit
-              </Button>
-              <Button
-                type='button'
-                variant='ghost'
-                size='sm'
-                onClick={() => setConfirmDeleteCategory(true)}
-                className='hover:text-destructive'
-              >
-                Delete
-              </Button>
-            </div>
+                : `${formatCurrency(totals.netSpend, currency)} net spend · no budget set`}
+            </span>
+            {hasPlanned ? (
+              <span className={overBudget ? 'text-destructive' : 'text-success'}>
+                {overBudget
+                  ? `${formatCurrency(totals.netSpend - totals.plannedAmount, currency)} over`
+                  : `${formatCurrency(totals.remaining, currency)} left`}
+              </span>
+            ) : null}
           </div>
-
           {hasPlanned ? (
-            <div className='mt-3'>
-              <div className='h-1.5 w-full overflow-hidden rounded-full bg-muted'>
-                <div
-                  className={`h-full rounded-full ${overBudget ? 'bg-destructive' : 'bg-primary'}`}
-                  style={{ width: `${Math.max(2, pct)}%` }}
-                />
-              </div>
-              <div className='mt-1.5 flex justify-between font-mono text-[0.6rem] text-muted-foreground uppercase tracking-widest'>
-                <span>
-                  {overBudget
-                    ? `${formatCurrency(totals.netSpend - totals.plannedAmount, currency)} over`
-                    : `${formatCurrency(totals.remaining, currency)} left`}
-                </span>
-                <span>{pct}%</span>
-              </div>
+            <div className='h-1.5 overflow-hidden rounded-full bg-muted'>
+              <div
+                className={`h-full rounded-full transition-all ${overBudget ? 'bg-destructive' : 'bg-success'}`}
+                style={{ width: `${pct}%` }}
+              />
             </div>
           ) : null}
-
-          {totals.estimatedTotal > 0 || totals.actualSpend !== totals.netSpend ? (
-            <p className='mt-3 rounded-md bg-muted/40 px-3 py-2 text-muted-foreground text-xs'>
-              {totals.estimatedTotal > 0
-                ? `${formatCurrency(totals.estimatedTotal, currency)} estimated · `
-                : ''}
-              {formatCurrency(totals.actualSpend, currency)} paid
-              {totals.refundableDeposits > 0
-                ? ` · ${formatCurrency(totals.refundableDeposits, currency)} refundable${
-                    totals.outstandingDeposits > 0
-                      ? ` (${formatCurrency(totals.outstandingDeposits, currency)} still to return)`
-                      : ''
-                  }`
-                : ''}
-            </p>
-          ) : null}
-
-          <div className='mt-3'>
-            {category.expenses.length === 0 ? (
-              <p className='py-2 text-muted-foreground text-sm'>No expenses recorded yet.</p>
-            ) : view === 'table' ? (
-              <ExpenseTable
-                expenses={category.expenses}
-                currency={currency}
-                totals={totals}
-                onEdit={(expense) => setEditExpense(expense)}
-                onDelete={(id) => setDeleteExpenseId(id)}
-              />
-            ) : (
-              <div>
-                {category.expenses.map((expense) => (
-                  <ExpenseRow
-                    key={expense.id}
-                    expense={expense}
-                    currency={currency}
-                    onEdit={() => setEditExpense(expense)}
-                    onDelete={() => setDeleteExpenseId(expense.id)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-
-          <Button
-            type='button'
-            size='sm'
-            variant='outline'
-            onClick={() => setShowAddExpense(true)}
-            className='mt-3 font-mono text-[0.62rem] uppercase tracking-widest'
-          >
-            + Add expense
-          </Button>
         </div>
-      ) : null}
-
+        {totals.refundableDeposits > 0 ? (
+          <p className='mt-4 text-muted-foreground text-xs'>
+            {formatCurrency(totals.refundableDeposits, currency)} refundable deposits excluded from
+            net spend
+            {totals.outstandingDeposits > 0
+              ? ` · ${formatCurrency(totals.outstandingDeposits, currency)} still to return`
+              : ''}
+          </p>
+        ) : null}
+      </header>
+      <ExpenseTable
+        category={category}
+        currency={currency}
+        onEdit={setEditExpense}
+        onDelete={setDeleteExpenseId}
+        onAdd={() => setShowAddExpense(true)}
+      />
       {/* Add expense */}
       <Dialog open={showAddExpense} onOpenChange={setShowAddExpense}>
         <DialogContent className='max-h-[85vh] overflow-y-auto sm:max-w-lg'>
@@ -513,6 +425,6 @@ export function CategoryCard({ category, currency, view }: Readonly<CategoryCard
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </section>
   )
 }

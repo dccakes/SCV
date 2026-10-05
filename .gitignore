@@ -3,6 +3,9 @@
 # claude worktrees
 .claude/worktrees/
 
+# local design previews
+/.superpowers/
+
 # dependencies
 /node_modules
 /.pnp

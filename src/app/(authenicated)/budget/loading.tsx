@@ -32,23 +32,29 @@ export default function BudgetLoading() {
           </div>
         </section>
 
-        {/* Category card skeletons — collapsed header row */}
-        <div className='space-y-4'>
-          {['a', 'b', 'c'].map((id) => (
-            <div
-              key={`budget-category-loading-${id}`}
-              className='rounded-lg border border-border/70 bg-card'
-            >
-              <div className='flex items-center gap-3 p-4 md:p-5'>
-                <Skeleton className='h-4 w-4 shrink-0' />
-                <Skeleton className='h-5 flex-1' />
-                <div className='flex shrink-0 items-center gap-5 sm:gap-8'>
-                  <Skeleton className='h-8 w-14' />
-                  <Skeleton className='h-8 w-14' />
+        <Skeleton className='mb-8 h-36 w-full rounded-lg' />
+        <div className='grid overflow-hidden rounded-lg border border-border/70 bg-card/65 xl:grid-cols-[minmax(245px,30%)_minmax(0,1fr)]'>
+          <div className='border-border/70 border-b p-4 xl:border-r xl:border-b-0'>
+            <Skeleton className='mb-5 h-8 w-28' />
+            {['a', 'b', 'c'].map((id) => (
+              <div key={`budget-category-loading-${id}`} className='border-border/70 border-b'>
+                <div className='flex items-center gap-3 p-4 md:p-5'>
+                  <Skeleton className='h-4 w-4 shrink-0' />
+                  <Skeleton className='h-5 flex-1' />
+                  <div className='flex shrink-0 items-center gap-5 sm:gap-8'>
+                    <Skeleton className='h-8 w-14' />
+                    <Skeleton className='h-8 w-14' />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          <div className='p-6'>
+            <Skeleton className='h-4 w-28' />
+            <Skeleton className='mt-3 h-8 w-40' />
+            <Skeleton className='mt-5 h-2 w-full' />
+            <Skeleton className='mt-8 h-44 w-full' />
+          </div>
         </div>
       </main>
     </>
