@@ -183,6 +183,7 @@ export function BudgetSummary({ summary, currency }: Readonly<BudgetSummaryProps
   const pctOfTarget =
     targetTotal > 0 ? Math.min(100, Math.round((netSpend / targetTotal) * 100)) : 0
   const overBudget = targetTotal > 0 && netSpend > targetTotal
+  const overPlanned = targetTotal > 0 && totalPlanned > targetTotal
 
   return (
     <section className='mb-8'>
@@ -248,6 +249,22 @@ export function BudgetSummary({ summary, currency }: Readonly<BudgetSummaryProps
           }
         />
       </div>
+
+      {overPlanned && (
+        <div className='mt-4 flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2.5'>
+          <span className='mt-0.5 shrink-0 text-destructive text-sm' aria-hidden='true'>
+            ⚠
+          </span>
+          <p className='text-destructive text-xs'>
+            <span className='font-medium'>
+              Section budgets total {formatCurrency(totalPlanned, currency)}
+            </span>
+            {' — '}
+            {formatCurrency(totalPlanned - targetTotal, currency)} over your target. Adjust section
+            budgets or increase your target to stay on track.
+          </p>
+        </div>
+      )}
     </section>
   )
 }
