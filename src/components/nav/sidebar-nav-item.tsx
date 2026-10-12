@@ -18,6 +18,7 @@ export default function NavItem(props: Readonly<NavItemProps>) {
       onClick={onClick}
       title={label}
       aria-label={label}
+      aria-current={isActive ? 'page' : undefined}
       className={`flex items-center border-l-2 py-2.5 font-mono text-xs uppercase tracking-widest transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-inset ${
         isCollapsed ? 'justify-center px-2' : 'gap-2.5 px-4'
       } ${
