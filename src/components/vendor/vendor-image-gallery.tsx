@@ -89,8 +89,8 @@ export function VendorImageGallery({ images, vendorId, hasWebsite }: VendorImage
             source: 'manual' as const,
           })),
         })
-      } catch {
-        toast.error('Failed to upload images')
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Failed to upload images')
       } finally {
         setIsUploading(false)
       }
