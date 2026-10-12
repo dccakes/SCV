@@ -282,7 +282,10 @@ function TasksCard({ dashboardData }: { dashboardData: DashboardData | null }) {
   const priorityQueue = dashboardData?.taskPriorityQueue
   const { tasks, toggleTask } = useTasksCardState(priorityQueue?.tasks ?? EMPTY_PRIORITY_TASKS)
   const completeTask = api.task.complete.useMutation({
-    onError: () => toast.error('Failed to update task'),
+    onError: (_, variables) => {
+      toggleTask(variables.taskId)
+      toast.error('Failed to update task')
+    },
   })
 
   const handleToggle = (taskId: string) => {
