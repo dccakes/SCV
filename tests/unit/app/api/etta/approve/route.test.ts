@@ -39,6 +39,10 @@ jest.mock('~/server/domains/vendor', () => {
     },
   }
 })
+const mockBroadcast = jest.fn()
+jest.mock('~/server/application/messaging', () => ({
+  getWhatsAppOutbound: () => ({ broadcast: mockBroadcast }),
+}))
 
 const mockValidateSession = validateCoupleSession as jest.Mock
 const mockLogAudit = logAudit as jest.Mock
@@ -222,6 +226,58 @@ describe('PATCH /api/etta/approve/[suggestionId]', () => {
     expect(data.status).toBe('approved')
     expect(new Date(data.resolvedAt).getTime()).toBeGreaterThanOrEqual(before.getTime())
     expect(new Date(data.resolvedAt).getTime()).toBeLessThanOrEqual(after.getTime())
+  })
+
+  describe('send_whatsapp_blast approvals', () => {
+    it('broadcasts the approved message to all households', async () => {
+      mockFindUnique.mockResolvedValue(
+        pendingSuggestion({
+          actionType: 'send_whatsapp_blast',
+          tier: 'T2',
+          actorId: 'etta-actor-1',
+          payload: { message: 'Venue update: Garden Hall!' },
+        })
+      )
+      mockBroadcast.mockResolvedValue({ sent: 3, failed: 0, unreachableHouseholds: 1 })
+
+      const res = await PATCH(makeRequest({ action: 'approve' }), makeParams())
+
+      expect(res.status).toBe(200)
+      expect(mockBroadcast).toHaveBeenCalledWith(
+        { userId: USER_ID, activeOrganization: null },
+        { weddingId: WEDDING_ID, message: 'Venue update: Garden Hall!' }
+      )
+    })
+
+    it('does not broadcast on dismiss', async () => {
+      mockFindUnique.mockResolvedValue(
+        pendingSuggestion({
+          actionType: 'send_whatsapp_blast',
+          tier: 'T2',
+          payload: { message: 'hello' },
+        })
+      )
+
+      const res = await PATCH(makeRequest({ action: 'dismiss' }), makeParams())
+
+      expect(res.status).toBe(200)
+      expect(mockBroadcast).not.toHaveBeenCalled()
+    })
+
+    it('returns 400 when the blast payload is invalid', async () => {
+      mockFindUnique.mockResolvedValue(
+        pendingSuggestion({
+          actionType: 'send_whatsapp_blast',
+          tier: 'T2',
+          payload: { nope: true },
+        })
+      )
+
+      const res = await PATCH(makeRequest({ action: 'approve' }), makeParams())
+
+      expect(res.status).toBe(400)
+      expect(mockBroadcast).not.toHaveBeenCalled()
+    })
   })
 
   describe('SUGGEST_VENDOR_FIELD approvals', () => {

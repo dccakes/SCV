@@ -9,6 +9,7 @@ import { VendorCategory } from '@prisma/client'
 import { z } from 'zod'
 import { logAudit } from '~/lib/etta/utils/audit'
 import { EttaAuthError, validateCoupleSession } from '~/lib/etta/utils/auth'
+import { getWhatsAppOutbound } from '~/server/application/messaging'
 import { db } from '~/server/db'
 import { fieldDefinitionSchema, vendorService } from '~/server/domains/vendor'
 
@@ -22,6 +23,11 @@ const suggestVendorFieldPayloadSchema = z.object({
   label: z.string().min(1),
   type: z.enum(['text', 'number', 'boolean']),
   reason: z.string().min(1),
+})
+
+const whatsappBlastPayloadSchema = z.object({
+  message: z.string().min(1),
+  recipientFilter: z.string().optional(),
 })
 
 class ApprovalRouteError extends Error {
@@ -52,11 +58,43 @@ const inferAuthStatus = (error: unknown, message: string): number => {
   return 500
 }
 
+async function executeWhatsAppBlast(
+  suggestion: NonNullable<SuggestionRecord>,
+  authz: Awaited<ReturnType<typeof validateCoupleSession>>['authz'],
+  weddingId: string
+) {
+  const parsedPayload = whatsappBlastPayloadSchema.safeParse(suggestion.payload)
+  if (!parsedPayload.success) {
+    throw new ApprovalRouteError('Invalid suggestion payload for send_whatsapp_blast', 400)
+  }
+
+  const result = await getWhatsAppOutbound().broadcast(authz, {
+    weddingId,
+    message: parsedPayload.data.message,
+  })
+
+  await logAudit({
+    weddingId,
+    actorId: suggestion.actorId,
+    actorType: 'etta',
+    action: 'whatsapp_blast_executed',
+    resourceType: 'etta_suggestion',
+    resourceId: suggestion.id,
+    tier: 'T2',
+    payload: result,
+  })
+}
+
 async function executeApprovalAction(
   suggestion: NonNullable<SuggestionRecord>,
   authz: Awaited<ReturnType<typeof validateCoupleSession>>['authz'],
   weddingId: string
 ) {
+  if (suggestion.actionType === 'send_whatsapp_blast') {
+    await executeWhatsAppBlast(suggestion, authz, weddingId)
+    return
+  }
+
   if (suggestion.actionType !== 'SUGGEST_VENDOR_FIELD') {
     return
   }
