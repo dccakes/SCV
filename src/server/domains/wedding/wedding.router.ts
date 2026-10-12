@@ -137,11 +137,14 @@ export const weddingRouter = createTRPCRouter({
    * Canonical workspace payload for client-side role/capability display.
    */
   getWorkspace: protectedProcedure.query(async ({ ctx }) => {
+    const weddingId = ctx.auth.activeWeddingId
+    const wedding = weddingId ? await weddingService.getById(weddingId) : null
     return {
       organizationId: ctx.auth.activeOrganization?.organizationId ?? null,
-      weddingId: ctx.auth.activeWeddingId ?? null,
+      weddingId: weddingId ?? null,
       role: ctx.auth.activeOrganization?.role ?? null,
       capabilities: readWorkspaceCapabilities(ctx.auth.activeOrganization?.role),
+      enabledAddOns: wedding?.enabledAddOns ?? [],
     }
   }),
 })

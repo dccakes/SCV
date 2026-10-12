@@ -14,6 +14,7 @@ jest.mock('~/hooks/use-workspace', () => ({
       capabilities: {
         canViewPlanning: true,
       },
+      enabledAddOns: ['website_builder'],
     },
   })),
 }))
@@ -33,6 +34,7 @@ describe('SidebarNavFrame', () => {
         capabilities: {
           canViewPlanning: true,
         },
+        enabledAddOns: ['website_builder'],
       },
     })
     localStorage.clear()
@@ -116,6 +118,7 @@ describe('SidebarNavFrame', () => {
         capabilities: {
           canViewPlanning: false,
         },
+        enabledAddOns: [],
       },
     })
 
@@ -134,5 +137,22 @@ describe('SidebarNavFrame', () => {
       'href',
       '/website'
     )
+  })
+
+  it('hides Wedding Website nav item when website_builder add-on is not enabled', () => {
+    useWorkspace.mockReturnValue({
+      workspace: {
+        role: 'owner',
+        capabilities: {
+          canViewPlanning: true,
+        },
+        enabledAddOns: [],
+      },
+    })
+
+    render(<SidebarNavFrame isOpen={false} setIsOpen={jest.fn()} />)
+
+    expect(screen.queryByRole('link', { name: 'Wedding Website' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument()
   })
 })
