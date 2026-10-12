@@ -11,6 +11,7 @@ import { runEttaAgent } from '~/lib/etta/agent'
 import { TelegramClient } from '~/lib/telegram/client'
 import { SessionSummarizer } from '~/server/application/messaging/session-summarizer'
 import { TelegramHandler } from '~/server/application/messaging/telegram-handler'
+import { feedbackService } from '~/server/domains/feedback'
 import { messagingService } from '~/server/domains/messaging'
 import { db } from '~/server/infrastructure/database'
 import { PrismaRateLimiter } from '~/server/infrastructure/rate-limit'
@@ -42,6 +43,7 @@ export function getTelegramHandler(): TelegramHandler {
       blob: putServerBlob,
       runEtta: runEttaAgent,
       summarizer: getSessionSummarizer(),
+      feedback: feedbackService,
       debounceMs: env.TELEGRAM_DEBOUNCE_MS,
     })
   }
