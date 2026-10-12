@@ -68,14 +68,14 @@ export function VendorCard({
   const averageRating = vendor.ratingSummary.average
   const ratingsPanelId = `vendor-ratings-${vendor.id}`
 
-  const priceDisplay = () => {
+  const priceDisplay = (() => {
     if (quoteCount === 0) return null
     if (quoteCount === 1) return formatPrice(quotePrices[0] ?? 0)
     const min = Math.min(...quotePrices)
     const max = Math.max(...quotePrices)
     if (min === max) return formatPrice(min)
     return `${formatPrice(min)} – ${formatPrice(max)}`
-  }
+  })()
 
   return (
     <div
@@ -186,8 +186,8 @@ export function VendorCard({
             </div>
           </div>
         )}
-        {priceDisplay() && (
-          <span className='font-medium font-mono text-foreground/80 text-xs'>{priceDisplay()}</span>
+        {priceDisplay && (
+          <span className='font-medium font-mono text-foreground/80 text-xs'>{priceDisplay}</span>
         )}
         <button
           type='button'
