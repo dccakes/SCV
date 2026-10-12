@@ -3,6 +3,8 @@
 import posthog from 'posthog-js'
 import { useEffect } from 'react'
 
+import { Button } from '~/components/ui/button'
+
 type AppErrorBoundaryProps = {
   error: Error & { digest?: string }
   reset: () => void
@@ -27,13 +29,9 @@ export default function AppErrorBoundary({ error, reset }: Readonly<AppErrorBoun
           Error ID: {error.digest}
         </p>
       ) : null}
-      <button
-        type='button'
-        className='rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground text-sm transition-colors hover:opacity-90'
-        onClick={reset}
-      >
+      <Button type='button' onClick={reset}>
         Try again
-      </button>
+      </Button>
     </div>
   )
 }

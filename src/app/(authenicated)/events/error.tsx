@@ -1,5 +1,7 @@
 'use client'
 
+import { Button } from '~/components/ui/button'
+
 type EventsErrorProps = {
   error: Error & { digest?: string }
   reset: () => void
@@ -17,13 +19,9 @@ export default function EventsError({ error, reset }: Readonly<EventsErrorProps>
           Error ID: {error.digest}
         </p>
       ) : null}
-      <button
-        type='button'
-        onClick={reset}
-        className='mt-4 rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground text-sm transition-colors hover:opacity-90'
-      >
+      <Button type='button' onClick={reset} className='mt-4'>
         Try again
-      </button>
+      </Button>
     </div>
   )
 }
