@@ -457,16 +457,16 @@ export function ChecklistPageClient({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteTask.isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                if (!deletingTask) {
-                  return
-                }
+              onClick={(e) => {
+                e.preventDefault()
+                if (!deletingTask) return
                 deleteTask.mutate({ taskId: deletingTask.id })
               }}
+              disabled={deleteTask.isPending}
             >
-              Confirm delete
+              {deleteTask.isPending ? 'Deleting...' : 'Confirm delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

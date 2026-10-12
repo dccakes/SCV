@@ -91,6 +91,7 @@ jest.mock('~/trpc/react', () => ({
       },
       delete: {
         useMutation: (options?: { onSuccess?: () => void }) => ({
+          isPending: false,
           mutate: (input: unknown) => {
             mockTaskDeleteMutate(input)
             options?.onSuccess?.()
@@ -419,6 +420,22 @@ describe('ChecklistPageClient', () => {
     )
 
     expect(screen.getByText('Everything is checked off')).toBeInTheDocument()
+  })
+
+  it('shows Confirm delete button enabled when not pending', async () => {
+    render(
+      <ChecklistPageClient
+        initialTasks={initialTasks}
+        initialMilestones={initialMilestones}
+        initialEvents={initialEvents}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit task Collect the marriage license' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Delete task' }))
+
+    const confirmBtn = await screen.findByRole('button', { name: 'Confirm delete' })
+    expect(confirmBtn).not.toBeDisabled()
   })
 
   it('updates and deletes a task from the edit flow', async () => {
