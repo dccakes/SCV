@@ -8,8 +8,7 @@ test.describe('RSVP Question Other Toggle', () => {
   test('creates a multiple-choice question with manual Other toggle control', async ({ page }) => {
     const uniqueQuestion = `Meal preference ${Date.now()}`
 
-    await page.getByRole('button', { name: /event actions for swamp ceremony/i }).click()
-    await page.getByRole('menuitem', { name: /rsvp questions/i }).click()
+    await page.getByRole('button', { name: /manage rsvp questions for swamp ceremony/i }).click()
 
     const manageDialog = page.getByRole('dialog').filter({
       has: page.getByRole('heading', { name: /rsvp questions/i }),
