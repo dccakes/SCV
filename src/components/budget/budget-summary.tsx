@@ -87,6 +87,11 @@ function BudgetSettingsDialog({
       return
     }
 
+    if (currency === currentCurrency && parsed === currentTarget) {
+      setOpen(false)
+      return
+    }
+
     try {
       if (currency !== currentCurrency) {
         await setCurrencyMutation.mutateAsync({ currency })
@@ -209,7 +214,7 @@ export function BudgetSummary({ summary, currency }: Readonly<BudgetSummaryProps
               className={`h-full rounded-full transition-all ${
                 overBudget ? 'bg-destructive' : 'bg-primary'
               }`}
-              style={{ width: `${Math.max(2, pctOfTarget)}%` }}
+              style={{ width: `${pctOfTarget}%` }}
             />
           </div>
         </div>
