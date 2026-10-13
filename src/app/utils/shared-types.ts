@@ -198,6 +198,7 @@ type Option = {
   text: string
   description: string
   questionId: string
+  translations?: unknown
 }
 
 type Question = {
@@ -208,6 +209,7 @@ type Question = {
   type: string
   isRequired: boolean
   allowOther?: boolean
+  translations?: unknown
   options?: Option[]
   answers?: Answer[]
   recentAnswer?: Answer | null

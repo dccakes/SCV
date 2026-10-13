@@ -153,6 +153,7 @@ export class QuestionService {
       type: data.type,
       isRequired: data.isRequired,
       allowOther: data.allowOther,
+      translations: data.translations,
       options: data.options,
     })
   }

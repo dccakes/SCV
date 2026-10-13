@@ -89,6 +89,37 @@ describe('QuestionService', () => {
       expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { event: ['update'] })
     })
 
+    it('passes Spanish translations of the question and options to the repository', async () => {
+      mockUpsertFn.mockResolvedValue(mockQuestion)
+
+      await questionService.upsertQuestion({
+        ctx: actorContext,
+        weddingId: 'wedding-123',
+        organizationId: 'org-1',
+        data: {
+          eventId: 'event-123',
+          text: 'Meal?',
+          type: 'Option',
+          isRequired: true,
+          allowOther: false,
+          translations: { es: { text: '¿Platillo?' } },
+          options: [
+            { text: 'Chicken', description: '', translations: { es: { text: 'Pollo' } } },
+            { text: 'Fish', description: '' },
+          ],
+        },
+      })
+
+      expect(mockUpsertFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          translations: { es: { text: '¿Platillo?' } },
+          options: expect.arrayContaining([
+            expect.objectContaining({ translations: { es: { text: 'Pollo' } } }),
+          ]),
+        })
+      )
+    })
+
     it('should create a website question successfully', async () => {
       mockUpsertFn.mockResolvedValue(mockWebsiteQuestion)
 

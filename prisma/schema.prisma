@@ -130,6 +130,8 @@ model WebsiteSection {
   isEnabled Boolean            @default(true)
   position  Int
   content   Json
+  /// Locale overlays of `content`, same shape, e.g. { "es": { "heading": "..." } }.
+  translations Json?
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
 
@@ -390,6 +392,8 @@ model Event {
   venue          String?
   attire         String?
   description    String?
+  /// Locale overlays for name, venue, attire and description, e.g. { "es": { "name": "Boda" } }.
+  translations   Json?
   collectRsvp    Boolean   @default(false)
   allowTagAlongs Boolean   @default(false)
 
@@ -434,6 +438,8 @@ model Question {
   type       String // ['Text', 'Option']
   isRequired Boolean  @default(false)
   allowOther Boolean  @default(false)
+  /// Locale overlays for the question text, e.g. { "es": { "text": "..." } }.
+  translations Json?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   options    Option[] @relation(name: "Question_Options")
@@ -448,6 +454,8 @@ model Option {
   responseCount   Int              @default(0)
   text            String
   description     String
+  /// Locale overlays for text and description, e.g. { "es": { "text": "Sí" } }.
+  translations    Json?
   question        Question         @relation(name: "Question_Options", fields: [questionId], references: [id], onDelete: Cascade)
   questionId      String
   createdAt       DateTime         @default(now())

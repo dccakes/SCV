@@ -133,7 +133,24 @@ describe('websiteRouter', () => {
 
       const input = { subUrl: 'johnandjane', accessToken: undefined, inviteToken: 'invite-token' }
       await expect(caller.fetchWeddingData(input)).resolves.toEqual(payload)
-      expect(mockFetchWeddingData).toHaveBeenCalledWith('johnandjane', undefined, 'invite-token')
+      expect(mockFetchWeddingData).toHaveBeenCalledWith(
+        'johnandjane',
+        undefined,
+        'invite-token',
+        undefined
+      )
+    })
+
+    it('forwards the visitor locale', async () => {
+      mockFetchWeddingData.mockResolvedValue({})
+      const caller = websiteRouter.createCaller({
+        db: {} as never,
+        auth: { userId: null, session: null },
+        headers: new Headers(),
+      })
+
+      await caller.fetchWeddingData({ subUrl: 'johnandjane', locale: 'es' })
+      expect(mockFetchWeddingData).toHaveBeenCalledWith('johnandjane', undefined, undefined, 'es')
     })
   })
 })

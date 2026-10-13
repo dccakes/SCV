@@ -28,6 +28,8 @@ export type Event = {
   venue: string | null
   attire: string | null
   description: string | null
+  /** Locale overlays for name/venue/attire/description, e.g. { es: { name } }. */
+  translations?: unknown
   weddingId: string
   collectRsvp: boolean
   allowTagAlongs: boolean

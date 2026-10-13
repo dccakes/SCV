@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 import {
   type SectionContentByType,
+  type SectionTranslations,
   type WebsiteSectionContent,
   WebsiteSectionType,
 } from '~/server/domains/website-section/website-section.types'
@@ -192,6 +193,22 @@ export function parseSectionContent<T extends WebsiteSectionType>(
   return sectionContentSchemaByType[type].parse(content) as SectionContentByType[T]
 }
 
+/**
+ * Read stored translations leniently: a translation that no longer validates
+ * (e.g. after a schema change) is dropped so guests fall back to English rather
+ * than the page failing to load.
+ */
+export function parseSectionTranslations<T extends WebsiteSectionType>(
+  type: T,
+  translations: unknown
+): SectionTranslations<SectionContentByType[T]> | undefined {
+  if (typeof translations !== 'object' || translations === null) return undefined
+  const es = (translations as { es?: unknown }).es
+  if (es === undefined) return undefined
+  const result = sectionContentSchemaByType[type].safeParse(es)
+  return result.success ? { es: result.data as SectionContentByType[T] } : undefined
+}
+
 /** Validate content against a type without throwing. */
 export function isValidSectionContent(type: WebsiteSectionType, content: unknown): boolean {
   return sectionContentSchemaByType[type].safeParse(content).success
@@ -233,11 +250,28 @@ export const updateSectionSchema = z
     type: z.enum(WEBSITE_SECTION_TYPES),
     isEnabled: z.boolean().optional(),
     content: z.unknown(),
+    /**
+     * Optional Spanish copy in the same shape as `content`. Omit to keep the
+     * stored translation unchanged.
+     */
+    translations: z.object({ es: z.unknown().optional() }).optional(),
   })
-  .superRefine((value, ctx) => attachContentIssues(value.type, value.content, ctx))
+  .superRefine((value, ctx) => {
+    attachContentIssues(value.type, value.content, ctx)
+    if (value.translations?.es !== undefined) {
+      const result = sectionContentSchemaByType[value.type].safeParse(value.translations.es)
+      if (!result.success) {
+        for (const issue of result.error.issues) {
+          ctx.addIssue({ ...issue, path: ['translations', 'es', ...issue.path] })
+        }
+      }
+    }
+  })
 
-/** Kept for the existing HOME-only editor endpoint. */
-export const updateHomeSectionSchema = homeSectionContentSchema
+/** Kept for the existing HOME-only editor endpoint, plus optional Spanish copy. */
+export const updateHomeSectionSchema = homeSectionContentSchema.extend({
+  translations: z.object({ es: homeSectionContentSchema.optional() }).optional(),
+})
 
 export type CreateWebsiteSectionInput = {
   websiteId: string
