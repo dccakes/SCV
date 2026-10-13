@@ -1,0 +1,262 @@
+import { TRPCError } from '@trpc/server'
+
+jest.mock('~/server/authz/permission-checker', () => ({
+  requirePermission: jest.fn(),
+}))
+
+jest.mock('~/server/domains/seating/seating.repository')
+
+import { requirePermission } from '~/server/authz/permission-checker'
+
+// @ts-expect-error - Importing mock functions from mocked module
+import {
+  buildSeatableGuest,
+  mockCreateTable,
+  mockDeleteAssignments,
+  mockDeleteTable,
+  mockEventBelongsToWedding,
+  mockFindSeatableGuestIds,
+  mockFindSeatableGuests,
+  mockFindTableById,
+  mockFindTablesByEventId,
+  mockReplaceAssignments,
+  mockTable,
+  mockUpdateTable,
+  resetMocks,
+  SeatingRepository,
+} from '~/server/domains/seating/seating.repository'
+import { SeatingService } from '~/server/domains/seating/seating.service'
+
+const mockRequirePermission = requirePermission as jest.Mock
+const WEDDING_ID = 'wedding-123'
+
+describe('SeatingService', () => {
+  let service: SeatingService
+  const ctx = {
+    userId: 'actor-1',
+    activeOrganization: { organizationId: 'org-1', role: 'owner' },
+  }
+
+  beforeEach(() => {
+    resetMocks()
+    mockRequirePermission.mockReset()
+    ;(mockEventBelongsToWedding as jest.Mock).mockResolvedValue(true)
+    ;(mockFindTableById as jest.Mock).mockResolvedValue(mockTable)
+    service = new SeatingService(new SeatingRepository())
+  })
+
+  describe('getChart', () => {
+    it('requires event read permission', async () => {
+      ;(mockFindTablesByEventId as jest.Mock).mockResolvedValue([])
+      ;(mockFindSeatableGuests as jest.Mock).mockResolvedValue([])
+
+      await service.getChart(ctx, WEDDING_ID, 'event-1')
+
+      expect(mockRequirePermission).toHaveBeenCalledWith(ctx, { event: ['read'] })
+    })
+
+    it('rejects events outside the active wedding', async () => {
+      ;(mockEventBelongsToWedding as jest.Mock).mockResolvedValue(false)
+
+      await expect(service.getChart(ctx, WEDDING_ID, 'event-x')).rejects.toMatchObject({
+        code: 'FORBIDDEN',
+      })
+    })
+
+    it('returns tables with guest ids and guests grouped by household', async () => {
+      ;(mockFindTablesByEventId as jest.Mock).mockResolvedValue([mockTable])
+      ;(mockFindSeatableGuests as jest.Mock).mockResolvedValue([
+        buildSeatableGuest({ id: 1, lastName: 'Zed', seatAssignments: [{ tableId: 'table-1' }] }),
+        buildSeatableGuest({
+          id: 2,
+          lastName: 'Zed',
+          isPrimaryContact: true,
+          seatAssignments: [{ tableId: 'table-1' }],
+          guestTagAssignments: [{ guestTag: { name: 'Family' } }],
+        }),
+        buildSeatableGuest({
+          id: 3,
+          lastName: 'Abbot',
+          householdId: 'household-2',
+          household: {
+            id: 'household-2',
+            address1: '1 Main St',
+            address2: null,
+            city: 'Austin',
+            state: 'TX',
+            zipCode: '78701',
+            country: null,
+            notes: 'Bringing a gift',
+          },
+        }),
+      ])
+
+      const chart = await service.getChart(ctx, WEDDING_ID, 'event-1')
+
+      expect(chart.tables).toEqual([
+        {
+          id: 'table-1',
+          name: 'Table 1',
+          shape: 'ROUND',
+          capacity: 4,
+          positionX: 40,
+          positionY: 40,
+          guestIds: [1, 2],
+        },
+      ])
+      // Households sorted by their primary contact's last name
+      expect(chart.households.map((h) => h.id)).toEqual(['household-2', 'household-1'])
+      expect(chart.households[0]).toMatchObject({
+        address: '1 Main St, Austin, TX 78701',
+        notes: 'Bringing a gift',
+      })
+      // Primary contact first within a household
+      expect(chart.households[1]?.guests.map((g) => g.id)).toEqual([2, 1])
+      expect(chart.households[1]?.guests[0]).toMatchObject({
+        tableId: 'table-1',
+        tags: ['Family'],
+        rsvp: 'Attending',
+      })
+      expect(chart.households[0]?.guests[0]?.tableId).toBeNull()
+    })
+  })
+
+  describe('createTable', () => {
+    it('creates a table on an event in the wedding', async () => {
+      ;(mockCreateTable as jest.Mock).mockResolvedValue(mockTable)
+
+      await service.createTable(ctx, WEDDING_ID, {
+        eventId: 'event-1',
+        name: 'Table 1',
+        shape: 'RECTANGULAR',
+        capacity: 8,
+        positionX: 10,
+        positionY: 20,
+      })
+
+      expect(mockRequirePermission).toHaveBeenCalledWith(ctx, { event: ['update'] })
+      expect(mockCreateTable).toHaveBeenCalledWith({
+        weddingId: WEDDING_ID,
+        eventId: 'event-1',
+        name: 'Table 1',
+        shape: 'RECTANGULAR',
+        capacity: 8,
+        positionX: 10,
+        positionY: 20,
+      })
+    })
+
+    it('rejects events outside the active wedding', async () => {
+      ;(mockEventBelongsToWedding as jest.Mock).mockResolvedValue(false)
+
+      await expect(
+        service.createTable(ctx, WEDDING_ID, {
+          eventId: 'event-x',
+          name: 'T',
+          shape: 'ROUND',
+          capacity: 8,
+          positionX: 0,
+          positionY: 0,
+        })
+      ).rejects.toBeInstanceOf(TRPCError)
+      expect(mockCreateTable).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('updateTable', () => {
+    it('renames, reshapes and moves a table', async () => {
+      await service.updateTable(ctx, WEDDING_ID, 'table-1', {
+        name: 'Head Table',
+        shape: 'RECTANGULAR',
+        positionX: 300,
+        positionY: 120,
+      })
+
+      expect(mockUpdateTable).toHaveBeenCalledWith('table-1', {
+        name: 'Head Table',
+        shape: 'RECTANGULAR',
+        positionX: 300,
+        positionY: 120,
+      })
+    })
+
+    it('rejects shrinking capacity below the number of seated guests', async () => {
+      await expect(
+        service.updateTable(ctx, WEDDING_ID, 'table-1', { capacity: 1 })
+      ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+      expect(mockUpdateTable).not.toHaveBeenCalled()
+    })
+
+    it('rejects tables from another wedding', async () => {
+      ;(mockFindTableById as jest.Mock).mockResolvedValue({ ...mockTable, weddingId: 'other' })
+
+      await expect(
+        service.updateTable(ctx, WEDDING_ID, 'table-1', { name: 'X' })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+
+    it('rejects missing tables', async () => {
+      ;(mockFindTableById as jest.Mock).mockResolvedValue(null)
+
+      await expect(
+        service.updateTable(ctx, WEDDING_ID, 'missing', { name: 'X' })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+  })
+
+  describe('deleteTable', () => {
+    it('deletes a table in the wedding', async () => {
+      await service.deleteTable(ctx, WEDDING_ID, 'table-1')
+
+      expect(mockDeleteTable).toHaveBeenCalledWith('table-1')
+    })
+  })
+
+  describe('assignGuests', () => {
+    it('seats guests at a table with room', async () => {
+      ;(mockFindSeatableGuestIds as jest.Mock).mockResolvedValue([3, 4])
+
+      await service.assignGuests(ctx, WEDDING_ID, { tableId: 'table-1', guestIds: [3, 4] })
+
+      expect(mockFindSeatableGuestIds).toHaveBeenCalledWith('event-1', [3, 4])
+      expect(mockReplaceAssignments).toHaveBeenCalledWith('event-1', 'table-1', [3, 4])
+    })
+
+    it('blocks a drop that would exceed capacity', async () => {
+      ;(mockFindSeatableGuestIds as jest.Mock).mockResolvedValue([3, 4, 5])
+
+      await expect(
+        service.assignGuests(ctx, WEDDING_ID, { tableId: 'table-1', guestIds: [3, 4, 5] })
+      ).rejects.toMatchObject({
+        code: 'BAD_REQUEST',
+        message: 'Table 1 only has 2 open seats',
+      })
+      expect(mockReplaceAssignments).not.toHaveBeenCalled()
+    })
+
+    it('rejects guests who are not seatable for the event', async () => {
+      ;(mockFindSeatableGuestIds as jest.Mock).mockResolvedValue([3])
+
+      await expect(
+        service.assignGuests(ctx, WEDDING_ID, { tableId: 'table-1', guestIds: [3, 99] })
+      ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+      expect(mockReplaceAssignments).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('unassignGuests', () => {
+    it('removes guests from their tables for the event', async () => {
+      await service.unassignGuests(ctx, WEDDING_ID, { eventId: 'event-1', guestIds: [1] })
+
+      expect(mockDeleteAssignments).toHaveBeenCalledWith('event-1', [1])
+    })
+
+    it('rejects events outside the active wedding', async () => {
+      ;(mockEventBelongsToWedding as jest.Mock).mockResolvedValue(false)
+
+      await expect(
+        service.unassignGuests(ctx, WEDDING_ID, { eventId: 'event-x', guestIds: [1] })
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    })
+  })
+})

@@ -9,6 +9,7 @@ export const RESERVED_WEBSITE_ROOT_SEGMENTS = [
   'guest-list',
   'join',
   'old_dashboard',
+  'seating',
   'settings',
   'vendors',
   'website',

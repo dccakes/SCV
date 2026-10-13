@@ -41,6 +41,7 @@ const RESERVED_ROOT_SEGMENTS = new Set([
   'guest-list',
   'join',
   'old_dashboard',
+  'seating',
   'settings',
   'vendors',
   'w',
