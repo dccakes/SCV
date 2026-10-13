@@ -757,3 +757,22 @@ describe('EventForm - Form State', () => {
     expect(result.current.formState.isDirty).toBe(false)
   })
 })
+
+describe('transformToServerInput translations', () => {
+  it('sends Spanish text and clears blank Spanish fields', () => {
+    const result = transformToServerInput({
+      eventName: 'Welcome Dinner',
+      collectRsvp: false,
+      allowTagAlongs: false,
+      translations: { es: { name: 'Cena de bienvenida', venue: '', attire: '', description: '' } },
+    })
+    expect(result.translations).toEqual({
+      es: {
+        name: 'Cena de bienvenida',
+        venue: undefined,
+        attire: undefined,
+        description: undefined,
+      },
+    })
+  })
+})

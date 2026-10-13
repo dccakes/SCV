@@ -9,6 +9,7 @@ import { WebsiteEditor } from '~/app/_components/website/website-editor'
 import { WebsiteMediaEditor } from '~/app/_components/website/website-media-editor'
 import { WebsitePasswordCard } from '~/app/_components/website/website-password-card'
 import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
+import { EditingLanguageProvider, EditingLanguageToggle } from '~/components/i18n/editing-language'
 import { WebsiteManager } from '~/components/website-manager/website-manager'
 import { auth } from '~/lib/auth'
 import { computePublicWebsiteUrl } from '~/lib/website/public-url'
@@ -50,6 +51,7 @@ export default async function WebsitePage() {
   const introText = homeContent?.introText ?? ''
   const headline = homeContent?.headline ?? ''
   const headlineAccent = homeContent?.headlineAccent ?? ''
+  const homeSpanish = homeSection?.type === 'HOME' ? homeSection.translations?.es : undefined
 
   if (!isWebsiteBuilderEnabled) {
     return (
@@ -93,17 +95,27 @@ export default async function WebsitePage() {
                 templates={listTemplateSummaries()}
                 currentTemplateId={existingWebsite?.templateId ?? null}
               />
-              <WebsiteEditor
-                initialIntroText={introText}
-                initialHeadline={headline}
-                initialHeadlineAccent={headlineAccent}
-                publicUrl={computePublicWebsiteUrl(websiteSubUrl)}
-              />
-              <WebsiteMediaEditor
-                initialHeaderImageUrl={existingWebsite?.headerImageUrl ?? null}
-                initialCoupleImageUrls={existingWebsite?.coupleImageUrls ?? []}
-              />
-              <SectionsEditor initialSections={sections} />
+              <EditingLanguageProvider>
+                <div className='space-y-6'>
+                  <EditingLanguageToggle className='sticky top-0 z-10' />
+                  <WebsiteEditor
+                    initialIntroText={introText}
+                    initialHeadline={headline}
+                    initialHeadlineAccent={headlineAccent}
+                    initialSpanish={{
+                      introText: homeSpanish?.introText ?? '',
+                      headline: homeSpanish?.headline ?? '',
+                      headlineAccent: homeSpanish?.headlineAccent ?? '',
+                    }}
+                    publicUrl={computePublicWebsiteUrl(websiteSubUrl)}
+                  />
+                  <WebsiteMediaEditor
+                    initialHeaderImageUrl={existingWebsite?.headerImageUrl ?? null}
+                    initialCoupleImageUrls={existingWebsite?.coupleImageUrls ?? []}
+                  />
+                  <SectionsEditor initialSections={sections} />
+                </div>
+              </EditingLanguageProvider>
             </>
           ) : null}
         </div>

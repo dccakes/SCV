@@ -5,10 +5,13 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
+import {
+  TranslatableInput,
+  TranslatableTextarea,
+  useEditingLanguage,
+} from '~/components/i18n/editing-language'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
-import { Input } from '~/components/ui/input'
-import { Textarea } from '~/components/ui/textarea'
 import { api } from '~/trpc/react'
 
 type WebsiteEditorProps = Readonly<{
@@ -16,18 +19,37 @@ type WebsiteEditorProps = Readonly<{
   initialIntroText: string
   initialHeadline: string
   initialHeadlineAccent: string
+  /** Stored Spanish translation of the hero and intro. */
+  initialSpanish?: HeroCopy
 }>
+
+type HeroCopy = { introText: string; headline: string; headlineAccent: string }
+
+const EMPTY_HERO: HeroCopy = { introText: '', headline: '', headlineAccent: '' }
 
 export function WebsiteEditor({
   initialIntroText,
   initialHeadline,
   initialHeadlineAccent,
+  initialSpanish = EMPTY_HERO,
   publicUrl,
 }: WebsiteEditorProps) {
   const router = useRouter()
-  const [introText, setIntroText] = useState(initialIntroText)
-  const [headline, setHeadline] = useState(initialHeadline)
-  const [headlineAccent, setHeadlineAccent] = useState(initialHeadlineAccent)
+  const { language } = useEditingLanguage()
+  const translating = language === 'es'
+  const [english, setEnglish] = useState<HeroCopy>({
+    introText: initialIntroText,
+    headline: initialHeadline,
+    headlineAccent: initialHeadlineAccent,
+  })
+  const [spanish, setSpanish] = useState<HeroCopy>(initialSpanish)
+  const [baseline, setBaseline] = useState(() =>
+    JSON.stringify({ en: english, es: initialSpanish })
+  )
+  const current = translating ? spanish : english
+  const { introText, headline, headlineAccent } = current
+  const setField = (key: keyof HeroCopy, value: string) =>
+    (translating ? setSpanish : setEnglish)((copy) => ({ ...copy, [key]: value }))
   const [copied, setCopied] = useState(false)
   const copyResetTimeoutRef = useRef<number | null>(null)
   const updateHomeSection = api.websiteSection.updateHomeSection.useMutation({
@@ -36,6 +58,7 @@ export function WebsiteEditor({
     },
     onSuccess: () => {
       toast.success('Hero & intro saved')
+      setBaseline(JSON.stringify({ en: english, es: spanish }))
       router.refresh()
     },
   })
@@ -64,10 +87,7 @@ export function WebsiteEditor({
     }
   }
 
-  const hasChanges =
-    introText !== initialIntroText ||
-    headline !== initialHeadline ||
-    headlineAccent !== initialHeadlineAccent
+  const hasChanges = baseline !== JSON.stringify({ en: english, es: spanish })
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -84,10 +104,14 @@ export function WebsiteEditor({
   }, [hasChanges, updateHomeSection.isPending])
 
   const saveIntro = () => {
+    const toContent = (copy: HeroCopy) => ({
+      introText: copy.introText,
+      headline: copy.headline.trim() ? copy.headline : undefined,
+      headlineAccent: copy.headlineAccent.trim() ? copy.headlineAccent : undefined,
+    })
     updateHomeSection.mutate({
-      introText,
-      headline: headline.trim() ? headline : undefined,
-      headlineAccent: headlineAccent.trim() ? headlineAccent : undefined,
+      ...toContent(english),
+      translations: { es: toContent(spanish) },
     })
   }
 
@@ -139,12 +163,13 @@ export function WebsiteEditor({
               >
                 Hero Headline
               </label>
-              <Textarea
+              <TranslatableTextarea
+                reference={translating ? english.headline : undefined}
                 id='website-hero-headline'
                 maxLength={160}
                 name='headline'
                 rows={3}
-                onChange={(event) => setHeadline(event.target.value)}
+                onChange={(event) => setField('headline', event.target.value)}
                 placeholder={'Our Greatest\nAdventure\nBegins'}
                 value={headline}
               />
@@ -160,11 +185,12 @@ export function WebsiteEditor({
               >
                 Emphasis
               </label>
-              <Input
+              <TranslatableInput
+                reference={translating ? english.headlineAccent : undefined}
                 id='website-hero-accent'
                 maxLength={40}
                 name='headlineAccent'
-                onChange={(event) => setHeadlineAccent(event.target.value)}
+                onChange={(event) => setField('headlineAccent', event.target.value)}
                 placeholder='Here.'
                 value={headlineAccent}
               />
@@ -180,11 +206,12 @@ export function WebsiteEditor({
             >
               Home Intro
             </label>
-            <Textarea
+            <TranslatableTextarea
+              reference={translating ? english.introText : undefined}
               id='website-intro-text'
               maxLength={2000}
               name='introText'
-              onChange={(event) => setIntroText(event.target.value)}
+              onChange={(event) => setField('introText', event.target.value)}
               placeholder='Welcome guests with a short introduction, weekend note, or practical overview…'
               value={introText}
             />

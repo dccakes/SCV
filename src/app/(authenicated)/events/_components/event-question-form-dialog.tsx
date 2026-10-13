@@ -5,6 +5,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
 import type { Option, Question } from '~/app/utils/shared-types'
+import {
+  type EditingLanguage,
+  LanguageSwitch,
+  ReferenceNote,
+} from '~/components/i18n/editing-language'
 import { Button } from '~/components/ui/button'
 import {
   Dialog,
@@ -22,7 +27,25 @@ type QuestionDraftOption = {
   id?: string
   text: string
   description: string
+  /** Spanish label and description; blank falls back to English for guests. */
+  textEs: string
+  descriptionEs: string
 }
+
+/** Read a string from a stored `translations.es` payload. */
+const readSpanish = (translations: unknown, key: string): string => {
+  if (typeof translations !== 'object' || translations === null) return ''
+  const es = (translations as { es?: Record<string, unknown> }).es
+  const value = es?.[key]
+  return typeof value === 'string' ? value : ''
+}
+
+const emptyOption = (): QuestionDraftOption => ({
+  text: '',
+  description: '',
+  textEs: '',
+  descriptionEs: '',
+})
 
 type EventQuestionFormDialogProps = Readonly<{
   open: boolean
@@ -36,16 +59,15 @@ type EventQuestionFormDialogProps = Readonly<{
 
 const normalizeOptions = (options?: Option[]): QuestionDraftOption[] => {
   if (!options || options.length === 0) {
-    return [
-      { text: '', description: '' },
-      { text: '', description: '' },
-    ]
+    return [emptyOption(), emptyOption()]
   }
 
   return options.map((option) => ({
     id: option.id,
     text: option.text,
     description: option.description,
+    textEs: readSpanish(option.translations, 'text'),
+    descriptionEs: readSpanish(option.translations, 'description'),
   }))
 }
 
@@ -59,6 +81,10 @@ export function EventQuestionFormDialog({
 }: EventQuestionFormDialogProps) {
   const isEditMode = initialQuestion !== undefined
   const [questionText, setQuestionText] = useState('')
+  const [questionTextEs, setQuestionTextEs] = useState('')
+  // English owns the structure (type, options); Spanish only translates text.
+  const [language, setLanguage] = useState<EditingLanguage>('en')
+  const translating = language === 'es'
   const [questionType, setQuestionType] = useState<'Text' | 'Option'>('Text')
   const [allowOther, setAllowOther] = useState(false)
   const [options, setOptions] = useState<QuestionDraftOption[]>(normalizeOptions())
@@ -68,6 +94,8 @@ export function EventQuestionFormDialog({
     if (!open) return
 
     setQuestionText(initialQuestion?.text ?? '')
+    setQuestionTextEs(readSpanish(initialQuestion?.translations, 'text'))
+    setLanguage('en')
     setQuestionType((initialQuestion?.type as 'Text' | 'Option' | undefined) ?? 'Text')
     setAllowOther(initialQuestion?.allowOther ?? false)
     setOptions(normalizeOptions(initialQuestion?.options))
@@ -95,7 +123,7 @@ export function EventQuestionFormDialog({
   })
 
   const handleAddOption = () => {
-    setOptions((previous) => [...previous, { text: '', description: '' }])
+    setOptions((previous) => [...previous, emptyOption()])
   }
 
   const handleRemoveOption = (index: number) => {
@@ -106,13 +134,13 @@ export function EventQuestionFormDialog({
       }
 
       const next = previous.filter((_, optionIndex) => optionIndex !== index)
-      return next.length >= 2 ? next : [...next, { text: '', description: '' }]
+      return next.length >= 2 ? next : [...next, emptyOption()]
     })
   }
 
   const handleOptionChange = (
     index: number,
-    key: keyof QuestionDraftOption,
+    key: 'text' | 'description' | 'textEs' | 'descriptionEs',
     value: string
   ): void => {
     setOptions((previous) =>
@@ -137,6 +165,7 @@ export function EventQuestionFormDialog({
       questionId: initialQuestion?.id,
       ...(websiteId ? { websiteId } : { eventId }),
       text: questionText.trim(),
+      translations: { es: { text: questionTextEs.trim() || undefined } },
       type: questionType,
       isRequired: questionType === 'Option',
       allowOther: questionType === 'Option' ? allowOther : false,
@@ -148,6 +177,12 @@ export function EventQuestionFormDialog({
                 id: option.id,
                 text: option.text.trim(),
                 description: option.description.trim(),
+                translations: {
+                  es: {
+                    text: option.textEs.trim() || undefined,
+                    description: option.descriptionEs.trim() || undefined,
+                  },
+                },
               }))
           : undefined,
       deletedOptions:
@@ -167,18 +202,40 @@ export function EventQuestionFormDialog({
           <DialogDescription>
             This question is shown only for this event when guests RSVP.
           </DialogDescription>
+          <div className='flex flex-col gap-2 pt-2 sm:flex-row sm:items-center sm:justify-between'>
+            <p className='text-muted-foreground text-xs'>
+              {translating
+                ? 'Spanish text for Spanish-speaking guests. Blank fields show the English.'
+                : 'Switch to ES to translate this question for your wedding website.'}
+            </p>
+            <LanguageSwitch value={language} onChange={setLanguage} label='Question language' />
+          </div>
         </DialogHeader>
 
         <div className='space-y-4'>
           <div className='space-y-2'>
             <Label htmlFor='event-question-text'>Question</Label>
-            <Input
-              id='event-question-text'
-              value={questionText}
-              onChange={(event) => setQuestionText(event.target.value)}
-              placeholder='e.g., Meal preference?'
-              disabled={upsertQuestion.isPending}
-            />
+            {translating ? (
+              <>
+                <Input
+                  id='event-question-text'
+                  lang='es'
+                  value={questionTextEs}
+                  onChange={(event) => setQuestionTextEs(event.target.value)}
+                  placeholder={questionText || 'p. ej., ¿Qué platillo prefieres?'}
+                  disabled={upsertQuestion.isPending}
+                />
+                {questionText ? <ReferenceNote reference={questionText} /> : null}
+              </>
+            ) : (
+              <Input
+                id='event-question-text'
+                value={questionText}
+                onChange={(event) => setQuestionText(event.target.value)}
+                placeholder='e.g., Meal preference?'
+                disabled={upsertQuestion.isPending}
+              />
+            )}
           </div>
 
           <div className='space-y-2'>
@@ -188,7 +245,7 @@ export function EventQuestionFormDialog({
               className='flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background'
               value={questionType}
               onChange={(event) => setQuestionType(event.target.value as 'Text' | 'Option')}
-              disabled={upsertQuestion.isPending}
+              disabled={upsertQuestion.isPending || translating}
             >
               <option value='Text'>Short Answer</option>
               <option value='Option'>Multiple Choice</option>
@@ -199,16 +256,18 @@ export function EventQuestionFormDialog({
             <div className='space-y-3 rounded-md border p-3'>
               <div className='flex items-center justify-between'>
                 <Label>Answer options</Label>
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='sm'
-                  onClick={handleAddOption}
-                  disabled={upsertQuestion.isPending}
-                >
-                  <Plus className='mr-1 h-4 w-4' />
-                  Add option
-                </Button>
+                {translating ? null : (
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={handleAddOption}
+                    disabled={upsertQuestion.isPending}
+                  >
+                    <Plus className='mr-1 h-4 w-4' />
+                    Add option
+                  </Button>
+                )}
               </div>
               <p className='text-muted-foreground text-xs'>
                 Guests must answer multiple-choice questions.
@@ -226,7 +285,7 @@ export function EventQuestionFormDialog({
                   type='checkbox'
                   checked={allowOther}
                   onChange={(event) => setAllowOther(event.target.checked)}
-                  disabled={upsertQuestion.isPending}
+                  disabled={upsertQuestion.isPending || translating}
                 />
                 Allow Other write-in answer
               </label>
@@ -236,29 +295,60 @@ export function EventQuestionFormDialog({
                     key={option.id ?? `option-${index}`}
                     className='grid grid-cols-[1fr_1fr_auto] gap-2'
                   >
-                    <Input
-                      value={option.text}
-                      onChange={(event) => handleOptionChange(index, 'text', event.target.value)}
-                      placeholder='Option label'
-                      disabled={upsertQuestion.isPending}
-                    />
-                    <Input
-                      value={option.description}
-                      onChange={(event) =>
-                        handleOptionChange(index, 'description', event.target.value)
-                      }
-                      placeholder='Optional description'
-                      disabled={upsertQuestion.isPending}
-                    />
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='icon'
-                      onClick={() => handleRemoveOption(index)}
-                      disabled={upsertQuestion.isPending || options.length <= 2}
-                    >
-                      <Trash2 className='h-4 w-4' />
-                    </Button>
+                    {translating ? (
+                      <>
+                        <Input
+                          lang='es'
+                          aria-label={`Spanish label for ${option.text || `option ${index + 1}`}`}
+                          value={option.textEs}
+                          onChange={(event) =>
+                            handleOptionChange(index, 'textEs', event.target.value)
+                          }
+                          placeholder={option.text || 'Opción'}
+                          disabled={upsertQuestion.isPending}
+                        />
+                        <Input
+                          lang='es'
+                          aria-label={`Spanish description for ${option.text || `option ${index + 1}`}`}
+                          value={option.descriptionEs}
+                          onChange={(event) =>
+                            handleOptionChange(index, 'descriptionEs', event.target.value)
+                          }
+                          placeholder={option.description || 'Descripción opcional'}
+                          disabled={upsertQuestion.isPending}
+                        />
+                        <span aria-hidden='true' className='w-10' />
+                      </>
+                    ) : (
+                      <>
+                        <Input
+                          value={option.text}
+                          onChange={(event) =>
+                            handleOptionChange(index, 'text', event.target.value)
+                          }
+                          placeholder='Option label'
+                          disabled={upsertQuestion.isPending}
+                        />
+                        <Input
+                          value={option.description}
+                          onChange={(event) =>
+                            handleOptionChange(index, 'description', event.target.value)
+                          }
+                          placeholder='Optional description'
+                          disabled={upsertQuestion.isPending}
+                        />
+                        <Button
+                          type='button'
+                          variant='ghost'
+                          size='icon'
+                          aria-label='Remove option'
+                          onClick={() => handleRemoveOption(index)}
+                          disabled={upsertQuestion.isPending || options.length <= 2}
+                        >
+                          <Trash2 className='h-4 w-4' />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>

@@ -10,7 +10,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { format } from 'date-fns'
 import { Calendar as CalendarIcon, Clock } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { type Resolver, type SubmitHandler, useForm } from 'react-hook-form'
 
 import {
@@ -18,6 +18,11 @@ import {
   EventFormSchema,
   getEventFormDefaults,
 } from '~/components/forms/event/event-form.schema'
+import {
+  type EditingLanguage,
+  LanguageSwitch,
+  ReferenceNote,
+} from '~/components/i18n/editing-language'
 import { Button } from '~/components/ui/button'
 import { Calendar } from '~/components/ui/calendar'
 import {
@@ -53,6 +58,39 @@ type ModernEventFormProps =
       event: Event
     })
 
+type SpanishEventText = { name: string; venue: string; attire: string; description: string }
+
+/** Stored Spanish text for an event, as editable strings. */
+function readSpanish(event: Event | undefined): SpanishEventText {
+  const stored =
+    typeof event?.translations === 'object' && event.translations !== null
+      ? (event.translations as { es?: Partial<Record<keyof SpanishEventText, unknown>> }).es
+      : undefined
+  const text = (value: unknown) => (typeof value === 'string' ? value : '')
+  return {
+    name: text(stored?.name),
+    venue: text(stored?.venue),
+    attire: text(stored?.attire),
+    description: text(stored?.description),
+  }
+}
+
+/** Form values for an existing event, including its Spanish text. */
+function toFormValues(event: Event): EventFormData {
+  return {
+    eventName: event.name,
+    date: event.date ? format(new Date(event.date), 'yyyy-MM-dd') : '',
+    startTime: event.startTime ?? '',
+    endTime: event.endTime ?? '',
+    venue: event.venue ?? '',
+    attire: event.attire ?? '',
+    description: event.description ?? '',
+    collectRsvp: event.collectRsvp ?? false,
+    allowTagAlongs: event.allowTagAlongs ?? false,
+    translations: { es: readSpanish(event) },
+  }
+}
+
 export function ModernEventForm({
   mode,
   open,
@@ -62,28 +100,22 @@ export function ModernEventForm({
   isSubmitting = false,
 }: ModernEventFormProps) {
   const isEditMode = mode === 'edit'
+  // Name, venue, attire and description can be written in English and Spanish;
+  // date, times and switches are shared by both languages.
+  const [language, setLanguage] = useState<EditingLanguage>('en')
+  const translating = language === 'es'
 
   // Initialize form with defaults or event data
   const form = useForm<EventFormData>({
     resolver: zodResolver(EventFormSchema) as Resolver<EventFormData>,
-    defaultValues: isEditMode
-      ? {
-          eventName: event.name,
-          date: event.date ? format(new Date(event.date), 'yyyy-MM-dd') : '',
-          startTime: event.startTime ?? '',
-          endTime: event.endTime ?? '',
-          venue: event.venue ?? '',
-          attire: event.attire ?? '',
-          description: event.description ?? '',
-          collectRsvp: event.collectRsvp ?? false,
-          allowTagAlongs: event.allowTagAlongs ?? false,
-        }
-      : getEventFormDefaults(),
+    defaultValues: isEditMode ? toFormValues(event) : getEventFormDefaults(),
   })
 
   const { register, handleSubmit, formState, setValue, watch } = form
   const { errors, isDirty } = formState
   const dateValue = watch('date')
+  const english = watch(['eventName', 'venue', 'attire', 'description'])
+  const spanishErrors = errors.translations?.es
 
   const handleFormSubmit: SubmitHandler<EventFormData> = async (data) => {
     await onSubmit(data)
@@ -95,21 +127,8 @@ export function ModernEventForm({
   useEffect(() => {
     if (open) {
       // When dialog opens, reset to event data or defaults
-      form.reset(
-        isEditMode
-          ? {
-              eventName: event.name,
-              date: event.date ? format(new Date(event.date), 'yyyy-MM-dd') : '',
-              startTime: event.startTime ?? '',
-              endTime: event.endTime ?? '',
-              venue: event.venue ?? '',
-              attire: event.attire ?? '',
-              description: event.description ?? '',
-              collectRsvp: event.collectRsvp ?? false,
-              allowTagAlongs: event.allowTagAlongs ?? false,
-            }
-          : getEventFormDefaults()
-      )
+      form.reset(isEditMode ? toFormValues(event) : getEventFormDefaults())
+      setLanguage('en')
     }
   }, [open, event, form, isEditMode])
 
@@ -128,6 +147,14 @@ export function ModernEventForm({
               ? 'Update the details for your wedding event.'
               : 'Add a new event like ceremony, reception, or rehearsal dinner.'}
           </DialogDescription>
+          <div className='flex flex-col gap-2 pt-2 sm:flex-row sm:items-center sm:justify-between'>
+            <p className='text-muted-foreground text-xs'>
+              {translating
+                ? 'Spanish text for Spanish-speaking guests. Blank fields show the English.'
+                : 'Switch to ES to add Spanish text for your wedding website.'}
+            </p>
+            <LanguageSwitch value={language} onChange={setLanguage} label='Event language' />
+          </div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(handleFormSubmit)} className='space-y-4 md:space-y-6'>
@@ -136,15 +163,38 @@ export function ModernEventForm({
             <Label htmlFor='eventName' className='text-sm md:text-base'>
               Event Name <span className='text-destructive'>*</span>
             </Label>
-            <Input
-              id='eventName'
-              {...register('eventName')}
-              placeholder='e.g., Wedding Ceremony'
-              disabled={isSubmitting}
-              className={cn(errors.eventName && 'border-destructive')}
-            />
-            {errors.eventName && (
-              <p className='text-destructive text-xs md:text-sm'>{errors.eventName.message}</p>
+            {translating ? (
+              <>
+                <Input
+                  key='eventName-es'
+                  id='eventName'
+                  lang='es'
+                  {...register('translations.es.name')}
+                  placeholder={english[0] || 'p. ej., Ceremonia religiosa'}
+                  disabled={isSubmitting}
+                  className={cn(spanishErrors?.name && 'border-destructive')}
+                />
+                {english[0] ? <ReferenceNote reference={english[0]} /> : null}
+                {spanishErrors?.name && (
+                  <p className='text-destructive text-xs md:text-sm'>
+                    {spanishErrors.name.message}
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <Input
+                  key='eventName-en'
+                  id='eventName'
+                  {...register('eventName')}
+                  placeholder='e.g., Wedding Ceremony'
+                  disabled={isSubmitting}
+                  className={cn(errors.eventName && 'border-destructive')}
+                />
+                {errors.eventName && (
+                  <p className='text-destructive text-xs md:text-sm'>{errors.eventName.message}</p>
+                )}
+              </>
             )}
           </div>
 
@@ -235,13 +285,29 @@ export function ModernEventForm({
             <Label htmlFor='venue' className='text-sm md:text-base'>
               Venue
             </Label>
-            <Input
-              id='venue'
-              {...register('venue')}
-              placeholder="e.g., St. Mary's Church"
-              disabled={isSubmitting}
-              className={cn(errors.venue && 'border-destructive')}
-            />
+            {translating ? (
+              <>
+                <Input
+                  key='venue-es'
+                  id='venue'
+                  lang='es'
+                  {...register('translations.es.venue')}
+                  placeholder={english[1] || undefined}
+                  disabled={isSubmitting}
+                  className={cn(errors.venue && 'border-destructive')}
+                />
+                {english[1] ? <ReferenceNote reference={english[1]} /> : null}
+              </>
+            ) : (
+              <Input
+                key='venue-en'
+                id='venue'
+                {...register('venue')}
+                placeholder="e.g., St. Mary's Church"
+                disabled={isSubmitting}
+                className={cn(errors.venue && 'border-destructive')}
+              />
+            )}
             {errors.venue && (
               <p className='text-destructive text-xs md:text-sm'>{errors.venue.message}</p>
             )}
@@ -252,13 +318,29 @@ export function ModernEventForm({
             <Label htmlFor='attire' className='text-sm md:text-base'>
               Attire
             </Label>
-            <Input
-              id='attire'
-              {...register('attire')}
-              placeholder='e.g., Black Tie, Cocktail Attire'
-              disabled={isSubmitting}
-              className={cn(errors.attire && 'border-destructive')}
-            />
+            {translating ? (
+              <>
+                <Input
+                  key='attire-es'
+                  id='attire'
+                  lang='es'
+                  {...register('translations.es.attire')}
+                  placeholder={english[2] || undefined}
+                  disabled={isSubmitting}
+                  className={cn(errors.attire && 'border-destructive')}
+                />
+                {english[2] ? <ReferenceNote reference={english[2]} /> : null}
+              </>
+            ) : (
+              <Input
+                key='attire-en'
+                id='attire'
+                {...register('attire')}
+                placeholder='e.g., Black Tie, Cocktail Attire'
+                disabled={isSubmitting}
+                className={cn(errors.attire && 'border-destructive')}
+              />
+            )}
             {errors.attire && (
               <p className='text-destructive text-xs md:text-sm'>{errors.attire.message}</p>
             )}
@@ -269,14 +351,31 @@ export function ModernEventForm({
             <Label htmlFor='description' className='text-sm md:text-base'>
               Description
             </Label>
-            <Textarea
-              id='description'
-              {...register('description')}
-              placeholder='Add any additional details about the event...'
-              rows={3}
-              disabled={isSubmitting}
-              className={cn(errors.description && 'border-destructive', 'resize-none')}
-            />
+            {translating ? (
+              <>
+                <Textarea
+                  key='description-es'
+                  id='description'
+                  lang='es'
+                  {...register('translations.es.description')}
+                  placeholder={english[3] || undefined}
+                  rows={3}
+                  disabled={isSubmitting}
+                  className={cn(errors.description && 'border-destructive', 'resize-none')}
+                />
+                {english[3] ? <ReferenceNote reference={english[3]} /> : null}
+              </>
+            ) : (
+              <Textarea
+                key='description-en'
+                id='description'
+                {...register('description')}
+                placeholder='Add any additional details about the event...'
+                rows={3}
+                disabled={isSubmitting}
+                className={cn(errors.description && 'border-destructive', 'resize-none')}
+              />
+            )}
             {errors.description && (
               <p className='text-destructive text-xs md:text-sm'>{errors.description.message}</p>
             )}
