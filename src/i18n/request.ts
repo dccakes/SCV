@@ -1,5 +1,6 @@
 import { headers } from 'next/headers'
 import { getRequestConfig } from 'next-intl/server'
+import { loadMessages } from '~/i18n/load-messages'
 import type { Locale } from '~/lib/locale/locale-detection'
 
 export default getRequestConfig(async () => {
@@ -8,6 +9,6 @@ export default getRequestConfig(async () => {
   const locale: Locale = raw === 'es' ? 'es' : 'en'
   return {
     locale,
-    messages: (await import(`./messages/${locale}.json`)).default,
+    messages: await loadMessages(locale),
   }
 })

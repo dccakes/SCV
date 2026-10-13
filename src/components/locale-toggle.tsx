@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useLocale } from 'next-intl'
 
-export function LocaleToggle() {
+export function LocaleToggle({ className }: Readonly<{ className?: string }> = {}) {
   const locale = useLocale()
   const router = useRouter()
 
@@ -22,8 +22,11 @@ export function LocaleToggle() {
     <button
       type='button'
       onClick={handleSwitch}
-      className='font-mono text-muted-foreground text-xs uppercase tracking-[0.22em] hover:text-foreground'
-      aria-label={`Switch to ${switchTo === 'en' ? 'English' : 'Spanish'}`}
+      className={
+        className ??
+        'font-mono text-muted-foreground text-xs uppercase tracking-[0.22em] hover:text-foreground'
+      }
+      aria-label={switchTo === 'en' ? 'Switch to English' : 'Cambiar a español'}
     >
       {locale === 'en' ? (
         <>
