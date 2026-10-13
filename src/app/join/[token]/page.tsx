@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CheckCircle2, Loader2 } from 'lucide-react'
 import { useParams } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -31,6 +31,8 @@ type SelfFillFormData = {
 
 export default function SelfFillPage() {
   const t = useTranslations('join')
+  const phoneCopy = useTranslations('site.phoneInput')
+  const locale = useLocale() === 'es' ? 'es' : 'en'
   const params = useParams()
   const token = params.token as string
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -224,6 +226,13 @@ export default function SelfFillPage() {
                     placeholder='+1 234 567 8900'
                     error={Boolean(errors.phone)}
                     aria-describedby={errors.phone ? 'phone-error' : undefined}
+                    locale={locale}
+                    labels={{
+                      selectCountry: phoneCopy('selectCountry'),
+                      searchCountries: phoneCopy('searchCountries'),
+                      countryCodes: phoneCopy('countryCodes'),
+                      noCountries: phoneCopy('noCountries'),
+                    }}
                   />
                 )}
               />

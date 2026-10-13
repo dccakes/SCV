@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { useState } from 'react'
 
 import { Button } from '~/components/ui/button'
@@ -27,6 +27,8 @@ export function HouseholdDetailsForm({
   inviteHref,
 }: Readonly<HouseholdDetailsFormProps>) {
   const t = useTranslations('household')
+  const phoneCopy = useTranslations('site.phoneInput')
+  const locale = useLocale() === 'es' ? 'es' : 'en'
   const [phones, setPhones] = useState<Record<number, string>>(() =>
     Object.fromEntries(inviteData.guests.map((guest) => [guest.id, valueOrEmpty(guest.phone)]))
   )
@@ -93,6 +95,13 @@ export function HouseholdDetailsForm({
                       setPhones((current) => ({ ...current, [guest.id]: nextValue ?? '' }))
                     }
                     className='w-full'
+                    locale={locale}
+                    labels={{
+                      selectCountry: phoneCopy('selectCountry'),
+                      searchCountries: phoneCopy('searchCountries'),
+                      countryCodes: phoneCopy('countryCodes'),
+                      noCountries: phoneCopy('noCountries'),
+                    }}
                   />
                 </div>
               </div>

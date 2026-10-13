@@ -63,6 +63,12 @@
       "saveTheDateTitle": "Save the Date — {coupleNames}'s Wedding",
       "saveTheDateDescription": "{coupleNames} are getting married{hasDate, select, yes { on {date}} other {}}{hasVenue, select, yes { in {venue}} other {}}. Open your household save the date to confirm your details.",
       "saveTheDateUpdateTitle": "Update our details"
+    },
+    "phoneInput": {
+      "selectCountry": "Select country",
+      "searchCountries": "Search countries...",
+      "countryCodes": "Country codes",
+      "noCountries": "No countries found"
     }
   }
 }

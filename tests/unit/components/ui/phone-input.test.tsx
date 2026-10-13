@@ -71,6 +71,23 @@ describe('PhoneInput', () => {
     expect(screen.getByRole('button', { name: 'Select country' })).toHaveTextContent('+44')
   })
 
+  it('shows Spanish country names and picker copy for Spanish guests', () => {
+    render(
+      <PhoneInput
+        value={undefined}
+        onChange={jest.fn()}
+        defaultCountry='GB'
+        locale='es'
+        labels={{ selectCountry: 'Selecciona un país', searchCountries: 'Buscar país...' }}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Selecciona un país' }))
+    expect(screen.getByPlaceholderText('Buscar país...')).toBeInTheDocument()
+    expect(screen.getByText('Estados Unidos')).toBeInTheDocument()
+    expect(screen.getByText('Reino Unido')).toBeInTheDocument()
+  })
+
   it('applies destructive border class when error=true', () => {
     render(<PhoneInput value={undefined} onChange={jest.fn()} error />)
 

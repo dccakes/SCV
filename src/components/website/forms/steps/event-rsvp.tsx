@@ -7,7 +7,7 @@ import { IoIosCheckmarkCircleOutline } from 'react-icons/io'
 import type { Event, Guest, RsvpFormResponse, StepFormProps } from '~/app/utils/shared-types'
 import { useRsvpForm, useUpdateRsvpForm } from '~/components/contexts/rsvp-form-context'
 import { upsertRsvpResponses } from '~/components/website/forms/rsvp-state'
-import { formatLongDate } from '~/lib/locale/intl-format'
+import { formatEventTime, formatLongDate } from '~/lib/locale/intl-format'
 
 interface EventRsvpFormProps extends StepFormProps {
   event: Event
@@ -51,7 +51,7 @@ export default function EventRsvpForm({
             {event.startTime
               ? t('eventDateTime', {
                   date: formatLongDate(event.date, locale),
-                  time: event.startTime,
+                  time: formatEventTime(event.startTime, locale),
                 })
               : formatLongDate(event.date, locale)}
           </span>

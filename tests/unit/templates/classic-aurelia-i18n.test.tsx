@@ -51,6 +51,9 @@ describe('Classic and Aurelia in Mexican Spanish', () => {
     expect(screen.getByText('Junto con sus familias')).toBeInTheDocument()
     expect(screen.getByText('y')).toBeInTheDocument()
     expect(screen.getByText('30 de mayo de 2027')).toBeInTheDocument()
+    // A time typed as "5:00 PM" reads on the 24-hour clock for Spanish visitors.
+    expect(screen.getByText('17:00')).toBeInTheDocument()
+    expect(screen.queryByText('5:00 PM')).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Confirmar asistencia' })).toBeInTheDocument()
   })
 

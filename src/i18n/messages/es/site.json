@@ -63,6 +63,12 @@
       "saveTheDateTitle": "Reserva la fecha — Boda de {coupleNames}",
       "saveTheDateDescription": "¡{coupleNames} se casan{hasDate, select, yes { el {date}} other {}}{hasVenue, select, yes { en {venue}} other {}}! Abre tu reserva la fecha para confirmar los datos de tu hogar.",
       "saveTheDateUpdateTitle": "Actualizar nuestros datos"
+    },
+    "phoneInput": {
+      "selectCountry": "Selecciona un país",
+      "searchCountries": "Buscar país...",
+      "countryCodes": "Códigos de país",
+      "noCountries": "No encontramos ese país"
     }
   }
 }

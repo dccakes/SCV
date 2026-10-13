@@ -45,6 +45,22 @@ import { normalizePhoneToE164 } from '~/lib/phone/phone-validator'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 import { api } from '~/trpc/react'
 
+/** Stored Spanish event text as the legacy event form expects it. */
+const readEventTranslations = (translations: unknown): EventFormData['translations'] => {
+  if (typeof translations !== 'object' || translations === null) return undefined
+  const es = (translations as { es?: Record<string, unknown> }).es
+  if (!es) return undefined
+  const text = (value: unknown) => (typeof value === 'string' ? value : undefined)
+  return {
+    es: {
+      name: text(es.name),
+      venue: text(es.venue),
+      attire: text(es.attire),
+      description: text(es.description),
+    },
+  }
+}
+
 type GuestsViewProps = {
   events: Event[]
   households: HouseholdWithGuests[]
@@ -960,6 +976,7 @@ const SelectedEventTableHeader = ({
       description: event.description ?? undefined,
       eventId: event.id,
       allowTagAlongs: event.allowTagAlongs ?? false,
+      translations: readEventTranslations(event.translations),
     })
     toggleEventForm()
   }

@@ -67,7 +67,7 @@ export function ClassicHomeMobile({
           )}
           {!!event.startTime && (
             <span className='font-thin text-2xl'>
-              {event.startTime}
+              {dates.eventTime(event.startTime)}
               {!!event.endTime && ` - ${event.endTime}`}
             </span>
           )}

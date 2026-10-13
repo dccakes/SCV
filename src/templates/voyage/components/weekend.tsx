@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
+import { formatEventTime } from '~/lib/locale/intl-format'
 import { Decor } from '~/templates/voyage/components/decor'
 import {
   bodyFont,
@@ -60,7 +61,7 @@ export function VoyageWeekend({
                 </p>
                 <p className={`${headingFont} text-2xl`}>
                   {event.startTime
-                    ? `${event.startTime}${event.endTime ? `–${event.endTime}` : ''}`
+                    ? `${formatEventTime(event.startTime, locale)}${event.endTime ? `–${formatEventTime(event.endTime, locale)}` : ''}`
                     : t('timeTba')}
                 </p>
               </div>

@@ -120,6 +120,10 @@ type EventFormData = {
   description: string | undefined
   eventId: string
   allowTagAlongs?: boolean
+  /** Spanish text for the wedding website; blank fields show the English. */
+  translations?: {
+    es?: { name?: string; venue?: string; attire?: string; description?: string }
+  }
 }
 
 type EventId = string

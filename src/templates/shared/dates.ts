@@ -1,5 +1,5 @@
 import { useLocale } from 'next-intl'
-import { formatLongDate, toIntlLocale } from '~/lib/locale/intl-format'
+import { formatEventTime, formatLongDate, toIntlLocale } from '~/lib/locale/intl-format'
 import type { WeddingDate } from '~/server/domains/website/website.types'
 
 /**
@@ -62,5 +62,8 @@ export function useTemplateDates() {
     return formatLongDate(date, appLocale)
   }
 
-  return { weddingDate, weddingDateNumeric, eventDate }
+  /** Event start/end time in the visitor's convention (24-hour for Spanish). */
+  const eventTime = (time: string): string => formatEventTime(time, appLocale)
+
+  return { weddingDate, weddingDateNumeric, eventDate, eventTime }
 }

@@ -94,7 +94,7 @@ export function AureliaHome({ weddingData, path, introText }: Readonly<TemplateS
               )}
               {!!event.startTime && (
                 <span className='text-muted-foreground text-sm'>
-                  {event.startTime}
+                  {dates.eventTime(event.startTime)}
                   {!!event.endTime && ` – ${event.endTime}`}
                 </span>
               )}

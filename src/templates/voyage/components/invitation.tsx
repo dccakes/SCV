@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
+import { formatEventTime } from '~/lib/locale/intl-format'
 import { findWeddingDay } from '~/templates/shared/wedding-day'
 import type { TemplateSurfaceProps } from '~/templates/types'
 import {
@@ -64,7 +65,9 @@ export function VoyageInvitation({ weddingData, path }: Readonly<TemplateSurface
                   day: 'numeric',
                   timeZone: 'UTC',
                 }).format(weddingEvent.date)}
-                {weddingEvent.startTime ? ` · ${weddingEvent.startTime}` : ''}
+                {weddingEvent.startTime
+                  ? ` · ${formatEventTime(weddingEvent.startTime, locale)}`
+                  : ''}
               </p>
             ) : null}
             {venue ? (

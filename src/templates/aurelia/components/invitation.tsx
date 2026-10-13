@@ -46,7 +46,7 @@ export function AureliaInvitation({ weddingData, path }: Readonly<TemplateSurfac
           )}
           {weddingEvent?.startTime && (
             <p className='text-muted-foreground text-sm'>
-              {weddingEvent.startTime}
+              {dates.eventTime(weddingEvent.startTime)}
               {weddingEvent.endTime && ` – ${weddingEvent.endTime}`}
             </p>
           )}

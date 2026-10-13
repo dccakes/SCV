@@ -66,7 +66,7 @@ export function ClassicHome({ weddingData, path, introText }: Readonly<TemplateS
           )}
           {!!event.startTime && (
             <span className='font-thin text-2xl'>
-              {event.startTime}
+              {dates.eventTime(event.startTime)}
               {!!event.endTime && ` - ${event.endTime}`}
             </span>
           )}
