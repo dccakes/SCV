@@ -168,6 +168,13 @@ describe('proxy', () => {
     expect(mockGetSessionCookie).not.toHaveBeenCalled()
   })
 
+  it('lets logged-out guests open the invitation page', async () => {
+    const response = await proxy(createRequest('/w/shrek-and-fiona/invitation'))
+
+    // The page runs its own website-password check, like RSVP and save the date.
+    expect(response.headers.get('location')).toBeNull()
+  })
+
   it('allows the guest-facing public tRPC procedures, including batched together', async () => {
     mockGetSessionCookie.mockReturnValue(null)
 
