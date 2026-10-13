@@ -1,7 +1,7 @@
 'use client'
 
 import { toNestErrors } from '@hookform/resolvers'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { type FieldErrors, type Resolver, useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -93,8 +93,12 @@ export function SeatingTableDialog(props: Readonly<SeatingTableDialogProps>) {
   })
   const selectedShape = watch('shape')
 
+  // Load values only when the dialog opens, so data changing underneath an
+  // open dialog (optimistic update, rollback, refetch) never wipes user input
+  const wasOpen = useRef(false)
   useEffect(() => {
-    if (open) reset(defaultValues)
+    if (open && !wasOpen.current) reset(defaultValues)
+    wasOpen.current = open
   }, [open, defaultValues, reset])
 
   const submit = handleSubmit((values) => {

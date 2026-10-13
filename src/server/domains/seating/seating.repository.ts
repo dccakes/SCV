@@ -1,13 +1,27 @@
-import type { PrismaClient } from '@prisma/client'
+import { Prisma, type PrismaClient } from '@prisma/client'
+
+import { SeatAlreadyTakenError } from '~/server/domains/seating/seating.errors'
 
 import { NON_SEATABLE_RSVPS } from '~/server/domains/seating/seating.rules'
 import type {
   CreateSeatingTableInput,
   SeatableGuestRecord,
   SeatingTable,
+  SeatingTableLock,
   SeatingTableRecord,
   UpdateSeatingTableInput,
 } from '~/server/domains/seating/seating.types'
+
+const seatableInvitation = (eventId: string) => ({
+  eventId,
+  rsvp: { notIn: [...NON_SEATABLE_RSVPS] },
+})
+
+// Seats whose guest has declined or lost their invitation since being seated
+const staleAssignments = (eventId: string) => ({
+  eventId,
+  guest: { invitations: { none: seatableInvitation(eventId) } },
+})
 
 export class SeatingRepository {
   constructor(private db: PrismaClient) {}
@@ -24,7 +38,11 @@ export class SeatingRepository {
     return this.db.seatingTable.findMany({
       where: { eventId },
       include: {
-        seatAssignments: { select: { guestId: true }, orderBy: { createdAt: 'asc' } },
+        seatAssignments: {
+          where: { guest: { invitations: { some: seatableInvitation(eventId) } } },
+          select: { guestId: true },
+          orderBy: { createdAt: 'asc' },
+        },
       },
       orderBy: { createdAt: 'asc' },
     })
@@ -36,7 +54,7 @@ export class SeatingRepository {
    */
   async findSeatableGuests(eventId: string): Promise<SeatableGuestRecord[]> {
     return this.db.invitation.findMany({
-      where: { eventId, rsvp: { notIn: [...NON_SEATABLE_RSVPS] } },
+      where: seatableInvitation(eventId),
       select: {
         rsvp: true,
         dietaryRestrictions: true,
@@ -72,11 +90,21 @@ export class SeatingRepository {
     })
   }
 
+  /**
+   * A table with the guests seated at it who are still seatable for its event.
+   */
   async findTableById(id: string): Promise<SeatingTableRecord | null> {
-    return this.db.seatingTable.findUnique({
-      where: { id },
-      include: { seatAssignments: { select: { guestId: true } } },
+    const table = await this.db.seatingTable.findUnique({ where: { id } })
+    if (!table) return null
+
+    const seatAssignments = await this.db.seatAssignment.findMany({
+      where: {
+        tableId: id,
+        guest: { invitations: { some: seatableInvitation(table.eventId) } },
+      },
+      select: { guestId: true },
     })
+    return { ...table, seatAssignments }
   }
 
   async createTable(data: CreateSeatingTableInput & { weddingId: string }): Promise<SeatingTable> {
@@ -96,22 +124,63 @@ export class SeatingRepository {
    */
   async findSeatableGuestIds(eventId: string, guestIds: number[]): Promise<number[]> {
     const invitations = await this.db.invitation.findMany({
-      where: { eventId, guestId: { in: guestIds }, rsvp: { notIn: [...NON_SEATABLE_RSVPS] } },
+      where: { ...seatableInvitation(eventId), guestId: { in: guestIds } },
       select: { guestId: true },
     })
     return invitations.map((invitation) => invitation.guestId)
   }
 
   /**
-   * Seats guests at a table, moving them off any other table for the event.
+   * Runs work in a transaction holding a row lock on the table, so capacity
+   * checks and seat changes for that table are serialized. Stale seats for the
+   * event are removed first so they never count toward capacity.
    */
-  async replaceAssignments(eventId: string, tableId: string, guestIds: number[]): Promise<void> {
-    await this.db.$transaction([
-      this.db.seatAssignment.deleteMany({ where: { eventId, guestId: { in: guestIds } } }),
-      this.db.seatAssignment.createMany({
-        data: guestIds.map((guestId) => ({ eventId, tableId, guestId })),
-      }),
-    ])
+  async withLockedTable<T>(
+    table: { id: string; eventId: string },
+    work: (lock: SeatingTableLock) => Promise<T>
+  ): Promise<T> {
+    try {
+      return await this.runLocked(table, work)
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new SeatAlreadyTakenError()
+      }
+      throw error
+    }
+  }
+
+  private runLocked<T>(
+    table: { id: string; eventId: string },
+    work: (lock: SeatingTableLock) => Promise<T>
+  ): Promise<T> {
+    return this.db.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "SeatingTable" WHERE "id" = ${table.id} FOR UPDATE`
+      await tx.seatAssignment.deleteMany({ where: staleAssignments(table.eventId) })
+
+      return work({
+        seatedGuestIds: async () => {
+          const seats = await tx.seatAssignment.findMany({
+            where: { tableId: table.id },
+            select: { guestId: true },
+          })
+          return seats.map((seat) => seat.guestId)
+        },
+        // Seats guests at the table, moving them off any other table for the event
+        replaceAssignments: async (guestIds) => {
+          await tx.seatAssignment.deleteMany({
+            where: { eventId: table.eventId, guestId: { in: guestIds } },
+          })
+          await tx.seatAssignment.createMany({
+            data: guestIds.map((guestId) => ({
+              eventId: table.eventId,
+              tableId: table.id,
+              guestId,
+            })),
+          })
+        },
+        updateTable: (data) => tx.seatingTable.update({ where: { id: table.id }, data }),
+      })
+    })
   }
 
   async deleteAssignments(eventId: string, guestIds: number[]): Promise<void> {

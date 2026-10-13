@@ -62,6 +62,13 @@ export type SeatableGuestRecord = {
   }
 }
 
+// Operations available inside SeatingRepository.withLockedTable
+export type SeatingTableLock = {
+  seatedGuestIds: () => Promise<number[]>
+  replaceAssignments: (guestIds: number[]) => Promise<void>
+  updateTable: (data: UpdateSeatingTableInput) => Promise<SeatingTable>
+}
+
 // Service output shapes
 export type SeatingTableView = {
   id: string

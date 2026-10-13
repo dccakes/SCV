@@ -36,7 +36,7 @@ function DraggableGuest(props: Readonly<{ guest: SeatingGuest; onSelect: () => v
         ref={setNodeRef}
         type='button'
         onClick={onSelect}
-        aria-label={`${fullName(guest)}. Drag onto a table, or press to view details.`}
+        aria-label={`${fullName(guest)}. Press Space to move onto a table, or Enter for details.`}
         {...attributes}
         {...listeners}
         className={cn(
@@ -81,7 +81,7 @@ function HouseholdGroup(
         ref={setNodeRef}
         {...attributes}
         {...listeners}
-        aria-label={`${label}, ${unassigned.length} unseated. Drag to seat everyone together.`}
+        aria-label={`${label}, ${unassigned.length} unseated. Press Space to move everyone together.`}
         className='flex w-full cursor-grab touch-none items-center justify-between gap-2 border-border/70 border-b px-2 py-1.5 active:cursor-grabbing'
       >
         <span className='flex items-center gap-1.5 font-mono text-[0.64rem] text-foreground/70 uppercase tracking-widest'>

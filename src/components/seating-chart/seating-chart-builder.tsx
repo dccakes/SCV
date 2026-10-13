@@ -1,20 +1,11 @@
 'use client'
 
-import {
-  DndContext,
-  type DragEndEvent,
-  DragOverlay,
-  type DragStartEvent,
-  KeyboardSensor,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core'
+import { DndContext, type DragEndEvent, DragOverlay, type DragStartEvent } from '@dnd-kit/core'
 import { Download, Plus } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { createChartCache } from '~/components/seating-chart/seating-chart-cache'
 import type { DragData, DropData, GuestDragData } from '~/components/seating-chart/seating-dnd'
 import { SeatingGuestDrawer } from '~/components/seating-chart/seating-guest-drawer'
 import { SeatingGuestSidebar } from '~/components/seating-chart/seating-guest-sidebar'
@@ -30,6 +21,7 @@ import {
   type SeatingTableFormValues,
 } from '~/components/seating-chart/seating-table-dialog'
 import { SeatingTableNode } from '~/components/seating-chart/seating-table-node'
+import { useSeatingSensors } from '~/components/seating-chart/use-seating-sensors'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -110,11 +102,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
   const chartQuery = api.seating.getChart.useQuery(chartInput, { enabled: eventId !== null })
   const chart = chartQuery.data
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
-    useSensor(KeyboardSensor)
-  )
+  const sensors = useSeatingSensors()
 
   const allGuests = useMemo(
     () => chart?.households.flatMap((household) => household.guests) ?? [],
@@ -129,54 +117,55 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
     chart?.households.find((household) => household.id === selectedGuest?.householdId) ?? null
   const seatedCount = allGuests.filter((guest) => guest.tableId !== null).length
 
-  // Optimistically apply a change to the cached chart, rolling back on error
-  const optimistic = async (update: (current: SeatingChart) => SeatingChart) => {
-    await utils.seating.getChart.cancel(chartInput)
-    const previous = utils.seating.getChart.getData(chartInput)
-    if (previous) utils.seating.getChart.setData(chartInput, update(previous))
-    return { previous }
+  // Optimistic updates are keyed to the event each mutation started in
+  const cache = createChartCache(utils.seating.getChart)
+  const onMutationError = (
+    error: { message: string },
+    context: Awaited<ReturnType<typeof cache.optimistic>> | undefined
+  ) => {
+    cache.rollback(context)
+    toast.error(error.message)
   }
-  const rollback = (context: { previous?: SeatingChart } | undefined, message: string) => {
-    if (context?.previous) utils.seating.getChart.setData(chartInput, context.previous)
-    toast.error(message)
-  }
-  const refresh = () => utils.seating.getChart.invalidate(chartInput)
 
   const assignGuests = api.seating.assignGuests.useMutation({
     onMutate: ({ tableId, guestIds }) =>
-      optimistic((current) => seatGuests(current, tableId, guestIds)),
-    onError: (error, _input, context) => rollback(context, error.message),
-    onSettled: refresh,
+      cache.optimistic(chartInput, (current) => seatGuests(current, tableId, guestIds)),
+    onError: (error, _input, context) => onMutationError(error, context),
+    onSettled: (_data, _error, _input, context) => cache.refresh(context),
   })
   const unassignGuests = api.seating.unassignGuests.useMutation({
-    onMutate: ({ guestIds }) => optimistic((current) => seatGuests(current, null, guestIds)),
-    onError: (error, _input, context) => rollback(context, error.message),
-    onSettled: refresh,
+    onMutate: ({ eventId: mutationEventId, guestIds }) =>
+      cache.optimistic({ eventId: mutationEventId }, (current) =>
+        seatGuests(current, null, guestIds)
+      ),
+    onError: (error, _input, context) => onMutationError(error, context),
+    onSettled: (_data, _error, _input, context) => cache.refresh(context),
   })
   const updateTable = api.seating.updateTable.useMutation({
     onMutate: ({ id, data }) =>
-      optimistic((current) => ({
+      cache.optimistic(chartInput, (current) => ({
         ...current,
         tables: current.tables.map((table) => (table.id === id ? { ...table, ...data } : table)),
       })),
-    onError: (error, _input, context) => rollback(context, error.message),
+    onError: (error, _input, context) => onMutationError(error, context),
     onSuccess: () => setTableDialog(null),
-    onSettled: refresh,
+    onSettled: (_data, _error, _input, context) => cache.refresh(context),
   })
   const createTable = api.seating.createTable.useMutation({
     onError: (error) => toast.error(error.message),
     onSuccess: () => setTableDialog(null),
-    onSettled: refresh,
+    onSettled: (_data, _error, input) =>
+      utils.seating.getChart.invalidate({ eventId: input.eventId }),
   })
   const deleteTable = api.seating.deleteTable.useMutation({
     onMutate: ({ id }) =>
-      optimistic((current) => {
+      cache.optimistic(chartInput, (current) => {
         const removed = current.tables.find((table) => table.id === id)
         const unseated = seatGuests(current, null, removed?.guestIds ?? [])
         return { ...unseated, tables: unseated.tables.filter((table) => table.id !== id) }
       }),
-    onError: (error, _input, context) => rollback(context, error.message),
-    onSettled: refresh,
+    onError: (error, _input, context) => onMutationError(error, context),
+    onSettled: (_data, _error, _input, context) => cache.refresh(context),
   })
 
   const handleEventChange = (nextEventId: string) => {

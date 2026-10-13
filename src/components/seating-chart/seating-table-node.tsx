@@ -42,7 +42,7 @@ function SeatedGuest(
       ref={setNodeRef}
       type='button'
       title={name}
-      aria-label={`${name}. Drag to move, or press to view details.`}
+      aria-label={`${name}. Press Space to move, or Enter for details.`}
       onClick={onSelect}
       {...attributes}
       {...listeners}
@@ -135,7 +135,7 @@ export function SeatingTableNode(props: Readonly<SeatingTableNodeProps>) {
       <button
         ref={setDragRef}
         type='button'
-        aria-label={`${table.name}, ${table.guestIds.length} of ${table.capacity} seats filled. Drag to move, or press to edit.`}
+        aria-label={`${table.name}, ${table.guestIds.length} of ${table.capacity} seats filled. Press Space to move, or Enter to edit.`}
         onClick={() => onEdit(table.id)}
         {...attributes}
         {...listeners}
