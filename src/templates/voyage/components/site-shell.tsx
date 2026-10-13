@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import type { ReactNode } from 'react'
 import type { WeddingPageData } from '~/server/domains/website/website.types'
 import { Decor } from '~/templates/voyage/components/decor'
@@ -10,7 +11,12 @@ import {
   labelFont,
   scriptFont,
 } from '~/templates/voyage/components/primitives'
-import { coupleIdentity, type VoyageLocation, voyagePages } from '~/templates/voyage/site'
+import {
+  coupleIdentity,
+  identityCopy,
+  type VoyageLocation,
+  voyagePages,
+} from '~/templates/voyage/site'
 
 export function VoyageSiteShell({
   weddingData,
@@ -23,7 +29,10 @@ export function VoyageSiteShell({
   current: VoyageLocation
   children: ReactNode
 }) {
-  const identity = coupleIdentity(weddingData)
+  const t = useTranslations('voyage.nav')
+  const tPages = useTranslations('voyage.pages')
+  const tIdentity = useTranslations('voyage.identity')
+  const identity = coupleIdentity(weddingData, identityCopy(tIdentity))
   return (
     <div className='relative min-h-screen bg-background text-foreground'>
       <VoyageNavbar
@@ -46,22 +55,22 @@ export function VoyageSiteShell({
           </Link>
           <HeartRule />
           <nav
-            aria-label='Footer navigation'
+            aria-label={t('footerAria')}
             className='flex max-w-3xl flex-wrap justify-center gap-x-5 gap-y-1'
           >
             <Link
               href={path}
               className={`${labelFont} inline-flex min-h-11 items-center text-[0.62rem] uppercase tracking-[0.2em] hover:text-primary`}
             >
-              Home
+              {t('home')}
             </Link>
-            {Object.entries(voyagePages).map(([page, { title }]) => (
+            {Object.entries(voyagePages).map(([page, { titleKey }]) => (
               <Link
                 key={page}
                 href={`${path}/${page}`}
                 className={`${labelFont} inline-flex min-h-11 items-center text-[0.62rem] uppercase tracking-[0.2em] hover:text-primary`}
               >
-                {title}
+                {tPages(titleKey)}
               </Link>
             ))}
             {weddingData.website.isRsvpEnabled ? (
@@ -69,13 +78,11 @@ export function VoyageSiteShell({
                 href={`${path}/rsvp`}
                 className={`${labelFont} inline-flex min-h-11 items-center text-primary text-xs`}
               >
-                RSVP
+                {t('rsvp')}
               </Link>
             ) : null}
           </nav>
-          <p className={`${scriptFont} text-3xl text-primary`}>
-            Thank you for being part of our beginning
-          </p>
+          <p className={`${scriptFont} text-3xl text-primary`}>{t('footerThanks')}</p>
         </div>
       </footer>
     </div>
@@ -91,6 +98,7 @@ export function VoyagePageHeading({
   description: string
   path: string
 }) {
+  const t = useTranslations('voyage.nav')
   return (
     <div className='relative overflow-hidden border-border border-b bg-background px-6 py-8 text-center sm:py-12'>
       <Decor
@@ -102,7 +110,7 @@ export function VoyagePageHeading({
           href={path}
           className={`${labelFont} inline-flex min-h-11 items-center text-[0.62rem] text-muted-foreground uppercase tracking-[0.2em] hover:text-primary`}
         >
-          ← Home
+          {t('backHome')}
         </Link>
 
         <h1 className={`${headingFont} font-light text-4xl italic sm:text-5xl`}>{title}</h1>

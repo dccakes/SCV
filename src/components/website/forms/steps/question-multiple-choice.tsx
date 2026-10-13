@@ -106,6 +106,7 @@ export default function QuestionMultipleChoice({
       </ul>
       {isOtherSelected && (
         <textarea
+          aria-label={t('otherPlaceholder')}
           className='w-full rounded-lg border border-gray-700 bg-white p-3 text-left text-base text-black placeholder:text-gray-500'
           placeholder={t('otherPlaceholder')}
           value={otherResponse}

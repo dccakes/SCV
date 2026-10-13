@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 
 import { loadVisitorWedding } from '~/app/w/[websiteSubUrl]/_lib/load-visitor-wedding'
 import { resolveRecognizedRsvpHousehold } from '~/app/w/[websiteSubUrl]/_lib/recognized-rsvp-household'
@@ -28,14 +29,15 @@ export async function generateMetadata({ params }: RsvpPageProps): Promise<Metad
   // per-website favicon route, matching the wedding page.
   const iconUrl = `/w/${websiteSubUrl}/icon`
 
-  let title = 'RSVP'
+  const t = await getTranslations('site.metadata')
+  let title = t('rsvpTitle')
   if (loadResult.status === 'ready') {
     const { groomFirstName, groomLastName, brideFirstName, brideLastName } = loadResult.weddingData
     const groomName = groomFirstName && groomLastName ? `${groomFirstName} ${groomLastName}` : ''
     const brideName = brideFirstName && brideLastName ? `${brideFirstName} ${brideLastName}` : ''
     const coupleName =
       groomName && brideName ? `${groomName} & ${brideName}` : groomName || brideName
-    if (coupleName) title = `${coupleName} — RSVP`
+    if (coupleName) title = t('rsvpCoupleTitle', { coupleName })
   }
 
   return {

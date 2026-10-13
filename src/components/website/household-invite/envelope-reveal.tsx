@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 
@@ -93,6 +94,7 @@ function EnvelopeIntro({
   coupleNames,
   coupleNameClassName,
 }: Readonly<{ coupleNames: string; coupleNameClassName: string }>) {
+  const t = useTranslations('site.envelope')
   return (
     <div
       aria-hidden='true'
@@ -109,7 +111,7 @@ function EnvelopeIntro({
             {coupleNames}
           </span>
           <span className='font-[family-name:var(--tpl-label-font,var(--tpl-body-font))] text-[0.6rem] text-muted-foreground uppercase tracking-[0.28em]'>
-            {"You're Invited"}
+            {t('invited')}
           </span>
           <span className='block h-px w-10 bg-border' />
         </div>

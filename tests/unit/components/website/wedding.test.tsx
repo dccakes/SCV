@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import { createElement } from 'react'
-
+import { renderWithIntl as render } from '~/../tests/unit/test-utils/intl'
 import WeddingWebsite from '~/components/website/wedding'
 
 const mockHeadersGet = jest.fn()
@@ -15,6 +15,7 @@ jest.mock('next/headers', () => ({
 
 jest.mock('next/navigation', () => ({
   notFound: jest.fn(),
+  useRouter: () => ({ refresh: jest.fn() }),
 }))
 
 jest.mock('~/templates', () => ({
@@ -86,6 +87,8 @@ describe('WeddingWebsite', () => {
     )
 
     expect(screen.getByTestId('minimal-page')).toHaveTextContent('/w/shrek-and-fiona|true')
+    // The minimal page has no template navbar, so it carries its own language toggle.
+    expect(screen.getByRole('button', { name: 'Cambiar a español' })).toBeInTheDocument()
   })
 
   it('renders the full home surface on desktop when website_builder is enabled', async () => {
@@ -137,5 +140,23 @@ describe('WeddingWebsite', () => {
       'Welcome, Donkey & Dragon'
     )
     expect(screen.getByTestId('full-page')).toBeInTheDocument()
+  })
+
+  it('greets a recognized household in Spanish', async () => {
+    render(
+      await WeddingWebsite({
+        websiteSubUrl: 'shrek-and-fiona',
+        weddingData: createWeddingData({ websiteBuilderEnabled: true }),
+        invitedHousehold: {
+          guestFirstNames: ['Donkey', 'Dragon'],
+          greeting: 'Donkey & Dragon',
+        },
+      }),
+      { locale: 'es' }
+    )
+
+    expect(
+      screen.getByRole('complementary', { name: 'Bienvenida personalizada' })
+    ).toHaveTextContent('¡Les damos la bienvenida, Donkey & Dragon!')
   })
 })

@@ -11,6 +11,7 @@
  */
 
 import Image from 'next/image'
+import { useTranslations } from 'next-intl'
 import { Fragment, type ReactNode } from 'react'
 import type {
   DestinationSectionContent,
@@ -117,6 +118,7 @@ export function VoyageOurStory({
   content: OurStorySectionContent
   imageUrl?: string | null
 }) {
+  const t = useTranslations('voyage.sections')
   if (!content.body.trim()) {
     return null
   }
@@ -124,16 +126,14 @@ export function VoyageOurStory({
     <Band id='our-story' className='overflow-hidden'>
       <div className='grid items-center gap-10 lg:grid-cols-2 lg:gap-16'>
         <div className='relative flex flex-col gap-6'>
-          <Eyebrow>About Us</Eyebrow>
+          <Eyebrow>{t('aboutUs')}</Eyebrow>
           <h2 className={`${sectionHeadingClass} leading-tight`}>
             {content.heading}
             <IconHeart className='ml-3 inline-block h-6 w-6 align-middle text-primary' />
           </h2>
           <GoldRule className='self-start' />
           <Prose text={content.body} className='max-w-xl' />
-          <p className={`${scriptFont} text-3xl text-primary`}>
-            Thank you for being part of our story.
-          </p>
+          <p className={`${scriptFont} text-3xl text-primary`}>{t('thankYouStory')}</p>
         </div>
 
         <div className='relative'>
@@ -173,13 +173,14 @@ const CARD_CLASS =
 const MILESTONE_DECOR: DecorName[] = ['coffee', 'mountains', 'ringBox', 'church']
 
 export function VoyageTimeline({ content }: { content: TimelineSectionContent }) {
+  const t = useTranslations('voyage.sections')
   if (content.milestones.length === 0) {
     return null
   }
   return (
     <Band id='timeline' tone='cream'>
       <div className='flex flex-col items-center gap-14'>
-        <CenteredHead eyebrow={content.eyebrow ?? 'Our Story'} heading={content.heading} />
+        <CenteredHead eyebrow={content.eyebrow ?? t('ourStory')} heading={content.heading} />
         <ol className='relative grid w-full gap-12 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6'>
           {/* The connecting champagne line across desktop columns. */}
           <span
@@ -229,13 +230,14 @@ export function VoyageTimeline({ content }: { content: TimelineSectionContent })
 
 /** The fixed destination highlights shown beneath the destination copy. */
 const DESTINATION_HIGHLIGHTS = [
-  { Icon: IconArch, label: 'Colonial Beauty' },
-  { Icon: IconFerris, label: 'Rich Culture' },
-  { Icon: IconCuisine, label: 'Incredible Cuisine' },
-  { Icon: IconRosette, label: 'Warm Hospitality' },
+  { Icon: IconArch, key: 'colonial' },
+  { Icon: IconFerris, key: 'culture' },
+  { Icon: IconCuisine, key: 'cuisine' },
+  { Icon: IconRosette, key: 'hospitality' },
 ] as const
 
 export function VoyageDestination({ content }: { content: DestinationSectionContent }) {
+  const t = useTranslations('voyage.sections')
   if (!content.body.trim() && !content.imageUrl) {
     return null
   }
@@ -266,7 +268,7 @@ export function VoyageDestination({ content }: { content: DestinationSectionCont
               <FloralSpray className='pointer-events-none absolute top-1/2 -right-10 hidden h-[24rem] w-auto -translate-y-1/2 opacity-90 lg:block xl:-right-24' />
             }
           />
-          <Eyebrow>{content.eyebrow ?? 'The Destination'}</Eyebrow>
+          <Eyebrow>{content.eyebrow ?? t('destination')}</Eyebrow>
           <h2 className={`${sectionHeadingClass} leading-tight`}>
             {content.heading}
             <IconHeart className='ml-3 inline-block h-6 w-6 align-middle text-primary' />
@@ -285,13 +287,13 @@ export function VoyageDestination({ content }: { content: DestinationSectionCont
           ) : null}
 
           <ul className='mt-2 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4'>
-            {DESTINATION_HIGHLIGHTS.map(({ Icon, label }) => (
-              <li key={label} className='flex flex-col items-center gap-2.5 text-center'>
+            {DESTINATION_HIGHLIGHTS.map(({ Icon, key }) => (
+              <li key={key} className='flex flex-col items-center gap-2.5 text-center'>
                 <Icon className='h-9 w-9 text-[#8A7A66]' />
                 <span
                   className={`${labelFont} text-[#6F675D] text-[0.56rem] uppercase leading-tight tracking-[0.18em]`}
                 >
-                  {label}
+                  {t(`highlights.${key}`)}
                 </span>
               </li>
             ))}
@@ -317,6 +319,7 @@ export function VoyageDestination({ content }: { content: DestinationSectionCont
  * renderer is kept for the section contract.
  */
 export function VoyageExperiences({ content }: { content: ExperiencesSectionContent }) {
+  const t = useTranslations('voyage.sections')
   if (content.items.length === 0) {
     return null
   }
@@ -324,7 +327,7 @@ export function VoyageExperiences({ content }: { content: ExperiencesSectionCont
     <Band id='experiences'>
       <div className='flex flex-col items-center gap-12'>
         <CenteredHead
-          eyebrow={content.eyebrow ?? 'Curated Experiences'}
+          eyebrow={content.eyebrow ?? t('curatedExperiences')}
           heading={content.heading}
         />
         <div className='grid w-full gap-6 sm:grid-cols-2 lg:grid-cols-4'>
@@ -369,6 +372,7 @@ export function VoyageExperiences({ content }: { content: ExperiencesSectionCont
  * The card grid stays a uniform height either way.
  */
 function WeddingPartyCard({ member, anchorId }: { member: WeddingPartyMember; anchorId: string }) {
+  const t = useTranslations('voyage.sections')
   const initial = member.name?.[0] ?? '·'
   const card = (
     <div className='flex h-full w-full flex-col items-center gap-1.5 rounded-[3px] border border-[#DDD2C0] bg-[#FBF8F2] p-2 pb-4 text-center transition-colors group-hover:border-[#B15C41]/50'>
@@ -395,7 +399,7 @@ function WeddingPartyCard({ member, anchorId }: { member: WeddingPartyMember; an
         <span
           className={`${labelFont} mt-0.5 text-[0.56rem] text-primary uppercase tracking-[0.18em]`}
         >
-          Read more
+          {t('readMore')}
         </span>
       ) : null}
     </div>
@@ -418,12 +422,12 @@ function WeddingPartyCard({ member, anchorId }: { member: WeddingPartyMember; an
         className='fixed inset-0 z-50 hidden items-start justify-center overflow-y-auto bg-[#1D2320]/75 p-4 py-10 target:flex sm:items-center'
       >
         <a href='#wedding-party' className='absolute inset-0'>
-          <span className='sr-only'>Close</span>
+          <span className='sr-only'>{t('close')}</span>
         </a>
         <div className='relative flex w-full max-w-2xl flex-col overflow-hidden rounded-[3px] bg-[#FBF8F2] shadow-2xl sm:flex-row'>
           <a
             href='#wedding-party'
-            aria-label='Close'
+            aria-label={t('close')}
             className='absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[#1D2320]/70 text-[#F7F3EC] transition-colors hover:bg-[#1D2320]'
           >
             <IconClose className='h-4 w-4' />
@@ -464,6 +468,7 @@ function WeddingPartyCard({ member, anchorId }: { member: WeddingPartyMember; an
  * a pure-CSS lightbox on click/tap instead of being squeezed into the card.
  */
 export function VoyageWeddingParty({ content }: { content: WeddingPartySectionContent }) {
+  const t = useTranslations('voyage.sections')
   if (content.members.length === 0) {
     return null
   }
@@ -485,7 +490,7 @@ export function VoyageWeddingParty({ content }: { content: WeddingPartySectionCo
         }
       />
       <div className='relative flex flex-col items-center gap-12'>
-        <CenteredHead eyebrow='Our People' heading={content.heading} />
+        <CenteredHead eyebrow={t('ourPeople')} heading={content.heading} />
         <div className='grid w-full grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6'>
           {content.members.map((member, index) => {
             const anchorId = `party-${index}-${member.name.replace(/\s+/g, '-').toLowerCase()}`
@@ -494,7 +499,7 @@ export function VoyageWeddingParty({ content }: { content: WeddingPartySectionCo
                 {content.members.length >= 4 && index === midpoint ? (
                   <div className='hidden flex-col items-center justify-center gap-4 rounded-[3px] border border-[#DDD2C0] bg-[#FBF8F2] px-4 py-8 text-center lg:flex'>
                     <p className={`${scriptFont} text-2xl text-primary leading-snug`}>
-                      Thank you for being our people.
+                      {t('thankYouPeople')}
                     </p>
                     <Decor
                       name='floralCorner'
@@ -517,10 +522,11 @@ const SERVICE_ICONS = [IconPlane, IconCar, IconBed, IconCamera, IconConcierge, I
 
 /** Travel copy + a responsive grid of thin-line services (no Band wrapper). */
 function TravelContent({ content }: { content: TravelSectionContent }) {
+  const t = useTranslations('voyage.sections')
   const services = content.services ?? []
   return (
     <div className='flex flex-col gap-6'>
-      <Eyebrow>Travel &amp; Stay</Eyebrow>
+      <Eyebrow>{t('travelStay')}</Eyebrow>
       <h2 className={`${sectionHeadingClass} italic leading-tight`}>{content.heading}</h2>
       <GoldRule className='self-start' />
       <Prose text={content.body} />
@@ -600,6 +606,7 @@ export function LinkifiedBlurb({ text, className = '' }: { text: string; classNa
  * button, so the card grid stays a uniform height either way.
  */
 function StayCard({ stay, anchorId }: { stay: TravelStay; anchorId: string }) {
+  const t = useTranslations('voyage.sections')
   const card = (
     <>
       <div className='relative aspect-[4/3] overflow-hidden bg-[#EFE7DA]'>
@@ -628,7 +635,7 @@ function StayCard({ stay, anchorId }: { stay: TravelStay; anchorId: string }) {
           <span
             className={`${labelFont} mt-1 text-[0.56rem] text-primary uppercase tracking-[0.18em]`}
           >
-            Read more
+            {t('readMore')}
           </span>
         ) : null}
       </div>
@@ -656,12 +663,12 @@ function StayCard({ stay, anchorId }: { stay: TravelStay; anchorId: string }) {
         className='fixed inset-0 z-50 hidden items-start justify-center overflow-y-auto bg-[#1D2320]/75 p-4 py-10 target:flex sm:items-center'
       >
         <a href='#travel' className='absolute inset-0'>
-          <span className='sr-only'>Close</span>
+          <span className='sr-only'>{t('close')}</span>
         </a>
         <div className='relative flex w-full max-w-2xl flex-col overflow-hidden rounded-[3px] bg-[#FBF8F2] shadow-2xl sm:flex-row'>
           <a
             href='#travel'
-            aria-label='Close'
+            aria-label={t('close')}
             className='absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[#1D2320]/70 text-[#F7F3EC] transition-colors hover:bg-[#1D2320]'
           >
             <IconClose className='h-4 w-4' />
@@ -695,7 +702,7 @@ function StayCard({ stay, anchorId }: { stay: TravelStay; anchorId: string }) {
                 rel='noreferrer'
                 className={`${labelFont} mt-2 inline-flex w-fit items-center gap-2 rounded-[2px] bg-primary px-5 py-2.5 text-[#FBF8F2] text-[0.62rem] uppercase tracking-[0.2em] transition-colors hover:bg-[#8A4530]`}
               >
-                {stay.buttonLabel?.trim() || 'Visit Website'}
+                {stay.buttonLabel?.trim() || t('visitWebsite')}
               </a>
             ) : null}
           </div>
@@ -707,13 +714,14 @@ function StayCard({ stay, anchorId }: { stay: TravelStay; anchorId: string }) {
 
 /** Recommended-stay cards (no Band wrapper). */
 function StaysGrid({ content }: { content: TravelSectionContent }) {
+  const t = useTranslations('voyage.sections')
   const stays = content.stays ?? []
   if (stays.length === 0) {
     return null
   }
   return (
     <div className='mt-14 flex flex-col gap-5'>
-      <Eyebrow>Recommended Stays</Eyebrow>
+      <Eyebrow>{t('recommendedStays')}</Eyebrow>
       <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
         {stays.map((stay, index) => {
           const anchorId = `stay-${index}-${stay.name.replace(/\s+/g, '-').toLowerCase()}`
@@ -726,9 +734,10 @@ function StaysGrid({ content }: { content: TravelSectionContent }) {
 
 /** The FAQ as a champagne-ruled accordion (no Band wrapper). */
 function FaqContent({ content }: { content: FaqSectionContent }) {
+  const t = useTranslations('voyage.sections')
   return (
     <div className='flex flex-col gap-6'>
-      <Eyebrow>Questions?</Eyebrow>
+      <Eyebrow>{t('questions')}</Eyebrow>
       <h2 className={`${sectionHeadingClass} italic leading-tight`}>{content.heading}</h2>
       <GoldRule className='self-start' />
       <div className='flex flex-col gap-3'>
@@ -833,9 +842,10 @@ export function VoyageFaq({ content }: { content: FaqSectionContent }) {
 }
 
 export function VoyageRegistry({ content }: { content: RegistrySectionContent }) {
+  const t = useTranslations('voyage.sections')
   return (
     <div className='flex flex-col gap-6'>
-      <Eyebrow>Registry</Eyebrow>
+      <Eyebrow>{t('registry')}</Eyebrow>
       <h2 className={`${sectionHeadingClass} leading-tight`}>{content.heading}</h2>
       <GoldRule className='self-start' />
       <Prose text={content.body} />

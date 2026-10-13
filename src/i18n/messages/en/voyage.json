@@ -1,1 +1,582 @@
-{}
+{
+  "voyage": {
+    "identity": {
+      "ourWedding": "Our Wedding",
+      "theCouple": "the couple",
+      "or": "or"
+    },
+    "pages": {
+      "weekend": {
+        "title": "Wedding Weekend",
+        "description": "The moments we can’t wait to share with you."
+      },
+      "stay": {
+        "title": "Where to Stay",
+        "description": "Find your home for the weekend, with booking details close at hand."
+      },
+      "travel": {
+        "title": "Travel",
+        "description": "Everything you need for the journey and your time here."
+      },
+      "puebla": {
+        "title": "Explore Puebla",
+        "description": "A little local inspiration for the time between celebrations."
+      },
+      "mexico": {
+        "title": "Explore Mexico",
+        "description": "Make a longer adventure of your journey."
+      },
+      "story": {
+        "title": "Our Story",
+        "description": "The people, places and moments that brought us here."
+      },
+      "faq": {
+        "title": "FAQs & Contact",
+        "description": "A few useful answers, and a way to stay in touch."
+      },
+      "registry": {
+        "title": "Registry",
+        "description": "Your presence means the world to us."
+      },
+      "fallbackTitle": "Wedding Website"
+    },
+    "nav": {
+      "skipToContent": "Skip to content",
+      "home": "Home",
+      "homeAria": "{names} — Home",
+      "backHome": "← Home",
+      "mainAria": "Wedding navigation",
+      "mobileAria": "Mobile wedding navigation",
+      "footerAria": "Footer navigation",
+      "thingsToDo": "Things to Do",
+      "more": "More",
+      "menu": "Menu",
+      "rsvp": "RSVP",
+      "footerThanks": "Thank you for being part of our beginning"
+    },
+    "home": {
+      "heroLine1": "Our Forever",
+      "heroLine2": "Begins in",
+      "paradise": "Paradise",
+      "introFallback": "We can’t wait to celebrate our love with you in the city that stole our hearts.",
+      "rsvpNow": "RSVP Now",
+      "weddingDetails": "Wedding Details",
+      "planAria": "Plan your visit",
+      "quickLinks": {
+        "schedule": { "label": "Schedule", "detail": "Every celebration" },
+        "stay": { "label": "Book Your Stay", "detail": "Hotels & wedding rates" },
+        "travel": { "label": "Getting Here", "detail": "Flights & transfers" },
+        "wear": { "label": "What to Wear", "detail": "Dress code & guidance" }
+      },
+      "storyEyebrow": "Our story",
+      "storyHeading": "The journey to here",
+      "readStory": "Read our story",
+      "thingsToDoEyebrow": "Things to do",
+      "adventureHeading": "A little adventure awaits",
+      "explorePuebla": {
+        "title": "Explore Puebla",
+        "description": "Our favourite sights, food and day trips for the time between celebrations."
+      },
+      "exploreMexico": {
+        "title": "Explore Mexico",
+        "description": "Stay a little longer. Discover our favourite places for a bigger adventure."
+      },
+      "kindlyRsvp": "Kindly RSVP",
+      "cantWait": "We can’t wait to celebrate with you!",
+      "honored": "We would be honored to celebrate with you. Let us know if you can make the journey.",
+      "yourInvitation": "Your Invitation",
+      "rsvpDeadline": "RSVP deadline: {deadline}",
+      "sendRsvp": "Send RSVP"
+    },
+    "content": {
+      "relatedAria": "Related information",
+      "contact": {
+        "eyebrow": "We’re here to help",
+        "heading": "Have a question?",
+        "body": "Please contact {names} with any questions—we’re happy to help.",
+        "communityEyebrow": "Stay in the loop",
+        "communityHeading": "Our WhatsApp community",
+        "communityBody": "A place for wedding updates and questions as we get closer to the celebration.",
+        "communityCta": "Join the WhatsApp community"
+      },
+      "weekend": {
+        "links": {
+          "schedule": "Schedule",
+          "wear": "What to Wear",
+          "transport": "Wedding transport"
+        },
+        "transportHeading": "Getting to the celebrations",
+        "transportBody": "We’ll provide transport from Puebla city centre to the ceremony venue and back, so you won’t need to arrange your own journey. Pickup locations and times will be shared here closer to the wedding.",
+        "walkingDistance": "All other events will be within walking distance of Puebla city centre.",
+        "venues": "Venues & directions"
+      },
+      "stay": {
+        "links": {
+          "gettingHere": "Getting here",
+          "schedule": "Wedding schedule",
+          "contact": "Questions? Contact us"
+        }
+      },
+      "travel": {
+        "links": {
+          "dates": "Travel dates",
+          "transfers": "Transfers",
+          "hotels": "Hotels",
+          "puebla": "Explore Puebla",
+          "mexico": "Explore Mexico"
+        },
+        "eyebrow": "Plan your journey",
+        "heading": "When to travel",
+        "datesFallback": "Event dates will be shared here once confirmed.",
+        "body": "Allow time to settle in before your first event, and leave enough time for your onward journey after the celebrations.",
+        "checkSchedule": "Check the schedule",
+        "transfersEyebrow": "Getting to Puebla",
+        "transfersHeading": "Mexico City to Puebla",
+        "transfersIntro": "If you’re arriving at Mexico City International Airport (MEX / AICM), you can continue directly to Puebla by bus or arrange a private transfer.",
+        "busHeading": "By bus from the airport",
+        "busBody": "Estrella Roja runs hourly buses from Terminal 1 and Terminal 2 to Puebla. Tickets can be bought on site at the airport bus ticket counters. Check the Puebla drop-off point before arranging the final journey to your hotel. Allow time for immigration, baggage collection and traffic when planning your connection.",
+        "driversHeading": "Drivers & private transfers",
+        "driversBody": "We’ll add known driver contacts and private transfer options here closer to the wedding, including how to book and arrange your pickup.",
+        "contactsSoon": "Contacts coming soon"
+      },
+      "puebla": {
+        "links": {
+          "mexico": "Extending your trip? Explore Mexico",
+          "gettingAround": "Getting around"
+        }
+      },
+      "mexico": {
+        "links": {
+          "cityGuide": "Mexico City guide",
+          "puebla": "Staying nearby? Explore Puebla",
+          "travel": "Travel information"
+        }
+      },
+      "story": {
+        "comingSoon": "Our story and favourite moments are coming soon."
+      },
+      "faq": {
+        "links": {
+          "wear": "What to Wear",
+          "hotels": "Hotel booking details",
+          "travel": "Travel & transfers",
+          "contact": "Contact & WhatsApp"
+        },
+        "heading": "Questions & Answers",
+        "seeWear": "See what to wear for each event →",
+        "seeStay": "See hotel rates and booking instructions →",
+        "seeTravel": "See travel and transfer details →"
+      },
+      "registry": {
+        "fallback": "Your presence is the greatest gift.",
+        "comingSoon": "Details coming soon."
+      }
+    },
+    "weekend": {
+      "eyebrow": "Wedding Weekend",
+      "heading": "Let’s Celebrate Together",
+      "localTimes": "All times are local to the event venue.",
+      "scheduleAria": "Schedule",
+      "dateTba": "Date to be announced",
+      "timeTba": "Time to be announced",
+      "venueTba": "Venue details coming soon",
+      "eventDetails": "Event details →",
+      "directions": "Get directions ↗",
+      "whatToWear": "What to wear: ",
+      "dressCodeTba": "Dress code to be announced",
+      "empty": "The schedule will appear here as our plans are confirmed.",
+      "viewFull": "View the full weekend",
+      "dressCode": {
+        "eyebrow": "Dress code",
+        "heading": "What to Wear",
+        "intro": "A little guidance for each celebration, so you can pack with confidence.",
+        "moreSoon": "More guidance coming soon",
+        "moreSoonBody": "Outfit suggestions, footwear advice and any finishing touches will appear here once the details are confirmed."
+      }
+    },
+    "stays": {
+      "eyebrow": "Make yourself at home",
+      "checkInstructions": "Check each hotel’s instructions before booking to make sure you receive any wedding rates.",
+      "visitWebsite": "Visit Website",
+      "bookingSoon": "Booking link coming soon.",
+      "empty": "Our accommodation recommendations and booking details are coming soon.",
+      "viewDetails": "View hotel details",
+      "viewDetailsAria": "View hotel details for {name}",
+      "close": "Close"
+    },
+    "sections": {
+      "aboutUs": "About Us",
+      "thankYouStory": "Thank you for being part of our story.",
+      "ourStory": "Our Story",
+      "destination": "The Destination",
+      "highlights": {
+        "colonial": "Colonial Beauty",
+        "culture": "Rich Culture",
+        "cuisine": "Incredible Cuisine",
+        "hospitality": "Warm Hospitality"
+      },
+      "curatedExperiences": "Curated Experiences",
+      "readMore": "Read more",
+      "close": "Close",
+      "ourPeople": "Our People",
+      "thankYouPeople": "Thank you for being our people.",
+      "travelStay": "Travel & Stay",
+      "recommendedStays": "Recommended Stays",
+      "visitWebsite": "Visit Website",
+      "questions": "Questions?",
+      "registry": "Registry"
+    },
+    "media": {
+      "moments": "A Few of Our Favorite Moments",
+      "hoverHint": "Hover a photo to relive the moment"
+    },
+    "minimal": {
+      "invited": "You are invited",
+      "tagline": "Our greatest adventure begins here."
+    },
+    "invitation": {
+      "preface": "Together with their families",
+      "and": "and",
+      "line": "request the pleasure of your company",
+      "dateTba": "Date to be announced",
+      "visitWebsite": "Visit our website",
+      "rsvp": "RSVP"
+    },
+    "saveTheDate": {
+      "eyebrow": "Save the Date",
+      "daysToGo": "{count, plural, one {# day to go} other {# days to go}}",
+      "footnote": "Formal invitation to follow.",
+      "visitWebsite": "Visit our website",
+      "rsvp": "RSVP",
+      "dateTba": "Date to be announced",
+      "calendarTitle": "{names} Wedding",
+      "calendarDescription": "Save the date for the wedding of {names}! Formal invitation to follow. {url}"
+    },
+    "flights": {
+      "eyebrow": "Getting There",
+      "heading": "Search Flights",
+      "intro": "We recommend flying to either Mexico City or Puebla — find a flight into whichever airport suits your journey.",
+      "flyingInto": "Flying Into",
+      "flyingFrom": "Flying From",
+      "placeholder": "City or airport code, e.g. London",
+      "depart": "Depart",
+      "return": "Return",
+      "search": "Search Flights",
+      "destinations": {
+        "MEX": "Mexico City (MEX)",
+        "PBC": "Puebla (PBC)"
+      }
+    },
+    "mexicoCity": {
+      "eyebrow": "A few days in the capital",
+      "heading": "Mexico City, neighbourhood by neighbourhood",
+      "culture": "Culture",
+      "food": "Food",
+      "recommendation": "{name} — {description}",
+      "gettingAroundHeading": "Getting around",
+      "gettingAroundBody": "Walk within each neighbourhood; use Uber or a hotel-arranged taxi between areas. We do not recommend using public transportation within Mexico City. Allow extra time for city traffic.",
+      "beforeHeading": "Before you go",
+      "beforeBody": "Check current opening days and reservations before setting out, particularly for museums and restaurants. Keep WhatsApp handy for coordinating with your hotel or driver.",
+      "neighbourhoods": {
+        "chapultepec": "Chapultepec & Polanco",
+        "centro": "Centro Histórico",
+        "reforma": "Paseo de la Reforma",
+        "coyoacan": "Coyoacán",
+        "teotihuacan": "Teotihuacán",
+        "sanAngel": "San Ángel"
+      },
+      "places": {
+        "antropologia": {
+          "name": "Museo Nacional de Antropología",
+          "description": "The finest museum in the country"
+        },
+        "bosque": {
+          "name": "Bosque de Chapultepec",
+          "description": "A leafy park for a long walk"
+        },
+        "castillo": {
+          "name": "Chapultepec Castle",
+          "description": "Hilltop history and city views"
+        },
+        "tamayo": { "name": "Museo Tamayo", "description": "Contemporary art museum" },
+        "soumaya": {
+          "name": "Museo Soumaya",
+          "description": "Free art collection in a striking building"
+        },
+        "pujol": { "name": "Pujol", "description": "Modern Mexican tasting menus in Polanco" },
+        "contramar": { "name": "Contramar", "description": "Seafood lunch worth booking ahead" },
+        "bellasArtes": {
+          "name": "Bellas Artes",
+          "description": "Palace of murals, music and exhibitions"
+        },
+        "alameda": { "name": "Alameda Central", "description": "Mexico City’s oldest public park" },
+        "palacioPostal": {
+          "name": "Palacio Postal",
+          "description": "Ornate early twentieth-century post office"
+        },
+        "zocalo": { "name": "Zócalo", "description": "The city’s vast central square" },
+        "madero": { "name": "Madero", "description": "Pedestrian street lined with architecture" },
+        "cardenal": { "name": "El Cardenal", "description": "Traditional Mexican restaurant" },
+        "tacuba": {
+          "name": "Café de Tacuba",
+          "description": "Historic café for breakfast and lunch"
+        },
+        "angel": {
+          "name": "Ángel de la Independencia",
+          "description": "The city’s iconic golden monument"
+        },
+        "diana": {
+          "name": "Diana the Huntress Fountain",
+          "description": "A landmark bronze fountain"
+        },
+        "reforma": {
+          "name": "Paseo de la Reforma",
+          "description": "Grand boulevard for a city stroll"
+        },
+        "nin": { "name": "Café Nin", "description": "Pastries and an easy breakfast stop" },
+        "torreLatino": {
+          "name": "Torre Latinoamericana",
+          "description": "Cocktails with a skyline view"
+        },
+        "casaAzul": { "name": "Casa Azul", "description": "Frida Kahlo’s former home and museum" },
+        "hidalgo": {
+          "name": "Jardín Hidalgo",
+          "description": "The neighbourhood’s lively main square"
+        },
+        "centenario": {
+          "name": "Jardín Centenario",
+          "description": "A shady garden with the coyote fountain"
+        },
+        "coyoacanMarkets": {
+          "name": "Coyoacán markets",
+          "description": "Local crafts, colour and street life"
+        },
+        "danzantes": {
+          "name": "Los Danzantes",
+          "description": "Leisurely lunch with regional Mexican cooking"
+        },
+        "mercadoCoyoacan": {
+          "name": "Mercado de Coyoacán",
+          "description": "Classic tostadas and market snacks"
+        },
+        "sol": {
+          "name": "Pyramid of the Sun",
+          "description": "The site’s monumental central pyramid"
+        },
+        "luna": {
+          "name": "Pyramid of the Moon",
+          "description": "A ceremonial pyramid with a long view"
+        },
+        "calzada": {
+          "name": "Avenue of the Dead",
+          "description": "The ancient city’s central processional road"
+        },
+        "gruta": {
+          "name": "La Gruta",
+          "description": "Cave restaurant near the archaeological site"
+        },
+        "sanJacinto": {
+          "name": "Plaza San Jacinto",
+          "description": "The heart of the Saturday art market"
+        },
+        "bazar": {
+          "name": "Bazar del Sábado",
+          "description": "Handcrafts and artwork each Saturday"
+        },
+        "cobbles": {
+          "name": "Cobbled streets",
+          "description": "A slower neighbourhood for wandering"
+        },
+        "bistro83": {
+          "name": "Bistró 83",
+          "description": "Breakfast or lunch in a leafy courtyard"
+        },
+        "sanAngelInn": {
+          "name": "San Ángel Inn",
+          "description": "Classic hacienda setting for a long meal"
+        }
+      }
+    },
+    "mexicoGuide": {
+      "zocalo": {
+        "eyebrow": "Things to See and Do",
+        "heading": "Welcome to Puebla",
+        "intro": "We recommend everyone stays within a few blocks of the Zócalo, Puebla’s main square, which puts the whole of the Centro Histórico — a UNESCO World Heritage site — within a short walk of your door. Here is what you could do with a free morning or an afternoon between events.",
+        "eatDrink": "Eat & Drink",
+        "shortDrive": "Worth the Short Drive"
+      },
+      "sights": {
+        "catedral": {
+          "name": "Catedral de Puebla",
+          "distance": "On the square · 1 min walk",
+          "blurb": "The twin towers are the tallest cathedral towers in Mexico. Step inside for the marble and gilt altar, then — if the bell-tower visit is running, weekends only and tickets at the door — climb it for a view over the tiled domes."
+        },
+        "rosario": {
+          "name": "Capilla del Rosario",
+          "distance": "2 blocks · 5 min walk",
+          "blurb": "Tucked inside the Templo de Santo Domingo, this gold-leaf baroque chapel was called the eighth wonder of the New World when it opened in 1690. Free to enter, and worth going back to twice."
+        },
+        "palafoxiana": {
+          "name": "Biblioteca Palafoxiana",
+          "distance": "1 block · 4 min walk",
+          "blurb": "The first public library in the Americas, founded in 1646 — 45,000 volumes on tiered cedar shelves, in a hall unchanged since the 1770s. Small entrance fee, closed Mondays."
+        },
+        "munecos": {
+          "name": "Casa de los Muñecos",
+          "distance": "On the square · 1 min walk",
+          "blurb": "The tiled facade on the north-east corner is covered in caricatures of the councillors who tried to stop the owner building higher than they had. He won, and made sure everyone knew."
+        },
+        "santaRosa": {
+          "name": "Ex-Convento de Santa Rosa",
+          "distance": "6 blocks · 10 min walk",
+          "blurb": "The Talavera-tiled convent kitchen where mole poblano was supposedly invented, now the city’s Talavera museum. Go before you eat the mole rather than after."
+        },
+        "sapos": {
+          "name": "Callejón de los Sapos",
+          "distance": "5 blocks · 8 min walk",
+          "blurb": "Antique shops by day, a flea market on Saturday and Sunday, cantinas with live music after dark. Stop at La Pasita in the afternoon before it shuts: one shot, one cube of cheese, one raisin."
+        },
+        "artista": {
+          "name": "Barrio del Artista & El Parián",
+          "distance": "4 blocks · 8 min walk",
+          "blurb": "Painters keep open studios around a small plaza, and El Parián next door is good for cheerful souvenirs. For certified Talavera, walk five blocks west to Uriarte instead — same workshop since 1824, and you can watch them paint it."
+        },
+        "amparo": {
+          "name": "Museo Amparo",
+          "distance": "3 blocks · 8 min walk",
+          "blurb": "Pre-Hispanic and colonial collections in a beautifully restored mansion, and a rooftop terrace café with the best view of the cathedral in the city. Closed Tuesdays, not Mondays."
+        },
+        "fuertes": {
+          "name": "Fuertes de Loreto y Guadalupe",
+          "distance": "10 min by Uber",
+          "blurb": "The hill where the outnumbered Mexican army won on the fifth of May, 1862 — the reason the date means anything at all. Ramparts, a museum, and the long view back over the city."
+        }
+      },
+      "table": {
+        "mole": {
+          "title": "Mole poblano",
+          "body": "Puebla claims to have invented it, in a convent kitchen. Fonda de Santa Clara on 3 Poniente is the reliable classic and El Mural de los Poetas is where we would go for a proper dinner — have it with turkey, and skip the arcade restaurants on the square itself."
+        },
+        "chiles": {
+          "title": "Chiles en nogada",
+          "body": "The dish Puebla is most famous for — a stuffed poblano under walnut cream — but it only appears once the nuez de Castilla is harvested, from late July. You will be two months early, so put it on the list for a return trip and eat mole instead."
+        },
+        "cemitas": {
+          "title": "Cemitas & tacos árabes",
+          "body": "The city’s two great sandwiches. A cemita is a sesame roll with quesillo, avocado, chipotle and papalo — Mercado El Carmen for the real thing. Tacos árabes come off a vertical spit in pan árabe rather than a tortilla, and are worth staying up for."
+        },
+        "dulces": {
+          "title": "Calle de los Dulces",
+          "body": "6 Oriente is lined with sweet shops — camotes, borrachitos and tortitas de Santa Clara, sold from the same doorways since before the revolution."
+        },
+        "rooftop": {
+          "title": "Sunset from a rooftop",
+          "body": "The terraces on the square look straight at the cathedral, and on a clear evening Popocatépetl and Iztaccíhuatl sit off to the west, to your right. The end of May is the turn of the rainy season, so the volcanoes show themselves more often in the morning than at dusk. Either way: mezcal, and stay for the light."
+        }
+      },
+      "nearby": {
+        "cholula": {
+          "title": "Cholula — 20 minutes",
+          "body": "The Great Pyramid is the largest by volume in the world, with a yellow church sitting on top of it. Walk the tunnel if it is open, climb up for the volcano view, then have lunch on the plaza below. Closed Mondays."
+        },
+        "tonantzintla": {
+          "title": "Tonantzintla & Acatepec — 30 minutes",
+          "body": "Two village churches beside Cholula. Acatepec is the Talavera-tiled facade; Tonantzintla is the one to go inside, for a ceiling of indigenous saints, fruit and feathered angels carved by the villagers themselves. No photographs in there."
+        },
+        "atlixco": {
+          "title": "Atlixco — 45 minutes",
+          "body": "A flower-growing town with a painted village square and the Cerro de San Miguel viewpoint over the valley. The nurseries are in full colour in late spring, and the drive out is half the pleasure."
+        }
+      },
+      "practical": {
+        "mondays": {
+          "title": "A word on Mondays",
+          "body": "Almost every museum in Mexico closes on Monday, the Palafoxiana and the Cholula pyramid included. Museo Amparo is the odd one out and closes on Tuesday. Churches are open every day."
+        },
+        "altitude": {
+          "title": "2,135 metres",
+          "body": "Puebla sits high. On your first day drink more water than you want to and let the mezcal go slowly — the altitude catches everyone out."
+        },
+        "cash": {
+          "title": "Cash & cards",
+          "body": "Restaurants and hotels take cards; markets, the sweet shops and street taxis want pesos. Draw from a bank ATM and decline the machine’s own exchange rate. Ten to fifteen per cent is the tip."
+        },
+        "gettingAround": {
+          "title": "Getting around",
+          "body": "Uber and DiDi both work well here and cost very little across the Centro. Use them rather than street taxis, use them late at night, and use them to get out to Cholula."
+        },
+        "pack": {
+          "title": "What to pack",
+          "body": "The end of May is warm by day and cool once the sun goes down, and the rains are just beginning — a jacket for the evenings, a light rain layer for the afternoon storms, and flat shoes for the cobbles."
+        }
+      },
+      "goodToKnow": "Good to Know",
+      "explore": {
+        "eyebrow": "Make a Trip of It",
+        "heading": "Where to Go in Mexico",
+        "intro": "You are flying a long way for one weekend — so stay a little longer. These are the four places we would send you, whether you have two extra days or two extra weeks.",
+        "gettingThere": "Getting there · ",
+        "outro": "And if you would rather not go far: Puebla and the surrounding towns make for great sights and hikes.",
+        "tagline": "Come for the wedding, stay for the country."
+      },
+      "trips": {
+        "mexicoCity": {
+          "name": "Mexico City",
+          "region": "The capital · 2 hours from Puebla",
+          "blurb": "If you add only one stop, make it this one: a great museum city wrapped around a colonial centre, with some of the best eating anywhere in the world.",
+          "gettingThere": "ADO leaves Puebla’s CAPU terminal every twenty minutes and takes about two hours, arriving at TAPO on the east side. There are direct CAPU buses to the airport too — much better than crossing the city.",
+          "highlights": {
+            "h1": "Museo Nacional de Antropología — the finest museum in the country. Give it half a day, then walk up to Chapultepec Castle for the view.",
+            "h2": "The Centro Histórico: the Zócalo, Templo Mayor, Bellas Artes, and the Diego Rivera murals in the Palacio Nacional — bring your passport and check it is open.",
+            "h3": "Frida Kahlo’s Casa Azul in Coyoacán — timed tickets sell out weeks ahead, so book online before you fly.",
+            "h4": "Roma and Condesa for long lunches, tree-lined streets and cocktails afterwards.",
+            "h5": "Teotihuacán, an hour north — arrive at opening, or float over the pyramids in a balloon.",
+            "h6": "Lucha libre at Arena México on a Friday night — Super Viernes is the big card, and tickets are cheap."
+          }
+        },
+        "oaxaca": {
+          "name": "Oaxaca City",
+          "region": "Oaxaca · 4½ hrs by road from Puebla, 1 hr by air from Mexico City",
+          "blurb": "The country’s food and craft capital — mezcal, seven moles and markets you would fly in for on their own. Two nights minimum, three if you can.",
+          "gettingThere": "There is no direct flight from Puebla: fly from Mexico City in an hour, take ADO straight from CAPU, or drive the 135D toll road through the mountains in four and a half hours — that one in daylight.",
+          "highlights": {
+            "h1": "Mercado 20 de Noviembre for the Pasillo de Humo, the smoke-filled grill hall, with Mercado Benito Juárez next door.",
+            "h2": "Santo Domingo and its cultural museum — the ethnobotanical garden is guided-tour only, and English tours run just a few times a week.",
+            "h3": "Monte Albán, the Zapotec city on the ridge, thirty minutes above town, with Mitla and the vast tree at El Tule out in the valley.",
+            "h4": "The Sunday market at Tlacolula, and the rug weavers and mezcal palenques of Teotitlán del Valle on the way.",
+            "h5": "Hierve el Agua’s petrified waterfalls, best as an early start — check it is open first, the community closes the road from time to time.",
+            "h6": "Late May and June are the green season: the valleys turn after the first rains and the city is quiet, before the Guelaguetza crowds arrive in July."
+          }
+        },
+        "puertoEscondido": {
+          "name": "Puerto Escondido",
+          "region": "Oaxacan coast · 1 hr by air from Mexico City",
+          "blurb": "Where Mexico City goes to swim: barefoot, unpolished and warm all year. The easiest possible way to end a trip.",
+          "gettingThere": "An hour from Mexico City by air, or forty minutes from Oaxaca City in a twelve-seat prop plane — pack light, the bag limit is strict. The new highway has cut the drive down from Oaxaca to about three and a half hours.",
+          "highlights": {
+            "h1": "Playa Carrizalillo for the calm swimming cove — there are a hundred and seventy steps down to it.",
+            "h2": "Zicatela for the surf and the sunset, but do not get in the water there: it is the Mexican Pipeline, the summer swell is already running by June, and the rips are lethal.",
+            "h3": "Bioluminescence on the Manialtepec lagoon, best on a moonless night once the rains have started.",
+            "h4": "A dawn boat trip for dolphins and turtles — the whales have gone north by June, but the turtles are just beginning to nest.",
+            "h5": "Baby-turtle releases at Playa Bacocho, which start up again as the nesting season opens.",
+            "h6": "Mazunte and Zipolite, ninety minutes east, if you want somewhere quieter still."
+          }
+        },
+        "sanMiguel": {
+          "name": "San Miguel de Allende",
+          "region": "Guanajuato · 3½ hrs by road from Mexico City",
+          "blurb": "Cobblestones, rooftop bars and a pink church out of a fairy tale, in a town small enough to walk end to end. Made for a slow two nights.",
+          "gettingThere": "Fly into Querétaro (QRO) and drive an hour, or León (BJX) and drive an hour and three-quarters; comfortable buses also run from Mexico City.",
+          "highlights": {
+            "h1": "The Parroquia de San Miguel Arcángel on the Jardín — best at golden hour from a rooftop, and the one everyone means is Luna at the Rosewood.",
+            "h2": "Fábrica La Aurora, an old textile mill full of galleries and studios.",
+            "h3": "Hot springs at La Gruta or Escondido Place, twenty minutes out — cash only, and packed at weekends.",
+            "h4": "Atotonilco, the frescoed sanctuary fifteen minutes away, and the cactus gardens at El Charco del Ingenio.",
+            "h5": "The Tuesday tianguis out on the Querétaro road — huge, cheap and not walkable, so take a taxi.",
+            "h6": "Guanajuato city, ninety minutes away, for tunnels, callejones and colour."
+          }
+        }
+      }
+    }
+  }
+}

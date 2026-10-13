@@ -4,34 +4,19 @@ import type {
   WebsiteSectionType,
 } from '~/server/domains/website-section/website-section.types'
 
-/** Shared by routes and navigation. English copy is kept here for future localization. */
+/**
+ * Shared by routes and navigation. Copy lives in the `voyage.pages` messages;
+ * each entry names its title and description keys.
+ */
 export const voyagePages = {
-  weekend: {
-    title: 'Wedding Weekend',
-    description: 'The moments we can’t wait to share with you.',
-  },
-  stay: {
-    title: 'Where to Stay',
-    description: 'Find your home for the weekend, with booking details close at hand.',
-  },
-  travel: {
-    title: 'Travel',
-    description: 'Everything you need for the journey and your time here.',
-  },
-  puebla: {
-    title: 'Explore Puebla',
-    description: 'A little local inspiration for the time between celebrations.',
-  },
-  mexico: { title: 'Explore Mexico', description: 'Make a longer adventure of your journey.' },
-  story: {
-    title: 'Our Story',
-    description: 'The people, places and moments that brought us here.',
-  },
-  faq: {
-    title: 'FAQs & Contact',
-    description: 'A few useful answers, and a way to stay in touch.',
-  },
-  registry: { title: 'Registry', description: 'Your presence means the world to us.' },
+  weekend: { titleKey: 'weekend.title', descriptionKey: 'weekend.description' },
+  stay: { titleKey: 'stay.title', descriptionKey: 'stay.description' },
+  travel: { titleKey: 'travel.title', descriptionKey: 'travel.description' },
+  puebla: { titleKey: 'puebla.title', descriptionKey: 'puebla.description' },
+  mexico: { titleKey: 'mexico.title', descriptionKey: 'mexico.description' },
+  story: { titleKey: 'story.title', descriptionKey: 'story.description' },
+  faq: { titleKey: 'faq.title', descriptionKey: 'faq.description' },
+  registry: { titleKey: 'registry.title', descriptionKey: 'registry.description' },
 } as const
 export type VoyagePage = keyof typeof voyagePages
 export type VoyageLocation = VoyagePage | 'home' | 'rsvp'
@@ -57,9 +42,13 @@ export function orderedEvents(events: VoyageEvent[]) {
     )
   })
 }
+/** The Intl locale for general formatting: Mexican Spanish or US English. */
+export function intlLocale(locale: string) {
+  return locale === 'es' ? 'es-MX' : 'en-US'
+}
 /** Database calendar dates must not shift into the server's timezone. */
-export function eventDate(date: Date) {
-  return new Intl.DateTimeFormat('en-GB', {
+export function eventDate(date: Date, locale: string) {
+  return new Intl.DateTimeFormat(locale === 'es' ? 'es-MX' : 'en-GB', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -67,14 +56,14 @@ export function eventDate(date: Date) {
     timeZone: 'UTC',
   }).format(date)
 }
-export function eventDateRange(events: VoyageEvent[]) {
+export function eventDateRange(events: VoyageEvent[], locale: string) {
   const dates = orderedEvents(events).flatMap((event) => (event.date ? [event.date] : []))
   const first = dates[0]
   const last = dates[dates.length - 1]
   if (!first || !last) return null
   return first.getTime() === last.getTime()
-    ? eventDate(first)
-    : `${eventDate(first)} – ${eventDate(last)}`
+    ? eventDate(first, locale)
+    : `${eventDate(first, locale)} – ${eventDate(last, locale)}`
 }
 export function flightDates(events: VoyageEvent[]) {
   const dates = orderedEvents(events).flatMap((event) => (event.date ? [event.date] : []))
@@ -89,14 +78,19 @@ export function flightDates(events: VoyageEvent[]) {
     returnPlaceholder: shift(dates[dates.length - 1], 1),
   }
 }
-export function coupleIdentity(wedding: WeddingPageData) {
+/** Fallback wording for `coupleIdentity`, from the `voyage.identity` messages. */
+export type IdentityCopy = { ourWedding: string; theCouple: string; or: string }
+export function identityCopy(t: (key: keyof IdentityCopy) => string): IdentityCopy {
+  return { ourWedding: t('ourWedding'), theCouple: t('theCouple'), or: t('or') }
+}
+export function coupleIdentity(wedding: WeddingPageData, copy: IdentityCopy) {
   const names = [wedding.brideFirstName, wedding.groomFirstName].filter(
     (name): name is string => !!name
   )
   return {
-    coupleNames: names.join(' & ') || 'Our Wedding',
-    contactNames: names.join(' or ') || 'the couple',
-    monogram: names.map((name) => name[0]).join(' | ') || 'Our Wedding',
+    coupleNames: names.join(' & ') || copy.ourWedding,
+    contactNames: names.join(` ${copy.or} `) || copy.theCouple,
+    monogram: names.map((name) => name[0]).join(' | ') || copy.ourWedding,
   }
 }
 /** Keep previously shared in-page links working. */

@@ -1,1 +1,68 @@
-{}
+{
+  "site": {
+    "localeToggle": {
+      "switchToEnglish": "Switch to English",
+      "switchToSpanish": "Cambiar a español"
+    },
+    "password": {
+      "eyebrow": "Private Wedding Website",
+      "title": "This site is password protected",
+      "description": "Enter the password shared by the couple to unlock their wedding website.",
+      "label": "Password",
+      "placeholder": "Enter password…",
+      "submit": "Unlock Site",
+      "submitting": "Unlocking…",
+      "error": "Incorrect password. Check the password and try again."
+    },
+    "welcome": {
+      "label": "Personalized welcome",
+      "message": "Welcome, <name>{greeting}</name> — we're so glad you're here."
+    },
+    "rsvpClosed": {
+      "eyebrow": "Coming Soon",
+      "title": "RSVPs not yet open",
+      "description": "We're not quite ready to accept RSVPs yet. Check back soon!",
+      "backToWedding": "Back to Wedding"
+    },
+    "rsvpForm": {
+      "heading": "RSVP",
+      "close": "Close RSVP form",
+      "confirmClose": "Are you sure? Your RSVP has not been sent.",
+      "submitError": "Failed to submit RSVP. Please try again.",
+      "missingWebsite": "Something went wrong. Please refresh the page and try again.",
+      "eventDateTime": "{date} at {time}",
+      "nameLabel": "Your first and last name",
+      "answerLabel": "Your answer",
+      "attending": "Attending",
+      "notAttending": "Not attending"
+    },
+    "calendar": {
+      "google": "Google Calendar",
+      "outlook": "Outlook",
+      "apple": "Apple Calendar",
+      "eventTitle": "{coupleNames} Wedding",
+      "eventDescription": "Save the date for the wedding of {coupleNames}! Formal invitation to follow."
+    },
+    "envelope": {
+      "invited": "You're Invited"
+    },
+    "saveTheDateUpdate": {
+      "description": "Please confirm the names and mailing address we should use for future physical invitations.",
+      "errorValidation": "Please check the highlighted details and try again. Each person needs a first name, and emails must be valid and unique.",
+      "errorExpired": "This save-the-date link has expired or could not be verified. Please ask the couple for a fresh link.",
+      "errorSave": "We could not save those details. Please try again in a moment."
+    },
+    "metadata": {
+      "websiteTitle": "Wedding Website",
+      "weddingTitle": "{brideName} & {groomName} Wedding",
+      "weddingDescription": "Join us for the wedding of {brideName} and {groomName}.",
+      "rsvpTitle": "RSVP",
+      "rsvpCoupleTitle": "{coupleName} — RSVP",
+      "invitationTitle": "Invitation",
+      "invitationCoupleTitle": "Invitation — {groomFirstName} & {brideFirstName}",
+      "saveTheDateTitle": "Save the Date — {coupleNames}'s Wedding",
+      "saveTheDateDescription": "{coupleNames} are getting married{hasDate, select, yes { on {date}} other {}}{hasVenue, select, yes { in {venue}} other {}}. Open your household save the date to confirm your details.",
+      "saveTheDateUpdateTitle": "Update our details"
+    }
+  }
+}

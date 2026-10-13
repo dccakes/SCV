@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react'
-
+import { screen } from '@testing-library/react'
+import { renderWithIntl as render } from '~/../tests/unit/test-utils/intl'
 import { AureliaInvitation } from '~/templates/aurelia/components/invitation'
 import { AureliaSaveTheDate } from '~/templates/aurelia/components/save-the-date'
 import { ClassicInvitation } from '~/templates/classic/components/invitation'

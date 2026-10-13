@@ -2,18 +2,24 @@ import { TRPCError } from '@trpc/server'
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 
 import { HouseholdDetailsForm } from '~/components/website/household-invite/household-details-form'
 import { InvalidHouseholdInvite } from '~/components/website/household-invite/invalid-household-invite'
+import { SiteLocaleToggle } from '~/components/website/site-locale-toggle'
 import { householdInviteCookieName } from '~/lib/website/cookies'
 import { householdInviteService } from '~/server/application/household-invite'
 import type { UpdateHouseholdInviteInput } from '~/server/application/household-invite/household-invite.service'
 
-export const metadata: Metadata = {
-  robots: {
-    index: false,
-    follow: false,
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('site.metadata')
+  return {
+    title: t('saveTheDateUpdateTitle'),
+    robots: {
+      index: false,
+      follow: false,
+    },
+  }
 }
 
 type HouseholdSaveTheDateUpdatePageProps = {
@@ -54,19 +60,12 @@ const parseUpdateFormData = (formData: FormData): UpdateHouseholdInviteInput => 
   }
 }
 
-const getErrorMessage = (errorCode: string | undefined) => {
-  if (errorCode === 'validation') {
-    return 'Please check the highlighted details and try again. Each person needs a first name, and emails must be valid and unique.'
-  }
+type UpdatePageTranslator = (key: 'errorValidation' | 'errorExpired' | 'errorSave') => string
 
-  if (errorCode === 'expired') {
-    return 'This save-the-date link has expired or could not be verified. Please ask the couple for a fresh link.'
-  }
-
-  if (errorCode === 'save') {
-    return 'We could not save those details. Please try again in a moment.'
-  }
-
+const getErrorMessage = (errorCode: string | undefined, t: UpdatePageTranslator) => {
+  if (errorCode === 'validation') return t('errorValidation')
+  if (errorCode === 'expired') return t('errorExpired')
+  if (errorCode === 'save') return t('errorSave')
   return null
 }
 
@@ -81,6 +80,9 @@ export default async function HouseholdSaveTheDateUpdatePage({
   const inviteData = await householdInviteService.getInviteData(websiteSubUrl, code)
 
   if (!inviteData) return <InvalidHouseholdInvite websiteSubUrl={websiteSubUrl} />
+
+  const t = await getTranslations('site.saveTheDateUpdate')
+  const tInvite = await getTranslations('invite')
 
   const updateHouseholdDetails = async (formData: FormData) => {
     'use server'
@@ -109,20 +111,20 @@ export default async function HouseholdSaveTheDateUpdatePage({
 
   return (
     <main className='min-h-screen bg-background px-5 py-10 text-foreground'>
+      <SiteLocaleToggle />
       <section className='mx-auto w-full max-w-3xl'>
         <p className='mb-3 font-mono text-muted-foreground text-xs uppercase tracking-[0.28em]'>
-          Save the date
+          {tInvite('saveTheDate')}
         </p>
-        <h1 className='font-display text-5xl italic leading-none'>Update our details</h1>
+        <h1 className='font-display text-5xl italic leading-none'>{tInvite('updateDetails')}</h1>
         <p className='mt-5 max-w-xl font-sans text-muted-foreground leading-7'>
-          Please confirm the names and mailing address we should use for future physical
-          invitations.
+          {t('description')}
         </p>
 
         <HouseholdDetailsForm
           inviteData={inviteData}
           action={updateHouseholdDetails}
-          errorMessage={getErrorMessage(resolvedSearchParams?.error)}
+          errorMessage={getErrorMessage(resolvedSearchParams?.error, t)}
           inviteHref={`/w/${websiteSubUrl}/save-the-date`}
         />
       </section>

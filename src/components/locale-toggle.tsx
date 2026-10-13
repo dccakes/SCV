@@ -1,10 +1,11 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 
 export function LocaleToggle({ className }: Readonly<{ className?: string }> = {}) {
   const locale = useLocale()
+  const t = useTranslations('site.localeToggle')
   const router = useRouter()
 
   const switchTo = locale === 'en' ? 'es' : 'en'
@@ -26,7 +27,9 @@ export function LocaleToggle({ className }: Readonly<{ className?: string }> = {
         className ??
         'font-mono text-muted-foreground text-xs uppercase tracking-[0.22em] hover:text-foreground'
       }
-      aria-label={switchTo === 'en' ? 'Switch to English' : 'Cambiar a español'}
+      // The label is written in the target language, so tag it for screen readers.
+      lang={switchTo}
+      aria-label={switchTo === 'en' ? t('switchToEnglish') : t('switchToSpanish')}
     >
       {locale === 'en' ? (
         <>

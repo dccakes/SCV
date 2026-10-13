@@ -1,1 +1,68 @@
-{}
+{
+  "site": {
+    "localeToggle": {
+      "switchToEnglish": "Switch to English",
+      "switchToSpanish": "Cambiar a español"
+    },
+    "password": {
+      "eyebrow": "Sitio de boda privado",
+      "title": "Este sitio está protegido con contraseña",
+      "description": "Ingresa la contraseña que te compartió la pareja para entrar a su sitio de boda.",
+      "label": "Contraseña",
+      "placeholder": "Escribe la contraseña…",
+      "submit": "Entrar al sitio",
+      "submitting": "Desbloqueando…",
+      "error": "Contraseña incorrecta. Revísala e intenta de nuevo."
+    },
+    "welcome": {
+      "label": "Bienvenida personalizada",
+      "message": "{count, plural, one {¡Te damos la bienvenida, <name>{greeting}</name>! Nos da muchísimo gusto que estés aquí.} other {¡Les damos la bienvenida, <name>{greeting}</name>! Nos da muchísimo gusto que estén aquí.}}"
+    },
+    "rsvpClosed": {
+      "eyebrow": "Muy pronto",
+      "title": "Las confirmaciones aún no están abiertas",
+      "description": "Todavía no estamos listos para recibir confirmaciones de asistencia. ¡Vuelve pronto!",
+      "backToWedding": "Regresar a la boda"
+    },
+    "rsvpForm": {
+      "heading": "Confirmación",
+      "close": "Cerrar el formulario de confirmación",
+      "confirmClose": "¿Seguro que quieres salir? Tu confirmación todavía no se ha enviado.",
+      "submitError": "No pudimos enviar tu confirmación. Por favor intenta de nuevo.",
+      "missingWebsite": "Algo salió mal. Por favor recarga la página e intenta de nuevo.",
+      "eventDateTime": "{date} a las {time}",
+      "nameLabel": "Tu nombre y apellido",
+      "answerLabel": "Tu respuesta",
+      "attending": "Asistirá",
+      "notAttending": "No asistirá"
+    },
+    "calendar": {
+      "google": "Google Calendar",
+      "outlook": "Outlook",
+      "apple": "Calendario de Apple",
+      "eventTitle": "Boda de {coupleNames}",
+      "eventDescription": "¡Reserva la fecha para la boda de {coupleNames}! La invitación formal llegará pronto."
+    },
+    "envelope": {
+      "invited": "Te invitamos"
+    },
+    "saveTheDateUpdate": {
+      "description": "Por favor confirma los nombres y la dirección postal que debemos usar para las futuras invitaciones impresas.",
+      "errorValidation": "Revisa los datos marcados e intenta de nuevo. Cada persona necesita un nombre, y los correos deben ser válidos y no repetirse.",
+      "errorExpired": "Este enlace de reserva la fecha expiró o no se pudo verificar. Por favor pídele a la pareja un enlace nuevo.",
+      "errorSave": "No pudimos guardar esos datos. Por favor intenta de nuevo en un momento."
+    },
+    "metadata": {
+      "websiteTitle": "Sitio de boda",
+      "weddingTitle": "Boda de {brideName} & {groomName}",
+      "weddingDescription": "Acompáñanos a la boda de {brideName} y {groomName}.",
+      "rsvpTitle": "Confirma tu asistencia",
+      "rsvpCoupleTitle": "{coupleName} — Confirma tu asistencia",
+      "invitationTitle": "Invitación",
+      "invitationCoupleTitle": "Invitación — {groomFirstName} & {brideFirstName}",
+      "saveTheDateTitle": "Reserva la fecha — Boda de {coupleNames}",
+      "saveTheDateDescription": "¡{coupleNames} se casan{hasDate, select, yes { el {date}} other {}}{hasVenue, select, yes { en {venue}} other {}}! Abre tu reserva la fecha para confirmar los datos de tu hogar.",
+      "saveTheDateUpdateTitle": "Actualizar nuestros datos"
+    }
+  }
+}

@@ -2,6 +2,13 @@ import { render, screen } from '@testing-library/react'
 
 import RootRouteHandler from '~/app/w/[websiteSubUrl]/page'
 
+const mockLocale: 'en' | 'es' = 'en'
+jest.mock('next-intl/server', () =>
+  jest
+    .requireActual('~/../tests/unit/test-utils/intl-server')
+    .createIntlServerMock(() => mockLocale)
+)
+
 const mockFetchWeddingData = jest.fn()
 const mockVerifyWebsitePassword = jest.fn()
 const mockCookieGet = jest.fn()

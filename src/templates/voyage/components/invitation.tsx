@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { formatDateStandard } from '~/app/utils/helpers'
+import { useLocale, useTranslations } from 'next-intl'
+import { findWeddingDay } from '~/templates/shared/wedding-day'
 import type { TemplateSurfaceProps } from '~/templates/types'
 import {
   BotanicalSprig,
@@ -11,13 +12,15 @@ import {
   PrimaryButton,
   sectionHeadingClass,
 } from '~/templates/voyage/components/primitives'
+import { intlLocale } from '~/templates/voyage/site'
 
 export function VoyageInvitation({ weddingData, path }: Readonly<TemplateSurfaceProps>) {
+  const t = useTranslations('voyage.invitation')
+  const locale = useLocale()
   const { website } = weddingData
-  const weddingEvent =
-    weddingData.events.find((event) => event.name === 'Wedding Day') ?? weddingData.events[0]
+  const weddingEvent = findWeddingDay(weddingData.events) ?? weddingData.events[0]
   const venue = weddingEvent?.venue ?? null
-  const dateLabel = weddingData.date?.standardFormat ?? 'Date to be announced'
+  const dateLabel = weddingData.date?.standardFormat ?? t('dateTba')
   const copy = weddingData.invitation
 
   return (
@@ -32,17 +35,15 @@ export function VoyageInvitation({ weddingData, path }: Readonly<TemplateSurface
           className='pointer-events-none absolute top-1/2 -right-6 h-3/4 w-auto -translate-y-1/2 text-[#B15C41]/12'
         />
         <div className='relative flex flex-col items-center gap-5'>
-          <Eyebrow>{copy?.preface ?? 'Together with their families'}</Eyebrow>
+          <Eyebrow>{copy?.preface ?? t('preface')}</Eyebrow>
           <h1 className={sectionHeadingClass}>
             {weddingData.brideFirstName} {weddingData.brideLastName}
           </h1>
-          <span className={`${headingFont} text-[#B15C41] text-xl italic`}>and</span>
+          <span className={`${headingFont} text-[#B15C41] text-xl italic`}>{t('and')}</span>
           <h1 className={sectionHeadingClass}>
             {weddingData.groomFirstName} {weddingData.groomLastName}
           </h1>
-          <p className={`${bodyFont} text-[#6F675D]`}>
-            {copy?.invitationLine ?? 'request the pleasure of your company'}
-          </p>
+          <p className={`${bodyFont} text-[#6F675D]`}>{copy?.invitationLine ?? t('line')}</p>
           {copy?.message ? (
             <p
               className={`${bodyFont} max-w-md whitespace-pre-line text-[#6F675D] text-sm leading-7`}
@@ -57,7 +58,12 @@ export function VoyageInvitation({ weddingData, path }: Readonly<TemplateSurface
             </p>
             {weddingEvent?.date ? (
               <p className={`${bodyFont} text-[#6F675D] text-sm`}>
-                {formatDateStandard(weddingEvent.date)}
+                {new Intl.DateTimeFormat(intlLocale(locale), {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  timeZone: 'UTC',
+                }).format(weddingEvent.date)}
                 {weddingEvent.startTime ? ` · ${weddingEvent.startTime}` : ''}
               </p>
             ) : null}
@@ -71,14 +77,14 @@ export function VoyageInvitation({ weddingData, path }: Readonly<TemplateSurface
           </div>
           {website.isRsvpEnabled ? (
             <div className='pt-4'>
-              <PrimaryButton href={`${path}/rsvp`}>RSVP</PrimaryButton>
+              <PrimaryButton href={`${path}/rsvp`}>{t('rsvp')}</PrimaryButton>
             </div>
           ) : (
             <Link
               href={path}
               className={`${labelFont} pt-2 text-[#B15C41] text-[0.64rem] uppercase tracking-[0.26em] underline-offset-4 hover:underline`}
             >
-              Visit our website
+              {t('visitWebsite')}
             </Link>
           )}
         </div>

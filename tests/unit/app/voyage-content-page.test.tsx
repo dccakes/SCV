@@ -13,6 +13,13 @@ jest.mock('~/app/w/[websiteSubUrl]/_lib/invited-household', () => ({
 jest.mock('~/app/w/[websiteSubUrl]/_lib/website-access', () => ({
   grantWebsiteAccess: (...args: unknown[]) => mockGrant(...args),
 }))
+jest.mock('next-intl/server', () => ({
+  getTranslations: async (namespace: string) => {
+    const { createTranslator } = jest.requireActual('next-intl')
+    const messages = jest.requireActual('~/i18n/messages/en/voyage.json')
+    return createTranslator({ locale: 'en', messages, namespace })
+  },
+}))
 jest.mock('next/navigation', () => ({
   notFound: () => {
     throw new Error('NOT_FOUND')
@@ -91,4 +98,10 @@ it('does not expose pages when the website builder is disabled', async () => {
 it('returns not found for a missing wedding', async () => {
   mockLoad.mockResolvedValue({ loadResult: { status: 'not-found' } })
   await expect(Page({ params: params() })).rejects.toThrow('NOT_FOUND')
+})
+it('builds page metadata from the translated page copy', async () => {
+  expect(await generateMetadata({ params: params('stay') })).toMatchObject({
+    title: 'Where to Stay — Holly & Diego',
+    description: 'Find your home for the weekend, with booking details close at hand.',
+  })
 })
