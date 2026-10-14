@@ -8,7 +8,7 @@ import type { Locale } from '~/lib/locale/locale-detection'
 import { createHouseholdInviteCode } from '~/server/application/household-invite/household-invite-code'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
-import { WEDDING_DAY_EVENT_NAME } from '~/server/domains/event/event.types'
+import { CEREMONY_EVENT_NAME, WEDDING_DAY_EVENT_NAME } from '~/server/domains/event/event.types'
 import { rsvpHouseholdSelect } from '~/server/domains/household/household.repository'
 import type { HouseholdSearchResult } from '~/server/domains/household/household.types'
 import { localizeEvent, localizeSection } from '~/server/domains/website/website.localization'
@@ -66,6 +66,8 @@ export type HouseholdInviteData = {
     name: string
     date: Date | null
     venue: string | null
+    /** The ceremony event, found on its English name before translation. */
+    isCeremony: boolean
   }>
   household: {
     id: string
@@ -582,7 +584,10 @@ export class HouseholdInviteService {
     // The primary date/venue come from the "Wedding Day" event, matched on its
     // English name before translations apply; the full event list drives the
     // save-the-date calendar block.
-    const events = rawEvents.map((event) => localizeEvent(event, locale))
+    const events = rawEvents.map((event) => ({
+      ...localizeEvent(event, locale),
+      isCeremony: event.name === CEREMONY_EVENT_NAME,
+    }))
     const weddingDayEvent = events[rawEvents.findIndex((e) => e.name === WEDDING_DAY_EVENT_NAME)]
 
     // Mirror the website surfaces: only enabled Save the Date copy overrides the

@@ -25,6 +25,9 @@ export type EventQuestion = Prisma.QuestionGetPayload<{
  */
 export const WEDDING_DAY_EVENT_NAME = 'Wedding Day'
 
+/** The ceremony event created during onboarding, matched on its English name too. */
+export const CEREMONY_EVENT_NAME = 'Ceremony'
+
 export type Event = {
   id: string
   name: string

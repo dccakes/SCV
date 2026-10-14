@@ -121,9 +121,16 @@ function SectionCard({ entry, initialContent, initialSpanish, initialEnabled }: 
     onError: (error) => {
       toast.error(error.message || `Unable to save the ${entry.label} section.`)
     },
-    onSuccess: () => {
+    onSuccess: (_section, saved) => {
       toast.success(`${entry.label} saved`)
-      setBaseline(snapshot(content, alignedSpanish, isEnabled))
+      // Mark what was sent as saved; edits made while saving stay dirty.
+      setBaseline(
+        snapshot(
+          saved.content as WebsiteSectionContent,
+          saved.translations?.es as WebsiteSectionContent,
+          saved.isEnabled ?? true
+        )
+      )
       router.refresh()
     },
   })

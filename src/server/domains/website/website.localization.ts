@@ -40,10 +40,10 @@ function localizeFields<T extends WithTranslations, K extends keyof T>(
   const fields = Object.fromEntries(
     keys.filter((key) => key in entity).map((key) => [key, entity[key]])
   ) as Pick<T, K>
-  return {
-    ...withoutTranslations(entity),
-    ...overlayTranslation(fields, readTranslation(entity.translations, locale)),
-  }
+  const localized = overlayTranslation(fields, readTranslation(entity.translations, locale))
+  // The overlay may carry fields English left out; only the entity's own are kept.
+  const kept = Object.fromEntries(Object.keys(fields).map((key) => [key, localized[key as K]]))
+  return { ...withoutTranslations(entity), ...kept }
 }
 
 type LocalizableOption = WithTranslations & { text: string; description: string }

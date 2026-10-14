@@ -246,7 +246,12 @@ describe('HouseholdInviteService', () => {
 
     expect(es?.saveTheDate).toEqual({ eyebrow: 'Reserva la fecha', message: 'Join us in Puebla.' })
     expect(es?.events).toEqual([
-      { name: 'Boda', date: new Date('2027-05-30T12:00:00.000Z'), venue: 'Jardín' },
+      {
+        name: 'Boda',
+        date: new Date('2027-05-30T12:00:00.000Z'),
+        venue: 'Jardín',
+        isCeremony: false,
+      },
     ])
     // The wedding day is still found by its English name.
     expect(es?.wedding.venue).toBe('Jardín')
@@ -257,7 +262,38 @@ describe('HouseholdInviteService', () => {
       name: 'Wedding Day',
       date: new Date('2027-05-30T12:00:00.000Z'),
       venue: 'Garden',
+      isCeremony: false,
     })
+  })
+
+  it('flags the ceremony by its English name, even when translated', async () => {
+    const db = createDb()
+    db.website.findFirst.mockResolvedValue({ weddingId: 'wedding-123', templateId: null })
+    db.household.findFirst.mockResolvedValue({
+      ...inviteHousehold,
+      wedding: {
+        ...inviteHousehold.wedding,
+        events: [
+          { name: 'Welcome Drinks', date: new Date('2027-05-29'), venue: 'Hotel Bar' },
+          {
+            name: 'Ceremony',
+            date: new Date('2027-05-30'),
+            venue: 'Cathedral',
+            translations: { es: { name: 'Ceremonia', venue: 'Catedral', attire: 'Formal' } },
+          },
+        ],
+      },
+    })
+    const service = new HouseholdInviteService(db as never)
+
+    const es = await service.getInviteData('harry-and-hermione', INVITE_CODE, 'es')
+
+    expect(es?.events.map((event) => [event.name, event.isCeremony])).toEqual([
+      ['Welcome Drinks', false],
+      ['Ceremonia', true],
+    ])
+    // Translations only replace fields the event actually has.
+    expect(es?.events[1]).not.toHaveProperty('attire')
   })
 
   it('ignores Save the Date copy that is present but disabled', async () => {

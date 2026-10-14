@@ -147,8 +147,9 @@ export function ModernEventForm({
 
         <form
           onSubmit={handleSubmit(handleFormSubmit, (invalid) => {
-            // Show the Spanish fields when only they fail, so the error is visible.
-            if (invalid.translations && !invalid.eventName) setLanguage('es')
+            // Show the language whose fields failed, so the error is visible.
+            if (invalid.eventName) setLanguage('en')
+            else if (invalid.translations) setLanguage('es')
           })}
           className='space-y-4 md:space-y-6'
         >
