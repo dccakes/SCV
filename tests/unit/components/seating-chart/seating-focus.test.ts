@@ -1,4 +1,4 @@
-import { getNextFocusKey } from '~/components/seating-chart/seating-focus'
+import { findNearest, getNextFocusKey } from '~/components/seating-chart/seating-focus'
 
 // Sidebar order: Smith household header, Ann, Ben, then Jones header, Cara
 const candidates = [
@@ -33,5 +33,21 @@ describe('getNextFocusKey', () => {
 
   it('returns null when the dragged item is not in the list', () => {
     expect(getNextFocusKey(candidates, 'seat-guest:9', [9])).toBeNull()
+  })
+})
+
+describe('findNearest', () => {
+  const items = ['a', 'b', 'c', 'd']
+
+  it('prefers the next kept item after the index', () => {
+    expect(findNearest(items, 1, (item) => item !== 'c')).toBe('d')
+  })
+
+  it('falls back to the previous kept item', () => {
+    expect(findNearest(items, 3, (item) => item !== 'c')).toBe('b')
+  })
+
+  it('returns undefined when nothing is kept', () => {
+    expect(findNearest(items, 0, () => false)).toBeUndefined()
   })
 })

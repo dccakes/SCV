@@ -3,7 +3,7 @@
 import { DndContext, type DragEndEvent, DragOverlay, type DragStartEvent } from '@dnd-kit/core'
 import { Download, Plus } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import {
   createSeatingAnnouncements,
@@ -11,15 +11,15 @@ import {
 } from '~/components/seating-chart/seating-announcements'
 import { createChartCache } from '~/components/seating-chart/seating-chart-cache'
 import type { DragData, DropData, GuestDragData } from '~/components/seating-chart/seating-dnd'
+import { pickFocusAfterDrawerClose } from '~/components/seating-chart/seating-drawer-focus'
 import { type FocusCandidate, getNextFocusKey } from '~/components/seating-chart/seating-focus'
 import { SeatingGuestDrawer } from '~/components/seating-chart/seating-guest-drawer'
 import { SeatingGuestSidebar } from '~/components/seating-chart/seating-guest-sidebar'
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
-  clampTablePosition,
+  fitOnCanvas,
   getNextTablePosition,
-  getTableFootprint,
 } from '~/components/seating-chart/seating-layout'
 import {
   SeatingTableDialog,
@@ -84,10 +84,15 @@ const seatGuests = (chart: SeatingChart, tableId: string | null, guestIds: numbe
 
 // Sidebar items in DOM order, read when a keyboard drop is about to remove one
 const readSidebarFocusCandidates = (): FocusCandidate[] =>
-  Array.from(document.querySelectorAll<HTMLElement>('[data-seating-focus-key]')).map((node) => ({
+  Array.from(
+    document.querySelectorAll<HTMLElement>('[data-seating-sidebar] [data-seating-focus-key]')
+  ).map((node) => ({
     key: node.dataset.seatingFocusKey ?? '',
     guestIds: (node.dataset.seatingGuestIds ?? '').split(',').filter(Boolean).map(Number),
   }))
+
+const findFocusTarget = (key: string) =>
+  document.querySelector<HTMLElement>(`[data-seating-focus-key="${key}"]`)
 
 const downloadCsv = (fileName: string, csv: string) => {
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
@@ -112,6 +117,8 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
 
   const [eventId, setEventId] = useState(initialEventId ?? events[0]?.id ?? null)
   const [selectedGuestId, setSelectedGuestId] = useState<number | null>(null)
+  // What opened the guest drawer, so focus can land somewhere sensible on close
+  const drawerOpener = useRef<{ key: string; sidebarKeys: string[]; guestId: number } | null>(null)
   const [tableDialog, setTableDialog] = useState<TableDialogState>(null)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [activeDrag, setActiveDrag] = useState<GuestDragData | null>(null)
@@ -195,11 +202,46 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
   useEffect(() => {
     if (!pendingFocusKey || !chart) return
     const frame = requestAnimationFrame(() => {
-      document.querySelector<HTMLElement>(`[data-seating-focus-key="${pendingFocusKey}"]`)?.focus()
+      findFocusTarget(pendingFocusKey)?.focus()
       setPendingFocusKey(null)
     })
     return () => cancelAnimationFrame(frame)
   }, [pendingFocusKey, chart])
+
+  const openGuestFrom = (source: 'sidebar' | 'seat') => (guestId: number) => {
+    if (selectedGuestId === null) {
+      drawerOpener.current = {
+        key: `${source === 'sidebar' ? 'sidebar-guest' : 'seat-guest'}:${guestId}`,
+        sidebarKeys: readSidebarFocusCandidates().map((candidate) => candidate.key),
+        guestId,
+      }
+    }
+    setSelectedGuestId(guestId)
+  }
+
+  // Switching guests inside the open drawer: focus follows the guest shown last
+  const switchDrawerGuest = (guestId: number) => {
+    if (drawerOpener.current) drawerOpener.current.guestId = guestId
+    setSelectedGuestId(guestId)
+  }
+
+  // Seating or unseating from the drawer removes the element that opened it;
+  // send focus to the next guest (or the guest's new spot) instead of <body>
+  const handleDrawerCloseAutoFocus = (event: Event) => {
+    const opener = drawerOpener.current
+    drawerOpener.current = null
+    if (!opener) return
+    const target = pickFocusAfterDrawerClose({
+      openerKey: opener.key,
+      sidebarKeysAtOpen: opener.sidebarKeys,
+      guestId: opener.guestId,
+      isPresent: (key) => findFocusTarget(key) !== null,
+    })
+    event.preventDefault()
+    // Last resort: the sidebar search box
+    const fallback = document.querySelector<HTMLElement>('[data-seating-sidebar] input')
+    ;(target ? findFocusTarget(target) : fallback)?.focus()
+  }
 
   const handleEventChange = (nextEventId: string) => {
     setEventId(nextEventId)
@@ -221,11 +263,12 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
     if (data.type === 'table') {
       const table = tablesById.get(data.tableId)
       if (!table || (event.delta.x === 0 && event.delta.y === 0)) return
-      const position = clampTablePosition(
-        { x: table.positionX + event.delta.x, y: table.positionY + event.delta.y },
-        getTableFootprint(table.shape, table.capacity)
+      const position = fitOnCanvas(
+        { positionX: table.positionX + event.delta.x, positionY: table.positionY + event.delta.y },
+        table.shape,
+        table.capacity
       )
-      updateTable.mutate({ id: table.id, data: { positionX: position.x, positionY: position.y } })
+      updateTable.mutate({ id: table.id, data: position })
       return
     }
 
@@ -278,7 +321,9 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
       return
     }
     if (action.kind === 'update') {
-      updateTable.mutate({ id: action.tableId, data: values })
+      const table = tablesById.get(action.tableId)
+      const position = table && fitOnCanvas(table, values.shape, values.capacity)
+      updateTable.mutate({ id: action.tableId, data: { ...values, ...position } })
       return
     }
     const position = getNextTablePosition(chart.tables)
@@ -360,7 +405,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
               households={chart.households}
               totalGuests={allGuests.length}
               seatedGuests={seatedCount}
-              onSelectGuest={setSelectedGuestId}
+              onSelectGuest={openGuestFrom('sidebar')}
             />
             <section
               aria-label='Floor plan'
@@ -388,7 +433,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
                     table={table}
                     guestsById={guestsById}
                     onEdit={(tableId) => setTableDialog({ mode: 'edit', tableId })}
-                    onSelectGuest={setSelectedGuestId}
+                    onSelectGuest={openGuestFrom('seat')}
                   />
                 ))}
               </div>
@@ -456,7 +501,8 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
         household={selectedHousehold}
         tables={chart?.tables ?? []}
         onClose={() => setSelectedGuestId(null)}
-        onSelectGuest={setSelectedGuestId}
+        onSelectGuest={switchDrawerGuest}
+        onCloseAutoFocus={handleDrawerCloseAutoFocus}
         onUnseat={(guestId) => {
           if (eventId) unassignGuests.mutate({ eventId, guestIds: [guestId] })
         }}

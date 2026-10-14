@@ -21,9 +21,9 @@ type SeatingPageSearchParams = {
   eventId?: string
 }
 
-export default async function SeatingPage(props: {
-  searchParams?: Promise<SeatingPageSearchParams>
-}) {
+export default async function SeatingPage(
+  props: Readonly<{ searchParams?: Promise<SeatingPageSearchParams> }>
+) {
   const searchParams = (await props.searchParams) ?? {}
   await getRequiredWedding()
   const events = ((await api.event.getAllByUserId()) ?? []).map((event) => ({

@@ -42,7 +42,7 @@ function DraggableGuest(props: Readonly<{ guest: SeatingGuest; onSelect: () => v
         {...attributes}
         {...listeners}
         className={cn(
-          'flex w-full touch-none items-center gap-2 rounded-[4px] px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+          'flex w-full touch-manipulation items-center gap-2 rounded-[4px] px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           isDragging && 'opacity-30'
         )}
       >
@@ -86,7 +86,7 @@ function HouseholdGroup(
         {...attributes}
         {...listeners}
         aria-label={`${label}, ${unassigned.length} unseated. Press Space to move everyone together.`}
-        className='flex w-full cursor-grab touch-none items-center justify-between gap-2 border-border/70 border-b px-2 py-1.5 active:cursor-grabbing'
+        className='flex w-full cursor-grab touch-manipulation items-center justify-between gap-2 border-border/70 border-b px-2 py-1.5 active:cursor-grabbing'
       >
         <span className='flex items-center gap-1.5 font-mono text-[0.64rem] text-foreground/70 uppercase tracking-widest'>
           <GripVertical className='h-3.5 w-3.5' aria-hidden='true' />
@@ -128,6 +128,7 @@ export function SeatingGuestSidebar(props: Readonly<SeatingGuestSidebarProps>) {
   return (
     <aside
       ref={setNodeRef}
+      data-seating-sidebar
       aria-label='Unseated guests'
       className={cn(
         'flex h-[40vh] min-h-0 flex-col rounded-md border border-border/70 bg-background transition-colors lg:h-auto',

@@ -2,6 +2,7 @@ import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
   clampTablePosition,
+  fitOnCanvas,
   getNextTablePosition,
   getSeatPositions,
   getTableFootprint,
@@ -51,5 +52,29 @@ describe('seating layout', () => {
     const first = getNextTablePosition([])
     const second = getNextTablePosition([{ positionX: first.x, positionY: first.y }])
     expect(second).not.toEqual(first)
+  })
+})
+
+describe('fitOnCanvas', () => {
+  it('pulls a table back inside the canvas when it grows past the edge', () => {
+    const big = getTableFootprint('ROUND', 30)
+    expect(fitOnCanvas({ positionX: 2200, positionY: 40 }, 'ROUND', 30)).toEqual({
+      positionX: CANVAS_WIDTH - big.width,
+      positionY: 40,
+    })
+  })
+
+  it('keeps a position that already fits, rounded to whole pixels', () => {
+    expect(fitOnCanvas({ positionX: 40.4, positionY: 40 }, 'ROUND', 8)).toEqual({
+      positionX: 40,
+      positionY: 40,
+    })
+  })
+
+  it('keeps a dragged table off negative coordinates', () => {
+    expect(fitOnCanvas({ positionX: -30, positionY: -5 }, 'RECTANGULAR', 6)).toEqual({
+      positionX: 0,
+      positionY: 0,
+    })
   })
 })

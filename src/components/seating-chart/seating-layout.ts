@@ -98,3 +98,19 @@ export const getNextTablePosition = (
     if (!isTaken(point) || point.y > CANVAS_HEIGHT - GRID_STEP) return point
   }
 }
+
+/**
+ * A table position kept inside the canvas for the table's size. Used for every
+ * move or resize, so a dragged or enlarged table never spills off the edge.
+ */
+export const fitOnCanvas = (
+  position: { positionX: number; positionY: number },
+  shape: SeatingTableShape,
+  capacity: number
+): { positionX: number; positionY: number } => {
+  const { x, y } = clampTablePosition(
+    { x: position.positionX, y: position.positionY },
+    getTableFootprint(shape, capacity)
+  )
+  return { positionX: x, positionY: y }
+}

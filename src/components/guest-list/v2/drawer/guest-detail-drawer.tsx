@@ -29,6 +29,8 @@ export type GuestDetailDrawerProps = {
   footer?: React.ReactNode
   mode?: GuestDetailDrawerMode
   className?: string
+  // Lets callers redirect focus on close when the opener no longer exists
+  onCloseAutoFocus?: (event: Event) => void
   children: React.ReactNode
 }
 
@@ -42,6 +44,7 @@ export function GuestDetailDrawer(props: Readonly<GuestDetailDrawerProps>) {
     footer,
     mode = 'desktop',
     className,
+    onCloseAutoFocus,
     children,
   } = props
 
@@ -50,6 +53,7 @@ export function GuestDetailDrawer(props: Readonly<GuestDetailDrawerProps>) {
       <DialogPortal>
         <DialogOverlay className={SIDE_PANE_OVERLAY_CLASS} />
         <DialogPrimitive.Content
+          onCloseAutoFocus={onCloseAutoFocus}
           className={cn(
             `fixed inset-0 z-50 flex h-screen w-screen max-w-none translate-x-0 translate-y-0 flex-col overflow-hidden p-0 pb-0 outline-none ${SIDE_PANE_SURFACE_CLASS}`,
             mode === 'desktop' &&

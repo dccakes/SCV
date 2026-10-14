@@ -81,4 +81,16 @@ describe('SeatingGuestSidebar', () => {
     expect(within(list).queryByRole('button', { name: /Ann Smith/ })).not.toBeInTheDocument()
     expect(within(list).getByRole('button', { name: /Cara Jones/ })).toBeInTheDocument()
   })
+
+  it('lets touch users scroll the list: rows allow panning, drags start on long press', () => {
+    renderSidebar()
+
+    for (const row of [
+      screen.getByRole('button', { name: /Ann Smith/ }),
+      screen.getByRole('button', { name: /Smith household/ }),
+    ]) {
+      expect(row).not.toHaveClass('touch-none')
+      expect(row).toHaveClass('touch-manipulation')
+    }
+  })
 })

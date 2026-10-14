@@ -41,6 +41,7 @@ function SeatedGuest(
   return (
     <button
       ref={setNodeRef}
+      data-seating-focus-key={`seat-guest:${guest.id}`}
       type='button'
       title={name}
       aria-label={`${name}. Press Space to move, or Enter for details.`}
@@ -54,7 +55,7 @@ function SeatedGuest(
         height: SEAT_SIZE,
       }}
       className={cn(
-        'absolute flex touch-none items-center justify-center rounded-full border border-foreground/30 bg-card font-mono text-[0.6rem] text-foreground shadow-sm transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'absolute flex touch-manipulation items-center justify-center rounded-full border border-foreground/30 bg-card font-mono text-[0.6rem] text-foreground shadow-sm transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         isDragging && 'opacity-30'
       )}
     >
@@ -153,7 +154,7 @@ export function SeatingTableNode(props: Readonly<SeatingTableNodeProps>) {
           top: (footprint.height - surface.height) / 2,
         }}
         className={cn(
-          'absolute flex cursor-grab touch-none flex-col items-center justify-center border-2 bg-card px-2 text-center shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing',
+          'absolute flex cursor-grab touch-manipulation flex-col items-center justify-center border-2 bg-card px-2 text-center shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing',
           table.shape === 'ROUND' ? 'rounded-full' : 'rounded-md',
           isGuestOver && fits && 'border-success bg-success/10',
           isGuestOver && !fits && 'border-destructive bg-destructive/10',

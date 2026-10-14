@@ -33,6 +33,7 @@ type SeatingGuestDrawerProps = {
   onSelectGuest: (guestId: number) => void
   onUnseat: (guestId: number) => void
   onSeat: (guestId: number, tableId: string) => void
+  onCloseAutoFocus?: (event: Event) => void
 }
 
 function DetailRow(props: Readonly<{ label: string; value: string | null }>) {
@@ -45,7 +46,8 @@ function DetailRow(props: Readonly<{ label: string; value: string | null }>) {
 }
 
 export function SeatingGuestDrawer(props: Readonly<SeatingGuestDrawerProps>) {
-  const { guest, household, tables, onClose, onSelectGuest, onUnseat, onSeat } = props
+  const { guest, household, tables, onClose, onSelectGuest, onUnseat, onSeat, onCloseAutoFocus } =
+    props
   const tableName = (tableId: string | null) =>
     tables.find((table) => table.id === tableId)?.name ?? null
   const seatedAt = guest ? tableName(guest.tableId) : null
@@ -56,6 +58,7 @@ export function SeatingGuestDrawer(props: Readonly<SeatingGuestDrawerProps>) {
       onOpenChange={(open) => {
         if (!open) onClose()
       }}
+      onCloseAutoFocus={onCloseAutoFocus}
       title={guest ? formatGuestName(guest) : 'Guest details'}
       subtitle={seatedAt ? `Seated at ${seatedAt}` : 'Not seated yet'}
       headerMeta={
