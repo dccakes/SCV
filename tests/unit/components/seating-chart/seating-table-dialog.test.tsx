@@ -117,4 +117,20 @@ describe('SeatingTableDialog', () => {
     expect(screen.getByLabelText('Table name')).toHaveValue('Head Table')
     expect(screen.getByLabelText('Seats')).toHaveValue(10)
   })
+
+  it('lets the caller place focus when the dialog closes', async () => {
+    const onCloseAutoFocus = jest.fn((event: Event) => event.preventDefault())
+    const props = {
+      mode: 'create' as const,
+      defaultValues: { name: 'Table 1', shape: 'ROUND' as const, capacity: 8 },
+      isSubmitting: false,
+      onOpenChange: jest.fn(),
+      onSubmit: jest.fn(),
+      onCloseAutoFocus,
+    }
+    const { rerender } = render(<SeatingTableDialog {...props} open />)
+    rerender(<SeatingTableDialog {...props} open={false} />)
+
+    await waitFor(() => expect(onCloseAutoFocus).toHaveBeenCalled())
+  })
 })

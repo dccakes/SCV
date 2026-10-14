@@ -114,3 +114,18 @@ export const fitOnCanvas = (
   )
   return { positionX: x, positionY: y }
 }
+
+/**
+ * The position to save after an edit changes a table's size, or undefined when
+ * it still fits. Edits then never resend a position, so they cannot undo a
+ * move another planner made in the meantime.
+ */
+export const refitAfterResize = (
+  table: { positionX: number; positionY: number },
+  shape: SeatingTableShape,
+  capacity: number
+): { positionX: number; positionY: number } | undefined => {
+  const fitted = fitOnCanvas(table, shape, capacity)
+  const moved = fitted.positionX !== table.positionX || fitted.positionY !== table.positionY
+  return moved ? fitted : undefined
+}

@@ -142,6 +142,7 @@ export function SeatingTableNode(props: Readonly<SeatingTableNodeProps>) {
 
       <button
         ref={setDragRef}
+        data-seating-focus-key={`table:${table.id}`}
         type='button'
         aria-label={`${table.name}, ${table.guestIds.length} of ${table.capacity} seats filled. Press Space to move, or Enter to edit.`}
         onClick={() => onEdit(table.id)}

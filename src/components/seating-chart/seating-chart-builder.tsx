@@ -20,6 +20,7 @@ import {
   CANVAS_WIDTH,
   fitOnCanvas,
   getNextTablePosition,
+  refitAfterResize,
 } from '~/components/seating-chart/seating-layout'
 import {
   SeatingTableDialog,
@@ -27,8 +28,10 @@ import {
 } from '~/components/seating-chart/seating-table-dialog'
 import { SeatingTableNode } from '~/components/seating-chart/seating-table-node'
 import {
+  ADD_TABLE_FOCUS_KEY,
   resolveTableSubmit,
   type TableDialogState,
+  tableDialogFocusKey,
 } from '~/components/seating-chart/seating-table-submit'
 import { useSeatingSensors } from '~/components/seating-chart/use-seating-sensors'
 import {
@@ -94,6 +97,18 @@ const readSidebarFocusCandidates = (): FocusCandidate[] =>
 const findFocusTarget = (key: string) =>
   document.querySelector<HTMLElement>(`[data-seating-focus-key="${key}"]`)
 
+// Focus the first key that is on the page; false when none is
+const focusFirstPresent = (keys: ReadonlyArray<string | null>): boolean => {
+  for (const key of keys) {
+    const target = key ? findFocusTarget(key) : null
+    if (target) {
+      target.focus()
+      return true
+    }
+  }
+  return false
+}
+
 const downloadCsv = (fileName: string, csv: string) => {
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
   const link = document.createElement('a')
@@ -121,8 +136,19 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
   const drawerOpener = useRef<{ key: string; sidebarKeys: string[]; guestId: number } | null>(null)
   const [tableDialog, setTableDialog] = useState<TableDialogState>(null)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+  // Where focus returns when the table or delete dialog closes
+  const tableDialogReturnKey = useRef(ADD_TABLE_FOCUS_KEY)
   const [activeDrag, setActiveDrag] = useState<GuestDragData | null>(null)
-  const [pendingFocusKey, setPendingFocusKey] = useState<string | null>(null)
+  // Focus to apply after a keyboard drop, once the chart the drop happened on
+  // has been replaced by the optimistic update (the target may not exist yet,
+  // or may be about to remount under another table)
+  const [pendingFocus, setPendingFocus] = useState<{
+    key: string
+    chartAtDrop: SeatingChart | undefined
+  } | null>(null)
+  const focusAfterDrop = (key: string | null) => {
+    if (key) setPendingFocus({ key, chartAtDrop: chart })
+  }
 
   const chartInput = { eventId: eventId ?? '' }
   const chartQuery = api.seating.getChart.useQuery(chartInput, { enabled: eventId !== null })
@@ -197,19 +223,20 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
     ...optimisticHandlers,
   })
 
-  // Runs after the optimistic update has re-rendered the sidebar. The extra
-  // frame lets dnd-kit's own focus restore (which finds no node) go first.
+  // Waits for the chart to change, then focuses on the next frame so dnd-kit's
+  // own focus restore (which finds no node) goes first
   useEffect(() => {
-    if (!pendingFocusKey || !chart) return
+    if (!pendingFocus || !chart || chart === pendingFocus.chartAtDrop) return
     const frame = requestAnimationFrame(() => {
-      findFocusTarget(pendingFocusKey)?.focus()
-      setPendingFocusKey(null)
+      findFocusTarget(pendingFocus.key)?.focus()
+      setPendingFocus(null)
     })
     return () => cancelAnimationFrame(frame)
-  }, [pendingFocusKey, chart])
+  }, [pendingFocus, chart])
 
   const openGuestFrom = (source: 'sidebar' | 'seat') => (guestId: number) => {
-    if (selectedGuestId === null) {
+    // A guest who dropped off the chart leaves the drawer closed: a fresh open
+    if (selectedGuest === null) {
       drawerOpener.current = {
         key: `${source === 'sidebar' ? 'sidebar-guest' : 'seat-guest'}:${guestId}`,
         sidebarKeys: readSidebarFocusCandidates().map((candidate) => candidate.key),
@@ -228,6 +255,9 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
   // Seating or unseating from the drawer removes the element that opened it;
   // send focus to the next guest (or the guest's new spot) instead of <body>
   const handleDrawerCloseAutoFocus = (event: Event) => {
+    // Runs however the drawer closed, including its guest dropping off the
+    // chart, so the selection never lingers and the drawer cannot reopen itself
+    setSelectedGuestId(null)
     const opener = drawerOpener.current
     drawerOpener.current = null
     if (!opener) return
@@ -239,8 +269,21 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
     })
     event.preventDefault()
     // Last resort: the sidebar search box
-    const fallback = document.querySelector<HTMLElement>('[data-seating-sidebar] input')
-    ;(target ? findFocusTarget(target) : fallback)?.focus()
+    if (!focusFirstPresent([target])) {
+      document.querySelector<HTMLElement>('[data-seating-sidebar] input')?.focus()
+    }
+  }
+
+  const openTableDialog = (dialog: NonNullable<TableDialogState>) => {
+    tableDialogReturnKey.current = tableDialogFocusKey(dialog)
+    setTableDialog(dialog)
+  }
+
+  // Both table dialogs open from state, not a Radix trigger, so return focus
+  // ourselves; a deleted table falls back to the Add table button
+  const returnFocusFromTableDialog = (event: Event) => {
+    event.preventDefault()
+    focusFirstPresent([tableDialogReturnKey.current, ADD_TABLE_FOCUS_KEY])
   }
 
   const handleEventChange = (nextEventId: string) => {
@@ -275,9 +318,13 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
     const drop = event.over?.data.current as DropData | undefined
     if (!drop) return
 
+    const isKeyboard = event.activatorEvent instanceof KeyboardEvent
     if (drop.type === 'unassigned') {
       const seated = data.guestIds.filter((id) => guestsById.get(id)?.tableId != null)
-      if (seated.length > 0) unassignGuests.mutate({ eventId, guestIds: seated })
+      if (seated.length === 0) return
+      // Keyboard users follow the guest back to the sidebar
+      if (isKeyboard) focusAfterDrop(`sidebar-guest:${seated[0]}`)
+      unassignGuests.mutate({ eventId, guestIds: seated })
       return
     }
 
@@ -288,11 +335,15 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
       toast.error(openSeatsMessage(table.name, getOpenSeats(table)))
       return
     }
-    // Keyboard users keep their place: focus the next unseated guest, since
-    // the item they dragged is about to leave the sidebar
-    if (event.activatorEvent instanceof KeyboardEvent) {
-      setPendingFocusKey(
-        getNextFocusKey(readSidebarFocusCandidates(), String(event.active.id), data.guestIds)
+    // Keyboard users keep their place: from the sidebar, focus the next
+    // unseated guest; a seated guest moved to another table keeps focus
+    if (isKeyboard) {
+      const [firstGuestId] = data.guestIds
+      const fromSeat = firstGuestId !== undefined && guestsById.get(firstGuestId)?.tableId != null
+      focusAfterDrop(
+        fromSeat
+          ? `seat-guest:${firstGuestId}`
+          : getNextFocusKey(readSidebarFocusCandidates(), String(event.active.id), data.guestIds)
       )
     }
     assignGuests.mutate({ tableId: table.id, guestIds: data.guestIds })
@@ -322,7 +373,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
     }
     if (action.kind === 'update') {
       const table = tablesById.get(action.tableId)
-      const position = table && fitOnCanvas(table, values.shape, values.capacity)
+      const position = table && refitAfterResize(table, values.shape, values.capacity)
       updateTable.mutate({ id: action.tableId, data: { ...values, ...position } })
       return
     }
@@ -376,7 +427,11 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
             <Download className='mr-2 h-4 w-4' aria-hidden='true' />
             Export CSV
           </Button>
-          <Button onClick={() => setTableDialog({ mode: 'create' })} disabled={!chart}>
+          <Button
+            data-seating-focus-key={ADD_TABLE_FOCUS_KEY}
+            onClick={() => openTableDialog({ mode: 'create' })}
+            disabled={!chart}
+          >
             <Plus className='mr-2 h-4 w-4' aria-hidden='true' />
             Add table
           </Button>
@@ -432,7 +487,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
                     key={table.id}
                     table={table}
                     guestsById={guestsById}
-                    onEdit={(tableId) => setTableDialog({ mode: 'edit', tableId })}
+                    onEdit={(tableId) => openTableDialog({ mode: 'edit', tableId })}
                     onSelectGuest={openGuestFrom('seat')}
                   />
                 ))}
@@ -450,6 +505,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
       )}
 
       <SeatingTableDialog
+        onCloseAutoFocus={returnFocusFromTableDialog}
         mode={tableDialog?.mode ?? 'create'}
         open={tableDialog !== null}
         defaultValues={dialogDefaults}
@@ -475,7 +531,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
           if (!open) setPendingDeleteId(null)
         }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent onCloseAutoFocus={returnFocusFromTableDialog}>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this table?</AlertDialogTitle>
             <AlertDialogDescription>

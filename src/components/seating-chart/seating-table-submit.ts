@@ -18,3 +18,12 @@ export const resolveTableSubmit = (
     ? { kind: 'update', tableId: dialog.tableId }
     : { kind: 'missing' }
 }
+
+export const ADD_TABLE_FOCUS_KEY = 'add-table'
+
+/**
+ * Where focus returns when the table dialog closes. These dialogs open from
+ * state, not a Radix trigger, so without this focus would drop to the page.
+ */
+export const tableDialogFocusKey = (dialog: NonNullable<TableDialogState>): string =>
+  dialog.mode === 'edit' ? `table:${dialog.tableId}` : ADD_TABLE_FOCUS_KEY

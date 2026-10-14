@@ -6,6 +6,7 @@ import {
   getNextTablePosition,
   getSeatPositions,
   getTableFootprint,
+  refitAfterResize,
 } from '~/components/seating-chart/seating-layout'
 
 describe('seating layout', () => {
@@ -76,5 +77,17 @@ describe('fitOnCanvas', () => {
       positionX: 0,
       positionY: 0,
     })
+  })
+})
+
+describe('refitAfterResize', () => {
+  it('returns a new position only when the resized table no longer fits', () => {
+    expect(refitAfterResize({ positionX: 2200, positionY: 40 }, 'ROUND', 30)).toEqual(
+      fitOnCanvas({ positionX: 2200, positionY: 40 }, 'ROUND', 30)
+    )
+  })
+
+  it('returns nothing when the position is unchanged, so edits never resend it', () => {
+    expect(refitAfterResize({ positionX: 40, positionY: 40 }, 'ROUND', 8)).toBeUndefined()
   })
 })

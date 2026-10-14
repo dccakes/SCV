@@ -45,6 +45,7 @@ type SeatingTableDialogProps = {
   onOpenChange: (open: boolean) => void
   onSubmit: (values: SeatingTableFormValues) => void
   onDelete?: () => void
+  onCloseAutoFocus?: (event: Event) => void
 }
 
 const SHAPE_OPTIONS = [
@@ -62,6 +63,7 @@ export function SeatingTableDialog(props: Readonly<SeatingTableDialogProps>) {
     onOpenChange,
     onSubmit,
     onDelete,
+    onCloseAutoFocus,
   } = props
 
   const {
@@ -97,7 +99,7 @@ export function SeatingTableDialog(props: Readonly<SeatingTableDialogProps>) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-md'>
+      <DialogContent className='sm:max-w-md' onCloseAutoFocus={onCloseAutoFocus}>
         <DialogHeader>
           <DialogTitle className='font-display text-2xl italic'>
             {mode === 'create' ? 'Add table' : 'Edit table'}

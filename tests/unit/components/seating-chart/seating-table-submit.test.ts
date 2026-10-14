@@ -1,4 +1,8 @@
-import { resolveTableSubmit } from '~/components/seating-chart/seating-table-submit'
+import {
+  ADD_TABLE_FOCUS_KEY,
+  resolveTableSubmit,
+  tableDialogFocusKey,
+} from '~/components/seating-chart/seating-table-submit'
 
 const tables = [{ id: 't1' }, { id: 't2' }]
 
@@ -18,5 +22,15 @@ describe('resolveTableSubmit', () => {
     expect(resolveTableSubmit({ mode: 'edit', tableId: 'gone' }, tables)).toEqual({
       kind: 'missing',
     })
+  })
+})
+
+describe('tableDialogFocusKey', () => {
+  it('returns focus to the Add table button after creating', () => {
+    expect(tableDialogFocusKey({ mode: 'create' })).toBe(ADD_TABLE_FOCUS_KEY)
+  })
+
+  it('returns focus to the edited table', () => {
+    expect(tableDialogFocusKey({ mode: 'edit', tableId: 't1' })).toBe('table:t1')
   })
 })
