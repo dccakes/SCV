@@ -1,14 +1,15 @@
 import { TRPCError } from '@trpc/server'
 
 import { calculateDaysRemaining, formatDateNumber } from '~/app/utils/helpers'
+import { toIntlLocale } from '~/lib/locale/intl-format'
 import type { Locale } from '~/lib/locale/locale-detection'
 import { deriveWeddingSubUrl } from '~/lib/website-slug'
 import type { HouseholdInviteService } from '~/server/application/household-invite/household-invite.service'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { EventRepository } from '~/server/domains/event/event.repository'
+import { WEDDING_DAY_EVENT_NAME } from '~/server/domains/event/event.types'
 import {
-  dateLocaleFor,
   localizeEvent,
   localizeQuestion,
   localizeSection,
@@ -129,11 +130,11 @@ export class WebsiteManagementService {
     }
 
     const { translations, ...content } = input
-    return translations?.es
-      ? this.websiteSectionRepository.upsertHomeSection(website.id, content, {
-          es: translations.es,
-        })
-      : this.websiteSectionRepository.upsertHomeSection(website.id, content)
+    return this.websiteSectionRepository.upsertHomeSection(
+      website.id,
+      content,
+      translations?.es ? { es: translations.es } : undefined
+    )
   }
 
   /**
@@ -244,10 +245,10 @@ export class WebsiteManagementService {
       })
     }
     // Match the wedding day on its English name before any translation applies.
-    const weddingDate = rawEvents.find((event) => event.name === 'Wedding Day')?.date
+    const weddingDate = rawEvents.find((event) => event.name === WEDDING_DAY_EVENT_NAME)?.date
     const events = rawEvents.map((event) => ({
       ...localizeEvent(event, locale),
-      isWeddingDay: event.name === 'Wedding Day',
+      isWeddingDay: event.name === WEDDING_DAY_EVENT_NAME,
     }))
     const sections = rawSections.map(
       (section) => localizeSection(section, locale) as WebsiteSection
@@ -295,7 +296,7 @@ export class WebsiteManagementService {
       brideFirstName: wedding.brideFirstName,
       brideLastName: wedding.brideLastName,
       date: {
-        standardFormat: weddingDate?.toLocaleDateString(dateLocaleFor(locale), {
+        standardFormat: weddingDate?.toLocaleDateString(toIntlLocale(locale), {
           weekday: 'long',
           year: 'numeric',
           month: 'short',

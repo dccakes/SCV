@@ -19,6 +19,12 @@ export type EventQuestion = Prisma.QuestionGetPayload<{
 /**
  * Core Event entity type
  */
+/**
+ * The main wedding event is identified by this English name; translated names
+ * never replace it for matching.
+ */
+export const WEDDING_DAY_EVENT_NAME = 'Wedding Day'
+
 export type Event = {
   id: string
   name: string

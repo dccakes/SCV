@@ -121,29 +121,29 @@ export function syncRemovedItems<T>(prev: unknown, next: unknown, translation: T
   return changed ? (result as T) : translation
 }
 
-/** Spanish text stored for an event; fields that are not strings come back undefined. */
-export type EventSpanishText = {
-  name?: string
-  venue?: string
-  attire?: string
-  description?: string
+/** One translated string from stored translations, or undefined when absent. */
+export function readTranslatedString(
+  translations: unknown,
+  locale: Locale,
+  key: string
+): string | undefined {
+  const overlay = readTranslation(translations, locale)
+  const value = isRecord(overlay) ? overlay[key] : undefined
+  return typeof value === 'string' ? value : undefined
 }
 
-/** Read an event's stored Spanish text, for prefilling event editors. */
-export function readEventSpanish(translations: unknown): EventSpanishText | undefined {
-  const es = readTranslation(translations, 'es')
-  if (!isRecord(es)) return undefined
-  const text = (value: unknown) => (typeof value === 'string' ? value : undefined)
+/** An event's stored Spanish text in the shape event editors send back. */
+export function readEventTranslations(
+  translations: unknown
+): { es: { name?: string; venue?: string; attire?: string; description?: string } } | undefined {
+  if (!isRecord(readTranslation(translations, 'es'))) return undefined
+  const read = (key: string) => readTranslatedString(translations, 'es', key)
   return {
-    name: text(es.name),
-    venue: text(es.venue),
-    attire: text(es.attire),
-    description: text(es.description),
+    es: {
+      name: read('name'),
+      venue: read('venue'),
+      attire: read('attire'),
+      description: read('description'),
+    },
   }
-}
-
-/** An event's stored translations in the shape event editors send back. */
-export function readEventTranslations(translations: unknown): { es: EventSpanishText } | undefined {
-  const es = readEventSpanish(translations)
-  return es ? { es } : undefined
 }

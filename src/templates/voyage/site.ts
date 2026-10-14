@@ -42,10 +42,6 @@ export function orderedEvents(events: VoyageEvent[]) {
     )
   })
 }
-/** The Intl locale for general formatting: Mexican Spanish or US English. */
-export function intlLocale(locale: string) {
-  return locale === 'es' ? 'es-MX' : 'en-US'
-}
 /** Database calendar dates must not shift into the server's timezone. */
 export function eventDate(date: Date, locale: string) {
   return new Intl.DateTimeFormat(locale === 'es' ? 'es-MX' : 'en-GB', {

@@ -10,6 +10,7 @@ import { EnvelopeReveal } from '~/components/website/household-invite/envelope-r
 import { InvalidHouseholdInvite } from '~/components/website/household-invite/invalid-household-invite'
 import { SiteLocaleToggle } from '~/components/website/site-locale-toggle'
 import { formatLongDate, toIntlLocale } from '~/lib/locale/intl-format'
+import { toLocale } from '~/lib/locale/locale-detection'
 import { buildSaveTheDateCalendarLinks } from '~/lib/website/calendar'
 import { householdInviteCookieName } from '~/lib/website/cookies'
 import { householdInviteService } from '~/server/application/household-invite'
@@ -108,7 +109,7 @@ export default async function SaveTheDatePage({ params, searchParams }: SaveTheD
   const inviteData = await householdInviteService.getInviteData(
     websiteSubUrl,
     code,
-    locale === 'es' ? 'es' : 'en'
+    toLocale(locale)
   )
 
   if (!inviteData) return <InvalidHouseholdInvite websiteSubUrl={websiteSubUrl} />

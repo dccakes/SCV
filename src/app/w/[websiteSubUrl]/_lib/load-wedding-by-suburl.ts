@@ -1,7 +1,7 @@
 import { getLocale } from 'next-intl/server'
 import { cache } from 'react'
 
-import type { Locale } from '~/lib/locale/locale-detection'
+import { type Locale, toLocale } from '~/lib/locale/locale-detection'
 import type { WeddingPageData } from '~/server/domains/website/website.types'
 import { api } from '~/trpc/server'
 
@@ -36,7 +36,7 @@ export const loadWeddingBySubUrl = cache(
 
     try {
       // Couple-authored copy is served in the visitor's language (English fallback).
-      const locale: Locale = fixedLocale ?? ((await getLocale()) === 'es' ? 'es' : 'en')
+      const locale: Locale = fixedLocale ?? toLocale(await getLocale())
       const weddingData = await api.website.fetchWeddingData({
         subUrl: websiteSubUrl,
         accessToken,

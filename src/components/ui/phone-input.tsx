@@ -8,6 +8,7 @@ import ReactPhoneNumberInput from 'react-phone-number-input/input'
 
 import { Input } from '~/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
+import { toIntlLocale } from '~/lib/locale/intl-format'
 import { cn } from '~/lib/utils'
 
 export type PhoneInputProps = {
@@ -54,8 +55,10 @@ type CountryOption = {
 
 const displayNamesFor = (locale: 'en' | 'es') =>
   typeof Intl !== 'undefined'
-    ? new Intl.DisplayNames([locale === 'es' ? 'es-MX' : 'en'], { type: 'region' })
+    ? new Intl.DisplayNames([toIntlLocale(locale)], { type: 'region' })
     : null
+
+const DISPLAY_NAMES = { en: displayNamesFor('en'), es: displayNamesFor('es') }
 
 const buildCountryOption = (
   code: Country,
@@ -66,19 +69,10 @@ const buildCountryOption = (
   label: displayNames?.of(code) ?? code,
 })
 
-const buildCountryOptions = (locale: 'en' | 'es'): CountryOption[] => {
-  const displayNames = displayNamesFor(locale)
-  return getCountries().map((code) => buildCountryOption(code, displayNames))
-}
-
-/** Country lists are built once per language. */
-const countryOptionsByLocale: Record<'en' | 'es', CountryOption[] | undefined> = {
-  en: undefined,
-  es: undefined,
-}
-const countryOptionsFor = (locale: 'en' | 'es'): CountryOption[] => {
-  countryOptionsByLocale[locale] ??= buildCountryOptions(locale)
-  return countryOptionsByLocale[locale]
+/** Country lists per language, built once. */
+const COUNTRY_OPTIONS = {
+  en: getCountries().map((code) => buildCountryOption(code, DISPLAY_NAMES.en)),
+  es: getCountries().map((code) => buildCountryOption(code, DISPLAY_NAMES.es)),
 }
 
 const getFlagEmoji = (country: Country) =>
@@ -129,7 +123,7 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
     ref
   ) => {
     const copy = { ...DEFAULT_LABELS, ...labels }
-    const countryOptions = countryOptionsFor(locale)
+    const countryOptions = COUNTRY_OPTIONS[locale]
     const [isCountryListOpen, setIsCountryListOpen] = React.useState(false)
     const [searchQuery, setSearchQuery] = React.useState('')
     const searchInputRef = React.useRef<HTMLInputElement>(null)
@@ -144,7 +138,7 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
 
     const selectedCountryOption =
       countryOptions.find((option) => option.code === selectedCountry) ??
-      buildCountryOption(selectedCountry, displayNamesFor(locale))
+      buildCountryOption(selectedCountry, DISPLAY_NAMES[locale])
 
     const trimmedQuery = searchQuery.trim()
     const lowerQuery = trimmedQuery.toLowerCase()

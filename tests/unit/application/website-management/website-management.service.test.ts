@@ -240,9 +240,11 @@ describe('WebsiteManagementService', () => {
       expect(result).toMatchObject({
         content: { introText: 'Updated intro' },
       })
-      expect(mockUpsertHomeSectionFn).toHaveBeenCalledWith('website-123', {
-        introText: 'Updated intro',
-      })
+      expect(mockUpsertHomeSectionFn).toHaveBeenCalledWith(
+        'website-123',
+        { introText: 'Updated intro' },
+        undefined
+      )
     })
   })
 

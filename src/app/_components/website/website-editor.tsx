@@ -164,7 +164,7 @@ export function WebsiteEditor({
                 Hero Headline
               </label>
               <TranslatableTextarea
-                reference={translating ? english.headline : undefined}
+                reference={english.headline}
                 id='website-hero-headline'
                 maxLength={160}
                 name='headline'
@@ -186,7 +186,7 @@ export function WebsiteEditor({
                 Emphasis
               </label>
               <TranslatableInput
-                reference={translating ? english.headlineAccent : undefined}
+                reference={english.headlineAccent}
                 id='website-hero-accent'
                 maxLength={40}
                 name='headlineAccent'
@@ -207,7 +207,7 @@ export function WebsiteEditor({
               Home Intro
             </label>
             <TranslatableTextarea
-              reference={translating ? english.introText : undefined}
+              reference={english.introText}
               id='website-intro-text'
               maxLength={2000}
               name='introText'

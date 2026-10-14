@@ -4,13 +4,14 @@ import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 
 import { ANALYTICS_ACTIONS, ANALYTICS_SCOPES, buildEventName } from '~/lib/analytics/events'
-import { overlayTranslation, readTranslation } from '~/lib/i18n/translations'
 import type { Locale } from '~/lib/locale/locale-detection'
 import { createHouseholdInviteCode } from '~/server/application/household-invite/household-invite-code'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
+import { WEDDING_DAY_EVENT_NAME } from '~/server/domains/event/event.types'
 import { rsvpHouseholdSelect } from '~/server/domains/household/household.repository'
 import type { HouseholdSearchResult } from '~/server/domains/household/household.types'
+import { localizeEvent, localizeSection } from '~/server/domains/website/website.localization'
 import {
   type SaveTheDateSectionContent,
   WebsiteSectionType,
@@ -38,10 +39,6 @@ export type UpdateHouseholdInviteInput = {
   country: string | null
   guests: HouseholdInviteGuestInput[]
 }
-
-// The primary wedding date and venue live on the event named "Wedding Day"
-// (see website-management.service.ts), not on the Wedding record itself.
-const WEDDING_DAY_EVENT_NAME = 'Wedding Day'
 
 export type HouseholdInviteData = {
   weddingId: string
@@ -526,7 +523,7 @@ export class HouseholdInviteService {
     weddingId: string,
     householdId: string,
     expiresAt: Date,
-    locale: Locale = 'en'
+    locale: Locale
   ): Promise<HouseholdInviteData | null> {
     const [household, website] = await Promise.all([
       this.db.household.findFirst({
@@ -585,13 +582,7 @@ export class HouseholdInviteService {
     // The primary date/venue come from the "Wedding Day" event, matched on its
     // English name before translations apply; the full event list drives the
     // save-the-date calendar block.
-    const events = rawEvents.map(({ translations, ...event }) => ({
-      ...event,
-      ...overlayTranslation(
-        { name: event.name, venue: event.venue },
-        readTranslation(translations, locale)
-      ),
-    }))
+    const events = rawEvents.map((event) => localizeEvent(event, locale))
     const weddingDayEvent = events[rawEvents.findIndex((e) => e.name === WEDDING_DAY_EVENT_NAME)]
 
     // Mirror the website surfaces: only enabled Save the Date copy overrides the
@@ -601,10 +592,10 @@ export class HouseholdInviteService {
       ? saveTheDateSectionContentSchema.safeParse(saveTheDateSection.content)
       : undefined
     const saveTheDate = parsedSaveTheDate?.success
-      ? overlayTranslation(
-          parsedSaveTheDate.data,
-          readTranslation(saveTheDateSection?.translations, locale)
-        )
+      ? localizeSection(
+          { content: parsedSaveTheDate.data, translations: saveTheDateSection?.translations },
+          locale
+        ).content
       : undefined
 
     return {

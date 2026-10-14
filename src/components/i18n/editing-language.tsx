@@ -136,52 +136,61 @@ export function ReferenceNote({ reference }: Readonly<{ reference: string }>) {
   )
 }
 
-/** Input that edits English, or the Spanish translation with the English as reference. */
-export function TranslatableInput({
-  reference,
-  shared,
-  placeholder,
-  disabled,
-  ...props
-}: Readonly<React.ComponentProps<typeof Input> & ReferenceProps>) {
-  const translating = useIsTranslating()
-  if (!translating) return <Input placeholder={placeholder} disabled={disabled} {...props} />
-  if (shared) {
-    return <Input placeholder={placeholder} disabled title='Edit links in English' {...props} />
+type TranslatableControlProps<P> = Readonly<
+  P & ReferenceProps & { placeholder?: string; disabled?: boolean }
+>
+
+/**
+ * Wrap a text control so it edits English normally and, while translating,
+ * edits the Spanish copy with the English shown as placeholder and note.
+ * Shared controls (links) are locked while translating.
+ */
+function translatable<P extends object>(Control: React.ComponentType<P & { lang?: string }>) {
+  return function Translatable({ reference, shared, ...props }: TranslatableControlProps<P>) {
+    const translating = useIsTranslating()
+    const controlProps = props as P & { placeholder?: string; disabled?: boolean }
+    if (!translating) return <Control {...controlProps} />
+    if (shared) return <Control {...controlProps} disabled title='Edit links in English' />
+    const english = reference?.trim() ? reference : undefined
+    return (
+      <div className='w-full space-y-1'>
+        <Control {...controlProps} lang='es' placeholder={english ?? controlProps.placeholder} />
+        {english ? <ReferenceNote reference={english} /> : null}
+      </div>
+    )
   }
-  return (
-    <div className='w-full space-y-1'>
-      <Input
-        lang='es'
-        placeholder={reference?.trim() ? reference : placeholder}
-        disabled={disabled}
-        {...props}
-      />
-      {reference?.trim() ? <ReferenceNote reference={reference} /> : null}
-    </div>
-  )
 }
 
+/** Input that edits English, or the Spanish translation with the English as reference. */
+export const TranslatableInput = translatable<React.ComponentProps<typeof Input>>(Input)
+
 /** Textarea that edits English, or the Spanish translation with the English as reference. */
-export function TranslatableTextarea({
-  reference,
-  shared,
-  placeholder,
-  disabled,
-  ...props
-}: Readonly<React.ComponentProps<typeof Textarea> & ReferenceProps>) {
-  const translating = useIsTranslating()
-  if (!translating) return <Textarea placeholder={placeholder} disabled={disabled} {...props} />
-  if (shared) return <Textarea placeholder={placeholder} disabled {...props} />
+export const TranslatableTextarea = translatable<React.ComponentProps<typeof Textarea>>(Textarea)
+
+/**
+ * Header row for dialogs that edit one item in both languages: a hint and the
+ * EN / ES switch.
+ */
+export function LanguageSwitchHeader({
+  value,
+  onChange,
+  label,
+  englishHint,
+}: Readonly<{
+  value: EditingLanguage
+  onChange: (language: EditingLanguage) => void
+  label: string
+  /** Shown while editing English, e.g. "Switch to ES to translate this question." */
+  englishHint: string
+}>) {
   return (
-    <div className='w-full space-y-1'>
-      <Textarea
-        lang='es'
-        placeholder={reference?.trim() ? reference : placeholder}
-        disabled={disabled}
-        {...props}
-      />
-      {reference?.trim() ? <ReferenceNote reference={reference} /> : null}
+    <div className='flex flex-col gap-2 pt-2 sm:flex-row sm:items-center sm:justify-between'>
+      <p className='text-muted-foreground text-xs'>
+        {value === 'es'
+          ? 'Spanish text for Spanish-speaking guests. Blank fields show the English.'
+          : englishHint}
+      </p>
+      <LanguageSwitch value={value} onChange={onChange} label={label} />
     </div>
   )
 }

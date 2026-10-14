@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 
 import { Button } from '~/components/ui/button'
@@ -9,6 +9,7 @@ import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
 import { PhoneInput } from '~/components/ui/phone-input'
 import { HouseholdSubmitButton } from '~/components/website/household-invite/household-submit-button'
+import { useGuestPhoneInput } from '~/components/website/use-guest-phone-input'
 import type { HouseholdInviteData } from '~/server/application/household-invite/household-invite.service'
 
 type HouseholdDetailsFormProps = {
@@ -27,8 +28,7 @@ export function HouseholdDetailsForm({
   inviteHref,
 }: Readonly<HouseholdDetailsFormProps>) {
   const t = useTranslations('household')
-  const phoneCopy = useTranslations('site.phoneInput')
-  const locale = useLocale() === 'es' ? 'es' : 'en'
+  const phoneInput = useGuestPhoneInput()
   const [phones, setPhones] = useState<Record<number, string>>(() =>
     Object.fromEntries(inviteData.guests.map((guest) => [guest.id, valueOrEmpty(guest.phone)]))
   )
@@ -95,13 +95,7 @@ export function HouseholdDetailsForm({
                       setPhones((current) => ({ ...current, [guest.id]: nextValue ?? '' }))
                     }
                     className='w-full'
-                    locale={locale}
-                    labels={{
-                      selectCountry: phoneCopy('selectCountry'),
-                      searchCountries: phoneCopy('searchCountries'),
-                      countryCodes: phoneCopy('countryCodes'),
-                      noCountries: phoneCopy('noCountries'),
-                    }}
+                    {...phoneInput}
                   />
                 </div>
               </div>

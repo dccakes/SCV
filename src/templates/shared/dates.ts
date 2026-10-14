@@ -3,9 +3,8 @@ import { formatEventTime, formatLongDate, toIntlLocale } from '~/lib/locale/intl
 import type { WeddingDate } from '~/server/domains/website/website.types'
 
 /**
- * The server ships the wedding date pre-formatted in English; its numeric form
- * (`MM.DD.YYYY`) is the stable source we re-parse to format in the visitor's
- * locale. Returns a UTC-midnight date, or undefined when it can't be parsed.
+ * The wedding date's numeric form (`MM.DD.YYYY`) is locale-independent, so it
+ * is the stable source we re-parse to format in the visitor's locale. Returns a UTC-midnight date, or undefined when it can't be parsed.
  */
 function parseNumericDate(value: string | undefined): Date | undefined {
   const match = value?.trim().match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/)

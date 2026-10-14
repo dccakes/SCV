@@ -98,11 +98,13 @@ function SectionCard({ entry, initialContent, initialSpanish, initialEnabled }: 
     alignTranslation(initialContent, initialSpanish)
   )
   const [isEnabled, setIsEnabled] = useState(initialEnabled)
-  const snapshot = (en: WebsiteSectionContent, es: WebsiteSectionContent, enabled: boolean) =>
-    JSON.stringify({ en, es: alignTranslation(en, es), enabled })
-  const [baseline, setBaseline] = useState(() =>
-    snapshot(initialContent, alignTranslation(initialContent, initialSpanish), initialEnabled)
-  )
+  // Spanish is compared aligned to the English rows, the way it is saved.
+  const snapshot = (
+    en: WebsiteSectionContent,
+    alignedEs: WebsiteSectionContent,
+    enabled: boolean
+  ) => JSON.stringify({ en, es: alignedEs, enabled })
+  const [baseline, setBaseline] = useState(() => snapshot(initialContent, spanish, initialEnabled))
   const alignedSpanish = alignTranslation(content, spanish)
 
   const changeContent = (next: WebsiteSectionContent) => {
@@ -121,12 +123,12 @@ function SectionCard({ entry, initialContent, initialSpanish, initialEnabled }: 
     },
     onSuccess: () => {
       toast.success(`${entry.label} saved`)
-      setBaseline(snapshot(content, spanish, isEnabled))
+      setBaseline(snapshot(content, alignedSpanish, isEnabled))
       router.refresh()
     },
   })
 
-  const hasChanges = baseline !== snapshot(content, spanish, isEnabled)
+  const hasChanges = baseline !== snapshot(content, alignedSpanish, isEnabled)
 
   const save = () => {
     upsertSection.mutate({

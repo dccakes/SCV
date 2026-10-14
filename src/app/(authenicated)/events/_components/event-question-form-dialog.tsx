@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import type { Option, Question } from '~/app/utils/shared-types'
 import {
   type EditingLanguage,
-  LanguageSwitch,
+  LanguageSwitchHeader,
   ReferenceNote,
 } from '~/components/i18n/editing-language'
 import { Button } from '~/components/ui/button'
@@ -21,6 +21,7 @@ import {
 } from '~/components/ui/dialog'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
+import { readTranslatedString } from '~/lib/i18n/translations'
 import { api } from '~/trpc/react'
 
 type QuestionDraftOption = {
@@ -32,13 +33,9 @@ type QuestionDraftOption = {
   descriptionEs: string
 }
 
-/** Read a string from a stored `translations.es` payload. */
-const readSpanish = (translations: unknown, key: string): string => {
-  if (typeof translations !== 'object' || translations === null) return ''
-  const es = (translations as { es?: Record<string, unknown> }).es
-  const value = es?.[key]
-  return typeof value === 'string' ? value : ''
-}
+/** A stored Spanish string, or blank for the editor. */
+const readSpanish = (translations: unknown, key: string): string =>
+  readTranslatedString(translations, 'es', key) ?? ''
 
 const emptyOption = (): QuestionDraftOption => ({
   text: '',
@@ -202,40 +199,28 @@ export function EventQuestionFormDialog({
           <DialogDescription>
             This question is shown only for this event when guests RSVP.
           </DialogDescription>
-          <div className='flex flex-col gap-2 pt-2 sm:flex-row sm:items-center sm:justify-between'>
-            <p className='text-muted-foreground text-xs'>
-              {translating
-                ? 'Spanish text for Spanish-speaking guests. Blank fields show the English.'
-                : 'Switch to ES to translate this question for your wedding website.'}
-            </p>
-            <LanguageSwitch value={language} onChange={setLanguage} label='Question language' />
-          </div>
+          <LanguageSwitchHeader
+            value={language}
+            onChange={setLanguage}
+            label='Question language'
+            englishHint='Switch to ES to translate this question for your wedding website.'
+          />
         </DialogHeader>
 
         <div className='space-y-4'>
           <div className='space-y-2'>
             <Label htmlFor='event-question-text'>Question</Label>
-            {translating ? (
-              <>
-                <Input
-                  id='event-question-text'
-                  lang='es'
-                  value={questionTextEs}
-                  onChange={(event) => setQuestionTextEs(event.target.value)}
-                  placeholder={questionText || 'p. ej., ¿Qué platillo prefieres?'}
-                  disabled={upsertQuestion.isPending}
-                />
-                {questionText ? <ReferenceNote reference={questionText} /> : null}
-              </>
-            ) : (
-              <Input
-                id='event-question-text'
-                value={questionText}
-                onChange={(event) => setQuestionText(event.target.value)}
-                placeholder='e.g., Meal preference?'
-                disabled={upsertQuestion.isPending}
-              />
-            )}
+            <Input
+              id='event-question-text'
+              lang={translating ? 'es' : undefined}
+              value={translating ? questionTextEs : questionText}
+              onChange={(event) =>
+                (translating ? setQuestionTextEs : setQuestionText)(event.target.value)
+              }
+              placeholder={translating ? questionText || undefined : 'e.g., Meal preference?'}
+              disabled={upsertQuestion.isPending}
+            />
+            {translating && questionText ? <ReferenceNote reference={questionText} /> : null}
           </div>
 
           <div className='space-y-2'>

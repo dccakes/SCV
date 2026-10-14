@@ -11,7 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { format } from 'date-fns'
 import { Calendar as CalendarIcon, Clock } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { type Resolver, type SubmitHandler, useForm } from 'react-hook-form'
+import { type Resolver, type SubmitHandler, type UseFormReturn, useForm } from 'react-hook-form'
 
 import {
   type EventFormData,
@@ -20,7 +20,7 @@ import {
 } from '~/components/forms/event/event-form.schema'
 import {
   type EditingLanguage,
-  LanguageSwitch,
+  LanguageSwitchHeader,
   ReferenceNote,
 } from '~/components/i18n/editing-language'
 import { Button } from '~/components/ui/button'
@@ -38,7 +38,7 @@ import { Label } from '~/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import { Switch } from '~/components/ui/switch'
 import { Textarea } from '~/components/ui/textarea'
-import { readEventSpanish } from '~/lib/i18n/translations'
+import { readEventTranslations } from '~/lib/i18n/translations'
 import { cn } from '~/lib/utils'
 import type { Event } from '~/server/domains/event/event.types'
 
@@ -61,7 +61,7 @@ type ModernEventFormProps =
 
 /** Form values for an existing event, including its Spanish text. */
 function toFormValues(event: Event): EventFormData {
-  const spanish = readEventSpanish(event.translations)
+  const spanish = readEventTranslations(event.translations)?.es
   return {
     eventName: event.name,
     date: event.date ? format(new Date(event.date), 'yyyy-MM-dd') : '',
@@ -106,8 +106,6 @@ export function ModernEventForm({
   const { register, handleSubmit, formState, setValue, watch } = form
   const { errors, isDirty } = formState
   const dateValue = watch('date')
-  const english = watch(['eventName', 'venue', 'attire', 'description'])
-  const spanishErrors = errors.translations?.es
 
   const handleFormSubmit: SubmitHandler<EventFormData> = async (data) => {
     await onSubmit(data)
@@ -139,14 +137,12 @@ export function ModernEventForm({
               ? 'Update the details for your wedding event.'
               : 'Add a new event like ceremony, reception, or rehearsal dinner.'}
           </DialogDescription>
-          <div className='flex flex-col gap-2 pt-2 sm:flex-row sm:items-center sm:justify-between'>
-            <p className='text-muted-foreground text-xs'>
-              {translating
-                ? 'Spanish text for Spanish-speaking guests. Blank fields show the English.'
-                : 'Switch to ES to add Spanish text for your wedding website.'}
-            </p>
-            <LanguageSwitch value={language} onChange={setLanguage} label='Event language' />
-          </div>
+          <LanguageSwitchHeader
+            value={language}
+            onChange={setLanguage}
+            label='Event language'
+            englishHint='Switch to ES to add Spanish text for your wedding website.'
+          />
         </DialogHeader>
 
         <form
@@ -156,45 +152,15 @@ export function ModernEventForm({
           })}
           className='space-y-4 md:space-y-6'
         >
-          {/* Event Name */}
-          <div className='space-y-2'>
-            <Label htmlFor='eventName' className='text-sm md:text-base'>
-              Event Name <span className='text-destructive'>*</span>
-            </Label>
-            {translating ? (
-              <>
-                <Input
-                  key='eventName-es'
-                  id='eventName'
-                  lang='es'
-                  {...register('translations.es.name')}
-                  placeholder={english[0] || 'p. ej., Ceremonia religiosa'}
-                  disabled={isSubmitting}
-                  className={cn(spanishErrors?.name && 'border-destructive')}
-                />
-                {english[0] ? <ReferenceNote reference={english[0]} /> : null}
-                {spanishErrors?.name && (
-                  <p className='text-destructive text-xs md:text-sm'>
-                    {spanishErrors.name.message}
-                  </p>
-                )}
-              </>
-            ) : (
-              <>
-                <Input
-                  key='eventName-en'
-                  id='eventName'
-                  {...register('eventName')}
-                  placeholder='e.g., Wedding Ceremony'
-                  disabled={isSubmitting}
-                  className={cn(errors.eventName && 'border-destructive')}
-                />
-                {errors.eventName && (
-                  <p className='text-destructive text-xs md:text-sm'>{errors.eventName.message}</p>
-                )}
-              </>
-            )}
-          </div>
+          <BilingualField
+            form={form}
+            name='eventName'
+            label='Event Name'
+            required
+            placeholder='e.g., Wedding Ceremony'
+            translating={translating}
+            disabled={isSubmitting}
+          />
 
           {/* Date */}
           <div className='space-y-2'>
@@ -278,106 +244,33 @@ export function ModernEventForm({
             </div>
           </div>
 
-          {/* Venue */}
-          <div className='space-y-2'>
-            <Label htmlFor='venue' className='text-sm md:text-base'>
-              Venue
-            </Label>
-            {translating ? (
-              <>
-                <Input
-                  key='venue-es'
-                  id='venue'
-                  lang='es'
-                  {...register('translations.es.venue')}
-                  placeholder={english[1] || undefined}
-                  disabled={isSubmitting}
-                  className={cn(errors.venue && 'border-destructive')}
-                />
-                {english[1] ? <ReferenceNote reference={english[1]} /> : null}
-              </>
-            ) : (
-              <Input
-                key='venue-en'
-                id='venue'
-                {...register('venue')}
-                placeholder="e.g., St. Mary's Church"
-                disabled={isSubmitting}
-                className={cn(errors.venue && 'border-destructive')}
-              />
-            )}
-            {errors.venue && (
-              <p className='text-destructive text-xs md:text-sm'>{errors.venue.message}</p>
-            )}
-          </div>
+          <BilingualField
+            form={form}
+            name='venue'
+            label='Venue'
+            placeholder="e.g., St. Mary's Church"
+            translating={translating}
+            disabled={isSubmitting}
+          />
 
-          {/* Attire */}
-          <div className='space-y-2'>
-            <Label htmlFor='attire' className='text-sm md:text-base'>
-              Attire
-            </Label>
-            {translating ? (
-              <>
-                <Input
-                  key='attire-es'
-                  id='attire'
-                  lang='es'
-                  {...register('translations.es.attire')}
-                  placeholder={english[2] || undefined}
-                  disabled={isSubmitting}
-                  className={cn(errors.attire && 'border-destructive')}
-                />
-                {english[2] ? <ReferenceNote reference={english[2]} /> : null}
-              </>
-            ) : (
-              <Input
-                key='attire-en'
-                id='attire'
-                {...register('attire')}
-                placeholder='e.g., Black Tie, Cocktail Attire'
-                disabled={isSubmitting}
-                className={cn(errors.attire && 'border-destructive')}
-              />
-            )}
-            {errors.attire && (
-              <p className='text-destructive text-xs md:text-sm'>{errors.attire.message}</p>
-            )}
-          </div>
+          <BilingualField
+            form={form}
+            name='attire'
+            label='Attire'
+            placeholder='e.g., Black Tie, Cocktail Attire'
+            translating={translating}
+            disabled={isSubmitting}
+          />
 
-          {/* Description */}
-          <div className='space-y-2'>
-            <Label htmlFor='description' className='text-sm md:text-base'>
-              Description
-            </Label>
-            {translating ? (
-              <>
-                <Textarea
-                  key='description-es'
-                  id='description'
-                  lang='es'
-                  {...register('translations.es.description')}
-                  placeholder={english[3] || undefined}
-                  rows={3}
-                  disabled={isSubmitting}
-                  className={cn(errors.description && 'border-destructive', 'resize-none')}
-                />
-                {english[3] ? <ReferenceNote reference={english[3]} /> : null}
-              </>
-            ) : (
-              <Textarea
-                key='description-en'
-                id='description'
-                {...register('description')}
-                placeholder='Add any additional details about the event...'
-                rows={3}
-                disabled={isSubmitting}
-                className={cn(errors.description && 'border-destructive', 'resize-none')}
-              />
-            )}
-            {errors.description && (
-              <p className='text-destructive text-xs md:text-sm'>{errors.description.message}</p>
-            )}
-          </div>
+          <BilingualField
+            form={form}
+            name='description'
+            label='Description'
+            placeholder='Add any additional details about the event...'
+            multiline
+            translating={translating}
+            disabled={isSubmitting}
+          />
 
           {/* Collect RSVPs */}
           <div className='flex items-center justify-between rounded-lg border bg-muted/50 p-4'>
@@ -439,5 +332,72 @@ export function ModernEventForm({
         </form>
       </DialogContent>
     </Dialog>
+  )
+}
+
+/** English fields that also have a Spanish version, mapped to their Spanish key. */
+const SPANISH_KEY = {
+  eventName: 'name',
+  venue: 'venue',
+  attire: 'attire',
+  description: 'description',
+} as const
+
+/**
+ * One event text field that edits English, or its Spanish translation (with the
+ * English shown as placeholder and note) while translating.
+ */
+function BilingualField({
+  form,
+  name,
+  label,
+  placeholder,
+  required = false,
+  multiline = false,
+  translating,
+  disabled,
+}: Readonly<{
+  form: UseFormReturn<EventFormData>
+  name: keyof typeof SPANISH_KEY
+  label: string
+  placeholder: string
+  required?: boolean
+  multiline?: boolean
+  translating: boolean
+  disabled: boolean
+}>) {
+  const spanishKey = SPANISH_KEY[name]
+  const path = translating ? (`translations.es.${spanishKey}` as const) : name
+  const english = form.watch(name) || undefined
+  const { errors } = form.formState
+  const error = translating ? errors.translations?.es?.[spanishKey] : errors[name]
+  const controlProps = {
+    id: name,
+    lang: translating ? 'es' : undefined,
+    ...form.register(path),
+    placeholder: translating ? english : placeholder,
+    disabled,
+  }
+
+  return (
+    <div className='space-y-2'>
+      <Label htmlFor={name} className='text-sm md:text-base'>
+        {label} {required ? <span className='text-destructive'>*</span> : null}
+      </Label>
+      {multiline ? (
+        <Textarea
+          key={path}
+          {...controlProps}
+          rows={3}
+          className={cn(error && 'border-destructive', 'resize-none')}
+        />
+      ) : (
+        <Input key={path} {...controlProps} className={cn(error && 'border-destructive')} />
+      )}
+      {translating && english ? <ReferenceNote reference={english} /> : null}
+      {error?.message ? (
+        <p className='text-destructive text-xs md:text-sm'>{error.message}</p>
+      ) : null}
+    </div>
   )
 }

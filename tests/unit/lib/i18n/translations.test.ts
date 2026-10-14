@@ -1,7 +1,7 @@
 import {
   alignTranslation,
   overlayTranslation,
-  readEventSpanish,
+  readEventTranslations,
   readTranslation,
   syncRemovedItems,
 } from '~/lib/i18n/translations'
@@ -139,15 +139,12 @@ describe('syncRemovedItems', () => {
   })
 })
 
-describe('readEventSpanish', () => {
+describe('readEventTranslations', () => {
   it('reads the stored Spanish event text and ignores junk', () => {
-    expect(readEventSpanish({ es: { name: 'Boda', venue: 3 } })).toEqual({
-      name: 'Boda',
-      venue: undefined,
-      attire: undefined,
-      description: undefined,
+    expect(readEventTranslations({ es: { name: 'Boda', venue: 3 } })).toEqual({
+      es: { name: 'Boda', venue: undefined, attire: undefined, description: undefined },
     })
-    expect(readEventSpanish(null)).toBeUndefined()
-    expect(readEventSpanish({ en: {} })).toBeUndefined()
+    expect(readEventTranslations(null)).toBeUndefined()
+    expect(readEventTranslations({ en: {} })).toBeUndefined()
   })
 })

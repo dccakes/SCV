@@ -28,6 +28,24 @@ export function localizeSection<T extends WithTranslations & { content: unknown 
   }
 }
 
+/**
+ * Overlay translated text onto the named fields only, so a stored translation
+ * can never touch ids, dates or other non-text data.
+ */
+function localizeFields<T extends WithTranslations, K extends keyof T>(
+  entity: T,
+  keys: readonly K[],
+  locale: Locale
+): Omit<T, 'translations'> {
+  const fields = Object.fromEntries(
+    keys.filter((key) => key in entity).map((key) => [key, entity[key]])
+  ) as Pick<T, K>
+  return {
+    ...withoutTranslations(entity),
+    ...overlayTranslation(fields, readTranslation(entity.translations, locale)),
+  }
+}
+
 type LocalizableOption = WithTranslations & { text: string; description: string }
 type LocalizableQuestion = WithTranslations & { text: string; options?: LocalizableOption[] }
 
@@ -36,23 +54,13 @@ export function localizeQuestion<T extends LocalizableQuestion>(
   question: T,
   locale: Locale
 ): Omit<T, 'translations'> {
-  const overlay = readTranslation(question.translations, locale) as { text?: unknown } | undefined
-  const base = withoutTranslations(question)
   return {
-    ...base,
-    text: overlayTranslation(question.text, overlay?.text),
+    ...localizeFields(question, ['text'], locale),
     ...(question.options
       ? {
-          options: question.options.map((option) => {
-            const optionOverlay = readTranslation(option.translations, locale) as
-              | { text?: unknown; description?: unknown }
-              | undefined
-            return {
-              ...withoutTranslations(option),
-              text: overlayTranslation(option.text, optionOverlay?.text),
-              description: overlayTranslation(option.description, optionOverlay?.description),
-            }
-          }),
+          options: question.options.map((option) =>
+            localizeFields(option, ['text', 'description'], locale)
+          ),
         }
       : {}),
   }
@@ -61,8 +69,8 @@ export function localizeQuestion<T extends LocalizableQuestion>(
 type LocalizableEvent = WithTranslations & {
   name: string
   venue: string | null
-  attire: string | null
-  description: string | null
+  attire?: string | null
+  description?: string | null
   questions?: LocalizableQuestion[]
 }
 
@@ -71,21 +79,10 @@ export function localizeEvent<T extends LocalizableEvent>(
   event: T,
   locale: Locale
 ): Omit<T, 'translations'> {
-  const overlay = readTranslation(event.translations, locale)
-  const text = overlayTranslation(
-    { name: event.name, venue: event.venue, attire: event.attire, description: event.description },
-    overlay
-  )
   return {
-    ...withoutTranslations(event),
-    ...text,
+    ...localizeFields(event, ['name', 'venue', 'attire', 'description'], locale),
     ...(event.questions
       ? { questions: event.questions.map((question) => localizeQuestion(question, locale)) }
       : {}),
   }
-}
-
-/** BCP 47 tag used for dates on the guest site. */
-export function dateLocaleFor(locale: Locale): string {
-  return locale === 'es' ? 'es-MX' : 'en-US'
 }
