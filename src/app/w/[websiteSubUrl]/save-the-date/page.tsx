@@ -105,7 +105,11 @@ export default async function SaveTheDatePage({ params, searchParams }: SaveTheD
   const tCalendar = await getTranslations('site.calendar')
   const cookieStore = await cookies()
   const code = cookieStore.get(householdInviteCookieName(websiteSubUrl))?.value
-  const inviteData = await householdInviteService.getInviteData(websiteSubUrl, code)
+  const inviteData = await householdInviteService.getInviteData(
+    websiteSubUrl,
+    code,
+    locale === 'es' ? 'es' : 'en'
+  )
 
   if (!inviteData) return <InvalidHouseholdInvite websiteSubUrl={websiteSubUrl} />
 

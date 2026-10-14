@@ -4,6 +4,8 @@ import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 
 import { ANALYTICS_ACTIONS, ANALYTICS_SCOPES, buildEventName } from '~/lib/analytics/events'
+import { overlayTranslation, readTranslation } from '~/lib/i18n/translations'
+import type { Locale } from '~/lib/locale/locale-detection'
 import { createHouseholdInviteCode } from '~/server/application/household-invite/household-invite-code'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
@@ -286,14 +288,19 @@ export class HouseholdInviteService {
     }
   }
 
-  async getInviteData(subUrl: string, code: string | null | undefined) {
+  /**
+   * Invite card data for a household. With `locale: 'es'` the couple's Spanish
+   * Save the Date copy and event text replace the English, field by field.
+   */
+  async getInviteData(subUrl: string, code: string | null | undefined, locale: Locale = 'en') {
     const scopedInvite = await this.resolveInviteScope(subUrl, code)
     if (!scopedInvite) return null
 
     return this.loadHouseholdInviteData(
       scopedInvite.weddingId,
       scopedInvite.householdId,
-      scopedInvite.expiresAt
+      scopedInvite.expiresAt,
+      locale
     )
   }
 
@@ -518,7 +525,8 @@ export class HouseholdInviteService {
   private async loadHouseholdInviteData(
     weddingId: string,
     householdId: string,
-    expiresAt: Date
+    expiresAt: Date,
+    locale: Locale = 'en'
   ): Promise<HouseholdInviteData | null> {
     const [household, website] = await Promise.all([
       this.db.household.findFirst({
@@ -539,7 +547,7 @@ export class HouseholdInviteService {
               brideLastName: true,
               events: {
                 orderBy: { date: 'asc' },
-                select: { name: true, date: true, venue: true },
+                select: { name: true, date: true, venue: true, translations: true },
               },
             },
           },
@@ -565,7 +573,7 @@ export class HouseholdInviteService {
           templateId: true,
           websiteSections: {
             where: { type: WebsiteSectionType.SAVE_THE_DATE },
-            select: { isEnabled: true, content: true },
+            select: { isEnabled: true, content: true, translations: true },
           },
         },
       }),
@@ -573,10 +581,18 @@ export class HouseholdInviteService {
 
     if (!household) return null
 
-    const { events, ...weddingNames } = household.wedding
-    // The primary date/venue come from the "Wedding Day" event; the full event
-    // list drives the save-the-date calendar block.
-    const weddingDayEvent = events.find((event) => event.name === WEDDING_DAY_EVENT_NAME)
+    const { events: rawEvents, ...weddingNames } = household.wedding
+    // The primary date/venue come from the "Wedding Day" event, matched on its
+    // English name before translations apply; the full event list drives the
+    // save-the-date calendar block.
+    const events = rawEvents.map(({ translations, ...event }) => ({
+      ...event,
+      ...overlayTranslation(
+        { name: event.name, venue: event.venue },
+        readTranslation(translations, locale)
+      ),
+    }))
+    const weddingDayEvent = events[rawEvents.findIndex((e) => e.name === WEDDING_DAY_EVENT_NAME)]
 
     // Mirror the website surfaces: only enabled Save the Date copy overrides the
     // template defaults, and malformed stored content is ignored rather than thrown.
@@ -584,7 +600,12 @@ export class HouseholdInviteService {
     const parsedSaveTheDate = saveTheDateSection?.isEnabled
       ? saveTheDateSectionContentSchema.safeParse(saveTheDateSection.content)
       : undefined
-    const saveTheDate = parsedSaveTheDate?.success ? parsedSaveTheDate.data : undefined
+    const saveTheDate = parsedSaveTheDate?.success
+      ? overlayTranslation(
+          parsedSaveTheDate.data,
+          readTranslation(saveTheDateSection?.translations, locale)
+        )
+      : undefined
 
     return {
       weddingId,

@@ -38,6 +38,7 @@ import { Label } from '~/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import { Switch } from '~/components/ui/switch'
 import { Textarea } from '~/components/ui/textarea'
+import { readEventSpanish } from '~/lib/i18n/translations'
 import { cn } from '~/lib/utils'
 import type { Event } from '~/server/domains/event/event.types'
 
@@ -58,25 +59,9 @@ type ModernEventFormProps =
       event: Event
     })
 
-type SpanishEventText = { name: string; venue: string; attire: string; description: string }
-
-/** Stored Spanish text for an event, as editable strings. */
-function readSpanish(event: Event | undefined): SpanishEventText {
-  const stored =
-    typeof event?.translations === 'object' && event.translations !== null
-      ? (event.translations as { es?: Partial<Record<keyof SpanishEventText, unknown>> }).es
-      : undefined
-  const text = (value: unknown) => (typeof value === 'string' ? value : '')
-  return {
-    name: text(stored?.name),
-    venue: text(stored?.venue),
-    attire: text(stored?.attire),
-    description: text(stored?.description),
-  }
-}
-
 /** Form values for an existing event, including its Spanish text. */
 function toFormValues(event: Event): EventFormData {
+  const spanish = readEventSpanish(event.translations)
   return {
     eventName: event.name,
     date: event.date ? format(new Date(event.date), 'yyyy-MM-dd') : '',
@@ -87,7 +72,14 @@ function toFormValues(event: Event): EventFormData {
     description: event.description ?? '',
     collectRsvp: event.collectRsvp ?? false,
     allowTagAlongs: event.allowTagAlongs ?? false,
-    translations: { es: readSpanish(event) },
+    translations: {
+      es: {
+        name: spanish?.name ?? '',
+        venue: spanish?.venue ?? '',
+        attire: spanish?.attire ?? '',
+        description: spanish?.description ?? '',
+      },
+    },
   }
 }
 
@@ -157,7 +149,13 @@ export function ModernEventForm({
           </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(handleFormSubmit)} className='space-y-4 md:space-y-6'>
+        <form
+          onSubmit={handleSubmit(handleFormSubmit, (invalid) => {
+            // Show the Spanish fields when only they fail, so the error is visible.
+            if (invalid.translations && !invalid.eventName) setLanguage('es')
+          })}
+          className='space-y-4 md:space-y-6'
+        >
           {/* Event Name */}
           <div className='space-y-2'>
             <Label htmlFor='eventName' className='text-sm md:text-base'>

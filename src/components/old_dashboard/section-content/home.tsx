@@ -9,6 +9,7 @@ import { convertDate, formatDateHTML5 } from '~/app/utils/helpers'
 import type { DashboardData, Event, EventFormData } from '~/app/utils/shared-types'
 import { useToggleEventForm } from '~/components/contexts/event-form-context'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
+import { readEventTranslations } from '~/lib/i18n/translations'
 
 type HomeContentProps = {
   dashboardData: DashboardData
@@ -39,6 +40,8 @@ export default function HomeContent({
       attire: event.attire ?? undefined,
       description: event.description ?? undefined,
       eventId: event.id,
+      // Load stored Spanish so editing it in the legacy form does not drop other fields.
+      translations: readEventTranslations(event.translations),
     })
     toggleEventForm()
   }

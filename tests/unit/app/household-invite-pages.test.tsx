@@ -322,6 +322,8 @@ describe('household invite pages', () => {
       { locale: 'es' }
     )
 
+    // The couple's Spanish copy is requested for Spanish visitors.
+    expect(mockGetInviteData).toHaveBeenCalledWith('harry-and-hermione', 'cookie-code', 'es')
     expect(screen.getByText('Reserva la fecha')).toBeInTheDocument()
     expect(screen.getByText('30 de mayo de 2027 – 31 de mayo de 2027')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /calendario de apple/i })).toBeInTheDocument()

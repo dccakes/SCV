@@ -23,14 +23,20 @@ const isWebsiteNotFoundError = (error: unknown): boolean => {
 }
 
 export const loadWeddingBySubUrl = cache(
-  async (websiteSubUrl: string, accessToken?: string, inviteToken?: string) => {
+  async (
+    websiteSubUrl: string,
+    accessToken?: string,
+    inviteToken?: string,
+    /** Fixed language for shared outputs (e.g. cached OG images); defaults to the visitor's. */
+    fixedLocale?: Locale
+  ) => {
     if (!websiteSubUrl) {
       return { status: 'not-found' } as const
     }
 
     try {
       // Couple-authored copy is served in the visitor's language (English fallback).
-      const locale: Locale = (await getLocale()) === 'es' ? 'es' : 'en'
+      const locale: Locale = fixedLocale ?? ((await getLocale()) === 'es' ? 'es' : 'en')
       const weddingData = await api.website.fetchWeddingData({
         subUrl: websiteSubUrl,
         accessToken,

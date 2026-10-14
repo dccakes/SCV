@@ -5,6 +5,7 @@ type AnimatedInputLabelProps = {
   type?: string
   pattern?: string
   title?: string
+  maxLength?: number
   inputValue: string
   fieldName?: string
   labelText: string
@@ -26,6 +27,7 @@ export default function AnimatedInputLabel({
   type,
   pattern,
   title,
+  maxLength,
   inputValue,
   fieldName,
   labelText,
@@ -39,6 +41,7 @@ export default function AnimatedInputLabel({
         type={type ?? 'text'}
         pattern={pattern}
         title={title}
+        maxLength={maxLength}
         id={id}
         placeholder=' '
         value={inputValue ?? ''}

@@ -124,7 +124,8 @@ export async function GET(
   try {
     const { websiteSubUrl } = await params
 
-    const loadResult = await loadWeddingBySubUrl(websiteSubUrl)
+    // The image is cached publicly for everyone, so always render the English copy.
+    const loadResult = await loadWeddingBySubUrl(websiteSubUrl, undefined, undefined, 'en')
 
     let headerImageUrl: string | null = null
     let headline: string | undefined

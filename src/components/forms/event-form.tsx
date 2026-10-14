@@ -136,6 +136,8 @@ export default function EventForm({ prefillFormData }: EventFormProps) {
                     id={`event-${field}-es`}
                     inputValue={spanish[field] ?? ''}
                     fieldName={field}
+                    // Matches the server limit on event names.
+                    maxLength={field === 'name' ? 50 : undefined}
                     labelText={label}
                     handleOnChange={handleSpanishChange}
                   />

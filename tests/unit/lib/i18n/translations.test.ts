@@ -1,6 +1,7 @@
 import {
   alignTranslation,
   overlayTranslation,
+  readEventSpanish,
   readTranslation,
   syncRemovedItems,
 } from '~/lib/i18n/translations'
@@ -135,5 +136,18 @@ describe('syncRemovedItems', () => {
     const es = { items: [{ question: 'PA' }] }
     const items = [{ question: 'A' }]
     expect(syncRemovedItems({ items }, { items: [...items, { question: 'B' }] }, es)).toBe(es)
+  })
+})
+
+describe('readEventSpanish', () => {
+  it('reads the stored Spanish event text and ignores junk', () => {
+    expect(readEventSpanish({ es: { name: 'Boda', venue: 3 } })).toEqual({
+      name: 'Boda',
+      venue: undefined,
+      attire: undefined,
+      description: undefined,
+    })
+    expect(readEventSpanish(null)).toBeUndefined()
+    expect(readEventSpanish({ en: {} })).toBeUndefined()
   })
 })
