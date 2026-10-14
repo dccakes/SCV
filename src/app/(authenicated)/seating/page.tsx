@@ -30,9 +30,7 @@ export default async function SeatingPage(props: {
     id: event.id,
     name: event.name,
   }))
-  const initialEventId = events.some((event) => event.id === searchParams.eventId)
-    ? (searchParams.eventId ?? null)
-    : null
+  const initialEventId = events.find((event) => event.id === searchParams.eventId)?.id ?? null
 
   return (
     <>

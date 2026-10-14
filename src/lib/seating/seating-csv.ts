@@ -1,3 +1,5 @@
+import { formatGuestName } from '~/lib/seating/guest-name'
+
 type CsvTable = { id: string; name: string }
 type CsvGuest = { firstName: string; lastName: string; tableId: string | null }
 
@@ -24,7 +26,7 @@ export const buildSeatingCsv = (
 
   const rows = guests
     .map((guest) => ({
-      name: `${guest.firstName} ${guest.lastName}`.trim(),
+      name: formatGuestName(guest),
       table: (guest.tableId && tableNames.get(guest.tableId)) || null,
     }))
     .sort((a, b) => {

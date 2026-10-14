@@ -7,7 +7,12 @@ import {
   SeatingTableNotFoundError,
 } from '~/server/domains/seating/seating.errors'
 import type { SeatingRepository } from '~/server/domains/seating/seating.repository'
-import { getSeatsNeeded, hasRoomForGuests } from '~/server/domains/seating/seating.rules'
+import {
+  getOpenSeats,
+  getSeatsNeeded,
+  hasRoomForGuests,
+  openSeatsMessage,
+} from '~/server/domains/seating/seating.rules'
 import type {
   AssignGuestsInput,
   CreateSeatingTableInput,
@@ -16,7 +21,6 @@ import type {
   SeatingHousehold,
   SeatingTable,
   SeatingTableLock,
-  SeatingTableRecord,
   UnassignGuestsInput,
   UpdateSeatingTableInput,
 } from '~/server/domains/seating/seating.types'
@@ -164,10 +168,9 @@ export class SeatingService {
       const { capacity, name } = lock.table
       const seatedGuestIds = await lock.seatedGuestIds()
       if (!hasRoomForGuests({ capacity, seatedGuestIds }, guestIds)) {
-        const openSeats = Math.max(0, capacity - seatedGuestIds.length)
         throw new TRPCError({
           code: 'BAD_REQUEST',
-          message: `${name} only has ${openSeats} open seat${openSeats === 1 ? '' : 's'}`,
+          message: openSeatsMessage(name, getOpenSeats({ capacity, guestIds: seatedGuestIds })),
         })
       }
 
@@ -223,7 +226,7 @@ export class SeatingService {
     }
   }
 
-  private async getTableInWedding(id: string, weddingId: string): Promise<SeatingTableRecord> {
+  private async getTableInWedding(id: string, weddingId: string): Promise<SeatingTable> {
     const table = await this.repo.findTableById(id)
     if (!table || table.weddingId !== weddingId) {
       throw new TRPCError({

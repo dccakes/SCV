@@ -10,7 +10,7 @@ type ChartCacheClient = {
   invalidate: (input: ChartInput) => Promise<void>
 }
 
-export type ChartMutationContext = { input: ChartInput; previous?: SeatingChart }
+type ChartMutationContext = { input: ChartInput; previous?: SeatingChart }
 
 /**
  * Optimistic updates keyed to the event a mutation started in, so a rollback

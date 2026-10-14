@@ -1,12 +1,13 @@
 'use client'
 
-import { useDndContext, useDraggable, useDroppable } from '@dnd-kit/core'
+import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
+import { useMemo } from 'react'
 
 import {
   type DragData,
-  type GuestDragData,
   getInitials,
+  guestDragData,
   type TableDropData,
 } from '~/components/seating-chart/seating-dnd'
 import {
@@ -16,7 +17,7 @@ import {
   SEAT_SIZE,
 } from '~/components/seating-chart/seating-layout'
 import { cn } from '~/lib/utils'
-import { hasRoomForGuests } from '~/server/domains/seating/seating.rules'
+import { tableHasRoom } from '~/server/domains/seating/seating.rules'
 import type { SeatingGuest, SeatingTableView } from '~/server/domains/seating/seating.types'
 
 type SeatingTableNodeProps = {
@@ -30,8 +31,8 @@ function SeatedGuest(
   props: Readonly<{ guest: SeatingGuest; x: number; y: number; onSelect: () => void }>
 ) {
   const { guest, x, y, onSelect } = props
-  const name = `${guest.firstName} ${guest.lastName}`
-  const data: GuestDragData = { type: 'guests', guestIds: [guest.id], label: name }
+  const data = guestDragData(guest)
+  const name = data.label
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `seat-guest:${guest.id}`,
     data,
@@ -64,9 +65,14 @@ function SeatedGuest(
 
 export function SeatingTableNode(props: Readonly<SeatingTableNodeProps>) {
   const { table, guestsById, onEdit, onSelectGuest } = props
-  const footprint = getTableFootprint(table.shape, table.capacity)
-  const surface = getTableSurface(table.shape, table.capacity)
-  const seats = getSeatPositions(table.shape, table.capacity)
+  const { footprint, surface, seats } = useMemo(
+    () => ({
+      footprint: getTableFootprint(table.shape, table.capacity),
+      surface: getTableSurface(table.shape, table.capacity),
+      seats: getSeatPositions(table.shape, table.capacity),
+    }),
+    [table.shape, table.capacity]
+  )
   const seatedGuests = table.guestIds
     .map((id) => guestsById.get(id))
     .filter((guest): guest is SeatingGuest => guest !== undefined)
@@ -81,17 +87,16 @@ export function SeatingTableNode(props: Readonly<SeatingTableNodeProps>) {
   } = useDraggable({ id: `table:${table.id}`, data: dragData })
 
   const dropData: TableDropData = { type: 'table', tableId: table.id }
-  const { setNodeRef: setDropRef, isOver } = useDroppable({
-    id: `table-drop:${table.id}`,
-    data: dropData,
-  })
+  // useDroppable's `active` only changes on drag start/end, unlike useDndContext,
+  // which re-renders every table on every pointer move
+  const {
+    setNodeRef: setDropRef,
+    isOver,
+    active,
+  } = useDroppable({ id: `table-drop:${table.id}`, data: dropData })
 
-  const { active } = useDndContext()
   const activeData = active?.data.current as DragData | undefined
-  const incoming = activeData?.type === 'guests' ? activeData.guestIds : null
-  const fits =
-    incoming === null ||
-    hasRoomForGuests({ capacity: table.capacity, seatedGuestIds: table.guestIds }, incoming)
+  const fits = !isOver || activeData?.type !== 'guests' || tableHasRoom(table, activeData.guestIds)
 
   return (
     <div

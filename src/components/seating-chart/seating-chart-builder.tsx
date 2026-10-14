@@ -5,6 +5,10 @@ import { Download, Plus } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import {
+  createSeatingAnnouncements,
+  SEATING_SCREEN_READER_INSTRUCTIONS,
+} from '~/components/seating-chart/seating-announcements'
 import { createChartCache } from '~/components/seating-chart/seating-chart-cache'
 import type { DragData, DropData, GuestDragData } from '~/components/seating-chart/seating-dnd'
 import { type FocusCandidate, getNextFocusKey } from '~/components/seating-chart/seating-focus'
@@ -22,6 +26,10 @@ import {
   type SeatingTableFormValues,
 } from '~/components/seating-chart/seating-table-dialog'
 import { SeatingTableNode } from '~/components/seating-chart/seating-table-node'
+import {
+  resolveTableSubmit,
+  type TableDialogState,
+} from '~/components/seating-chart/seating-table-submit'
 import { useSeatingSensors } from '~/components/seating-chart/use-seating-sensors'
 import {
   AlertDialog,
@@ -43,7 +51,11 @@ import {
   SelectValue,
 } from '~/components/ui/select'
 import { buildSeatingCsv } from '~/lib/seating/seating-csv'
-import { hasRoomForGuests } from '~/server/domains/seating/seating.rules'
+import {
+  getOpenSeats,
+  openSeatsMessage,
+  tableHasRoom,
+} from '~/server/domains/seating/seating.rules'
 import type { SeatingChart, SeatingGuest } from '~/server/domains/seating/seating.types'
 import { api } from '~/trpc/react'
 
@@ -51,8 +63,6 @@ type SeatingChartBuilderProps = {
   events: Array<{ id: string; name: string }>
   initialEventId: string | null
 }
-
-type TableDialogState = { mode: 'create' } | { mode: 'edit'; tableId: string } | null
 
 const DEFAULT_CAPACITY = 8
 
@@ -121,6 +131,10 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
     () => new Map<number, SeatingGuest>(allGuests.map((guest) => [guest.id, guest])),
     [allGuests]
   )
+  const tablesById = useMemo(
+    () => new Map((chart?.tables ?? []).map((table) => [table.id, table])),
+    [chart]
+  )
   const selectedGuest = selectedGuestId === null ? null : (guestsById.get(selectedGuestId) ?? null)
   const selectedHousehold =
     chart?.households.find((household) => household.id === selectedGuest?.householdId) ?? null
@@ -128,27 +142,28 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
 
   // Optimistic updates are keyed to the event each mutation started in
   const cache = createChartCache(utils.seating.getChart)
-  const onMutationError = (
-    error: { message: string },
-    context: Awaited<ReturnType<typeof cache.optimistic>> | undefined
-  ) => {
-    cache.rollback(context)
-    toast.error(error.message)
+  type MutationContext = Awaited<ReturnType<typeof cache.optimistic>> | undefined
+  // Shared by every optimistic mutation: undo and explain on error, refetch after
+  const optimisticHandlers = {
+    onError: (error: { message: string }, _input: unknown, context: MutationContext) => {
+      cache.rollback(context)
+      toast.error(error.message)
+    },
+    onSettled: (_data: unknown, _error: unknown, _input: unknown, context: MutationContext) =>
+      cache.refresh(context),
   }
 
   const assignGuests = api.seating.assignGuests.useMutation({
     onMutate: ({ tableId, guestIds }) =>
       cache.optimistic(chartInput, (current) => seatGuests(current, tableId, guestIds)),
-    onError: (error, _input, context) => onMutationError(error, context),
-    onSettled: (_data, _error, _input, context) => cache.refresh(context),
+    ...optimisticHandlers,
   })
   const unassignGuests = api.seating.unassignGuests.useMutation({
     onMutate: ({ eventId: mutationEventId, guestIds }) =>
       cache.optimistic({ eventId: mutationEventId }, (current) =>
         seatGuests(current, null, guestIds)
       ),
-    onError: (error, _input, context) => onMutationError(error, context),
-    onSettled: (_data, _error, _input, context) => cache.refresh(context),
+    ...optimisticHandlers,
   })
   const updateTable = api.seating.updateTable.useMutation({
     onMutate: ({ id, data }) =>
@@ -156,9 +171,8 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
         ...current,
         tables: current.tables.map((table) => (table.id === id ? { ...table, ...data } : table)),
       })),
-    onError: (error, _input, context) => onMutationError(error, context),
+    ...optimisticHandlers,
     onSuccess: () => setTableDialog(null),
-    onSettled: (_data, _error, _input, context) => cache.refresh(context),
   })
   const createTable = api.seating.createTable.useMutation({
     onError: (error) => toast.error(error.message),
@@ -173,8 +187,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
         const unseated = seatGuests(current, null, removed?.guestIds ?? [])
         return { ...unseated, tables: unseated.tables.filter((table) => table.id !== id) }
       }),
-    onError: (error, _input, context) => onMutationError(error, context),
-    onSettled: (_data, _error, _input, context) => cache.refresh(context),
+    ...optimisticHandlers,
   })
 
   // Runs after the optimistic update has re-rendered the sidebar. The extra
@@ -206,7 +219,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
     if (!data) return
 
     if (data.type === 'table') {
-      const table = chart.tables.find((candidate) => candidate.id === data.tableId)
+      const table = tablesById.get(data.tableId)
       if (!table || (event.delta.x === 0 && event.delta.y === 0)) return
       const position = clampTablePosition(
         { x: table.positionX + event.delta.x, y: table.positionY + event.delta.y },
@@ -225,14 +238,11 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
       return
     }
 
-    const table = chart.tables.find((candidate) => candidate.id === drop.tableId)
+    const table = tablesById.get(drop.tableId)
     if (!table) return
     if (data.guestIds.every((id) => table.guestIds.includes(id))) return
-    if (
-      !hasRoomForGuests({ capacity: table.capacity, seatedGuestIds: table.guestIds }, data.guestIds)
-    ) {
-      const openSeats = table.capacity - table.guestIds.length
-      toast.error(`${table.name} only has ${openSeats} open seat${openSeats === 1 ? '' : 's'}`)
+    if (!tableHasRoom(table, data.guestIds)) {
+      toast.error(openSeatsMessage(table.name, getOpenSeats(table)))
       return
     }
     // Keyboard users keep their place: focus the next unseated guest, since
@@ -246,9 +256,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
   }
 
   const editingTable =
-    tableDialog?.mode === 'edit'
-      ? chart?.tables.find((table) => table.id === tableDialog.tableId)
-      : undefined
+    tableDialog?.mode === 'edit' ? tablesById.get(tableDialog.tableId) : undefined
   const dialogDefaults = useMemo<SeatingTableFormValues>(
     () =>
       editingTable
@@ -262,14 +270,36 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
   )
 
   const handleTableSubmit = (values: SeatingTableFormValues) => {
-    if (!eventId || !chart) return
-    if (editingTable) {
-      updateTable.mutate({ id: editingTable.id, data: values })
+    if (!eventId || !chart || !tableDialog) return
+    const action = resolveTableSubmit(tableDialog, chart.tables)
+    if (action.kind === 'missing') {
+      toast.error('This table was deleted. Refresh to see the latest seating chart.')
+      setTableDialog(null)
+      return
+    }
+    if (action.kind === 'update') {
+      updateTable.mutate({ id: action.tableId, data: values })
       return
     }
     const position = getNextTablePosition(chart.tables)
     createTable.mutate({ eventId, ...values, positionX: position.x, positionY: position.y })
   }
+
+  // Seat one guest from the drawer, the non-drag path to the same mutation
+  const handleSeatGuest = (guestId: number, tableId: string) => {
+    const table = tablesById.get(tableId)
+    if (!table) return
+    if (!tableHasRoom(table, [guestId])) {
+      toast.error(`${table.name} is full`)
+      return
+    }
+    assignGuests.mutate({ tableId, guestIds: [guestId] })
+  }
+
+  const announcements = useMemo(
+    () => createSeatingAnnouncements((tableId) => tablesById.get(tableId)),
+    [tablesById]
+  )
 
   const handleExport = () => {
     if (!chart) return
@@ -317,6 +347,10 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
       ) : (
         <DndContext
           sensors={sensors}
+          accessibility={{
+            announcements,
+            screenReaderInstructions: SEATING_SCREEN_READER_INSTRUCTIONS,
+          }}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
           onDragCancel={() => setActiveDrag(null)}
@@ -426,6 +460,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
         onUnseat={(guestId) => {
           if (eventId) unassignGuests.mutate({ eventId, guestIds: [guestId] })
         }}
+        onSeat={handleSeatGuest}
       />
     </div>
   )

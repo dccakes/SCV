@@ -1,7 +1,10 @@
+// Top-level app routes. The proxy never treats these as wedding website slugs,
+// and websites cannot claim them.
 export const RESERVED_WEBSITE_ROOT_SEGMENTS = [
   '',
   'api',
   'auth',
+  'budget',
   'checklist',
   'dashboard',
   'design-system',

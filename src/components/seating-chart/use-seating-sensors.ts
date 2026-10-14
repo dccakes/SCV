@@ -2,11 +2,13 @@ import { KeyboardSensor, MouseSensor, TouchSensor, useSensor, useSensors } from 
 
 // Space picks up and drops; Enter is left to the element's click so keyboard
 // users can still open the table editor or guest details.
-const KEYBOARD_CODES = {
-  start: ['Space'],
-  cancel: ['Escape'],
-  end: ['Space', 'Enter'],
+// Options are module constants so useSensor's memo holds across renders;
+// new objects each render would re-create every draggable's listeners.
+const KEYBOARD_OPTIONS = {
+  keyboardCodes: { start: ['Space'], cancel: ['Escape'], end: ['Space', 'Enter'] },
 }
+const MOUSE_OPTIONS = { activationConstraint: { distance: 6 } }
+const TOUCH_OPTIONS = { activationConstraint: { delay: 180, tolerance: 8 } }
 
 /**
  * Mouse drags start after a small move so clicks still work; touch drags need
@@ -14,7 +16,7 @@ const KEYBOARD_CODES = {
  */
 export const useSeatingSensors = () =>
   useSensors(
-    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
-    useSensor(KeyboardSensor, { keyboardCodes: KEYBOARD_CODES })
+    useSensor(MouseSensor, MOUSE_OPTIONS),
+    useSensor(TouchSensor, TOUCH_OPTIONS),
+    useSensor(KeyboardSensor, KEYBOARD_OPTIONS)
   )

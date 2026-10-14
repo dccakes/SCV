@@ -1,6 +1,5 @@
 'use client'
 
-import { toNestErrors } from '@hookform/resolvers'
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -24,6 +23,7 @@ import {
 } from '~/components/ui/select'
 import { Textarea } from '~/components/ui/textarea'
 import { TASK_CATEGORIES, type TaskCategoryValue } from '~/lib/constants/task-categories'
+import { zodFormResolver } from '~/lib/forms/zod-form-resolver'
 import type { EventWithStats } from '~/server/domains/event'
 import type { Task } from '~/server/domains/task'
 
@@ -88,26 +88,7 @@ export function TaskDialog({
   const primaryEventId = task?.eventId ?? events[0]?.id ?? ''
 
   const form = useForm<TaskDialogFormData>({
-    resolver: async (values, _context, options) => {
-      const result = taskDialogSchema.safeParse(values)
-
-      if (result.success) {
-        return { values: result.data, errors: {} }
-      }
-
-      const errors = result.error.issues.reduce<Record<string, { type: string; message: string }>>(
-        (current, issue) => {
-          const fieldName = String(issue.path[0] ?? 'root')
-          if (!current[fieldName]) {
-            current[fieldName] = { type: issue.code, message: issue.message }
-          }
-          return current
-        },
-        {}
-      )
-
-      return { values: {}, errors: toNestErrors(errors, options) }
-    },
+    resolver: zodFormResolver(taskDialogSchema),
     defaultValues: getDefaultValues(mode, primaryEventId, task),
   })
 

@@ -1,8 +1,7 @@
 'use client'
 
-import { toNestErrors } from '@hookform/resolvers'
 import { useEffect, useRef } from 'react'
-import { type FieldErrors, type Resolver, useForm } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 import { Button } from '~/components/ui/button'
@@ -16,17 +15,18 @@ import {
 } from '~/components/ui/dialog'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
+import { zodFormResolver } from '~/lib/forms/zod-form-resolver'
 import { cn } from '~/lib/utils'
 import { MAX_TABLE_CAPACITY, MIN_TABLE_CAPACITY } from '~/server/domains/seating/seating.rules'
-import { seatingTableShapeSchema } from '~/server/domains/seating/seating.validator'
+import {
+  seatingTableShapeSchema,
+  tableNameSchema,
+} from '~/server/domains/seating/seating.validator'
 
-export const seatingTableFormSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(1, 'Table name is required')
-    .max(50, 'Table name must be 50 characters or less'),
+const seatingTableFormSchema = z.object({
+  name: tableNameSchema,
   shape: seatingTableShapeSchema,
+  // Same bounds as the server, with wording for the form field
   capacity: z
     .number({ error: 'Enter how many seats this table has' })
     .int('Seats must be a whole number')
@@ -35,22 +35,6 @@ export const seatingTableFormSchema = z.object({
 })
 
 export type SeatingTableFormValues = z.infer<typeof seatingTableFormSchema>
-
-// @hookform/resolvers v3 does not map zod 4 errors, so parse and map them here
-const seatingTableResolver: Resolver<SeatingTableFormValues> = (values, _context, options) => {
-  const result = seatingTableFormSchema.safeParse(values)
-  if (result.success) return { values: result.data, errors: {} }
-
-  const errors: Record<string, { type: string; message: string }> = {}
-  for (const issue of result.error.issues) {
-    const field = String(issue.path[0] ?? 'root')
-    errors[field] ??= { type: issue.code, message: issue.message }
-  }
-  return {
-    values: {},
-    errors: toNestErrors(errors as FieldErrors<SeatingTableFormValues>, options),
-  }
-}
 
 type SeatingTableDialogProps = {
   mode: 'create' | 'edit'
@@ -88,7 +72,7 @@ export function SeatingTableDialog(props: Readonly<SeatingTableDialogProps>) {
     setError,
     watch,
   } = useForm<SeatingTableFormValues>({
-    resolver: seatingTableResolver,
+    resolver: zodFormResolver(seatingTableFormSchema),
     defaultValues,
   })
   const selectedShape = watch('shape')

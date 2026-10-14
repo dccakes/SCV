@@ -9,6 +9,16 @@ import {
 } from '~/components/guest-list/v2/drawer/guest-detail-sections'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/ui/select'
+import { AGE_GROUP_OPTIONS } from '~/lib/constants/guest'
+import { formatGuestName } from '~/lib/seating/guest-name'
+import { getOpenSeats } from '~/server/domains/seating/seating.rules'
 import type {
   SeatingGuest,
   SeatingHousehold,
@@ -22,17 +32,8 @@ type SeatingGuestDrawerProps = {
   onClose: () => void
   onSelectGuest: (guestId: number) => void
   onUnseat: (guestId: number) => void
+  onSeat: (guestId: number, tableId: string) => void
 }
-
-const AGE_GROUP_LABELS: Record<string, string> = {
-  INFANT: 'Infant',
-  CHILD: 'Child',
-  TEEN: 'Teen',
-  ADULT: 'Adult',
-}
-
-const fullName = (guest: Pick<SeatingGuest, 'firstName' | 'lastName'>) =>
-  `${guest.firstName} ${guest.lastName}`.trim()
 
 function DetailRow(props: Readonly<{ label: string; value: string | null }>) {
   return (
@@ -44,7 +45,7 @@ function DetailRow(props: Readonly<{ label: string; value: string | null }>) {
 }
 
 export function SeatingGuestDrawer(props: Readonly<SeatingGuestDrawerProps>) {
-  const { guest, household, tables, onClose, onSelectGuest, onUnseat } = props
+  const { guest, household, tables, onClose, onSelectGuest, onUnseat, onSeat } = props
   const tableName = (tableId: string | null) =>
     tables.find((table) => table.id === tableId)?.name ?? null
   const seatedAt = guest ? tableName(guest.tableId) : null
@@ -55,7 +56,7 @@ export function SeatingGuestDrawer(props: Readonly<SeatingGuestDrawerProps>) {
       onOpenChange={(open) => {
         if (!open) onClose()
       }}
-      title={guest ? fullName(guest) : 'Guest details'}
+      title={guest ? formatGuestName(guest) : 'Guest details'}
       subtitle={seatedAt ? `Seated at ${seatedAt}` : 'Not seated yet'}
       headerMeta={
         guest ? (
@@ -93,7 +94,30 @@ export function SeatingGuestDrawer(props: Readonly<SeatingGuestDrawerProps>) {
               ) : null
             }
           >
-            <DetailRow label='Table' value={seatedAt ?? 'Unassigned'} />
+            {/* Seating without dragging, for keyboard, touch and screen reader users */}
+            <Select
+              value={guest.tableId ?? undefined}
+              onValueChange={(tableId) => {
+                if (tableId !== guest.tableId) onSeat(guest.id, tableId)
+              }}
+            >
+              <SelectTrigger aria-label='Seat at table'>
+                <SelectValue
+                  placeholder={tables.length === 0 ? 'Add a table first' : 'Unassigned'}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {tables.map((table) => {
+                  const open = getOpenSeats(table)
+                  const isOwnTable = table.id === guest.tableId
+                  return (
+                    <SelectItem key={table.id} value={table.id} disabled={open <= 0 && !isOwnTable}>
+                      {table.name} ({open <= 0 ? 'full' : `${open} open`})
+                    </SelectItem>
+                  )
+                })}
+              </SelectContent>
+            </Select>
           </GuestDetailSection>
 
           <GuestDetailSection title='Guest' contentClassName='space-y-1.5'>
@@ -101,7 +125,10 @@ export function SeatingGuestDrawer(props: Readonly<SeatingGuestDrawerProps>) {
             <DetailRow label='Phone' value={guest.phone} />
             <DetailRow
               label='Age group'
-              value={AGE_GROUP_LABELS[guest.ageGroup ?? 'ADULT'] ?? null}
+              value={
+                AGE_GROUP_OPTIONS.find((option) => option.value === (guest.ageGroup ?? 'ADULT'))
+                  ?.label ?? null
+              }
             />
             <DetailRow label='Dietary needs' value={guest.dietaryRestrictions} />
             {guest.isTagAlong ? <DetailRow label='Tag-along' value='Yes' /> : null}
@@ -121,7 +148,7 @@ export function SeatingGuestDrawer(props: Readonly<SeatingGuestDrawerProps>) {
                           : 'text-foreground/80 underline-offset-2 hover:underline'
                       }
                     >
-                      {fullName(member)}
+                      {formatGuestName(member)}
                       {member.isPrimaryContact ? ' (primary)' : ''}
                     </button>
                     <span className='text-xs'>{tableName(member.tableId) ?? 'Unassigned'}</span>

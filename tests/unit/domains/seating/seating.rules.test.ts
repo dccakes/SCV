@@ -1,18 +1,31 @@
 import {
+  getOpenSeats,
   getSeatsNeeded,
   hasRoomForGuests,
-  isSeatableRsvp,
+  NON_SEATABLE_RSVPS,
+  openSeatsMessage,
+  tableHasRoom,
 } from '~/server/domains/seating/seating.rules'
 
 describe('seating rules', () => {
-  describe('isSeatableRsvp', () => {
-    it.each([
-      ['Invited', true],
-      ['Attending', true],
-      ['Declined', false],
-      ['Not Invited', false],
-    ])('treats %s as seatable=%s', (rsvp, expected) => {
-      expect(isSeatableRsvp(rsvp)).toBe(expected)
+  it('excludes declined and not-invited guests from seating', () => {
+    expect(NON_SEATABLE_RSVPS).toEqual(['Declined', 'Not Invited'])
+  })
+
+  describe('table helpers', () => {
+    it('counts open seats, never below zero', () => {
+      expect(getOpenSeats({ capacity: 4, guestIds: [1] })).toBe(3)
+      expect(getOpenSeats({ capacity: 2, guestIds: [1, 2, 3] })).toBe(0)
+    })
+
+    it('checks room on a chart table', () => {
+      expect(tableHasRoom({ capacity: 2, guestIds: [1] }, [2])).toBe(true)
+      expect(tableHasRoom({ capacity: 2, guestIds: [1] }, [2, 3])).toBe(false)
+    })
+
+    it('pluralises the open seats message', () => {
+      expect(openSeatsMessage('Table 1', 1)).toBe('Table 1 only has 1 open seat')
+      expect(openSeatsMessage('Table 1', 0)).toBe('Table 1 only has 0 open seats')
     })
   })
 

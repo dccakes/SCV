@@ -44,26 +44,12 @@ describe('SeatingRepository', () => {
     )
   })
 
-  it('filters a single table’s seats against that table’s event', async () => {
+  it('looks a table up with a single query', async () => {
     const { db, repo } = buildDb()
     db.seatingTable.findUnique.mockResolvedValue({ id: 't1', eventId: 'event-1' })
-    db.seatAssignment.findMany.mockResolvedValue([{ guestId: 4 }])
 
-    const table = await repo.findTableById('t1')
-
-    expect(db.seatAssignment.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { tableId: 't1', guest: { invitations: { some: SEATABLE } } },
-      })
-    )
-    expect(table?.seatAssignments).toEqual([{ guestId: 4 }])
-  })
-
-  it('returns null for a missing table without querying seats', async () => {
-    const { db, repo } = buildDb()
-    db.seatingTable.findUnique.mockResolvedValue(null)
-
-    expect(await repo.findTableById('missing')).toBeNull()
+    expect(await repo.findTableById('t1')).toEqual({ id: 't1', eventId: 'event-1' })
+    expect(db.seatingTable.findUnique).toHaveBeenCalledWith({ where: { id: 't1' } })
     expect(db.seatAssignment.findMany).not.toHaveBeenCalled()
   })
 

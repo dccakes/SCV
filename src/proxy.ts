@@ -2,6 +2,7 @@ import { getSessionCookie } from 'better-auth/cookies'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { getLocaleFromCountry, type Locale } from '~/lib/locale/locale-detection'
+import { reservedWebsiteRootSegmentsSet } from '~/lib/website/reserved-root-segments'
 import { isVoyagePage } from '~/templates/voyage/site'
 
 const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/join', '/blog', '/api/webhooks', '/api/cron']
@@ -29,27 +30,9 @@ const isPublicTrpcPath = (pathname: string): boolean => {
   )
 }
 const PUBLIC_EXACT_PATHS = ['/', '/api/blob/upload', '/api/locale', '/pricing', '/open-source']
-const RESERVED_ROOT_SEGMENTS = new Set([
-  '',
-  'api',
-  'auth',
-  'budget',
-  'checklist',
-  'dashboard',
-  'design-system',
-  'events',
-  'guest-list',
-  'join',
-  'old_dashboard',
-  'seating',
-  'settings',
-  'vendors',
-  'w',
-  'website',
-])
 
 const isReservedSlug = (slug: string): boolean =>
-  RESERVED_ROOT_SEGMENTS.has(slug) || slug.startsWith('auth') || slug.startsWith('join')
+  reservedWebsiteRootSegmentsSet.has(slug) || slug.startsWith('auth') || slug.startsWith('join')
 
 const isPublicWebsitePath = (pathname: string): boolean => {
   const segments = pathname.split('/').filter(Boolean)

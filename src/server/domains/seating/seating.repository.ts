@@ -92,21 +92,8 @@ export class SeatingRepository {
     })
   }
 
-  /**
-   * A table with the guests seated at it who are still seatable for its event.
-   */
-  async findTableById(id: string): Promise<SeatingTableRecord | null> {
-    const table = await this.db.seatingTable.findUnique({ where: { id } })
-    if (!table) return null
-
-    const seatAssignments = await this.db.seatAssignment.findMany({
-      where: {
-        tableId: id,
-        guest: { invitations: { some: seatableInvitation(table.eventId) } },
-      },
-      select: { guestId: true },
-    })
-    return { ...table, seatAssignments }
+  async findTableById(id: string): Promise<SeatingTable | null> {
+    return this.db.seatingTable.findUnique({ where: { id } })
   }
 
   async createTable(data: CreateSeatingTableInput & { weddingId: string }): Promise<SeatingTable> {

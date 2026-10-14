@@ -4,14 +4,13 @@
  * Shared by the service (authoritative checks) and the client (drop previews).
  */
 
+import { RSVP_STATUS } from '~/lib/constants/rsvp'
+
 // RSVP values that mean the guest will not be at the event
-export const NON_SEATABLE_RSVPS = ['Declined', 'Not Invited'] as const
+export const NON_SEATABLE_RSVPS = [RSVP_STATUS.DECLINED, RSVP_STATUS.NOT_INVITED] as const
 
 export const MIN_TABLE_CAPACITY = 1
 export const MAX_TABLE_CAPACITY = 30
-
-export const isSeatableRsvp = (rsvp: string): boolean =>
-  !(NON_SEATABLE_RSVPS as readonly string[]).includes(rsvp)
 
 export const getSeatsNeeded = (
   seatedGuestIds: readonly number[],
@@ -27,3 +26,15 @@ export const hasRoomForGuests = (
 ): boolean =>
   table.seatedGuestIds.length + getSeatsNeeded(table.seatedGuestIds, incomingGuestIds) <=
   table.capacity
+
+type TableSeats = { capacity: number; guestIds: readonly number[] }
+
+export const getOpenSeats = (table: TableSeats): number =>
+  Math.max(0, table.capacity - table.guestIds.length)
+
+// Client-side room check on a table as the chart returns it
+export const tableHasRoom = (table: TableSeats, incomingGuestIds: readonly number[]): boolean =>
+  hasRoomForGuests({ capacity: table.capacity, seatedGuestIds: table.guestIds }, incomingGuestIds)
+
+export const openSeatsMessage = (tableName: string, openSeats: number): string =>
+  `${tableName} only has ${openSeats} open seat${openSeats === 1 ? '' : 's'}`

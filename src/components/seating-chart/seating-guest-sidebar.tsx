@@ -6,10 +6,12 @@ import { useMemo, useState } from 'react'
 
 import {
   type GuestDragData,
+  guestDragData,
   UNASSIGNED_DROP_ID,
   type UnassignedDropData,
 } from '~/components/seating-chart/seating-dnd'
 import { Input } from '~/components/ui/input'
+import { formatGuestName } from '~/lib/seating/guest-name'
 import { cn } from '~/lib/utils'
 import type { SeatingGuest, SeatingHousehold } from '~/server/domains/seating/seating.types'
 
@@ -20,11 +22,9 @@ type SeatingGuestSidebarProps = {
   onSelectGuest: (guestId: number) => void
 }
 
-const fullName = (guest: SeatingGuest) => `${guest.firstName} ${guest.lastName}`
-
 function DraggableGuest(props: Readonly<{ guest: SeatingGuest; onSelect: () => void }>) {
   const { guest, onSelect } = props
-  const data: GuestDragData = { type: 'guests', guestIds: [guest.id], label: fullName(guest) }
+  const data = guestDragData(guest)
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `sidebar-guest:${guest.id}`,
     data,
@@ -38,7 +38,7 @@ function DraggableGuest(props: Readonly<{ guest: SeatingGuest; onSelect: () => v
         data-seating-focus-key={`sidebar-guest:${guest.id}`}
         data-seating-guest-ids={guest.id}
         onClick={onSelect}
-        aria-label={`${fullName(guest)}. Press Space to move onto a table, or Enter for details.`}
+        aria-label={`${formatGuestName(guest)}. Press Space to move onto a table, or Enter for details.`}
         {...attributes}
         {...listeners}
         className={cn(
@@ -47,7 +47,7 @@ function DraggableGuest(props: Readonly<{ guest: SeatingGuest; onSelect: () => v
         )}
       >
         <GripVertical className='h-3.5 w-3.5 shrink-0 text-muted-foreground' aria-hidden='true' />
-        <span className='truncate'>{fullName(guest)}</span>
+        <span className='truncate'>{formatGuestName(guest)}</span>
         {guest.isTagAlong ? (
           <span className='ml-auto font-mono text-[0.6rem] text-muted-foreground'>+1</span>
         ) : null}
@@ -118,7 +118,8 @@ export function SeatingGuestSidebar(props: Readonly<SeatingGuestSidebarProps>) {
         household,
         unassigned: household.guests.filter(
           (guest) =>
-            guest.tableId === null && (!query || fullName(guest).toLowerCase().includes(query))
+            guest.tableId === null &&
+            (!query || formatGuestName(guest).toLowerCase().includes(query))
         ),
       }))
       .filter((group) => group.unassigned.length > 0)

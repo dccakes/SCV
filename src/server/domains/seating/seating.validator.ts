@@ -4,13 +4,13 @@ import { MAX_TABLE_CAPACITY, MIN_TABLE_CAPACITY } from '~/server/domains/seating
 
 export const seatingTableShapeSchema = z.enum(['ROUND', 'RECTANGULAR'])
 
-const tableNameSchema = z
+export const tableNameSchema = z
   .string()
   .trim()
   .min(1, 'Table name is required')
   .max(50, 'Table name must be 50 characters or less')
 
-const capacitySchema = z
+export const capacitySchema = z
   .number()
   .int()
   .min(MIN_TABLE_CAPACITY, `Tables need at least ${MIN_TABLE_CAPACITY} seat`)
