@@ -87,20 +87,23 @@ describe('bilingual sections editor', () => {
     fireEvent.change(card.getByPlaceholderText('Formal'), { target: { value: 'Formal' } })
     fireEvent.click(card.getByRole('button', { name: 'Save' }))
 
-    expect(mockUpsertMutate).toHaveBeenCalledWith({
-      type: 'FAQ',
-      isEnabled: true,
-      content: faqSection.content,
-      translations: {
-        es: {
-          heading: 'Preguntas frecuentes',
-          items: [
-            { question: '¿Código de vestimenta?', answer: 'Formal' },
-            { question: '¿Niños?', answer: 'Solo adultos' },
-          ],
+    expect(mockUpsertMutate).toHaveBeenCalledWith(
+      {
+        type: 'FAQ',
+        isEnabled: true,
+        content: faqSection.content,
+        translations: {
+          es: {
+            heading: 'Preguntas frecuentes',
+            items: [
+              { question: '¿Código de vestimenta?', answer: 'Formal' },
+              { question: '¿Niños?', answer: 'Solo adultos' },
+            ],
+          },
         },
       },
-    })
+      expect.anything()
+    )
   })
 
   it('removes the matching Spanish row when an English row is deleted', () => {
@@ -117,7 +120,8 @@ describe('bilingual sections editor', () => {
             items: [{ question: '¿Niños?', answer: 'Solo adultos' }],
           },
         },
-      })
+      }),
+      expect.anything()
     )
   })
 })

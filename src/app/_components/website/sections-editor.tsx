@@ -121,16 +121,8 @@ function SectionCard({ entry, initialContent, initialSpanish, initialEnabled }: 
     onError: (error) => {
       toast.error(error.message || `Unable to save the ${entry.label} section.`)
     },
-    onSuccess: (_section, saved) => {
+    onSuccess: () => {
       toast.success(`${entry.label} saved`)
-      // Mark what was sent as saved; edits made while saving stay dirty.
-      setBaseline(
-        snapshot(
-          saved.content as WebsiteSectionContent,
-          saved.translations?.es as WebsiteSectionContent,
-          saved.isEnabled ?? true
-        )
-      )
       router.refresh()
     },
   })
@@ -138,12 +130,12 @@ function SectionCard({ entry, initialContent, initialSpanish, initialEnabled }: 
   const hasChanges = baseline !== snapshot(content, alignedSpanish, isEnabled)
 
   const save = () => {
-    upsertSection.mutate({
-      type: entry.type,
-      content,
-      isEnabled,
-      translations: { es: alignedSpanish },
-    })
+    // Mark what was sent as saved; edits made while saving stay dirty.
+    const sent = snapshot(content, alignedSpanish, isEnabled)
+    upsertSection.mutate(
+      { type: entry.type, content, isEnabled, translations: { es: alignedSpanish } },
+      { onSuccess: () => setBaseline(sent) }
+    )
   }
 
   return (
