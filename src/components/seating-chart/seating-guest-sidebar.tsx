@@ -35,6 +35,8 @@ function DraggableGuest(props: Readonly<{ guest: SeatingGuest; onSelect: () => v
       <button
         ref={setNodeRef}
         type='button'
+        data-seating-focus-key={`sidebar-guest:${guest.id}`}
+        data-seating-guest-ids={guest.id}
         onClick={onSelect}
         aria-label={`${fullName(guest)}. Press Space to move onto a table, or Enter for details.`}
         {...attributes}
@@ -79,6 +81,8 @@ function HouseholdGroup(
       <button
         type='button'
         ref={setNodeRef}
+        data-seating-focus-key={`household:${household.id}`}
+        data-seating-guest-ids={data.guestIds.join(',')}
         {...attributes}
         {...listeners}
         aria-label={`${label}, ${unassigned.length} unseated. Press Space to move everyone together.`}

@@ -2,7 +2,10 @@ import { TRPCError } from '@trpc/server'
 
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
-import { SeatAlreadyTakenError } from '~/server/domains/seating/seating.errors'
+import {
+  SeatAlreadyTakenError,
+  SeatingTableNotFoundError,
+} from '~/server/domains/seating/seating.errors'
 import type { SeatingRepository } from '~/server/domains/seating/seating.repository'
 import { getSeatsNeeded, hasRoomForGuests } from '~/server/domains/seating/seating.rules'
 import type {
@@ -12,6 +15,7 @@ import type {
   SeatingChart,
   SeatingHousehold,
   SeatingTable,
+  SeatingTableLock,
   SeatingTableRecord,
   UnassignGuestsInput,
   UpdateSeatingTableInput,
@@ -118,16 +122,16 @@ export class SeatingService {
   ): Promise<SeatingTable> {
     requirePermission(ctx, { event: ['update'] })
     const table = await this.getTableInWedding(id, weddingId)
-    const { capacity } = data
-    if (capacity === undefined) return this.repo.updateTable(id, data)
 
-    return this.repo.withLockedTable({ id: table.id, eventId: table.eventId }, async (lock) => {
-      const seatedCount = (await lock.seatedGuestIds()).length
-      if (capacity < seatedCount) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: `${table.name} has ${seatedCount} guests seated. Move guests before reducing seats.`,
-        })
+    return this.withLockedTable(table, async (lock) => {
+      if (data.capacity !== undefined) {
+        const seatedCount = (await lock.seatedGuestIds()).length
+        if (data.capacity < seatedCount) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: `${lock.table.name} has ${seatedCount} guests seated. Move guests before reducing seats.`,
+          })
+        }
       }
       return lock.updateTable(data)
     })
@@ -156,30 +160,20 @@ export class SeatingService {
       })
     }
 
-    try {
-      await this.repo.withLockedTable({ id: table.id, eventId: table.eventId }, async (lock) => {
-        const seatedGuestIds = await lock.seatedGuestIds()
-        if (!hasRoomForGuests({ capacity: table.capacity, seatedGuestIds }, guestIds)) {
-          const openSeats = Math.max(0, table.capacity - seatedGuestIds.length)
-          throw new TRPCError({
-            code: 'BAD_REQUEST',
-            message: `${table.name} only has ${openSeats} open seat${openSeats === 1 ? '' : 's'}`,
-          })
-        }
-
-        if (getSeatsNeeded(seatedGuestIds, guestIds) === 0) return
-        await lock.replaceAssignments(guestIds)
-      })
-    } catch (error) {
-      // Another request seated one of these guests at the same moment
-      if (error instanceof SeatAlreadyTakenError) {
+    await this.withLockedTable(table, async (lock) => {
+      const { capacity, name } = lock.table
+      const seatedGuestIds = await lock.seatedGuestIds()
+      if (!hasRoomForGuests({ capacity, seatedGuestIds }, guestIds)) {
+        const openSeats = Math.max(0, capacity - seatedGuestIds.length)
         throw new TRPCError({
-          code: 'CONFLICT',
-          message: 'Someone else just moved one of these guests. Refresh and try again.',
+          code: 'BAD_REQUEST',
+          message: `${name} only has ${openSeats} open seat${openSeats === 1 ? '' : 's'}`,
         })
       }
-      throw error
-    }
+
+      if (getSeatsNeeded(seatedGuestIds, guestIds) === 0) return
+      await lock.replaceAssignments(guestIds)
+    })
   }
 
   async unassignGuests(
@@ -190,6 +184,33 @@ export class SeatingService {
     requirePermission(ctx, { event: ['update'] })
     await this.assertEventInWedding(input.eventId, weddingId)
     await this.repo.deleteAssignments(input.eventId, input.guestIds)
+  }
+
+  /**
+   * Runs work under the table's row lock, translating concurrent-edit errors
+   * from the repository into user-facing tRPC errors.
+   */
+  private async withLockedTable<T>(
+    table: { id: string; eventId: string },
+    work: (lock: SeatingTableLock) => Promise<T>
+  ): Promise<T> {
+    try {
+      return await this.repo.withLockedTable({ id: table.id, eventId: table.eventId }, work)
+    } catch (error) {
+      if (error instanceof SeatAlreadyTakenError) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: 'Someone else just moved one of these guests. Refresh and try again.',
+        })
+      }
+      if (error instanceof SeatingTableNotFoundError) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'This table was just deleted. Refresh to see the latest seating chart.',
+        })
+      }
+      throw error
+    }
   }
 
   private async assertEventInWedding(eventId: string, weddingId: string): Promise<void> {

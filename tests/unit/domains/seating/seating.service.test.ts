@@ -7,7 +7,10 @@ jest.mock('~/server/authz/permission-checker', () => ({
 jest.mock('~/server/domains/seating/seating.repository')
 
 import { requirePermission } from '~/server/authz/permission-checker'
-import { SeatAlreadyTakenError } from '~/server/domains/seating/seating.errors'
+import {
+  SeatAlreadyTakenError,
+  SeatingTableNotFoundError,
+} from '~/server/domains/seating/seating.errors'
 
 // @ts-expect-error - Importing mock functions from mocked module
 import {
@@ -22,9 +25,9 @@ import {
   mockFindTablesByEventId,
   mockLockedReplaceAssignments,
   mockLockedSeatedGuestIds,
+  mockLockedTableRow,
   mockLockedUpdateTable,
   mockTable,
-  mockUpdateTable,
   mockWithLockedTable,
   resetMocks,
   SeatingRepository,
@@ -176,12 +179,26 @@ describe('SeatingService', () => {
         positionY: 120,
       })
 
-      expect(mockUpdateTable).toHaveBeenCalledWith('table-1', {
+      expect(mockLockedUpdateTable).toHaveBeenCalledWith({
         name: 'Head Table',
         shape: 'RECTANGULAR',
         positionX: 300,
         positionY: 120,
       })
+    })
+
+    it('sends position-only moves through the lock too', async () => {
+      await service.updateTable(ctx, WEDDING_ID, 'table-1', { positionX: 5, positionY: 6 })
+
+      expect(mockLockedUpdateTable).toHaveBeenCalledWith({ positionX: 5, positionY: 6 })
+    })
+
+    it('reports a table deleted by someone else as NOT_FOUND', async () => {
+      ;(mockWithLockedTable as jest.Mock).mockRejectedValue(new SeatingTableNotFoundError())
+
+      await expect(
+        service.updateTable(ctx, WEDDING_ID, 'table-1', { positionX: 5 })
+      ).rejects.toMatchObject({ code: 'NOT_FOUND' })
     })
 
     it('rejects shrinking capacity below the number of seated guests', async () => {
@@ -191,7 +208,6 @@ describe('SeatingService', () => {
         service.updateTable(ctx, WEDDING_ID, 'table-1', { capacity: 1 })
       ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
       expect(mockLockedUpdateTable).not.toHaveBeenCalled()
-      expect(mockUpdateTable).not.toHaveBeenCalled()
     })
 
     it('checks and changes capacity inside the locked table transaction', async () => {
@@ -204,7 +220,6 @@ describe('SeatingService', () => {
         expect.any(Function)
       )
       expect(mockLockedUpdateTable).toHaveBeenCalledWith({ capacity: 2 })
-      expect(mockUpdateTable).not.toHaveBeenCalled()
     })
 
     it('rejects tables from another wedding', async () => {
@@ -268,6 +283,27 @@ describe('SeatingService', () => {
         service.assignGuests(ctx, WEDDING_ID, { tableId: 'table-1', guestIds: [3] })
       ).rejects.toMatchObject({ code: 'BAD_REQUEST', message: 'Table 1 only has 0 open seats' })
       expect(mockLockedReplaceAssignments).not.toHaveBeenCalled()
+    })
+
+    it('checks against the capacity read under the lock, not the earlier snapshot', async () => {
+      // Snapshot (mockTable) says capacity 4; another planner lowered it to 2 meanwhile
+      mockLockedTableRow.capacity = 2
+      ;(mockFindSeatableGuestIds as jest.Mock).mockResolvedValue([3])
+
+      await expect(
+        service.assignGuests(ctx, WEDDING_ID, { tableId: 'table-1', guestIds: [3] })
+      ).rejects.toMatchObject({ code: 'BAD_REQUEST', message: 'Table 1 only has 0 open seats' })
+      expect(mockLockedReplaceAssignments).not.toHaveBeenCalled()
+      mockLockedTableRow.capacity = 4
+    })
+
+    it('reports a table deleted by someone else as NOT_FOUND', async () => {
+      ;(mockFindSeatableGuestIds as jest.Mock).mockResolvedValue([3])
+      ;(mockWithLockedTable as jest.Mock).mockRejectedValue(new SeatingTableNotFoundError())
+
+      await expect(
+        service.assignGuests(ctx, WEDDING_ID, { tableId: 'table-1', guestIds: [3] })
+      ).rejects.toMatchObject({ code: 'NOT_FOUND' })
     })
 
     it('blocks a drop that would exceed capacity', async () => {

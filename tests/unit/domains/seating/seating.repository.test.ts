@@ -1,13 +1,16 @@
 import { Prisma, type PrismaClient } from '@prisma/client'
 
-import { SeatAlreadyTakenError } from '~/server/domains/seating/seating.errors'
+import {
+  SeatAlreadyTakenError,
+  SeatingTableNotFoundError,
+} from '~/server/domains/seating/seating.errors'
 import { SeatingRepository } from '~/server/domains/seating/seating.repository'
 
 const SEATABLE = { eventId: 'event-1', rsvp: { notIn: ['Declined', 'Not Invited'] } }
 
 const buildDb = () => {
   const tx = {
-    $queryRaw: jest.fn().mockResolvedValue([]),
+    $queryRaw: jest.fn().mockResolvedValue([{ name: 'T1', capacity: 6 }]),
     seatAssignment: {
       deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
       createMany: jest.fn().mockResolvedValue({ count: 0 }),
@@ -68,7 +71,10 @@ describe('SeatingRepository', () => {
     it('locks the table row and purges stale seats before running the work', async () => {
       const { tx, repo } = buildDb()
       const order: string[] = []
-      tx.$queryRaw.mockImplementation(async () => order.push('lock'))
+      tx.$queryRaw.mockImplementation(async () => {
+        order.push('lock')
+        return [{ name: 'T1', capacity: 6 }]
+      })
       tx.seatAssignment.deleteMany.mockImplementation(async () => order.push('purge'))
 
       await repo.withLockedTable({ id: 't1', eventId: 'event-1' }, async () => {
@@ -134,6 +140,29 @@ describe('SeatingRepository', () => {
           throw boom
         })
       ).rejects.toBe(boom)
+    })
+
+    it('exposes the table row read under the lock', async () => {
+      const { repo } = buildDb()
+
+      const row = await repo.withLockedTable(
+        { id: 't1', eventId: 'event-1' },
+        async (lock) => lock.table
+      )
+
+      expect(row).toEqual({ name: 'T1', capacity: 6 })
+    })
+
+    it('throws SeatingTableNotFoundError when the table was deleted before the lock', async () => {
+      const { tx, repo } = buildDb()
+      tx.$queryRaw.mockResolvedValue([])
+      const work = jest.fn()
+
+      await expect(
+        repo.withLockedTable({ id: 't1', eventId: 'event-1' }, work)
+      ).rejects.toBeInstanceOf(SeatingTableNotFoundError)
+      expect(work).not.toHaveBeenCalled()
+      expect(tx.seatAssignment.deleteMany).not.toHaveBeenCalled()
     })
   })
 })

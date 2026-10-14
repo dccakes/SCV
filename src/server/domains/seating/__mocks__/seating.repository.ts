@@ -53,7 +53,6 @@ export const mockFindTablesByEventId = jest.fn()
 export const mockFindSeatableGuests = jest.fn()
 export const mockFindTableById = jest.fn()
 export const mockCreateTable = jest.fn()
-export const mockUpdateTable = jest.fn()
 export const mockDeleteTable = jest.fn()
 export const mockFindSeatableGuestIds = jest.fn()
 export const mockDeleteAssignments = jest.fn()
@@ -64,8 +63,12 @@ export const mockLockedReplaceAssignments = jest.fn()
 export const mockLockedUpdateTable = jest.fn()
 export const mockWithLockedTable = jest.fn()
 
+// The table row as read under the lock; defaults match mockTable
+export const mockLockedTableRow = { name: 'Table 1', capacity: 4 }
+
 const runWithLock = async (_table: unknown, work: (lock: unknown) => Promise<unknown>) =>
   work({
+    table: mockLockedTableRow,
     seatedGuestIds: mockLockedSeatedGuestIds,
     replaceAssignments: mockLockedReplaceAssignments,
     updateTable: mockLockedUpdateTable,
@@ -77,7 +80,6 @@ export const SeatingRepository = jest.fn().mockImplementation(() => ({
   findSeatableGuests: mockFindSeatableGuests,
   findTableById: mockFindTableById,
   createTable: mockCreateTable,
-  updateTable: mockUpdateTable,
   deleteTable: mockDeleteTable,
   findSeatableGuestIds: mockFindSeatableGuestIds,
   deleteAssignments: mockDeleteAssignments,
@@ -90,7 +92,6 @@ export const resetMocks = (): void => {
   mockFindSeatableGuests.mockReset()
   mockFindTableById.mockReset()
   mockCreateTable.mockReset()
-  mockUpdateTable.mockReset()
   mockDeleteTable.mockReset()
   mockFindSeatableGuestIds.mockReset()
   mockDeleteAssignments.mockReset()

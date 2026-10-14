@@ -3,10 +3,11 @@
 import { DndContext, type DragEndEvent, DragOverlay, type DragStartEvent } from '@dnd-kit/core'
 import { Download, Plus } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { createChartCache } from '~/components/seating-chart/seating-chart-cache'
 import type { DragData, DropData, GuestDragData } from '~/components/seating-chart/seating-dnd'
+import { type FocusCandidate, getNextFocusKey } from '~/components/seating-chart/seating-focus'
 import { SeatingGuestDrawer } from '~/components/seating-chart/seating-guest-drawer'
 import { SeatingGuestSidebar } from '~/components/seating-chart/seating-guest-sidebar'
 import {
@@ -71,6 +72,13 @@ const seatGuests = (chart: SeatingChart, tableId: string | null, guestIds: numbe
   }
 }
 
+// Sidebar items in DOM order, read when a keyboard drop is about to remove one
+const readSidebarFocusCandidates = (): FocusCandidate[] =>
+  Array.from(document.querySelectorAll<HTMLElement>('[data-seating-focus-key]')).map((node) => ({
+    key: node.dataset.seatingFocusKey ?? '',
+    guestIds: (node.dataset.seatingGuestIds ?? '').split(',').filter(Boolean).map(Number),
+  }))
+
 const downloadCsv = (fileName: string, csv: string) => {
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
   const link = document.createElement('a')
@@ -97,6 +105,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
   const [tableDialog, setTableDialog] = useState<TableDialogState>(null)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [activeDrag, setActiveDrag] = useState<GuestDragData | null>(null)
+  const [pendingFocusKey, setPendingFocusKey] = useState<string | null>(null)
 
   const chartInput = { eventId: eventId ?? '' }
   const chartQuery = api.seating.getChart.useQuery(chartInput, { enabled: eventId !== null })
@@ -168,6 +177,17 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
     onSettled: (_data, _error, _input, context) => cache.refresh(context),
   })
 
+  // Runs after the optimistic update has re-rendered the sidebar. The extra
+  // frame lets dnd-kit's own focus restore (which finds no node) go first.
+  useEffect(() => {
+    if (!pendingFocusKey || !chart) return
+    const frame = requestAnimationFrame(() => {
+      document.querySelector<HTMLElement>(`[data-seating-focus-key="${pendingFocusKey}"]`)?.focus()
+      setPendingFocusKey(null)
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [pendingFocusKey, chart])
+
   const handleEventChange = (nextEventId: string) => {
     setEventId(nextEventId)
     setSelectedGuestId(null)
@@ -214,6 +234,13 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
       const openSeats = table.capacity - table.guestIds.length
       toast.error(`${table.name} only has ${openSeats} open seat${openSeats === 1 ? '' : 's'}`)
       return
+    }
+    // Keyboard users keep their place: focus the next unseated guest, since
+    // the item they dragged is about to leave the sidebar
+    if (event.activatorEvent instanceof KeyboardEvent) {
+      setPendingFocusKey(
+        getNextFocusKey(readSidebarFocusCandidates(), String(event.active.id), data.guestIds)
+      )
     }
     assignGuests.mutate({ tableId: table.id, guestIds: data.guestIds })
   }

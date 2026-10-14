@@ -1,6 +1,9 @@
 import { Prisma, type PrismaClient } from '@prisma/client'
 
-import { SeatAlreadyTakenError } from '~/server/domains/seating/seating.errors'
+import {
+  SeatAlreadyTakenError,
+  SeatingTableNotFoundError,
+} from '~/server/domains/seating/seating.errors'
 
 import { NON_SEATABLE_RSVPS } from '~/server/domains/seating/seating.rules'
 import type {
@@ -9,7 +12,6 @@ import type {
   SeatingTable,
   SeatingTableLock,
   SeatingTableRecord,
-  UpdateSeatingTableInput,
 } from '~/server/domains/seating/seating.types'
 
 const seatableInvitation = (eventId: string) => ({
@@ -111,10 +113,6 @@ export class SeatingRepository {
     return this.db.seatingTable.create({ data })
   }
 
-  async updateTable(id: string, data: UpdateSeatingTableInput): Promise<SeatingTable> {
-    return this.db.seatingTable.update({ where: { id }, data })
-  }
-
   async deleteTable(id: string): Promise<SeatingTable> {
     return this.db.seatingTable.delete({ where: { id } })
   }
@@ -154,10 +152,14 @@ export class SeatingRepository {
     work: (lock: SeatingTableLock) => Promise<T>
   ): Promise<T> {
     return this.db.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT "id" FROM "SeatingTable" WHERE "id" = ${table.id} FOR UPDATE`
+      const [locked] = await tx.$queryRaw<Array<{ name: string; capacity: number }>>`
+        SELECT "name", "capacity" FROM "SeatingTable" WHERE "id" = ${table.id} FOR UPDATE`
+      if (!locked) throw new SeatingTableNotFoundError()
+
       await tx.seatAssignment.deleteMany({ where: staleAssignments(table.eventId) })
 
       return work({
+        table: { name: locked.name, capacity: locked.capacity },
         seatedGuestIds: async () => {
           const seats = await tx.seatAssignment.findMany({
             where: { tableId: table.id },

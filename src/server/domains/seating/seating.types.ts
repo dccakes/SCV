@@ -64,6 +64,8 @@ export type SeatableGuestRecord = {
 
 // Operations available inside SeatingRepository.withLockedTable
 export type SeatingTableLock = {
+  // The table as read under the lock; authoritative for capacity checks
+  table: { name: string; capacity: number }
   seatedGuestIds: () => Promise<number[]>
   replaceAssignments: (guestIds: number[]) => Promise<void>
   updateTable: (data: UpdateSeatingTableInput) => Promise<SeatingTable>
