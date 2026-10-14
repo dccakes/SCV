@@ -58,7 +58,6 @@ export function WebsiteEditor({
     },
     onSuccess: () => {
       toast.success('Hero & intro saved')
-      setBaseline(JSON.stringify({ en: english, es: spanish }))
       router.refresh()
     },
   })
@@ -109,10 +108,12 @@ export function WebsiteEditor({
       headline: copy.headline.trim() ? copy.headline : undefined,
       headlineAccent: copy.headlineAccent.trim() ? copy.headlineAccent : undefined,
     })
-    updateHomeSection.mutate({
-      ...toContent(english),
-      translations: { es: toContent(spanish) },
-    })
+    // Mark what was sent as saved; edits made while saving stay dirty.
+    const sent = JSON.stringify({ en: english, es: spanish })
+    updateHomeSection.mutate(
+      { ...toContent(english), translations: { es: toContent(spanish) } },
+      { onSuccess: () => setBaseline(sent) }
+    )
   }
 
   return (
