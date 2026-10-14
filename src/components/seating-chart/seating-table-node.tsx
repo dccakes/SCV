@@ -96,7 +96,9 @@ export function SeatingTableNode(props: Readonly<SeatingTableNodeProps>) {
   } = useDroppable({ id: `table-drop:${table.id}`, data: dropData })
 
   const activeData = active?.data.current as DragData | undefined
-  const fits = !isOver || activeData?.type !== 'guests' || tableHasRoom(table, activeData.guestIds)
+  // Only guest drags target a table; a table dragged over another gets no cue
+  const isGuestOver = isOver && activeData?.type === 'guests'
+  const fits = !isGuestOver || tableHasRoom(table, activeData.guestIds)
 
   return (
     <div
@@ -153,9 +155,9 @@ export function SeatingTableNode(props: Readonly<SeatingTableNodeProps>) {
         className={cn(
           'absolute flex cursor-grab touch-none flex-col items-center justify-center border-2 bg-card px-2 text-center shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing',
           table.shape === 'ROUND' ? 'rounded-full' : 'rounded-md',
-          isOver && fits && 'border-success bg-success/10',
-          isOver && !fits && 'border-destructive bg-destructive/10',
-          !isOver && 'border-foreground/40'
+          isGuestOver && fits && 'border-success bg-success/10',
+          isGuestOver && !fits && 'border-destructive bg-destructive/10',
+          !isGuestOver && 'border-foreground/40'
         )}
       >
         <span className='line-clamp-2 font-medium text-foreground text-xs leading-tight'>

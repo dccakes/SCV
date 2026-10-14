@@ -53,7 +53,9 @@ export const createSeatingAnnouncements = (
     },
     onDragEnd: ({ active, over }) => {
       const data = dragOf(active)
-      if (data?.type !== 'guests') return `${nameOf(data)} moved.`
+      // Neutral wording: dnd-kit does not pass the drag distance here, so a
+      // table dropped in place cannot be told apart from one that moved
+      if (data?.type !== 'guests') return `${nameOf(data)} dropped.`
       const drop = dropOf(over)
       if (drop?.type === 'unassigned') return `${data.label} moved to unseated guests.`
       const table = tableFor(drop)

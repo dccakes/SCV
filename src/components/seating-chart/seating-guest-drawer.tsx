@@ -94,9 +94,11 @@ export function SeatingGuestDrawer(props: Readonly<SeatingGuestDrawerProps>) {
               ) : null
             }
           >
-            {/* Seating without dragging, for keyboard, touch and screen reader users */}
+            {/* Seating without dragging (keyboard, touch, screen readers). Always
+                controlled: '' shows the placeholder, so a previous guest's pick
+                never lingers in Radix's internal state */}
             <Select
-              value={guest.tableId ?? undefined}
+              value={guest.tableId ?? ''}
               onValueChange={(tableId) => {
                 if (tableId !== guest.tableId) onSeat(guest.id, tableId)
               }}

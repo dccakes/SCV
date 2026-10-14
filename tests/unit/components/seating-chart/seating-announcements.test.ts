@@ -63,7 +63,7 @@ describe('seating announcements', () => {
     )
     expect(
       announcements.onDragEnd({ active: active({ type: 'table', tableId: 't1' }), over: null })
-    ).toBe('Head Table moved.')
+    ).toBe('Head Table dropped.')
   })
 
   it('explains the keyboard controls', () => {

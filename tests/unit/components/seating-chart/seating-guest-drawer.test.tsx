@@ -3,42 +3,56 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { SeatingGuestDrawer } from '~/components/seating-chart/seating-guest-drawer'
 import type { SeatingGuest, SeatingTableView } from '~/server/domains/seating/seating.types'
 
-jest.mock('~/components/ui/select', () => ({
-  Select: ({
-    value,
-    onValueChange,
-    children,
-  }: {
-    value?: string
-    onValueChange: (value: string) => void
-    children: React.ReactNode
-  }) => (
-    <select
-      aria-label='Seat at table'
-      value={value ?? ''}
-      onChange={(event) => onValueChange(event.target.value)}
-    >
-      <option value=''>Choose</option>
-      {children}
-    </select>
-  ),
-  SelectTrigger: () => null,
-  SelectValue: () => null,
-  SelectContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  SelectItem: ({
-    value,
-    disabled,
-    children,
-  }: {
-    value: string
-    disabled?: boolean
-    children: React.ReactNode
-  }) => (
-    <option value={value} disabled={disabled}>
-      {children}
-    </option>
-  ),
-}))
+// Behaves like Radix Select: controlled only while `value` is defined, otherwise
+// it keeps its own state, and re-picking the current value does not fire
+jest.mock('~/components/ui/select', () => {
+  const { useState } = jest.requireActual<typeof import('react')>('react')
+  return {
+    Select: ({
+      value,
+      onValueChange,
+      children,
+    }: {
+      value?: string
+      onValueChange: (value: string) => void
+      children: React.ReactNode
+    }) => {
+      const [internal, setInternal] = useState('')
+      const current = value === undefined ? internal : value
+      return (
+        <select
+          aria-label='Seat at table'
+          value={current}
+          onChange={(event) => {
+            const next = event.target.value
+            if (next === current) return
+            if (value === undefined) setInternal(next)
+            onValueChange(next)
+          }}
+        >
+          <option value=''>Choose</option>
+          {children}
+        </select>
+      )
+    },
+    SelectTrigger: () => null,
+    SelectValue: () => null,
+    SelectContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    SelectItem: ({
+      value,
+      disabled,
+      children,
+    }: {
+      value: string
+      disabled?: boolean
+      children: React.ReactNode
+    }) => (
+      <option value={value} disabled={disabled}>
+        {children}
+      </option>
+    ),
+  }
+})
 
 const guest: SeatingGuest = {
   id: 7,
@@ -73,18 +87,19 @@ const table = (
 
 const renderDrawer = (overrides: Partial<SeatingGuest> = {}) => {
   const onSeat = jest.fn()
-  render(
-    <SeatingGuestDrawer
-      guest={{ ...guest, ...overrides }}
-      household={null}
-      tables={[table('t1', 'Head Table', 4, [1]), table('t2', 'Kids Table', 2, [2, 3])]}
-      onClose={jest.fn()}
-      onSelectGuest={jest.fn()}
-      onUnseat={jest.fn()}
-      onSeat={onSeat}
-    />
-  )
-  return { onSeat }
+  const props = {
+    household: null,
+    tables: [table('t1', 'Head Table', 4, [1]), table('t2', 'Kids Table', 2, [2, 3])],
+    onClose: jest.fn(),
+    onSelectGuest: jest.fn(),
+    onUnseat: jest.fn(),
+    onSeat,
+  }
+  const { rerender } = render(<SeatingGuestDrawer {...props} guest={{ ...guest, ...overrides }} />)
+  // Re-render the same drawer for another guest, as the app does when switching guests
+  const rerenderWith = (next: Partial<SeatingGuest>) =>
+    rerender(<SeatingGuestDrawer {...props} guest={{ ...guest, ...next }} />)
+  return { onSeat, rerenderWith }
 }
 
 describe('SeatingGuestDrawer seat picker', () => {
@@ -111,5 +126,29 @@ describe('SeatingGuestDrawer seat picker', () => {
     expect(screen.getByRole('option', { name: 'Kids Table (full)' })).toBeEnabled()
     fireEvent.change(screen.getByLabelText('Seat at table'), { target: { value: 't2' } })
     expect(onSeat).not.toHaveBeenCalled()
+  })
+
+  it('starts empty for the next unseated guest after seating one, and can seat them too', () => {
+    const { onSeat, rerenderWith } = renderDrawer()
+    fireEvent.change(screen.getByLabelText('Seat at table'), { target: { value: 't1' } })
+    expect(onSeat).toHaveBeenLastCalledWith(7, 't1')
+
+    // Switch to an unseated housemate in the same drawer
+    rerenderWith({ id: 8, firstName: 'Ben' })
+    expect(screen.getByLabelText('Seat at table')).toHaveValue('')
+
+    fireEvent.change(screen.getByLabelText('Seat at table'), { target: { value: 't1' } })
+    expect(onSeat).toHaveBeenLastCalledWith(8, 't1')
+  })
+
+  it('shows unassigned again after a seat attempt is rolled back', () => {
+    const { onSeat, rerenderWith } = renderDrawer()
+    fireEvent.change(screen.getByLabelText('Seat at table'), { target: { value: 't1' } })
+
+    // Server rejected it; the guest is still unseated after rollback
+    rerenderWith({})
+    expect(screen.getByLabelText('Seat at table')).toHaveValue('')
+    fireEvent.change(screen.getByLabelText('Seat at table'), { target: { value: 't1' } })
+    expect(onSeat).toHaveBeenCalledTimes(2)
   })
 })
