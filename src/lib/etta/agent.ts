@@ -108,6 +108,16 @@ export async function runEttaAgent(req: EttaRequest) {
     tools,
     stopWhen: stepCountIs(10),
     providerOptions,
+    // OpenTelemetry spans per generation, step, and tool call, nested in the
+    // request trace. Prompts and completions hold guest PII, so only timing,
+    // model, token usage, and tool names are recorded.
+    experimental_telemetry: {
+      isEnabled: true,
+      functionId: `etta.${actor}`,
+      recordInputs: false,
+      recordOutputs: false,
+      metadata: { wedding_id: weddingId },
+    },
     onStepFinish: async ({ text, toolCalls, toolResults, usage, reasoning }) => {
       stepCount++
 

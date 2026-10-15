@@ -76,7 +76,12 @@ describe('logAudit', () => {
 
     await expect(logAudit(entry)).resolves.toBeUndefined()
 
-    expect(consoleSpy).toHaveBeenCalledWith('[Etta] Audit log failed:', expect.any(Error))
+    const [line] = consoleSpy.mock.calls[0] as [string]
+    expect(JSON.parse(line)).toMatchObject({
+      level: 'error',
+      message: 'Etta audit log failed',
+      component: 'etta',
+    })
     consoleSpy.mockRestore()
   })
 })

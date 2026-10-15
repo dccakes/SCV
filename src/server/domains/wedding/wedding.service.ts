@@ -8,6 +8,7 @@
 import { TRPCError } from '@trpc/server'
 
 import { provisionEtta } from '~/lib/etta/provision'
+import { logger } from '~/lib/observability/logger'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import { checklistSeedingService } from '~/server/domains/checklist'
@@ -91,15 +92,22 @@ export class WeddingService {
       try {
         await checklistSeedingService.ensureSeeded(wedding.id)
       } catch (error) {
-        // biome-ignore lint/suspicious/noConsole: preserve successful wedding creation if checklist seeding fails post-commit
-        console.error('[Checklist] Wedding create seeding failed:', error)
+        // Preserve successful wedding creation if checklist seeding fails post-commit.
+        logger.error(
+          'Checklist seeding failed on wedding create',
+          { component: 'checklist', wedding_id: wedding.id },
+          error
+        )
       }
     }
 
     // Provision Etta AI agent actor — fire-and-forget (idempotent)
-    provisionEtta(wedding.id).catch(
-      // biome-ignore lint/suspicious/noConsole: intentional error logging for fire-and-forget
-      (err) => console.error('[Etta] Background provision failed:', err)
+    provisionEtta(wedding.id).catch((err) =>
+      logger.error(
+        'Etta background provision failed',
+        { component: 'etta', wedding_id: wedding.id },
+        err
+      )
     )
 
     return wedding

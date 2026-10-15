@@ -78,6 +78,9 @@ export const env = createEnv({
     // Optional: PostHog client-side analytics (product + template instrumentation).
     NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: z.string().min(1).optional(),
     NEXT_PUBLIC_POSTHOG_HOST: z.string().url().optional(),
+    // Optional: share of browser traces to keep, 0..1 (default 1). Server
+    // sampling uses the standard OTEL_TRACES_SAMPLER / OTEL_TRACES_SAMPLER_ARG.
+    NEXT_PUBLIC_OTEL_SAMPLE_RATE: z.coerce.number().min(0).max(1).optional(),
   },
 
   /**
@@ -121,6 +124,7 @@ export const env = createEnv({
     POSTHOG_HOST: process.env.POSTHOG_HOST,
     NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN,
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+    NEXT_PUBLIC_OTEL_SAMPLE_RATE: process.env.NEXT_PUBLIC_OTEL_SAMPLE_RATE,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

@@ -153,14 +153,11 @@ describe('SelfFillRegistrationService', () => {
     })
 
     it('should log successful guest registration for audit', async () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
+      const consoleSpy = jest.spyOn(console, 'info').mockImplementation()
 
       await service.registerGuest(validToken, validGuestInput)
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('wedding-123'),
-        expect.anything()
-      )
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('"wedding_id":"wedding-123"'))
       consoleSpy.mockRestore()
     })
   })
@@ -325,10 +322,12 @@ describe('SelfFillRegistrationService', () => {
 
       await expect(service.registerGuest(validToken, validGuestInput)).rejects.toBeDefined()
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('wedding-123'),
-        expect.any(Error)
-      )
+      const [line] = consoleSpy.mock.calls[0] as [string]
+      expect(JSON.parse(line)).toMatchObject({
+        level: 'error',
+        wedding_id: 'wedding-123',
+        'exception.message': 'DB connection failed',
+      })
       consoleSpy.mockRestore()
     })
   })

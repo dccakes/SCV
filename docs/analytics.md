@@ -100,4 +100,5 @@ PostHog is disabled. Public templates already emit `rsvp.public_submission.start
 on RSVP submission (with wedding id, token, household, and the response payload).
 
 Unhandled exceptions are captured via `posthog.captureException` in
-`src/app/error.tsx` and `src/app/global-error.tsx`.
+`src/app/error.tsx` and `src/app/global-error.tsx`. Traces, logs, and the rest
+of error reporting are covered in [observability.md](./observability.md).

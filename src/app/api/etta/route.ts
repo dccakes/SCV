@@ -8,6 +8,7 @@
 import { runEttaAgent } from '~/lib/etta/agent'
 import { logAudit } from '~/lib/etta/utils/audit'
 import { EttaAuthError, resolveEttaAuth } from '~/lib/etta/utils/auth'
+import { logger } from '~/lib/observability/logger'
 
 const inferAuthStatus = (error: unknown, message: string): number => {
   if (error instanceof EttaAuthError) {
@@ -50,8 +51,7 @@ export async function POST(req: Request) {
         payload: { error: message, status },
       })
     } else {
-      // biome-ignore lint/suspicious/noConsole: error logging for unauthenticated requests
-      console.error('[Etta] Chat error (pre-auth):', message)
+      logger.error('Etta chat error before auth', { component: 'etta', status, error: message })
     }
 
     return Response.json({ error: message }, { status })

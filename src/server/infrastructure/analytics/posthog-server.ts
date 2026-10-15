@@ -6,7 +6,9 @@
  * application runs identically with or without analytics wired up.
  */
 
-import 'server-only'
+// No `server-only` guard: `src/instrumentation.ts` (compiled without the
+// react-server condition) reuses this client for `onRequestError`. The module
+// only reads the public project token, so nothing secret can leak.
 
 import { PostHog } from 'posthog-node'
 

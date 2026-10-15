@@ -4,6 +4,11 @@ import { NextResponse } from 'next/server'
 import { getLocaleFromCountry, type Locale } from '~/lib/locale/locale-detection'
 import { isVoyagePage } from '~/templates/voyage/site'
 
+// PostHog reverse proxy (see rewrites in next.config.js). Middleware runs before
+// rewrites, so without this bypass anonymous guests on public wedding sites have
+// their analytics, exception, log, and trace uploads redirected to sign-in.
+const POSTHOG_PROXY_PREFIX = '/oswp-pHsc1'
+
 const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/join', '/blog', '/api/webhooks', '/api/cron']
 
 // Guest-facing tRPC procedures that must be reachable without a session. The
@@ -101,6 +106,9 @@ const buildLocaleResponse = (req: NextRequest, locale: Locale): NextResponse => 
 
 export async function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname
+  if (pathname === POSTHOG_PROXY_PREFIX || pathname.startsWith(`${POSTHOG_PROXY_PREFIX}/`)) {
+    return NextResponse.next()
+  }
   const langOverride = req.cookies.get('lang-override')?.value
   const locale: Locale =
     langOverride === 'en' || langOverride === 'es'

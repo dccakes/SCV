@@ -7,7 +7,7 @@
 
 import { TRPCError } from '@trpc/server'
 import { del } from '@vercel/blob'
-
+import { logger } from '~/lib/observability/logger'
 import { MAX_FILES_PER_QUOTE, MAX_IMAGES_PER_VENDOR } from '~/lib/upload-config'
 
 import type { AuthzContext } from '~/server/authz/authorization.types'
@@ -489,9 +489,12 @@ export class VendorService {
     if (urls.length === 0) return
     try {
       await del(urls)
-    } catch {
-      // biome-ignore lint/suspicious/noConsole: best-effort error logging
-      console.error(`Failed to delete ${urls.length} blob file(s) during cleanup`)
+    } catch (error) {
+      logger.error(
+        'Failed to delete blob files during cleanup',
+        { 'blob.count': urls.length },
+        error
+      )
     }
   }
 

@@ -18,6 +18,7 @@ import { db } from '~/server/db'
 import { extractAnalyticsContext } from '~/server/infrastructure/analytics/analytics-context'
 import { captureServerEvent } from '~/server/infrastructure/analytics/capture'
 import { sanitizePayload } from '~/server/infrastructure/analytics/payload'
+import { withProcedureSpan } from '~/server/infrastructure/observability/trpc-tracing'
 
 /**
  * 1. CONTEXT
@@ -142,10 +143,20 @@ const analyticsMiddleware = t.middleware(async ({ ctx, path, type, next, getRawI
 })
 
 /**
- * Base procedure with analytics instrumentation applied. All public and
- * protected procedures build on this so instrumentation is universal.
+ * Tracing middleware
+ *
+ * Gives every procedure its own OpenTelemetry span (batched HTTP calls would
+ * otherwise share one route span), linked to the PostHog person and session.
  */
-const baseProcedure = t.procedure.use(analyticsMiddleware)
+const tracingMiddleware = t.middleware(({ ctx, path, type, next }) =>
+  withProcedureSpan({ path, type, headers: ctx.headers, userId: ctx.auth?.userId }, () => next())
+)
+
+/**
+ * Base procedure with tracing and analytics instrumentation applied. All public
+ * and protected procedures build on this so instrumentation is universal.
+ */
+const baseProcedure = t.procedure.use(tracingMiddleware).use(analyticsMiddleware)
 
 /**
  * Public (unauthenticated) procedure
