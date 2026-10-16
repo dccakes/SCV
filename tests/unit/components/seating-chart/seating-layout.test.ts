@@ -85,8 +85,9 @@ const placeAll = (shape: Placed['shape'], capacity: number, max = 500) => {
 describe('getNextTablePosition', () => {
   it('does not overlap two large rectangular tables', () => {
     const placed = placeAll('RECTANGULAR', 30, 2)
-    expect(placed).toHaveLength(2)
-    expect(overlaps(placed[0]!, placed[1]!)).toBe(false)
+    const [first, second] = placed
+    if (!first || !second) throw new Error('expected two tables to be placed')
+    expect(overlaps(first, second)).toBe(false)
   })
 
   it.each([

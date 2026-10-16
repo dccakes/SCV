@@ -1,4 +1,9 @@
-export type TableDialogState = { mode: 'create' } | { mode: 'edit'; tableId: string } | null
+// openId identifies each time a dialog is opened, so a save can tell whether
+// the dialog on screen is still the one it was submitted from
+export type TableDialogState =
+  | { mode: 'create'; openId: number }
+  | { mode: 'edit'; tableId: string; openId: number }
+  | null
 
 type TableSubmitAction =
   | { kind: 'create' }
@@ -29,17 +34,11 @@ export const tableDialogFocusKey = (dialog: NonNullable<TableDialogState>): stri
   dialog.mode === 'edit' ? `table:${dialog.tableId}` : ADD_TABLE_FOCUS_KEY
 
 /**
- * The dialog state after a table save succeeds: close it only if it is still
- * showing what was saved, so a save finishing late never closes (and loses)
- * another dialog the planner has opened since.
+ * The dialog state after a table save succeeds: close it only if the dialog on
+ * screen is the same opening that submitted. A save finishing after the planner
+ * dismissed and reopened a dialog (even for the same table) leaves it alone.
  */
 export const dialogAfterSave = (
   current: TableDialogState,
-  saved: NonNullable<TableDialogState>
-): TableDialogState => {
-  if (current === null || current.mode !== saved.mode) return current
-  if (current.mode === 'edit' && saved.mode === 'edit' && current.tableId !== saved.tableId) {
-    return current
-  }
-  return null
-}
+  savedOpenId: number
+): TableDialogState => (current?.openId === savedOpenId ? null : current)
