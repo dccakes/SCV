@@ -247,3 +247,105 @@ describe('flushLogsPerRequest', () => {
     await expect(waitUntil.mock.calls[0][0]).resolves.toBeUndefined()
   })
 })
+
+describe('flushLogsPerRequest under concurrency (real BatchLogRecordProcessor)', () => {
+  const VERCEL_CONTEXT = Symbol.for('@vercel/request-context')
+  const globals = globalThis as unknown as Record<symbol, unknown>
+  let activeStore: { waitUntil: jest.Mock } | undefined
+
+  beforeEach(() => {
+    globals[VERCEL_CONTEXT] = { get: () => activeStore }
+  })
+  afterEach(() => {
+    delete globals[VERCEL_CONTEXT]
+    activeStore = undefined
+  })
+
+  /** Exporter whose first export stays in flight until released. */
+  function slowExporter() {
+    const exported: string[] = []
+    let releaseFirst: () => void = () => undefined
+    let firstStarted: () => void = () => undefined
+    const firstExportStarted = new Promise<void>((resolve) => {
+      firstStarted = resolve
+    })
+    let calls = 0
+    return {
+      exported,
+      firstExportStarted,
+      release: () => releaseFirst(),
+      exporter: {
+        export(records: Array<{ body: unknown }>, done: (result: { code: number }) => void) {
+          calls += 1
+          const finish = () => {
+            exported.push(...records.map((record) => String(record.body)))
+            done({ code: 0 })
+          }
+          if (calls === 1) {
+            releaseFirst = finish
+            firstStarted()
+          } else {
+            finish()
+          }
+        },
+        forceFlush: () => Promise.resolve(),
+        shutdown: () => Promise.resolve(),
+      },
+    }
+  }
+
+  it('drains records that arrive while another request is mid-export', async () => {
+    const slow = slowExporter()
+    const provider = new LoggerProvider({
+      processors: [
+        flushLogsPerRequest(
+          new BatchLogRecordProcessor({ exporter: slow.exporter, scheduledDelayMillis: 60_000 })
+        ),
+      ],
+    })
+    const logger = provider.getLogger('test')
+    const requestA = { waitUntil: jest.fn() }
+    const requestB = { waitUntil: jest.fn() }
+
+    activeStore = requestA
+    logger.emit({ body: 'log from request A' })
+    await slow.firstExportStarted // A's export is now in flight
+
+    activeStore = requestB
+    logger.emit({ body: 'log from request B' })
+    // Let B's flush attempt run while A's export is still in flight.
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    const settled = Promise.all([
+      requestA.waitUntil.mock.calls[0][0],
+      requestB.waitUntil.mock.calls[0][0],
+    ])
+    slow.release()
+    await settled
+
+    // Neither request's waitUntil may resolve while a record is still buffered.
+    expect(slow.exported).toEqual(['log from request A', 'log from request B'])
+    await provider.shutdown()
+  })
+
+  it('flushes on demand through the same serialized drain', async () => {
+    const slow = slowExporter()
+    const processor = flushLogsPerRequest(
+      new BatchLogRecordProcessor({ exporter: slow.exporter, scheduledDelayMillis: 60_000 })
+    )
+    const provider = new LoggerProvider({ processors: [processor] })
+    const logger = provider.getLogger('test')
+
+    logger.emit({ body: 'first' }) // no request context: nothing scheduled
+    const firstFlush = processor.forceFlush()
+    await slow.firstExportStarted
+    logger.emit({ body: 'second' })
+    const secondFlush = processor.forceFlush()
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    slow.release()
+    await Promise.all([firstFlush, secondFlush])
+
+    expect(slow.exported).toEqual(['first', 'second'])
+    await provider.shutdown()
+  })
+})

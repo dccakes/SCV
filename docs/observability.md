@@ -108,9 +108,12 @@ control.
 
 On Vercel, `@vercel/otel` flushes span processors through `waitUntil`, but
 only for sampled root spans, and it never flushes log processors.
-`flushLogsPerRequest` therefore registers its own `waitUntil` flush whenever a
-log record is emitted inside a request, independent of trace sampling, so logs
-from sampled-out requests are exported before the function freezes. Outside a
+`flushLogsPerRequest` therefore hands each request's `waitUntil` a flush
+whenever a log record is emitted inside it, independent of trace sampling.
+All requests on an instance share one serialized drain that repeats until no
+records arrived during the last export: the SDK's `forceFlush()` returns
+immediately while another flush is exporting, so overlapping per-request
+flushes would otherwise release a request with its logs still buffered. Outside a
 request context the batch processor's timer exports as usual. Server
 exceptions are flushed explicitly before returning.
 

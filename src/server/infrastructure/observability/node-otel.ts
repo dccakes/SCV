@@ -57,31 +57,67 @@ function currentRequestContext(): { waitUntil?: WaitUntil } | undefined {
  * `@vercel/otel` registers its per-request `waitUntil` flush only for sampled
  * root spans and never flushes log processors, so logs from sampled-out
  * requests (or emitted outside any span) could sit in the batch buffer until
- * the instance froze. Each burst of records registers one flush with the
- * request's `waitUntil`; records emitted once that flush has started schedule
- * another. Outside a request context (long-lived servers, Docker) the batch
- * processor's timer exports as usual.
+ * the instance froze.
+ *
+ * Every flush goes through one serialized drain shared by all requests on the
+ * instance. The SDK's `forceFlush()` returns immediately when another flush is
+ * already exporting, without exporting records that arrived in the meantime,
+ * so overlapping per-request flushes would resolve while logs were still
+ * buffered. The drain instead repeats until a pass ends with no new records,
+ * and each request's `waitUntil` holds the drain promise, so no request is
+ * released while one of its records is unexported. Outside a request context
+ * (long-lived servers, Docker) the batch processor's timer exports as usual.
  */
 export function flushLogsPerRequest(processor: LogRecordProcessor): LogRecordProcessor {
-  const pending = new WeakSet<object>()
+  /** Set on every emit; cleared at the start of each drain pass. */
+  let unflushed = false
+  let drain: Promise<void> | null = null
+  /** The drain each request context was handed, so it is registered once per drain. */
+  const registered = new WeakMap<object, Promise<void>>()
+
+  const runDrain = async (): Promise<void> => {
+    // Yield once so a synchronous burst of records shares one export.
+    await new Promise<void>((resolve) => setTimeout(resolve, 0))
+    while (unflushed) {
+      unflushed = false
+      try {
+        await processor.forceFlush()
+      } catch {
+        // A failed export must not wedge the drain or reject waitUntil.
+      }
+    }
+  }
+
+  const flushAll = (): Promise<void> => {
+    if (!drain) {
+      // The loop's last check and this reset run in the same synchronous step,
+      // so a record emitted after it always starts a fresh drain.
+      drain = runDrain().finally(() => {
+        drain = null
+      })
+    }
+    return drain
+  }
+
   return {
     onEmit(record, context) {
       processor.onEmit(record, context)
+      unflushed = true
       const requestContext = currentRequestContext()
-      if (!requestContext?.waitUntil || pending.has(requestContext)) return
-      pending.add(requestContext)
-      requestContext.waitUntil(
-        // Yield once so a synchronous burst of records shares one export.
-        new Promise<void>((resolve) => setTimeout(resolve, 0))
-          .then(() => {
-            pending.delete(requestContext)
-            return processor.forceFlush()
-          })
-          .catch(() => undefined)
-      )
+      if (!requestContext?.waitUntil) return
+      const current = flushAll()
+      if (registered.get(requestContext) === current) return
+      registered.set(requestContext, current)
+      requestContext.waitUntil(current)
     },
-    forceFlush: () => processor.forceFlush(),
-    shutdown: () => processor.shutdown(),
+    forceFlush: () => {
+      unflushed = true
+      return flushAll()
+    },
+    shutdown: async () => {
+      await drain
+      await processor.shutdown()
+    },
   }
 }
 
