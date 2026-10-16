@@ -157,11 +157,32 @@ describe('HouseholdInviteService', () => {
               where: { name: 'Wedding Day' },
               orderBy: { date: 'asc' },
               take: 1,
-              select: { date: true, venue: true },
+              select: { date: true, venue: true, translations: true },
             },
           },
         },
       },
+    })
+  })
+
+  it("gives Spanish visitors the couple's Spanish venue in the public summary", async () => {
+    const db = createDb()
+    db.website.findFirst.mockResolvedValue({
+      wedding: {
+        groomFirstName: 'Diego',
+        brideFirstName: 'Laura',
+        events: [{ date: null, venue: 'Garden', translations: { es: { venue: 'Jardín' } } }],
+      },
+    })
+    const service = new HouseholdInviteService(db as never)
+
+    await expect(
+      service.getPublicWeddingSummary('harry-and-hermione', 'es')
+    ).resolves.toMatchObject({
+      venue: 'Jardín',
+    })
+    await expect(service.getPublicWeddingSummary('harry-and-hermione')).resolves.toMatchObject({
+      venue: 'Garden',
     })
   })
 

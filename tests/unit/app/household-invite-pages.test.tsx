@@ -259,7 +259,7 @@ describe('household invite pages', () => {
       params: Promise.resolve({ websiteSubUrl: 'ronald-and-ginny' }),
     })
 
-    expect(mockGetPublicWeddingSummary).toHaveBeenCalledWith('ronald-and-ginny')
+    expect(mockGetPublicWeddingSummary).toHaveBeenCalledWith('ronald-and-ginny', 'en')
     const expectedTitle = "Save the Date — Ronald & Ginny's Wedding"
     expect(metadata.title).toBe(expectedTitle)
     expect(metadata.openGraph?.title).toBe(expectedTitle)

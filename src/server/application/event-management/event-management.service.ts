@@ -47,6 +47,7 @@ export class EventManagementService {
       description,
       collectRsvp,
       allowTagAlongs,
+      translations,
     } = data
 
     return this.db.$transaction(async (tx) => {
@@ -62,6 +63,7 @@ export class EventManagementService {
           description,
           collectRsvp: collectRsvp ?? false,
           allowTagAlongs: allowTagAlongs ?? false,
+          ...(translations ? { translations } : {}),
         },
       })
 
@@ -142,6 +144,8 @@ export class EventManagementService {
           description: data.description,
           collectRsvp: data.collectRsvp,
           allowTagAlongs: data.allowTagAlongs,
+          // Omitted translations keep what is stored.
+          translations: data.translations,
         },
       })
 

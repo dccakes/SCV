@@ -66,10 +66,13 @@ export async function generateMetadata({ params }: SaveTheDatePageProps): Promis
   // The couple names, date, and venue are public wedding details tied to the
   // website slug, so derive the preview from the slug instead of the invite
   // code to give shared links a proper "Save the Date" card.
-  const summary = await householdInviteService.getPublicWeddingSummary(websiteSubUrl)
+  const locale = await getLocale()
+  const summary = await householdInviteService.getPublicWeddingSummary(
+    websiteSubUrl,
+    toLocale(locale)
+  )
   if (!summary) return baseMetadata
 
-  const locale = await getLocale()
   const t = await getTranslations('site.metadata')
   const coupleNames = `${summary.groomFirstName} & ${summary.brideFirstName}`
   const title = t('saveTheDateTitle', { coupleNames })

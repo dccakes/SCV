@@ -32,7 +32,7 @@ export function localizeSection<T extends WithTranslations & { content: unknown 
  * Overlay translated text onto the named fields only, so a stored translation
  * can never touch ids, dates or other non-text data.
  */
-function localizeFields<T extends WithTranslations, K extends keyof T>(
+export function localizeFields<T extends WithTranslations, K extends keyof T>(
   entity: T,
   keys: readonly K[],
   locale: Locale

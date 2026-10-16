@@ -11,7 +11,11 @@ import { requirePermission } from '~/server/authz/permission-checker'
 import { CEREMONY_EVENT_NAME, WEDDING_DAY_EVENT_NAME } from '~/server/domains/event/event.types'
 import { rsvpHouseholdSelect } from '~/server/domains/household/household.repository'
 import type { HouseholdSearchResult } from '~/server/domains/household/household.types'
-import { localizeEvent, localizeSection } from '~/server/domains/website/website.localization'
+import {
+  localizeEvent,
+  localizeFields,
+  localizeSection,
+} from '~/server/domains/website/website.localization'
 import {
   type SaveTheDateSectionContent,
   WebsiteSectionType,
@@ -252,7 +256,11 @@ export class HouseholdInviteService {
     })
   }
 
-  async getPublicWeddingSummary(subUrl: string): Promise<{
+  /** Public couple names, date and venue; the venue follows the visitor's language. */
+  async getPublicWeddingSummary(
+    subUrl: string,
+    locale: Locale = 'en'
+  ): Promise<{
     groomFirstName: string
     brideFirstName: string
     date: Date | null
@@ -269,7 +277,7 @@ export class HouseholdInviteService {
               where: { name: WEDDING_DAY_EVENT_NAME },
               orderBy: { date: 'asc' },
               take: 1,
-              select: { date: true, venue: true },
+              select: { date: true, venue: true, translations: true },
             },
           },
         },
@@ -278,7 +286,10 @@ export class HouseholdInviteService {
 
     if (!website) return null
 
-    const weddingDayEvent = website.wedding.events[0]
+    const rawWeddingDay = website.wedding.events[0]
+    const weddingDayEvent = rawWeddingDay
+      ? localizeFields(rawWeddingDay, ['venue'], locale)
+      : undefined
     return {
       groomFirstName: website.wedding.groomFirstName,
       brideFirstName: website.wedding.brideFirstName,
