@@ -108,6 +108,27 @@ describe('alignTranslation', () => {
   })
 })
 
+describe('alignTranslation optional fields', () => {
+  it('keeps Spanish text for optional fields English left empty or out', () => {
+    expect(alignTranslation({}, { message: 'Hola' })).toEqual({ message: 'Hola' })
+    expect(alignTranslation({ eyebrow: undefined }, { eyebrow: 'Reserva la fecha' })).toEqual({
+      eyebrow: 'Reserva la fecha',
+    })
+    expect(
+      alignTranslation(
+        { items: [{ title: 'Dinner' }] },
+        { items: [{ title: 'Cena', description: 'Rica' }] }
+      )
+    ).toEqual({ items: [{ title: 'Cena', description: 'Rica' }] })
+  })
+
+  it('never adds links, media or non-text values from the translation', () => {
+    expect(
+      alignTranslation({ heading: 'H' }, { imageUrl: 'https://x', ctaUrl: 'https://y', extra: 3 })
+    ).toEqual({ heading: '' })
+  })
+})
+
 describe('readTranslation', () => {
   it('returns the overlay for Spanish and nothing for English', () => {
     const translations = { es: { heading: 'Hola' } }

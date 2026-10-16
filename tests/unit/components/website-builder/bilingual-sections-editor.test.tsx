@@ -124,4 +124,32 @@ describe('bilingual sections editor', () => {
       expect.anything()
     )
   })
+
+  it('keeps Spanish text typed into an optional field English left blank', () => {
+    render(
+      <EditingLanguageProvider>
+        <EditingLanguageToggle />
+        <SectionsEditor initialSections={[]} />
+      </EditingLanguageProvider>
+    )
+    fireEvent.click(screen.getByRole('radio', { name: 'Spanish' }))
+    const card = within(
+      screen
+        .getByText('Save the Date Page', { selector: 'p' })
+        .closest('div.space-y-4') as HTMLElement
+    )
+    const footnote = card.getByPlaceholderText('Formal invitation to follow.')
+
+    fireEvent.change(footnote, { target: { value: 'Invitación formal pronto.' } })
+    expect(footnote).toHaveValue('Invitación formal pronto.')
+
+    fireEvent.click(card.getByRole('button', { name: 'Save' }))
+    expect(mockUpsertMutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'SAVE_THE_DATE',
+        translations: { es: expect.objectContaining({ footnote: 'Invitación formal pronto.' }) },
+      }),
+      expect.anything()
+    )
+  })
 })

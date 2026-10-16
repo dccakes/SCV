@@ -70,18 +70,29 @@ function alignValue(base: unknown, overlay: unknown): unknown {
     for (const [key, value] of Object.entries(base)) {
       result[key] = NON_TRANSLATABLE_KEYS.has(key) ? value : alignValue(value, source[key])
     }
+    // Keep Spanish text for optional fields English left out (never links or media).
+    for (const [key, value] of Object.entries(source)) {
+      if (!(key in base) && !NON_TRANSLATABLE_KEYS.has(key) && typeof value === 'string') {
+        result[key] = value
+      }
+    }
     return result
   }
   if (typeof base === 'string') {
     return typeof overlay === 'string' ? overlay : ''
   }
+  // An optional field English left empty can still be translated.
+  if (base === undefined || base === null) {
+    return typeof overlay === 'string' ? overlay : base
+  }
   return base
 }
 
 /**
- * The translation shaped exactly like the English content, for editing: every
- * English row has a matching row, text comes from the translation (or is blank)
- * and links/images are copied from English so the result validates like English.
+ * The translation shaped like the English content, for editing: every English
+ * row has a matching row, text comes from the translation (or is blank), links
+ * and images are copied from English, and Spanish text for optional fields
+ * English left empty is kept, so the result validates like English.
  */
 export function alignTranslation<T>(base: T, overlay: unknown): T {
   return alignValue(base, overlay) as T
