@@ -16,6 +16,8 @@ export type Question = {
   type: string // 'Text' | 'Option'
   isRequired: boolean
   allowOther: boolean
+  /** Locale overlays for the question text, e.g. { es: { text } }. */
+  translations?: unknown
   createdAt: Date
   updatedAt: Date
 }
@@ -28,6 +30,8 @@ export type Option = {
   questionId: string
   text: string
   description: string
+  /** Locale overlays for text/description, e.g. { es: { text, description } }. */
+  translations?: unknown
   responseCount: number
   createdAt: Date
   updatedAt: Date
@@ -80,6 +84,8 @@ export type OptionInput = {
   responseCount?: number
   text: string
   description?: string
+  /** Spanish label/description, e.g. { es: { text: 'Pollo' } }. */
+  translations?: { es?: { text?: string; description?: string } }
 }
 
 /**
@@ -93,6 +99,8 @@ export type UpsertQuestionInput = {
   type: string
   isRequired: boolean
   allowOther?: boolean
+  /** Spanish prompt, e.g. { es: { text } }. Omit to keep what is stored. */
+  translations?: { es?: { text?: string } }
   options?: OptionInput[]
   deletedOptions?: string[]
 }

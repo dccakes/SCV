@@ -1,5 +1,5 @@
-import { render, screen, within } from '@testing-library/react'
-
+import { screen, within } from '@testing-library/react'
+import { renderWithIntl as render } from '~/../tests/unit/test-utils/intl'
 import { VoyageHome } from '~/templates/voyage/components/home'
 import { VoyageMexicoCity } from '~/templates/voyage/components/mexico-city'
 import {

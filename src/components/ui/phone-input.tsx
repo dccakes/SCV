@@ -8,6 +8,7 @@ import ReactPhoneNumberInput from 'react-phone-number-input/input'
 
 import { Input } from '~/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
+import { toIntlLocale } from '~/lib/locale/intl-format'
 import { cn } from '~/lib/utils'
 
 export type PhoneInputProps = {
@@ -22,6 +23,24 @@ export type PhoneInputProps = {
   error?: boolean
   'aria-describedby'?: string
   'aria-label'?: string
+  /** Language for country names; defaults to English. */
+  locale?: 'en' | 'es'
+  /** Picker copy, for guest-facing screens shown in another language. */
+  labels?: Partial<PhoneInputLabels>
+}
+
+export type PhoneInputLabels = {
+  selectCountry: string
+  searchCountries: string
+  countryCodes: string
+  noCountries: string
+}
+
+const DEFAULT_LABELS: PhoneInputLabels = {
+  selectCountry: 'Select country',
+  searchCountries: 'Search countries...',
+  countryCodes: 'Country codes',
+  noCountries: 'No countries found',
 }
 
 type PhoneNumberInputFieldProps = React.ComponentProps<'input'> & {
@@ -34,24 +53,27 @@ type CountryOption = {
   label: string
 }
 
-const countryDisplayNames =
+const displayNamesFor = (locale: 'en' | 'es') =>
   typeof Intl !== 'undefined'
-    ? new Intl.DisplayNames(['en'], {
-        type: 'region',
-      })
+    ? new Intl.DisplayNames([toIntlLocale(locale)], { type: 'region' })
     : null
 
-const countryOptions: CountryOption[] = getCountries().map((code) => ({
-  code,
-  callingCode: `+${getCountryCallingCode(code)}`,
-  label: countryDisplayNames?.of(code) ?? code,
-}))
+const DISPLAY_NAMES = { en: displayNamesFor('en'), es: displayNamesFor('es') }
 
-const buildCountryOption = (code: Country): CountryOption => ({
+const buildCountryOption = (
+  code: Country,
+  displayNames: Intl.DisplayNames | null
+): CountryOption => ({
   code,
   callingCode: `+${getCountryCallingCode(code)}`,
-  label: countryDisplayNames?.of(code) ?? code,
+  label: displayNames?.of(code) ?? code,
 })
+
+/** Country lists per language, built once. */
+const COUNTRY_OPTIONS = {
+  en: getCountries().map((code) => buildCountryOption(code, DISPLAY_NAMES.en)),
+  es: getCountries().map((code) => buildCountryOption(code, DISPLAY_NAMES.es)),
+}
 
 const getFlagEmoji = (country: Country) =>
   String.fromCodePoint(...country.split('').map((character) => 127397 + character.charCodeAt(0)))
@@ -95,9 +117,13 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
       error,
       'aria-describedby': ariaDescribedBy,
       'aria-label': ariaLabel,
+      locale = 'en',
+      labels,
     },
     ref
   ) => {
+    const copy = { ...DEFAULT_LABELS, ...labels }
+    const countryOptions = COUNTRY_OPTIONS[locale]
     const [isCountryListOpen, setIsCountryListOpen] = React.useState(false)
     const [searchQuery, setSearchQuery] = React.useState('')
     const searchInputRef = React.useRef<HTMLInputElement>(null)
@@ -112,7 +138,7 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
 
     const selectedCountryOption =
       countryOptions.find((option) => option.code === selectedCountry) ??
-      buildCountryOption(selectedCountry)
+      buildCountryOption(selectedCountry, DISPLAY_NAMES[locale])
 
     const trimmedQuery = searchQuery.trim()
     const lowerQuery = trimmedQuery.toLowerCase()
@@ -156,7 +182,7 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
           <PopoverTrigger asChild>
             <button
               type='button'
-              aria-label='Select country'
+              aria-label={copy.selectCountry}
               disabled={disabled}
               className='flex shrink-0 items-center gap-2 border-border border-r bg-muted/30 px-2.5 font-sans text-foreground text-sm transition-colors hover:bg-muted/50 focus-visible:outline-none disabled:cursor-not-allowed'
             >
@@ -184,7 +210,7 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
               <input
                 ref={searchInputRef}
                 type='text'
-                placeholder='Search countries...'
+                placeholder={copy.searchCountries}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className='w-full rounded-[4px] border border-input bg-background py-1.5 pr-3 pl-8 text-sm outline-none placeholder:text-muted-foreground focus:border-ring focus:ring-1 focus:ring-ring'
@@ -192,11 +218,11 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
             </div>
             <div
               role='listbox'
-              aria-label='Country codes'
+              aria-label={copy.countryCodes}
               className='max-h-72 touch-pan-y overflow-y-auto overscroll-contain'
             >
               {filteredCountries.length === 0 ? (
-                <p className='py-4 text-center text-muted-foreground text-sm'>No countries found</p>
+                <p className='py-4 text-center text-muted-foreground text-sm'>{copy.noCountries}</p>
               ) : (
                 filteredCountries.map((option) => {
                   const isSelected = option.code === selectedCountry

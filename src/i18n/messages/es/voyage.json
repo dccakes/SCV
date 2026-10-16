@@ -1,0 +1,597 @@
+{
+  "voyage": {
+    "identity": {
+      "ourWedding": "Nuestra boda",
+      "theCouple": "los novios",
+      "or": "o"
+    },
+    "pages": {
+      "weekend": {
+        "title": "Fin de semana de boda",
+        "description": "Los momentos que nos morimos por compartir con ustedes."
+      },
+      "stay": {
+        "title": "Dónde hospedarse",
+        "description": "Encuentra tu hogar para el fin de semana, con los datos de reservación a la mano."
+      },
+      "travel": {
+        "title": "Viaje",
+        "description": "Todo lo que necesitas para el trayecto y para tu estancia aquí."
+      },
+      "puebla": {
+        "title": "Descubre Puebla",
+        "description": "Un poco de inspiración local para el tiempo entre celebraciones."
+      },
+      "mexico": {
+        "title": "Descubre México",
+        "description": "Convierte tu viaje en una aventura más larga."
+      },
+      "story": {
+        "title": "Nuestra historia",
+        "description": "Las personas, los lugares y los momentos que nos trajeron hasta aquí."
+      },
+      "faq": {
+        "title": "Preguntas y contacto",
+        "description": "Algunas respuestas útiles y una forma de estar en contacto."
+      },
+      "registry": {
+        "title": "Mesa de regalos",
+        "description": "Su presencia lo es todo para nosotros."
+      },
+      "fallbackTitle": "Sitio web de boda"
+    },
+    "nav": {
+      "skipToContent": "Saltar al contenido",
+      "home": "Inicio",
+      "homeAria": "{names} — Inicio",
+      "backHome": "← Inicio",
+      "mainAria": "Navegación de la boda",
+      "mobileAria": "Menú de navegación de la boda",
+      "footerAria": "Navegación del pie de página",
+      "thingsToDo": "Qué hacer",
+      "more": "Más",
+      "menu": "Menú",
+      "rsvp": "Confirmar",
+      "footerThanks": "Gracias por ser parte de nuestro comienzo"
+    },
+    "home": {
+      "heroLine1": "Nuestro para siempre",
+      "heroLine2": "comienza en",
+      "paradise": "el paraíso",
+      "introFallback": "Nos morimos de ganas de celebrar nuestro amor con ustedes en la ciudad que nos robó el corazón.",
+      "rsvpNow": "Confirma tu asistencia",
+      "weddingDetails": "Detalles de la boda",
+      "planAria": "Planea tu visita",
+      "quickLinks": {
+        "schedule": { "label": "Programa", "detail": "Todas las celebraciones" },
+        "stay": { "label": "Reserva tu hospedaje", "detail": "Hoteles y tarifas especiales" },
+        "travel": { "label": "Cómo llegar", "detail": "Vuelos y traslados" },
+        "wear": { "label": "Qué ponerse", "detail": "Código de vestimenta y consejos" }
+      },
+      "storyEyebrow": "Nuestra historia",
+      "storyHeading": "El camino hasta aquí",
+      "readStory": "Lee nuestra historia",
+      "thingsToDoEyebrow": "Qué hacer",
+      "adventureHeading": "Te espera una pequeña aventura",
+      "explorePuebla": {
+        "title": "Descubre Puebla",
+        "description": "Nuestros lugares, platillos y paseos favoritos para el tiempo entre celebraciones."
+      },
+      "exploreMexico": {
+        "title": "Descubre México",
+        "description": "Quédate un poco más. Conoce nuestros lugares favoritos para una aventura más grande."
+      },
+      "kindlyRsvp": "Confirma tu asistencia",
+      "cantWait": "¡Nos morimos de ganas de celebrar contigo!",
+      "honored": "Sería un honor celebrar contigo. Avísanos si puedes acompañarnos en este viaje.",
+      "yourInvitation": "Tu invitación",
+      "rsvpDeadline": "Fecha límite para confirmar: {deadline}",
+      "sendRsvp": "Enviar confirmación"
+    },
+    "content": {
+      "relatedAria": "Información relacionada",
+      "contact": {
+        "eyebrow": "Estamos para ayudarte",
+        "heading": "¿Tienes alguna pregunta?",
+        "body": "Escríbele a {names} con cualquier duda; con gusto te ayudamos.",
+        "communityEyebrow": "Mantente al tanto",
+        "communityHeading": "Nuestra comunidad de WhatsApp",
+        "communityBody": "Un espacio para novedades y preguntas sobre la boda conforme se acerca la celebración.",
+        "communityCta": "Únete a la comunidad de WhatsApp"
+      },
+      "weekend": {
+        "links": {
+          "schedule": "Programa",
+          "wear": "Qué ponerse",
+          "transport": "Transporte para la boda"
+        },
+        "transportHeading": "Cómo llegar a las celebraciones",
+        "transportBody": "Tendremos transporte del centro de Puebla al lugar de la ceremonia y de regreso, así que no tendrás que organizar tu propio traslado. Compartiremos aquí los puntos y horarios de salida conforme se acerque la boda.",
+        "walkingDistance": "Todos los demás eventos estarán a poca distancia a pie del centro de Puebla.",
+        "venues": "Lugares y cómo llegar"
+      },
+      "stay": {
+        "links": {
+          "gettingHere": "Cómo llegar",
+          "schedule": "Programa de la boda",
+          "contact": "¿Dudas? Contáctanos"
+        }
+      },
+      "travel": {
+        "links": {
+          "dates": "Fechas de viaje",
+          "transfers": "Traslados",
+          "hotels": "Hoteles",
+          "puebla": "Descubre Puebla",
+          "mexico": "Descubre México"
+        },
+        "eyebrow": "Planea tu viaje",
+        "heading": "Cuándo viajar",
+        "datesFallback": "Compartiremos aquí las fechas de los eventos en cuanto estén confirmadas.",
+        "body": "Date tiempo para instalarte antes del primer evento y deja suficiente margen para continuar tu viaje después de las celebraciones.",
+        "checkSchedule": "Consulta el programa",
+        "transfersEyebrow": "Cómo llegar a Puebla",
+        "transfersHeading": "De la Ciudad de México a Puebla",
+        "transfersIntro": "Si llegas al Aeropuerto Internacional de la Ciudad de México (MEX / AICM), puedes seguir directo a Puebla en autobús o contratar un traslado privado.",
+        "busHeading": "En autobús desde el aeropuerto",
+        "busBody": "Estrella Roja tiene salidas cada hora de la Terminal 1 y la Terminal 2 a Puebla. Los boletos se compran ahí mismo, en las taquillas de autobuses del aeropuerto. Revisa en qué punto de Puebla te deja el autobús antes de organizar el último tramo a tu hotel. Considera el tiempo de migración, la recolección de equipaje y el tráfico al planear tu conexión.",
+        "driversHeading": "Choferes y traslados privados",
+        "driversBody": "Conforme se acerque la boda, agregaremos aquí contactos de choferes de confianza y opciones de traslado privado, con los detalles para reservar y coordinar tu recogida.",
+        "contactsSoon": "Contactos muy pronto"
+      },
+      "puebla": {
+        "links": {
+          "mexico": "¿Vas a alargar tu viaje? Descubre México",
+          "gettingAround": "Cómo moverse"
+        }
+      },
+      "mexico": {
+        "links": {
+          "cityGuide": "Guía de la Ciudad de México",
+          "puebla": "¿Te quedas cerca? Descubre Puebla",
+          "travel": "Información de viaje"
+        }
+      },
+      "story": {
+        "comingSoon": "Muy pronto compartiremos nuestra historia y nuestros momentos favoritos."
+      },
+      "faq": {
+        "links": {
+          "wear": "Qué ponerse",
+          "hotels": "Reservación de hotel",
+          "travel": "Viaje y traslados",
+          "contact": "Contacto y WhatsApp"
+        },
+        "heading": "Preguntas y respuestas",
+        "seeWear": "Consulta qué ponerte para cada evento →",
+        "seeStay": "Consulta las tarifas de hotel y cómo reservar →",
+        "seeTravel": "Consulta los detalles de viaje y traslados →"
+      },
+      "registry": {
+        "fallback": "Tu presencia es el mejor regalo.",
+        "comingSoon": "Detalles muy pronto."
+      }
+    },
+    "weekend": {
+      "eyebrow": "Fin de semana de boda",
+      "heading": "¡Celebremos juntos!",
+      "localTimes": "Todos los horarios son en hora local del lugar del evento.",
+      "scheduleAria": "Programa",
+      "dateTba": "Fecha por confirmar",
+      "timeTba": "Horario por confirmar",
+      "venueTba": "Lugar por confirmar",
+      "eventDetails": "Detalles del evento →",
+      "directions": "Cómo llegar ↗",
+      "whatToWear": "Qué ponerse: ",
+      "dressCodeTba": "Código de vestimenta por confirmar",
+      "empty": "El programa aparecerá aquí conforme confirmemos nuestros planes.",
+      "viewFull": "Ver el fin de semana completo",
+      "dressCode": {
+        "eyebrow": "Código de vestimenta",
+        "heading": "Qué ponerse",
+        "intro": "Algunas sugerencias para cada celebración, para que armes tu maleta con confianza.",
+        "moreSoon": "Más sugerencias muy pronto",
+        "moreSoonBody": "Ideas de atuendos, consejos de calzado y cualquier detalle final aparecerán aquí en cuanto estén confirmados."
+      }
+    },
+    "stays": {
+      "eyebrow": "Siéntete como en casa",
+      "checkInstructions": "Revisa las indicaciones de cada hotel antes de reservar para asegurarte de obtener la tarifa especial de la boda.",
+      "visitWebsite": "Visitar sitio web",
+      "bookingSoon": "Enlace de reservación muy pronto.",
+      "empty": "Muy pronto compartiremos nuestras recomendaciones de hospedaje y los datos para reservar.",
+      "viewDetails": "Ver detalles del hotel",
+      "viewDetailsAria": "Ver detalles del hotel {name}",
+      "close": "Cerrar"
+    },
+    "sections": {
+      "aboutUs": "Sobre nosotros",
+      "thankYouStory": "Gracias por ser parte de nuestra historia.",
+      "ourStory": "Nuestra historia",
+      "destination": "El destino",
+      "highlights": {
+        "colonial": "Belleza colonial",
+        "culture": "Cultura viva",
+        "cuisine": "Cocina increíble",
+        "hospitality": "Cálida hospitalidad"
+      },
+      "curatedExperiences": "Experiencias seleccionadas",
+      "readMore": "Leer más",
+      "close": "Cerrar",
+      "ourPeople": "Nuestra gente",
+      "thankYouPeople": "Gracias por ser nuestra gente.",
+      "travelStay": "Viaje y hospedaje",
+      "recommendedStays": "Hospedaje recomendado",
+      "visitWebsite": "Visitar sitio web",
+      "questions": "¿Preguntas?",
+      "registry": "Mesa de regalos"
+    },
+    "media": {
+      "moments": "Algunos de nuestros momentos favoritos",
+      "hoverHint": "Pasa el cursor sobre una foto para revivir el momento"
+    },
+    "minimal": {
+      "invited": "Te invitamos",
+      "tagline": "Nuestra mayor aventura comienza aquí."
+    },
+    "invitation": {
+      "preface": "Junto con sus familias",
+      "and": "y",
+      "line": "tienen el gusto de invitarte",
+      "dateTba": "Fecha por confirmar",
+      "visitWebsite": "Visita nuestro sitio web",
+      "rsvp": "Confirmar"
+    },
+    "saveTheDate": {
+      "eyebrow": "Reserva la fecha",
+      "daysToGo": "{count, plural, one {Falta # día} other {Faltan # días}}",
+      "footnote": "La invitación formal llegará pronto.",
+      "visitWebsite": "Visita nuestro sitio web",
+      "rsvp": "Confirmar",
+      "dateTba": "Fecha por confirmar",
+      "calendarTitle": "Boda de {names}",
+      "calendarDescription": "¡Reserva la fecha para la boda de {names}! La invitación formal llegará pronto. {url}"
+    },
+    "flights": {
+      "eyebrow": "Cómo llegar",
+      "heading": "Busca vuelos",
+      "intro": "Te recomendamos volar a la Ciudad de México o a Puebla: encuentra un vuelo al aeropuerto que más te convenga.",
+      "flyingInto": "Vuelas a",
+      "flyingFrom": "Sales de",
+      "placeholder": "Ciudad o código de aeropuerto, p. ej. Houston",
+      "depart": "Ida",
+      "return": "Regreso",
+      "search": "Buscar vuelos",
+      "destinations": {
+        "MEX": "Ciudad de México (MEX)",
+        "PBC": "Puebla (PBC)"
+      }
+    },
+    "mexicoCity": {
+      "eyebrow": "Unos días en la capital",
+      "heading": "La Ciudad de México, colonia por colonia",
+      "culture": "Cultura",
+      "food": "Comida",
+      "recommendation": "{name} — {description}",
+      "gettingAroundHeading": "Cómo moverse",
+      "gettingAroundBody": "Recorre cada colonia a pie y usa Uber o un taxi pedido por el hotel para moverte entre zonas. No recomendamos usar el transporte público dentro de la Ciudad de México. Considera tiempo extra por el tráfico.",
+      "beforeHeading": "Antes de salir",
+      "beforeBody": "Revisa los días de apertura y las reservaciones antes de salir, sobre todo en museos y restaurantes. Ten WhatsApp a la mano para coordinarte con tu hotel o tu chofer.",
+      "neighbourhoods": {
+        "chapultepec": "Chapultepec y Polanco",
+        "centro": "Centro Histórico",
+        "reforma": "Paseo de la Reforma",
+        "coyoacan": "Coyoacán",
+        "teotihuacan": "Teotihuacán",
+        "sanAngel": "San Ángel"
+      },
+      "places": {
+        "antropologia": {
+          "name": "Museo Nacional de Antropología",
+          "description": "El mejor museo del país"
+        },
+        "bosque": {
+          "name": "Bosque de Chapultepec",
+          "description": "Un parque frondoso para una larga caminata"
+        },
+        "castillo": {
+          "name": "Castillo de Chapultepec",
+          "description": "Historia en lo alto del cerro y vistas de la ciudad"
+        },
+        "tamayo": { "name": "Museo Tamayo", "description": "Museo de arte contemporáneo" },
+        "soumaya": {
+          "name": "Museo Soumaya",
+          "description": "Colección de arte gratuita en un edificio impactante"
+        },
+        "pujol": {
+          "name": "Pujol",
+          "description": "Menús de degustación de cocina mexicana contemporánea en Polanco"
+        },
+        "contramar": {
+          "name": "Contramar",
+          "description": "Comida de mariscos; vale la pena reservar con tiempo"
+        },
+        "bellasArtes": {
+          "name": "Bellas Artes",
+          "description": "Palacio de murales, música y exposiciones"
+        },
+        "alameda": {
+          "name": "Alameda Central",
+          "description": "El parque público más antiguo de la Ciudad de México"
+        },
+        "palacioPostal": {
+          "name": "Palacio Postal",
+          "description": "Una ornamentada oficina de correos de principios del siglo XX"
+        },
+        "zocalo": { "name": "Zócalo", "description": "La enorme plaza principal de la ciudad" },
+        "madero": { "name": "Madero", "description": "Calle peatonal llena de arquitectura" },
+        "cardenal": {
+          "name": "El Cardenal",
+          "description": "Restaurante de comida mexicana tradicional"
+        },
+        "tacuba": {
+          "name": "Café de Tacuba",
+          "description": "Café histórico para desayunar o comer"
+        },
+        "angel": {
+          "name": "Ángel de la Independencia",
+          "description": "El emblemático monumento dorado de la ciudad"
+        },
+        "diana": {
+          "name": "Fuente de la Diana Cazadora",
+          "description": "Una icónica fuente de bronce"
+        },
+        "reforma": {
+          "name": "Paseo de la Reforma",
+          "description": "Un gran bulevar para pasear por la ciudad"
+        },
+        "nin": { "name": "Café Nin", "description": "Pan dulce y un desayuno sin complicaciones" },
+        "torreLatino": {
+          "name": "Torre Latinoamericana",
+          "description": "Cocteles con vista a la ciudad"
+        },
+        "casaAzul": {
+          "name": "Casa Azul",
+          "description": "La antigua casa de Frida Kahlo, hoy museo"
+        },
+        "hidalgo": {
+          "name": "Jardín Hidalgo",
+          "description": "La animada plaza principal del barrio"
+        },
+        "centenario": {
+          "name": "Jardín Centenario",
+          "description": "Un jardín con sombra y la fuente de los coyotes"
+        },
+        "coyoacanMarkets": {
+          "name": "Mercados de Coyoacán",
+          "description": "Artesanías locales, color y vida callejera"
+        },
+        "danzantes": {
+          "name": "Los Danzantes",
+          "description": "Una comida sin prisas con cocina regional mexicana"
+        },
+        "mercadoCoyoacan": {
+          "name": "Mercado de Coyoacán",
+          "description": "Las clásicas tostadas y antojitos de mercado"
+        },
+        "sol": {
+          "name": "Pirámide del Sol",
+          "description": "La monumental pirámide central del sitio"
+        },
+        "luna": {
+          "name": "Pirámide de la Luna",
+          "description": "Una pirámide ceremonial con una vista amplia"
+        },
+        "calzada": {
+          "name": "Calzada de los Muertos",
+          "description": "La avenida ceremonial central de la antigua ciudad"
+        },
+        "gruta": {
+          "name": "La Gruta",
+          "description": "Restaurante en una cueva junto a la zona arqueológica"
+        },
+        "sanJacinto": {
+          "name": "Plaza San Jacinto",
+          "description": "El corazón del mercado de arte de los sábados"
+        },
+        "bazar": {
+          "name": "Bazar del Sábado",
+          "description": "Artesanías y obras de arte cada sábado"
+        },
+        "cobbles": {
+          "name": "Calles empedradas",
+          "description": "Un barrio más tranquilo para pasear sin rumbo"
+        },
+        "bistro83": {
+          "name": "Bistró 83",
+          "description": "Desayuno o comida en un patio lleno de plantas"
+        },
+        "sanAngelInn": {
+          "name": "San Ángel Inn",
+          "description": "Una clásica hacienda para una comida larga"
+        }
+      }
+    },
+    "mexicoGuide": {
+      "zocalo": {
+        "eyebrow": "Qué ver y qué hacer",
+        "heading": "Bienvenidos a Puebla",
+        "intro": "Les recomendamos a todos hospedarse a unas cuantas cuadras del Zócalo, la plaza principal de Puebla, para tener todo el Centro Histórico — Patrimonio de la Humanidad por la UNESCO — a unos pasos de la puerta. Esto es lo que puedes hacer en una mañana libre o en una tarde entre eventos.",
+        "eatDrink": "Comer y beber",
+        "shortDrive": "Vale la pena el paseo"
+      },
+      "sights": {
+        "catedral": {
+          "name": "Catedral de Puebla",
+          "distance": "En la plaza · 1 min a pie",
+          "blurb": "Sus torres gemelas son las torres de catedral más altas de México. Entra a ver el altar de mármol y oro y luego — si está abierta la visita al campanario, solo fines de semana y con boletos en la entrada — sube para ver las cúpulas de azulejo desde arriba."
+        },
+        "rosario": {
+          "name": "Capilla del Rosario",
+          "distance": "2 cuadras · 5 min a pie",
+          "blurb": "Escondida dentro del Templo de Santo Domingo, esta capilla barroca de hoja de oro fue llamada la octava maravilla del Nuevo Mundo cuando se inauguró en 1690. La entrada es gratuita y vale la pena volver dos veces."
+        },
+        "palafoxiana": {
+          "name": "Biblioteca Palafoxiana",
+          "distance": "1 cuadra · 4 min a pie",
+          "blurb": "La primera biblioteca pública de América, fundada en 1646: 45,000 volúmenes en estantes escalonados de cedro, en una sala que no ha cambiado desde la década de 1770. Entrada con costo módico; cierra los lunes."
+        },
+        "munecos": {
+          "name": "Casa de los Muñecos",
+          "distance": "En la plaza · 1 min a pie",
+          "blurb": "La fachada de azulejos en la esquina noreste está cubierta de caricaturas de los regidores que intentaron impedir que el dueño construyera más alto que ellos. Él ganó, y se aseguró de que todos lo supieran."
+        },
+        "santaRosa": {
+          "name": "Ex-Convento de Santa Rosa",
+          "distance": "6 cuadras · 10 min a pie",
+          "blurb": "La cocina conventual de Talavera donde, según la leyenda, se inventó el mole poblano; hoy es el museo de Talavera de la ciudad. Visítalo antes de probar el mole, no después."
+        },
+        "sapos": {
+          "name": "Callejón de los Sapos",
+          "distance": "5 cuadras · 8 min a pie",
+          "blurb": "Tiendas de antigüedades de día, tianguis el sábado y el domingo, y cantinas con música en vivo de noche. Pasa por La Pasita en la tarde antes de que cierre: un caballito, un cubito de queso y una pasita."
+        },
+        "artista": {
+          "name": "Barrio del Artista y El Parián",
+          "distance": "4 cuadras · 8 min a pie",
+          "blurb": "Los pintores abren sus talleres alrededor de una pequeña plaza, y El Parián, justo al lado, es ideal para recuerditos alegres. Para Talavera certificada, mejor camina cinco cuadras al poniente hasta Uriarte: el mismo taller desde 1824, y puedes ver cómo la pintan."
+        },
+        "amparo": {
+          "name": "Museo Amparo",
+          "distance": "3 cuadras · 8 min a pie",
+          "blurb": "Colecciones prehispánicas y virreinales en una casona bellamente restaurada, y una terraza con café con la mejor vista de la catedral en toda la ciudad. Cierra los martes, no los lunes."
+        },
+        "fuertes": {
+          "name": "Fuertes de Loreto y Guadalupe",
+          "distance": "10 min en Uber",
+          "blurb": "El cerro donde el ejército mexicano, en desventaja numérica, ganó el 5 de mayo de 1862: la razón por la que esa fecha significa algo. Murallas, un museo y una gran vista de regreso sobre la ciudad."
+        }
+      },
+      "table": {
+        "mole": {
+          "title": "Mole poblano",
+          "body": "Puebla presume haberlo inventado en la cocina de un convento. La Fonda de Santa Clara en la 3 Poniente es el clásico confiable, y El Mural de los Poetas es donde iríamos para una buena cena. Pídelo con guajolote y evita los restaurantes de los portales de la plaza."
+        },
+        "chiles": {
+          "title": "Chiles en nogada",
+          "body": "El platillo más famoso de Puebla — un chile poblano relleno bañado en nogada — solo aparece cuando se cosecha la nuez de Castilla, a partir de finales de julio. Llegarás dos meses antes, así que apúntalo para tu próxima visita y esta vez disfruta el mole."
+        },
+        "cemitas": {
+          "title": "Cemitas y tacos árabes",
+          "body": "Las dos grandes tortas de la ciudad. La cemita es un pan con ajonjolí, quesillo, aguacate, chipotle y pápalo; ve al Mercado El Carmen para probar la auténtica. Los tacos árabes salen de un trompo vertical y se sirven en pan árabe en lugar de tortilla, y valen la desvelada."
+        },
+        "dulces": {
+          "title": "Calle de los Dulces",
+          "body": "La 6 Oriente está llena de dulcerías: camotes, borrachitos y tortitas de Santa Clara, que se venden en los mismos zaguanes desde antes de la Revolución."
+        },
+        "rooftop": {
+          "title": "Atardecer desde una terraza",
+          "body": "Las terrazas de la plaza miran directo a la catedral y, en una tarde despejada, el Popocatépetl y el Iztaccíhuatl se asoman al poniente, a tu derecha. Finales de mayo es el cambio a la temporada de lluvias, así que los volcanes se dejan ver más en la mañana que al atardecer. Como sea: pide un mezcal y quédate a ver la luz."
+        }
+      },
+      "nearby": {
+        "cholula": {
+          "title": "Cholula — 20 minutos",
+          "body": "La Gran Pirámide es la más grande del mundo por volumen, con una iglesia amarilla en la cima. Recorre el túnel si está abierto, sube para ver los volcanes y luego come en la plaza de abajo. Cierra los lunes."
+        },
+        "tonantzintla": {
+          "title": "Tonantzintla y Acatepec — 30 minutos",
+          "body": "Dos iglesias de pueblo junto a Cholula. Acatepec es la de la fachada de Talavera; Tonantzintla es la que hay que ver por dentro, por su techo de santos indígenas, frutas y ángeles emplumados tallados por los propios vecinos. Ahí adentro no se permiten fotos."
+        },
+        "atlixco": {
+          "title": "Atlixco — 45 minutos",
+          "body": "Un pueblo de flores con una plaza pintada de colores y el mirador del Cerro de San Miguel sobre el valle. Los viveros están en todo su color a finales de la primavera, y el camino es la mitad del encanto."
+        }
+      },
+      "practical": {
+        "mondays": {
+          "title": "Un aviso sobre los lunes",
+          "body": "Casi todos los museos de México cierran los lunes, incluidos la Palafoxiana y la pirámide de Cholula. El Museo Amparo es la excepción y cierra los martes. Las iglesias abren todos los días."
+        },
+        "altitude": {
+          "title": "2,135 metros",
+          "body": "Puebla está en las alturas. El primer día toma más agua de la que se te antoje y ve despacio con el mezcal: la altitud nos agarra a todos desprevenidos."
+        },
+        "cash": {
+          "title": "Efectivo y tarjetas",
+          "body": "Restaurantes y hoteles aceptan tarjeta; los mercados, las dulcerías y los taxis de la calle quieren pesos. Saca dinero de un cajero de banco y rechaza el tipo de cambio que te ofrece el propio cajero. La propina es de entre diez y quince por ciento."
+        },
+        "gettingAround": {
+          "title": "Cómo moverse",
+          "body": "Uber y DiDi funcionan muy bien aquí y cuestan muy poco dentro del Centro. Úsalos en lugar de los taxis de la calle, sobre todo en la noche, y también para ir a Cholula."
+        },
+        "pack": {
+          "title": "Qué llevar en la maleta",
+          "body": "A finales de mayo hace calor de día y refresca en cuanto se mete el sol, y apenas empiezan las lluvias: lleva una chamarra para las noches, un impermeable ligero para las tormentas de la tarde y zapatos bajos para el empedrado."
+        }
+      },
+      "goodToKnow": "Bueno saber",
+      "explore": {
+        "eyebrow": "Alarga tu viaje",
+        "heading": "A dónde ir en México",
+        "intro": "Vas a viajar muy lejos para un solo fin de semana, así que quédate un poco más. Estos son los cuatro lugares a los que te mandaríamos, ya sea que tengas dos días extra o dos semanas extra.",
+        "gettingThere": "Cómo llegar · ",
+        "outro": "Y si prefieres no ir muy lejos: Puebla y los pueblos de los alrededores tienen lugares increíbles para visitar y caminatas preciosas.",
+        "tagline": "Ven por la boda, quédate por el país."
+      },
+      "trips": {
+        "mexicoCity": {
+          "name": "Ciudad de México",
+          "region": "La capital · a 2 horas de Puebla",
+          "blurb": "Si solo agregas una parada, que sea esta: una gran ciudad de museos alrededor de un centro colonial, con algunos de los mejores lugares para comer en todo el mundo.",
+          "gettingThere": "ADO sale de la terminal CAPU de Puebla cada veinte minutos y hace unas dos horas hasta la TAPO, en el oriente de la ciudad. También hay autobuses directos de la CAPU al aeropuerto, mucho mejor que atravesar la ciudad.",
+          "highlights": {
+            "h1": "Museo Nacional de Antropología: el mejor museo del país. Dedícale medio día y luego sube al Castillo de Chapultepec por la vista.",
+            "h2": "El Centro Histórico: el Zócalo, el Templo Mayor, Bellas Artes y los murales de Diego Rivera en el Palacio Nacional; lleva tu pasaporte y revisa que esté abierto.",
+            "h3": "La Casa Azul de Frida Kahlo en Coyoacán: los boletos con horario se agotan con semanas de anticipación, así que cómpralos en línea antes de volar.",
+            "h4": "La Roma y la Condesa para comidas largas, calles arboladas y cocteles de sobremesa.",
+            "h5": "Teotihuacán, a una hora al norte: llega a la hora de apertura o sobrevuela las pirámides en globo.",
+            "h6": "Lucha libre en la Arena México un viernes en la noche: el Súper Viernes es la gran función y los boletos son baratos."
+          }
+        },
+        "oaxaca": {
+          "name": "Ciudad de Oaxaca",
+          "region": "Oaxaca · 4½ h por carretera desde Puebla, 1 h en avión desde la Ciudad de México",
+          "blurb": "La capital gastronómica y artesanal del país: mezcal, siete moles y mercados que por sí solos valen el viaje. Mínimo dos noches; tres si puedes.",
+          "gettingThere": "No hay vuelo directo desde Puebla: vuela desde la Ciudad de México en una hora, toma un ADO directo desde la CAPU o maneja por la autopista de cuota 135D entre las montañas en cuatro horas y media; esa, de día.",
+          "highlights": {
+            "h1": "El Mercado 20 de Noviembre por el Pasillo de Humo, el pasillo de asadores lleno de humo, con el Mercado Benito Juárez justo al lado.",
+            "h2": "Santo Domingo y su museo de las culturas: el jardín etnobotánico solo se visita con recorrido guiado, y los recorridos en inglés son pocos a la semana.",
+            "h3": "Monte Albán, la ciudad zapoteca sobre la loma, a treinta minutos del centro, con Mitla y el enorme árbol de El Tule en el valle.",
+            "h4": "El tianguis dominical de Tlacolula y, de camino, los tejedores de tapetes y los palenques de mezcal de Teotitlán del Valle.",
+            "h5": "Las cascadas petrificadas de Hierve el Agua, mejor saliendo temprano; revisa antes que esté abierto, porque la comunidad cierra el camino de vez en cuando.",
+            "h6": "Finales de mayo y junio son la temporada verde: los valles reverdecen con las primeras lluvias y la ciudad está tranquila, antes de que lleguen las multitudes de la Guelaguetza en julio."
+          }
+        },
+        "puertoEscondido": {
+          "name": "Puerto Escondido",
+          "region": "Costa de Oaxaca · 1 h en avión desde la Ciudad de México",
+          "blurb": "A donde va a nadar la Ciudad de México: descalzo, sin pretensiones y cálido todo el año. La forma más fácil de cerrar un viaje.",
+          "gettingThere": "A una hora en avión desde la Ciudad de México, o a cuarenta minutos desde la ciudad de Oaxaca en una avioneta de doce plazas; viaja ligero, el límite de equipaje es estricto. La nueva carretera redujo el trayecto desde Oaxaca a unas tres horas y media.",
+          "highlights": {
+            "h1": "Playa Carrizalillo, una caleta tranquila para nadar; para llegar hay que bajar unos ciento setenta escalones.",
+            "h2": "Zicatela para el surf y el atardecer, pero no te metas al mar ahí: es el Pipeline mexicano, en junio ya entra el oleaje de verano y las corrientes son mortales.",
+            "h3": "La bioluminiscencia en la laguna de Manialtepec, mejor en una noche sin luna, ya iniciadas las lluvias.",
+            "h4": "Un paseo en lancha al amanecer para ver delfines y tortugas: en junio las ballenas ya se fueron al norte, pero las tortugas apenas empiezan a anidar.",
+            "h5": "Las liberaciones de tortuguitas en Playa Bacocho, que se reanudan al abrir la temporada de anidación.",
+            "h6": "Mazunte y Zipolite, a noventa minutos al oriente, si buscas algo todavía más tranquilo."
+          }
+        },
+        "sanMiguel": {
+          "name": "San Miguel de Allende",
+          "region": "Guanajuato · 3½ h por carretera desde la Ciudad de México",
+          "blurb": "Calles empedradas, bares en azoteas y una parroquia rosa de cuento, en un pueblo tan pequeño que se recorre a pie de punta a punta. Ideal para dos noches sin prisas.",
+          "gettingThere": "Vuela a Querétaro (QRO) y maneja una hora, o a León (BJX) y maneja una hora cuarenta y cinco; también hay autobuses cómodos desde la Ciudad de México.",
+          "highlights": {
+            "h1": "La Parroquia de San Miguel Arcángel, frente al Jardín: se ve mejor a la hora dorada desde una terraza, y la que todos recomiendan es Luna, en el Rosewood.",
+            "h2": "Fábrica La Aurora, una antigua fábrica textil llena de galerías y talleres.",
+            "h3": "Aguas termales en La Gruta o Escondido Place, a veinte minutos: solo efectivo, y se llenan los fines de semana.",
+            "h4": "Atotonilco, el santuario de los frescos a quince minutos, y los jardines de cactáceas de El Charco del Ingenio.",
+            "h5": "El tianguis de los martes, sobre la carretera a Querétaro: enorme, barato y no se llega a pie, así que toma un taxi.",
+            "h6": "La ciudad de Guanajuato, a noventa minutos, por sus túneles, callejones y color."
+          }
+        }
+      }
+    }
+  }
+}

@@ -2,6 +2,7 @@ import { QuestionRepository } from '~/server/domains/question/question.repositor
 
 describe('QuestionRepository scope helpers', () => {
   const mockQuestionFindFirst = jest.fn()
+  const mockQuestionUpsert = jest.fn()
   const mockOptionDeleteMany = jest.fn()
   const mockEventFindFirst = jest.fn()
   const mockWebsiteFindFirst = jest.fn()
@@ -9,6 +10,7 @@ describe('QuestionRepository scope helpers', () => {
   const mockDb = {
     question: {
       findFirst: mockQuestionFindFirst,
+      upsert: mockQuestionUpsert,
     },
     option: {
       deleteMany: mockOptionDeleteMany,
@@ -79,5 +81,35 @@ describe('QuestionRepository scope helpers', () => {
       where: { id: 'website-1', weddingId: 'wedding-1' },
       select: { id: true },
     })
+  })
+
+  it('stores question and option translations, keeping stored ones when omitted', async () => {
+    mockQuestionUpsert.mockResolvedValue({ id: 'question-1' })
+
+    await repository.upsert({
+      questionId: 'question-1',
+      text: 'Meal?',
+      type: 'Option',
+      isRequired: true,
+      translations: { es: { text: '¿Platillo?' } },
+      options: [
+        { id: 'o1', text: 'Chicken', translations: { es: { text: 'Pollo' } } },
+        { text: 'Fish' },
+      ],
+    })
+
+    const args = mockQuestionUpsert.mock.lastCall?.[0]
+    expect(args.update.translations).toEqual({ es: { text: '¿Platillo?' } })
+    expect(args.create.translations).toEqual({ es: { text: '¿Platillo?' } })
+    expect(args.update.options.upsert[0].update.translations).toEqual({ es: { text: 'Pollo' } })
+    expect(args.update.options.upsert[1].update).not.toHaveProperty('translations')
+
+    await repository.upsert({
+      questionId: 'question-1',
+      text: 'Meal?',
+      type: 'Text',
+      isRequired: false,
+    })
+    expect(mockQuestionUpsert.mock.lastCall?.[0].update).not.toHaveProperty('translations')
   })
 })

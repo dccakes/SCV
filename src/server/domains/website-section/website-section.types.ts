@@ -211,7 +211,15 @@ type WebsiteSectionBase = {
 export type WebsiteSectionOfType<T extends WebsiteSectionType> = WebsiteSectionBase & {
   type: T
   content: SectionContentByType[T]
+  /**
+   * Translations of `content` in the same shape, keyed by locale. English is
+   * `content` itself; blank translated fields fall back to English.
+   */
+  translations?: SectionTranslations<SectionContentByType[T]>
 }
+
+/** Stored translations for one section's content. */
+export type SectionTranslations<T> = { es?: T }
 
 /**
  * A website section as a discriminated union — switching on `type` narrows

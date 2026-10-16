@@ -143,6 +143,11 @@ export type WeddingPageData = {
     venue: string | null
     attire: string | null
     description: string | null
+    /**
+     * Whether this is the main "Wedding Day" event. Set on the server from the
+     * English name so templates can find it even after names are translated.
+     */
+    isWeddingDay?: boolean
     weddingId: string
     collectRsvp: boolean
     questions: Question[]

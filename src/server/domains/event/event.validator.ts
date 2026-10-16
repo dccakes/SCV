@@ -24,6 +24,21 @@ const isTodayOrFutureDate = (value: string | undefined): boolean => {
 /**
  * Schema for creating a new event
  */
+/**
+ * Spanish copy for an event's guest-facing text. Blank fields fall back to the
+ * English value on the wedding website.
+ */
+export const eventTranslationsSchema = z.object({
+  es: z
+    .object({
+      name: z.string().max(50, { message: 'Event name must be 50 characters or less' }).optional(),
+      venue: z.string().optional(),
+      attire: z.string().optional(),
+      description: z.string().optional(),
+    })
+    .optional(),
+})
+
 export const createEventSchema = z
   .object({
     eventName: z
@@ -38,6 +53,7 @@ export const createEventSchema = z
     description: z.string().optional(),
     collectRsvp: z.boolean().default(false),
     allowTagAlongs: z.boolean().default(false),
+    translations: eventTranslationsSchema.optional(),
   })
   .refine((data) => isTodayOrFutureDate(data.date), {
     message: 'Event date cannot be in the past',
@@ -62,6 +78,7 @@ export const updateEventSchema = z
     description: z.string().optional(),
     collectRsvp: z.boolean().optional(),
     allowTagAlongs: z.boolean().optional(),
+    translations: eventTranslationsSchema.optional(),
   })
   .refine((data) => isTodayOrFutureDate(data.date), {
     message: 'Event date cannot be in the past',

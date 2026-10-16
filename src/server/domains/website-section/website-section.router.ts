@@ -32,6 +32,7 @@ export const websiteSectionRouter = createTRPCRouter({
       type: input.type,
       content: input.content,
       isEnabled: input.isEnabled,
+      translations: input.translations,
     })
   }),
 })

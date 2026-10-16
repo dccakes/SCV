@@ -1,6 +1,7 @@
 'use client'
 
 import { CalendarPlus } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 import { Button } from '~/components/ui/button'
 import type { SaveTheDateCalendarLinks } from '~/lib/website/calendar'
@@ -20,6 +21,7 @@ export function AddToCalendarButtons({
   ics,
   fileName,
 }: Readonly<SaveTheDateCalendarLinks>) {
+  const t = useTranslations('site.calendar')
   const downloadIcs = () => {
     const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' })
     const url = URL.createObjectURL(blob)
@@ -36,19 +38,19 @@ export function AddToCalendarButtons({
     <div className='flex flex-wrap items-center justify-center gap-3'>
       <Button asChild variant='outline' size='sm'>
         <a href={googleUrl} target='_blank' rel='noopener noreferrer'>
-          <CalendarPlus />
-          Google Calendar
+          <CalendarPlus aria-hidden />
+          {t('google')}
         </a>
       </Button>
       <Button asChild variant='outline' size='sm'>
         <a href={outlookUrl} target='_blank' rel='noopener noreferrer'>
-          <CalendarPlus />
-          Outlook
+          <CalendarPlus aria-hidden />
+          {t('outlook')}
         </a>
       </Button>
       <Button type='button' variant='outline' size='sm' onClick={downloadIcs}>
-        <CalendarPlus />
-        Apple Calendar
+        <CalendarPlus aria-hidden />
+        {t('apple')}
       </Button>
     </div>
   )

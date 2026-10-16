@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { useLocale, useTranslations } from 'next-intl'
 import type { TemplateSurfaceProps } from '~/templates/types'
 import { Decor } from '~/templates/voyage/components/decor'
 import { VoyageFlightSearch } from '~/templates/voyage/components/flight-search'
@@ -27,21 +28,32 @@ import {
 import { Band, VoyageDestination, VoyageRegistry } from '~/templates/voyage/components/sections'
 import { VoyageSiteShell } from '~/templates/voyage/components/site-shell'
 import { VoyageWeekend } from '~/templates/voyage/components/weekend'
-import { coupleIdentity, eventDateRange, flightDates, sectionOf } from '~/templates/voyage/site'
+import {
+  coupleIdentity,
+  eventDateRange,
+  flightDates,
+  identityCopy,
+  sectionOf,
+} from '~/templates/voyage/site'
 
 export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSurfaceProps>) {
+  const t = useTranslations('voyage.home')
+  const tIdentity = useTranslations('voyage.identity')
+  const locale = useLocale()
   const { website } = weddingData
-  const { coupleNames } = coupleIdentity(weddingData)
+  const { coupleNames } = coupleIdentity(weddingData, identityCopy(tIdentity))
   const destination = sectionOf(weddingData.sections, 'DESTINATION')
   const story = sectionOf(weddingData.sections, 'OUR_STORY')
   const registry = sectionOf(weddingData.sections, 'REGISTRY')
   const faq = sectionOf(weddingData.sections, 'FAQ')
   const deadline = faq?.content.items.find((item) =>
-    /(?:when|deadline).*rsvp|rsvp.*(?:when|deadline)/i.test(item.question)
+    /(?:when|deadline|cu[aá]ndo|fecha l[ií]mite).*(?:rsvp|confirm)|rsvp.*(?:when|deadline)/i.test(
+      item.question
+    )
   )?.answer
   const location = destination?.content.location ?? null
   const heroUrl = website.headerImageUrl ?? website.coverPhotoUrl ?? null
-  const dateLabel = eventDateRange(weddingData.events) ?? weddingData.date?.standardFormat
+  const dateLabel = eventDateRange(weddingData.events, locale) ?? weddingData.date?.standardFormat
   const heroHeadline = website.headline?.trim()
   const heroHeadlineAccent = website.headlineAccent?.trim()
   const rsvpHref = website.isRsvpEnabled ? `${path}/rsvp` : undefined
@@ -73,13 +85,13 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
                     </>
                   ) : (
                     <>
-                      Our Forever
+                      {t('heroLine1')}
                       <br />
-                      Begins in
+                      {t('heroLine2')}
                       <span
                         className={`${scriptFont} mt-2 block text-[#EFE0D2] text-[1.15em] leading-[1.2]`}
                       >
-                        {(location ?? 'Paradise').split(',')[0]}
+                        {(location ?? t('paradise')).split(',')[0]}
                         <IconHeart className='ml-4 inline-block h-[0.32em] w-[0.32em] align-middle' />
                       </span>
                     </>
@@ -88,15 +100,16 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
                 <p
                   className={`${bodyFont} max-w-xl text-[#F7F3EC]/90 text-lg leading-8 [text-shadow:0_1px_10px_rgba(13,17,15,0.45)]`}
                 >
-                  {introText ??
-                    'We can’t wait to celebrate our love with you in the city that stole our hearts.'}
+                  {introText ?? t('introFallback')}
                 </p>
                 <p className={`${bodyFont} text-[#F7F3EC] text-lg`}>
                   {[dateLabel, location].filter(Boolean).join(' · ')}
                 </p>
                 <div className='flex flex-wrap items-center gap-4 pt-1'>
-                  {rsvpHref ? <PrimaryButton href={rsvpHref}>RSVP Now</PrimaryButton> : null}
-                  <GhostButtonOnDark href={`${path}/weekend`}>Wedding Details</GhostButtonOnDark>
+                  {rsvpHref ? <PrimaryButton href={rsvpHref}>{t('rsvpNow')}</PrimaryButton> : null}
+                  <GhostButtonOnDark href={`${path}/weekend`}>
+                    {t('weddingDetails')}
+                  </GhostButtonOnDark>
                 </div>
               </div>
             </div>
@@ -104,20 +117,13 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
         </div>
       </HeroBackground>
 
-      <nav
-        aria-label='Plan your visit'
-        className='border-border border-y bg-card px-6 py-7 lg:px-10'
-      >
+      <nav aria-label={t('planAria')} className='border-border border-y bg-card px-6 py-7 lg:px-10'>
         <div className='mx-auto grid max-w-6xl grid-cols-2 gap-3 md:grid-cols-4'>
           {[
-            { label: 'Schedule', detail: 'Every celebration', href: '/weekend' },
-            { label: 'Book Your Stay', detail: 'Hotels & wedding rates', href: '/stay' },
-            { label: 'Getting Here', detail: 'Flights & transfers', href: '/travel' },
-            {
-              label: 'What to Wear',
-              detail: 'Dress code & guidance',
-              href: '/weekend#what-to-wear',
-            },
+            { key: 'schedule', href: '/weekend' },
+            { key: 'stay', href: '/stay' },
+            { key: 'travel', href: '/travel' },
+            { key: 'wear', href: '/weekend#what-to-wear' },
           ].map((item) => (
             <Link
               key={item.href}
@@ -127,9 +133,11 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
               <span
                 className={`${labelFont} text-[0.62rem] text-primary uppercase tracking-[0.26em]`}
               >
-                {item.label}
+                {t(`quickLinks.${item.key}.label`)}
               </span>
-              <span className={`${bodyFont} text-base text-muted-foreground`}>{item.detail}</span>
+              <span className={`${bodyFont} text-base text-muted-foreground`}>
+                {t(`quickLinks.${item.key}.detail`)}
+              </span>
             </Link>
           ))}
         </div>
@@ -140,14 +148,14 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
         <Band tone='cream'>
           <div className='grid items-center gap-10 md:grid-cols-2'>
             <div className='space-y-6'>
-              <Eyebrow>Our story</Eyebrow>
-              <h2 className={`${headingFont} text-4xl sm:text-5xl`}>The journey to here</h2>
+              <Eyebrow>{t('storyEyebrow')}</Eyebrow>
+              <h2 className={`${headingFont} text-4xl sm:text-5xl`}>{t('storyHeading')}</h2>
               <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
                 {story.content.body.length > 280
                   ? `${story.content.body.slice(0, 280).replace(/\s+\S*$/, '')}…`
                   : story.content.body}
               </p>
-              <OutlineButton href={`${path}/story`}>Read our story</OutlineButton>
+              <OutlineButton href={`${path}/story`}>{t('readStory')}</OutlineButton>
             </div>
             <div className='relative aspect-[4/3] overflow-hidden rounded-sm bg-secondary'>
               {website.coupleImageUrls[0] ? (
@@ -168,23 +176,21 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
       <VoyageFlightSearch {...flightDates(weddingData.events)} />
       <Band>
         <div className='mb-10 space-y-4 text-center'>
-          <Eyebrow>Things to do</Eyebrow>
-          <h2 className={`${headingFont} text-4xl sm:text-5xl`}>A little adventure awaits</h2>
+          <Eyebrow>{t('thingsToDoEyebrow')}</Eyebrow>
+          <h2 className={`${headingFont} text-4xl sm:text-5xl`}>{t('adventureHeading')}</h2>
         </div>
         <div className='grid gap-12 md:grid-cols-2 md:gap-16'>
           {[
             {
-              title: 'Explore Puebla',
+              title: t('explorePuebla.title'),
               href: 'puebla',
-              description:
-                'Our favourite sights, food and day trips for the time between celebrations.',
+              description: t('explorePuebla.description'),
               Icon: IconArch,
             },
             {
-              title: 'Explore Mexico',
+              title: t('exploreMexico.title'),
               href: 'mexico',
-              description:
-                'Stay a little longer. Discover our favourite places for a bigger adventure.',
+              description: t('exploreMexico.description'),
               Icon: IconCompass,
             },
           ].map(({ title, href, description, Icon }) => (
@@ -225,14 +231,11 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
               <VoyageRegistry content={registry.content} />
             ) : (
               <div className='flex flex-col gap-6'>
-                <Eyebrow>Kindly RSVP</Eyebrow>
-                <h2 className={`${sectionHeadingClass} italic leading-tight`}>
-                  We can&rsquo;t wait to celebrate with you!
-                </h2>
+                <Eyebrow>{t('kindlyRsvp')}</Eyebrow>
+                <h2 className={`${sectionHeadingClass} italic leading-tight`}>{t('cantWait')}</h2>
                 <GoldRule className='self-start' />
                 <p className={`${bodyFont} max-w-xl text-[#6F675D] text-lg leading-8`}>
-                  We would be honored to celebrate with you. Let us know if you can make the
-                  journey.
+                  {t('honored')}
                 </p>
                 <Decor
                   name='hacienda'
@@ -242,7 +245,7 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
             )}
             {rsvpHref ? (
               <div className='rounded-[3px] border border-[#DDD2C0] bg-[#F7F3EC] px-8 py-10 text-center'>
-                <Eyebrow>Your Invitation</Eyebrow>
+                <Eyebrow>{t('yourInvitation')}</Eyebrow>
                 <p className={`${headingFont} mt-4 text-3xl text-[#1D2320]`}>{coupleNames}</p>
                 {dateLabel ? (
                   <p
@@ -254,13 +257,13 @@ export function VoyageHome({ weddingData, path, introText }: Readonly<TemplateSu
                 ) : null}
                 {deadline ? (
                   <p className={`${bodyFont} mt-4 text-lg text-muted-foreground`}>
-                    RSVP deadline: {deadline}
+                    {t('rsvpDeadline', { deadline })}
                   </p>
                 ) : null}
                 <HeartRule className='mt-6' />
                 <div className='mt-6 flex justify-center'>
                   <PrimaryButton href={rsvpHref} className='w-full max-w-xs'>
-                    Send RSVP
+                    {t('sendRsvp')}
                   </PrimaryButton>
                 </div>
               </div>

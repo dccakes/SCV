@@ -48,6 +48,13 @@ export default async () => {
     // `~/trpc/react` — without per-test mocking.
     '@t3-oss/env-nextjs',
     '@t3-oss/env-core',
+    // next-intl ships ESM-only builds; transforming them lets tests render
+    // translated components inside a real NextIntlClientProvider.
+    'next-intl',
+    'use-intl',
+    '@formatjs',
+    'intl-messageformat',
+    'icu-minify',
   ]
   const pkg = esmPackages.join('|')
 

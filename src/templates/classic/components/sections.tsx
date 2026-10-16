@@ -11,6 +11,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import type {
   DestinationSectionContent,
   ExperiencesSectionContent,
@@ -52,6 +53,7 @@ function OurStory({ content }: { content: OurStorySectionContent }) {
 }
 
 function Travel({ content }: { content: TravelSectionContent }) {
+  const t = useTranslations('classic')
   const services = content.services ?? []
   const stays = content.stays ?? []
   return (
@@ -96,7 +98,7 @@ function Travel({ content }: { content: TravelSectionContent }) {
                   rel='noreferrer'
                   className='underline underline-offset-4 hover:text-pink-500'
                 >
-                  View stay
+                  {t('viewStay')}
                 </Link>
               ) : null}
             </li>

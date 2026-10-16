@@ -105,6 +105,39 @@ describe('EventManagementService', () => {
     expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, { event: ['update'] })
   })
 
+  it('saves Spanish event text when creating and updating', async () => {
+    mockDb._tx.event.create.mockResolvedValue(mockEvent)
+    mockDb._tx.guest.findMany.mockResolvedValue([])
+    mockDb._tx.invitation.createMany.mockResolvedValue({ count: 0 })
+    mockDb._tx.event.findUnique.mockResolvedValue({ id: 'event-123', allowTagAlongs: false })
+    mockDb._tx.event.update.mockResolvedValue(mockEvent)
+    const translations = { es: { name: 'Boda', venue: 'Jardín' } }
+
+    await service.createEvent(actorContext, 'wedding-123', {
+      eventName: 'Wedding Day',
+      translations,
+    })
+    expect(mockDb._tx.event.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ translations }),
+    })
+
+    await service.updateEvent(actorContext, 'wedding-123', {
+      eventId: 'event-123',
+      eventName: 'Wedding Day',
+      translations,
+    })
+    expect(mockDb._tx.event.update).toHaveBeenLastCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ translations }) })
+    )
+
+    // Leaving translations out keeps what is stored.
+    await service.updateEvent(actorContext, 'wedding-123', {
+      eventId: 'event-123',
+      eventName: 'Wedding Day',
+    })
+    expect(mockDb._tx.event.update.mock.lastCall?.[0].data.translations).toBeUndefined()
+  })
+
   it('requires event delete permission before deleting', async () => {
     mockDeleteFn.mockResolvedValue(mockEvent)
 

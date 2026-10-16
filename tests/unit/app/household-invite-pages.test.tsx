@@ -1,9 +1,11 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import {
   Headers as UndiciHeaders,
   Request as UndiciRequest,
   Response as UndiciResponse,
 } from 'undici'
+
+import { renderWithIntl } from '~/../tests/unit/test-utils/intl'
 
 Object.assign(globalThis, {
   Headers: UndiciHeaders,
@@ -26,6 +28,7 @@ jest.mock('next/headers', () => ({
 
 jest.mock('next/navigation', () => ({
   redirect: (url: string) => mockRedirect(url),
+  useRouter: () => ({ refresh: jest.fn() }),
 }))
 
 jest.mock('~/server/application/household-invite', () => ({
@@ -36,27 +39,12 @@ jest.mock('~/server/application/household-invite', () => ({
   },
 }))
 
-const inviteTranslations: Record<string, string> = {
-  saveTheDate: 'Save the date',
-  detailsUpdated: 'Your details were updated.',
-  date: 'Date',
-  location: 'Location',
-  toBeAnnounced: 'To be announced',
-  addToCalendar: 'Add to your calendar',
-  invitedHousehold: 'Invited household',
-  formalInvitationNote:
-    'Formal invitation details will follow. For now, please make sure we have the correct names and mailing address for your household.',
-  updateDetails: 'Update our details',
-  viewWebsite: 'View our website',
-  couldNotOpen: 'We could not open this invitation.',
-  invalidLinkDescription:
-    'This invite link may be expired, mistyped, or opened without the original household link. Please use the save-the-date link you received, or ask the couple for a new one.',
-}
-
-jest.mock('next-intl/server', () => ({
-  getLocale: () => Promise.resolve('en'),
-  getTranslations: () => Promise.resolve((key: string) => inviteTranslations[key] ?? key),
-}))
+let mockLocale: 'en' | 'es' = 'en'
+jest.mock('next-intl/server', () =>
+  jest
+    .requireActual('~/../tests/unit/test-utils/intl-server')
+    .createIntlServerMock(() => mockLocale)
+)
 
 jest.mock('~/components/website/household-invite/invalid-household-invite', () => ({
   InvalidHouseholdInvite: jest.fn().mockReturnValue(
@@ -137,6 +125,7 @@ describe('household invite pages', () => {
 
   afterEach(() => {
     jest.useRealTimers()
+    mockLocale = 'en'
   })
 
   it('validates the code route, sets a code-matched household invite cookie, and redirects', async () => {
@@ -175,11 +164,12 @@ describe('household invite pages', () => {
     mockGetInviteData.mockResolvedValue(inviteData)
     const InvitePage = (await import('~/app/w/[websiteSubUrl]/save-the-date/page')).default
 
-    render(
+    renderWithIntl(
       await InvitePage({
         params: Promise.resolve({ websiteSubUrl: 'harry-and-hermione' }),
         searchParams: Promise.resolve({ updated: '1' }),
-      })
+      }),
+      { locale: mockLocale }
     )
 
     expect(screen.getByText('Save the date')).toBeInTheDocument()
@@ -221,11 +211,12 @@ describe('household invite pages', () => {
     })
     const InvitePage = (await import('~/app/w/[websiteSubUrl]/save-the-date/page')).default
 
-    const { container } = render(
+    const { container } = renderWithIntl(
       await InvitePage({
         params: Promise.resolve({ websiteSubUrl: 'harry-and-hermione' }),
         searchParams: Promise.resolve({}),
-      })
+      }),
+      { locale: mockLocale }
     )
 
     // The card is wrapped in the couple's selected template theme so its colours
@@ -242,11 +233,12 @@ describe('household invite pages', () => {
     mockGetInviteData.mockResolvedValue({ ...inviteData, templateId: null })
     const InvitePage = (await import('~/app/w/[websiteSubUrl]/save-the-date/page')).default
 
-    const { container } = render(
+    const { container } = renderWithIntl(
       await InvitePage({
         params: Promise.resolve({ websiteSubUrl: 'harry-and-hermione' }),
         searchParams: Promise.resolve({}),
-      })
+      }),
+      { locale: mockLocale }
     )
 
     // Unknown/null template resolves to the default (classic) theme.
@@ -267,7 +259,7 @@ describe('household invite pages', () => {
       params: Promise.resolve({ websiteSubUrl: 'ronald-and-ginny' }),
     })
 
-    expect(mockGetPublicWeddingSummary).toHaveBeenCalledWith('ronald-and-ginny')
+    expect(mockGetPublicWeddingSummary).toHaveBeenCalledWith('ronald-and-ginny', 'en')
     const expectedTitle = "Save the Date — Ronald & Ginny's Wedding"
     expect(metadata.title).toBe(expectedTitle)
     expect(metadata.openGraph?.title).toBe(expectedTitle)
@@ -296,6 +288,48 @@ describe('household invite pages', () => {
     )
   })
 
+  it('builds Spanish save-the-date metadata with es-MX dates', async () => {
+    mockLocale = 'es'
+    mockGetPublicWeddingSummary.mockResolvedValue({
+      groomFirstName: 'Ronald',
+      brideFirstName: 'Ginny',
+      date: new Date('2027-05-30T12:00:00.000Z'),
+      venue: 'Puebla',
+    })
+    const { generateMetadata } = await import('~/app/w/[websiteSubUrl]/save-the-date/page')
+
+    const metadata = await generateMetadata({
+      params: Promise.resolve({ websiteSubUrl: 'ronald-and-ginny' }),
+    })
+
+    expect(metadata.title).toBe('Reserva la fecha — Boda de Ronald & Ginny')
+    expect(metadata.description).toBe(
+      '¡Ronald & Ginny se casan el 30 de mayo de 2027 en Puebla! Abre tu reserva la fecha para confirmar los datos de tu hogar.'
+    )
+  })
+
+  it('renders the save-the-date card in Spanish with a language toggle', async () => {
+    mockLocale = 'es'
+    mockCookieGet.mockReturnValue({ value: 'cookie-code' })
+    mockGetInviteData.mockResolvedValue(inviteData)
+    const InvitePage = (await import('~/app/w/[websiteSubUrl]/save-the-date/page')).default
+
+    renderWithIntl(
+      await InvitePage({
+        params: Promise.resolve({ websiteSubUrl: 'harry-and-hermione' }),
+        searchParams: Promise.resolve({}),
+      }),
+      { locale: 'es' }
+    )
+
+    // The couple's Spanish copy is requested for Spanish visitors.
+    expect(mockGetInviteData).toHaveBeenCalledWith('harry-and-hermione', 'cookie-code', 'es')
+    expect(screen.getByText('Reserva la fecha')).toBeInTheDocument()
+    expect(screen.getByText('30 de mayo de 2027 – 31 de mayo de 2027')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /calendario de apple/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Switch to English' })).toBeInTheDocument()
+  })
+
   it('falls back to noindex-only metadata when the slug has no wedding', async () => {
     mockGetPublicWeddingSummary.mockResolvedValue(null)
     const { generateMetadata } = await import('~/app/w/[websiteSubUrl]/save-the-date/page')
@@ -314,11 +348,12 @@ describe('household invite pages', () => {
     mockGetInviteData.mockResolvedValue(null)
     const InvitePage = (await import('~/app/w/[websiteSubUrl]/save-the-date/page')).default
 
-    render(
+    renderWithIntl(
       await InvitePage({
         params: Promise.resolve({ websiteSubUrl: 'harry-and-hermione' }),
         searchParams: Promise.resolve({ invalid: '1' }),
-      })
+      }),
+      { locale: mockLocale }
     )
 
     expect(screen.getByText('We could not open this invitation.')).toBeInTheDocument()

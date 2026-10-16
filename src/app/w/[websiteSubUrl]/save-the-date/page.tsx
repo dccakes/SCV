@@ -3,12 +3,14 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { getLocale, getTranslations } from 'next-intl/server'
 
-import { formatDateStandard } from '~/app/utils/helpers'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent } from '~/components/ui/card'
 import { AddToCalendarButtons } from '~/components/website/add-to-calendar-buttons'
 import { EnvelopeReveal } from '~/components/website/household-invite/envelope-reveal'
 import { InvalidHouseholdInvite } from '~/components/website/household-invite/invalid-household-invite'
+import { SiteLocaleToggle } from '~/components/website/site-locale-toggle'
+import { formatLongDate, toIntlLocale } from '~/lib/locale/intl-format'
+import { toLocale } from '~/lib/locale/locale-detection'
 import { buildSaveTheDateCalendarLinks } from '~/lib/website/calendar'
 import { householdInviteCookieName } from '~/lib/website/cookies'
 import { householdInviteService } from '~/server/application/household-invite'
@@ -36,7 +38,7 @@ const formatGuestName = (guest: { firstName: string; lastName: string }) =>
 const formatEventDateRange = (first: Date, last: Date, locale: string) => {
   // Event dates come from a `@db.Date` column (midnight UTC), so format in UTC to
   // show the day the couple entered regardless of the viewer's timezone.
-  const dateFormatter = new Intl.DateTimeFormat(locale === 'es' ? 'es' : 'en-US', {
+  const dateFormatter = new Intl.DateTimeFormat(toIntlLocale(locale), {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -46,16 +48,6 @@ const formatEventDateRange = (first: Date, last: Date, locale: string) => {
   return first.getTime() === last.getTime()
     ? dateFormatter.format(first)
     : `${dateFormatter.format(first)} – ${dateFormatter.format(last)}`
-}
-
-const buildSaveTheDateDescription = (
-  coupleNames: string,
-  dateLabel: string | undefined,
-  venue: string | null
-) => {
-  const when = dateLabel ? ` on ${dateLabel}` : ''
-  const where = venue ? ` in ${venue}` : ''
-  return `${coupleNames} are getting married${when}${where}. Open your household save the date to confirm your details.`
 }
 
 export async function generateMetadata({ params }: SaveTheDatePageProps): Promise<Metadata> {
@@ -74,16 +66,23 @@ export async function generateMetadata({ params }: SaveTheDatePageProps): Promis
   // The couple names, date, and venue are public wedding details tied to the
   // website slug, so derive the preview from the slug instead of the invite
   // code to give shared links a proper "Save the Date" card.
-  const summary = await householdInviteService.getPublicWeddingSummary(websiteSubUrl)
+  const locale = await getLocale()
+  const summary = await householdInviteService.getPublicWeddingSummary(
+    websiteSubUrl,
+    toLocale(locale)
+  )
   if (!summary) return baseMetadata
 
+  const t = await getTranslations('site.metadata')
   const coupleNames = `${summary.groomFirstName} & ${summary.brideFirstName}`
-  const title = `Save the Date — ${coupleNames}'s Wedding`
-  const description = buildSaveTheDateDescription(
+  const title = t('saveTheDateTitle', { coupleNames })
+  const description = t('saveTheDateDescription', {
     coupleNames,
-    formatDateStandard(summary.date),
-    summary.venue
-  )
+    hasDate: summary.date ? 'yes' : 'no',
+    date: summary.date ? formatLongDate(summary.date, locale) : '',
+    hasVenue: summary.venue ? 'yes' : 'no',
+    venue: summary.venue ?? '',
+  })
 
   return {
     ...baseMetadata,
@@ -107,9 +106,14 @@ export default async function SaveTheDatePage({ params, searchParams }: SaveTheD
   const resolvedSearchParams = await searchParams
   const locale = await getLocale()
   const t = await getTranslations('invite')
+  const tCalendar = await getTranslations('site.calendar')
   const cookieStore = await cookies()
   const code = cookieStore.get(householdInviteCookieName(websiteSubUrl))?.value
-  const inviteData = await householdInviteService.getInviteData(websiteSubUrl, code)
+  const inviteData = await householdInviteService.getInviteData(
+    websiteSubUrl,
+    code,
+    toLocale(locale)
+  )
 
   if (!inviteData) return <InvalidHouseholdInvite websiteSubUrl={websiteSubUrl} />
 
@@ -128,12 +132,12 @@ export default async function SaveTheDatePage({ params, searchParams }: SaveTheD
   const lastEvent = datedEvents[datedEvents.length - 1]
   const formattedDate =
     firstEvent && lastEvent ? formatEventDateRange(firstEvent.date, lastEvent.date, locale) : null
-  const ceremonyEvent = datedEvents.find((event) => event.name === 'Ceremony')
+  const ceremonyEvent = datedEvents.find((event) => event.isCeremony)
   const location = ceremonyEvent?.venue ?? firstEvent?.venue ?? null
 
   const calendarLinks = buildSaveTheDateCalendarLinks({
-    title: `${coupleNames} Wedding`,
-    description: `Save the date for the wedding of ${coupleNames}! Formal invitation to follow.`,
+    title: tCalendar('eventTitle', { coupleNames }),
+    description: tCalendar('eventDescription', { coupleNames }),
     location: location ?? undefined,
     events: inviteData.events,
   })
@@ -141,6 +145,7 @@ export default async function SaveTheDatePage({ params, searchParams }: SaveTheD
   return (
     <TemplateThemeProvider template={template}>
       <main className='relative min-h-screen overflow-hidden bg-background px-5 py-12 text-foreground sm:py-16'>
+        <SiteLocaleToggle />
         {/* Soft, warm backdrop so the save the date card reads as a framed keepsake. */}
         <div aria-hidden className='pointer-events-none absolute inset-0 -z-10'>
           <div className='absolute -top-32 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl' />

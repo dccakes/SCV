@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl'
 import { IoMdClose } from 'react-icons/io'
 
 export default function RsvpPageSkeleton() {
@@ -28,10 +29,11 @@ export default function RsvpPageSkeleton() {
 }
 
 const StaticProgressBar = () => {
+  const t = useTranslations('site.rsvpForm')
   return (
     <div className='fixed top-0 z-10 w-full bg-white px-10 py-1 text-center font-serif'>
-      <IoMdClose size={25} className='absolute top-2 right-20 z-20 cursor-pointer' />
-      <h1 className='py-3 text-2xl'>RSVP</h1>
+      <IoMdClose aria-hidden size={25} className='absolute top-2 right-20 z-20 cursor-pointer' />
+      <h1 className='py-3 text-xl sm:text-2xl'>{t('heading')}</h1>
       <div className='relative mb-2.5 h-3 w-full rounded-full bg-gray-200'>
         <div className='absolute top-0 left-0 mb-2.5 h-3 w-[3%] rounded-full bg-gray-700 transition-[width]'></div>
       </div>

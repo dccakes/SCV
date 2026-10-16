@@ -3,6 +3,13 @@ import { createElement } from 'react'
 
 import RootRouteHandler, { generateMetadata } from '~/app/w/[websiteSubUrl]/page'
 
+let mockLocale: 'en' | 'es' = 'en'
+jest.mock('next-intl/server', () =>
+  jest
+    .requireActual('~/../tests/unit/test-utils/intl-server')
+    .createIntlServerMock(() => mockLocale)
+)
+
 const mockLoadVisitorWedding = jest.fn()
 const mockCookiesGet = jest.fn()
 const mockWeddingWebsite = jest.fn(
@@ -81,6 +88,32 @@ describe('website suburl metadata + page wiring', () => {
 
     expect(metadata.title).toBe('Jane Smith & John Doe Wedding')
     expect(mockLoadVisitorWedding).toHaveBeenCalledWith('john-and-jane')
+  })
+
+  it('localizes the fallback title and description for Spanish-speaking visitors', async () => {
+    mockLocale = 'es'
+    mockLoadVisitorWedding.mockResolvedValue({
+      loadResult: {
+        status: 'ready',
+        weddingData: {
+          groomFirstName: 'John',
+          groomLastName: 'Doe',
+          brideFirstName: 'Jane',
+          brideLastName: 'Smith',
+          website: { introText: '' },
+        },
+      },
+    })
+
+    const metadata = await (
+      generateMetadata as (props: {
+        params: Promise<{ websiteSubUrl: string }>
+      }) => Promise<{ title?: string; description?: string }>
+    )({ params: Promise.resolve({ websiteSubUrl: 'john-and-jane' }) })
+
+    expect(metadata.title).toBe('Boda de Jane Smith & John Doe')
+    expect(metadata.description).toBe('Acompáñanos a la boda de Jane Smith y John Doe.')
+    mockLocale = 'en'
   })
 
   it('passes params.websiteSubUrl into WeddingWebsite', async () => {

@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, screen, within } from '@testing-library/react'
+import { renderWithIntl as render } from '~/../tests/unit/test-utils/intl'
 import type { WeddingPageData } from '~/server/domains/website/website.types'
 import { VoyageContentPage } from '~/templates/voyage/components/content-page'
 import { VoyageHome } from '~/templates/voyage/components/home'
@@ -262,5 +263,51 @@ describe('Voyage multi-page guest journeys', () => {
     fireEvent.click(toggle)
     fireEvent.keyDown(document, { key: 'Escape' })
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
+  })
+})
+
+describe('Voyage in Spanish', () => {
+  it('renders navigation, headings and dates in Mexican Spanish with the language switch', () => {
+    render(<VoyageContentPage page='weekend' weddingData={wedding} path='/w/couple' />, {
+      locale: 'es',
+    })
+    expect(screen.getByRole('heading', { level: 1, name: 'Fin de semana de boda' })).toBeVisible()
+    const nav = screen.getByRole('navigation', { name: 'Navegación de la boda' })
+    expect(within(nav).getByRole('link', { name: 'Dónde hospedarse' })).toHaveAttribute(
+      'href',
+      '/w/couple/stay'
+    )
+    expect(within(nav).getByRole('button', { name: /Qué hacer/ })).toBeInTheDocument()
+    for (const rsvp of screen.getAllByRole('link', { name: 'Confirmar' })) {
+      expect(rsvp).toHaveAttribute('href', '/w/couple/rsvp')
+    }
+    expect(screen.getByRole('heading', { name: 'Cómo llegar a las celebraciones' })).toBeVisible()
+    // Event dates follow the visitor locale; couple-authored event names stay as given.
+    const events = within(screen.getByRole('region', { name: 'Programa' })).getAllByRole('article')
+    expect(events[0]).toHaveTextContent('20 de mayo de 2027')
+    expect(events[0]).toHaveTextContent('Celebration 0')
+    expect(screen.queryByText('Where to Stay')).toBeNull()
+
+    const toggle = screen.getByRole('button', { name: 'Switch to English' })
+    expect(toggle).toHaveTextContent('EN|ES')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Menú' }))
+    const menu = screen.getByRole('navigation', { name: 'Menú de navegación de la boda' })
+    expect(within(menu).getByRole('link', { name: 'Inicio' })).toHaveAttribute('href', '/w/couple')
+    expect(within(menu).getByRole('button', { name: 'Switch to English' })).toBeInTheDocument()
+  })
+
+  it('offers the Spanish switch to English-speaking visitors', () => {
+    render(<VoyageHome weddingData={wedding} path='/w/couple' />)
+    expect(screen.getByRole('button', { name: 'Cambiar a español' })).toHaveTextContent('EN|ES')
+  })
+
+  it('translates the hand-written Puebla guide', () => {
+    render(<VoyageContentPage page='puebla' weddingData={wedding} path='/w/couple' />, {
+      locale: 'es',
+    })
+    expect(screen.getByRole('heading', { name: 'Bienvenidos a Puebla' })).toBeInTheDocument()
+    expect(screen.getByText('Un aviso sobre los lunes')).toBeInTheDocument()
+    expect(screen.getByText('Catedral de Puebla')).toBeInTheDocument()
   })
 })

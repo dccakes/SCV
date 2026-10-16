@@ -1,6 +1,8 @@
 import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getMessages } from 'next-intl/server'
 
+import { clientMessages } from '~/i18n/client-messages'
+
 export default async function WeddingWebsiteLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -8,8 +10,13 @@ export default async function WeddingWebsiteLayout({
   const messages = await getMessages()
 
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
-      {children}
+    <NextIntlClientProvider locale={locale} messages={clientMessages(messages)}>
+      {/*
+        The root <html lang> is shared with the English-only dashboard, so tag the
+        guest-facing subtree with the visitor's language for screen readers and
+        search engines.
+      */}
+      <div lang={locale}>{children}</div>
     </NextIntlClientProvider>
   )
 }

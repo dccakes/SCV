@@ -1,6 +1,7 @@
 import { headers } from 'next/headers'
 import type { InvitedHousehold } from '~/app/w/[websiteSubUrl]/_lib/invited-household'
 import { PersonalizedWelcome } from '~/components/website/personalized-welcome'
+import { SiteLocaleToggle } from '~/components/website/site-locale-toggle'
 import type { WeddingPageData } from '~/server/domains/website/website.types'
 import { resolveTemplate, TemplateThemeProvider } from '~/templates'
 
@@ -33,6 +34,8 @@ export default async function WeddingWebsite({
   if (!websiteBuilderEnabled) {
     return (
       <TemplateThemeProvider template={template}>
+        {/* The minimal page has no template navbar, so it carries its own toggle. */}
+        <SiteLocaleToggle />
         {welcome}
         <Minimal
           coupleNames={`${weddingData.brideFirstName} & ${weddingData.groomFirstName}`}

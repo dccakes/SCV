@@ -60,7 +60,7 @@ const isReservedSlug = (slug: string): boolean =>
 const isPublicWebsitePath = (pathname: string): boolean => {
   const segments = pathname.split('/').filter(Boolean)
 
-  // /w/[slug] (wedding website viewer), /w/[slug]/rsvp, and the household
+  // /w/[slug] (wedding website viewer), /w/[slug]/rsvp, /w/[slug]/invitation, and the household
   // save-the-date flow: /w/[slug]/save-the-date, /w/[slug]/save-the-date/[code],
   // /w/[slug]/save-the-date/update
   if (segments[0] === 'w') {
@@ -71,6 +71,7 @@ const isPublicWebsitePath = (pathname: string): boolean => {
     // Each content route still enforces website password/invite access itself.
     if (segments.length === 3 && segments[2] && isVoyagePage(segments[2])) return true
     if (segments.length === 3 && segments[2] === 'rsvp') return true
+    if (segments.length === 3 && segments[2] === 'invitation') return true
     if (segments.length === 3 && segments[2] === 'save-the-date') return true
     if (segments.length === 4 && segments[2] === 'save-the-date') return true
     return false

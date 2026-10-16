@@ -11,6 +11,11 @@ import DateInput from '~/components/forms/event/date-input'
 import TimeSelections from '~/components/forms/event/time-selections'
 import SidePaneWrapper from '~/components/forms/wrapper'
 import { useEventFormActions } from '~/components/hooks/forms/useEventFormActions'
+import {
+  type EditingLanguage,
+  LanguageSwitch,
+  ReferenceNote,
+} from '~/components/i18n/editing-language'
 
 type EventFormProps = {
   prefillFormData: EventFormData | undefined
@@ -33,6 +38,8 @@ export default function EventForm({ prefillFormData }: EventFormProps) {
   const toggleEventForm = useToggleEventForm()
 
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false)
+  // Name, venue, attire and description can also be written in Spanish.
+  const [language, setLanguage] = useState<EditingLanguage>('en')
   const [eventFormData, setEventFormData] = useState<EventFormData>(
     prefillFormData ?? defaultFormData
   )
@@ -53,6 +60,14 @@ export default function EventForm({ prefillFormData }: EventFormProps) {
         [field]: inputValue,
       }
     })
+  }
+
+  const spanish = eventFormData.translations?.es ?? {}
+  const handleSpanishChange = ({ field, inputValue }: { field: string; inputValue: string }) => {
+    setEventFormData((prev) => ({
+      ...prev,
+      translations: { es: { ...prev.translations?.es, [field]: inputValue || undefined } },
+    }))
   }
 
   const handleSaveEvent = () => {
@@ -98,8 +113,42 @@ export default function EventForm({ prefillFormData }: EventFormProps) {
           </button>
         </div>
         <div className='p-5'>
-          <h2 className='mb-3 font-semibold text-xl'>Event Information</h2>
-          <div className='grid grid-cols-1 grid-rows-[repeat(6,50px)] gap-5'>
+          <div className='mb-3 flex items-center justify-between gap-3'>
+            <h2 className='font-semibold text-xl'>Event Information</h2>
+            <LanguageSwitch value={language} onChange={setLanguage} label='Editing language' />
+          </div>
+          {language === 'es' ? (
+            <div className='space-y-5'>
+              <p className='text-muted-foreground text-xs'>
+                Spanish text for Spanish-speaking guests. Blank fields show the English. Date and
+                times are shared.
+              </p>
+              {(
+                [
+                  ['name', 'Nombre del evento', eventFormData.eventName],
+                  ['venue', 'Lugar', eventFormData.venue],
+                  ['attire', 'Vestimenta', eventFormData.attire],
+                  ['description', 'Descripción', eventFormData.description],
+                ] as const
+              ).map(([field, label, english]) => (
+                <div key={field} className='space-y-1'>
+                  <AnimatedInputLabel
+                    id={`event-${field}-es`}
+                    inputValue={spanish[field] ?? ''}
+                    fieldName={field}
+                    // Matches the server limit on event names.
+                    maxLength={field === 'name' ? 50 : undefined}
+                    labelText={label}
+                    handleOnChange={handleSpanishChange}
+                  />
+                  {english ? <ReferenceNote reference={english} /> : null}
+                </div>
+              ))}
+            </div>
+          ) : null}
+          <div
+            className={`grid grid-cols-1 grid-rows-[repeat(6,50px)] gap-5 ${language === 'es' ? 'hidden' : ''}`}
+          >
             <AnimatedInputLabel
               id='event-name'
               inputValue={eventFormData.eventName}

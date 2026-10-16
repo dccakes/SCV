@@ -1,10 +1,12 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { IoMdClose } from 'react-icons/io'
 import type { Event, Question, RsvpPageData } from '~/app/utils/shared-types'
 import { useRsvpForm, useUpdateRsvpForm } from '~/components/contexts/rsvp-form-context'
 import { useConfirmReloadPage } from '~/components/hooks'
+import { LocaleToggle } from '~/components/locale-toggle'
 import { AsyncState } from '~/components/ui/async-state'
 import MultistepRsvpForm from '~/components/website/forms/multi-step-form'
 import ConfirmNameForm from '~/components/website/forms/steps/confirm-name'
@@ -14,6 +16,7 @@ import QuestionMultipleChoice from '~/components/website/forms/steps/question-mu
 import QuestionShortAnswer from '~/components/website/forms/steps/question-short-answer'
 import SendRsvp from '~/components/website/forms/steps/send-rsvp'
 import RsvpConfirmation from '~/components/website/rsvp-confirmation'
+import { siteLocaleToggleClassName } from '~/components/website/site-locale-toggle'
 import { ANALYTICS_ACTIONS, ANALYTICS_SCOPES, buildEventName } from '~/lib/analytics/events'
 import { track } from '~/lib/analytics/track'
 import { api } from '~/trpc/react'
@@ -61,6 +64,7 @@ export default function MainRsvpForm({
   basePath,
   embedded = false,
 }: MainRsvpFormProps) {
+  const t = useTranslations('site.rsvpForm')
   const rsvpFormData = useRsvpForm()
   const numSteps = useRef(NUM_STATIC_STEPS)
   const updateRsvpForm = useUpdateRsvpForm()
@@ -80,7 +84,7 @@ export default function MainRsvpForm({
       setCurrentStep((prev) => prev + 1)
     },
     onError: (err) => {
-      setSubmitError(getMutationErrorMessage(err, 'Failed to submit RSVP. Please try again.'))
+      setSubmitError(getMutationErrorMessage(err, t('submitError')))
     },
   })
   const progress = (currentStep / numSteps.current) * 100
@@ -156,7 +160,7 @@ export default function MainRsvpForm({
           const subUrl = weddingData.website?.subUrl
 
           if (!subUrl) {
-            setSubmitError('Something went wrong. Please refresh the page and try again.')
+            setSubmitError(t('missingWebsite'))
             return
           }
 
@@ -222,18 +226,29 @@ const ProgressBar = ({
   basePath: string
   embedded: boolean
 }) => {
+  const t = useTranslations('site.rsvpForm')
   return (
     <div
       className={`${embedded ? 'relative mx-auto max-w-xl bg-background' : 'fixed top-0 z-10 bg-white'} w-full px-10 py-1 text-center`}
     >
+      {/*
+        Standalone RSVP pages have no site navbar, so offer the language toggle
+        here (opposite the close control). Embedded forms sit under the
+        template navbar, which already has one.
+      */}
+      {embedded ? null : (
+        <div className='absolute top-3 left-4 z-20'>
+          <LocaleToggle className={siteLocaleToggleClassName} />
+        </div>
+      )}
       <button
         type='button'
-        aria-label='Close RSVP form'
+        aria-label={t('close')}
         className='absolute top-2 right-20 z-20 rounded-md text-foreground/70 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
         onClick={() => {
           if (
             !shouldConfirmRsvpClose({ currentStep, numSteps }) ||
-            window.confirm('Are you sure? Your RSVP has not been sent.')
+            window.confirm(t('confirmClose'))
           ) {
             window.location.href = basePath
           }
@@ -241,7 +256,7 @@ const ProgressBar = ({
       >
         <IoMdClose size={25} />
       </button>
-      <h1 className='py-3 text-2xl'>RSVP</h1>
+      <h1 className='py-3 text-xl sm:text-2xl'>{t('heading')}</h1>
       <div className='relative mb-2.5 h-3 w-full rounded-full bg-gray-200'>
         <div
           className='absolute top-0 left-0 mb-2.5 h-3 rounded-full bg-gray-700 transition-[width]'

@@ -13,6 +13,7 @@ import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import { checklistSeedingService } from '~/server/domains/checklist'
 import type { EventService } from '~/server/domains/event/event.service'
+import { CEREMONY_EVENT_NAME } from '~/server/domains/event/event.types'
 import type { GuestTagService } from '~/server/domains/guest-tag/guest-tag.service'
 import type { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
 import type {
@@ -82,7 +83,7 @@ export class WeddingService {
     // Create default "Wedding Day" event if date/location provided
     if (data.hasWeddingDetails && (weddingDate || weddingLocation)) {
       await this.eventService.createEventSystem(wedding.id, {
-        eventName: 'Ceremony',
+        eventName: CEREMONY_EVENT_NAME,
         date: weddingDate ?? undefined,
         venue: weddingLocation ?? undefined,
         collectRsvp: false,

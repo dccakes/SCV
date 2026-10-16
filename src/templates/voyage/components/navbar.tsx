@@ -1,7 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { useEffect, useId, useRef, useState } from 'react'
+import { LocaleToggle } from '~/components/locale-toggle'
 import {
   headingFont,
   labelFont,
@@ -24,6 +26,8 @@ type Props = {
   rsvpEnabled: boolean
 }
 export function VoyageNavbar({ monogram, coupleNames, path, current, rsvpEnabled }: Props) {
+  const t = useTranslations('voyage.nav')
+  const tPages = useTranslations('voyage.pages')
   const [open, setOpen] = useState(false)
   const [dropdown, setDropdown] = useState<'explore' | 'more' | null>(null)
   const menuId = useId()
@@ -34,6 +38,13 @@ export function VoyageNavbar({ monogram, coupleNames, path, current, rsvpEnabled
     isHome
       ? 'text-[#F7F3EC]/90 hover:text-[#EFE0D2] focus-visible:outline-[#F7F3EC]'
       : 'hover:text-primary focus-visible:outline-primary'
+  }`
+
+  // The toggle marks the active language with `text-foreground`; recolour it for the dark hero.
+  const toggleClass = `${linkClass} ${
+    isHome
+      ? 'text-[#F7F3EC]/60 [&_.text-foreground]:text-[#F7F3EC]'
+      : 'text-muted-foreground [&_.text-foreground]:text-foreground'
   }`
 
   useEffect(() => {
@@ -76,7 +87,7 @@ export function VoyageNavbar({ monogram, coupleNames, path, current, rsvpEnabled
             : ''
         }`}
       >
-        {voyagePages[page].title}
+        {tPages(voyagePages[page].titleKey)}
       </Link>
     )
   }
@@ -94,13 +105,13 @@ export function VoyageNavbar({ monogram, coupleNames, path, current, rsvpEnabled
         href='#page-content'
         className='sr-only focus:not-sr-only focus:absolute focus:bg-background focus:p-4'
       >
-        Skip to content
+        {t('skipToContent')}
       </a>
       <div className='mx-auto flex max-w-7xl items-center justify-between gap-3 px-6 py-3 lg:px-10'>
         <Link
           href={path}
           onClick={close}
-          aria-label={`${coupleNames} — Home`}
+          aria-label={t('homeAria', { names: coupleNames })}
           className='flex min-h-11 shrink-0 flex-col justify-center'
         >
           <span className={`${headingFont} text-2xl tracking-[0.14em]`}>{monogram}</span>
@@ -110,7 +121,7 @@ export function VoyageNavbar({ monogram, coupleNames, path, current, rsvpEnabled
             {coupleNames}
           </span>
         </Link>
-        <nav aria-label='Wedding navigation' className='hidden items-center xl:flex'>
+        <nav aria-label={t('mainAria')} className='hidden items-center xl:flex'>
           {primaryPages.map(pageLink)}
           {(['explore', 'more'] as const).map((group) => {
             const pages = group === 'explore' ? explorePages : secondaryPages
@@ -129,7 +140,8 @@ export function VoyageNavbar({ monogram, coupleNames, path, current, rsvpEnabled
                       : ''
                   }`}
                 >
-                  {group === 'explore' ? 'Things to Do' : 'More'} <span aria-hidden='true'>⌄</span>
+                  {group === 'explore' ? t('thingsToDo') : t('more')}{' '}
+                  <span aria-hidden='true'>⌄</span>
                 </button>
                 {dropdown === group ? (
                   <div
@@ -148,6 +160,7 @@ export function VoyageNavbar({ monogram, coupleNames, path, current, rsvpEnabled
           })}
         </nav>
         <div className='flex items-center gap-2'>
+          <LocaleToggle className={`${toggleClass} hidden xl:flex`} />
           {rsvpEnabled ? (
             <Link
               href={`${path}/rsvp`}
@@ -155,7 +168,7 @@ export function VoyageNavbar({ monogram, coupleNames, path, current, rsvpEnabled
               aria-current={current === 'rsvp' ? 'page' : undefined}
               className={`${primaryButtonClass} px-6`}
             >
-              RSVP
+              {t('rsvp')}
             </Link>
           ) : null}
           <button
@@ -168,14 +181,14 @@ export function VoyageNavbar({ monogram, coupleNames, path, current, rsvpEnabled
               isHome ? 'border-[#F7F3EC]/40' : 'border-border'
             }`}
           >
-            Menu <span aria-hidden='true'>{open ? '×' : '☰'}</span>
+            {t('menu')} <span aria-hidden='true'>{open ? '×' : '☰'}</span>
           </button>
         </div>
       </div>
       {open ? (
         <nav
           id={menuId}
-          aria-label='Mobile wedding navigation'
+          aria-label={t('mobileAria')}
           className={`max-h-[calc(100dvh-5rem)] overflow-y-auto border-t px-6 py-4 xl:hidden ${
             isHome
               ? 'border-[#F7F3EC]/20 bg-[#1D2320]/95 text-[#F7F3EC] backdrop-blur-md'
@@ -188,7 +201,7 @@ export function VoyageNavbar({ monogram, coupleNames, path, current, rsvpEnabled
             className={linkClass}
             aria-current={current === 'home' ? 'page' : undefined}
           >
-            Home
+            {t('home')}
           </Link>
           {primaryPages.map(pageLink)}
           <p
@@ -196,11 +209,14 @@ export function VoyageNavbar({ monogram, coupleNames, path, current, rsvpEnabled
               isHome ? 'text-[#F7F3EC]/65' : 'text-muted-foreground'
             }`}
           >
-            Things to Do
+            {t('thingsToDo')}
           </p>
           {explorePages.map(pageLink)}
           <div className={`mt-3 border-t pt-3 ${isHome ? 'border-[#F7F3EC]/20' : 'border-border'}`}>
             {secondaryPages.map(pageLink)}
+          </div>
+          <div className={`mt-3 border-t pt-3 ${isHome ? 'border-[#F7F3EC]/20' : 'border-border'}`}>
+            <LocaleToggle className={toggleClass} />
           </div>
         </nav>
       ) : null}

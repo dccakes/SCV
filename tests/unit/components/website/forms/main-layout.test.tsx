@@ -1,5 +1,6 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, screen } from '@testing-library/react'
 import type { Dispatch, SetStateAction } from 'react'
+import { renderWithIntl as render } from '~/../tests/unit/test-utils/intl'
 import { sharedStyles } from '~/app/utils/shared-styles'
 import RsvpPageSkeleton from '~/app/w/[websiteSubUrl]/rsvp/loading'
 import MainRsvpForm from '~/components/website/forms/main'
@@ -165,6 +166,42 @@ describe('Main RSVP layout', () => {
     const progress = screen.getByRole('heading', { name: 'RSVP' }).parentElement
     expect(progress).not.toHaveClass('fixed')
     expect(progress).toHaveClass('relative')
+  })
+
+  it('shows a language toggle on the standalone form but not when embedded', () => {
+    const standalone = render(
+      <MainRsvpForm
+        weddingData={{ events: [], website: { generalQuestions: [] } } as never}
+        basePath='/wedding'
+      />
+    )
+    expect(screen.getByRole('button', { name: 'Cambiar a español' })).toBeInTheDocument()
+    standalone.unmount()
+
+    render(
+      <MainRsvpForm
+        weddingData={{ events: [], website: { generalQuestions: [] } } as never}
+        basePath='/wedding'
+        embedded
+      />
+    )
+    expect(screen.queryByRole('button', { name: 'Cambiar a español' })).not.toBeInTheDocument()
+  })
+
+  it('renders the RSVP chrome in Spanish', () => {
+    render(
+      <MainRsvpForm
+        weddingData={{ events: [], website: { generalQuestions: [] } } as never}
+        basePath='/wedding'
+      />,
+      { locale: 'es' }
+    )
+
+    expect(screen.getByRole('heading', { name: 'Confirmación' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Cerrar el formulario de confirmación' })
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Switch to English' })).toBeInTheDocument()
   })
 
   it('renders inline submit errors without using window alert', () => {
