@@ -70,9 +70,15 @@ party libraries log things we don't control.
 
 ## Privacy
 
-- Query strings and fragments are stripped from every URL attribute, on the
-  server (before any exporter, including Vercel's) and in the browser. tRPC GET
-  requests carry procedure input in `?input=`, and invite links carry tokens.
+- Query strings, fragments, and URL credentials are stripped from span names
+  and URL attributes, on the server (before any exporter, including Vercel's)
+  and in the browser. tRPC GET requests carry procedure input in `?input=`,
+  invite links carry tokens, and `@vercel/otel` names fetch spans
+  `fetch GET <full url>`.
+- Secrets in URL paths are masked: the Telegram bot token
+  (`/bot<id>:<secret>/`) becomes `/bot[REDACTED]/`. Add a pattern to
+  `sanitizeTelemetryText` in `node-otel.ts` for any new client that puts
+  credentials in a path.
 - Etta AI spans record model, timing, token usage, and tool names, but not
   prompts or completions (`recordInputs`/`recordOutputs` are off).
 - Prisma spans include SQL text with parameters as placeholders, not values.
@@ -84,7 +90,7 @@ party libraries log things we don't control.
 | File | Role |
 | --- | --- |
 | `src/instrumentation.ts` | `registerOTel` per runtime; `onRequestError` logging and capture |
-| `src/server/infrastructure/observability/node-otel.ts` | Node config: PostHog OTLP exporters, Prisma, URL redaction, log flushing |
+| `src/server/infrastructure/observability/node-otel.ts` | Node config: PostHog OTLP exporters, Prisma, span name and URL redaction, per-request log flushing |
 | `src/server/infrastructure/observability/trpc-tracing.ts` | Per-procedure tRPC spans |
 | `src/server/infrastructure/observability/capture-exception.ts` | Server exceptions to PostHog |
 | `src/lib/observability/logger.ts` | Server/Edge OTel logger |
@@ -94,10 +100,13 @@ party libraries log things we don't control.
 
 ### Serverless flushing
 
-On Vercel, `@vercel/otel` flushes span processors through `waitUntil` when a
-request ends, but it does not flush log processors. `flushLogsWithSpans`
-registers the log processor as a span processor too, so logs get the same
-per-request flush. Server exceptions are flushed explicitly before returning.
+On Vercel, `@vercel/otel` flushes span processors through `waitUntil`, but
+only for sampled root spans, and it never flushes log processors.
+`flushLogsPerRequest` therefore registers its own `waitUntil` flush whenever a
+log record is emitted inside a request, independent of trace sampling, so logs
+from sampled-out requests are exported before the function freezes. Outside a
+request context the batch processor's timer exports as usual. Server
+exceptions are flushed explicitly before returning.
 
 ## Verifying locally
 
