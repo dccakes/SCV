@@ -2,8 +2,15 @@ import { getSessionCookie } from 'better-auth/cookies'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { getLocaleFromCountry, type Locale } from '~/lib/locale/locale-detection'
+import { POSTHOG_PROXY_PATH } from '~/lib/observability/config'
 import { reservedWebsiteRootSegmentsSet } from '~/lib/website/reserved-root-segments'
 import { isVoyagePage } from '~/templates/voyage/site'
+
+// PostHog reverse proxy (see rewrites in next.config.js). Middleware runs before
+// rewrites, so without this bypass anonymous guests on public wedding sites have
+// their analytics, exception, log, and trace uploads redirected to sign-in.
+const isPostHogProxyPath = (pathname: string): boolean =>
+  pathname === POSTHOG_PROXY_PATH || pathname.startsWith(`${POSTHOG_PROXY_PATH}/`)
 
 const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/join', '/blog', '/api/webhooks', '/api/cron']
 
@@ -85,6 +92,9 @@ const buildLocaleResponse = (req: NextRequest, locale: Locale): NextResponse => 
 
 export async function proxy(req: NextRequest) {
   const pathname = req.nextUrl.pathname
+  if (isPostHogProxyPath(pathname)) {
+    return NextResponse.next()
+  }
   const langOverride = req.cookies.get('lang-override')?.value
   const locale: Locale =
     langOverride === 'en' || langOverride === 'es'

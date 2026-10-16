@@ -19,6 +19,9 @@ const config = {
   },
   experimental: {
     optimizePackageImports: ['date-fns', 'lucide-react', 'react-icons'],
+    // Renders <meta name="traceparent"> so the browser's document load span
+    // joins the server render trace (see src/lib/observability/browser-tracing.ts).
+    clientTraceMetadata: ['traceparent', 'tracestate'],
   },
   images: {
     remotePatterns: [
@@ -60,6 +63,9 @@ const config = {
       (process.env.VERCEL_BRANCH_URL
         ? `https://${process.env.VERCEL_BRANCH_URL}`
         : 'http://localhost:3000'),
+    // Browser telemetry resource attributes (PostHog logs and traces).
+    NEXT_PUBLIC_APP_VERSION: process.env.VERCEL_GIT_COMMIT_SHA ?? 'development',
+    NEXT_PUBLIC_DEPLOYMENT_ENVIRONMENT: process.env.VERCEL_ENV ?? process.env.NODE_ENV,
   },
 }
 

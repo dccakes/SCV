@@ -17,6 +17,8 @@
 import type { PrismaClient } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 
+import { logger } from '~/lib/observability/logger'
+
 import type { GuestRepository } from '~/server/domains/guest/guest.repository'
 import type { HouseholdRepository } from '~/server/domains/household/household.repository'
 import type { SelfFillRepository } from '~/server/domains/self-fill/self-fill.repository'
@@ -25,6 +27,8 @@ import type {
   SelfFillGuestInput,
   SelfFillRegistrationResult,
 } from '~/server/domains/self-fill/self-fill.types'
+
+const log = logger.child({ component: 'self-fill-registration' })
 
 // ─── Registration defaults ──────────────────────────────────────────────────
 const DEFAULT_AGE_GROUP = 'ADULT' as const
@@ -124,10 +128,10 @@ export class SelfFillRegistrationService implements ISelfFillRegistration {
         return { householdId: household.id, guestId: guest.id }
       })
 
-      // biome-ignore lint/suspicious/noConsole: audit log
-      console.log(`[SelfFillRegistration] Guest registered for weddingId=${weddingId}`, {
-        guestId,
-        householdId,
+      log.info('Self-fill guest registered', {
+        wedding_id: weddingId,
+        guest_id: guestId,
+        household_id: householdId,
       })
 
       return {
@@ -153,11 +157,7 @@ export class SelfFillRegistrationService implements ISelfFillRegistration {
         })
       }
 
-      // biome-ignore lint/suspicious/noConsole: audit log
-      console.error(
-        `[SelfFillRegistration] Failed to register guest for weddingId=${weddingId}`,
-        error
-      )
+      log.error('Self-fill guest registration failed', { wedding_id: weddingId }, error)
 
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',

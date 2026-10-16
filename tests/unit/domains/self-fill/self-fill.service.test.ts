@@ -84,14 +84,11 @@ describe('SelfFillService', () => {
 
     it('should log token generation for audit purposes', async () => {
       mockUpdateTokenFn.mockResolvedValue(undefined)
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
+      const consoleSpy = jest.spyOn(console, 'info').mockImplementation()
 
       await service.generateToken('wedding-123')
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('wedding-123'),
-        expect.anything()
-      )
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('"wedding_id":"wedding-123"'))
       consoleSpy.mockRestore()
     })
   })
@@ -109,14 +106,11 @@ describe('SelfFillService', () => {
 
     it('should log token revocation for audit purposes', async () => {
       mockUpdateTokenFn.mockResolvedValue(undefined)
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
+      const consoleSpy = jest.spyOn(console, 'info').mockImplementation()
 
       await service.revokeToken('wedding-123')
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('wedding-123'),
-        expect.anything()
-      )
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('"wedding_id":"wedding-123"'))
       consoleSpy.mockRestore()
     })
   })
