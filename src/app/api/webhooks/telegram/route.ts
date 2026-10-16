@@ -9,6 +9,7 @@
 import { after } from 'next/server'
 import { env } from '~/env'
 import { ANALYTICS_ACTIONS, ANALYTICS_SCOPES, buildEventName } from '~/lib/analytics/events'
+import { logger } from '~/lib/observability/logger'
 import type { TelegramUpdate } from '~/lib/telegram/types'
 import { getTelegramHandler, getTelegramRateLimiter } from '~/server/application/messaging'
 import { captureServerEvent } from '~/server/infrastructure/analytics/capture'
@@ -59,8 +60,7 @@ export async function POST(req: Request): Promise<Response> {
     try {
       await handler.handle(update)
     } catch (error) {
-      // biome-ignore lint/suspicious/noConsole: background handler error
-      console.error('[telegram-webhook]', error)
+      logger.error('Telegram webhook handler failed', { component: 'telegram-webhook' }, error)
     }
   })
 

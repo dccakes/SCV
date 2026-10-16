@@ -175,6 +175,24 @@ describe('proxy', () => {
     expect(response.headers.get('location')).toBeNull()
   })
 
+  it('lets anonymous guests reach the PostHog reverse proxy for events, logs, and traces', async () => {
+    mockGetSessionCookie.mockReturnValue(null)
+
+    const responses = await Promise.all(
+      [
+        '/oswp-pHsc1/e/',
+        '/oswp-pHsc1/flags/',
+        '/oswp-pHsc1/i/v1/logs',
+        '/oswp-pHsc1/i/v1/traces',
+      ].map((path) => proxy(createRequest(path)))
+    )
+
+    for (const response of responses) {
+      expect(response.headers.get('location')).toBeNull()
+    }
+    expect(mockGetSessionCookie).not.toHaveBeenCalled()
+  })
+
   it('allows the guest-facing public tRPC procedures, including batched together', async () => {
     mockGetSessionCookie.mockReturnValue(null)
 

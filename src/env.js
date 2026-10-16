@@ -78,6 +78,20 @@ export const env = createEnv({
     // Optional: PostHog client-side analytics (product + template instrumentation).
     NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: z.string().min(1).optional(),
     NEXT_PUBLIC_POSTHOG_HOST: z.string().url().optional(),
+    // Optional: share of browser traces to keep, 0..1. Unset or blank means the
+    // default of 1, the same rule `parseSampleRate` applies at runtime (a coerced
+    // number schema would turn "" into 0 and silently disable browser tracing).
+    // Server sampling uses the standard OTEL_TRACES_SAMPLER / OTEL_TRACES_SAMPLER_ARG.
+    NEXT_PUBLIC_OTEL_SAMPLE_RATE: z
+      .string()
+      .optional()
+      .refine(
+        (value) =>
+          value === undefined ||
+          value.trim() === '' ||
+          (Number.isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 1),
+        'NEXT_PUBLIC_OTEL_SAMPLE_RATE must be a number between 0 and 1'
+      ),
   },
 
   /**
@@ -121,6 +135,7 @@ export const env = createEnv({
     POSTHOG_HOST: process.env.POSTHOG_HOST,
     NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN,
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+    NEXT_PUBLIC_OTEL_SAMPLE_RATE: process.env.NEXT_PUBLIC_OTEL_SAMPLE_RATE,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

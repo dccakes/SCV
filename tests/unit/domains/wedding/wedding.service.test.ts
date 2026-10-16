@@ -236,10 +236,11 @@ describe('WeddingService', () => {
         })
       ).resolves.toEqual(mockWedding)
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        '[Checklist] Wedding create seeding failed:',
-        expect.any(Error)
-      )
+      const [line] = consoleErrorSpy.mock.calls[0] as [string]
+      expect(JSON.parse(line)).toMatchObject({
+        message: 'Checklist seeding failed on wedding create',
+        component: 'checklist',
+      })
 
       consoleErrorSpy.mockRestore()
     })

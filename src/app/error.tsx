@@ -13,7 +13,12 @@ export default function AppErrorBoundary({ error, reset }: Readonly<AppErrorBoun
     if (!posthog.__loaded) {
       return
     }
-    posthog.captureException(error)
+    // The digest matches `error.digest` on the server's request error log and
+    // exception, joining the client and server sides of the same failure.
+    posthog.captureException(error, {
+      mechanism: 'react-error-boundary',
+      ...(error.digest ? { digest: error.digest } : {}),
+    })
   }, [error])
 
   return (

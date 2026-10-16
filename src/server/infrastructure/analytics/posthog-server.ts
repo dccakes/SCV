@@ -10,6 +10,8 @@ import 'server-only'
 
 import { PostHog } from 'posthog-node'
 
+import { resolveServerPostHogTarget } from '~/lib/observability/config'
+
 const ENABLE_EXCEPTION_AUTOCAPTURE = true
 
 /*
@@ -24,18 +26,6 @@ let client: PostHog | null = null
 let initialized = false
 
 /**
- * Resolve the server analytics key. Prefer a dedicated server key, otherwise
- * reuse the public project key (same PostHog project).
- */
-function resolveKey(): string | undefined {
-  return process.env.POSTHOG_KEY ?? process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN ?? undefined
-}
-
-function resolveHost(): string | undefined {
-  return process.env.POSTHOG_HOST ?? process.env.NEXT_PUBLIC_POSTHOG_HOST ?? undefined
-}
-
-/**
  * Get the shared PostHog server client, or `null` when analytics is disabled.
  */
 export function getPostHogServer(): PostHog | null {
@@ -44,14 +34,15 @@ export function getPostHogServer(): PostHog | null {
   }
   initialized = true
 
-  const key = resolveKey()
-  if (!key) {
+  // Same token and host as the OTLP trace/log exporters (see node-otel.ts).
+  const target = resolveServerPostHogTarget()
+  if (!target) {
     client = null
     return client
   }
 
-  client = new PostHog(key, {
-    host: resolveHost(),
+  client = new PostHog(target.token, {
+    host: target.host,
     enableExceptionAutocapture: ENABLE_EXCEPTION_AUTOCAPTURE,
     // Flush eagerly: serverless invocations are short-lived, so we don't want
     // events queued in memory that never get sent.

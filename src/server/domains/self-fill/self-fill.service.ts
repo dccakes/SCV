@@ -10,11 +10,15 @@
 
 import { randomBytes } from 'node:crypto'
 
+import { logger } from '~/lib/observability/logger'
+
 import {
   type SelfFillRepository,
   TOKEN_EXPIRY_DAYS,
 } from '~/server/domains/self-fill/self-fill.repository'
 import type { SelfFillWeddingData } from '~/server/domains/self-fill/self-fill.types'
+
+const log = logger.child({ component: 'self-fill' })
 
 export class SelfFillService {
   constructor(private selfFillRepo: SelfFillRepository) {}
@@ -34,8 +38,7 @@ export class SelfFillService {
     const token = randomBytes(16).toString('hex')
     const generatedAt = new Date()
     await this.selfFillRepo.updateToken(weddingId, token, generatedAt)
-    // biome-ignore lint/suspicious/noConsole: audit log
-    console.log(`[SelfFill] Token generated for weddingId=${weddingId}`, { generatedAt })
+    log.info('Self-fill token generated', { wedding_id: weddingId, generated_at: generatedAt })
     return token
   }
 
@@ -46,8 +49,7 @@ export class SelfFillService {
   async revokeToken(weddingId: string): Promise<void> {
     const revokedAt = new Date()
     await this.selfFillRepo.updateToken(weddingId, null, null)
-    // biome-ignore lint/suspicious/noConsole: audit log
-    console.log(`[SelfFill] Token revoked for weddingId=${weddingId}`, { revokedAt })
+    log.info('Self-fill token revoked', { wedding_id: weddingId, revoked_at: revokedAt })
   }
 
   /**
