@@ -115,7 +115,7 @@ export default function EventForm({ prefillFormData }: EventFormProps) {
         <div className='p-5'>
           <div className='mb-3 flex items-center justify-between gap-3'>
             <h2 className='font-semibold text-xl'>Event Information</h2>
-            <LanguageSwitch value={language} onChange={setLanguage} label='Event language' />
+            <LanguageSwitch value={language} onChange={setLanguage} label='Editing language' />
           </div>
           {language === 'es' ? (
             <div className='space-y-5'>

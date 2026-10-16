@@ -202,7 +202,7 @@ export function EventQuestionFormDialog({
           <LanguageSwitchHeader
             value={language}
             onChange={setLanguage}
-            label='Question language'
+            label='Editing language'
             englishHint='Switch to ES to translate this question for your wedding website.'
           />
         </DialogHeader>

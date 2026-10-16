@@ -140,7 +140,7 @@ export function ModernEventForm({
           <LanguageSwitchHeader
             value={language}
             onChange={setLanguage}
-            label='Event language'
+            label='Editing language'
             englishHint='Switch to ES to add Spanish text for your wedding website.'
           />
         </DialogHeader>
