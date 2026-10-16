@@ -49,10 +49,81 @@ describe('seating layout', () => {
     })
   })
 
-  it('places new tables on the first free grid slot', () => {
-    const first = getNextTablePosition([])
-    const second = getNextTablePosition([{ positionX: first.x, positionY: first.y }])
-    expect(second).not.toEqual(first)
+  it('places the first table at the canvas margin', () => {
+    expect(getNextTablePosition([], { shape: 'ROUND', capacity: 8 })).toEqual({ x: 40, y: 40 })
+  })
+})
+
+type Placed = {
+  positionX: number
+  positionY: number
+  shape: 'ROUND' | 'RECTANGULAR'
+  capacity: number
+}
+
+const overlaps = (a: Placed, b: Placed) => {
+  const fa = getTableFootprint(a.shape, a.capacity)
+  const fb = getTableFootprint(b.shape, b.capacity)
+  return (
+    a.positionX < b.positionX + fb.width &&
+    b.positionX < a.positionX + fa.width &&
+    a.positionY < b.positionY + fb.height &&
+    b.positionY < a.positionY + fa.height
+  )
+}
+
+const placeAll = (shape: Placed['shape'], capacity: number, max = 500) => {
+  const placed: Placed[] = []
+  for (let i = 0; i < max; i++) {
+    const point = getNextTablePosition(placed, { shape, capacity })
+    if (!point) break
+    placed.push({ positionX: point.x, positionY: point.y, shape, capacity })
+  }
+  return placed
+}
+
+describe('getNextTablePosition', () => {
+  it('does not overlap two large rectangular tables', () => {
+    const placed = placeAll('RECTANGULAR', 30, 2)
+    expect(placed).toHaveLength(2)
+    expect(overlaps(placed[0]!, placed[1]!)).toBe(false)
+  })
+
+  it.each([
+    ['ROUND', 8],
+    ['RECTANGULAR', 30],
+    ['ROUND', 30],
+  ] as const)('fills the canvas with %s %i-seat tables without overlap, then reports no room', (shape, capacity) => {
+    const placed = placeAll(shape, capacity)
+    const footprint = getTableFootprint(shape, capacity)
+
+    // Filling stopped because space ran out, not because of the loop cap
+    expect(placed.length).toBeGreaterThan(1)
+    expect(placed.length).toBeLessThan(500)
+    expect(getNextTablePosition(placed, { shape, capacity })).toBeNull()
+    for (const [index, a] of placed.entries()) {
+      expect(a.positionX).toBeGreaterThanOrEqual(0)
+      expect(a.positionY).toBeGreaterThanOrEqual(0)
+      expect(a.positionX + footprint.width).toBeLessThanOrEqual(CANVAS_WIDTH)
+      expect(a.positionY + footprint.height).toBeLessThanOrEqual(CANVAS_HEIGHT)
+      for (const b of placed.slice(index + 1)) expect(overlaps(a, b)).toBe(false)
+    }
+  })
+
+  it('works around tables the planner has already moved', () => {
+    const existing: Placed[] = [
+      { positionX: 40, positionY: 40, shape: 'RECTANGULAR', capacity: 30 },
+      { positionX: 700, positionY: 60, shape: 'ROUND', capacity: 12 },
+    ]
+    const point = getNextTablePosition(existing, { shape: 'ROUND', capacity: 10 })
+    expect(point).not.toBeNull()
+    const candidate: Placed = {
+      positionX: point?.x ?? 0,
+      positionY: point?.y ?? 0,
+      shape: 'ROUND',
+      capacity: 10,
+    }
+    for (const table of existing) expect(overlaps(candidate, table)).toBe(false)
   })
 })
 

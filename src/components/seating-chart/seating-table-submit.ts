@@ -27,3 +27,19 @@ export const ADD_TABLE_FOCUS_KEY = 'add-table'
  */
 export const tableDialogFocusKey = (dialog: NonNullable<TableDialogState>): string =>
   dialog.mode === 'edit' ? `table:${dialog.tableId}` : ADD_TABLE_FOCUS_KEY
+
+/**
+ * The dialog state after a table save succeeds: close it only if it is still
+ * showing what was saved, so a save finishing late never closes (and loses)
+ * another dialog the planner has opened since.
+ */
+export const dialogAfterSave = (
+  current: TableDialogState,
+  saved: NonNullable<TableDialogState>
+): TableDialogState => {
+  if (current === null || current.mode !== saved.mode) return current
+  if (current.mode === 'edit' && saved.mode === 'edit' && current.tableId !== saved.tableId) {
+    return current
+  }
+  return null
+}

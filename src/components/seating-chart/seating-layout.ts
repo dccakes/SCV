@@ -9,8 +9,9 @@ const SEAT_PITCH = SEAT_SIZE + SEAT_GAP
 const MIN_ROUND_DIAMETER = 84
 const RECT_TABLE_DEPTH = 64
 const MIN_RECT_LENGTH = 96
-const GRID_STEP = 280
-const GRID_MARGIN = 40
+const PLACEMENT_MARGIN = 40
+const PLACEMENT_GAP = 16
+const PLACEMENT_STEP = 20
 
 export type Point = { x: number; y: number }
 export type Footprint = { width: number; height: number }
@@ -77,26 +78,47 @@ export const clampTablePosition = (position: Point, footprint: Footprint): Point
 })
 
 /**
- * First grid slot not already occupied by a table's top-left corner.
+ * Where a new table goes: the first spot, scanning rows from the top left,
+ * where its whole footprint fits on the canvas without touching any existing
+ * table (with a small gap). Null when the floor plan has no room left.
  */
 export const getNextTablePosition = (
-  tables: ReadonlyArray<{ positionX: number; positionY: number }>
-): Point => {
-  const columns = Math.floor((CANVAS_WIDTH - GRID_MARGIN) / GRID_STEP)
-  const isTaken = (point: Point) =>
-    tables.some(
-      (table) =>
-        Math.abs(table.positionX - point.x) < GRID_STEP / 2 &&
-        Math.abs(table.positionY - point.y) < GRID_STEP / 2
-    )
-
-  for (let index = 0; ; index++) {
-    const point = {
-      x: GRID_MARGIN + (index % columns) * GRID_STEP,
-      y: GRID_MARGIN + Math.floor(index / columns) * GRID_STEP,
+  tables: ReadonlyArray<{
+    positionX: number
+    positionY: number
+    shape: SeatingTableShape
+    capacity: number
+  }>,
+  newTable: { shape: SeatingTableShape; capacity: number }
+): Point | null => {
+  const size = getTableFootprint(newTable.shape, newTable.capacity)
+  // Existing footprints grown by the gap, so a hit means "too close"
+  const occupied = tables.map((table) => {
+    const footprint = getTableFootprint(table.shape, table.capacity)
+    return {
+      left: table.positionX - PLACEMENT_GAP,
+      top: table.positionY - PLACEMENT_GAP,
+      right: table.positionX + footprint.width + PLACEMENT_GAP,
+      bottom: table.positionY + footprint.height + PLACEMENT_GAP,
     }
-    if (!isTaken(point) || point.y > CANVAS_HEIGHT - GRID_STEP) return point
+  })
+
+  for (let y = PLACEMENT_MARGIN; y + size.height <= CANVAS_HEIGHT; y += PLACEMENT_STEP) {
+    let x = PLACEMENT_MARGIN
+    while (x + size.width <= CANVAS_WIDTH) {
+      const blocker = occupied.find(
+        (rect) =>
+          x < rect.right &&
+          rect.left < x + size.width &&
+          y < rect.bottom &&
+          rect.top < y + size.height
+      )
+      if (!blocker) return { x, y }
+      // Skip past the table in the way instead of stepping across it
+      x = Math.max(x + PLACEMENT_STEP, blocker.right)
+    }
   }
+  return null
 }
 
 /**

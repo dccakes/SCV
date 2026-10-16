@@ -29,6 +29,7 @@ import {
 import { SeatingTableNode } from '~/components/seating-chart/seating-table-node'
 import {
   ADD_TABLE_FOCUS_KEY,
+  dialogAfterSave,
   resolveTableSubmit,
   type TableDialogState,
   tableDialogFocusKey,
@@ -59,7 +60,11 @@ import {
   openSeatsMessage,
   tableHasRoom,
 } from '~/server/domains/seating/seating.rules'
-import type { SeatingChart, SeatingGuest } from '~/server/domains/seating/seating.types'
+import type {
+  SeatingChart,
+  SeatingGuest,
+  SeatingTableView,
+} from '~/server/domains/seating/seating.types'
 import { api } from '~/trpc/react'
 
 type SeatingChartBuilderProps = {
@@ -198,18 +203,32 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
       ),
     ...optimisticHandlers,
   })
+  const applyTableUpdate = ({
+    id,
+    data,
+  }: {
+    id: string
+    data: Partial<Pick<SeatingTableView, 'name' | 'shape' | 'capacity' | 'positionX' | 'positionY'>>
+  }) =>
+    cache.optimistic(chartInput, (current) => ({
+      ...current,
+      tables: current.tables.map((table) => (table.id === id ? { ...table, ...data } : table)),
+    }))
+  // Saves from the edit dialog. Moves use their own mutation so a move
+  // finishing can never close a dialog the planner opened in the meantime
   const updateTable = api.seating.updateTable.useMutation({
-    onMutate: ({ id, data }) =>
-      cache.optimistic(chartInput, (current) => ({
-        ...current,
-        tables: current.tables.map((table) => (table.id === id ? { ...table, ...data } : table)),
-      })),
+    onMutate: applyTableUpdate,
     ...optimisticHandlers,
-    onSuccess: () => setTableDialog(null),
+    onSuccess: (_data, input) =>
+      setTableDialog((current) => dialogAfterSave(current, { mode: 'edit', tableId: input.id })),
+  })
+  const moveTable = api.seating.updateTable.useMutation({
+    onMutate: applyTableUpdate,
+    ...optimisticHandlers,
   })
   const createTable = api.seating.createTable.useMutation({
     onError: (error) => toast.error(error.message),
-    onSuccess: () => setTableDialog(null),
+    onSuccess: () => setTableDialog((current) => dialogAfterSave(current, { mode: 'create' })),
     onSettled: (_data, _error, input) =>
       utils.seating.getChart.invalidate({ eventId: input.eventId }),
   })
@@ -311,7 +330,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
         table.shape,
         table.capacity
       )
-      updateTable.mutate({ id: table.id, data: position })
+      moveTable.mutate({ id: table.id, data: position })
       return
     }
 
@@ -377,7 +396,11 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
       updateTable.mutate({ id: action.tableId, data: { ...values, ...position } })
       return
     }
-    const position = getNextTablePosition(chart.tables)
+    const position = getNextTablePosition(chart.tables, values)
+    if (!position) {
+      toast.error('No room left on the floor plan. Move or remove a table to make space.')
+      return
+    }
     createTable.mutate({ eventId, ...values, positionX: position.x, positionY: position.y })
   }
 
