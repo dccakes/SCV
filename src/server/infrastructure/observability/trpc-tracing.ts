@@ -7,7 +7,7 @@
  * spans it caused nested underneath.
  */
 
-import { SpanKind, SpanStatusCode, trace } from '@opentelemetry/api'
+import { type SpanContext, SpanKind, SpanStatusCode, trace } from '@opentelemetry/api'
 import type { TRPCError } from '@trpc/server'
 import { getHTTPStatusCodeFromError } from '@trpc/server/http'
 
@@ -19,6 +19,17 @@ import {
 } from '~/lib/observability/config'
 
 const tracer = trace.getTracer('scv.trpc')
+
+/**
+ * Failing procedure span per error. tRPC calls `onError` after the procedure
+ * span has ended, when only the shared route span is active, so error reports
+ * look up the span that actually failed here.
+ */
+const failedProcedureSpans = new WeakMap<object, SpanContext>()
+
+export function getProcedureSpanContext(error: unknown): SpanContext | undefined {
+  return typeof error === 'object' && error !== null ? failedProcedureSpans.get(error) : undefined
+}
 
 export interface ProcedureSpanInput {
   path: string
@@ -40,7 +51,8 @@ export function withProcedureSpan<TResult extends ProcedureResult>(
       attributes: { 'rpc.system': 'trpc', 'rpc.method': path, 'trpc.type': type },
     },
     async (span) => {
-      const distinctId = headers?.get(POSTHOG_DISTINCT_ID_HEADER) ?? userId
+      // The header is client-controlled; the authenticated user always wins.
+      const distinctId = userId ?? headers?.get(POSTHOG_DISTINCT_ID_HEADER)
       const sessionId = headers?.get(POSTHOG_SESSION_ID_HEADER)
       if (distinctId) span.setAttribute(POSTHOG_DISTINCT_ID_ATTRIBUTE, distinctId)
       if (sessionId) span.setAttribute(POSTHOG_SESSION_ID_ATTRIBUTE, sessionId)
@@ -53,12 +65,16 @@ export function withProcedureSpan<TResult extends ProcedureResult>(
           span.setAttribute('http.response.status_code', status)
           // Client errors (auth, validation, not found) are expected outcomes.
           if (status >= 500) {
+            failedProcedureSpans.set(result.error, span.spanContext())
             span.recordException(result.error)
             span.setStatus({ code: SpanStatusCode.ERROR, message: result.error.message })
           }
         }
         return result
       } catch (error) {
+        if (typeof error === 'object' && error !== null) {
+          failedProcedureSpans.set(error, span.spanContext())
+        }
         span.recordException(error instanceof Error ? error : String(error))
         span.setStatus({ code: SpanStatusCode.ERROR })
         throw error

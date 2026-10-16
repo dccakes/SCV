@@ -9,7 +9,7 @@
  *   output keep working when no exporter is configured.
  *
  * Safe in both the Node.js and Edge runtimes: only API packages are imported.
- * For browser code use `~/lib/observability/browser-logger` instead.
+ * In browser code use `posthog.logger` (configured in `instrumentation-client.ts`).
  */
 
 import { trace } from '@opentelemetry/api'

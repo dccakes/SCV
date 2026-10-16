@@ -1,6 +1,10 @@
 import posthog from 'posthog-js'
 
-import { BROWSER_SERVICE_NAME, parseSampleRate } from '~/lib/observability/config'
+import {
+  BROWSER_SERVICE_NAME,
+  POSTHOG_PROXY_PATH,
+  parseSampleRate,
+} from '~/lib/observability/config'
 
 // Next.js runs this before hydration, including when the root layout fails.
 const token = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
@@ -10,7 +14,7 @@ const version = process.env.NEXT_PUBLIC_APP_VERSION ?? 'development'
 if (token) {
   try {
     posthog.init(token, {
-      api_host: '/oswp-pHsc1',
+      api_host: POSTHOG_PROXY_PATH,
       ui_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
       defaults: '2026-05-30',
       capture_exceptions: true,

@@ -87,3 +87,69 @@ describe('withProcedureSpan', () => {
     expect(exporter.getFinishedSpans()[0]?.status.code).toBe(SpanStatusCode.ERROR)
   })
 })
+
+describe('identity precedence', () => {
+  it('prefers the authenticated user over the client-sent distinct id header', async () => {
+    await withProcedureSpan(
+      {
+        path: 'guest.list',
+        type: 'query',
+        headers: new Headers({ 'x-posthog-distinct-id': 'someone_else' }),
+        userId: 'user_1',
+      },
+      async () => ({ ok: true as const })
+    )
+
+    expect(exporter.getFinishedSpans()[0]?.attributes.posthogDistinctId).toBe('user_1')
+  })
+
+  it('uses the header for anonymous guests', async () => {
+    await withProcedureSpan(
+      {
+        path: 'website.submitPublicRsvpForm',
+        type: 'mutation',
+        headers: new Headers({ 'x-posthog-distinct-id': 'anon_1' }),
+      },
+      async () => ({ ok: true as const })
+    )
+
+    expect(exporter.getFinishedSpans()[0]?.attributes.posthogDistinctId).toBe('anon_1')
+  })
+})
+
+describe('getProcedureSpanContext with a real tRPC handler', () => {
+  const { initTRPC } = require('@trpc/server') as typeof import('@trpc/server')
+  const { fetchRequestHandler } =
+    require('@trpc/server/adapters/fetch') as typeof import('@trpc/server/adapters/fetch')
+  const { getProcedureSpanContext } =
+    require('~/server/infrastructure/observability/trpc-tracing') as typeof import('~/server/infrastructure/observability/trpc-tracing')
+
+  const t = initTRPC.create()
+  const traced = t.procedure.use(({ path, type, next }) =>
+    withProcedureSpan({ path, type }, () => next())
+  )
+  const router = t.router({
+    ok: traced.query(() => 'fine'),
+    boom: traced.query(() => {
+      throw new Error('db down')
+    }),
+  })
+
+  it('maps the error tRPC hands to onError back to the failing procedure span', async () => {
+    const seen: Array<ReturnType<typeof getProcedureSpanContext>> = []
+    await fetchRequestHandler({
+      endpoint: '/api/trpc',
+      req: new Request('http://localhost/api/trpc/ok,boom?batch=1&input={}'),
+      router,
+      createContext: () => ({}),
+      onError: ({ error }) => {
+        seen.push(getProcedureSpanContext(error))
+      },
+    })
+
+    const boomSpan = exporter.getFinishedSpans().find((span) => span.name === 'trpc boom')
+    expect(seen).toHaveLength(1)
+    expect(seen[0]?.spanId).toBe(boomSpan?.spanContext().spanId)
+    expect(seen[0]?.traceId).toBe(boomSpan?.spanContext().traceId)
+  })
+})

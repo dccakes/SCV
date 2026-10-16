@@ -8,6 +8,7 @@ import { logger } from '~/lib/observability/logger'
 import { appRouter } from '~/server/api/root'
 import { createTRPCContext } from '~/server/api/trpc'
 import { captureServerException } from '~/server/infrastructure/observability/capture-exception'
+import { getProcedureSpanContext } from '~/server/infrastructure/observability/trpc-tracing'
 
 /**
  * This wraps the `createTRPCContext` helper and provides the required context for the tRPC API when
@@ -25,7 +26,7 @@ const handler = (req: NextRequest) =>
     req,
     router: appRouter,
     createContext: () => createContext(req),
-    onError: ({ path, error, type }) => {
+    onError: ({ path, error, type, ctx }) => {
       const status = getHTTPStatusCodeFromError(error)
       const attributes = {
         'trpc.path': path ?? 'unknown',
@@ -33,18 +34,23 @@ const handler = (req: NextRequest) =>
         'trpc.error_code': error.code,
         'http.response.status_code': status,
       }
-      const cause = error.cause ?? error
       if (status < 500) {
-        logger.warn('tRPC client error', attributes, cause)
+        // Expected outcomes (auth, validation, not found): no stack trace, which
+        // would only bloat billed log volume for something that isn't a bug.
+        logger.warn('tRPC client error', attributes)
         return
       }
+      const cause = error.cause ?? error
       logger.error('tRPC server error', attributes, cause)
-      const spanContext = trace.getActiveSpan()?.spanContext()
+      // onError runs after the procedure span ended; report the span that failed,
+      // not the route span shared by every procedure in the batch.
+      const spanContext = getProcedureSpanContext(error) ?? trace.getActiveSpan()?.spanContext()
       // tRPC turns the throw into a response, so Next's onRequestError never
       // sees it. Report after the response so the client isn't kept waiting.
       after(() =>
         captureServerException(cause, {
-          distinctId: req.headers.get(POSTHOG_DISTINCT_ID_HEADER) ?? undefined,
+          userId: ctx?.auth?.userId,
+          clientDistinctId: req.headers.get(POSTHOG_DISTINCT_ID_HEADER) ?? undefined,
           sessionId: req.headers.get(POSTHOG_SESSION_ID_HEADER) ?? undefined,
           properties: {
             ...attributes,

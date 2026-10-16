@@ -15,7 +15,7 @@ no-op, so the app runs identically with or without it.
 | `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` | client | Public project token (`phc_…`). Enables the browser SDK. |
 | `NEXT_PUBLIC_POSTHOG_HOST` | client | PostHog app/UI host (e.g. `https://us.posthog.com`). |
 | `POSTHOG_KEY` | server | Optional dedicated server key. Falls back to the public project token (same project). |
-| `POSTHOG_HOST` | server | Optional server API host. |
+| `POSTHOG_HOST` | server | Optional server ingestion host (default `https://us.i.posthog.com`), shared by events, exceptions, traces, and logs. |
 
 See `.env.example` for the full block.
 

@@ -38,7 +38,9 @@ export const onRequestError: Instrumentation.onRequestError = async (err, reques
     '~/server/infrastructure/observability/capture-exception'
   )
   await captureServerException(error, {
-    distinctId: headerValue(request.headers[POSTHOG_DISTINCT_ID_HEADER]),
+    // onRequestError resolves no auth session, so only the client-sent id
+    // exists; it links the replay but never updates a person profile.
+    clientDistinctId: headerValue(request.headers[POSTHOG_DISTINCT_ID_HEADER]),
     sessionId: headerValue(request.headers[POSTHOG_SESSION_ID_HEADER]),
     properties: { ...attributes, source: 'next-on-request-error' },
   })

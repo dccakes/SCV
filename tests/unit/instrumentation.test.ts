@@ -80,7 +80,7 @@ describe('onRequestError', () => {
     await onRequestError(requestError, request, requestContext)
 
     expect(mockCaptureServerException).toHaveBeenCalledWith(requestError, {
-      distinctId: 'user_1',
+      clientDistinctId: 'user_1',
       sessionId: 'session_1',
       properties: { ...expectedAttributes, source: 'next-on-request-error' },
     })

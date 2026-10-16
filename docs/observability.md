@@ -12,7 +12,7 @@ spans stay local, and logs still go to the console.
 | Signal | Server (Node.js) | Browser |
 | --- | --- | --- |
 | Traces | Next.js routes and renders, `fetch`, Prisma queries, one span per tRPC procedure, AI SDK (Etta) generations and tool calls | Document load, every `fetch` (including tRPC) |
-| Logs | `logger` from `~/lib/observability/logger` | `browserLogger` from `~/lib/observability/browser-logger` |
+| Logs | `logger` from `~/lib/observability/logger` | `posthog.logger` from `posthog-js` |
 | Errors | `onRequestError` (renders, route handlers, server actions) and tRPC 5xx | Unhandled errors and rejections, React error boundaries, fetch 5xx and network failures |
 
 ### One trace, browser to database
@@ -23,8 +23,13 @@ spans stay local, and logs still go to the console.
    the tRPC procedure and Prisma spans nest under the click that caused them.
 3. posthog-js `tracing_headers` adds `X-POSTHOG-DISTINCT-ID` and
    `X-POSTHOG-SESSION-ID`. Server spans and server exceptions use them to link
-   back to the person and the session replay (`posthogDistinctId` and
-   `sessionId` span attributes, `$session_id` on exceptions).
+   back to the session replay (`sessionId` span attribute, `$session_id` on
+   exceptions). Any client can set these headers, so for the person
+   (`posthogDistinctId`) tRPC spans and server exceptions prefer the signed-in
+   user id, and only a signed-in user id may create or update a person profile;
+   header ids from anonymous guests link to their session but never touch
+   profiles. The request's root span is the exception: `@vercel/otel` sets it
+   from the raw header before auth runs, so treat it as a hint.
 4. Logs emitted during a request carry its `trace_id`/`span_id`; exceptions
    carry `trace_id`/`span_id` properties.
 5. React error boundaries send Next's `digest`, which matches `error.digest` on
@@ -36,7 +41,7 @@ spans stay local, and logs still go to the console.
 | --- | --- | --- |
 | `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` | build + runtime | Enables browser analytics, errors, logs, and traces. |
 | `POSTHOG_KEY` | runtime | Server token; falls back to the public token. Must be a `phc_` project token. |
-| `POSTHOG_HOST` | runtime | Ingestion host for server events, traces, and logs. Default `https://us.i.posthog.com`. |
+| `POSTHOG_HOST` | runtime | Ingestion host for all server telemetry: events, exceptions, traces, and logs. Default `https://us.i.posthog.com`. `NEXT_PUBLIC_POSTHOG_HOST` (the UI host) is never used for ingestion. |
 | `NEXT_PUBLIC_OTEL_SAMPLE_RATE` | build | Browser root-trace sample rate, 0..1. Default 1. |
 | `OTEL_TRACES_SAMPLER`, `OTEL_TRACES_SAMPLER_ARG` | runtime | Server sampling (standard OTel). Default: all requests. |
 | `OTEL_EXPORTER_OTLP_*` | runtime | Optional extra OTLP trace destination, picked up by `@vercel/otel`. |
@@ -63,10 +68,12 @@ log.error('RSVP email failed', { wedding_id: weddingId }, error)
   call `captureServerException` from
   `~/server/infrastructure/observability/capture-exception`.
 
-In client components use `browserLogger` (same shape). Records go to PostHog
-Logs with the session and person attached; they are only mirrored to the
-console in development. Console autocapture is deliberately **off**: third
-party libraries log things we don't control.
+In client components use `posthog.logger` directly (`info`, `warn`, `error`,
+with an attributes object). `instrumentation-client.ts` sets its service name,
+environment, and version, and posthog-js attaches the session and person to
+each record. Records go to PostHog only, not the browser console. Console
+autocapture is deliberately **off**: third party libraries log things we don't
+control.
 
 ## Privacy
 
@@ -96,7 +103,6 @@ party libraries log things we don't control.
 | `src/lib/observability/logger.ts` | Server/Edge OTel logger |
 | `instrumentation-client.ts` | posthog-js init (errors, logs, tracing headers); lazy-loads browser tracing |
 | `src/lib/observability/browser-tracing.ts` | Browser OTel tracer, fetch + document load, fetch error reporting |
-| `src/lib/observability/browser-logger.ts` | Browser logger on PostHog Logs |
 
 ### Serverless flushing
 

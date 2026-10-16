@@ -9,7 +9,11 @@
 export const SERVICE_NAME = 'scv'
 export const BROWSER_SERVICE_NAME = 'scv-browser'
 
-/** Same-origin PostHog reverse proxy (rewrites in next.config.js). */
+/**
+ * Same-origin PostHog reverse proxy. Used by posthog-js (`api_host`), the browser
+ * trace exporter, and the auth bypass in `src/proxy.ts`. next.config.js can't
+ * import TypeScript, so its rewrites repeat the value; a unit test keeps them in sync.
+ */
 export const POSTHOG_PROXY_PATH = '/oswp-pHsc1'
 
 /** PostHog US ingestion host. Keep in sync with the rewrites in next.config.js. */
@@ -32,7 +36,7 @@ export function posthogOtlpUrl(host: string, signal: OtlpSignal): string {
   return `${host.replace(/\/+$/, '')}/i/v1/${signal}`
 }
 
-export interface ServerOtlpTarget {
+export interface ServerPostHogTarget {
   token: string
   host: string
 }
@@ -45,12 +49,12 @@ const nonBlank = (value: string | undefined): string | undefined => {
 }
 
 /**
- * Resolve where server traces and logs go. Mirrors the posthog-node key
- * resolution so one project token enables events, errors, traces, and logs.
- * `NEXT_PUBLIC_POSTHOG_HOST` is deliberately ignored: it is the UI host, not
- * an ingestion host.
+ * The single source of truth for server-side PostHog: posthog-node (events,
+ * exceptions), OTLP traces, and OTLP logs all use this token and host, so they
+ * can never land on different hosts. `NEXT_PUBLIC_POSTHOG_HOST` is deliberately
+ * ignored: it is the UI host (`ui_host`), not an ingestion host.
  */
-export function resolveServerOtlpTarget(env: EnvLike = process.env): ServerOtlpTarget | null {
+export function resolveServerPostHogTarget(env: EnvLike = process.env): ServerPostHogTarget | null {
   const token = nonBlank(env.POSTHOG_KEY) ?? nonBlank(env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN)
   if (!token) return null
   return { token, host: nonBlank(env.POSTHOG_HOST) ?? POSTHOG_INGEST_HOST }

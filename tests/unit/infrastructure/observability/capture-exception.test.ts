@@ -17,10 +17,11 @@ beforeEach(() => {
 })
 
 describe('captureServerException', () => {
-  it('captures with person/session linkage and flushes immediately', async () => {
+  it('attributes to the authenticated user with session linkage and flushes immediately', async () => {
     const error = new Error('boom')
     await captureServerException(error, {
-      distinctId: 'user_1',
+      userId: 'user_1',
+      clientDistinctId: 'someone_else',
       sessionId: 'session_1',
       properties: { trace_id: 't1', span_id: 's1', source: 'trpc' },
     })
@@ -35,7 +36,14 @@ describe('captureServerException', () => {
     expect(mockFlush).toHaveBeenCalled()
   })
 
-  it('keeps anonymous guests anonymous', async () => {
+  it('links anonymous guests by the client id without touching person profiles', async () => {
+    await captureServerException(new Error('x'), { clientDistinctId: 'anon_1' })
+
+    expect(mockCaptureException.mock.calls[0][1]).toBe('anon_1')
+    expect(mockCaptureException.mock.calls[0][2]).toMatchObject({ $process_person_profile: false })
+  })
+
+  it('stays anonymous with no identity at all', async () => {
     await captureServerException(new Error('x'))
     expect(mockCaptureException.mock.calls[0][1]).toBeUndefined()
     expect(mockCaptureException.mock.calls[0][2]).toMatchObject({ $process_person_profile: false })

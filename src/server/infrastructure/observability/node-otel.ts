@@ -26,7 +26,7 @@ import {
   POSTHOG_SESSION_ID_ATTRIBUTE,
   POSTHOG_SESSION_ID_HEADER,
   posthogOtlpUrl,
-  resolveServerOtlpTarget,
+  resolveServerPostHogTarget,
   SERVICE_NAME,
 } from '~/lib/observability/config'
 
@@ -136,7 +136,7 @@ function escapeRegExp(value: string): string {
 }
 
 export function buildNodeOTelConfig(env: EnvLike = process.env): Configuration {
-  const target = resolveServerOtlpTarget(env)
+  const target = resolveServerPostHogTarget(env)
 
   const base: Configuration = {
     serviceName: SERVICE_NAME,
