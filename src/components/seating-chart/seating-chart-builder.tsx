@@ -102,6 +102,9 @@ const readSidebarFocusCandidates = (): FocusCandidate[] =>
     guestIds: (node.dataset.seatingGuestIds ?? '').split(',').filter(Boolean).map(Number),
   }))
 
+const focusSidebarSearch = () =>
+  document.querySelector<HTMLElement>('[data-seating-sidebar] input')?.focus()
+
 const findFocusTarget = (key: string) =>
   document.querySelector<HTMLElement>(`[data-seating-focus-key="${key}"]`)
 
@@ -146,6 +149,9 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   // Where focus returns when the table or delete dialog closes
   const tableDialogReturnKey = useRef(ADD_TABLE_FOCUS_KEY)
+  // Set while the edit dialog hands off to the delete confirmation, which
+  // places focus itself; the closing editor must not focus the hidden table
+  const handingOffToDelete = useRef(false)
   const [activeDrag, setActiveDrag] = useState<GuestDragData | null>(null)
   // Focus to apply after a keyboard drop, once the chart the drop happened on
   // has been replaced by the optimistic update (the target may not exist yet,
@@ -257,7 +263,8 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
   useEffect(() => {
     if (!pendingFocus || !chart || chart === pendingFocus.chartAtDrop) return
     const frame = requestAnimationFrame(() => {
-      findFocusTarget(pendingFocus.key)?.focus()
+      // The target can be filtered out of the sidebar by an active search
+      if (!focusFirstPresent([pendingFocus.key])) focusSidebarSearch()
       setPendingFocus(null)
     })
     return () => cancelAnimationFrame(frame)
@@ -298,9 +305,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
     })
     event.preventDefault()
     // Last resort: the sidebar search box
-    if (!focusFirstPresent([target])) {
-      document.querySelector<HTMLElement>('[data-seating-sidebar] input')?.focus()
-    }
+    if (!focusFirstPresent([target])) focusSidebarSearch()
   }
 
   // Each opening gets its own id so a save only ever closes the dialog it came from
@@ -316,6 +321,10 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
   // ourselves; a deleted table falls back to the Add table button
   const returnFocusFromTableDialog = (event: Event) => {
     event.preventDefault()
+    if (handingOffToDelete.current) {
+      handingOffToDelete.current = false
+      return
+    }
     focusFirstPresent([tableDialogReturnKey.current, ADD_TABLE_FOCUS_KEY])
   }
 
@@ -396,7 +405,10 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
     [editingTable, chart?.tables.length]
   )
 
-  const handleTableSubmit = (values: SeatingTableFormValues) => {
+  const handleTableSubmit = (
+    values: SeatingTableFormValues,
+    changed: Partial<SeatingTableFormValues>
+  ) => {
     if (!eventId || !chart || !tableDialog) return
     const action = resolveTableSubmit(tableDialog, chart.tables)
     const { openId } = tableDialog
@@ -407,10 +419,24 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
       return
     }
     if (action.kind === 'update') {
+      // Send only what the planner changed, so a save never reverts fields
+      // another planner edited while this dialog was open
+      if (Object.keys(changed).length === 0) {
+        closeIfStillOpen()
+        return
+      }
       const table = tablesById.get(action.tableId)
-      const position = table && refitAfterResize(table, values.shape, values.capacity)
+      const resized = changed.shape !== undefined || changed.capacity !== undefined
+      const position =
+        table && resized
+          ? refitAfterResize(
+              table,
+              changed.shape ?? table.shape,
+              changed.capacity ?? table.capacity
+            )
+          : undefined
       updateTable.mutate(
-        { id: action.tableId, data: { ...values, ...position } },
+        { id: action.tableId, data: { ...changed, ...position } },
         { onSuccess: closeIfStillOpen }
       )
       return
@@ -563,6 +589,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
         onDelete={
           editingTable
             ? () => {
+                handingOffToDelete.current = true
                 setPendingDeleteId(editingTable.id)
                 setTableDialog(null)
               }

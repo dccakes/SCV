@@ -28,11 +28,10 @@ describe('SeatingTableDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add table' }))
 
     await waitFor(() =>
-      expect(onSubmit).toHaveBeenCalledWith({
-        name: 'Head Table',
-        shape: 'RECTANGULAR',
-        capacity: 12,
-      })
+      expect(onSubmit).toHaveBeenCalledWith(
+        { name: 'Head Table', shape: 'RECTANGULAR', capacity: 12 },
+        { name: 'Head Table', shape: 'RECTANGULAR', capacity: 12 }
+      )
     )
   })
 
@@ -132,5 +131,41 @@ describe('SeatingTableDialog', () => {
     rerender(<SeatingTableDialog {...props} open={false} />)
 
     await waitFor(() => expect(onCloseAutoFocus).toHaveBeenCalled())
+  })
+
+  it('reports only the fields the planner changed when editing', async () => {
+    const { onSubmit } = renderDialog({ mode: 'edit' })
+
+    fireEvent.change(screen.getByLabelText('Table name'), { target: { value: 'Head Table' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        { name: 'Head Table', shape: 'ROUND', capacity: 8 },
+        { name: 'Head Table' }
+      )
+    )
+  })
+
+  it('reports no changes when nothing was edited', async () => {
+    const { onSubmit } = renderDialog({ mode: 'edit' })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({ name: 'Table 1', shape: 'ROUND', capacity: 8 }, {})
+    )
+  })
+
+  it('does not block a rename on a seat count the planner did not touch', async () => {
+    // Someone else seated more guests since this dialog opened
+    const { onSubmit } = renderDialog({ mode: 'edit', minCapacity: 10 })
+
+    fireEvent.change(screen.getByLabelText('Table name'), { target: { value: 'Renamed' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(expect.anything(), { name: 'Renamed' })
+    )
   })
 })

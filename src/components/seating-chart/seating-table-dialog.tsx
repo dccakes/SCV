@@ -43,7 +43,9 @@ type SeatingTableDialogProps = {
   minCapacity?: number
   isSubmitting: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (values: SeatingTableFormValues) => void
+  // `changed` holds only the fields edited since the dialog opened, so an edit
+  // never resends values another planner may have changed in the meantime
+  onSubmit: (values: SeatingTableFormValues, changed: Partial<SeatingTableFormValues>) => void
   onDelete?: () => void
   onCloseAutoFocus?: (event: Event) => void
 }
@@ -67,7 +69,7 @@ export function SeatingTableDialog(props: Readonly<SeatingTableDialogProps>) {
   } = props
 
   const {
-    formState: { errors },
+    formState: { errors, dirtyFields },
     handleSubmit,
     register,
     reset,
@@ -88,13 +90,19 @@ export function SeatingTableDialog(props: Readonly<SeatingTableDialogProps>) {
   }, [open, defaultValues, reset])
 
   const submit = handleSubmit((values) => {
-    if (values.capacity < minCapacity) {
+    const changed: Partial<SeatingTableFormValues> = {
+      ...(dirtyFields.name ? { name: values.name } : {}),
+      ...(dirtyFields.shape ? { shape: values.shape } : {}),
+      ...(dirtyFields.capacity ? { capacity: values.capacity } : {}),
+    }
+    // Only a seat count the planner changed is checked against who is seated now
+    if (changed.capacity !== undefined && changed.capacity < minCapacity) {
       setError('capacity', {
         message: `${minCapacity} guests are seated here. Move guests before reducing seats.`,
       })
       return
     }
-    onSubmit(values)
+    onSubmit(values, changed)
   })
 
   return (
