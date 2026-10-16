@@ -93,4 +93,47 @@ describe('SeatingGuestSidebar', () => {
       expect(row).toHaveClass('touch-manipulation')
     }
   })
+
+  it('drags the whole unseated household from its header even when a search hides members', () => {
+    render(
+      <DndContext>
+        <SeatingGuestSidebar
+          households={[
+            {
+              id: 'h9',
+              address: null,
+              notes: null,
+              guests: [
+                guest({ id: 21, firstName: 'Papa', lastName: 'Bear', householdId: 'h9' }),
+                guest({ id: 22, firstName: 'Mama', lastName: 'Bear', householdId: 'h9' }),
+                guest({ id: 23, firstName: 'Baby', lastName: 'Bear', householdId: 'h9' }),
+                guest({
+                  id: 24,
+                  firstName: 'Uncle',
+                  lastName: 'Bear',
+                  householdId: 'h9',
+                  tableId: 't1',
+                }),
+              ],
+            },
+          ]}
+          totalGuests={4}
+          seatedGuests={1}
+          onSelectGuest={jest.fn()}
+        />
+      </DndContext>
+    )
+
+    fireEvent.change(screen.getByLabelText('Search unseated guests'), {
+      target: { value: 'papa' },
+    })
+
+    // Only the matching guest is listed...
+    expect(screen.getByRole('button', { name: /Papa Bear\./ })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Mama Bear\./ })).not.toBeInTheDocument()
+    // ...but the header still moves all three unseated members, and says so
+    const header = screen.getByRole('button', { name: /^Bear household, 3 unseated/ })
+    expect(header).toHaveTextContent('3/4')
+    expect(header).toHaveAttribute('data-seating-guest-ids', '21,22,23')
+  })
 })

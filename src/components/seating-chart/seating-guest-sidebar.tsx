@@ -59,11 +59,14 @@ function DraggableGuest(props: Readonly<{ guest: SeatingGuest; onSelect: () => v
 function HouseholdGroup(
   props: Readonly<{
     household: SeatingHousehold
+    // Every unseated member: what dragging the header moves
     unassigned: SeatingGuest[]
+    // The unseated members matching the search: what is listed
+    visible: SeatingGuest[]
     onSelectGuest: (guestId: number) => void
   }>
 ) {
-  const { household, unassigned, onSelectGuest } = props
+  const { household, unassigned, visible, onSelectGuest } = props
   const lead = household.guests[0]
   const label = lead ? `${lead.lastName} household` : 'Household'
   const data: GuestDragData = {
@@ -97,7 +100,7 @@ function HouseholdGroup(
         </span>
       </button>
       <ul className='p-1'>
-        {unassigned.map((guest) => (
+        {visible.map((guest) => (
           <DraggableGuest key={guest.id} guest={guest} onSelect={() => onSelectGuest(guest.id)} />
         ))}
       </ul>
@@ -114,15 +117,15 @@ export function SeatingGuestSidebar(props: Readonly<SeatingGuestSidebarProps>) {
   const groups = useMemo(() => {
     const query = search.trim().toLowerCase()
     return households
-      .map((household) => ({
-        household,
-        unassigned: household.guests.filter(
-          (guest) =>
-            guest.tableId === null &&
-            (!query || formatGuestName(guest).toLowerCase().includes(query))
-        ),
-      }))
-      .filter((group) => group.unassigned.length > 0)
+      .map((household) => {
+        const unassigned = household.guests.filter((guest) => guest.tableId === null)
+        // Search narrows what is listed, never what the household header moves
+        const visible = unassigned.filter(
+          (guest) => !query || formatGuestName(guest).toLowerCase().includes(query)
+        )
+        return { household, unassigned, visible }
+      })
+      .filter((group) => group.visible.length > 0)
   }, [households, search])
 
   return (
@@ -166,6 +169,7 @@ export function SeatingGuestSidebar(props: Readonly<SeatingGuestSidebarProps>) {
                 key={group.household.id}
                 household={group.household}
                 unassigned={group.unassigned}
+                visible={group.visible}
                 onSelectGuest={onSelectGuest}
               />
             ))}
