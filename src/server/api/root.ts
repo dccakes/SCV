@@ -17,6 +17,7 @@ import { invitationRouter } from '~/server/domains/invitation/invitation.router'
 import { messagingRouter } from '~/server/domains/messaging/messaging.router'
 import { milestoneRouter } from '~/server/domains/milestone/milestone.router'
 import { questionRouter } from '~/server/domains/question/question.router'
+import { seatingRouter } from '~/server/domains/seating/seating.router'
 import { createSelfFillRouter } from '~/server/domains/self-fill'
 import { taskRouter } from '~/server/domains/task/task.router'
 import { userRouter } from '~/server/domains/user/user.router'
@@ -53,6 +54,9 @@ export const appRouter = createTRPCRouter({
   // Phase 3 domains (migrated)
   question: questionRouter,
   household: householdRouter,
+
+  // Seating chart builder
+  seating: seatingRouter,
 
   // Self-fill guest registration (router created with injected application service)
   selfFill: createSelfFillRouter(selfFillRegistrationService),

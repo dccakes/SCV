@@ -34,6 +34,9 @@ model Wedding {
   invitations Invitation[]
   guestTags   GuestTag[]
 
+  // Seating chart
+  seatingTables SeatingTable[]
+
   // Add-on relationships
   website    Website?
   vendors    Vendor[]
@@ -365,6 +368,7 @@ model Guest {
   optionResponses OptionResponse[] @relation(name: "Guest_OptionResponses")
   answers         Answer[]         @relation(name: "Guest_Answers")
   guestQuestions  GuestQuestion[]
+  seatAssignments SeatAssignment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -398,6 +402,9 @@ model Event {
   gifts       Gift[]       @relation(name: "Event_Gifts")
   questions   Question[]   @relation(name: "Event_Questions")
   tasks       Task[]
+
+  seatingTables   SeatingTable[]
+  seatAssignments SeatAssignment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -525,6 +532,54 @@ model Invitation {
   @@index([weddingId])
   @@index([guestId])
   @@index([eventId])
+}
+
+// Seating chart: a table placed on an event's floor plan
+model SeatingTable {
+  id        String  @id @default(uuid())
+  weddingId String
+  wedding   Wedding @relation(fields: [weddingId], references: [id], onDelete: Cascade)
+  eventId   String
+  event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  name     String
+  shape    SeatingTableShape @default(ROUND)
+  capacity Int
+
+  // Top-left corner on the floor plan canvas, in pixels
+  positionX Int @default(0)
+  positionY Int @default(0)
+
+  seatAssignments SeatAssignment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([weddingId])
+  @@index([eventId])
+}
+
+// Seating chart: a guest seated at a table. eventId is denormalized from the
+// table so a guest can only be seated once per event.
+model SeatAssignment {
+  id      String       @id @default(uuid())
+  tableId String
+  table   SeatingTable @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  guestId Int
+  guest   Guest        @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  eventId String
+  event   Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([guestId, eventId])
+  @@index([tableId])
+  @@index([eventId])
+}
+
+enum SeatingTableShape {
+  ROUND
+  RECTANGULAR
 }
 
 // Enum: Guest age groups for planning purposes (meals, activities, etc.)
