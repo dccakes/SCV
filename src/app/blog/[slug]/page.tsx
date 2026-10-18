@@ -70,7 +70,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <p className='mb-3 font-mono text-[0.7rem] text-primary uppercase tracking-[0.12em]'>
           {post.tags.join(' · ')}
         </p>
-        <h1 className='font-serif text-5xl tracking-tight'>{post.title}</h1>
+        <h1 className='font-display text-5xl tracking-tight'>{post.title}</h1>
         <p className='mt-4 text-muted-foreground'>{post.description}</p>
         <p className='mt-3 font-mono text-[0.65rem] text-muted-foreground uppercase tracking-[0.08em]'>
           {post.author} · {post.readTimeMinutes} min read

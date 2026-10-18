@@ -152,7 +152,7 @@ export default function NonAuthenticatedView() {
               <span className='block h-px w-7 bg-primary' />
               Open Source Wedding Platform
             </p>
-            <h1 className='fu fu1 font-normal font-serif text-[clamp(3rem,5.5vw,5rem)] leading-[1.06] tracking-tight'>
+            <h1 className='fu fu1 font-display font-normal text-[clamp(3rem,5.5vw,5rem)] leading-[1.06] tracking-tight'>
               The <em className='text-primary italic'>infrastructure</em>
               <br />
               for your forever
@@ -248,7 +248,7 @@ export default function NonAuthenticatedView() {
             <span className='block h-px w-5 bg-primary' />
             What's inside
           </p>
-          <h2 className='font-normal font-serif text-[clamp(2rem,4vw,3rem)] leading-[1.1] tracking-tight'>
+          <h2 className='font-display font-normal text-[clamp(2rem,4vw,3rem)] leading-[1.1] tracking-tight'>
             Everything you need,
             <br />
             <em className='text-primary italic'>nothing you don't</em>
@@ -286,14 +286,14 @@ export default function NonAuthenticatedView() {
         <section id='etta' className='bg-foreground py-28 text-background'>
           <div className='mx-auto grid max-w-6xl grid-cols-1 items-center gap-16 px-6 md:grid-cols-2 md:px-12'>
             <div>
-              <p className='mb-3 flex items-center gap-3 font-mono text-[0.6rem] text-accent uppercase tracking-[.2em]'>
-                <span className='block h-px w-5 bg-accent' />
+              <p className='mb-3 flex items-center gap-3 font-mono text-[0.6rem] text-gold uppercase tracking-[.2em]'>
+                <span className='block h-px w-5 bg-gold' />
                 Meet Etta
               </p>
-              <h2 className='font-normal font-serif text-[clamp(2rem,4vw,3rem)] text-background leading-[1.1] tracking-tight'>
+              <h2 className='font-display font-normal text-[clamp(2rem,4vw,3rem)] text-background leading-[1.1] tracking-tight'>
                 Your AI wedding
                 <br />
-                <em className='text-accent italic'>planner, Etta</em>
+                <em className='text-gold italic'>planner, Etta</em>
               </h2>
               <p className='mt-6 max-w-md font-light font-serif text-[1rem] text-background/60 leading-[1.75]'>
                 Etta is OSWP's built-in AI wedding planner. She lives inside your planning data,
@@ -306,7 +306,7 @@ export default function NonAuthenticatedView() {
                     key={q}
                     className='flex items-start gap-3 font-mono text-[0.73rem] text-background/60 tracking-[.02em]'
                   >
-                    <span className='mt-px flex-shrink-0 text-accent'>→</span>
+                    <span className='mt-px flex-shrink-0 text-gold'>→</span>
                     {q}
                   </li>
                 ))}
@@ -316,7 +316,7 @@ export default function NonAuthenticatedView() {
             {/* Chat widget */}
             <div className='overflow-hidden rounded-lg border border-white/10 bg-white/[.04]'>
               <div className='flex items-center gap-3 border-white/10 border-b px-5 py-4'>
-                <div className='flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-accent to-primary font-serif text-[1rem] text-background italic'>
+                <div className='flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-gold to-primary font-serif text-[1rem] text-background italic'>
                   E
                 </div>
                 <div>
@@ -341,7 +341,7 @@ export default function NonAuthenticatedView() {
                   </p>
                 </div>
                 <div>
-                  <div className='mr-auto max-w-[85%] rounded rounded-bl-none border border-accent/20 bg-accent/10 px-4 py-3 font-serif text-[0.84rem] text-background/80 leading-relaxed'>
+                  <div className='mr-auto max-w-[85%] rounded rounded-bl-none border border-gold/20 bg-gold/10 px-4 py-3 font-serif text-[0.84rem] text-background/80 leading-relaxed'>
                     Looking at your timeline — 3 things need attention: caterer headcount due
                     Friday, 12 guests haven't RSVP'd, and the rehearsal dinner deposit is 4 days
                     overdue. Want me to handle any of these?
@@ -359,7 +359,7 @@ export default function NonAuthenticatedView() {
                   </p>
                 </div>
                 <div>
-                  <div className='mr-auto max-w-[85%] rounded rounded-bl-none border border-accent/20 bg-accent/10 px-4 py-3 font-serif text-[0.84rem] text-background/80 leading-relaxed'>
+                  <div className='mr-auto max-w-[85%] rounded rounded-bl-none border border-gold/20 bg-gold/10 px-4 py-3 font-serif text-[0.84rem] text-background/80 leading-relaxed'>
                     Sent nudges to 12 guests with your custom message. Emailed the Rosewood deposit
                     reminder — add it to your urgent board?
                   </div>
@@ -395,7 +395,7 @@ export default function NonAuthenticatedView() {
                 <span className='block h-px w-5 bg-primary' />
                 Built for developers
               </p>
-              <h2 className='font-normal font-serif text-[clamp(2rem,4vw,3rem)] leading-[1.1] tracking-tight'>
+              <h2 className='font-display font-normal text-[clamp(2rem,4vw,3rem)] leading-[1.1] tracking-tight'>
                 A backend you
                 <br />
                 <em className='text-primary italic'>actually own</em>

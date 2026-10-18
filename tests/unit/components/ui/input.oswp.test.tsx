@@ -8,7 +8,7 @@ describe('Input OSWP primitive contract', () => {
 
     const input = screen.getByRole('textbox', { name: 'Email' })
 
-    expect(input.className).toContain('rounded-[4px]')
+    expect(input.className).toContain('rounded-[10px]')
     expect(input.className).toContain('font-sans')
     expect(input.className).toContain('text-sm')
     expect(input.className).not.toContain('text-base')

@@ -124,7 +124,7 @@ export function WebsiteEditor({
             <p className='font-mono text-[0.62rem] text-foreground/45 uppercase tracking-[0.18em]'>
               Wedding Website
             </p>
-            <CardTitle className='font-serif text-3xl text-foreground'>
+            <CardTitle className='font-display text-3xl text-foreground'>
               Shape the first section of your guest-facing site.
             </CardTitle>
             <p className='max-w-2xl font-sans text-muted-foreground text-sm leading-6'>

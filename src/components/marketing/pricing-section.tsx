@@ -45,7 +45,7 @@ export default function PricingSection({ sectionId }: PricingSectionProps) {
         <span className='block h-px w-5 bg-primary' />
         Pricing
       </p>
-      <h2 className='font-normal font-serif text-[clamp(2rem,4vw,3rem)] leading-[1.1] tracking-tight'>
+      <h2 className='font-display font-normal text-[clamp(2rem,4vw,3rem)] leading-[1.1] tracking-tight'>
         Self-host free.
         <br />
         <em className='text-primary italic'>Or let us handle it.</em>
@@ -100,8 +100,8 @@ export default function PricingSection({ sectionId }: PricingSectionProps) {
           </div>
 
           <div className='relative flex flex-col bg-foreground px-8 py-9 text-background'>
-            <div className='absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r from-primary to-accent' />
-            <p className='mb-5 font-mono text-[0.57rem] text-accent uppercase tracking-[.18em]'>
+            <div className='absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r from-primary to-gold' />
+            <p className='mb-5 font-mono text-[0.57rem] text-gold uppercase tracking-[.18em]'>
               Couple
             </p>
             <div className='mb-3 flex items-baseline gap-1.5'>
@@ -121,7 +121,7 @@ export default function PricingSection({ sectionId }: PricingSectionProps) {
                   key={item}
                   className='flex items-center gap-2.5 font-mono text-[0.67rem] text-background/75 tracking-[.02em]'
                 >
-                  <span className='text-accent'>✓</span> {item}
+                  <span className='text-gold'>✓</span> {item}
                 </li>
               ))}
               <li className='flex items-center gap-2.5 font-mono text-[0.67rem] text-background/25 tracking-[.02em]'>
@@ -130,7 +130,7 @@ export default function PricingSection({ sectionId }: PricingSectionProps) {
             </ul>
             <Link
               href='/auth/signin'
-              className='mt-auto block rounded-sm bg-primary py-3.5 text-center font-mono text-[0.67rem] text-background uppercase tracking-[.1em] transition-all hover:-translate-y-0.5 hover:bg-accent'
+              className='mt-auto block rounded-sm bg-primary py-3.5 text-center font-mono text-[0.67rem] text-background uppercase tracking-[.1em] transition-all hover:-translate-y-0.5 hover:bg-primary/90'
             >
               Start free trial →
             </Link>

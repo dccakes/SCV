@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/u
 import { VendorCard } from '~/components/vendor/vendor-card'
 import { VendorCategoryConfigEditor } from '~/components/vendor/vendor-category-config-editor'
 import { VendorForm } from '~/components/vendor/vendor-form'
+import { STATUS_SORT_ORDER } from '~/components/vendor/vendor-list-view-model'
 import type { VendorWithQuotes } from '~/server/domains/vendor/vendor.types'
 
 type VendorCategory = VendorWithQuotes['category']
@@ -21,14 +22,7 @@ const CATEGORY_LABELS: Record<VendorCategory, string> = {
   OTHER: 'Other',
 }
 
-export const STATUS_SORT_ORDER: Record<VendorWithQuotes['status'], number> = {
-  SELECTED: 0,
-  IN_NEGOTIATION: 1,
-  PRE_SELECTED: 2,
-  IN_REVIEW: 3,
-  NOT_AVAILABLE: 4,
-  DECLINED: 5,
-}
+export { STATUS_SORT_ORDER }
 
 type VendorCategorySectionProps = {
   category: VendorCategory
@@ -68,32 +62,30 @@ export function VendorCategorySection({
     <section className='mb-8'>
       {/* Section label with hairline rule */}
       <div className='mb-3 flex items-center gap-3'>
-        <h2 className='shrink-0 font-mono text-[0.62rem] text-muted-foreground uppercase tracking-widest'>
+        <h2 className='shrink-0 font-semibold text-foreground text-lg'>
           {CATEGORY_LABELS[category]}
         </h2>
         <span className='h-px flex-1 bg-border' aria-hidden='true' />
         <Button
           size='sm'
           variant='ghost'
-          className='shrink-0 font-mono text-[0.58rem] text-muted-foreground uppercase tracking-wider hover:text-foreground'
+          className='shrink-0 text-muted-foreground hover:text-foreground'
           onClick={() => setShowCategoryConfig(true)}
         >
-          Customize Category
+          Customize category
         </Button>
         <Button
           size='sm'
           variant='outline'
-          className='shrink-0 rounded-sm border-primary/30 border-dashed font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:border-primary hover:bg-primary/5'
+          className='shrink-0'
           onClick={() => setShowAddForm(true)}
         >
-          + Add Vendor
+          Add vendor
         </Button>
       </div>
 
       {vendors.length === 0 && (
-        <p className='py-4 text-center font-mono text-[0.72rem] text-muted-foreground uppercase tracking-wider'>
-          No vendors added yet
-        </p>
+        <p className='py-4 text-center text-muted-foreground text-sm'>No vendors added yet</p>
       )}
 
       <div className='flex flex-col gap-2'>
@@ -112,7 +104,7 @@ export function VendorCategorySection({
       <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
         <DialogContent className='max-h-[85vh] overflow-y-auto sm:max-w-lg'>
           <DialogHeader>
-            <DialogTitle className='font-display text-xl italic'>
+            <DialogTitle className='font-display text-2xl'>
               Add {CATEGORY_LABELS[category]}
             </DialogTitle>
           </DialogHeader>

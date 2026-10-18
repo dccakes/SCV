@@ -39,53 +39,66 @@ All colours are defined as OKLCH CSS custom properties. Tailwind consumes them v
 
 ### 3.2 Semantic Tokens
 
+The internal app (dashboard and planning pages), auth pages and marketing site use the **Evergreen & Ivory** palette: an ivory canvas, white surfaces, near-black ink and a single deep evergreen for decisions and progress. Values live in `src/styles/globals.css`; hex equivalents are given for reference.
+
 #### Light Mode
 
-| Token | OKLCH Value | Intended Use |
-|-------|-------------|--------------|
-| `--background` | `0.9538 0.016 82.79` | Page background — warm off-white with a subtle golden hue |
-| `--foreground` | `0.3353 0.0132 2.7676` | Body text — deep warm brown, not pure black |
-| `--primary` | `0.7357 0.1641 34.7091` | Primary actions, key CTAs — a warm terracotta/amber |
-| `--primary-foreground` | `1 0 0` | Text on primary backgrounds |
-| `--secondary` | `0.9596 0.02 28.9029` | Secondary surfaces, subtle backgrounds |
-| `--secondary-foreground` | `0.5587 0.1294 32.7364` | Text on secondary surfaces |
-| `--muted` | `0.9656 0.0176 39.4009` | Disabled states, placeholders, de-emphasised content |
-| `--muted-foreground` | `0.5534 0.0116 58.0708` | De-emphasised text |
-| `--accent` | `0.6997 0.0882 84.38` | Highlights, hover states — warm olive/gold |
-| `--accent-foreground` | `0.3353 0.0132 2.7676` | Text on accent backgrounds |
-| `--destructive` | `0.602 0.214 27.11` | Destructive actions — delete, remove |
-| `--success` | `0.768 0.161 151.95` | Confirmations, completion states |
-| `--border` | `0.892 0.015 63.2` | Dividers, input borders |
-| `--ring` | `0.726 0.146 36.2` | Focus rings |
+| Token | OKLCH Value | Hex | Intended Use |
+|-------|-------------|-----|--------------|
+| `--background` | `0.9798 0.0045 78.3` | `#FAF8F5` | Page background: ivory |
+| `--foreground` | `0.2268 0.0041 84.59` | `#1D1C1A` | Body text: warm near-black ink |
+| `--card` / `--popover` | `1 0 0` | `#FFFFFF` | Cards, menus, dialogs |
+| `--primary` | `0.435 0.0541 174.32` | `#2E5B4F` | Primary actions, active states, progress: evergreen |
+| `--primary-foreground` | `1 0 0` | `#FFFFFF` | Text on primary (7.7:1) |
+| `--secondary` | `0.9531 0.0074 80.72` | `#F2EFEA` | Secondary surfaces, chips, tags |
+| `--secondary-foreground` | `0.3961 0.0113 78.19` | `#4A4640` | Text on secondary surfaces |
+| `--muted` | `0.9531 0.0074 80.72` | `#F2EFEA` | Disabled and de-emphasised surfaces |
+| `--muted-foreground` | `0.5127 0.0125 76.52` | `#6B665F` | De-emphasised text (5.4:1 on ivory) |
+| `--accent` | `0.9442 0.0109 167.79` | `#E6EFEB` | Hover and selection tint (pale evergreen) |
+| `--accent-foreground` | `0.3744 0.0463 174.11` | `#24493F` | Text on accent tint |
+| `--gold` | `0.6545 0.1045 82.36` | `#B08A3E` | Small decorative details only (ampersands, dots, progress) |
+| `--blush` / `--blush-foreground` | `0.9295 0.0206 48.49` / `0.4355 0.0894 39.02` | `#F4E4DC` / `#7A3E2A` | Etta suggestions and gentle callouts |
+| `--destructive` | `0.5294 0.1538 32.51` | `#B3402B` | Destructive actions |
+| `--success` | `0.5226 0.0933 160.2` | `#2F7A57` | Confirmations, completion |
+| `--border` / `--input` | `0.9145 0.0121 79.78` | `#E7E2DA` | Dividers, input borders |
+| `--ring` | `0.435 0.0541 174.32` | `#2E5B4F` | Focus rings |
+| `--sidebar` | `0.9531 0.0074 80.72` | `#F2EFEA` | App sidebar and Etta panel |
+| `--sidebar-accent` | `1 0 0` | `#FFFFFF` | Active sidebar item |
 
 #### Dark Mode
 
-Dark mode mirrors the token names but shifts to deeper, desaturated values. Background uses deep warm charcoal rather than pure black to maintain the warm character.
+Warm charcoal rather than pure black. The evergreen lifts so it stays legible, and text on it turns dark.
 
-| Token | OKLCH Value | Intended Use |
-|-------|-------------|--------------|
-| `--background` | `0.212 0.015 42.1` | Page background — deep warm charcoal |
-| `--foreground` | `0.938 0.012 82.5` | Body text on dark surfaces |
-| `--primary` | `0.778 0.145 35.3` | Primary actions, key CTAs |
-| `--primary-foreground` | `0.225 0.02 35.4` | Text on primary backgrounds |
-| `--secondary` | `0.284 0.018 39.8` | Secondary surfaces |
-| `--secondary-foreground` | `0.894 0.014 72.4` | Text on secondary surfaces |
-| `--muted` | `0.262 0.012 48.2` | Muted backgrounds and disabled states |
-| `--muted-foreground` | `0.734 0.017 68.5` | De-emphasised text |
-| `--accent` | `0.741 0.095 92.2` | Highlights and selected contexts |
-| `--accent-foreground` | `0.224 0.018 42.3` | Text on accent backgrounds |
-| `--destructive` | `0.674 0.182 27.6` | Destructive actions |
-| `--success` | `0.791 0.145 150.1` | Success states |
-| `--border` | `0.356 0.012 46.8` | Dividers and borders |
-| `--ring` | `0.783 0.127 38.7` | Focus rings |
+| Token | OKLCH Value | Hex | Intended Use |
+|-------|-------------|-----|--------------|
+| `--background` | `0.1875 0.0026 67.67` | `#141312` | Page background |
+| `--foreground` | `0.9531 0.0074 80.72` | `#F2EFEA` | Body text |
+| `--card` / `--popover` | `0.245 0.0048 67.6` | `#22201E` | Cards, menus, dialogs |
+| `--primary` | `0.7435 0.0717 170.05` | `#7DBBA5` | Primary actions, active states |
+| `--primary-foreground` | `0.2056 0.0178 169.92` | `#0F1A16` | Text on primary (8.1:1) |
+| `--secondary` / `--muted` | `0.286 0.0061 78.23` | `#2C2A27` | Secondary and muted surfaces |
+| `--secondary-foreground` | `0.8195 0.0141 78.25` | `#C9C3BA` | Text on secondary surfaces |
+| `--muted-foreground` | `0.7149 0.0134 75.33` | `#A8A29A` | De-emphasised text |
+| `--accent` / `--accent-foreground` | `0.3175 0.0345 171.64` / `0.8465 0.0559 170.01` | `#1F3830` / `#A9D9C7` | Hover and selection tint |
+| `--gold` | `0.7348 0.1021 82.33` | `#C9A35A` | Decorative details |
+| `--blush` / `--blush-foreground` | `0.2968 0.0288 36.11` / `0.83 0.0709 42.83` | `#3A2823` / `#F0B9A3` | Etta suggestions |
+| `--destructive` | `0.6714 0.1444 32.51` | `#E0705A` | Destructive actions (dark text on it) |
+| `--success` | `0.7548 0.1038 161` | `#6FC49A` | Success states |
+| `--border` / `--input` | `0.3149 0.0082 75.27` | `#34312D` | Dividers and borders |
+| `--sidebar` | `0.2181 0.0041 84.59` | `#1B1A18` | App sidebar and Etta panel |
+
+#### Guest-facing surfaces
+
+Guest pages (`/w/*`: wedding website, RSVP, save-the-date, invitations) and anything rendered inside `TemplateThemeProvider` keep the **original** terracotta palette, Georgia/monospace stacks and button shapes until the templates are redesigned. This is done in `globals.css` with `:root:has([data-guest-surface])` (set in `src/app/w/[websiteSubUrl]/layout.tsx`) and `[data-wedding-template]`. Do not remove these scopes without a template redesign.
 
 ### 3.3 Usage Rules
 
 1. **Primary colour = decisions and progress.** CTAs, active states, step indicators.
-2. **Accent colour = delight and context.** Hover states, selection highlights, celebratory moments.
+2. **Accent colour = quiet feedback.** Hover and selection tints only. It is too pale for text; use `text-gold` for decorative highlights and `text-primary` for emphasis.
 3. **Muted = information hierarchy.** Secondary labels, helper text, metadata.
-4. **Destructive = last resort.** Always paired with a confirmation step. Never used for warnings — use `--accent` or a dedicated warning token.
+4. **Destructive = last resort.** Always paired with a confirmation step. Never used for warnings; use `--gold` or a dedicated warning token.
 5. **Success = completion.** RSVP confirmed, vendor saved, website published. One clear moment per flow.
+6. **One accent per view.** Evergreen marks the single next action. Gold and blush are supporting notes, never competing CTAs.
 
 ### 3.4 Foundation Tokens Beyond Colour
 
@@ -93,10 +106,10 @@ These tokens are required to keep spacing, depth, and layering consistent across
 
 | Token | Value | Use |
 |-------|-------|-----|
-| `--radius-sm` | `0.375rem` (6px) | Inputs, chips, small badges |
-| `--radius-md` | `0.5rem` (8px) | Buttons, cards, list rows |
+| `--radius-sm` | `0.375rem` (6px) | Chips, small badges |
+| `--radius-md` | `0.625rem` (10px) | Buttons, inputs, selects, sidebar items |
 | `--radius-lg` | `0.75rem` (12px) | Modals, popovers, feature panels |
-| `--radius-xl` | `1rem` (16px) | Hero cards, large media surfaces |
+| `--radius-xl` | `1rem` (16px) | Cards, hero cards, large media surfaces |
 | `--shadow-sm` | `0 1px 2px oklch(0 0 0 / 0.06)` | Inputs, low-elevation surfaces |
 | `--shadow-md` | `0 6px 18px oklch(0 0 0 / 0.10)` | Cards, dropdowns |
 | `--shadow-lg` | `0 12px 30px oklch(0 0 0 / 0.14)` | Modals and dialogs |
@@ -112,11 +125,16 @@ These tokens are required to keep spacing, depth, and layering consistent across
 
 ### 4.1 Font Stack
 
-OSWP uses system fonts for body text to ensure fast loading and native feel. A display typeface may be introduced for headings in a future milestone — decisions on this require CEO approval.
+Two faces, nothing else:
+
+- **UI face**: the system font (SF Pro on Apple devices) for all body text, labels and controls.
+- **Display face**: Instrument Serif (`font-display`, loaded via `next/font`) for page titles, couple names, countdowns and large numbers. Never below 20px.
 
 ```css
 font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 ```
+
+Tailwind's `font-sans`, `font-serif` and `font-mono` all resolve through `--font-ui-*` variables. Internally all three are the UI face, so legacy `font-serif`/`font-mono` classes render in the system font. On guest surfaces they resolve to the original Georgia and monospace stacks. New code should use `font-sans` (or nothing) for UI text and `font-display` for display headings; do not reach for `font-serif` or `font-mono`.
 
 ### 4.2 Scale
 
@@ -132,7 +150,9 @@ font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe
 
 ### 4.3 Button Typography
 
-Buttons use **uppercase, monospaced-style, letter-spaced** text (`tracking-widest` + `font-mono` or equivalent). This creates a crisp, intentional feel for actions — distinct from body prose.
+Buttons use **sentence case, semibold, 14px** system text with a 10px radius (`rounded-[10px] font-semibold text-sm`). Labels read as plain verbs: "Add guest", "Mark done". Section eyebrows may use small uppercase with `tracking-[0.1em]`, but actions never do.
+
+Guest surfaces keep the original uppercase monospace buttons via the `ui-button` hook class.
 
 ### 4.4 Line Heights
 
@@ -448,9 +468,9 @@ Additional templates can be added in future milestones; the template selector UI
 
 ### 9.1 Dashboard Navigation
 
-- **Desktop**: Persistent left sidebar with icon + label
+- **Desktop**: Persistent light left sidebar (`--sidebar`) with a Lucide icon + sentence-case label
 - **Mobile**: Bottom navigation bar (max 5 items) + hamburger for overflow
-- Active state: `--primary` background, high contrast label
+- Active state: white pill (`--sidebar-accent`) with a subtle shadow, semibold label and evergreen icon; `aria-current="page"`
 - Navigation items in bottom bar: Dashboard, Guests, Events, Vendors, Website
 - Overflow (`More`) menu item on mobile: Settings (and future secondary routes)
 
@@ -533,7 +553,7 @@ A feature is not design-complete until all items below are true:
 
 These are design decisions intentionally deferred pending user research or roadmap prioritisation:
 
-1. **Display typeface**: Each template may define its own heading font. The question is whether OSWP ships a shared web font for the dashboard, or stays system fonts. Pending validation with early adopters.
+1. **Display typeface**: Decided in the Evergreen & Ivory refresh: Instrument Serif for display, system font for UI. Templates still define their own heading fonts.
 2. **Template library growth**: How many templates ship in v1 and what is the review/approval process for community-contributed templates? Needs product decision before the template library exceeds ~8 options.
 3. **Custom theme editor**: Should power users be able to customise colours/fonts beyond the preset templates (e.g. brand hex codes for couples with strong visual identities)? Scoped out of v1 — revisit at v1.1.
 4. **Mobile app patterns**: If a native mobile app is built, do these design tokens translate directly or do we need a separate native design pass? Deferred until web is stable.
@@ -541,4 +561,4 @@ These are design decisions intentionally deferred pending user research or roadm
 
 ---
 
-*Last updated: 2026-04-23 | Maintained by Head of Product*
+*Last updated: 2026-10-18 | Maintained by Head of Product*

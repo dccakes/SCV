@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 import type { DashboardData } from '~/app/utils/shared-types'
 import PlanningOverview from '~/components/dashboard/planning-overview'
@@ -251,11 +251,77 @@ describe('PlanningOverview', () => {
     expect(screen.getByText('17 May 2027')).toBeInTheDocument()
   })
 
-  it('renders tasks due this month in mini stats', () => {
+  it('leads with the countdown as the page heading', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
 
-    expect(screen.getByText('Tasks due this month')).toBeInTheDocument()
-    expect(screen.getByText('3')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: '440 days to go' })).toBeInTheDocument()
+  })
+
+  it('uses singular and wedding-day phrasing for the countdown', () => {
+    const withDays = (daysRemaining: number) =>
+      ({
+        ...mockDashboardData,
+        weddingData: { ...mockDashboardData.weddingData, daysRemaining },
+      }) as unknown as DashboardData
+
+    const { rerender } = render(<PlanningOverview dashboardData={withDays(1)} />)
+    expect(screen.getByRole('heading', { level: 2, name: '1 day to go' })).toBeInTheDocument()
+
+    rerender(<PlanningOverview dashboardData={withDays(0)} />)
+    expect(
+      screen.getByRole('heading', { level: 2, name: "It's your wedding day" })
+    ).toBeInTheDocument()
+  })
+
+  it('flags a wedding date in the past instead of claiming no date is set', () => {
+    const pastData = {
+      ...mockDashboardData,
+      weddingData: { ...mockDashboardData.weddingData, daysRemaining: -30 },
+    } as unknown as DashboardData
+
+    render(<PlanningOverview dashboardData={pastData} />)
+
+    expect(screen.getByText(/This date has passed/i)).toBeInTheDocument()
+    expect(screen.queryByText('No date set')).not.toBeInTheDocument()
+  })
+
+  it('explains empty milestones instead of rendering a blank panel', () => {
+    render(<PlanningOverview dashboardData={{ ...mockDashboardData, milestones: [] }} />)
+
+    expect(screen.getByText(/Milestones appear here as you plan/i)).toBeInTheDocument()
+  })
+
+  it('shows the next task in an Up next card with a mark done action', () => {
+    render(<PlanningOverview dashboardData={mockDashboardData} />)
+
+    const upNext = screen.getByRole('region', { name: 'Up next' })
+    expect(upNext).toHaveTextContent('Pay rehearsal dinner deposit')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mark done' }))
+
+    expect(mockMutate).toHaveBeenCalledWith({ taskId: 'task-1', completed: true })
+  })
+
+  it('lists the remaining tasks under Coming up with the monthly due count', () => {
+    render(<PlanningOverview dashboardData={mockDashboardData} />)
+
+    const comingUp = screen.getByRole('region', { name: 'Coming up' })
+    expect(comingUp).toHaveTextContent('Confirm catering headcount')
+    expect(comingUp).not.toHaveTextContent('Pay rehearsal dinner deposit')
+    expect(comingUp).toHaveTextContent('3 due this month')
+  })
+
+  it('summarises RSVPs as attending out of invited with the awaiting count', () => {
+    render(<PlanningOverview dashboardData={mockDashboardData} />)
+
+    const rsvps = screen.getByRole('region', { name: 'RSVPs' })
+    expect(rsvps).toHaveTextContent('89')
+    expect(rsvps).toHaveTextContent('/ 120')
+    expect(rsvps).toHaveTextContent('23 still to reply')
+    expect(within(rsvps).getByRole('link', { name: 'Manage RSVPs →' })).toHaveAttribute(
+      'href',
+      '/guest-list'
+    )
   })
 
   it('renders real priority queue tasks and the checklist link', () => {
@@ -263,6 +329,10 @@ describe('PlanningOverview', () => {
 
     expect(screen.getByText('Pay rehearsal dinner deposit')).toBeInTheDocument()
     expect(screen.getByText('Confirm catering headcount')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open checklist' })).toHaveAttribute(
+      'href',
+      '/checklist'
+    )
     expect(
       screen
         .getAllByRole('link', { name: /view all/i })
@@ -384,8 +454,9 @@ describe('PlanningOverview', () => {
 
     render(<PlanningOverview dashboardData={emptyData} />)
     expect(screen.getByText('Your Wedding')).toBeInTheDocument()
-    // Multiple "0" values render across stats cells — verify at least one exists
-    expect(screen.getAllByText('0').length).toBeGreaterThanOrEqual(1)
+    expect(
+      screen.getByRole('heading', { level: 2, name: "It's your wedding day" })
+    ).toBeInTheDocument()
   })
 
   it('shows RSVP empty state when no RSVP data exists', () => {

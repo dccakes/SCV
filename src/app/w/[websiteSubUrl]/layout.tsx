@@ -12,11 +12,14 @@ export default async function WeddingWebsiteLayout({
   return (
     <NextIntlClientProvider locale={locale} messages={clientMessages(messages)}>
       {/*
-        The root <html lang> is shared with the English-only dashboard, so tag the
+        Guest-facing pages keep the original styling; see globals.css. The root
+        <html lang> is shared with the English-only dashboard, so tag the
         guest-facing subtree with the visitor's language for screen readers and
         search engines.
       */}
-      <div lang={locale}>{children}</div>
+      <div data-guest-surface lang={locale} className='contents'>
+        {children}
+      </div>
     </NextIntlClientProvider>
   )
 }
