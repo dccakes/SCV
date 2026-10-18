@@ -42,6 +42,21 @@ const themeColorTokens = {
     DEFAULT: oklchToken('--card'),
     foreground: oklchToken('--card-foreground'),
   },
+  sidebar: {
+    DEFAULT: oklchToken('--sidebar'),
+    foreground: oklchToken('--sidebar-foreground'),
+    primary: oklchToken('--sidebar-primary'),
+    'primary-foreground': oklchToken('--sidebar-primary-foreground'),
+    accent: oklchToken('--sidebar-accent'),
+    'accent-foreground': oklchToken('--sidebar-accent-foreground'),
+    border: oklchToken('--sidebar-border'),
+    ring: oklchToken('--sidebar-ring'),
+  },
+  gold: oklchToken('--gold'),
+  blush: {
+    DEFAULT: oklchToken('--blush'),
+    foreground: oklchToken('--blush-foreground'),
+  },
   'sidebar-ink': oklchToken('--sidebar-ink'),
   'sidebar-cream': oklchToken('--sidebar-cream'),
   'etta-ink': oklchToken('--etta-ink'),
@@ -68,6 +83,11 @@ const config = {
     },
     extend: {
       fontFamily: {
+        // Scoped in globals.css: the system UI face internally, the original
+        // stacks on guest surfaces ([data-guest-surface]).
+        sans: ['var(--font-ui-sans)'],
+        serif: ['var(--font-ui-serif)'],
+        mono: ['var(--font-ui-mono)'],
         display: ['var(--font-display)', 'Instrument Serif', 'serif'],
       },
       colors: themeColorTokens,

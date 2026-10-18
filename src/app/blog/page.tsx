@@ -31,7 +31,7 @@ export default async function BlogPage({
         <p className='mb-3 font-mono text-[0.7rem] text-primary uppercase tracking-[0.12em]'>
           Marketing
         </p>
-        <h1 className='font-serif text-5xl tracking-tight'>OSWP Blog</h1>
+        <h1 className='font-display text-5xl tracking-tight'>OSWP Blog</h1>
         <p className='mt-3 max-w-2xl text-muted-foreground'>
           Product updates, changelog entries, and stories from building the open source wedding
           platform.

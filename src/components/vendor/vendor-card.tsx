@@ -80,13 +80,13 @@ export function VendorCard({
   return (
     <div
       data-testid='vendor-card-root'
-      className={`group relative flex cursor-pointer flex-col gap-2 rounded-lg border border-border/90 bg-card/60 px-4 py-3 transition-all hover:bg-card hover:shadow-sm sm:flex-row sm:items-center sm:justify-between ${
+      className={`group relative flex cursor-pointer flex-col gap-2 rounded-xl border border-border/70 bg-card px-4 py-3.5 shadow-sm transition-all hover:border-primary/40 sm:flex-row sm:items-center sm:justify-between ${
         isMuted ? 'opacity-60 grayscale' : ''
       }`}
     >
       <button
         type='button'
-        className='absolute inset-0 rounded-lg'
+        className='absolute inset-0 rounded-xl'
         onClick={() => onViewDetails(vendor.id)}
         aria-label={`View ${vendor.name} details`}
       />
@@ -101,19 +101,17 @@ export function VendorCard({
           />
         )}
         <div className='flex flex-col gap-0.5'>
-          <span className='font-display text-[1.05rem] text-foreground italic group-hover:text-primary'>
+          <span className='font-semibold text-[1rem] text-foreground group-hover:text-primary'>
             {vendor.name}
           </span>
           <div className='flex items-center gap-2'>
             {vendor.location && (
-              <span className='font-mono text-[10px] text-muted-foreground lowercase tracking-wider'>
-                {vendor.location}
-              </span>
+              <span className='text-muted-foreground text-xs'>{vendor.location}</span>
             )}
             {isContacted && (
               <>
                 {vendor.location && <span className='text-border'>·</span>}
-                <span className='rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[10px] text-primary uppercase tracking-wider'>
+                <span className='rounded-md bg-accent px-2 py-0.5 text-accent-foreground text-xs'>
                   Contacted
                 </span>
               </>
@@ -121,7 +119,7 @@ export function VendorCard({
             {quoteCount > 0 && (
               <>
                 {(vendor.location || isContacted) && <span className='text-border'>·</span>}
-                <span className='font-mono text-[10px] text-muted-foreground lowercase tracking-wider'>
+                <span className='text-muted-foreground text-xs'>
                   {quoteCount} {quoteCount === 1 ? 'quote' : 'quotes'}
                 </span>
               </>
@@ -129,9 +127,7 @@ export function VendorCard({
           </div>
         </div>
         {averageRating !== null && (
-          <span className='font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
-            {averageRating.toFixed(1)} avg
-          </span>
+          <span className='text-muted-foreground text-xs'>{averageRating.toFixed(1)} avg</span>
         )}
       </div>
 
@@ -158,7 +154,7 @@ export function VendorCard({
           <div className='pointer-events-auto relative'>
             <button
               type='button'
-              className='font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'
+              className='text-muted-foreground text-xs'
               onClick={(event) => {
                 event.stopPropagation()
                 setShowRatingsBreakdown((value) => !value)
@@ -176,10 +172,7 @@ export function VendorCard({
               }`}
             >
               {vendor.ratingSummary.ratings.map((rating) => (
-                <p
-                  key={rating.userId}
-                  className='font-mono text-[0.55rem] text-popover-foreground lowercase tracking-wider'
-                >
+                <p key={rating.userId} className='text-popover-foreground text-xs'>
                   {rating.userLabel}: {rating.stars} stars
                 </p>
               ))}
@@ -187,7 +180,9 @@ export function VendorCard({
           </div>
         )}
         {priceDisplay() && (
-          <span className='font-medium font-mono text-foreground/80 text-xs'>{priceDisplay()}</span>
+          <span className='font-semibold text-foreground text-sm tabular-nums'>
+            {priceDisplay()}
+          </span>
         )}
         <button
           type='button'

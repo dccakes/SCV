@@ -55,7 +55,7 @@ function SeatedGuest(
         height: SEAT_SIZE,
       }}
       className={cn(
-        'absolute flex touch-manipulation items-center justify-center rounded-full border border-foreground/30 bg-card font-mono text-[0.6rem] text-foreground shadow-sm transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'absolute flex touch-manipulation items-center justify-center rounded-full border border-foreground/30 bg-card text-[0.6rem] text-foreground tabular-nums shadow-sm transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         isDragging && 'opacity-30'
       )}
     >
@@ -167,7 +167,7 @@ export function SeatingTableNode(props: Readonly<SeatingTableNodeProps>) {
         </span>
         <span
           className={cn(
-            'font-mono text-[0.6rem]',
+            'text-[0.6rem] tabular-nums',
             table.guestIds.length >= table.capacity ? 'text-success' : 'text-muted-foreground'
           )}
         >

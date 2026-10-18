@@ -535,7 +535,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
             />
             <section
               aria-label='Floor plan'
-              className='relative h-[65vh] min-h-[24rem] overflow-auto rounded-md border border-border/70 bg-muted/30 lg:h-auto'
+              className='relative h-[65vh] min-h-[24rem] overflow-auto rounded-xl border border-border bg-muted/40 lg:h-auto'
             >
               <div
                 className='relative'

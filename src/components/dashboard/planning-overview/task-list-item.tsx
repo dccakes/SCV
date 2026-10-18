@@ -10,9 +10,9 @@ type TaskListItemProps = Readonly<{
 }>
 
 const tagClass: Record<string, string> = {
-  Vendor: 'bg-success/12 text-success',
-  Admin: 'bg-accent/12 text-accent-foreground',
-  Urgent: 'bg-primary/10 text-foreground',
+  Vendor: 'bg-accent text-accent-foreground',
+  Admin: 'bg-secondary text-secondary-foreground',
+  Urgent: 'bg-gold/15 text-foreground',
   Overdue: 'bg-destructive/10 text-destructive',
 }
 
@@ -21,31 +21,31 @@ function TaskListItemBase({ task, onToggle }: TaskListItemProps) {
     <button
       type='button'
       onClick={() => onToggle(task.id)}
-      className='flex min-h-[44px] w-full items-center gap-2.5 rounded px-2 py-2.5 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+      className='flex min-h-[52px] w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
     >
       <span
-        className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-sm border text-[0.6rem] transition-all ${
+        className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-[1.5px] text-[0.65rem] transition-all ${
           task.done
-            ? 'border-success bg-success text-white'
-            : 'border-border hover:border-success/70'
+            ? 'border-primary bg-primary text-primary-foreground'
+            : 'border-foreground/30 hover:border-primary'
         }`}
       >
         {task.done && '✓'}
       </span>
       <span
-        className={`flex-1 font-serif text-[0.9rem] leading-tight ${
+        className={`flex-1 text-[0.95rem] leading-tight ${
           task.done ? 'text-foreground/50 line-through decoration-foreground/25' : 'text-foreground'
         }`}
       >
         {task.text}
       </span>
       <span
-        className={`flex-shrink-0 rounded-full px-2 py-0.5 font-mono text-[0.52rem] uppercase tracking-wider ${tagClass[task.tag] ?? 'bg-muted text-foreground/60'}`}
+        className={`flex-shrink-0 rounded-md px-2 py-0.5 text-xs ${tagClass[task.tag] ?? 'bg-secondary text-secondary-foreground'}`}
       >
         {task.tag}
       </span>
       <span
-        className={`flex-shrink-0 font-mono text-[0.56rem] tracking-wider ${task.urgent ? 'text-foreground/80' : 'text-foreground/50'}`}
+        className={`w-16 flex-shrink-0 text-right text-xs ${task.urgent ? 'text-foreground' : 'text-muted-foreground'}`}
       >
         {task.due}
       </span>

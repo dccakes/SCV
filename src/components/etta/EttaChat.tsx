@@ -50,11 +50,11 @@ function ThinkingBlock({ text, state }: { text: string; state?: 'streaming' | 'd
   if (!text) return null
 
   return (
-    <div className='rounded border border-white/8 bg-white/[0.03]'>
+    <div className='rounded border border-sidebar-border bg-sidebar-foreground/[0.03]'>
       <button
         type='button'
         onClick={() => setExpanded((v) => !v)}
-        className='flex w-full items-center gap-2 px-2.5 py-1.5 text-left font-mono text-[0.6rem] text-sidebar-cream/40 uppercase tracking-widest transition-colors hover:text-sidebar-cream/60'
+        className='flex w-full items-center gap-2 px-2.5 py-1.5 text-left font-mono text-[0.6rem] text-muted-foreground uppercase tracking-widest transition-colors hover:text-muted-foreground'
       >
         {isStreaming ? (
           <span className='h-1.5 w-1.5 rounded-full bg-amber-400 motion-safe:animate-pulse' />
@@ -64,7 +64,7 @@ function ThinkingBlock({ text, state }: { text: string; state?: 'streaming' | 'd
         {isStreaming ? 'thinking…' : 'thought process'}
       </button>
       {(expanded || isStreaming) && (
-        <div className='border-white/8 border-t px-2.5 py-2 font-mono text-[0.68rem] text-sidebar-cream/30 leading-relaxed'>
+        <div className='border-sidebar-border border-t px-2.5 py-2 font-mono text-[0.68rem] text-muted-foreground leading-relaxed'>
           {text}
         </div>
       )}
@@ -76,7 +76,7 @@ function ThinkingBlock({ text, state }: { text: string; state?: 'streaming' | 'd
 
 function ToolCallIndicator({ name }: { name: string }) {
   return (
-    <div className='flex items-center gap-1.5 font-mono text-[0.6rem] text-accent/60 uppercase tracking-widest'>
+    <div className='flex items-center gap-1.5 font-mono text-[0.6rem] text-gold/60 uppercase tracking-widest'>
       <span className='text-[0.5rem]'>⚡</span>
       {name}
     </div>
@@ -157,15 +157,17 @@ export function EttaChat({ persona, guestToken, isConfigured = true, onClose }: 
   }
 
   return (
-    <div className='flex h-full w-full flex-col overflow-hidden bg-etta-ink'>
+    <div className='flex h-full w-full flex-col overflow-hidden bg-sidebar'>
       {/* Header */}
-      <div className='flex items-center gap-3 border-white/10 border-b px-4 py-3.5'>
-        <div className='flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent to-primary font-serif text-lg text-white italic shadow-md'>
+      <div className='flex items-center gap-3 border-sidebar-border border-b px-4 py-3.5'>
+        <div className='flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gold to-primary font-serif text-lg text-white italic shadow-md'>
           E
         </div>
         <div className='min-w-0 flex-1'>
-          <p className='font-serif text-[1rem] text-sidebar-cream italic leading-tight'>Etta</p>
-          <p className='font-mono text-[0.55rem] text-sidebar-cream/32 uppercase tracking-widest'>
+          <p className='font-serif text-[1rem] text-sidebar-foreground italic leading-tight'>
+            Etta
+          </p>
+          <p className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
             {subtitle}
           </p>
         </div>
@@ -178,7 +180,7 @@ export function EttaChat({ persona, guestToken, isConfigured = true, onClose }: 
             type='button'
             aria-label='Close Etta'
             onClick={onClose}
-            className='flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md text-sidebar-cream/50 transition-colors hover:bg-white/[0.06] hover:text-sidebar-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-etta-ink'
+            className='flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-foreground/[0.06] hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar'
           >
             <svg
               aria-hidden='true'
@@ -200,7 +202,7 @@ export function EttaChat({ persona, guestToken, isConfigured = true, onClose }: 
         role='log'
         aria-live='polite'
         aria-label='Conversation with Etta'
-        className='flex flex-1 flex-col gap-3 overflow-y-auto px-3 py-3 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:bg-white/15 [&::-webkit-scrollbar]:w-[3px]'
+        className='flex flex-1 flex-col gap-3 overflow-y-auto px-3 py-3 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:bg-sidebar-foreground/15 [&::-webkit-scrollbar]:w-[3px]'
       >
         {messages.map((msg) => (
           <div
@@ -210,8 +212,8 @@ export function EttaChat({ persona, guestToken, isConfigured = true, onClose }: 
             <div
               className={`max-w-[88%] rounded px-3 py-2 font-serif text-[0.82rem] leading-relaxed ${
                 msg.role === 'assistant'
-                  ? 'flex flex-col gap-2 rounded-tl-none bg-white/[0.08] text-sidebar-cream'
-                  : 'rounded-tr-none border border-primary/35 bg-primary/25 text-sidebar-cream italic'
+                  ? 'flex flex-col gap-2 rounded-tl-none bg-sidebar-foreground/[0.08] text-sidebar-foreground'
+                  : 'rounded-tr-none border border-primary/35 bg-primary/25 text-sidebar-foreground italic'
               }`}
             >
               {msg.role === 'assistant' ? (
@@ -228,7 +230,7 @@ export function EttaChat({ persona, guestToken, isConfigured = true, onClose }: 
 
         {isLoading && messages.at(-1)?.role !== 'assistant' && (
           <div className='flex items-start'>
-            <div className='rounded rounded-tl-none bg-white/[0.08] px-3 py-2 font-serif text-[0.82rem] text-sidebar-cream/70 italic'>
+            <div className='rounded rounded-tl-none bg-sidebar-foreground/[0.08] px-3 py-2 font-serif text-[0.82rem] text-sidebar-foreground/80 italic'>
               <span className='inline-flex gap-1'>
                 <span className='animate-bounce'>·</span>
                 <span className='animate-bounce [animation-delay:150ms]'>·</span>
@@ -247,7 +249,7 @@ export function EttaChat({ persona, guestToken, isConfigured = true, onClose }: 
               key={s}
               type='button'
               onClick={() => handleSuggestionClick(s)}
-              className='min-h-[44px] rounded border border-white/7 bg-white/[0.04] px-3 py-2 text-left font-mono text-[0.58rem] text-sidebar-cream/45 tracking-wider transition-all hover:border-accent/30 hover:bg-accent/[0.06] hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-etta-ink'
+              className='min-h-[44px] rounded border border-sidebar-border bg-sidebar-foreground/[0.04] px-3 py-2 text-left font-mono text-[0.58rem] text-muted-foreground tracking-wider transition-all hover:border-primary/30 hover:bg-primary/[0.06] hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar'
             >
               &ldquo;{s}&rdquo;
             </button>
@@ -258,20 +260,20 @@ export function EttaChat({ persona, guestToken, isConfigured = true, onClose }: 
       {/* Input */}
       <form
         onSubmit={handleSubmit}
-        className='flex items-center gap-2 border-white/10 border-t px-3 py-3'
+        className='flex items-center gap-2 border-sidebar-border border-t px-3 py-3'
       >
         <input
           type='text'
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder='Ask Etta anything…'
-          className='flex-1 rounded border border-white/10 bg-white/[0.06] px-3 py-2 font-serif text-[0.82rem] text-sidebar-cream/80 italic placeholder:text-sidebar-cream/35 focus:border-accent/50 focus:text-sidebar-cream focus:outline-none focus:ring-2 focus:ring-accent/40'
+          className='flex-1 rounded border border-sidebar-border bg-sidebar-foreground/[0.06] px-3 py-2 font-serif text-[0.82rem] text-sidebar-foreground/80 italic placeholder:text-muted-foreground focus:border-primary/50 focus:text-sidebar-foreground focus:outline-none focus:ring-2 focus:ring-ring/40'
         />
         <button
           type='submit'
           aria-label='Send'
           disabled={isLoading || !input.trim()}
-          className='flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-primary text-sm text-white shadow transition-all hover:bg-accent hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-etta-ink disabled:opacity-40 disabled:hover:bg-primary'
+          className='flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-primary text-sm text-white shadow transition-all hover:bg-primary/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar disabled:opacity-40 disabled:hover:bg-primary'
         >
           &rarr;
         </button>

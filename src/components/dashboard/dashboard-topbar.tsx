@@ -56,10 +56,8 @@ export default function DashboardTopbar(props: Readonly<DashboardTopbarProps>) {
         </button>
 
         <div className='flex items-baseline gap-3'>
-          <h1 className='font-serif text-foreground text-xl'>{title}</h1>
-          <span className='hidden font-mono text-[0.62rem] text-foreground/50 tracking-wider sm:block'>
-            {today}
-          </span>
+          <h1 className='font-semibold text-foreground text-lg'>{title}</h1>
+          <span className='hidden text-muted-foreground text-sm sm:block'>{today}</span>
         </div>
       </div>
 
@@ -70,7 +68,7 @@ export default function DashboardTopbar(props: Readonly<DashboardTopbarProps>) {
             type='button'
             aria-label='Add task'
             onClick={onAddTask ?? dispatchDashboardAddTaskEvent}
-            className='flex min-h-[44px] items-center gap-1.5 rounded-sm bg-foreground px-3 py-1.5 font-mono text-[0.62rem] text-background uppercase tracking-widest transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+            className='flex min-h-[40px] items-center gap-1.5 rounded-[10px] bg-primary px-4 font-semibold text-primary-foreground text-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
           >
             + Add task
           </button>

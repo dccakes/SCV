@@ -4,70 +4,71 @@
 
 @layer base {
   :root {
-    /* --background: 0.9856 0.0084 56.3169; */
-    --background: 0.9538 0.016 82.79;
-    --foreground: 0.3353 0.0132 2.7676;
+    /* Evergreen & Ivory (internal app, auth, marketing). See DESIGN.md §3. */
+    --background: 0.9798 0.0045 78.3;
+    --foreground: 0.2268 0.0041 84.59;
 
     --card: 1 0 0;
-    --card-foreground: 0.3353 0.0132 2.7676;
+    --card-foreground: 0.2268 0.0041 84.59;
 
     --popover: 1 0 0;
-    --popover-foreground: 0.3353 0.0132 2.7676;
+    --popover-foreground: 0.2268 0.0041 84.59;
 
-    --primary: 0.7357 0.1641 34.7091;
+    --primary: 0.435 0.0541 174.32;
     --primary-foreground: 1 0 0;
 
-    --secondary: 0.9596 0.02 28.9029;
-    --secondary-foreground: 0.5587 0.1294 32.7364;
+    --secondary: 0.9531 0.0074 80.72;
+    --secondary-foreground: 0.3961 0.0113 78.19;
 
-    --muted: 0.9656 0.0176 39.4009;
-    --muted-foreground: 0.5534 0.0116 58.0708;
+    --muted: 0.9531 0.0074 80.72;
+    --muted-foreground: 0.5127 0.0125 76.52;
 
-    /* --accent: 0.8278 0.1131 57.9984; */
-    --accent: 0.6997 0.0882 84.38;
-    --accent-foreground: 0.3353 0.0132 2.7676;
+    --accent: 0.9442 0.0109 167.79;
+    --accent-foreground: 0.3744 0.0463 174.11;
 
-    --success: 0.768 0.161 151.95;
-    --success-foreground: 0.985 0.01 151.5;
+    --success: 0.5226 0.0933 160.2;
+    --success-foreground: 1 0 0;
 
-    --destructive: 0.6122 0.2082 22.241;
+    --destructive: 0.5294 0.1538 32.51;
     --destructive-foreground: 1 0 0;
 
-    --border: 0.9296 0.037 38.6868;
-    --input: 0.9296 0.037 38.6868;
-    --ring: 0.7357 0.1641 34.7091;
+    --border: 0.9145 0.0121 79.78;
+    --input: 0.9145 0.0121 79.78;
+    --ring: 0.435 0.0541 174.32;
 
     --radius: 0.625rem;
 
-    --chart-1: 0.7357 0.1641 34.7091;
+    --chart-1: 0.435 0.0541 174.32;
+    --chart-2: 0.6545 0.1045 82.36;
+    --chart-3: 0.7542 0.0751 42.03;
+    --chart-4: 0.8067 0.0367 171.89;
+    --chart-5: 0.4355 0.0894 39.02;
 
-    --chart-2: 0.8278 0.1131 57.9984;
-
-    --chart-3: 0.8773 0.0763 54.9314;
-
-    --chart-4: 0.82 0.1054 40.8859;
-
-    --chart-5: 0.6368 0.1306 32.0721;
-
-    --sidebar: 0.9656 0.0176 39.4009;
-
-    --sidebar-foreground: 0.3353 0.0132 2.7676;
-
-    --sidebar-primary: 0.7357 0.1641 34.7091;
-
+    --sidebar: 0.9531 0.0074 80.72;
+    --sidebar-foreground: 0.2268 0.0041 84.59;
+    --sidebar-primary: 0.435 0.0541 174.32;
     --sidebar-primary-foreground: 1 0 0;
+    --sidebar-accent: 1 0 0;
+    --sidebar-accent-foreground: 0.2268 0.0041 84.59;
+    --sidebar-border: 0.9145 0.0121 79.78;
+    --sidebar-ring: 0.435 0.0541 174.32;
 
-    --sidebar-accent: 0.8278 0.1131 57.9984;
+    /* Supporting accents: gold for small details, blush for Etta suggestions. */
+    --gold: 0.6545 0.1045 82.36;
+    --blush: 0.9295 0.0206 48.49;
+    --blush-foreground: 0.4355 0.0894 39.02;
 
-    --sidebar-accent-foreground: 0.3353 0.0132 2.7676;
-
-    --sidebar-border: 0.9296 0.037 38.6868;
-
-    --sidebar-ring: 0.7357 0.1641 34.7091;
-
+    /* Legacy dark-surface tokens, kept for old_dashboard and the design-system page. */
     --sidebar-ink: 0.19 0.022 48;
     --sidebar-cream: 0.96 0.01 56;
     --etta-ink: 0.19 0.022 48;
+
+    /* Tailwind's sans/serif/mono families read these. Internally all three are the
+       system UI face; display headings use --font-display. Guest surfaces restore
+       the original stacks below. */
+    --font-ui-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-ui-serif: var(--font-ui-sans);
+    --font-ui-mono: var(--font-ui-sans);
 
     --font-sans: Montserrat, sans-serif;
 
@@ -113,50 +114,53 @@
   }
 
   .dark {
-    --background: 0.2569 0.0169 352.4042;
-    --foreground: 0.9397 0.0119 51.3156;
+    --background: 0.1875 0.0026 67.67;
+    --foreground: 0.9531 0.0074 80.72;
 
-    --card: 0.3184 0.0176 341.4465;
-    --card-foreground: 0.9397 0.0119 51.3156;
+    --card: 0.245 0.0048 67.6;
+    --card-foreground: 0.9531 0.0074 80.72;
 
-    --popover: 0.3184 0.0176 341.4465;
-    --popover-foreground: 0.9397 0.0119 51.3156;
+    --popover: 0.245 0.0048 67.6;
+    --popover-foreground: 0.9531 0.0074 80.72;
 
-    --primary: 0.7357 0.1641 34.7091;
-    --primary-foreground: 1 0 0;
+    --primary: 0.7435 0.0717 170.05;
+    --primary-foreground: 0.2056 0.0178 169.92;
 
-    --secondary: 0.3637 0.0203 342.2664;
-    --secondary-foreground: 0.9397 0.0119 51.3156;
+    --secondary: 0.286 0.0061 78.23;
+    --secondary-foreground: 0.8195 0.0141 78.25;
 
-    --muted: 0.2848 0.0159 343.6554;
-    --muted-foreground: 0.8378 0.0237 52.6346;
+    --muted: 0.286 0.0061 78.23;
+    --muted-foreground: 0.7149 0.0134 75.33;
 
-    --accent: 0.8278 0.1131 57.9984;
-    --accent-foreground: 0.2569 0.0169 352.4042;
+    --accent: 0.3175 0.0345 171.64;
+    --accent-foreground: 0.8465 0.0559 170.01;
 
-    --success: 0.575 0.135 151.95;
-    --success-foreground: 0.965 0.012 151.5;
+    --success: 0.7548 0.1038 161;
+    --success-foreground: 0.2056 0.0178 169.92;
 
-    --destructive: 0.6122 0.2082 22.241;
-    --destructive-foreground: 1 0 0;
+    --destructive: 0.6714 0.1444 32.51;
+    --destructive-foreground: 0.2056 0.0178 169.92;
 
-    --border: 0.3637 0.0203 342.2664;
-    --input: 0.3637 0.0203 342.2664;
-    --ring: 0.7357 0.1641 34.7091;
-    --chart-1: 0.7357 0.1641 34.7091;
-    --chart-2: 0.8278 0.1131 57.9984;
-    --chart-3: 0.8773 0.0763 54.9314;
-    --chart-4: 0.82 0.1054 40.8859;
-    --chart-5: 0.6368 0.1306 32.0721;
+    --border: 0.3149 0.0082 75.27;
+    --input: 0.3149 0.0082 75.27;
+    --ring: 0.7435 0.0717 170.05;
+    --chart-1: 0.7435 0.0717 170.05;
+    --chart-2: 0.7348 0.1021 82.33;
+    --chart-3: 0.5358 0.0906 38.9;
+    --chart-4: 0.4884 0.0534 171.27;
+    --chart-5: 0.83 0.0709 42.83;
     --radius: 0.625rem;
-    --sidebar: 0.2569 0.0169 352.4042;
-    --sidebar-foreground: 0.9397 0.0119 51.3156;
-    --sidebar-primary: 0.7357 0.1641 34.7091;
-    --sidebar-primary-foreground: 1 0 0;
-    --sidebar-accent: 0.8278 0.1131 57.9984;
-    --sidebar-accent-foreground: 0.2569 0.0169 352.4042;
-    --sidebar-border: 0.3637 0.0203 342.2664;
-    --sidebar-ring: 0.7357 0.1641 34.7091;
+    --sidebar: 0.2181 0.0041 84.59;
+    --sidebar-foreground: 0.9531 0.0074 80.72;
+    --sidebar-primary: 0.7435 0.0717 170.05;
+    --sidebar-primary-foreground: 0.2056 0.0178 169.92;
+    --sidebar-accent: 0.245 0.0048 67.6;
+    --sidebar-accent-foreground: 0.9531 0.0074 80.72;
+    --sidebar-border: 0.3149 0.0082 75.27;
+    --sidebar-ring: 0.7435 0.0717 170.05;
+    --gold: 0.7348 0.1021 82.33;
+    --blush: 0.2968 0.0288 36.11;
+    --blush-foreground: 0.83 0.0709 42.83;
     --sidebar-ink: 0.19 0.022 48;
     --sidebar-cream: 0.96 0.01 56;
     --etta-ink: 0.19 0.022 48;
@@ -181,6 +185,124 @@
     --shadow-xl: 0px 6px 12px -3px hsl(0 0% 0% / 0.09), 0px 8px 10px -4px hsl(0 0% 0% / 0.09);
     --shadow-2xl: 0px 6px 12px -3px hsl(0 0% 0% / 0.22);
   }
+
+  /*
+   * Guest-facing surfaces (/w/*) keep the original palette, fonts and component
+   * shapes until the wedding templates are redesigned. Pages opt in with
+   * data-guest-surface; :has() lifts the scope to :root so portalled dialogs and
+   * the page background match too. [data-wedding-template] (set by
+   * TemplateThemeProvider) covers template previews inside the internal app.
+   * Template cssVars still override these inline.
+   */
+  :root:has([data-guest-surface]),
+  [data-wedding-template] {
+    --background: 0.9538 0.016 82.79;
+    --foreground: 0.3353 0.0132 2.7676;
+    --card: 1 0 0;
+    --card-foreground: 0.3353 0.0132 2.7676;
+    --popover: 1 0 0;
+    --popover-foreground: 0.3353 0.0132 2.7676;
+    --primary: 0.7357 0.1641 34.7091;
+    --primary-foreground: 1 0 0;
+    --secondary: 0.9596 0.02 28.9029;
+    --secondary-foreground: 0.5587 0.1294 32.7364;
+    --muted: 0.9656 0.0176 39.4009;
+    --muted-foreground: 0.5534 0.0116 58.0708;
+    --accent: 0.6997 0.0882 84.38;
+    --accent-foreground: 0.3353 0.0132 2.7676;
+    --success: 0.768 0.161 151.95;
+    --success-foreground: 0.985 0.01 151.5;
+    --destructive: 0.6122 0.2082 22.241;
+    --destructive-foreground: 1 0 0;
+    --border: 0.9296 0.037 38.6868;
+    --input: 0.9296 0.037 38.6868;
+    --ring: 0.7357 0.1641 34.7091;
+    --radius: 0.625rem;
+    --chart-1: 0.7357 0.1641 34.7091;
+    --chart-2: 0.8278 0.1131 57.9984;
+    --chart-3: 0.8773 0.0763 54.9314;
+    --chart-4: 0.82 0.1054 40.8859;
+    --chart-5: 0.6368 0.1306 32.0721;
+    --sidebar: 0.9656 0.0176 39.4009;
+    --sidebar-foreground: 0.3353 0.0132 2.7676;
+    --sidebar-primary: 0.7357 0.1641 34.7091;
+    --sidebar-primary-foreground: 1 0 0;
+    --sidebar-accent: 0.8278 0.1131 57.9984;
+    --sidebar-accent-foreground: 0.3353 0.0132 2.7676;
+    --sidebar-border: 0.9296 0.037 38.6868;
+    --sidebar-ring: 0.7357 0.1641 34.7091;
+    --sidebar-ink: 0.19 0.022 48;
+    --sidebar-cream: 0.96 0.01 56;
+    --etta-ink: 0.19 0.022 48;
+    --font-ui-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --font-ui-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    --font-ui-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
+
+  :root.dark:has([data-guest-surface]),
+  .dark [data-wedding-template] {
+    --background: 0.2569 0.0169 352.4042;
+    --foreground: 0.9397 0.0119 51.3156;
+    --card: 0.3184 0.0176 341.4465;
+    --card-foreground: 0.9397 0.0119 51.3156;
+    --popover: 0.3184 0.0176 341.4465;
+    --popover-foreground: 0.9397 0.0119 51.3156;
+    --primary: 0.7357 0.1641 34.7091;
+    --primary-foreground: 1 0 0;
+    --secondary: 0.3637 0.0203 342.2664;
+    --secondary-foreground: 0.9397 0.0119 51.3156;
+    --muted: 0.2848 0.0159 343.6554;
+    --muted-foreground: 0.8378 0.0237 52.6346;
+    --accent: 0.8278 0.1131 57.9984;
+    --accent-foreground: 0.2569 0.0169 352.4042;
+    --success: 0.575 0.135 151.95;
+    --success-foreground: 0.965 0.012 151.5;
+    --destructive: 0.6122 0.2082 22.241;
+    --destructive-foreground: 1 0 0;
+    --border: 0.3637 0.0203 342.2664;
+    --input: 0.3637 0.0203 342.2664;
+    --ring: 0.7357 0.1641 34.7091;
+    --chart-1: 0.7357 0.1641 34.7091;
+    --chart-2: 0.8278 0.1131 57.9984;
+    --chart-3: 0.8773 0.0763 54.9314;
+    --chart-4: 0.82 0.1054 40.8859;
+    --chart-5: 0.6368 0.1306 32.0721;
+    --radius: 0.625rem;
+    --sidebar: 0.2569 0.0169 352.4042;
+    --sidebar-foreground: 0.9397 0.0119 51.3156;
+    --sidebar-primary: 0.7357 0.1641 34.7091;
+    --sidebar-primary-foreground: 1 0 0;
+    --sidebar-accent: 0.8278 0.1131 57.9984;
+    --sidebar-accent-foreground: 0.2569 0.0169 352.4042;
+    --sidebar-border: 0.3637 0.0203 342.2664;
+    --sidebar-ring: 0.7357 0.1641 34.7091;
+    --sidebar-ink: 0.19 0.022 48;
+    --sidebar-cream: 0.96 0.01 56;
+    --etta-ink: 0.19 0.022 48;
+  }
+
+  /* Original component shapes on guest surfaces (see Button, Card, Input, Select, Textarea). */
+  :root:has([data-guest-surface]) .ui-button,
+  [data-wedding-template] .ui-button {
+    border-radius: 2px;
+    font-family: var(--font-ui-mono);
+    font-size: 0.68rem;
+    line-height: inherit;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  :root:has([data-guest-surface]) .ui-card,
+  [data-wedding-template] .ui-card {
+    border-radius: 8px;
+  }
+
+  :root:has([data-guest-surface]) .ui-field,
+  [data-wedding-template] .ui-field {
+    border-radius: 4px;
+  }
+
   .theme {
     --font-sans: Montserrat, sans-serif;
     --font-mono: Ubuntu Mono, monospace;

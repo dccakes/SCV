@@ -8,6 +8,6 @@ describe('Card OSWP primitive contract', () => {
 
     const card = container.firstElementChild
     expect(card).not.toBeNull()
-    expect(card?.className).toContain('rounded-[8px]')
+    expect(card?.className).toContain('rounded-2xl')
   })
 })

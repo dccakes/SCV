@@ -8,22 +8,14 @@ export default function WeddingChipCard(props: Readonly<WeddingChipCardProps>) {
   const { coupleName, weddingDate, weddingLocation } = props
 
   return (
-    <div className='mx-3 mt-3 mb-1 rounded-md border border-white/15 bg-white/[0.07] px-3 py-2.5'>
+    <div className='mx-3 mt-3 mb-1 rounded-xl bg-sidebar-accent px-3.5 py-3 shadow-sm'>
       {coupleName && (
-        <p className='mb-1 font-serif text-base text-sidebar-cream italic leading-tight'>
+        <p className='mb-1 font-display text-[1.35rem] text-sidebar-foreground leading-tight'>
           {coupleName}
         </p>
       )}
-      {weddingDate && (
-        <p className='font-mono text-[0.6rem] text-accent uppercase tracking-widest'>
-          {weddingDate}
-        </p>
-      )}
-      {weddingLocation && (
-        <p className='font-mono text-[0.6rem] text-accent uppercase tracking-widest'>
-          {weddingLocation}
-        </p>
-      )}
+      {weddingDate && <p className='text-muted-foreground text-xs'>{weddingDate}</p>}
+      {weddingLocation && <p className='text-muted-foreground text-xs'>{weddingLocation}</p>}
     </div>
   )
 }

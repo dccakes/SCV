@@ -9,7 +9,10 @@ export default async function WeddingWebsiteLayout({
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      {children}
+      {/* Guest-facing pages keep the original styling; see globals.css. */}
+      <div data-guest-surface className='contents'>
+        {children}
+      </div>
     </NextIntlClientProvider>
   )
 }

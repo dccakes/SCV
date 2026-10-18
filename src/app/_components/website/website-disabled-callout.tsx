@@ -10,7 +10,7 @@ export function WebsiteDisabledCallout() {
         <p className='font-mono text-[0.62rem] text-foreground/45 uppercase tracking-[0.18em]'>
           Website Builder Disabled
         </p>
-        <CardTitle className='font-serif text-3xl text-foreground'>
+        <CardTitle className='font-display text-3xl text-foreground'>
           Turn on the public wedding website plugin to start editing.
         </CardTitle>
       </CardHeader>

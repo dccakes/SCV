@@ -42,14 +42,14 @@ function DraggableGuest(props: Readonly<{ guest: SeatingGuest; onSelect: () => v
         {...attributes}
         {...listeners}
         className={cn(
-          'flex w-full touch-manipulation items-center gap-2 rounded-[4px] px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+          'flex w-full touch-manipulation items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           isDragging && 'opacity-30'
         )}
       >
         <GripVertical className='h-3.5 w-3.5 shrink-0 text-muted-foreground' aria-hidden='true' />
         <span className='truncate'>{formatGuestName(guest)}</span>
         {guest.isTagAlong ? (
-          <span className='ml-auto font-mono text-[0.6rem] text-muted-foreground'>+1</span>
+          <span className='ml-auto text-[0.6rem] text-muted-foreground'>+1</span>
         ) : null}
       </button>
     </li>
@@ -91,11 +91,11 @@ function HouseholdGroup(
         aria-label={`${label}, ${unassigned.length} unseated. Press Space to move everyone together.`}
         className='flex w-full cursor-grab touch-manipulation items-center justify-between gap-2 border-border/70 border-b px-2 py-1.5 active:cursor-grabbing'
       >
-        <span className='flex items-center gap-1.5 font-mono text-[0.64rem] text-foreground/70 uppercase tracking-widest'>
+        <span className='flex items-center gap-1.5 font-semibold text-[0.64rem] text-muted-foreground uppercase tracking-[0.1em]'>
           <GripVertical className='h-3.5 w-3.5' aria-hidden='true' />
           {label}
         </span>
-        <span className='font-mono text-[0.6rem] text-muted-foreground'>
+        <span className='text-[0.6rem] text-muted-foreground tabular-nums'>
           {unassigned.length}/{household.guests.length}
         </span>
       </button>
@@ -134,14 +134,14 @@ export function SeatingGuestSidebar(props: Readonly<SeatingGuestSidebarProps>) {
       data-seating-sidebar
       aria-label='Unseated guests'
       className={cn(
-        'flex h-[40vh] min-h-0 flex-col rounded-md border border-border/70 bg-background transition-colors lg:h-auto',
-        isOver && 'border-foreground/50 bg-muted'
+        'flex h-[40vh] min-h-0 flex-col rounded-xl border border-border bg-card shadow-sm transition-colors lg:h-auto',
+        isOver && 'border-primary/50 bg-accent'
       )}
     >
       <div className='space-y-2 border-border/70 border-b p-3'>
         <div className='flex items-baseline justify-between'>
           <h2 className='font-medium text-sm'>Unseated guests</h2>
-          <span className='font-mono text-[0.64rem] text-muted-foreground'>
+          <span className='text-[0.64rem] text-muted-foreground tabular-nums'>
             {seatedGuests}/{totalGuests} seated
           </span>
         </div>

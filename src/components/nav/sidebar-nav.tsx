@@ -1,5 +1,16 @@
 'use client'
 
+import {
+  Armchair,
+  CalendarDays,
+  Globe,
+  LayoutDashboard,
+  ListChecks,
+  Settings,
+  Store,
+  Users,
+  Wallet,
+} from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import SidebarNavContent, { type SidebarSection } from '~/components/nav/sidebar-nav-content'
@@ -12,24 +23,24 @@ const SIDEBAR_SECTIONS: readonly SidebarSection[] = [
   {
     title: 'Planning',
     items: [
-      { label: 'Dashboard', href: '/dashboard', icon: '◈' },
-      { label: 'Events', href: '/events', icon: '☷' },
-      { label: 'Checklist', href: '/checklist', icon: '▣' },
-      { label: 'Wedding Website', href: '/website', icon: '◌' },
-      { label: 'Vendors', href: '/vendors', icon: '◐' },
-      { label: 'Budget', href: '/budget', icon: '▤' },
+      { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { label: 'Events', href: '/events', icon: CalendarDays },
+      { label: 'Checklist', href: '/checklist', icon: ListChecks },
+      { label: 'Wedding Website', href: '/website', icon: Globe },
+      { label: 'Vendors', href: '/vendors', icon: Store },
+      { label: 'Budget', href: '/budget', icon: Wallet },
     ],
   },
   {
     title: 'Guests',
     items: [
-      { label: 'Guest List', href: '/guest-list', icon: '◉' },
-      { label: 'Seating Chart', href: '/seating', icon: '▦' },
+      { label: 'Guest List', href: '/guest-list', icon: Users },
+      { label: 'Seating Chart', href: '/seating', icon: Armchair },
     ],
   },
   {
     title: 'Settings',
-    items: [{ label: 'Settings', href: '/settings', icon: '⚙' }],
+    items: [{ label: 'Settings', href: '/settings', icon: Settings }],
   },
 ]
 
@@ -98,10 +109,10 @@ function SidebarNav({
   userInitials,
 }: SidebarNavProps) {
   return (
-    <div className='flex h-full min-h-0 flex-col overflow-hidden bg-sidebar-ink'>
+    <div className='flex h-full min-h-0 flex-col overflow-hidden border-sidebar-border border-r bg-sidebar'>
       {/* Header: logo + collapse toggle */}
       <div
-        className={`flex items-center border-white/10 border-b py-4 ${
+        className={`flex items-center border-sidebar-border border-b py-4 ${
           isCollapsed
             ? 'justify-center px-2'
             : showCollapseToggle
@@ -110,11 +121,11 @@ function SidebarNav({
         }`}
       >
         {!isCollapsed && (
-          <div className='flex items-center gap-2'>
-            <span className='font-medium font-mono text-sidebar-cream text-xs uppercase tracking-[0.2em]'>
+          <div className='flex items-center gap-1.5'>
+            <span className='font-display text-[1.45rem] text-sidebar-foreground leading-none'>
               OSWP
             </span>
-            <span className='mt-[-6px] h-1.5 w-1.5 rounded-full bg-primary' />
+            <span className='mt-[-10px] h-1.5 w-1.5 rounded-full bg-gold' />
           </div>
         )}
 
@@ -128,7 +139,7 @@ function SidebarNav({
                 onToggleEttaPanel?.()
                 onNavClick?.()
               }}
-              className={`flex h-11 items-center justify-center rounded-md text-sidebar-cream/55 transition-colors hover:bg-white/[0.08] hover:text-sidebar-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar-ink ${
+              className={`flex h-11 items-center justify-center rounded-md text-sidebar-foreground/70 transition-colors hover:bg-sidebar-foreground/[0.06] hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar ${
                 isCollapsed ? 'w-11' : 'gap-1.5 px-2.5'
               }`}
               title={ettaPanelOpen ? 'Hide Etta panel' : 'Show Etta panel'}
@@ -136,9 +147,7 @@ function SidebarNav({
               <span aria-hidden='true' className='text-[0.82rem]'>
                 ✦
               </span>
-              {!isCollapsed && (
-                <span className='font-mono text-[0.58rem] uppercase tracking-widest'>AI</span>
-              )}
+              {!isCollapsed && <span className='font-semibold text-xs'>Etta</span>}
             </button>
           ) : null}
 
@@ -148,7 +157,7 @@ function SidebarNav({
               aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               aria-expanded={!isCollapsed}
               onClick={onToggleCollapse}
-              className='flex h-11 w-11 items-center justify-center rounded-md text-sidebar-cream/55 transition-colors hover:bg-white/[0.08] hover:text-sidebar-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar-ink'
+              className='flex h-11 w-11 items-center justify-center rounded-md text-sidebar-foreground/70 transition-colors hover:bg-sidebar-foreground/[0.06] hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar'
             >
               <svg
                 aria-hidden='true'
@@ -333,7 +342,7 @@ export default function SidebarNavFrame(props: SidebarNavFrameProps) {
           className='fixed inset-0 z-50 lg:hidden'
         >
           <div
-            className='absolute inset-0 bg-black/60'
+            className='absolute inset-0 bg-foreground/40'
             onClick={() => setIsOpen(false)}
             aria-hidden='true'
           />
@@ -359,7 +368,7 @@ export default function SidebarNavFrame(props: SidebarNavFrameProps) {
               type='button'
               aria-label='Close menu'
               onClick={() => setIsOpen(false)}
-              className='absolute top-2 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-md text-sidebar-cream/50 transition-colors hover:bg-white/[0.06] hover:text-sidebar-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar-ink'
+              className='absolute top-2 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-md text-sidebar-foreground/70 transition-colors hover:bg-sidebar-foreground/[0.06] hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar'
             >
               <svg
                 aria-hidden='true'
