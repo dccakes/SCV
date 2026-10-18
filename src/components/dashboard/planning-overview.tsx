@@ -8,8 +8,12 @@ import type { DashboardData, EventWithResponses } from '~/app/utils/shared-types
 import { formatCurrency } from '~/components/budget/format'
 import { TaskDialog } from '~/components/checklist/task-dialog'
 import { TaskListItem } from '~/components/dashboard/planning-overview/task-list-item'
-import { useTasksCardState } from '~/components/dashboard/planning-overview/use-tasks-card-state'
+import {
+  type TaskItem,
+  useTasksCardState,
+} from '~/components/dashboard/planning-overview/use-tasks-card-state'
 import { DASHBOARD_ADD_TASK_EVENT } from '~/components/dashboard/task-dialog-events'
+import { Button } from '~/components/ui/button'
 import { Skeleton } from '~/components/ui/skeleton'
 import type { EventWithStats } from '~/server/domains/event'
 import { api } from '~/trpc/react'
@@ -22,170 +26,201 @@ interface PlanningOverviewProps {
   dashboardData: DashboardData | null
 }
 
-// CardShell action link: uses text-foreground for accessible contrast on light card bg
-function CardShell({
+const linkClass =
+  'text-primary text-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+
+const outlineLinkClass =
+  'inline-flex min-h-[44px] items-center rounded-[10px] border border-border px-4 font-semibold text-foreground text-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+
+function Panel({
+  id,
   title,
-  icon,
   action,
   actionHref,
+  aside,
   children,
 }: {
+  id: string
   title: string
-  icon: string
   action?: string
   actionHref?: string
+  aside?: React.ReactNode
   children: React.ReactNode
 }) {
+  const headingId = `dashboard-${id}`
+
   return (
-    <div className='overflow-hidden rounded-lg border border-border/90 bg-card/85'>
-      <div className='flex items-center justify-between border-border border-b px-4 py-3'>
-        <p className='flex items-center gap-2 font-mono text-[0.62rem] text-foreground/55 uppercase tracking-widest'>
-          <span>{icon}</span>
+    <section
+      aria-labelledby={headingId}
+      className='rounded-2xl border border-border/70 bg-card p-5 shadow-sm md:p-6'
+    >
+      <div className='mb-3 flex items-baseline justify-between gap-3'>
+        <h2 id={headingId} className='font-semibold text-[1.02rem] text-foreground'>
           {title}
-        </p>
-        {action && actionHref && (
-          <Link
-            href={actionHref}
-            className='font-mono text-[0.58rem] text-primary uppercase tracking-widest transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
-          >
-            {action}
-          </Link>
-        )}
+        </h2>
+        <div className='flex items-baseline gap-4'>
+          {aside}
+          {action && actionHref && (
+            <Link href={actionHref} className={linkClass}>
+              {action}
+            </Link>
+          )}
+        </div>
       </div>
-      <div className='p-4'>{children}</div>
-    </div>
+      {children}
+    </section>
   )
 }
 
-function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null }) {
+function EmptyNote({ children }: { children: React.ReactNode }) {
+  return <p className='text-muted-foreground text-sm leading-relaxed'>{children}</p>
+}
+
+function getCountdownHeading(days: number): { lead: string; tail: string } {
+  if (days === 0) return { lead: "It's your", tail: 'wedding day' }
+  if (days === 1) return { lead: '1 day', tail: 'to go' }
+  return { lead: `${days} days`, tail: 'to go' }
+}
+
+function TodayHero({ dashboardData }: { dashboardData: DashboardData | null }) {
   const weddingData = dashboardData?.weddingData
   const bride = weddingData?.brideFirstName ?? ''
   const groom = weddingData?.groomFirstName ?? ''
   const coupleName = bride && groom ? `${bride} & ${groom}` : bride || groom || 'Your Wedding'
   const hasDate = weddingData?.daysRemaining != null && weddingData.daysRemaining >= 0
-  const days = hasDate ? weddingData.daysRemaining : null
   const dateLabel = weddingData?.date?.standardFormat ?? ''
   const location = weddingData?.location ?? ''
+  const isPastDate = !hasDate && dateLabel !== '' && (weddingData?.daysRemaining ?? 0) < 0
 
   const milestones = dashboardData?.milestones ?? []
   const completedMilestones = milestones.filter((milestone) => milestone.effectiveStatus === 'done')
   const planningPct =
     milestones.length > 0 ? Math.round((completedMilestones.length / milestones.length) * 100) : 0
+  const countdown = hasDate ? getCountdownHeading(weddingData.daysRemaining) : null
 
   return (
-    <div className='relative overflow-hidden rounded-lg bg-sidebar px-6 py-5'>
-      {/* decorative glow */}
-      <div className='pointer-events-none absolute top-[-40px] right-[-20px] h-48 w-48 rounded-full bg-primary/20 blur-2xl' />
-
-      <div className='relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
-        <div>
-          <p className='mb-1 font-mono text-[0.6rem] text-muted-foreground uppercase tracking-[0.18em]'>
-            {hasDate ? 'Days until the big day' : 'Your wedding'}
-          </p>
-          <p className='font-serif text-2xl text-sidebar-foreground italic leading-tight'>
-            {coupleName}
-          </p>
-          {(dateLabel || location) && (
-            <p className='mt-0.5 font-mono text-[0.62rem] text-muted-foreground tracking-wider'>
-              {[dateLabel, location].filter(Boolean).join(' · ')}
-            </p>
-          )}
-          {!hasDate && !location && (
-            <p className='mt-0.5 font-mono text-[0.62rem] text-muted-foreground tracking-wider'>
-              Set your date & location in{' '}
-              <Link href='/settings' className='text-primary underline underline-offset-2'>
-                Settings
-              </Link>
-            </p>
-          )}
-          <div className='mt-3 h-[2px] w-full max-w-[200px] overflow-hidden rounded-full bg-sidebar-foreground/[0.08]'>
-            <div
-              className='h-full rounded-full bg-gradient-to-r from-primary to-gold'
-              style={{ width: `${planningPct}%` }}
-            />
-          </div>
-          <p className='mt-1 font-mono text-[0.55rem] text-muted-foreground tracking-widest'>
-            {planningPct}% of planning complete
-          </p>
-        </div>
-
-        {hasDate ? (
-          <div className='text-center'>
-            <span className='block font-display text-6xl text-sidebar-foreground leading-none'>
-              {days}
-            </span>
-            <span className='mt-1 block font-mono text-[0.55rem] text-muted-foreground uppercase tracking-[0.14em]'>
-              Days
-            </span>
-          </div>
+    <div className='flex flex-col gap-3'>
+      {countdown && <p className='text-muted-foreground text-sm'>{coupleName}</p>}
+      <h2 className='font-display text-5xl text-foreground leading-[1.02] tracking-tight md:text-7xl'>
+        {countdown ? (
+          <>
+            {countdown.lead} <span className='text-primary italic'>{countdown.tail}</span>
+          </>
         ) : (
-          <div className='text-center'>
-            <span className='block font-display text-5xl text-muted-foreground leading-none'>
-              —
-            </span>
-            <span className='mt-1 block font-mono text-[0.55rem] text-muted-foreground uppercase tracking-[0.14em]'>
-              No date set
-            </span>
-          </div>
+          coupleName
         )}
+      </h2>
+      {(dateLabel || location) && (
+        <p className='text-base text-muted-foreground'>
+          {[dateLabel, location].filter(Boolean).join(' · ')}
+        </p>
+      )}
+      {!hasDate && (
+        <p className='text-muted-foreground text-sm'>
+          <span>{isPastDate ? 'This date has passed' : 'No date set'}</span>
+          {' · '}
+          <Link href='/settings' className='text-primary underline underline-offset-2'>
+            {isPastDate ? 'Update it in Settings' : 'Add it in Settings'}
+          </Link>
+        </p>
+      )}
+      <div className='mt-1 flex items-center gap-3'>
+        <div
+          className='h-1.5 w-40 overflow-hidden rounded-full bg-secondary'
+          role='img'
+          aria-label={`${planningPct}% of planning complete`}
+        >
+          <div className='h-full rounded-full bg-primary' style={{ width: `${planningPct}%` }} />
+        </div>
+        <p className='text-muted-foreground text-sm'>{planningPct}% of planning complete</p>
       </div>
     </div>
   )
 }
 
-function MiniStats({ dashboardData }: { dashboardData: DashboardData | null }) {
-  const total = dashboardData?.totalGuests ?? 0
-  const rsvpSummary = (dashboardData?.events ?? []).reduce(
-    (acc, event) => {
-      const eventWithResponses = event as EventWithResponses
-      if (!eventWithResponses.collectRsvp) return acc
-      acc.confirmed += eventWithResponses.guestResponses?.attending ?? 0
-      acc.pending += eventWithResponses.guestResponses?.invited ?? 0
-      acc.declined += eventWithResponses.guestResponses?.declined ?? 0
-      return acc
-    },
-    { confirmed: 0, pending: 0, declined: 0 }
-  )
-  const confirmed = rsvpSummary.confirmed
-  const pending = rsvpSummary.pending
-  const pct = total > 0 ? Math.round((confirmed / total) * 100) : 0
-
-  const stats = [
-    { icon: '◉', val: total, label: 'Total guests', delta: null, href: '/guest-list' },
-    { icon: '✓', val: confirmed, label: 'Confirmed', delta: `${pct}%`, href: '/guest-list' },
-    { icon: '◐', val: pending, label: 'Awaiting reply', delta: null, href: '/guest-list' },
-    {
-      icon: '◧',
-      val: dashboardData?.tasksDueThisMonth ?? 0,
-      label: 'Tasks due this month',
-      delta: null,
-      href: '/checklist',
-    },
-  ]
-
+function UpNextCard({
+  task,
+  onComplete,
+}: {
+  task: TaskItem | undefined
+  onComplete: (taskId: string) => void
+}) {
   return (
-    <div className='grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border/90 bg-border lg:grid-cols-4'>
-      {stats.map((s) => (
-        <Link
-          key={s.label}
-          href={s.href}
-          className='flex items-center gap-3 bg-card/90 px-4 py-3 transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-inset'
+    <section
+      aria-labelledby='dashboard-up-next'
+      className='flex flex-wrap items-center gap-6 rounded-2xl border border-border/70 bg-card p-6 shadow-sm md:p-7'
+    >
+      <div className='flex min-w-0 flex-[1_1_280px] flex-col gap-2'>
+        <h2
+          id='dashboard-up-next'
+          className='font-semibold text-primary text-xs uppercase tracking-[0.1em]'
         >
-          <span className='text-xl opacity-55'>{s.icon}</span>
-          <div className='min-w-0'>
-            <div className='font-serif text-[1.4rem] text-foreground leading-none'>{s.val}</div>
-            <div className='font-mono text-[0.56rem] text-foreground/55 uppercase tracking-widest'>
-              {s.label}
-            </div>
-          </div>
-          {s.delta && (
-            <span className='ml-auto font-mono text-[0.58rem] text-success tracking-wider'>
-              {s.delta}
-            </span>
-          )}
+          Up next
+        </h2>
+        {task ? (
+          <>
+            <p className='font-semibold text-2xl text-foreground tracking-tight'>{task.text}</p>
+            <p className='text-muted-foreground text-sm'>
+              {task.tag} · {task.due}
+            </p>
+          </>
+        ) : (
+          <>
+            <p className='font-semibold text-2xl text-foreground tracking-tight'>
+              You're all caught up
+            </p>
+            <EmptyNote>
+              No active tasks yet. Add your first task to start tracking your planning progress.
+            </EmptyNote>
+          </>
+        )}
+      </div>
+      <div className='flex flex-wrap gap-2.5'>
+        {task && (
+          <Button type='button' size='lg' className='px-5' onClick={() => onComplete(task.id)}>
+            Mark done
+          </Button>
+        )}
+        <Link href='/checklist' className={outlineLinkClass}>
+          {task ? 'Open checklist' : 'Go to checklist →'}
         </Link>
-      ))}
-    </div>
+      </div>
+    </section>
+  )
+}
+
+function ComingUpCard({
+  tasks,
+  totalActive,
+  dueThisMonth,
+  onToggle,
+}: {
+  tasks: TaskItem[]
+  totalActive: number
+  dueThisMonth: number
+  onToggle: (taskId: string) => void
+}) {
+  return (
+    <Panel
+      id='coming-up'
+      title='Coming up'
+      action='View all →'
+      actionHref='/checklist'
+      aside={<span className='text-muted-foreground text-sm'>{dueThisMonth} due this month</span>}
+    >
+      {tasks.length > 0 ? (
+        <div className='-mx-2 flex flex-col'>
+          {tasks.map((task) => (
+            <TaskListItem key={task.id} task={task} onToggle={onToggle} />
+          ))}
+        </div>
+      ) : (
+        <EmptyNote>Nothing else is due right now.</EmptyNote>
+      )}
+      <p className='mt-3 text-muted-foreground text-xs'>
+        {tasks.length + 1} of {totalActive} active tasks shown
+      </p>
+    </Panel>
   )
 }
 
@@ -208,25 +243,17 @@ function RsvpCard({ dashboardData }: { dashboardData: DashboardData | null }) {
 
   if (total === 0) {
     return (
-      <CardShell title='RSVP Status' icon='◉'>
+      <Panel id='rsvps' title='RSVPs'>
         <div className='flex flex-col gap-3'>
-          <div className='flex items-baseline gap-2'>
-            <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
-            <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
-              No RSVPs collected yet
-            </span>
-          </div>
-          <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
+          <p className='font-medium text-foreground text-sm'>No RSVPs collected yet</p>
+          <EmptyNote>
             Enable RSVP collection on one of your events to start tracking responses
-          </div>
-          <Link
-            href='/events'
-            className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
-          >
+          </EmptyNote>
+          <Link href='/events' className={`${outlineLinkClass} self-start`}>
             Set up RSVPs →
           </Link>
         </div>
-      </CardShell>
+      </Panel>
     )
   }
 
@@ -235,95 +262,27 @@ function RsvpCard({ dashboardData }: { dashboardData: DashboardData | null }) {
   const declinedPct = (declined / total) * 100
 
   return (
-    <CardShell title='RSVP Status' icon='◉' action='View all →' actionHref='/guest-list'>
-      {/* Counts */}
-      <div className='mb-3 grid grid-cols-4 divide-x divide-border'>
-        {[
-          { val: attending, label: 'Confirmed', color: 'text-success' },
-          { val: pending, label: 'Pending', color: 'text-foreground' },
-          { val: declined, label: 'Declined', color: 'text-foreground/60' },
-          { val: total, label: 'Invited', color: 'text-foreground' },
-        ].map((s) => (
-          <div key={s.label} className='px-2 text-center first:pl-0 last:pr-0'>
-            <span className={`block font-serif text-[2rem] leading-none ${s.color}`}>{s.val}</span>
-            <span className='font-mono text-[0.55rem] text-foreground/60 uppercase tracking-widest'>
-              {s.label}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* Bar — aria-label describes the segments */}
-      <div
-        className='mb-2 flex h-1.5 overflow-hidden rounded-full bg-border'
-        role='img'
-        aria-label={`RSVP breakdown: ${Math.round(confirmedPct)}% confirmed, ${Math.round(pendingPct)}% pending, ${Math.round(declinedPct)}% declined`}
-      >
-        <div className='bg-success' style={{ width: `${confirmedPct}%` }} />
-        <div className='bg-primary/50' style={{ width: `${pendingPct}%` }} />
-        <div className='bg-foreground/30' style={{ width: `${declinedPct}%` }} />
-      </div>
-
-      {pending > 0 && (
-        <p className='mb-3 font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
-          Still waiting on {pending} — check guest list for details
+    <Panel id='rsvps' title='RSVPs' action='View all →' actionHref='/guest-list'>
+      <div className='flex flex-col gap-3'>
+        <p className='font-display text-[2.75rem] text-foreground leading-none'>
+          {attending}
+          <span className='text-muted-foreground text-xl'> / {total}</span>
         </p>
-      )}
-
-      <Link
-        href='/guest-list'
-        className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
-      >
-        Manage RSVPs →
-      </Link>
-    </CardShell>
-  )
-}
-
-function TasksCard({ dashboardData }: { dashboardData: DashboardData | null }) {
-  const priorityQueue = dashboardData?.taskPriorityQueue
-  const { tasks, toggleTask } = useTasksCardState(priorityQueue?.tasks ?? EMPTY_PRIORITY_TASKS)
-  const completeTask = api.task.complete.useMutation({
-    onError: () => toast.error('Failed to update task'),
-  })
-
-  const handleToggle = (taskId: string) => {
-    toggleTask(taskId)
-    const targetTask = tasks.find((task) => task.id === taskId)
-
-    completeTask.mutate({
-      taskId,
-      completed: !(targetTask?.done ?? false),
-    })
-  }
-
-  return (
-    <CardShell title='Upcoming tasks' icon='◈' action='View all →' actionHref='/checklist'>
-      {tasks.length > 0 ? (
-        <>
-          <div className='flex flex-col gap-1.5'>
-            {tasks.map((task) => (
-              <TaskListItem key={task.id} task={task} onToggle={handleToggle} />
-            ))}
-          </div>
-          <p className='mt-3 font-mono text-[0.56rem] text-foreground/50 tracking-wider'>
-            {tasks.length} of {priorityQueue?.totalActive ?? 0} active tasks shown
-          </p>
-        </>
-      ) : (
-        <div className='flex flex-col gap-3'>
-          <p className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
-            No active tasks yet. Add your first task to start tracking your planning progress.
-          </p>
-          <Link
-            href='/checklist'
-            className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
-          >
-            Go to checklist →
-          </Link>
+        <div
+          className='flex h-1.5 overflow-hidden rounded-full bg-secondary'
+          role='img'
+          aria-label={`RSVP breakdown: ${Math.round(confirmedPct)}% confirmed, ${Math.round(pendingPct)}% pending, ${Math.round(declinedPct)}% declined`}
+        >
+          <div className='bg-primary' style={{ width: `${confirmedPct}%` }} />
+          <div className='bg-gold/60' style={{ width: `${pendingPct}%` }} />
+          <div className='bg-foreground/25' style={{ width: `${declinedPct}%` }} />
         </div>
-      )}
-    </CardShell>
+        <p className='text-muted-foreground text-sm'>
+          {pending > 0 ? `${pending} still to reply` : 'Everyone has replied'}
+          {declined > 0 ? ` · ${declined} declined` : ''}
+        </p>
+      </div>
+    </Panel>
   )
 }
 
@@ -332,23 +291,13 @@ function BudgetCard() {
 
   if (isLoading) {
     return (
-      <CardShell title='Budget' icon='◧' action='Manage →' actionHref='/budget'>
+      <Panel id='budget' title='Budget' action='Manage →' actionHref='/budget'>
         <div className='flex flex-col gap-3'>
-          <div className='flex items-baseline gap-2'>
-            <Skeleton className='h-9 w-24' />
-            <Skeleton className='h-3 w-20' />
-          </div>
+          <Skeleton className='h-10 w-32' />
           <Skeleton className='h-1.5 w-full' />
-          <div className='grid grid-cols-3 gap-2'>
-            {[0, 1, 2].map((i) => (
-              <div key={i} className='text-center'>
-                <Skeleton className='mx-auto h-5 w-10' />
-                <Skeleton className='mx-auto mt-1 h-2 w-12' />
-              </div>
-            ))}
-          </div>
+          <Skeleton className='h-3 w-40' />
         </div>
-      </CardShell>
+      </Panel>
     )
   }
 
@@ -358,25 +307,15 @@ function BudgetCard() {
 
   if (!hasBudget) {
     return (
-      <CardShell title='Budget' icon='◧' action='Manage →' actionHref='/budget'>
+      <Panel id='budget' title='Budget' action='Manage →' actionHref='/budget'>
         <div className='flex flex-col gap-3'>
-          <div className='flex items-baseline gap-2'>
-            <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
-            <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
-              No budget set up yet
-            </span>
-          </div>
-          <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
-            Track your wedding spending against a target budget
-          </div>
-          <Link
-            href='/budget'
-            className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
-          >
+          <p className='font-medium text-foreground text-sm'>No budget set up yet</p>
+          <EmptyNote>Track your wedding spending against a target budget</EmptyNote>
+          <Link href='/budget' className={`${outlineLinkClass} self-start`}>
             Set up your budget →
           </Link>
         </div>
-      </CardShell>
+      </Panel>
     )
   }
 
@@ -388,58 +327,34 @@ function BudgetCard() {
   const overBudget = target > 0 && netSpend > target
 
   return (
-    <CardShell title='Budget' icon='◧' action='Manage →' actionHref='/budget'>
+    <Panel id='budget' title='Budget' action='Manage →' actionHref='/budget'>
       <div className='flex flex-col gap-3'>
-        <div className='flex items-baseline gap-2'>
-          <span className='font-serif text-[2.2rem] text-foreground leading-none'>
-            {formatCurrency(netSpend, currency)}
+        <p className='font-display text-[2.75rem] text-foreground leading-none'>
+          {formatCurrency(netSpend, currency)}
+          <span className='text-muted-foreground text-xl'>
+            {target > 0 ? ` / ${formatCurrency(target, currency)}` : ' net spend'}
           </span>
-          <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
-            {target > 0 ? `of ${formatCurrency(target, currency)}` : 'net spend'}
-          </span>
-        </div>
+        </p>
         {target > 0 && (
           <div
-            className='h-1.5 overflow-hidden rounded-full bg-border'
+            className='h-1.5 overflow-hidden rounded-full bg-secondary'
             role='img'
             aria-label={`${pct}% of budget used`}
           >
             <div
-              className={`h-full rounded-full transition-all ${overBudget ? 'bg-destructive' : 'bg-gradient-to-r from-success to-gold'}`}
+              className={`h-full rounded-full transition-all ${overBudget ? 'bg-destructive' : 'bg-gold'}`}
               style={{ width: `${pct > 0 ? Math.max(2, pct) : 0}%` }}
             />
           </div>
         )}
-        <div className='grid grid-cols-3 divide-x divide-border text-center'>
-          {[
-            {
-              val: formatCurrency(actualSpend, currency),
-              label: 'Spent',
-              color: 'text-foreground',
-            },
-            {
-              val: target > 0 ? formatCurrency(remaining, currency) : String(categoryCount),
-              label: target > 0 ? 'Remaining' : `Section${categoryCount !== 1 ? 's' : ''}`,
-              color: overBudget ? 'text-destructive' : 'text-foreground',
-            },
-            {
-              val: target > 0 ? `${pct}%` : '—',
-              label: target > 0 ? 'Of target' : 'No target',
-              color: 'text-foreground/60',
-            },
-          ].map((s) => (
-            <div key={s.label} className='px-2 first:pl-0 last:pr-0'>
-              <span className={`block font-serif text-[1.1rem] leading-none ${s.color}`}>
-                {s.val}
-              </span>
-              <span className='font-mono text-[0.52rem] text-foreground/55 uppercase tracking-widest'>
-                {s.label}
-              </span>
-            </div>
-          ))}
-        </div>
+        <p className={`text-sm ${overBudget ? 'text-destructive' : 'text-muted-foreground'}`}>
+          {formatCurrency(actualSpend, currency)} spent ·{' '}
+          {target > 0
+            ? `${formatCurrency(remaining, currency)} remaining`
+            : `${categoryCount} section${categoryCount !== 1 ? 's' : ''}`}
+        </p>
       </div>
-    </CardShell>
+    </Panel>
   )
 }
 
@@ -454,57 +369,46 @@ function VendorsCard() {
 
   if (vendorCount === 0) {
     return (
-      <CardShell title='Vendors' icon='◐' action='Manage →' actionHref='/vendors'>
+      <Panel id='vendors' title='Vendors' action='Manage →' actionHref='/vendors'>
         <div className='flex flex-col gap-3'>
-          <div className='flex items-baseline gap-2'>
-            <span className='font-serif text-[2.2rem] text-foreground/30 leading-none'>—</span>
-            <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
-              No vendors added yet
-            </span>
-          </div>
-          <div className='font-mono text-[0.58rem] text-foreground/60 tracking-wider'>
-            Track quotes, contacts, and contracts in one place
-          </div>
-          <Link
-            href='/vendors'
-            className='inline-block min-h-[44px] rounded-sm border border-border px-3 py-2.5 font-mono text-[0.58rem] text-foreground/70 uppercase tracking-widest transition-all hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
-          >
+          <p className='font-medium text-foreground text-sm'>No vendors added yet</p>
+          <EmptyNote>Track quotes, contacts, and contracts in one place</EmptyNote>
+          <Link href='/vendors' className={`${outlineLinkClass} self-start`}>
             Add your first vendor →
           </Link>
         </div>
-      </CardShell>
+      </Panel>
     )
   }
 
   return (
-    <CardShell title='Vendors' icon='◐' action='Manage →' actionHref='/vendors'>
+    <Panel id='vendors' title='Vendors' action='Manage →' actionHref='/vendors'>
       <div className='flex flex-col gap-3'>
-        <div className='flex items-baseline gap-2'>
-          <span className='font-serif text-[2.2rem] text-foreground leading-none'>
+        <p className='flex items-baseline gap-2'>
+          <span className='font-display text-[2.75rem] text-foreground leading-none'>
             {vendorCount}
           </span>
-          <span className='font-mono text-[0.65rem] text-foreground/60 tracking-wider'>
+          <span className='text-muted-foreground text-sm'>
             vendor{vendorCount !== 1 ? 's' : ''} tracked
           </span>
-        </div>
-        <div className='grid grid-cols-3 divide-x divide-border text-center'>
+        </p>
+        <div className='flex flex-col'>
           {[
-            { val: selected, label: 'Selected', color: 'text-success' },
-            { val: inProgress, label: 'In Progress', color: 'text-foreground' },
-            { val: inReview, label: 'In Review', color: 'text-foreground/60' },
+            { val: selected, label: 'Selected' },
+            { val: inProgress, label: 'In Progress' },
+            { val: inReview, label: 'In Review' },
           ].map((s) => (
-            <div key={s.label} className='px-2 first:pl-0 last:pr-0'>
-              <span className={`block font-serif text-[1.6rem] leading-none ${s.color}`}>
-                {s.val}
-              </span>
-              <span className='font-mono text-[0.52rem] text-foreground/55 uppercase tracking-widest'>
-                {s.label}
-              </span>
+            <div
+              key={s.label}
+              className='flex items-center justify-between border-border/70 border-t py-2 text-sm'
+            >
+              <span className='text-muted-foreground'>{s.label}</span>
+              <span className='font-semibold text-foreground tabular-nums'>{s.val}</span>
             </div>
           ))}
         </div>
       </div>
-    </CardShell>
+    </Panel>
   )
 }
 
@@ -522,13 +426,16 @@ function MilestonesCard({ dashboardData }: { dashboardData: DashboardData | null
   ])
 
   const dotClass = {
-    done: 'bg-success border-success',
-    today: 'bg-primary border-primary shadow-[0_0_0_3px_rgba(196,99,58,0.18)]',
+    done: 'bg-primary border-primary',
+    today: 'bg-gold border-gold ring-4 ring-gold/20',
     upcoming: 'bg-card border-border',
   }
 
   return (
-    <CardShell title='Milestones' icon='▷' action='Full timeline →' actionHref='/checklist'>
+    <Panel id='milestones' title='Milestones' action='Full timeline →' actionHref='/checklist'>
+      {visibleMilestones.length === 0 && (
+        <EmptyNote>Milestones appear here as you plan and tick off your checklist.</EmptyNote>
+      )}
       <div className='flex flex-col'>
         {visibleMilestones.map((milestone, i) => {
           const status = getMilestoneStatus(milestone, pendingMilestones[0]?.id)
@@ -549,22 +456,22 @@ function MilestonesCard({ dashboardData }: { dashboardData: DashboardData | null
                     : 'Upcoming'
 
           return (
-            <div key={milestone.id} className='relative flex gap-3 pb-3 last:pb-0'>
+            <div key={milestone.id} className='relative flex gap-3 pb-4 last:pb-0'>
               {i < visibleMilestones.length - 1 && (
                 <div className='absolute top-4 bottom-0 left-[5px] w-px bg-border' />
               )}
               <span
-                className={`relative z-10 mt-1 h-3 w-3 flex-shrink-0 rounded-full border-2 ${dotClass[status]}`}
+                className={`relative z-10 mt-1.5 h-3 w-3 flex-shrink-0 rounded-full border-2 ${dotClass[status]}`}
               />
               <div>
-                <p className='font-serif text-[0.88rem] text-foreground leading-tight'>
+                <p className='font-medium text-foreground text-sm leading-tight'>
                   {milestone.title}
                   {milestone.key === 'wedding_day' ? ' ✦' : ''}
                   {hasMilestoneOverride(milestone) ? ' ⚠' : ''}
                 </p>
                 <p
-                  className={`mt-0.5 font-mono text-[0.58rem] tracking-wider ${
-                    status === 'today' ? 'text-foreground/80' : 'text-foreground/60'
+                  className={`mt-0.5 text-xs ${
+                    status === 'today' ? 'text-foreground/80' : 'text-muted-foreground'
                   }`}
                 >
                   {subtitle}
@@ -574,7 +481,42 @@ function MilestonesCard({ dashboardData }: { dashboardData: DashboardData | null
           )
         })}
       </div>
-    </CardShell>
+    </Panel>
+  )
+}
+
+function PlanningTasks({ dashboardData }: { dashboardData: DashboardData | null }) {
+  const priorityQueue = dashboardData?.taskPriorityQueue
+  const { tasks, toggleTask } = useTasksCardState(priorityQueue?.tasks ?? EMPTY_PRIORITY_TASKS)
+  const completeTask = api.task.complete.useMutation({
+    onError: () => toast.error('Failed to update task'),
+  })
+
+  const handleToggle = (taskId: string) => {
+    toggleTask(taskId)
+    const targetTask = tasks.find((task) => task.id === taskId)
+
+    completeTask.mutate({
+      taskId,
+      completed: !(targetTask?.done ?? false),
+    })
+  }
+
+  const upNext = tasks.find((task) => !task.done)
+  const rest = tasks.filter((task) => task.id !== upNext?.id)
+
+  return (
+    <>
+      <UpNextCard task={upNext} onComplete={handleToggle} />
+      {tasks.length > 0 && (
+        <ComingUpCard
+          tasks={rest}
+          totalActive={priorityQueue?.totalActive ?? 0}
+          dueThisMonth={dashboardData?.tasksDueThisMonth ?? 0}
+          onToggle={handleToggle}
+        />
+      )}
+    </>
   )
 }
 
@@ -614,24 +556,19 @@ export default function PlanningOverview({ dashboardData }: PlanningOverviewProp
 
   return (
     <>
-      <div className='flex flex-col gap-5'>
-        {/* Countdown hero */}
-        <CountdownHero dashboardData={dashboardData} />
+      <div className='mx-auto flex max-w-[1080px] flex-col gap-8 pb-6'>
+        <TodayHero dashboardData={dashboardData} />
 
-        {/* Mini stats */}
-        <MiniStats dashboardData={dashboardData} />
-
-        {/* Row: RSVP + Tasks */}
-        <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
-          <RsvpCard dashboardData={dashboardData} />
-          <TasksCard dashboardData={dashboardData} />
-        </div>
-
-        {/* Row: Budget + Vendors + Milestones */}
-        <div className='grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3'>
-          <BudgetCard />
-          <VendorsCard />
-          <MilestonesCard dashboardData={dashboardData} />
+        <div className='flex flex-wrap items-start gap-6'>
+          <div className='flex min-w-0 flex-[2_1_520px] flex-col gap-6'>
+            <PlanningTasks dashboardData={dashboardData} />
+            <MilestonesCard dashboardData={dashboardData} />
+          </div>
+          <div className='flex min-w-0 flex-[1_1_280px] flex-col gap-4'>
+            <RsvpCard dashboardData={dashboardData} />
+            <BudgetCard />
+            <VendorsCard />
+          </div>
         </div>
       </div>
 
