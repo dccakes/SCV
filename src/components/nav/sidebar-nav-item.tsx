@@ -1,16 +1,17 @@
+import type { LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 
 interface NavItemProps {
   label: string
   href: string
-  icon: string
+  icon: LucideIcon
   isActive: boolean
   isCollapsed: boolean
   onClick?: () => void
 }
 
 export default function NavItem(props: Readonly<NavItemProps>) {
-  const { label, href, icon, isActive, isCollapsed, onClick } = props
+  const { label, href, icon: Icon, isActive, isCollapsed, onClick } = props
 
   return (
     <Link
@@ -18,15 +19,20 @@ export default function NavItem(props: Readonly<NavItemProps>) {
       onClick={onClick}
       title={label}
       aria-label={label}
-      className={`flex items-center border-l-2 py-2.5 font-mono text-xs uppercase tracking-widest transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-cream/80 focus-visible:ring-inset ${
-        isCollapsed ? 'justify-center px-2' : 'gap-2.5 px-4'
+      aria-current={isActive ? 'page' : undefined}
+      className={`mx-2 flex h-10 items-center rounded-[10px] text-[0.94rem] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring ${
+        isCollapsed ? 'justify-center px-2' : 'gap-3 px-3'
       } ${
         isActive
-          ? 'border-primary bg-primary/25 text-primary-foreground'
-          : 'border-transparent text-muted-foreground hover:bg-white/25 hover:text-primary-foreground'
+          ? 'bg-sidebar-accent font-semibold text-sidebar-accent-foreground shadow-sm'
+          : 'text-sidebar-foreground/75 hover:bg-sidebar-foreground/[0.05] hover:text-sidebar-foreground'
       }`}
     >
-      <span className='flex-shrink-0 text-center text-base leading-none'>{icon}</span>
+      <Icon
+        aria-hidden='true'
+        className={`h-[18px] w-[18px] flex-shrink-0 ${isActive ? 'text-sidebar-primary' : ''}`}
+        strokeWidth={1.8}
+      />
       {!isCollapsed && <span>{label}</span>}
     </Link>
   )

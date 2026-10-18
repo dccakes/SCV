@@ -1,9 +1,10 @@
+import type { LucideIcon } from 'lucide-react'
 import NavItem from '~/components/nav/sidebar-nav-item'
 
 export type SidebarNavItem = {
   label: string
   href: string
-  icon: string
+  icon: LucideIcon
 }
 
 export type SidebarSection = {
@@ -22,13 +23,13 @@ export default function SidebarNavContent(props: Readonly<SidebarNavContentProps
   const { sections, isCollapsed, isActive, onNavClick } = props
 
   return (
-    <nav className='flex min-h-0 flex-1 flex-col gap-px overflow-y-auto py-3'>
+    <nav className='flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto py-3'>
       {sections.map((section, sectionIndex) => (
         <div key={section.title}>
           {!isCollapsed && (
             <p
-              className={`font-mono text-[0.55rem] text-muted-foreground uppercase tracking-[0.18em] ${
-                sectionIndex === 0 ? 'px-4 pt-2 pb-1' : 'mt-2 px-4 pt-2 pb-1'
+              className={`font-semibold text-[0.7rem] text-muted-foreground uppercase tracking-[0.1em] ${
+                sectionIndex === 0 ? 'px-5 pt-2 pb-1.5' : 'mt-3 px-5 pt-2 pb-1.5'
               }`}
             >
               {section.title}

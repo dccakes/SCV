@@ -65,7 +65,7 @@ export function GuestDetailDrawer(props: Readonly<GuestDetailDrawerProps>) {
           </DialogClose>
 
           <header className='border-border/80 border-b px-5 py-5 pr-14 md:px-6'>
-            <DialogTitle className='font-serif text-3xl text-foreground leading-tight'>
+            <DialogTitle className='font-display text-3xl text-foreground leading-tight'>
               {title}
             </DialogTitle>
             {subtitle ? (

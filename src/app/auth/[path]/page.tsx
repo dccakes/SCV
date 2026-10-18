@@ -6,12 +6,12 @@ export default async function AuthPage({ params }: { params: Promise<{ path: str
   const showDemoAccounts = process.env.NODE_ENV !== 'production'
 
   return (
-    <main className='flex min-h-screen items-center justify-center bg-gray-50 px-4 py-8'>
+    <main className='flex min-h-screen items-center justify-center bg-background px-4 py-8'>
       <div className='w-full max-w-md space-y-4'>
         <AuthView path={path} />
 
         {isSignInPath && showDemoAccounts ? (
-          <section className='rounded-md border border-border bg-card p-3 text-card-foreground shadow-sm'>
+          <section className='rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm'>
             <h2 className='font-medium text-sm'>Demo Accounts</h2>
             <p className='mt-1 text-muted-foreground text-xs'>
               Try the seeded wedding demo data with one of these accounts.

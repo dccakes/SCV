@@ -166,7 +166,7 @@ function GuestCardComponent({
             {rsvpSummary.invited > 0 && (
               <Badge
                 variant='outline'
-                className='border-foreground/20 bg-accent/12 font-normal text-foreground/80'
+                className='border-foreground/20 bg-gold/12 font-normal text-foreground/80'
               >
                 {rsvpSummary.invited} invited
               </Badge>

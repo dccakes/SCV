@@ -73,55 +73,57 @@ function CountdownHero({ dashboardData }: { dashboardData: DashboardData | null 
     milestones.length > 0 ? Math.round((completedMilestones.length / milestones.length) * 100) : 0
 
   return (
-    <div className='relative overflow-hidden rounded-lg bg-sidebar-ink px-6 py-5'>
+    <div className='relative overflow-hidden rounded-lg bg-sidebar px-6 py-5'>
       {/* decorative glow */}
       <div className='pointer-events-none absolute top-[-40px] right-[-20px] h-48 w-48 rounded-full bg-primary/20 blur-2xl' />
 
       <div className='relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div>
-          <p className='mb-1 font-mono text-[0.6rem] text-sidebar-cream/40 uppercase tracking-[0.18em]'>
+          <p className='mb-1 font-mono text-[0.6rem] text-muted-foreground uppercase tracking-[0.18em]'>
             {hasDate ? 'Days until the big day' : 'Your wedding'}
           </p>
-          <p className='font-serif text-2xl text-sidebar-cream italic leading-tight'>
+          <p className='font-serif text-2xl text-sidebar-foreground italic leading-tight'>
             {coupleName}
           </p>
           {(dateLabel || location) && (
-            <p className='mt-0.5 font-mono text-[0.62rem] text-sidebar-cream/40 tracking-wider'>
+            <p className='mt-0.5 font-mono text-[0.62rem] text-muted-foreground tracking-wider'>
               {[dateLabel, location].filter(Boolean).join(' · ')}
             </p>
           )}
           {!hasDate && !location && (
-            <p className='mt-0.5 font-mono text-[0.62rem] text-sidebar-cream/30 tracking-wider'>
+            <p className='mt-0.5 font-mono text-[0.62rem] text-muted-foreground tracking-wider'>
               Set your date & location in{' '}
               <Link href='/settings' className='text-primary underline underline-offset-2'>
                 Settings
               </Link>
             </p>
           )}
-          <div className='mt-3 h-[2px] w-full max-w-[200px] overflow-hidden rounded-full bg-white/[0.08]'>
+          <div className='mt-3 h-[2px] w-full max-w-[200px] overflow-hidden rounded-full bg-sidebar-foreground/[0.08]'>
             <div
-              className='h-full rounded-full bg-gradient-to-r from-primary to-accent'
+              className='h-full rounded-full bg-gradient-to-r from-primary to-gold'
               style={{ width: `${planningPct}%` }}
             />
           </div>
-          <p className='mt-1 font-mono text-[0.55rem] text-sidebar-cream/30 tracking-widest'>
+          <p className='mt-1 font-mono text-[0.55rem] text-muted-foreground tracking-widest'>
             {planningPct}% of planning complete
           </p>
         </div>
 
         {hasDate ? (
           <div className='text-center'>
-            <span className='block font-serif text-6xl text-sidebar-cream leading-none'>
+            <span className='block font-display text-6xl text-sidebar-foreground leading-none'>
               {days}
             </span>
-            <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
+            <span className='mt-1 block font-mono text-[0.55rem] text-muted-foreground uppercase tracking-[0.14em]'>
               Days
             </span>
           </div>
         ) : (
           <div className='text-center'>
-            <span className='block font-serif text-5xl text-sidebar-cream/30 leading-none'>—</span>
-            <span className='mt-1 block font-mono text-[0.55rem] text-sidebar-cream/30 uppercase tracking-[0.14em]'>
+            <span className='block font-display text-5xl text-muted-foreground leading-none'>
+              —
+            </span>
+            <span className='mt-1 block font-mono text-[0.55rem] text-muted-foreground uppercase tracking-[0.14em]'>
               No date set
             </span>
           </div>
@@ -167,7 +169,7 @@ function MiniStats({ dashboardData }: { dashboardData: DashboardData | null }) {
         <Link
           key={s.label}
           href={s.href}
-          className='flex items-center gap-3 bg-card/90 px-4 py-3 transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-foreground/50'
+          className='flex items-center gap-3 bg-card/90 px-4 py-3 transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-inset'
         >
           <span className='text-xl opacity-55'>{s.icon}</span>
           <div className='min-w-0'>
@@ -403,7 +405,7 @@ function BudgetCard() {
             aria-label={`${pct}% of budget used`}
           >
             <div
-              className={`h-full rounded-full transition-all ${overBudget ? 'bg-destructive' : 'bg-gradient-to-r from-success to-accent'}`}
+              className={`h-full rounded-full transition-all ${overBudget ? 'bg-destructive' : 'bg-gradient-to-r from-success to-gold'}`}
               style={{ width: `${pct > 0 ? Math.max(2, pct) : 0}%` }}
             />
           </div>

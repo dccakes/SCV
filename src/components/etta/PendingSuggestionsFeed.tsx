@@ -41,16 +41,16 @@ export function PendingSuggestionsFeed({ suggestions: initial }: PendingSuggesti
   return (
     <div>
       <div className='mb-4 flex items-center gap-2'>
-        <h2 className='font-semibold text-gray-900 text-lg'>Etta&apos;s Suggestions</h2>
+        <h2 className='font-semibold text-foreground text-lg'>Etta&apos;s Suggestions</h2>
         {suggestions.length > 0 && (
-          <span className='inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-gray-200 px-1.5 font-medium text-gray-700 text-xs'>
+          <span className='inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-secondary px-1.5 font-medium text-secondary-foreground text-xs'>
             {suggestions.length}
           </span>
         )}
       </div>
 
       {suggestions.length === 0 ? (
-        <p className='py-8 text-center text-gray-400 text-sm'>No pending suggestions</p>
+        <p className='py-8 text-center text-muted-foreground text-sm'>No pending suggestions</p>
       ) : (
         <div className='flex flex-col gap-3'>
           {suggestions.map((suggestion) => (

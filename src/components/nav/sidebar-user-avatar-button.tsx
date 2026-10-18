@@ -14,23 +14,21 @@ export default function SidebarUserAvatarButton(props: Readonly<SidebarUserAvata
   const roleLabel = getOrganizationRoleLabel(workspace.role ?? 'member')
 
   return (
-    <div className='flex flex-col gap-1.5 border-white/10 border-t p-3'>
+    <div className='flex flex-col gap-1.5 border-sidebar-border border-t p-3'>
       <div
-        className={`flex items-center gap-2 rounded-md px-2 py-1.5 font-mono text-sidebar-cream/70 text-xs ${
+        className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-sidebar-foreground text-sm ${
           isCollapsed ? 'justify-center' : ''
         }`}
       >
-        <span className='flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent font-serif text-white text-xs italic'>
+        <span className='flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-[0.7rem] text-primary-foreground'>
           {initials}
         </span>
         {!isCollapsed && (
           <div>
-            <div className='font-serif text-[0.75rem] text-muted-foreground leading-tight'>
+            <div className='font-medium text-sidebar-foreground text-sm leading-tight'>
               {firstName}
             </div>
-            <div className='text-[0.55rem] text-muted-foreground uppercase tracking-wider'>
-              {roleLabel}
-            </div>
+            <div className='text-muted-foreground text-xs'>{roleLabel}</div>
           </div>
         )}
       </div>
@@ -38,7 +36,7 @@ export default function SidebarUserAvatarButton(props: Readonly<SidebarUserAvata
       <button
         type='button'
         onClick={onSignOut}
-        className={`flex items-center gap-2 rounded-sm border border-white/25 px-2 py-1.5 font-mono text-[0.58rem] text-muted-foreground uppercase tracking-widest transition-all hover:border-white/20 hover:text-sidebar-cream/75 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sidebar-cream/40 ${
+        className={`flex h-9 items-center gap-2 rounded-[10px] px-2 text-muted-foreground text-sm transition-colors hover:bg-sidebar-foreground/[0.06] hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring ${
           isCollapsed ? 'justify-center' : ''
         }`}
         title='Sign out'

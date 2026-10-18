@@ -8,7 +8,7 @@ export default function OpenSourceSection({ includeLongForm = false }: OpenSourc
       <p className='mb-5 font-mono text-[0.63rem] text-white/55 uppercase tracking-[.2em]'>
         Free &amp; Open Source
       </p>
-      <h2 className='font-normal font-serif text-[clamp(2rem,4vw,3rem)] text-white'>
+      <h2 className='font-display font-normal text-[clamp(2rem,4vw,3rem)] text-white'>
         Built with love.
         <br />
         Shared with everyone.
