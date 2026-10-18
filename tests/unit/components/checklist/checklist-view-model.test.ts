@@ -3,6 +3,8 @@ import {
   bucketTasks,
   filterTasks,
   getChecklistFiltersFromSearchParams,
+  getCompletionPercent,
+  groupBucketsIntoHorizons,
   hasMilestoneOverrideDivergence,
 } from '~/components/checklist/checklist-view-model'
 import type { MilestoneWithEffectiveStatus } from '~/server/domains/milestone'
@@ -105,6 +107,46 @@ describe('checklist-view-model', () => {
     expect(buckets.find((bucket) => bucket.key === 'done')?.tasks.map((task) => task.id)).toEqual([
       'task-done',
     ])
+  })
+
+  it('groups time buckets into Now, Next and Later columns and keeps Done apart', () => {
+    const now = new Date('2026-04-15T12:00:00.000Z')
+    const buckets = bucketTasks(
+      [
+        { ...baseTask, id: 'week', dueDate: new Date('2026-04-16T00:00:00.000Z') },
+        { ...baseTask, id: 'three', monthsBeforeWedding: 2 },
+        { ...baseTask, id: 'six', monthsBeforeWedding: 5 },
+        { ...baseTask, id: 'nine', monthsBeforeWedding: 10 },
+        { ...baseTask, id: 'dayof', monthsBeforeWedding: 0 },
+        { ...baseTask, id: 'done', completed: true },
+      ],
+      now
+    )
+
+    const { horizons, done } = groupBucketsIntoHorizons(buckets)
+
+    expect(horizons.map((horizon) => horizon.key)).toEqual(['now', 'next', 'later'])
+    expect(horizons.map((horizon) => horizon.title)).toEqual(['Now', 'Next', 'Later'])
+    expect(horizons[0]?.buckets.map((bucket) => bucket.key)).toEqual(['this-week', 'this-month'])
+    expect(horizons[1]?.buckets.map((bucket) => bucket.key)).toEqual(['three-months'])
+    expect(horizons[2]?.buckets.map((bucket) => bucket.key)).toEqual([
+      'six-months',
+      'nine-plus-months',
+      'day-of',
+    ])
+    expect(horizons.map((horizon) => horizon.taskCount)).toEqual([1, 1, 3])
+    expect(done.tasks.map((task) => task.id)).toEqual(['done'])
+  })
+
+  it('reports completion as a whole percentage and zero for an empty list', () => {
+    expect(getCompletionPercent([])).toBe(0)
+    expect(
+      getCompletionPercent([
+        { ...baseTask, id: 'a', completed: true },
+        { ...baseTask, id: 'b' },
+        { ...baseTask, id: 'c' },
+      ])
+    ).toBe(33)
   })
 
   it('flags milestone override divergence only when the effective status differs from derived', () => {

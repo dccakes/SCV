@@ -258,6 +258,15 @@ const initialEvents: EventWithStats[] = [
   },
 ]
 
+const renderChecklist = () =>
+  render(
+    <ChecklistPageClient
+      initialTasks={initialTasks}
+      initialMilestones={initialMilestones}
+      initialEvents={initialEvents}
+    />
+  )
+
 describe('ChecklistPageClient', () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -282,7 +291,7 @@ describe('ChecklistPageClient', () => {
 
     expect(screen.getByText('Invitations sent')).toBeInTheDocument()
     expect(screen.getByText('This week')).toBeInTheDocument()
-    expect(screen.getByText('3 months')).toBeInTheDocument()
+    expect(screen.getByText(/Within 3 months/)).toBeInTheDocument()
     expect(screen.getByText('Mail the invitations')).toBeInTheDocument()
     expect(screen.getByText('Collect the marriage license')).toBeInTheDocument()
     expect(screen.getByText('⚠ override')).toBeInTheDocument()
@@ -290,6 +299,36 @@ describe('ChecklistPageClient', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Done bucket' }))
     expect(screen.getByText('Pack the guest book pens')).toBeInTheDocument()
+  })
+
+  it('lays tasks out in Now, Next and Later columns', () => {
+    renderChecklist()
+
+    expect(screen.getByRole('region', { name: 'Now' })).toHaveTextContent('Mail the invitations')
+    expect(screen.getByRole('region', { name: 'Next' })).toHaveTextContent(
+      'Collect the marriage license'
+    )
+    expect(screen.getByRole('region', { name: 'Later' })).not.toHaveTextContent(
+      'Mail the invitations'
+    )
+  })
+
+  it('hides the milestones strip when there are no milestones', () => {
+    render(
+      <ChecklistPageClient
+        initialTasks={initialTasks}
+        initialMilestones={[]}
+        initialEvents={initialEvents}
+      />
+    )
+
+    expect(screen.queryByRole('heading', { name: 'Milestones' })).not.toBeInTheDocument()
+  })
+
+  it('shows overall checklist progress', () => {
+    renderChecklist()
+
+    expect(screen.getByText('33% of tasks done')).toBeInTheDocument()
   })
 
   it('syncs filter changes into the URL', () => {
@@ -301,7 +340,7 @@ describe('ChecklistPageClient', () => {
       />
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'LEGAL' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Legal' }))
 
     expect(mockReplace).toHaveBeenCalledWith('/checklist?category=LEGAL')
   })

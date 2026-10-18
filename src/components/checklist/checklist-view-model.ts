@@ -90,6 +90,65 @@ export function bucketTasks(tasks: Task[], now: Date = new Date()): TaskBucket[]
   }))
 }
 
+export type TaskHorizonKey = 'now' | 'next' | 'later'
+
+export type TaskHorizon = {
+  key: TaskHorizonKey
+  title: string
+  hint: string
+  buckets: TaskBucket[]
+  taskCount: number
+}
+
+const HORIZON_BUCKETS: Array<{
+  key: TaskHorizonKey
+  title: string
+  hint: string
+  bucketKeys: TaskBucketKey[]
+}> = [
+  { key: 'now', title: 'Now', hint: 'This month', bucketKeys: ['this-week', 'this-month'] },
+  { key: 'next', title: 'Next', hint: 'Within 3 months', bucketKeys: ['three-months'] },
+  {
+    key: 'later',
+    title: 'Later',
+    hint: '3 months and beyond',
+    bucketKeys: ['six-months', 'nine-plus-months', 'day-of'],
+  },
+]
+
+const EMPTY_DONE_BUCKET: TaskBucket = { key: 'done', title: 'Done', tasks: [] }
+
+export function groupBucketsIntoHorizons(buckets: TaskBucket[]): {
+  horizons: TaskHorizon[]
+  done: TaskBucket
+} {
+  const byKey = new Map(buckets.map((bucket) => [bucket.key, bucket]))
+
+  const horizons = HORIZON_BUCKETS.map(({ bucketKeys, ...horizon }) => {
+    const horizonBuckets = bucketKeys.flatMap((bucketKey) => {
+      const bucket = byKey.get(bucketKey)
+      return bucket ? [bucket] : []
+    })
+
+    return {
+      ...horizon,
+      buckets: horizonBuckets,
+      taskCount: horizonBuckets.reduce((total, bucket) => total + bucket.tasks.length, 0),
+    }
+  })
+
+  return { horizons, done: byKey.get('done') ?? EMPTY_DONE_BUCKET }
+}
+
+export function getCompletionPercent(tasks: Task[]): number {
+  if (tasks.length === 0) {
+    return 0
+  }
+
+  const completed = tasks.filter((task) => task.completed).length
+  return Math.round((completed / tasks.length) * 100)
+}
+
 export function hasMilestoneOverrideDivergence(milestone: MilestoneWithEffectiveStatus): boolean {
   return (
     milestone.userOverrideStatus !== null && milestone.effectiveStatus !== milestone.derivedStatus
