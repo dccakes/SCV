@@ -125,4 +125,35 @@ describe('useTasksCardState', () => {
       urgent: true,
     })
   })
+
+  it('labels undated tasks from their derived target date', () => {
+    const items = createTaskCardItems(
+      [
+        {
+          id: 'task-2',
+          weddingId: 'wedding-1',
+          eventId: 'event-1',
+          vendorId: null,
+          milestoneId: null,
+          seedKey: null,
+          title: 'Book venue',
+          category: 'VENUE',
+          monthsBeforeWedding: 12,
+          dueDate: null,
+          targetDate: new Date('2026-04-10T00:00:00.000Z'),
+          description: null,
+          notes: null,
+          isDefault: true,
+          position: 0,
+          completed: false,
+          completedAt: null,
+          createdAt: new Date('2026-01-01T00:00:00.000Z'),
+          updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+        },
+      ] as Parameters<typeof useTasksCardState>[0],
+      new Date('2026-10-18T12:00:00.000Z')
+    )
+
+    expect(items[0]).toMatchObject({ tag: 'Overdue', due: 'Overdue', urgent: true })
+  })
 })

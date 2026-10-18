@@ -124,8 +124,8 @@ export class DashboardService {
 
     // Build events with RSVP statistics
     const eventsWithStats = await this.buildEventsWithStats(events, invitations)
-    const taskPriorityQueue = buildTaskPriorityQueue(taskCandidates)
-    const tasksDueThisMonth = countTasksDueThisMonth(taskCandidates)
+    const taskPriorityQueue = buildTaskPriorityQueue(taskCandidates, weddingDate ?? null)
+    const tasksDueThisMonth = countTasksDueThisMonth(taskCandidates, weddingDate ?? null)
 
     // Get total guest count (excluding tag-alongs)
     const totalGuests = await this.guestRepo.countByWeddingId(weddingId, {

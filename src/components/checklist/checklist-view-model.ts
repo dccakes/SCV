@@ -2,6 +2,7 @@ import { TASK_CATEGORIES, type TaskCategoryValue } from '~/lib/constants/task-ca
 
 import type { MilestoneWithEffectiveStatus } from '~/server/domains/milestone'
 import type { Task } from '~/server/domains/task'
+import { endOfUtcWeek, getTaskTargetDate, startOfUtcDay } from '~/server/domains/task/task.schedule'
 
 export type ChecklistStatusFilter = 'active' | 'completed' | 'all'
 
@@ -199,26 +200,6 @@ function getTaskBucketKey(task: Task, now: Date, weddingDate: Date | null): Task
   return 'nine-plus-months'
 }
 
-// Explicit due dates win; otherwise the target is the wedding date minus the task's lead time.
-function getTaskTargetDate(task: Task, weddingDate: Date | null): Date | null {
-  if (task.dueDate) {
-    return startOfUtcDay(task.dueDate)
-  }
-
-  if (!weddingDate) {
-    return null
-  }
-
-  const wedding = startOfUtcDay(weddingDate)
-  return new Date(
-    Date.UTC(
-      wedding.getUTCFullYear(),
-      wedding.getUTCMonth() - task.monthsBeforeWedding,
-      wedding.getUTCDate()
-    )
-  )
-}
-
 function monthsBetween(from: Date, to: Date): number {
   const months =
     (to.getUTCFullYear() - from.getUTCFullYear()) * 12 + (to.getUTCMonth() - from.getUTCMonth())
@@ -255,15 +236,4 @@ function compareBucketTasks(left: Task, right: Task, weddingDate: Date | null): 
 
 function isTaskCategory(value: string | null): value is TaskCategoryValue {
   return value !== null && TASK_CATEGORIES.includes(value as TaskCategoryValue)
-}
-
-function startOfUtcDay(date: Date): Date {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
-}
-
-function endOfUtcWeek(date: Date): Date {
-  const end = startOfUtcDay(date)
-  const daysUntilSunday = (7 - end.getUTCDay()) % 7
-  end.setUTCDate(end.getUTCDate() + daysUntilSunday)
-  return end
 }

@@ -6,7 +6,10 @@ import type { TaskCategoryValue } from '~/lib/constants/task-categories'
 import { TASK_CATEGORY_LABELS } from '~/lib/constants/task-categories'
 import type { Task } from '~/server/domains/task'
 
-const EMPTY_TASKS: Task[] = []
+// The priority queue adds targetDate; plain tasks fall back to their explicit due date.
+type CardTask = Task & { targetDate?: Date | null }
+
+const EMPTY_TASKS: CardTask[] = []
 
 export type TaskItem = {
   id: string
@@ -17,7 +20,7 @@ export type TaskItem = {
   urgent: boolean
 }
 
-export function useTasksCardState(priorityTasks: Task[] = EMPTY_TASKS) {
+export function useTasksCardState(priorityTasks: CardTask[] = EMPTY_TASKS) {
   const [tasks, setTasks] = useState<TaskItem[]>(() => createTaskCardItems(priorityTasks))
 
   useEffect(() => {
@@ -33,15 +36,19 @@ export function useTasksCardState(priorityTasks: Task[] = EMPTY_TASKS) {
   return { tasks, setTasks, toggleTask }
 }
 
-export function createTaskCardItems(tasks: Task[], now: Date = new Date()): TaskItem[] {
-  return tasks.map((task) => ({
-    id: task.id,
-    text: task.title,
-    tag: getTaskTag(task.category, task.dueDate, task.completed, now),
-    due: getTaskDueLabel(task, now),
-    done: task.completed,
-    urgent: isUrgentTask(task, now),
-  }))
+export function createTaskCardItems(tasks: CardTask[], now: Date = new Date()): TaskItem[] {
+  return tasks.map((task) => {
+    const targetDate = task.targetDate ?? task.dueDate
+
+    return {
+      id: task.id,
+      text: task.title,
+      tag: getTaskTag(task.category, targetDate, task.completed, now),
+      due: getTaskDueLabel(task, targetDate, now),
+      done: task.completed,
+      urgent: isUrgentTask(targetDate, task.completed, now),
+    }
+  })
 }
 
 const getTaskTag = (
@@ -69,14 +76,14 @@ const getTaskTag = (
   return TASK_CATEGORY_LABELS[category] ?? 'Task'
 }
 
-const getTaskDueLabel = (task: Task, now: Date): string => {
+const getTaskDueLabel = (task: Task, targetDate: Date | null, now: Date): string => {
   if (task.completed) {
     return 'Done'
   }
 
-  if (task.dueDate) {
+  if (targetDate) {
     const today = startOfUtcDay(now)
-    const normalizedDueDate = startOfUtcDay(task.dueDate)
+    const normalizedDueDate = startOfUtcDay(targetDate)
     if (normalizedDueDate < today) {
       return 'Overdue'
     }
@@ -99,13 +106,13 @@ const getTaskDueLabel = (task: Task, now: Date): string => {
   return `${task.monthsBeforeWedding} mo`
 }
 
-const isUrgentTask = (task: Task, now: Date): boolean => {
-  if (!task.dueDate || task.completed) {
+const isUrgentTask = (targetDate: Date | null, completed: boolean, now: Date): boolean => {
+  if (!targetDate || completed) {
     return false
   }
 
   const today = startOfUtcDay(now)
-  const normalizedDueDate = startOfUtcDay(task.dueDate)
+  const normalizedDueDate = startOfUtcDay(targetDate)
   return normalizedDueDate <= endOfUtcWeek(today)
 }
 

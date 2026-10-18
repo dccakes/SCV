@@ -6,6 +6,7 @@ const mockGetRequiredWedding = jest.fn()
 const mockGetTasks = jest.fn()
 const mockGetMilestones = jest.fn()
 const mockGetEvents = jest.fn()
+const mockGetWeddingDetails = jest.fn()
 const mockChecklistPageClient = jest.fn(
   ({
     initialTasks,
@@ -42,6 +43,9 @@ jest.mock('~/trpc/server', () => ({
     event: {
       getAllByUserIdWithStats: () => mockGetEvents(),
     },
+    wedding: {
+      getDetails: () => mockGetWeddingDetails(),
+    },
   },
 }))
 
@@ -65,6 +69,8 @@ describe('ChecklistPage', () => {
     mockGetTasks.mockReset()
     mockGetMilestones.mockReset()
     mockGetEvents.mockReset()
+    mockGetWeddingDetails.mockReset()
+    mockGetWeddingDetails.mockResolvedValue({ weddingDate: '2027-04-10T00:00:00.000Z' })
     mockChecklistPageClient.mockClear()
     mockDashboardTopbar.mockClear()
   })
@@ -86,6 +92,7 @@ describe('ChecklistPage', () => {
       initialTasks: [{ id: 'task-1' }],
       initialMilestones: [{ id: 'milestone-1' }],
       initialEvents: [{ id: 'event-1' }],
+      weddingDate: '2027-04-10T00:00:00.000Z',
     })
     expect(screen.getByTestId('checklist-page-client')).toBeInTheDocument()
   })

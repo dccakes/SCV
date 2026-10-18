@@ -1,11 +1,15 @@
-import type { Task, TaskPriorityQueueResult } from '~/server/domains/task/task.types'
+import { endOfUtcWeek, getTaskTargetDate, startOfUtcDay } from '~/server/domains/task/task.schedule'
+import type { PriorityTask, Task, TaskPriorityQueueResult } from '~/server/domains/task/task.types'
 
 export function buildTaskPriorityQueue(
   tasks: Task[],
+  weddingDate: Date | null = null,
   now: Date = new Date(),
   limit = 6
 ): TaskPriorityQueueResult {
-  const rankedTasks = [...tasks].sort((left, right) => comparePriorityTasks(left, right, now))
+  const rankedTasks = tasks
+    .map((task) => ({ ...task, targetDate: getTaskTargetDate(task, weddingDate) }))
+    .sort((left, right) => comparePriorityTasks(left, right, now))
 
   return {
     tasks: rankedTasks.slice(0, limit),
@@ -13,21 +17,21 @@ export function buildTaskPriorityQueue(
   }
 }
 
-export function countTasksDueThisMonth(tasks: Task[], now: Date = new Date()): number {
-  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
+// Overdue tasks count too: they still need doing this month.
+export function countTasksDueThisMonth(
+  tasks: Task[],
+  weddingDate: Date | null = null,
+  now: Date = new Date()
+): number {
   const monthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1))
 
   return tasks.filter((task) => {
-    if (task.dueDate) {
-      const dueDate = startOfUtcDay(task.dueDate)
-      return dueDate >= monthStart && dueDate < monthEnd
-    }
-
-    return task.monthsBeforeWedding === 0
+    const targetDate = getTaskTargetDate(task, weddingDate)
+    return targetDate !== null && targetDate < monthEnd
   }).length
 }
 
-const comparePriorityTasks = (left: Task, right: Task, now: Date): number => {
+const comparePriorityTasks = (left: PriorityTask, right: PriorityTask, now: Date): number => {
   const today = startOfUtcDay(now)
   const weekEnd = endOfUtcWeek(today)
   const leftBucket = getPriorityBucket(left, today, weekEnd)
@@ -37,20 +41,19 @@ const comparePriorityTasks = (left: Task, right: Task, now: Date): number => {
     return leftBucket - rightBucket
   }
 
-  if (leftBucket === 2 && left.monthsBeforeWedding !== right.monthsBeforeWedding) {
+  // Without a wedding date undated tasks have no target, so rank by lead time first.
+  const hasUndated = !left.targetDate || !right.targetDate
+  if (leftBucket === 2 && hasUndated && left.monthsBeforeWedding !== right.monthsBeforeWedding) {
     return right.monthsBeforeWedding - left.monthsBeforeWedding
   }
 
-  if (left.dueDate && right.dueDate) {
-    const dueDifference =
-      startOfUtcDay(left.dueDate).getTime() - startOfUtcDay(right.dueDate).getTime()
-    if (dueDifference !== 0) {
-      return dueDifference
+  if (left.targetDate && right.targetDate) {
+    const targetDifference = left.targetDate.getTime() - right.targetDate.getTime()
+    if (targetDifference !== 0) {
+      return targetDifference
     }
-  } else if (left.dueDate || right.dueDate) {
-    return left.dueDate ? -1 : 1
-  } else if (left.monthsBeforeWedding !== right.monthsBeforeWedding) {
-    return left.monthsBeforeWedding - right.monthsBeforeWedding
+  } else if (left.targetDate || right.targetDate) {
+    return left.targetDate ? -1 : 1
   }
 
   if (left.position !== right.position) {
@@ -60,29 +63,18 @@ const comparePriorityTasks = (left: Task, right: Task, now: Date): number => {
   return left.createdAt.getTime() - right.createdAt.getTime()
 }
 
-const getPriorityBucket = (task: Task, today: Date, weekEnd: Date): number => {
-  if (!task.dueDate) {
+const getPriorityBucket = (task: PriorityTask, today: Date, weekEnd: Date): number => {
+  if (!task.targetDate) {
     return 2
   }
 
-  const dueDate = startOfUtcDay(task.dueDate)
-  if (dueDate < today) {
+  if (task.targetDate < today) {
     return 0
   }
 
-  if (dueDate <= weekEnd) {
+  if (task.targetDate <= weekEnd) {
     return 1
   }
 
   return 2
-}
-
-const startOfUtcDay = (date: Date): Date =>
-  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
-
-const endOfUtcWeek = (date: Date): Date => {
-  const end = startOfUtcDay(date)
-  const daysUntilSunday = (7 - end.getUTCDay()) % 7
-  end.setUTCDate(end.getUTCDate() + daysUntilSunday)
-  return end
 }

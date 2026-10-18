@@ -41,7 +41,10 @@ export type TaskUpdateData = {
   completedAt?: Date | null
 }
 
+// targetDate is the explicit due date, or one derived from the wedding date and lead time.
+export type PriorityTask = Task & { targetDate: Date | null }
+
 export type TaskPriorityQueueResult = {
-  tasks: Task[]
+  tasks: PriorityTask[]
   totalActive: number
 }

@@ -32,6 +32,7 @@ export const mockDelete = jest.fn()
 export const mockBelongsToWedding = jest.fn()
 export const mockEventBelongsToWedding = jest.fn()
 export const mockFindFirstEventId = jest.fn()
+export const mockFindFirstEventDate = jest.fn().mockResolvedValue(null)
 
 export const TaskRepository = jest.fn().mockImplementation(() => ({
   findById: mockFindById,
@@ -43,6 +44,7 @@ export const TaskRepository = jest.fn().mockImplementation(() => ({
   belongsToWedding: mockBelongsToWedding,
   eventBelongsToWedding: mockEventBelongsToWedding,
   findFirstEventId: mockFindFirstEventId,
+  findFirstEventDate: mockFindFirstEventDate,
 }))
 
 export const resetMocks = (): void => {

@@ -126,6 +126,17 @@ export class TaskRepository {
 
     return event?.id ?? null
   }
+
+  // Same event ordering as findFirstEventId: the first event stands in for the wedding date.
+  async findFirstEventDate(weddingId: string): Promise<Date | null> {
+    const event = await this.db.event.findFirst({
+      where: { weddingId },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      select: { date: true },
+    })
+
+    return event?.date ?? null
+  }
 }
 
 const hasTaskField = <T extends object, K extends keyof T>(value: T, key: K): boolean =>

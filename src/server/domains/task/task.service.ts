@@ -112,8 +112,11 @@ export class TaskService {
   async getPriorityQueue(ctx: AuthzContext, weddingId: string): Promise<TaskPriorityQueueResult> {
     requirePermission(ctx, { wedding: ['read'] })
 
-    const activeTasks = await this.taskRepository.findPriorityQueueCandidates(weddingId)
-    return buildTaskPriorityQueue(activeTasks)
+    const [activeTasks, weddingDate] = await Promise.all([
+      this.taskRepository.findPriorityQueueCandidates(weddingId),
+      this.taskRepository.findFirstEventDate(weddingId),
+    ])
+    return buildTaskPriorityQueue(activeTasks, weddingDate)
   }
 
   private async resolveEventId(weddingId: string, eventId?: string): Promise<string> {

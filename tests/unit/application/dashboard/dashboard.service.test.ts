@@ -551,7 +551,8 @@ describe('DashboardService', () => {
       expect(result?.weddingData).toBeDefined()
       expect(result?.totalGuests).toBe(3)
       expect(result?.totalEvents).toBe(2)
-      expect(result?.tasksDueThisMonth).toBe(1)
+      // The first event (wedding date) is in June 2025, so both tasks are overdue and count.
+      expect(result?.tasksDueThisMonth).toBe(2)
       expect(result?.taskPriorityQueue.tasks).toHaveLength(2)
       expect(result?.milestones).toHaveLength(1)
       expect(result?.households).toHaveLength(2)

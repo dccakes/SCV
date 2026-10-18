@@ -8,6 +8,7 @@ export const taskService = new TaskService(taskRepository)
 export { TaskRepository } from '~/server/domains/task/task.repository'
 export { TaskService } from '~/server/domains/task/task.service'
 export type {
+  PriorityTask,
   Task,
   TaskCreateData,
   TaskListFilters,
