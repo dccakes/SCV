@@ -16,10 +16,11 @@ export default async function ChecklistPage(_props: {
 }) {
   await getRequiredWedding()
 
-  const [initialTasks, initialMilestones, initialEvents] = await Promise.all([
+  const [initialTasks, initialMilestones, initialEvents, weddingDetails] = await Promise.all([
     api.task.list({}),
     api.milestone.getAll({}),
     api.event.getAllByUserIdWithStats(),
+    api.wedding.getDetails(),
   ])
 
   return (
@@ -30,6 +31,7 @@ export default async function ChecklistPage(_props: {
           initialTasks={initialTasks}
           initialMilestones={initialMilestones}
           initialEvents={initialEvents ?? []}
+          weddingDate={weddingDetails.weddingDate ?? null}
         />
       </main>
     </>

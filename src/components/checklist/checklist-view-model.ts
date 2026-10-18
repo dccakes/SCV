@@ -72,11 +72,15 @@ export function filterTasks(tasks: Task[], filters: ChecklistFilters): Task[] {
   })
 }
 
-export function bucketTasks(tasks: Task[], now: Date = new Date()): TaskBucket[] {
+export function bucketTasks(
+  tasks: Task[],
+  now: Date = new Date(),
+  weddingDate: Date | null = null
+): TaskBucket[] {
   const grouped = new Map<TaskBucketKey, Task[]>()
 
   for (const task of tasks) {
-    const bucketKey = getTaskBucketKey(task, now)
+    const bucketKey = getTaskBucketKey(task, now, weddingDate)
     const bucketTasks = grouped.get(bucketKey) ?? []
     bucketTasks.push(task)
     grouped.set(bucketKey, bucketTasks)
@@ -85,7 +89,7 @@ export function bucketTasks(tasks: Task[], now: Date = new Date()): TaskBucket[]
   return TASK_BUCKET_ORDER.map((bucket) => ({
     ...bucket,
     tasks: [...(grouped.get(bucket.key) ?? [])].sort((left, right) =>
-      compareBucketTasks(left, right, now)
+      compareBucketTasks(left, right, weddingDate)
     ),
   }))
 }
@@ -155,22 +159,24 @@ export function hasMilestoneOverrideDivergence(milestone: MilestoneWithEffective
   )
 }
 
-function getTaskBucketKey(task: Task, now: Date): TaskBucketKey {
+function getTaskBucketKey(task: Task, now: Date, weddingDate: Date | null): TaskBucketKey {
   if (task.completed) {
     return 'done'
   }
 
-  if (task.dueDate) {
-    const dueDate = startOfUtcDay(task.dueDate)
-    const today = startOfUtcDay(now)
+  const targetDate = getTaskTargetDate(task, weddingDate)
+  const today = startOfUtcDay(now)
+
+  if (targetDate) {
     const weekEnd = endOfUtcWeek(today)
     const monthEnd = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 1))
 
-    if (dueDate <= weekEnd) {
+    // Overdue tasks land here too, so anything past its target surfaces under Now.
+    if (targetDate <= weekEnd) {
       return 'this-week'
     }
 
-    if (dueDate < monthEnd) {
+    if (targetDate < monthEnd) {
       return 'this-month'
     }
   }
@@ -179,26 +185,57 @@ function getTaskBucketKey(task: Task, now: Date): TaskBucketKey {
     return 'day-of'
   }
 
-  if (task.monthsBeforeWedding <= 3) {
+  // Without a target date we only know the planned lead time, not how far away it is.
+  const monthsAway = targetDate ? monthsBetween(today, targetDate) : task.monthsBeforeWedding
+
+  if (monthsAway <= 3) {
     return 'three-months'
   }
 
-  if (task.monthsBeforeWedding <= 6) {
+  if (monthsAway <= 6) {
     return 'six-months'
   }
 
   return 'nine-plus-months'
 }
 
-function compareBucketTasks(left: Task, right: Task, now: Date): number {
-  if (left.dueDate && right.dueDate) {
-    const dueDateDifference =
-      startOfUtcDay(left.dueDate).getTime() - startOfUtcDay(right.dueDate).getTime()
-    if (dueDateDifference !== 0) {
-      return dueDateDifference
+// Explicit due dates win; otherwise the target is the wedding date minus the task's lead time.
+function getTaskTargetDate(task: Task, weddingDate: Date | null): Date | null {
+  if (task.dueDate) {
+    return startOfUtcDay(task.dueDate)
+  }
+
+  if (!weddingDate) {
+    return null
+  }
+
+  const wedding = startOfUtcDay(weddingDate)
+  return new Date(
+    Date.UTC(
+      wedding.getUTCFullYear(),
+      wedding.getUTCMonth() - task.monthsBeforeWedding,
+      wedding.getUTCDate()
+    )
+  )
+}
+
+function monthsBetween(from: Date, to: Date): number {
+  const months =
+    (to.getUTCFullYear() - from.getUTCFullYear()) * 12 + (to.getUTCMonth() - from.getUTCMonth())
+  return to.getUTCDate() > from.getUTCDate() ? months + 1 : months
+}
+
+function compareBucketTasks(left: Task, right: Task, weddingDate: Date | null): number {
+  const leftTarget = getTaskTargetDate(left, weddingDate)
+  const rightTarget = getTaskTargetDate(right, weddingDate)
+
+  if (leftTarget && rightTarget) {
+    const targetDifference = leftTarget.getTime() - rightTarget.getTime()
+    if (targetDifference !== 0) {
+      return targetDifference
     }
-  } else if (left.dueDate || right.dueDate) {
-    return left.dueDate ? -1 : 1
+  } else if (leftTarget || rightTarget) {
+    return leftTarget ? -1 : 1
   }
 
   if (left.completedAt && right.completedAt) {
@@ -213,7 +250,7 @@ function compareBucketTasks(left: Task, right: Task, now: Date): number {
     return left.position - right.position
   }
 
-  return left.createdAt.getTime() - right.createdAt.getTime() + now.getTime() * 0
+  return left.createdAt.getTime() - right.createdAt.getTime()
 }
 
 function isTaskCategory(value: string | null): value is TaskCategoryValue {

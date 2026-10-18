@@ -109,6 +109,36 @@ describe('checklist-view-model', () => {
     ])
   })
 
+  it('buckets tasks by distance to their target date when the wedding date is known', () => {
+    const now = new Date('2026-10-18T12:00:00.000Z')
+    const weddingDate = new Date('2027-04-10T00:00:00.000Z')
+    const tasks: Task[] = [
+      { ...baseTask, id: 'overdue-12', monthsBeforeWedding: 12 },
+      { ...baseTask, id: 'overdue-9', monthsBeforeWedding: 9 },
+      { ...baseTask, id: 'next-4', monthsBeforeWedding: 4 },
+      { ...baseTask, id: 'later-1', monthsBeforeWedding: 1 },
+      { ...baseTask, id: 'dayof', monthsBeforeWedding: 0 },
+      {
+        ...baseTask,
+        id: 'explicit-due',
+        monthsBeforeWedding: 1,
+        dueDate: new Date('2026-10-28T00:00:00.000Z'),
+      },
+    ]
+
+    const buckets = bucketTasks(tasks, now, weddingDate)
+    const idsFor = (key: string) =>
+      buckets.find((bucket) => bucket.key === key)?.tasks.map((task) => task.id)
+
+    // Wedding is ~6 months out, so 12 and 9 month tasks are overdue and belong in Now.
+    expect(idsFor('this-week')).toEqual(['overdue-12', 'overdue-9'])
+    expect(idsFor('this-month')).toEqual(['explicit-due'])
+    expect(idsFor('three-months')).toEqual(['next-4'])
+    expect(idsFor('six-months')).toEqual(['later-1'])
+    expect(idsFor('nine-plus-months')).toEqual([])
+    expect(idsFor('day-of')).toEqual(['dayof'])
+  })
+
   it('groups time buckets into Now, Next and Later columns and keeps Done apart', () => {
     const now = new Date('2026-04-15T12:00:00.000Z')
     const buckets = bucketTasks(

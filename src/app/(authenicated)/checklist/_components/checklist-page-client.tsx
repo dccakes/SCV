@@ -48,12 +48,14 @@ type ChecklistPageClientProps = Readonly<{
   initialTasks: Task[]
   initialMilestones: MilestoneWithEffectiveStatus[]
   initialEvents: EventWithStats[]
+  weddingDate: string | null
 }>
 
 export function ChecklistPageClient({
   initialTasks,
   initialMilestones,
   initialEvents,
+  weddingDate,
 }: ChecklistPageClientProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -87,7 +89,10 @@ export function ChecklistPageClient({
   })
 
   const filteredTasks = useMemo(() => filterTasks(tasks, filters), [filters, tasks])
-  const buckets = useMemo(() => bucketTasks(filteredTasks), [filteredTasks])
+  const buckets = useMemo(
+    () => bucketTasks(filteredTasks, new Date(), weddingDate ? new Date(weddingDate) : null),
+    [filteredTasks, weddingDate]
+  )
   const { horizons, done } = useMemo(() => groupBucketsIntoHorizons(buckets), [buckets])
   const completionPercent = getCompletionPercent(tasks)
   const hasDefaultFilters =
