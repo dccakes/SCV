@@ -99,9 +99,9 @@ test.describe('Vendor CRUD', () => {
   test('should create a new vendor', async ({ page }) => {
     await page.goto('/vendors')
 
-    // Click the top-level "+ Add Vendor" button (defaults to "Other" category)
+    // Click the top-level "Add vendor" button (defaults to "Other" category)
     await page
-      .getByRole('button', { name: /\+ add vendor/i })
+      .getByRole('button', { name: /^add vendor$/i })
       .first()
       .click()
 
@@ -119,9 +119,9 @@ test.describe('Vendor CRUD', () => {
   test('should delete a vendor', async ({ page }) => {
     await page.goto('/vendors')
 
-    // First create a vendor to delete via the top-level "+ Add Vendor" button
+    // First create a vendor to delete via the top-level "Add vendor" button
     await page
-      .getByRole('button', { name: /\+ add vendor/i })
+      .getByRole('button', { name: /^add vendor$/i })
       .first()
       .click()
 
@@ -143,7 +143,7 @@ test.describe('Vendor CRUD', () => {
 
     // Create a dedicated vendor so we don't permanently mutate seed data
     await page
-      .getByRole('button', { name: /\+ add vendor/i })
+      .getByRole('button', { name: /^add vendor$/i })
       .first()
       .click()
     const createDialog = page.getByRole('dialog')
@@ -397,9 +397,9 @@ test.describe('XSS Injection Prevention', () => {
       leftoverCount = await removeBtns.count()
     }
 
-    // Create a vendor with XSS in the name via the top-level "+ Add Vendor" button
+    // Create a vendor with XSS in the name via the top-level "Add vendor" button
     await page
-      .getByRole('button', { name: /\+ add vendor/i })
+      .getByRole('button', { name: /^add vendor$/i })
       .first()
       .click()
 
@@ -450,7 +450,7 @@ test.describe('XSS Injection Prevention', () => {
     }
 
     await page
-      .getByRole('button', { name: /\+ add vendor/i })
+      .getByRole('button', { name: /^add vendor$/i })
       .first()
       .click()
 
