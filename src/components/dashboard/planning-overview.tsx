@@ -262,7 +262,7 @@ function RsvpCard({ dashboardData }: { dashboardData: DashboardData | null }) {
   const declinedPct = (declined / total) * 100
 
   return (
-    <Panel id='rsvps' title='RSVPs' action='View all →' actionHref='/guest-list'>
+    <Panel id='rsvps' title='RSVPs'>
       <div className='flex flex-col gap-3'>
         <p className='font-display text-[2.75rem] text-foreground leading-none'>
           {attending}
@@ -281,6 +281,9 @@ function RsvpCard({ dashboardData }: { dashboardData: DashboardData | null }) {
           {pending > 0 ? `${pending} still to reply` : 'Everyone has replied'}
           {declined > 0 ? ` · ${declined} declined` : ''}
         </p>
+        <Link href='/guest-list' className={`${outlineLinkClass} self-start`}>
+          Manage RSVPs →
+        </Link>
       </div>
     </Panel>
   )

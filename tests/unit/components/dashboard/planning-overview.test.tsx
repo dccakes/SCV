@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 import type { DashboardData } from '~/app/utils/shared-types'
 import PlanningOverview from '~/components/dashboard/planning-overview'
@@ -318,6 +318,10 @@ describe('PlanningOverview', () => {
     expect(rsvps).toHaveTextContent('89')
     expect(rsvps).toHaveTextContent('/ 120')
     expect(rsvps).toHaveTextContent('23 still to reply')
+    expect(within(rsvps).getByRole('link', { name: 'Manage RSVPs →' })).toHaveAttribute(
+      'href',
+      '/guest-list'
+    )
   })
 
   it('renders real priority queue tasks and the checklist link', () => {
