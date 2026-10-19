@@ -10,7 +10,6 @@
 
 // biome-ignore lint/style/noRestrictedImports: cross-domain read-only aggregation requires direct DB access for derived timeline events
 import type { PrismaClient } from '@prisma/client'
-import { TRPCError } from '@trpc/server'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { CommunicationLogRepository } from '~/server/domains/communication-log/communication-log.repository'
@@ -18,6 +17,7 @@ import type {
   CommunicationLogEntry,
   HouseholdNote,
 } from '~/server/domains/communication-log/communication-log.types'
+import { ForbiddenError } from '~/server/domains/shared/domain-error'
 
 export class CommunicationLogService {
   constructor(
@@ -42,10 +42,7 @@ export class CommunicationLogService {
       select: { id: true },
     })
     if (!household) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'Household does not belong to your wedding',
-      })
+      throw new ForbiddenError('Household does not belong to your wedding')
     }
 
     const [notes, invitations, gifts] = await Promise.all([
@@ -142,10 +139,7 @@ export class CommunicationLogService {
 
     const belongsToWedding = await this.repository.belongsToWedding(noteId, weddingId)
     if (!belongsToWedding) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'Note does not belong to your wedding',
-      })
+      throw new ForbiddenError('Note does not belong to your wedding')
     }
 
     return this.repository.delete(noteId)

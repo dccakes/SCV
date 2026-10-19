@@ -4,8 +4,6 @@
 
 import { randomBytes } from 'node:crypto'
 
-import { TRPCError } from '@trpc/server'
-
 import { env } from '~/env'
 
 import type { AuthzContext } from '~/server/authz/authorization.types'
@@ -18,6 +16,11 @@ import type {
   MessagingIdentity,
   SessionOptions,
 } from '~/server/domains/messaging/messaging.types'
+import {
+  InvariantViolationError,
+  NotFoundError,
+  ValidationError,
+} from '~/server/domains/shared/domain-error'
 
 const PAIRING_TOKEN_TTL_MS = 15 * 60_000
 
@@ -39,10 +42,7 @@ export class MessagingService {
 
     const username = env.TELEGRAM_BOT_USERNAME
     if (!username) {
-      throw new TRPCError({
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'TELEGRAM_BOT_USERNAME is not configured',
-      })
+      throw new InvariantViolationError('TELEGRAM_BOT_USERNAME is not configured')
     }
 
     const token = randomBytes(32).toString('base64url')
@@ -69,12 +69,12 @@ export class MessagingService {
     const result = await this.repo.consumeAndUpsert(input)
     if (!result.ok) {
       if (result.code === 'NOT_FOUND') {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'Pairing token not found' })
+        throw new NotFoundError('Pairing token not found')
       }
       if (result.code === 'CONSUMED') {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Pairing token already consumed' })
+        throw new ValidationError('Pairing token already consumed')
       }
-      throw new TRPCError({ code: 'BAD_REQUEST', message: 'Pairing token expired' })
+      throw new ValidationError('Pairing token expired')
     }
     return result.identity
   }
@@ -211,7 +211,7 @@ export class MessagingService {
     requirePermission(ctx, { wedding: ['update'] })
     const identity = await this.repo.findIdentityById(identityId)
     if (!identity || identity.weddingId !== weddingId) {
-      throw new TRPCError({ code: 'NOT_FOUND', message: 'Identity not found' })
+      throw new NotFoundError('Identity not found')
     }
     await this.repo.revokeIdentity(identityId)
   }

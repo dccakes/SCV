@@ -7,8 +7,6 @@
  * - Ownership + permission enforcement
  */
 
-import { TRPCError } from '@trpc/server'
-
 jest.mock('~/server/authz/permission-checker', () => ({
   requirePermission: jest.fn(),
 }))
@@ -20,6 +18,7 @@ import type {
   BudgetCategoryWithExpenses,
   BudgetExpense,
 } from '~/server/domains/budget/budget.types'
+import { DomainError } from '~/server/domains/shared/domain-error'
 
 const mockRequirePermission = requirePermission as jest.Mock
 
@@ -242,7 +241,7 @@ describe('BudgetService category ownership', () => {
 
     await expect(
       service.updateCategory(ctx, WEDDING_ID, { categoryId: 'category-1', name: 'Hacked' })
-    ).rejects.toThrow(TRPCError)
+    ).rejects.toThrow(DomainError)
   })
 
   it('throws NOT_FOUND when the category is missing', async () => {
@@ -251,7 +250,7 @@ describe('BudgetService category ownership', () => {
     })
 
     await expect(service.deleteCategory(ctx, WEDDING_ID, 'missing')).rejects.toMatchObject({
-      code: 'NOT_FOUND',
+      kind: 'NOT_FOUND',
     })
   })
 
@@ -287,7 +286,7 @@ describe('BudgetService expense ownership', () => {
         description: 'Sneaky',
         amount: 100,
       })
-    ).rejects.toThrow(TRPCError)
+    ).rejects.toThrow(DomainError)
   })
 
   it('defaults deposit and refund flags when creating an expense', async () => {
@@ -325,6 +324,6 @@ describe('BudgetService expense ownership', () => {
 
     await expect(
       service.updateExpense(ctx, WEDDING_ID, { expenseId: 'e1', amount: 5 })
-    ).rejects.toThrow(TRPCError)
+    ).rejects.toThrow(DomainError)
   })
 })

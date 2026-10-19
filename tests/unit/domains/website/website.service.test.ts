@@ -111,7 +111,7 @@ describe('WebsiteService', () => {
       await expect(
         websiteService.updateWebsite(actorContext, 'wedding-123', {})
       ).rejects.toMatchObject({
-        code: 'BAD_REQUEST',
+        kind: 'VALIDATION',
       })
 
       expect(mockUpdateFn).not.toHaveBeenCalled()
@@ -139,7 +139,7 @@ describe('WebsiteService', () => {
 
       await expect(
         websiteService.updateRsvpEnabled(actorContext, 'wedding-123', 'website-123', false)
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
       expect(mockUpdateRsvpEnabledFn).not.toHaveBeenCalled()
     })

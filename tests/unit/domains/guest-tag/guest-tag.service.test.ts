@@ -1,5 +1,3 @@
-import { TRPCError } from '@trpc/server'
-
 jest.mock('~/server/authz/permission-checker', () => ({
   requirePermission: jest.fn(),
 }))
@@ -23,6 +21,7 @@ import {
   resetMocks,
 } from '~/server/domains/guest-tag/guest-tag.repository'
 import { GuestTagService } from '~/server/domains/guest-tag/guest-tag.service'
+import { DomainError } from '~/server/domains/shared/domain-error'
 
 const mockCreateFn = mockCreate as jest.Mock
 const mockFindByIdFn = mockFindById as jest.Mock
@@ -92,7 +91,7 @@ describe('GuestTagService', () => {
           name: 'Family',
           color: '#3b82f6',
         })
-      ).rejects.toThrow(TRPCError)
+      ).rejects.toThrow(DomainError)
 
       expect(mockCreateFn).not.toHaveBeenCalled()
     })
@@ -188,7 +187,7 @@ describe('GuestTagService', () => {
         guestTagService.update(actorContext, 'tag-123', 'wedding-123', {
           name: 'Family',
         })
-      ).rejects.toThrow(TRPCError)
+      ).rejects.toThrow(DomainError)
 
       expect(mockUpdateFn).not.toHaveBeenCalled()
     })

@@ -16,7 +16,6 @@
 
 // biome-ignore lint/style/noRestrictedImports: architectural violation, tracked in ARCHITECTURAL_VIOLATIONS.md
 import type { PrismaClient } from '@prisma/client'
-import { TRPCError } from '@trpc/server'
 
 import { RSVP_STATUS } from '~/lib/constants/rsvp'
 import type { AuthzContext } from '~/server/authz/authorization.types'
@@ -24,6 +23,7 @@ import { requirePermission } from '~/server/authz/permission-checker'
 import type { EventRepository } from '~/server/domains/event/event.repository'
 import type { Event, EventWithStats } from '~/server/domains/event/event.types'
 import type { CreateEventInput, UpdateEventInput } from '~/server/domains/event/event.validator'
+import { ForbiddenError, NotFoundError } from '~/server/domains/shared/domain-error'
 
 export class EventService {
   constructor(
@@ -127,18 +127,12 @@ export class EventService {
     const event = await this.eventRepository.findById(eventId)
 
     if (!event) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'Event not found',
-      })
+      throw new NotFoundError('Event not found')
     }
 
     // Check ownership
     if (event.weddingId !== weddingId) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to access this event',
-      })
+      throw new ForbiddenError('You do not have permission to access this event')
     }
 
     return event
@@ -160,7 +154,7 @@ export class EventService {
       // Check if allowTagAlongs is being toggled on; also verifies event belongs to this wedding
       const currentEvent = await tx.event.findUnique({ where: { id: data.eventId } })
       if (!currentEvent || currentEvent.weddingId !== weddingId) {
-        throw new TRPCError({ code: 'FORBIDDEN' })
+        throw new ForbiddenError()
       }
       const wasAllowed = currentEvent.allowTagAlongs
       const nowAllowed = data.allowTagAlongs ?? false
@@ -240,7 +234,7 @@ export class EventService {
   private async assertEventInWedding(eventId: string, weddingId: string): Promise<void> {
     const belongs = await this.eventRepository.belongsToWedding(eventId, weddingId)
     if (!belongs) {
-      throw new TRPCError({ code: 'FORBIDDEN' })
+      throw new ForbiddenError()
     }
   }
 

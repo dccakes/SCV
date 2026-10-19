@@ -4,31 +4,34 @@ Groups 1 to 4 are PR 1, group 5 is PR 2, groups 6 to 10 are PR 3 (see design.md,
 
 ## 1. Domain error foundation (PR 1)
 
-- [ ] 1.1 Add `src/server/domains/shared/domain-error.ts` with `DomainError` and the six subclasses (D1), and verify with a unit test that each subclass exposes its `kind`, message and `cause`
-- [ ] 1.2 Add `src/server/api/domain-error-mapping.ts` with the `kind → code` table and `toTRPCError`, and verify with a unit test covering every kind, including the no-message case producing the code string as message
-- [ ] 1.3 Add `domainErrorMiddleware` as the innermost `.use()` on `baseProcedure` (D2), and verify with a test that a resolver throwing `NotFoundError('x')` returns `NOT_FOUND` with message `x` and that `trpc-tracing` records status 404, not 500
-- [ ] 1.4 Add a test that walks `appRouter` procedures and asserts a `ForbiddenError` from each surfaces as `FORBIDDEN`, and verify it passes
-- [ ] 1.5 Add an "Errors" subsection to `claude.md` (services throw `DomainError`, routers may throw `TRPCError`) and verify the example compiles against the real module path
+- [x] 1.1 Add `src/server/domains/shared/domain-error.ts` with `DomainError` and the six subclasses (D1), and verify with a unit test that each subclass exposes its `kind`, message and `cause`
+- [x] 1.2 Add `src/server/api/domain-error-mapping.ts` with the `kind → code` table and `toTRPCError`, and verify with a unit test covering every kind, including the no-message case producing the code string as message
+- [x] 1.3 Add `domainErrorMiddleware` as the innermost `.use()` on `baseProcedure` (D2), and verify with a test that a resolver throwing `NotFoundError('x')` returns `NOT_FOUND` with message `x` and that `trpc-tracing` records status 404, not 500
+- [x] 1.4 Add a test that walks `appRouter` procedures and asserts a `ForbiddenError` from each surfaces as `FORBIDDEN`, and verify it passes
+  - Done as: runtime tests on both builders (`publicProcedure`, `protectedProcedure`, the only two exported) plus a static guard that `initTRPC` exists only in `src/server/api/trpc.ts`. Walking `appRouter` would need every service mocked for the same guarantee.
+- [x] 1.5 Add an "Errors" subsection to `claude.md` (services throw `DomainError`, routers may throw `TRPCError`) and verify the example compiles against the real module path
 
 ## 2. Error sweep: authz and domain services (PR 1)
 
-- [ ] 2.1 Convert `src/server/authz/active-wedding.ts`, `organization-scope.ts` and `permission-checker.ts`, and verify `tests/unit/server/authz/organization-scope.test.ts` asserts subclasses and all `*.router.authz-context.test.ts` still pass unchanged
-- [ ] 2.2 Convert the guest list domains (guest, guest-tag, invitation, gift, question), and verify their service tests assert subclasses and their router tests pass unchanged
-- [ ] 2.3 Convert the planning domains (event, task, milestone, budget), and verify the same way
-- [ ] 2.4 Convert the remaining domains (user, vendor, website, website-section, wedding, messaging, communication-log), and verify the same way
-- [ ] 2.5 Verify `grep -rl TRPCError src/server/domains --include=*.service.ts` returns nothing
+- [x] 2.1 Convert `src/server/authz/active-wedding.ts`, `organization-scope.ts` and `permission-checker.ts`, and verify `tests/unit/server/authz/organization-scope.test.ts` asserts subclasses and all `*.router.authz-context.test.ts` still pass unchanged
+- [x] 2.2 Convert the guest list domains (guest, guest-tag, invitation, gift, question), and verify their service tests assert subclasses and their router tests pass unchanged
+- [x] 2.3 Convert the planning domains (event, task, milestone, budget), and verify the same way
+- [x] 2.4 Convert the remaining domains (user, vendor, website, website-section, wedding, messaging, communication-log), and verify the same way
+- [x] 2.5 Verify `grep -rl TRPCError src/server/domains --include=*.service.ts` returns nothing
 
 ## 3. Error sweep: application services and direct callers (PR 1)
 
-- [ ] 3.1 Convert the application services (event-management, guest-insights, household-invite, household-management, member-management, rsvp-submission, self-fill-registration, website-management), replacing selective `instanceof TRPCError` re-throws with subclass checks (D3), and verify their tests in `tests/unit/application/**` pass with subclass assertions
-- [ ] 3.2 Update `src/app/w/[websiteSubUrl]/save-the-date/update/page.tsx` to branch on `ForbiddenError`, `ValidationError` and `ConflictError`, and verify with a test covering the `expired`, `validation` and `save` redirects from the `domain-error-contract` spec
-- [ ] 3.3 Grep `src/app` and `src/lib` for other `instanceof TRPCError` or `.code ===` checks on service errors, convert any found, and record "none" in the PR description if there are none
+- [x] 3.1 Convert the application services (event-management, guest-insights, household-invite, household-management, member-management, rsvp-submission, self-fill-registration, website-management), replacing selective `instanceof TRPCError` re-throws with subclass checks (D3), and verify their tests in `tests/unit/application/**` pass with subclass assertions
+- [x] 3.2 Update `src/app/w/[websiteSubUrl]/save-the-date/update/page.tsx` to branch on `ForbiddenError`, `ValidationError` and `ConflictError`, and verify with a test covering the `expired`, `validation` and `save` redirects from the `domain-error-contract` spec
+- [x] 3.3 Grep `src/app` and `src/lib` for other `instanceof TRPCError` or `.code ===` checks on service errors, convert any found, and record "none" in the PR description if there are none
+  - Other `.code` checks (`load-wedding-by-suburl.ts`, `join/[token]`, `self-invite-link-manager`, `authenticated-route-data`) all go through tRPC, so they see mapped codes. `isAccessError` was also taught `DomainError` kinds, with tests, so future direct callers stay correct.
 
 ## 4. Lint enforcement for errors (PR 1)
 
-- [ ] 4.1 Install dependencies and reproduce why the existing `@prisma/client` ban in `biome.json` doesn't flag `event.service.ts`, and write the cause in the PR description
-- [ ] 4.2 Fix the override (D11) so it bans `@trpc/server` across services, application and authz (excluding routers), and verify `npm run lint` fails on a scratch file importing `TRPCError` in a service and passes on the real tree
-- [ ] 4.3 Run `npm run lint`, `npx tsc --noEmit` and `npm run test:unit`, and verify all three are clean before opening PR 1
+- [x] 4.1 Install dependencies and reproduce why the existing `@prisma/client` ban in `biome.json` doesn't flag `event.service.ts`, and write the cause in the PR description
+  - Cause: the rule works (it even flags type-only imports). Eight files suppress it with `// biome-ignore lint/style/noRestrictedImports`. Group 6 removes those suppressions.
+- [x] 4.2 Fix the override (D11) so it bans `@trpc/server` across services, application and authz (excluding routers), and verify `npm run lint` fails on a scratch file importing `TRPCError` in a service and passes on the real tree
+- [x] 4.3 Run `npm run lint`, `npx tsc --noEmit` and `npm run test:unit`, and verify all three are clean before opening PR 1
 
 ## 5. RSVP status value (PR 2)
 

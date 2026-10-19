@@ -169,7 +169,7 @@ describe('SelfFillRegistrationService', () => {
       mockFindByTokenFn.mockResolvedValue(null)
 
       await expect(service.registerGuest(validToken, validGuestInput)).rejects.toMatchObject({
-        code: 'NOT_FOUND',
+        kind: 'NOT_FOUND',
         message: expect.stringContaining('registration link'),
       })
     })
@@ -190,7 +190,7 @@ describe('SelfFillRegistrationService', () => {
       mockFindByTokenFn.mockResolvedValue({ ...mockSelfFillWeddingData, events: [] })
 
       await expect(service.registerGuest(validToken, validGuestInput)).rejects.toMatchObject({
-        code: 'NOT_FOUND',
+        kind: 'NOT_FOUND',
         message: expect.stringContaining('registration link'),
       })
     })
@@ -213,7 +213,7 @@ describe('SelfFillRegistrationService', () => {
       mockFindByEmailAndWeddingIdFn.mockResolvedValue(mockGuest)
 
       await expect(service.registerGuest(validToken, validGuestInput)).rejects.toMatchObject({
-        code: 'CONFLICT',
+        kind: 'CONFLICT',
         message: 'You are already registered for this wedding.',
       })
     })
@@ -284,7 +284,7 @@ describe('SelfFillRegistrationService', () => {
       mockFindByTokenFn.mockResolvedValue(null)
 
       await expect(service.registerGuest(validToken, validGuestInput)).rejects.toMatchObject({
-        code: 'NOT_FOUND',
+        kind: 'NOT_FOUND',
         message: 'Invalid or expired registration link',
       })
     })
@@ -294,7 +294,7 @@ describe('SelfFillRegistrationService', () => {
       mockFindByEmailAndWeddingIdFn.mockResolvedValue(mockGuest)
 
       await expect(service.registerGuest(validToken, validGuestInput)).rejects.toMatchObject({
-        code: 'CONFLICT',
+        kind: 'CONFLICT',
         message: 'You are already registered for this wedding.',
       })
     })
@@ -309,7 +309,7 @@ describe('SelfFillRegistrationService', () => {
       mockCreateWithGiftsFn.mockRejectedValue(new Error('DB connection failed'))
 
       await expect(service.registerGuest(validToken, validGuestInput)).rejects.toMatchObject({
-        code: 'INTERNAL_SERVER_ERROR',
+        kind: 'INVARIANT_VIOLATION',
       })
     })
 

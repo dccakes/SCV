@@ -1,6 +1,5 @@
 // biome-ignore lint/style/noRestrictedImports: Application service owns a cross-domain public flow.
 import { Prisma, type PrismaClient } from '@prisma/client'
-import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 
 import { ANALYTICS_ACTIONS, ANALYTICS_SCOPES, buildEventName } from '~/lib/analytics/events'
@@ -9,6 +8,15 @@ import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import { rsvpHouseholdSelect } from '~/server/domains/household/household.repository'
 import type { HouseholdSearchResult } from '~/server/domains/household/household.types'
+import {
+  ConflictError,
+  DomainError,
+  ForbiddenError,
+  InvariantViolationError,
+  NotFoundError,
+  PreconditionFailedError,
+  ValidationError,
+} from '~/server/domains/shared/domain-error'
 import {
   type SaveTheDateSectionContent,
   WebsiteSectionType,
@@ -108,18 +116,12 @@ const normalizeOptionalText = (value: string | null) => optionalTextSchema.parse
 const normalizeUpdateInput = (input: UpdateHouseholdInviteInput): UpdateHouseholdInviteInput => {
   const guests = input.guests.map((guest) => {
     if (!Number.isInteger(guest.guestId) || guest.guestId <= 0) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Guest details could not be matched to this household',
-      })
+      throw new ValidationError('Guest details could not be matched to this household')
     }
 
     const firstName = guest.firstName.trim()
     if (!firstName) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Each household member needs a first name',
-      })
+      throw new ValidationError('Each household member needs a first name')
     }
 
     return {
@@ -135,10 +137,7 @@ const normalizeUpdateInput = (input: UpdateHouseholdInviteInput): UpdateHousehol
     .map((guest) => guest.email)
     .filter((email): email is string => Boolean(email))
   if (new Set(emails).size !== emails.length) {
-    throw new TRPCError({
-      code: 'BAD_REQUEST',
-      message: 'Each email address can only be used once for this wedding',
-    })
+    throw new ValidationError('Each email address can only be used once for this wedding')
   }
 
   return {
@@ -157,10 +156,7 @@ const normalizeBaseUrl = (baseUrl: string) => {
     const parsed = new URL(baseUrl)
     return parsed.origin
   } catch {
-    throw new TRPCError({
-      code: 'BAD_REQUEST',
-      message: 'Unable to generate invite link for this website origin',
-    })
+    throw new ValidationError('Unable to generate invite link for this website origin')
   }
 }
 
@@ -191,10 +187,7 @@ export class HouseholdInviteService {
     })
 
     if (!household) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'Household not found',
-      })
+      throw new NotFoundError('Household not found')
     }
 
     const website = await this.db.website.findFirst({
@@ -203,10 +196,9 @@ export class HouseholdInviteService {
     })
 
     if (!website) {
-      throw new TRPCError({
-        code: 'PRECONDITION_FAILED',
-        message: 'Publish a wedding website before generating household invite links',
-      })
+      throw new PreconditionFailedError(
+        'Publish a wedding website before generating household invite links'
+      )
     }
 
     const expiresAt = new Date()
@@ -245,10 +237,7 @@ export class HouseholdInviteService {
       }
     }
 
-    throw new TRPCError({
-      code: 'INTERNAL_SERVER_ERROR',
-      message: 'Could not generate a unique invite code',
-    })
+    throw new InvariantViolationError('Could not generate a unique invite code')
   }
 
   async getPublicWeddingSummary(subUrl: string): Promise<{
@@ -324,22 +313,18 @@ export class HouseholdInviteService {
   ): Promise<{ success: true }> {
     const inviteData = await this.getInviteData(subUrl, code)
     if (!inviteData) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'Invalid or expired household invite',
-      })
+      throw new ForbiddenError('Invalid or expired household invite')
     }
 
     let normalizedInput: UpdateHouseholdInviteInput
     try {
       normalizedInput = normalizeUpdateInput(input)
     } catch (error) {
-      if (error instanceof TRPCError) throw error
+      if (error instanceof DomainError) throw error
       if (error instanceof z.ZodError) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Please enter a valid email address or leave the email field blank',
-        })
+        throw new ValidationError(
+          'Please enter a valid email address or leave the email field blank'
+        )
       }
       throw error
     }
@@ -350,10 +335,7 @@ export class HouseholdInviteService {
     )
 
     if (hasInvalidGuest) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'Guest update is outside this household invite',
-      })
+      throw new ForbiddenError('Guest update is outside this household invite')
     }
 
     try {
@@ -373,10 +355,7 @@ export class HouseholdInviteService {
           })
 
           if (existingGuest) {
-            throw new TRPCError({
-              code: 'CONFLICT',
-              message: 'Each email address can only be used once for this wedding',
-            })
+            throw new ConflictError('Each email address can only be used once for this wedding')
           }
         }
 
@@ -393,10 +372,7 @@ export class HouseholdInviteService {
         })
 
         if (householdUpdate.count !== 1) {
-          throw new TRPCError({
-            code: 'FORBIDDEN',
-            message: 'Invalid or expired household invite',
-          })
+          throw new ForbiddenError('Invalid or expired household invite')
         }
 
         await Promise.all(
@@ -416,21 +392,15 @@ export class HouseholdInviteService {
             })
 
             if (guestUpdate.count !== 1) {
-              throw new TRPCError({
-                code: 'FORBIDDEN',
-                message: 'Guest update is outside this household invite',
-              })
+              throw new ForbiddenError('Guest update is outside this household invite')
             }
           })
         )
       })
     } catch (error) {
-      if (error instanceof TRPCError) throw error
+      if (error instanceof DomainError) throw error
       if (isUniqueConstraintError(error)) {
-        throw new TRPCError({
-          code: 'CONFLICT',
-          message: 'Each email address can only be used once for this wedding',
-        })
+        throw new ConflictError('Each email address can only be used once for this wedding')
       }
       throw error
     }

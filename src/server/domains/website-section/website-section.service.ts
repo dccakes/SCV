@@ -1,4 +1,4 @@
-import { TRPCError } from '@trpc/server'
+import { ValidationError } from '~/server/domains/shared/domain-error'
 import type { WebsiteSectionRepository } from '~/server/domains/website-section/website-section.repository'
 import {
   type HomeSectionContent,
@@ -34,10 +34,7 @@ export class WebsiteSectionService {
   async updateHomeSection(websiteId: string, input: HomeSectionContent) {
     const parsed = updateHomeSectionSchema.safeParse(input)
     if (!parsed.success) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: parsed.error.issues[0]?.message ?? 'Invalid HOME section content',
-      })
+      throw new ValidationError(parsed.error.issues[0]?.message ?? 'Invalid HOME section content')
     }
 
     return this.websiteSectionRepository.upsertHomeSection(websiteId, parsed.data)
@@ -57,10 +54,9 @@ export class WebsiteSectionService {
     try {
       validatedContent = parseSectionContent(type, content)
     } catch (error) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: error instanceof Error ? error.message : `Invalid content for ${type} section`,
-      })
+      throw new ValidationError(
+        error instanceof Error ? error.message : `Invalid content for ${type} section`
+      )
     }
 
     return this.websiteSectionRepository.upsertByType(websiteId, type, validatedContent, isEnabled)

@@ -36,13 +36,13 @@ describe('requirePermission', () => {
 
   it('throws FORBIDDEN when viewer attempts a write action', () => {
     expect(() => requirePermission(viewerCtx, { event: ['create'] })).toThrow(
-      expect.objectContaining({ code: 'FORBIDDEN' })
+      expect.objectContaining({ kind: 'FORBIDDEN' })
     )
   })
 
   it('throws FORBIDDEN when member attempts guest invitation send', () => {
     expect(() => requirePermission(memberCtx, { guest_invitation: ['send'] })).toThrow(
-      expect.objectContaining({ code: 'FORBIDDEN' })
+      expect.objectContaining({ kind: 'FORBIDDEN' })
     )
   })
 
@@ -63,7 +63,7 @@ describe('requirePermission', () => {
 
   it('throws PRECONDITION_FAILED when no active organization in context', () => {
     expect(() => requirePermission(noOrgCtx, { event: ['create'] })).toThrow(
-      expect.objectContaining({ code: 'PRECONDITION_FAILED' })
+      expect.objectContaining({ kind: 'PRECONDITION_FAILED' })
     )
   })
 
@@ -73,7 +73,7 @@ describe('requirePermission', () => {
       activeOrganization: { organizationId: 'org-1', role: 'superuser' },
     }
     expect(() => requirePermission(unknownRoleCtx, { event: ['read'] })).toThrow(
-      expect.objectContaining({ code: 'FORBIDDEN' })
+      expect.objectContaining({ kind: 'FORBIDDEN' })
     )
   })
 })

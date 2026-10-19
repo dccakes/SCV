@@ -1,11 +1,16 @@
-import { TRPCError } from '@trpc/server'
-
 import { calculateDaysRemaining, formatDateNumber } from '~/app/utils/helpers'
 import { deriveWeddingSubUrl } from '~/lib/website-slug'
 import type { HouseholdInviteService } from '~/server/application/household-invite/household-invite.service'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { EventRepository } from '~/server/domains/event/event.repository'
+import {
+  ConflictError,
+  ForbiddenError,
+  InvariantViolationError,
+  NotFoundError,
+  ValidationError,
+} from '~/server/domains/shared/domain-error'
 import type { WebsiteRepository } from '~/server/domains/website/website.repository'
 import type {
   CreateWebsiteInput,
@@ -47,10 +52,7 @@ export class WebsiteManagementService {
 
     const wedding = await this.weddingRepository.findById(weddingId)
     if (!wedding) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'Wedding not found',
-      })
+      throw new NotFoundError('Wedding not found')
     }
 
     const subUrl =
@@ -58,10 +60,7 @@ export class WebsiteManagementService {
 
     const existingWebsite = await this.websiteRepository.findBySubUrl(subUrl)
     if (existingWebsite && existingWebsite.weddingId !== weddingId) {
-      throw new TRPCError({
-        code: 'CONFLICT',
-        message: 'This URL is already taken',
-      })
+      throw new ConflictError('This URL is already taken')
     }
 
     if (existingWebsite) {
@@ -85,10 +84,7 @@ export class WebsiteManagementService {
           return website
         }
 
-        throw new TRPCError({
-          code: 'CONFLICT',
-          message: 'This URL is already taken',
-        })
+        throw new ConflictError('This URL is already taken')
       }
 
       throw error
@@ -111,10 +107,7 @@ export class WebsiteManagementService {
 
     const website = await this.websiteRepository.findByWeddingId(weddingId)
     if (!website) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'Website not found',
-      })
+      throw new NotFoundError('Website not found')
     }
 
     return this.websiteSectionRepository.upsertHomeSection(website.id, input)
@@ -146,21 +139,16 @@ export class WebsiteManagementService {
 
     const website = await this.websiteRepository.findByWeddingId(weddingId)
     if (!website) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'Website not found',
-      })
+      throw new NotFoundError('Website not found')
     }
 
     let content: WebsiteSection['content']
     try {
       content = parseSectionContent(input.type, input.content)
     } catch (error) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message:
-          error instanceof Error ? error.message : `Invalid content for ${input.type} section`,
-      })
+      throw new ValidationError(
+        error instanceof Error ? error.message : `Invalid content for ${input.type} section`
+      )
     }
 
     return this.websiteSectionRepository.upsertByType(
@@ -178,10 +166,7 @@ export class WebsiteManagementService {
   ): Promise<WeddingPageData> {
     const website = await this.websiteRepository.findBySubUrlWithQuestions(subUrl)
     if (!website) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'This website does not exist.',
-      })
+      throw new NotFoundError('This website does not exist.')
     }
 
     if (website.isPasswordEnabled) {
@@ -197,10 +182,7 @@ export class WebsiteManagementService {
       const hasInviteAccess = await this.hasValidInviteForWedding(inviteToken, website.weddingId)
 
       if (!hasPasswordAccess && !hasInviteAccess) {
-        throw new TRPCError({
-          code: 'FORBIDDEN',
-          message: 'Password access required for this wedding website',
-        })
+        throw new ForbiddenError('Password access required for this wedding website')
       }
     }
 
@@ -210,10 +192,7 @@ export class WebsiteManagementService {
       this.websiteSectionRepository.findByWebsiteId(website.id),
     ])
     if (!wedding) {
-      throw new TRPCError({
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to fetch wedding data.',
-      })
+      throw new InvariantViolationError('Failed to fetch wedding data.')
     }
     const weddingDate = events.find((event) => event.name === 'Wedding Day')?.date
     const homeSection = sections.find((section) => section.type === WebsiteSectionType.HOME)

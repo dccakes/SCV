@@ -2,8 +2,6 @@
  * Tests for RSVP Submission Application Service
  */
 
-import { TRPCError } from '@trpc/server'
-
 jest.mock('~/server/authz/permission-checker', () => ({
   requirePermission: jest.fn(),
 }))
@@ -42,6 +40,7 @@ import {
   QuestionRepository,
   resetMocks as resetQuestionMocks,
 } from '~/server/domains/question/question.repository'
+import { DomainError } from '~/server/domains/shared/domain-error'
 import {
   mockFindWeddingIdByValidTokenAndSubUrl,
   resetMocks as resetWeddingMocks,
@@ -327,7 +326,7 @@ describe('RsvpSubmissionService', () => {
         answersToQuestions: [],
       })
     ).rejects.toMatchObject({
-      code: 'FORBIDDEN',
+      kind: 'FORBIDDEN',
       message: 'RSVP is not available for this wedding',
     })
   })
@@ -344,7 +343,7 @@ describe('RsvpSubmissionService', () => {
         answersToQuestions: [],
       })
     ).rejects.toMatchObject({
-      code: 'FORBIDDEN',
+      kind: 'FORBIDDEN',
       message: 'Invalid or expired RSVP token',
     })
   })
@@ -357,7 +356,7 @@ describe('RsvpSubmissionService', () => {
         rsvpResponses: [{ eventId: 'event-123', guestId: 1, rsvp: 'Attending' }],
         answersToQuestions: [],
       })
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
     expect(mockDb.$transaction).not.toHaveBeenCalled()
   })
@@ -373,6 +372,6 @@ describe('RsvpSubmissionService', () => {
           { questionId: 'q', questionType: 'Text', response: 'x', householdId: 'h-1' },
         ],
       })
-    ).rejects.toBeInstanceOf(TRPCError)
+    ).rejects.toBeInstanceOf(DomainError)
   })
 })

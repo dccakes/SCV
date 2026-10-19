@@ -1,5 +1,3 @@
-import { TRPCError } from '@trpc/server'
-
 jest.mock('~/server/authz/permission-checker', () => ({
   requirePermission: jest.fn(),
 }))
@@ -19,6 +17,7 @@ import {
   mockUpdate,
   resetMocks as resetEventRepoMocks,
 } from '~/server/domains/event/event.repository'
+import { ForbiddenError } from '~/server/domains/shared/domain-error'
 
 const mockRequirePermission = requirePermission as jest.Mock
 const mockEnsureSeededFn = mockEnsureSeeded as jest.Mock
@@ -122,7 +121,7 @@ describe('EventManagementService', () => {
         eventId: 'event-999',
         eventName: 'Blocked',
       })
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
     expect(mockDb.$transaction).not.toHaveBeenCalled()
   })
@@ -133,7 +132,7 @@ describe('EventManagementService', () => {
     await expect(
       service.deleteEvent(actorContext, 'wedding-123', 'event-999')
     ).rejects.toMatchObject({
-      code: 'FORBIDDEN',
+      kind: 'FORBIDDEN',
     })
 
     expect(mockDeleteFn).not.toHaveBeenCalled()
@@ -141,14 +140,14 @@ describe('EventManagementService', () => {
 
   it('rejects create when permission is missing', async () => {
     mockRequirePermission.mockImplementation(() => {
-      throw new TRPCError({ code: 'FORBIDDEN' })
+      throw new ForbiddenError()
     })
 
     await expect(
       service.createEvent(actorContext, 'wedding-123', {
         eventName: 'Blocked',
       })
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
     expect(mockDb.$transaction).not.toHaveBeenCalled()
   })

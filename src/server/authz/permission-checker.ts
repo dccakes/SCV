@@ -1,28 +1,24 @@
-import { TRPCError } from '@trpc/server'
-
 import { organizationRoles } from '~/lib/auth-permissions'
 import type {
   ActiveOrganization,
   AuthzContext,
   PermissionInput,
 } from '~/server/authz/authorization.types'
+import { ForbiddenError, PreconditionFailedError } from '~/server/domains/shared/domain-error'
 
 export const requirePermission = (
   ctx: AuthzContext,
   permissions: PermissionInput
 ): ActiveOrganization => {
   if (!ctx.activeOrganization) {
-    throw new TRPCError({
-      code: 'PRECONDITION_FAILED',
-      message: 'No active organization in session',
-    })
+    throw new PreconditionFailedError('No active organization in session')
   }
 
   const { role, organizationId } = ctx.activeOrganization
   const roleKey = role as keyof typeof organizationRoles
 
   if (!role || !(roleKey in organizationRoles)) {
-    throw new TRPCError({ code: 'FORBIDDEN' })
+    throw new ForbiddenError()
   }
 
   // Cast required: better-auth generates role-specific authorize overloads that are
@@ -31,7 +27,7 @@ export const requirePermission = (
   const result = (organizationRoles[roleKey] as unknown as AuthorizeCallable).authorize(permissions)
 
   if (!result.success) {
-    throw new TRPCError({ code: 'FORBIDDEN' })
+    throw new ForbiddenError()
   }
 
   return { organizationId, role }

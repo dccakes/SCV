@@ -1,6 +1,6 @@
-import { TRPCError } from '@trpc/server'
 import { DashboardOverviewUseCase } from '~/server/application/dashboard/dashboard-overview.use-case'
 import type { AuthzContext } from '~/server/authz/authorization.types'
+import { DomainError } from '~/server/domains/shared/domain-error'
 
 jest.mock('~/lib/auth-permissions', () => require('~/lib/__mocks__/auth-permissions'))
 
@@ -53,6 +53,6 @@ describe('DashboardOverviewUseCase', () => {
         authz: buildAuthz('viewer'),
         activeWeddingId: 'wedding-1',
       })
-    ).rejects.toThrow(TRPCError)
+    ).rejects.toThrow(DomainError)
   })
 })

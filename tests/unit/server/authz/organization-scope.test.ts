@@ -1,11 +1,10 @@
-import type { TRPCError } from '@trpc/server'
-
 import {
   assertEntityInActiveOrganization,
   assertEventInActiveOrganization,
   assertGuestInActiveOrganization,
   assertInvitationInActiveOrganization,
 } from 'server/authz/organization-scope'
+import type { DomainError } from '~/server/domains/shared/domain-error'
 
 const activeOrganization = {
   organizationId: 'org-1',
@@ -33,8 +32,8 @@ describe('organization scope guards', () => {
         entityOrganizationId: 'org-2',
       })
     ).toThrow(
-      expect.objectContaining<Partial<TRPCError>>({
-        code: 'FORBIDDEN',
+      expect.objectContaining<Partial<DomainError>>({
+        kind: 'FORBIDDEN',
       })
     )
   })
@@ -65,7 +64,7 @@ describe('organization scope guards', () => {
         eventRepository,
       })
     ).rejects.toMatchObject({
-      code: 'PRECONDITION_FAILED',
+      kind: 'PRECONDITION_FAILED',
     })
   })
 

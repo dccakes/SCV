@@ -332,7 +332,7 @@ describe('HouseholdInviteService', () => {
           },
         ],
       })
-    ).rejects.toHaveProperty('code', 'FORBIDDEN')
+    ).rejects.toHaveProperty('kind', 'FORBIDDEN')
     expect(db.$transaction).not.toHaveBeenCalled()
   })
 
@@ -475,7 +475,7 @@ describe('HouseholdInviteService', () => {
           },
         ],
       })
-    ).rejects.toHaveProperty('code', 'BAD_REQUEST')
+    ).rejects.toHaveProperty('kind', 'VALIDATION')
     expect(db.$transaction).not.toHaveBeenCalled()
   })
 
@@ -523,7 +523,7 @@ describe('HouseholdInviteService', () => {
           },
         ],
       })
-    ).rejects.toHaveProperty('code', 'BAD_REQUEST')
+    ).rejects.toHaveProperty('kind', 'VALIDATION')
     expect(db.$transaction).not.toHaveBeenCalled()
   })
 

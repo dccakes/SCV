@@ -2,8 +2,6 @@
  * Tests for Messaging Domain Service
  */
 
-import { TRPCError } from '@trpc/server'
-
 jest.mock('~/env', () => ({
   env: new Proxy({} as Record<string, string | undefined>, {
     get: (_t, prop: string) => process.env[prop],
@@ -44,6 +42,7 @@ import {
   resetMocks,
 } from '~/server/domains/messaging/messaging.repository'
 import { MessagingService } from '~/server/domains/messaging/messaging.service'
+import { DomainError } from '~/server/domains/shared/domain-error'
 
 const mockRequirePermission = requirePermission as jest.Mock
 const mockCreatePairingTokenFn = mockCreatePairingToken as jest.Mock
@@ -120,7 +119,7 @@ describe('MessagingService', () => {
       await expect(
         service.createPairingToken(ctx, 'wedding-123', 'telegram')
       ).rejects.toMatchObject({
-        code: 'INTERNAL_SERVER_ERROR',
+        kind: 'INVARIANT_VIOLATION',
       })
     })
 
@@ -164,7 +163,7 @@ describe('MessagingService', () => {
           channel: 'telegram',
           externalChatId: 'chat-99',
         })
-      ).rejects.toBeInstanceOf(TRPCError)
+      ).rejects.toBeInstanceOf(DomainError)
     })
 
     it('rejects an already-consumed token', async () => {
@@ -176,11 +175,11 @@ describe('MessagingService', () => {
           channel: 'telegram',
           externalChatId: 'chat-99',
         })
-      ).rejects.toBeInstanceOf(TRPCError)
+      ).rejects.toBeInstanceOf(DomainError)
     })
 
     it('rejects an unknown token', async () => {
-      mockConsumeAndUpsertFn.mockResolvedValue({ ok: false, code: 'NOT_FOUND' })
+      mockConsumeAndUpsertFn.mockResolvedValue({ ok: false, kind: 'NOT_FOUND' })
 
       await expect(
         service.consumePairingToken({
@@ -188,7 +187,7 @@ describe('MessagingService', () => {
           channel: 'telegram',
           externalChatId: 'chat-99',
         })
-      ).rejects.toBeInstanceOf(TRPCError)
+      ).rejects.toBeInstanceOf(DomainError)
     })
   })
 
@@ -394,7 +393,7 @@ describe('MessagingService', () => {
       mockFindIdentityByIdFn.mockResolvedValue({ ...mockIdentity, weddingId: 'other-wedding' })
 
       await expect(service.revokeIdentity(ctx, 'identity-1', 'wedding-123')).rejects.toMatchObject({
-        code: 'NOT_FOUND',
+        kind: 'NOT_FOUND',
       })
       expect(mockRevokeIdentityFn).not.toHaveBeenCalled()
     })
@@ -403,7 +402,7 @@ describe('MessagingService', () => {
       mockFindIdentityByIdFn.mockResolvedValue(null)
 
       await expect(service.revokeIdentity(ctx, 'identity-1', 'wedding-123')).rejects.toMatchObject({
-        code: 'NOT_FOUND',
+        kind: 'NOT_FOUND',
       })
       expect(mockRevokeIdentityFn).not.toHaveBeenCalled()
     })

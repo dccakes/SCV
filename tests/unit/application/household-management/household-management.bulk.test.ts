@@ -2,8 +2,6 @@
  * Tests for HouseholdManagementService.bulkCreateHouseholds()
  */
 
-import { TRPCError } from '@trpc/server'
-
 jest.mock('~/server/authz/permission-checker', () => ({
   requirePermission: jest.fn(),
 }))
@@ -34,6 +32,7 @@ import {
   mockEventBelongsToWedding,
   resetMocks as resetInvitationMocks,
 } from '~/server/domains/invitation/invitation.repository'
+import { InvariantViolationError } from '~/server/domains/shared/domain-error'
 import { WebsiteRepository } from '~/server/domains/website/website.repository'
 
 const mockRequirePermission = requirePermission as jest.Mock
@@ -244,7 +243,7 @@ describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
 
       await expect(
         service.bulkCreateHouseholds(actorContext, 'wedding-123', [SINGLE_GUEST_HOUSEHOLD])
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
     })
 
     it('should count the second household as failed when household creation returns null', async () => {
@@ -297,10 +296,8 @@ describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
       expect(result).toEqual({ created: 0, failed: 2 })
     })
 
-    it('should count TRPCError from createHouseholdWithGuests as a failure', async () => {
-      mockCreateWithGifts.mockRejectedValue(
-        new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Something broke' })
-      )
+    it('should count DomainError from createHouseholdWithGuests as a failure', async () => {
+      mockCreateWithGifts.mockRejectedValue(new InvariantViolationError('Something broke'))
 
       const result = await service.bulkCreateHouseholds(actorContext, 'wedding-123', [
         SINGLE_GUEST_HOUSEHOLD,

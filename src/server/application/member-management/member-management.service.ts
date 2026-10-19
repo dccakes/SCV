@@ -1,8 +1,7 @@
-import { TRPCError } from '@trpc/server'
-
 import type { OrganizationRole } from '~/lib/auth-permissions'
 import type { ActiveOrganization, AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
+import { ForbiddenError } from '~/server/domains/shared/domain-error'
 
 export type OrganizationMemberAction = 'invite' | 'role_update' | 'remove'
 
@@ -52,7 +51,7 @@ export class MemberManagementService {
 
   private assertOrganizationScope(activeOrgId: string, inputOrgId: string): void {
     if (activeOrgId !== inputOrgId) {
-      throw new TRPCError({ code: 'FORBIDDEN' })
+      throw new ForbiddenError()
     }
   }
 

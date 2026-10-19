@@ -1,5 +1,3 @@
-import { TRPCError } from '@trpc/server'
-
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { GuestTagRepository } from '~/server/domains/guest-tag/guest-tag.repository'
@@ -9,13 +7,14 @@ import type {
   GuestTagWithGuestCount,
   UpdateGuestTagInput,
 } from '~/server/domains/guest-tag/guest-tag.types'
+import { ConflictError, ForbiddenError } from '~/server/domains/shared/domain-error'
 
 export class GuestTagService {
   constructor(private repo: GuestTagRepository) {}
 
   /**
    * Create a new guest tag
-   * @throws TRPCError if tag with same name already exists
+   * @throws ConflictError if tag with same name already exists
    */
   async create(ctx: AuthzContext, data: CreateGuestTagInput): Promise<GuestTag> {
     requirePermission(ctx, { guest: ['update'] })
@@ -25,10 +24,7 @@ export class GuestTagService {
     // Check for duplicate tag name
     const exists = await this.repo.existsByName(data.weddingId, trimmedName)
     if (exists) {
-      throw new TRPCError({
-        code: 'CONFLICT',
-        message: 'A tag with this name already exists for this wedding',
-      })
+      throw new ConflictError('A tag with this name already exists for this wedding')
     }
 
     return this.repo.create({
@@ -60,7 +56,7 @@ export class GuestTagService {
 
   /**
    * Update a guest tag
-   * @throws TRPCError if new name conflicts with existing tag
+   * @throws ConflictError if new name conflicts with existing tag
    */
   async update(
     ctx: AuthzContext,
@@ -75,10 +71,7 @@ export class GuestTagService {
     if (data.name) {
       const exists = await this.repo.existsByName(weddingId, data.name)
       if (exists) {
-        throw new TRPCError({
-          code: 'CONFLICT',
-          message: 'A tag with this name already exists for this wedding',
-        })
+        throw new ConflictError('A tag with this name already exists for this wedding')
       }
     }
 
@@ -118,10 +111,7 @@ export class GuestTagService {
     const inScope = await this.repo.belongsToWedding(id, weddingId)
 
     if (!inScope) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to access this guest tag',
-      })
+      throw new ForbiddenError('You do not have permission to access this guest tag')
     }
   }
 }

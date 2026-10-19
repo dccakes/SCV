@@ -5,11 +5,11 @@
  * Handles guest creation, updates, and retrieval.
  */
 
-import { TRPCError } from '@trpc/server'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { GuestRepository } from '~/server/domains/guest/guest.repository'
 import type { Guest, GuestWithInvitations } from '~/server/domains/guest/guest.types'
+import { ForbiddenError } from '~/server/domains/shared/domain-error'
 
 export class GuestService {
   constructor(private guestRepository: GuestRepository) {}
@@ -213,10 +213,7 @@ export class GuestService {
   private async assertGuestInWedding(guestId: number, weddingId: string): Promise<void> {
     const guest = await this.guestRepository.findById(guestId)
     if (!guest || guest.weddingId !== weddingId) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to modify this guest',
-      })
+      throw new ForbiddenError('You do not have permission to modify this guest')
     }
   }
 }

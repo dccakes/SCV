@@ -5,8 +5,6 @@
  * Handles wedding creation, updates, and retrieval.
  */
 
-import { TRPCError } from '@trpc/server'
-
 import { provisionEtta } from '~/lib/etta/provision'
 import { logger } from '~/lib/observability/logger'
 import type { AuthzContext } from '~/server/authz/authorization.types'
@@ -14,6 +12,11 @@ import { requirePermission } from '~/server/authz/permission-checker'
 import { checklistSeedingService } from '~/server/domains/checklist'
 import type { EventService } from '~/server/domains/event/event.service'
 import type { GuestTagService } from '~/server/domains/guest-tag/guest-tag.service'
+import {
+  NotFoundError,
+  PreconditionFailedError,
+  ValidationError,
+} from '~/server/domains/shared/domain-error'
 import type { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
 import type {
   CreateWeddingInput,
@@ -51,10 +54,7 @@ export class WeddingService {
     // Check if user already has a wedding (currently allow only one wedding per user)
     const existingWedding = await this.weddingRepository.existsForUser(userId)
     if (existingWedding) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'User already has a wedding',
-      })
+      throw new ValidationError('User already has a wedding')
     }
 
     const {
@@ -137,10 +137,7 @@ export class WeddingService {
 
     const wedding = await this.weddingRepository.findById(weddingId)
     if (!wedding) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'Wedding not found',
-      })
+      throw new NotFoundError('Wedding not found')
     }
 
     const enabledAddOns = enabled
@@ -167,20 +164,14 @@ export class WeddingService {
     sessionActiveOrganizationId: string | null
   ): Promise<Wedding> {
     if (!sessionActiveOrganizationId) {
-      throw new TRPCError({
-        code: 'PRECONDITION_FAILED',
-        message: 'No active organization in session',
-      })
+      throw new PreconditionFailedError('No active organization in session')
     }
 
     const scopedWedding = await this.weddingRepository.findByOrganizationId(
       sessionActiveOrganizationId
     )
     if (!scopedWedding) {
-      throw new TRPCError({
-        code: 'PRECONDITION_FAILED',
-        message: 'Active organization is not linked to a wedding',
-      })
+      throw new PreconditionFailedError('Active organization is not linked to a wedding')
     }
 
     return scopedWedding

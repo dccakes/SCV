@@ -1,5 +1,3 @@
-import { TRPCError } from '@trpc/server'
-
 jest.mock('~/server/authz/permission-checker', () => ({
   requirePermission: jest.fn(),
 }))
@@ -19,6 +17,7 @@ import {
   resetMocks,
 } from '~/server/domains/milestone/milestone.repository'
 import { MilestoneService } from '~/server/domains/milestone/milestone.service'
+import { ForbiddenError } from '~/server/domains/shared/domain-error'
 
 const mockRequirePermission = requirePermission as jest.Mock
 const mockBelongsToWeddingFn = mockBelongsToWedding as jest.Mock
@@ -174,7 +173,7 @@ describe('MilestoneService', () => {
 
     await expect(
       milestoneService.attestMilestone(actorContext, 'milestone-123', 'wedding-123')
-    ).rejects.toMatchObject({ code: 'INTERNAL_SERVER_ERROR' })
+    ).rejects.toMatchObject({ kind: 'INVARIANT_VIOLATION' })
   })
 
   it('rejects mutation when the milestone belongs to a different wedding', async () => {
@@ -182,7 +181,7 @@ describe('MilestoneService', () => {
 
     await expect(
       milestoneService.dismissMilestone(actorContext, 'milestone-123', 'other-wedding')
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
     expect(mockUpdateFn).not.toHaveBeenCalled()
   })
@@ -193,16 +192,16 @@ describe('MilestoneService', () => {
 
     await expect(
       milestoneService.attestMilestone(actorContext, 'milestone-123', 'wedding-123')
-    ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+    ).rejects.toMatchObject({ kind: 'NOT_FOUND' })
   })
 
   it('propagates permission errors for reads', async () => {
     mockRequirePermission.mockImplementation(() => {
-      throw new TRPCError({ code: 'FORBIDDEN' })
+      throw new ForbiddenError()
     })
 
     await expect(
       milestoneService.getEffectiveMilestones(actorContext, 'wedding-123')
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
   })
 })

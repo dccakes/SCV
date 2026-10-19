@@ -1,7 +1,10 @@
-import { TRPCError } from '@trpc/server'
-
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
+import {
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from '~/server/domains/shared/domain-error'
 import { buildTaskPriorityQueue } from '~/server/domains/task/task.priority'
 import type { TaskRepository } from '~/server/domains/task/task.repository'
 import type { Task, TaskPriorityQueueResult } from '~/server/domains/task/task.types'
@@ -99,11 +102,11 @@ export class TaskService {
 
     const task = await this.taskRepository.findById(taskId)
     if (!task) {
-      throw new TRPCError({ code: 'NOT_FOUND', message: 'Task not found' })
+      throw new NotFoundError('Task not found')
     }
 
     if (task.weddingId !== weddingId) {
-      throw new TRPCError({ code: 'FORBIDDEN' })
+      throw new ForbiddenError()
     }
 
     return task
@@ -123,10 +126,7 @@ export class TaskService {
 
     const firstEventId = await this.taskRepository.findFirstEventId(weddingId)
     if (!firstEventId) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Tasks require a wedding event before they can be created',
-      })
+      throw new ValidationError('Tasks require a wedding event before they can be created')
     }
 
     return firstEventId
@@ -135,10 +135,7 @@ export class TaskService {
   private async assertEventAssignment(eventId: string, weddingId: string): Promise<string> {
     const belongs = await this.taskRepository.eventBelongsToWedding(eventId, weddingId)
     if (!belongs) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Event does not belong to the active wedding',
-      })
+      throw new ValidationError('Event does not belong to the active wedding')
     }
 
     return eventId
@@ -147,7 +144,7 @@ export class TaskService {
   private async assertTaskOwnership(taskId: string, weddingId: string): Promise<void> {
     const belongs = await this.taskRepository.belongsToWedding(taskId, weddingId)
     if (!belongs) {
-      throw new TRPCError({ code: 'FORBIDDEN' })
+      throw new ForbiddenError()
     }
   }
 }

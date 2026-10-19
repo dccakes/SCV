@@ -15,7 +15,6 @@
 
 // biome-ignore lint/style/noRestrictedImports: application service, cross-domain orchestration is expected
 import type { PrismaClient } from '@prisma/client'
-import { TRPCError } from '@trpc/server'
 
 import { logger } from '~/lib/observability/logger'
 
@@ -27,6 +26,12 @@ import type {
   SelfFillGuestInput,
   SelfFillRegistrationResult,
 } from '~/server/domains/self-fill/self-fill.types'
+import {
+  ConflictError,
+  DomainError,
+  InvariantViolationError,
+  NotFoundError,
+} from '~/server/domains/shared/domain-error'
 
 const log = logger.child({ component: 'self-fill-registration' })
 
@@ -62,10 +67,7 @@ export class SelfFillRegistrationService implements ISelfFillRegistration {
     // 1. Validate token + load wedding in one query (P11)
     const wedding = await this.selfFillRepo.findByToken(token)
     if (!wedding) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'Invalid or expired registration link',
-      })
+      throw new NotFoundError('Invalid or expired registration link')
     }
 
     const weddingId = wedding.id
@@ -73,10 +75,7 @@ export class SelfFillRegistrationService implements ISelfFillRegistration {
 
     // 2. Guard: wedding must have events to create invitations (P10)
     if (eventIds.length === 0) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'Invalid or expired registration link',
-      })
+      throw new NotFoundError('Invalid or expired registration link')
     }
 
     // Normalise email: empty string → null, lowercase + trim (P6)
@@ -89,10 +88,7 @@ export class SelfFillRegistrationService implements ISelfFillRegistration {
         if (normalizedEmail) {
           const existing = await this.guestRepo.findByEmailAndWeddingId(normalizedEmail, weddingId)
           if (existing) {
-            throw new TRPCError({
-              code: 'CONFLICT',
-              message: 'You are already registered for this wedding.',
-            })
+            throw new ConflictError('You are already registered for this wedding.')
           }
         }
 
@@ -141,7 +137,7 @@ export class SelfFillRegistrationService implements ISelfFillRegistration {
         message: `Thank you, ${data.firstName}! You have been added to the guest list.`,
       }
     } catch (error) {
-      if (error instanceof TRPCError) throw error
+      if (error instanceof DomainError) throw error
 
       // DB unique constraint violation — treat as duplicate (P2)
       // Duck-typed check avoids importing Prisma namespace (generated client not available in tests)
@@ -151,18 +147,12 @@ export class SelfFillRegistrationService implements ISelfFillRegistration {
         'code' in error &&
         (error as { code: string }).code === 'P2002'
       ) {
-        throw new TRPCError({
-          code: 'CONFLICT',
-          message: 'You are already registered for this wedding.',
-        })
+        throw new ConflictError('You are already registered for this wedding.')
       }
 
       log.error('Self-fill guest registration failed', { wedding_id: weddingId }, error)
 
-      throw new TRPCError({
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to complete registration. Please try again.',
-      })
+      throw new InvariantViolationError('Failed to complete registration. Please try again.')
     }
   }
 }

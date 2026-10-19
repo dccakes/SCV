@@ -1,5 +1,3 @@
-import { TRPCError } from '@trpc/server'
-
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { MilestoneRepository } from '~/server/domains/milestone/milestone.repository'
@@ -7,6 +5,11 @@ import type {
   Milestone,
   MilestoneWithEffectiveStatus,
 } from '~/server/domains/milestone/milestone.types'
+import {
+  ForbiddenError,
+  InvariantViolationError,
+  NotFoundError,
+} from '~/server/domains/shared/domain-error'
 
 export class MilestoneService {
   constructor(private milestoneRepository: MilestoneRepository) {}
@@ -76,14 +79,14 @@ export class MilestoneService {
   private async assertMilestoneOwnership(milestoneId: string, weddingId: string): Promise<void> {
     const belongs = await this.milestoneRepository.belongsToWedding(milestoneId, weddingId)
     if (!belongs) {
-      throw new TRPCError({ code: 'FORBIDDEN' })
+      throw new ForbiddenError()
     }
   }
 
   private async requireMilestone(milestoneId: string): Promise<Milestone> {
     const milestone = await this.milestoneRepository.findById(milestoneId)
     if (!milestone) {
-      throw new TRPCError({ code: 'NOT_FOUND', message: 'Milestone not found' })
+      throw new NotFoundError('Milestone not found')
     }
 
     return milestone
@@ -101,9 +104,8 @@ export class MilestoneService {
       return resolved
     }
 
-    throw new TRPCError({
-      code: 'INTERNAL_SERVER_ERROR',
-      message: `Updated milestone ${milestone.id} missing from wedding snapshot ${weddingId}`,
-    })
+    throw new InvariantViolationError(
+      `Updated milestone ${milestone.id} missing from wedding snapshot ${weddingId}`
+    )
   }
 }

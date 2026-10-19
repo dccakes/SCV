@@ -2,8 +2,6 @@
  * Tests for Invitation Domain Service
  */
 
-import { TRPCError } from '@trpc/server'
-
 // Must mock before importing the service
 jest.mock('server/authz/permission-checker', () => ({
   requirePermission: jest.fn(),
@@ -32,6 +30,7 @@ import {
   resetMocks,
 } from 'server/domains/invitation/invitation.repository'
 import { InvitationService } from 'server/domains/invitation/invitation.service'
+import { ForbiddenError } from '~/server/domains/shared/domain-error'
 
 // Create typed aliases for mocked functions
 const mockCreateFn = mockCreate as jest.Mock
@@ -96,7 +95,7 @@ describe('InvitationService', () => {
 
     it('should reject create when actor lacks guest invitation create permission', async () => {
       mockRequirePermission.mockImplementation(() => {
-        throw new TRPCError({ code: 'FORBIDDEN' })
+        throw new ForbiddenError()
       })
 
       await expect(
@@ -105,7 +104,7 @@ describe('InvitationService', () => {
           eventId: 'event-123',
           rsvp: 'Invited',
         })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
       expect(mockCreateFn).not.toHaveBeenCalled()
     })
@@ -119,7 +118,7 @@ describe('InvitationService', () => {
           eventId: 'event-123',
           rsvp: 'Invited',
         })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
       expect(mockCreateFn).not.toHaveBeenCalled()
     })
@@ -133,7 +132,7 @@ describe('InvitationService', () => {
           eventId: 'event-123',
           rsvp: 'Invited',
         })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
       expect(mockCreateFn).not.toHaveBeenCalled()
     })
@@ -167,14 +166,14 @@ describe('InvitationService', () => {
           eventId: 'event-123',
           rsvp: 'Attending',
         })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
       expect(mockUpdateFn).not.toHaveBeenCalled()
     })
 
     it('should reject update when actor lacks RSVP edit permission', async () => {
       mockRequirePermission.mockImplementation(() => {
-        throw new TRPCError({ code: 'FORBIDDEN' })
+        throw new ForbiddenError()
       })
 
       await expect(
@@ -183,7 +182,7 @@ describe('InvitationService', () => {
           eventId: 'event-123',
           rsvp: 'Attending',
         })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
       expect(mockUpdateFn).not.toHaveBeenCalled()
     })
@@ -350,14 +349,14 @@ describe('InvitationService', () => {
 
     it('should reject when actor lacks permission', async () => {
       mockRequirePermission.mockImplementation(() => {
-        throw new TRPCError({ code: 'FORBIDDEN' })
+        throw new ForbiddenError()
       })
 
       await expect(
         invitationService.bulkUpdateInvitations(actorContext, 'wedding-123', {
           invitations: [{ guestId: 1, eventId: 'event-123', rsvp: 'Invited' }],
         })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
       expect(mockUpdateManyFn).not.toHaveBeenCalled()
     })
@@ -372,7 +371,7 @@ describe('InvitationService', () => {
             { guestId: 2, eventId: 'event-123', rsvp: 'Invited' },
           ],
         })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
       expect(mockUpdateManyFn).not.toHaveBeenCalled()
     })

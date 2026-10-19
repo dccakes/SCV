@@ -5,8 +5,7 @@
  * Handles authorization checks and orchestrates repository calls.
  */
 
-import { TRPCError } from '@trpc/server'
-
+import { ForbiddenError, NotFoundError } from '~/server/domains/shared/domain-error'
 import type { UserRepository } from '~/server/domains/user/user.repository'
 import type { UpdateUserInput, User } from '~/server/domains/user/user.types'
 
@@ -30,18 +29,12 @@ export class UserService {
   async getById(userId: string, requestingUserId: string): Promise<User> {
     // Users can only access their own data
     if (userId !== requestingUserId) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You can only access your own user data',
-      })
+      throw new ForbiddenError('You can only access your own user data')
     }
 
     const user = await this.userRepository.findById(userId)
     if (!user) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'User not found',
-      })
+      throw new NotFoundError('User not found')
     }
 
     return user
@@ -58,19 +51,13 @@ export class UserService {
   ): Promise<User> {
     // Users can only update their own profile
     if (userId !== requestingUserId) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You can only update your own profile',
-      })
+      throw new ForbiddenError('You can only update your own profile')
     }
 
     // Check if user exists
     const exists = await this.userRepository.exists(userId)
     if (!exists) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'User not found',
-      })
+      throw new NotFoundError('User not found')
     }
 
     return this.userRepository.update(userId, data)

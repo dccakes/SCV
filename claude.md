@@ -146,7 +146,7 @@ async create(userId: string, data: CreateEventInput) {
 ```typescript
 // ✅ GOOD - Service contains business logic
 // server/domains/event/event.service.ts
-import { TRPCError } from '@trpc/server'
+import { ValidationError } from '~/server/domains/shared/domain-error'
 import { EventRepository } from './event.repository'
 import { type CreateEventInput } from './event.types'
 
@@ -158,10 +158,7 @@ export class EventService {
     if (data.date) {
       const eventDate = new Date(data.date)
       if (eventDate < new Date()) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Event date cannot be in the past',
-        })
+        throw new ValidationError('Event date cannot be in the past')
       }
     }
 
@@ -189,8 +186,28 @@ async createEvent(userId: string, data: CreateEventInput) {
 - ✅ Business logic and validation
 - ✅ Call own repository
 - ✅ Authorization checks
+- ✅ Throw `DomainError` subclasses for business failures
 - ❌ NO database access (use repository)
 - ❌ NO calling other services (use Application layer)
+- ❌ NO `TRPCError` / `@trpc/server` imports (enforced by Biome)
+
+**Errors:** Services, application services and `server/authz` throw the
+transport-agnostic errors in `~/server/domains/shared/domain-error`:
+
+| Throw | Client sees |
+|-------|-------------|
+| `NotFoundError` | `NOT_FOUND` |
+| `ForbiddenError` | `FORBIDDEN` |
+| `ConflictError` | `CONFLICT` |
+| `ValidationError` | `BAD_REQUEST` |
+| `PreconditionFailedError` | `PRECONDITION_FAILED` |
+| `InvariantViolationError` | `INTERNAL_SERVER_ERROR` |
+
+`domainErrorMiddleware` in `server/api/trpc.ts` maps them (table in
+`server/api/domain-error-mapping.ts`). Routers may still throw `TRPCError`.
+Server actions and pages that call services directly branch on the subclasses
+(`error instanceof ForbiddenError`). In service tests, assert the subclass:
+`rejects.toBeInstanceOf(ValidationError)` or `rejects.toMatchObject({ kind: 'VALIDATION' })`.
 
 ---
 
@@ -363,7 +380,7 @@ async createEvent(userId: string, data: CreateEventInput) {
 
 ```typescript
 // tests/unit/domains/wedding/wedding.service.test.ts
-import { TRPCError } from '@trpc/server'
+import { ConflictError } from '~/server/domains/shared/domain-error'
 
 jest.mock('~/server/domains/wedding/wedding.repository')
 jest.mock('~/server/infrastructure/database/client')
@@ -432,7 +449,7 @@ describe('WeddingService', () => {
           brideFirstName: 'Jane',
           brideLastName: 'Smith',
         })
-      ).rejects.toThrow(TRPCError)
+      ).rejects.toThrow(ConflictError)
 
       // Should NOT call repository when duplicate detected
       expect(mockCreateFn).not.toHaveBeenCalled()
@@ -599,7 +616,7 @@ export const resetMocks = (): void => {
 
 ```typescript
 // tests/unit/domains/event/event.service.test.ts
-import { TRPCError } from '@trpc/server'
+import { ValidationError } from '~/server/domains/shared/domain-error'
 
 // 1. FIRST: Declare the mock (hoisted by Jest)
 jest.mock('~/server/domains/event/event.repository')
@@ -653,7 +670,7 @@ describe('EventService', () => {
           eventName: 'Wedding',
           date: '2020-01-01',
         })
-      ).rejects.toThrow(TRPCError)
+      ).rejects.toThrow(ValidationError)
 
       // Repository should NOT be called
       expect(mockCreateFn).not.toHaveBeenCalled()

@@ -12,9 +12,11 @@ import superjson from 'superjson'
 import { z } from 'zod'
 import { resolveTrpcEventName } from '~/lib/analytics/events'
 import { auth } from '~/lib/auth'
+import { toTRPCError } from '~/server/api/domain-error-mapping'
 import { resolveWorkspaceScope } from '~/server/application/workspace/workspace-scope'
 import type { ActiveOrganization, AuthzContext } from '~/server/authz/authorization.types'
 import { db } from '~/server/db'
+import { DomainError } from '~/server/domains/shared/domain-error'
 import { extractAnalyticsContext } from '~/server/infrastructure/analytics/analytics-context'
 import { captureServerEvent } from '~/server/infrastructure/analytics/capture'
 import { sanitizePayload } from '~/server/infrastructure/analytics/payload'
@@ -153,10 +155,28 @@ const tracingMiddleware = t.middleware(({ ctx, path, type, next }) =>
 )
 
 /**
- * Base procedure with tracing and analytics instrumentation applied. All public
- * and protected procedures build on this so instrumentation is universal.
+ * Domain error middleware
+ *
+ * Services throw transport-agnostic DomainErrors. This translates them into
+ * TRPCErrors with the matching code. It runs innermost so tracing and the
+ * route's onError see the mapped code and HTTP status rather than a 500.
  */
-const baseProcedure = t.procedure.use(tracingMiddleware).use(analyticsMiddleware)
+const domainErrorMiddleware = t.middleware(async ({ next }) => {
+  const result = await next()
+  if (!result.ok && result.error.cause instanceof DomainError) {
+    throw toTRPCError(result.error.cause)
+  }
+  return result
+})
+
+/**
+ * Base procedure with tracing, analytics and domain error mapping applied. All
+ * public and protected procedures build on this so they apply universally.
+ */
+const baseProcedure = t.procedure
+  .use(tracingMiddleware)
+  .use(analyticsMiddleware)
+  .use(domainErrorMiddleware)
 
 /**
  * Public (unauthenticated) procedure

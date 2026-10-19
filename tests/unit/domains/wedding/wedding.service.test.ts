@@ -8,8 +8,6 @@
  * - User profile is updated with couple info
  */
 
-import { TRPCError } from '@trpc/server'
-
 // Must mock before importing the service
 jest.mock('server/domains/wedding/wedding.repository')
 jest.mock('server/domains/event/event.service')
@@ -51,6 +49,7 @@ import {
 import { WeddingService } from 'server/domains/wedding/wedding.service'
 import { requirePermission } from '~/server/authz/permission-checker'
 import { mockEnsureSeeded, resetMocks as resetChecklistMocks } from '~/server/domains/checklist'
+import { DomainError, ForbiddenError } from '~/server/domains/shared/domain-error'
 
 // Create typed aliases for mock functions
 const mockCreateFn = mockCreate as jest.Mock
@@ -151,7 +150,7 @@ describe('WeddingService', () => {
           brideFirstName: 'Jane',
           brideLastName: 'Smith',
         })
-      ).rejects.toThrow(TRPCError)
+      ).rejects.toThrow(DomainError)
 
       expect(mockCreateFn).not.toHaveBeenCalled()
     })
@@ -289,7 +288,7 @@ describe('WeddingService', () => {
 
     it('should reject update when permission check fails', async () => {
       mockRequirePermission.mockImplementation(() => {
-        throw new TRPCError({ code: 'FORBIDDEN' })
+        throw new ForbiddenError()
       })
 
       await expect(
@@ -298,7 +297,7 @@ describe('WeddingService', () => {
           weddingId: 'wedding-123',
           data: { groomFirstName: 'Updated' },
         })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
       expect(mockUpdateFn).not.toHaveBeenCalled()
     })
@@ -403,7 +402,7 @@ describe('WeddingService', () => {
 
     it('throws PRECONDITION_FAILED when no active organization is provided', async () => {
       await expect(weddingService.getWeddingIdByUserId('user-123')).rejects.toMatchObject({
-        code: 'PRECONDITION_FAILED',
+        kind: 'PRECONDITION_FAILED',
       })
       expect(mockFindByUserIdFn).not.toHaveBeenCalled()
     })
@@ -414,7 +413,7 @@ describe('WeddingService', () => {
       await expect(
         weddingService.getWeddingIdByUserId('user-123', 'org-orphan')
       ).rejects.toMatchObject({
-        code: 'PRECONDITION_FAILED',
+        kind: 'PRECONDITION_FAILED',
       })
     })
   })

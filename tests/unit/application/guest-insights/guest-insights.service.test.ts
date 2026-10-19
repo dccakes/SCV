@@ -1,7 +1,7 @@
-import { TRPCError } from '@trpc/server'
 import { RSVP_STATUS } from '~/lib/constants/rsvp'
 import { GuestInsightsService } from '~/server/application/guest-insights/guest-insights.service'
 import type { AuthzContext } from '~/server/authz/authorization.types'
+import { DomainError } from '~/server/domains/shared/domain-error'
 
 jest.mock('~/lib/auth-permissions', () => require('~/lib/__mocks__/auth-permissions'))
 
@@ -39,7 +39,7 @@ describe('GuestInsightsService', () => {
   })
 
   it('rejects guest list reads for viewer role', async () => {
-    await expect(service.listGuests(buildAuthz('viewer'), 'wedding-1')).rejects.toThrow(TRPCError)
+    await expect(service.listGuests(buildAuthz('viewer'), 'wedding-1')).rejects.toThrow(DomainError)
   })
 
   it('rejects household reads when household guests are outside wedding scope', async () => {
@@ -47,7 +47,7 @@ describe('GuestInsightsService', () => {
 
     await expect(
       service.listHouseholdGuests(buildAuthz('owner'), 'wedding-1', 'household-1')
-    ).rejects.toThrow(TRPCError)
+    ).rejects.toThrow(DomainError)
   })
 
   it('returns RSVP summary counts', async () => {

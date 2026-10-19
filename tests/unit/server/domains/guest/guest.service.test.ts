@@ -8,10 +8,10 @@ jest.mock('~/server/authz/permission-checker', () => ({
 
 jest.mock('~/server/domains/guest/guest.repository')
 
-import { TRPCError } from '@trpc/server'
 import { requirePermission } from '~/server/authz/permission-checker'
 import { GuestRepository } from '~/server/domains/guest/guest.repository'
 import { GuestService } from '~/server/domains/guest/guest.service'
+import { DomainError } from '~/server/domains/shared/domain-error'
 
 const mockRequirePermission = requirePermission as jest.Mock
 
@@ -68,7 +68,7 @@ describe('GuestService', () => {
       mockRepo.findById.mockResolvedValue({ id: guestId, weddingId: 'other-wedding' })
 
       await expect(service.updateGuestTags(authz, weddingId, guestId, tagIds)).rejects.toThrow(
-        TRPCError
+        DomainError
       )
     })
 
@@ -76,7 +76,7 @@ describe('GuestService', () => {
       mockRepo.findById.mockResolvedValue(null)
 
       await expect(service.updateGuestTags(authz, weddingId, guestId, tagIds)).rejects.toThrow(
-        TRPCError
+        DomainError
       )
     })
   })

@@ -6,8 +6,6 @@
  * ownership verification, and derived total computation.
  */
 
-import { TRPCError } from '@trpc/server'
-
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { BudgetRepository } from '~/server/domains/budget/budget.repository'
@@ -25,6 +23,7 @@ import type {
   UpdateCategoryInput,
   UpdateExpenseInput,
 } from '~/server/domains/budget/budget.validator'
+import { ForbiddenError, NotFoundError } from '~/server/domains/shared/domain-error'
 
 export class BudgetService {
   constructor(private repository: BudgetRepository) {}
@@ -225,26 +224,20 @@ export class BudgetService {
   private async assertCategoryOwnership(categoryId: string, weddingId: string): Promise<void> {
     const category = await this.repository.findCategoryById(categoryId)
     if (!category) {
-      throw new TRPCError({ code: 'NOT_FOUND', message: 'Budget category not found' })
+      throw new NotFoundError('Budget category not found')
     }
     if (category.weddingId !== weddingId) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to access this budget category',
-      })
+      throw new ForbiddenError('You do not have permission to access this budget category')
     }
   }
 
   private async assertExpenseOwnership(expenseId: string, weddingId: string): Promise<void> {
     const expense = await this.repository.findExpenseById(expenseId)
     if (!expense) {
-      throw new TRPCError({ code: 'NOT_FOUND', message: 'Budget expense not found' })
+      throw new NotFoundError('Budget expense not found')
     }
     if (expense.weddingId !== weddingId) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to access this budget expense',
-      })
+      throw new ForbiddenError('You do not have permission to access this budget expense')
     }
   }
 

@@ -10,7 +10,6 @@
 
 // biome-ignore lint/style/noRestrictedImports: Application services use PrismaClient for cross-domain transactions
 import type { PrismaClient } from '@prisma/client'
-import { TRPCError } from '@trpc/server'
 import type {
   CreateHouseholdResult,
   CreateHouseholdWithGuestsInput,
@@ -24,6 +23,11 @@ import { GuestRepository } from '~/server/domains/guest/guest.repository'
 import { HouseholdRepository } from '~/server/domains/household/household.repository'
 import type { Household, HouseholdSearchResult } from '~/server/domains/household/household.types'
 import { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
+import {
+  ForbiddenError,
+  InvariantViolationError,
+  NotFoundError,
+} from '~/server/domains/shared/domain-error'
 import type { WebsiteRepository } from '~/server/domains/website/website.repository'
 
 export class HouseholdManagementService {
@@ -80,10 +84,7 @@ export class HouseholdManagementService {
       )
 
       if (!household) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to create household',
-        })
+        throw new InvariantViolationError('Failed to create household')
       }
 
       const guests = await Promise.all(
@@ -117,10 +118,7 @@ export class HouseholdManagementService {
           const guestWithTags = await txGuestRepo.findByIdWithInvitations(createdGuest.id)
 
           if (!guestWithTags) {
-            throw new TRPCError({
-              code: 'INTERNAL_SERVER_ERROR',
-              message: 'Failed to refetch guest after creation',
-            })
+            throw new InvariantViolationError('Failed to refetch guest after creation')
           }
 
           return guestWithTags
@@ -128,10 +126,7 @@ export class HouseholdManagementService {
       )
 
       if (!guests.length) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to create guests',
-        })
+        throw new InvariantViolationError('Failed to create guests')
       }
 
       return {
@@ -250,10 +245,7 @@ export class HouseholdManagementService {
           const guestWithTags = await txGuestRepo.findByIdWithInvitations(updatedGuest.id)
 
           if (!guestWithTags) {
-            throw new TRPCError({
-              code: 'INTERNAL_SERVER_ERROR',
-              message: 'Failed to refetch guest after update',
-            })
+            throw new InvariantViolationError('Failed to refetch guest after update')
           }
 
           return guestWithTags
@@ -261,10 +253,7 @@ export class HouseholdManagementService {
       )
 
       if (!updatedHousehold || !updatedGuests) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to update guests',
-        })
+        throw new InvariantViolationError('Failed to update guests')
       }
 
       const updatedGifts = await Promise.all(
@@ -312,7 +301,7 @@ export class HouseholdManagementService {
         await this.createHouseholdWithGuests(ctx, weddingId, household)
         created++
       } catch (error) {
-        if (error instanceof TRPCError && ['FORBIDDEN', 'UNAUTHORIZED'].includes(error.code)) {
+        if (error instanceof ForbiddenError) {
           throw error
         }
         failed++
@@ -343,10 +332,7 @@ export class HouseholdManagementService {
     const website = await this.websiteRepo.findBySubUrl(subUrl)
 
     if (!website?.isRsvpEnabled) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'RSVP is not available for this wedding',
-      })
+      throw new NotFoundError('RSVP is not available for this wedding')
     }
 
     return this.householdRepo.searchPublicByName(searchText, website.weddingId)
@@ -380,10 +366,7 @@ export class HouseholdManagementService {
     const belongsToWedding = await this.householdRepo.belongsToWedding(householdId, weddingId)
 
     if (!belongsToWedding) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to modify this household',
-      })
+      throw new ForbiddenError('You do not have permission to modify this household')
     }
   }
 
@@ -392,10 +375,7 @@ export class HouseholdManagementService {
     for (const guestId of uniqueGuestIds) {
       const belongsToWedding = await this.guestRepo.belongsToWedding(guestId, weddingId)
       if (!belongsToWedding) {
-        throw new TRPCError({
-          code: 'FORBIDDEN',
-          message: `Guest ${guestId} is outside the requested wedding scope`,
-        })
+        throw new ForbiddenError(`Guest ${guestId} is outside the requested wedding scope`)
       }
     }
   }
@@ -405,10 +385,7 @@ export class HouseholdManagementService {
     for (const eventId of uniqueEventIds) {
       const belongsToWedding = await this.invitationRepo.eventBelongsToWedding(eventId, weddingId)
       if (!belongsToWedding) {
-        throw new TRPCError({
-          code: 'FORBIDDEN',
-          message: `Event ${eventId} is outside the requested wedding scope`,
-        })
+        throw new ForbiddenError(`Event ${eventId} is outside the requested wedding scope`)
       }
     }
   }

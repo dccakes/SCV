@@ -12,13 +12,13 @@ jest.mock('~/server/domains/invitation/invitation.repository')
 jest.mock('~/server/domains/gift/gift.repository')
 jest.mock('~/server/domains/website/website.repository')
 
-import { TRPCError } from '@trpc/server'
 import { HouseholdManagementService } from '~/server/application/household-management/household-management.service'
 import { requirePermission } from '~/server/authz/permission-checker'
 import { GiftRepository } from '~/server/domains/gift/gift.repository'
 import { GuestRepository } from '~/server/domains/guest/guest.repository'
 import { HouseholdRepository } from '~/server/domains/household/household.repository'
 import { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
+import { DomainError } from '~/server/domains/shared/domain-error'
 import { WebsiteRepository } from '~/server/domains/website/website.repository'
 
 const mockRequirePermission = requirePermission as jest.Mock
@@ -101,7 +101,7 @@ describe('HouseholdManagementService', () => {
 
       await expect(
         service.updateHouseholdAddress(authz, weddingId, householdId, addressData)
-      ).rejects.toThrow(TRPCError)
+      ).rejects.toThrow(DomainError)
     })
   })
 })

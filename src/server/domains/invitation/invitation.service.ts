@@ -5,8 +5,6 @@
  * Handles invitation creation, RSVP updates, and retrieval.
  */
 
-import { TRPCError } from '@trpc/server'
-
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
@@ -17,6 +15,7 @@ import type {
   RsvpStats,
   UpdateInvitationInput,
 } from '~/server/domains/invitation/invitation.types'
+import { ForbiddenError } from '~/server/domains/shared/domain-error'
 
 export class InvitationService {
   constructor(private invitationRepository: InvitationRepository) {}
@@ -37,10 +36,7 @@ export class InvitationService {
     ])
 
     if (!guestInWedding || !eventInWedding) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'Invitation target is outside the requested wedding scope',
-      })
+      throw new ForbiddenError('Invitation target is outside the requested wedding scope')
     }
 
     return this.invitationRepository.create({
@@ -67,7 +63,7 @@ export class InvitationService {
       weddingId
     )
     if (!belongs) {
-      throw new TRPCError({ code: 'FORBIDDEN' })
+      throw new ForbiddenError()
     }
 
     return this.invitationRepository.update(data.guestId, data.eventId, {
@@ -91,7 +87,7 @@ export class InvitationService {
   async getByEventIdInWedding(eventId: string, weddingId: string): Promise<Invitation[]> {
     const inScope = await this.invitationRepository.eventBelongsToWedding(eventId, weddingId)
     if (!inScope) {
-      throw new TRPCError({ code: 'FORBIDDEN' })
+      throw new ForbiddenError()
     }
     return this.invitationRepository.findByEventId(eventId)
   }
@@ -133,7 +129,7 @@ export class InvitationService {
     )
 
     if (!allBelong) {
-      throw new TRPCError({ code: 'FORBIDDEN' })
+      throw new ForbiddenError()
     }
 
     return this.invitationRepository.updateMany(

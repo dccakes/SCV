@@ -1,6 +1,6 @@
-import { TRPCError } from '@trpc/server'
 import { EventInsightsService } from '~/server/application/event-insights/event-insights.service'
 import type { AuthzContext } from '~/server/authz/authorization.types'
+import { DomainError } from '~/server/domains/shared/domain-error'
 
 jest.mock('~/lib/auth-permissions', () => require('~/lib/__mocks__/auth-permissions'))
 
@@ -31,7 +31,7 @@ describe('EventInsightsService', () => {
   })
 
   it('rejects event list for viewer role', async () => {
-    await expect(service.listEvents(buildAuthz('viewer'), 'wedding-1')).rejects.toThrow(TRPCError)
+    await expect(service.listEvents(buildAuthz('viewer'), 'wedding-1')).rejects.toThrow(DomainError)
   })
 
   it('lists event stats with event.read permission', async () => {

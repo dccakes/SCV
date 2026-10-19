@@ -5,12 +5,11 @@
  * Handles gift tracking, updates, and thank you status.
  */
 
-import { TRPCError } from '@trpc/server'
-
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { GiftRepository } from '~/server/domains/gift/gift.repository'
 import type { Gift, UpdateGiftInput, UpsertGiftInput } from '~/server/domains/gift/gift.types'
+import { ForbiddenError } from '~/server/domains/shared/domain-error'
 
 export class GiftService {
   constructor(private giftRepository: GiftRepository) {}
@@ -30,10 +29,7 @@ export class GiftService {
       weddingId
     )
     if (!inScope) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to update this gift',
-      })
+      throw new ForbiddenError('You do not have permission to update this gift')
     }
 
     // Only update thankYouSentAt on transitions: set on false→true, clear on true→false

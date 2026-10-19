@@ -2,8 +2,6 @@
  * Tests for Question Domain Service
  */
 
-import { TRPCError } from '@trpc/server'
-
 // Must mock before importing the service
 jest.mock('~/server/authz/permission-checker', () => ({
   requirePermission: jest.fn(),
@@ -31,6 +29,7 @@ import {
   resetMocks,
 } from '~/server/domains/question/question.repository'
 import { QuestionService } from '~/server/domains/question/question.service'
+import { DomainError, ForbiddenError } from '~/server/domains/shared/domain-error'
 
 // Create typed aliases for mocked functions
 const mockUpsertFn = mockUpsert as jest.Mock
@@ -110,7 +109,7 @@ describe('QuestionService', () => {
 
     it('should reject upsert when permission check fails', async () => {
       mockRequirePermission.mockImplementation(() => {
-        throw new TRPCError({ code: 'FORBIDDEN' })
+        throw new ForbiddenError()
       })
 
       await expect(
@@ -125,7 +124,7 @@ describe('QuestionService', () => {
             isRequired: false,
           },
         })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
       expect(mockUpsertFn).not.toHaveBeenCalled()
     })
@@ -142,7 +141,7 @@ describe('QuestionService', () => {
             isRequired: false,
           },
         })
-      ).rejects.toThrow(TRPCError)
+      ).rejects.toThrow(DomainError)
 
       await expect(
         questionService.upsertQuestion({
@@ -156,7 +155,7 @@ describe('QuestionService', () => {
           },
         })
       ).rejects.toMatchObject({
-        code: 'BAD_REQUEST',
+        kind: 'VALIDATION',
         message: 'Question must belong to either Event or Website',
       })
     })
@@ -175,7 +174,7 @@ describe('QuestionService', () => {
             isRequired: false,
           },
         })
-      ).rejects.toThrow(TRPCError)
+      ).rejects.toThrow(DomainError)
 
       await expect(
         questionService.upsertQuestion({
@@ -191,7 +190,7 @@ describe('QuestionService', () => {
           },
         })
       ).rejects.toMatchObject({
-        code: 'BAD_REQUEST',
+        kind: 'VALIDATION',
         message: 'Question cannot belong to both Event and Website',
       })
     })
@@ -238,7 +237,7 @@ describe('QuestionService', () => {
             deletedOptions: ['option-1'],
           },
         })
-      ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+      ).rejects.toMatchObject({ kind: 'VALIDATION' })
 
       expect(mockDeleteOptionsForQuestionFn).not.toHaveBeenCalled()
       expect(mockUpsertFn).not.toHaveBeenCalled()
@@ -257,7 +256,7 @@ describe('QuestionService', () => {
             isRequired: false,
           },
         })
-      ).rejects.toMatchObject({ code: 'PRECONDITION_FAILED' })
+      ).rejects.toMatchObject({ kind: 'PRECONDITION_FAILED' })
     })
 
     it('should reject upsert when event is outside wedding scope', async () => {
@@ -275,7 +274,7 @@ describe('QuestionService', () => {
             isRequired: false,
           },
         })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
       expect(mockUpsertFn).not.toHaveBeenCalled()
     })
@@ -295,7 +294,7 @@ describe('QuestionService', () => {
             isRequired: false,
           },
         })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
       expect(mockUpsertFn).not.toHaveBeenCalled()
     })
@@ -316,7 +315,7 @@ describe('QuestionService', () => {
             isRequired: false,
           },
         })
-      ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+      ).rejects.toMatchObject({ kind: 'VALIDATION' })
 
       expect(mockUpsertFn).not.toHaveBeenCalled()
     })
@@ -338,7 +337,7 @@ describe('QuestionService', () => {
             isRequired: false,
           },
         })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
       expect(mockUpsertFn).not.toHaveBeenCalled()
     })
@@ -373,7 +372,7 @@ describe('QuestionService', () => {
           organizationId: 'org-1',
           data: { questionId: 'question-123' },
         })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
       expect(mockDeleteFn).not.toHaveBeenCalled()
     })
@@ -388,13 +387,13 @@ describe('QuestionService', () => {
           organizationId: 'org-1',
           data: { questionId: 'missing-question' },
         })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
     })
 
     it('should reject delete when permission check fails', async () => {
       mockFindByIdFn.mockResolvedValue(mockQuestion)
       mockRequirePermission.mockImplementation(() => {
-        throw new TRPCError({ code: 'FORBIDDEN' })
+        throw new ForbiddenError()
       })
 
       await expect(
@@ -404,7 +403,7 @@ describe('QuestionService', () => {
           organizationId: 'org-1',
           data: { questionId: 'question-123' },
         })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
       expect(mockDeleteFn).not.toHaveBeenCalled()
     })
@@ -417,7 +416,7 @@ describe('QuestionService', () => {
           organizationId: null,
           data: { questionId: 'question-123' },
         })
-      ).rejects.toMatchObject({ code: 'PRECONDITION_FAILED' })
+      ).rejects.toMatchObject({ kind: 'PRECONDITION_FAILED' })
     })
   })
 

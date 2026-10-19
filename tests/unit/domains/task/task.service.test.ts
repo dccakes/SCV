@@ -1,5 +1,4 @@
 import { TaskCategory } from '@prisma/client'
-import { TRPCError } from '@trpc/server'
 
 jest.mock('~/server/authz/permission-checker', () => ({
   requirePermission: jest.fn(),
@@ -8,6 +7,7 @@ jest.mock('~/server/authz/permission-checker', () => ({
 jest.mock('~/server/domains/task/task.repository')
 
 import { requirePermission } from '~/server/authz/permission-checker'
+import { ForbiddenError } from '~/server/domains/shared/domain-error'
 // @ts-expect-error test mock exports
 import {
   mockBelongsToWedding,
@@ -103,7 +103,7 @@ describe('TaskService', () => {
         category: TaskCategory.VENDORS,
         monthsBeforeWedding: 6,
       })
-    ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+    ).rejects.toMatchObject({ kind: 'VALIDATION' })
 
     expect(mockCreateFn).not.toHaveBeenCalled()
   })
@@ -118,7 +118,7 @@ describe('TaskService', () => {
         category: TaskCategory.VENDORS,
         monthsBeforeWedding: 6,
       })
-    ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+    ).rejects.toMatchObject({ kind: 'VALIDATION' })
 
     expect(mockCreateFn).not.toHaveBeenCalled()
   })
@@ -179,7 +179,7 @@ describe('TaskService', () => {
         taskId: 'task-123',
         eventId: 'event-other',
       })
-    ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+    ).rejects.toMatchObject({ kind: 'VALIDATION' })
 
     expect(mockUpdateFn).not.toHaveBeenCalled()
   })
@@ -225,7 +225,7 @@ describe('TaskService', () => {
 
     await expect(
       taskService.getTaskById(actorContext, 'wedding-123', 'task-123')
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
   })
 
   it('deletes a task in the active wedding scope', async () => {
@@ -313,11 +313,11 @@ describe('TaskService', () => {
 
   it('propagates permission failures', async () => {
     mockRequirePermission.mockImplementation(() => {
-      throw new TRPCError({ code: 'FORBIDDEN' })
+      throw new ForbiddenError()
     })
 
     await expect(taskService.listTasks(actorContext, 'wedding-123')).rejects.toMatchObject({
-      code: 'FORBIDDEN',
+      kind: 'FORBIDDEN',
     })
   })
 })

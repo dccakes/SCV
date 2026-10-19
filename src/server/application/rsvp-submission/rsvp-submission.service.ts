@@ -10,7 +10,6 @@
 
 // biome-ignore lint/style/noRestrictedImports: Application services use PrismaClient for cross-domain transactions
 import type { PrismaClient } from '@prisma/client'
-import { TRPCError } from '@trpc/server'
 import type {
   SubmitPublicRsvpSchemaInput,
   SubmitRsvpSchemaInput,
@@ -21,6 +20,7 @@ import type { GuestRepository } from '~/server/domains/guest/guest.repository'
 import type { HouseholdRepository } from '~/server/domains/household/household.repository'
 import { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
 import { QuestionRepository } from '~/server/domains/question/question.repository'
+import { ForbiddenError } from '~/server/domains/shared/domain-error'
 import type { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
 
 // Re-use types from validator for internal use
@@ -83,10 +83,7 @@ export class RsvpSubmissionService {
       return this.getWeddingIdFromValidToken(subUrl, token)
     }
 
-    throw new TRPCError({
-      code: 'FORBIDDEN',
-      message: 'RSVP is not available for this wedding',
-    })
+    throw new ForbiddenError('RSVP is not available for this wedding')
   }
 
   async submitRsvp(data: SubmitRsvpSchemaInput): Promise<{ success: boolean }> {
@@ -190,10 +187,7 @@ export class RsvpSubmissionService {
     const weddingId = await this.weddingRepo.findWeddingIdByValidTokenAndSubUrl(subUrl, token)
 
     if (!weddingId) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'Invalid or expired RSVP token',
-      })
+      throw new ForbiddenError('Invalid or expired RSVP token')
     }
 
     return weddingId
@@ -213,10 +207,7 @@ export class RsvpSubmissionService {
       )
 
       if (invitationCount !== data.rsvpResponses.length) {
-        throw new TRPCError({
-          code: 'FORBIDDEN',
-          message: 'Invalid RSVP submission scope for token',
-        })
+        throw new ForbiddenError('Invalid RSVP submission scope for token')
       }
     }
 
@@ -241,10 +232,7 @@ export class RsvpSubmissionService {
       const guestCount = await this.guestRepo.countByIdsInWedding(weddingId, Array.from(guestIds))
 
       if (guestCount !== guestIds.size) {
-        throw new TRPCError({
-          code: 'FORBIDDEN',
-          message: 'Invalid RSVP submission scope for token',
-        })
+        throw new ForbiddenError('Invalid RSVP submission scope for token')
       }
     }
 
@@ -255,10 +243,7 @@ export class RsvpSubmissionService {
       )
 
       if (householdCount !== householdIds.size) {
-        throw new TRPCError({
-          code: 'FORBIDDEN',
-          message: 'Invalid RSVP submission scope for token',
-        })
+        throw new ForbiddenError('Invalid RSVP submission scope for token')
       }
     }
   }

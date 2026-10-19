@@ -5,13 +5,17 @@
  * Handles vendor and quote CRUD with ownership verification.
  */
 
-import { TRPCError } from '@trpc/server'
 import { del } from '@vercel/blob'
 import { logger } from '~/lib/observability/logger'
 import { MAX_FILES_PER_QUOTE, MAX_IMAGES_PER_VENDOR } from '~/lib/upload-config'
 
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
+import {
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from '~/server/domains/shared/domain-error'
 import type { VendorRepository } from '~/server/domains/vendor/vendor.repository'
 import type {
   Vendor,
@@ -91,14 +95,11 @@ export class VendorService {
     const vendor = await this.vendorRepository.findByIdWithQuotes(vendorId)
 
     if (!vendor) {
-      throw new TRPCError({ code: 'NOT_FOUND', message: 'Vendor not found' })
+      throw new NotFoundError('Vendor not found')
     }
 
     if (vendor.weddingId !== weddingId) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to access this vendor',
-      })
+      throw new ForbiddenError('You do not have permission to access this vendor')
     }
 
     return {
@@ -140,7 +141,7 @@ export class VendorService {
     const quote = vendor?.quotes.find((item) => item.id === quoteId)
 
     if (!quote) {
-      throw new TRPCError({ code: 'NOT_FOUND', message: 'Quote not found' })
+      throw new NotFoundError('Quote not found')
     }
 
     return quote
@@ -215,10 +216,7 @@ export class VendorService {
 
     const trimmedMessage = message.trim()
     if (trimmedMessage.length === 0) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Message is required',
-      })
+      throw new ValidationError('Message is required')
     }
 
     return this.vendorRepository.createVendorNote({
@@ -244,10 +242,7 @@ export class VendorService {
 
     const categoryConfig = await this.vendorRepository.findCategoryConfig(weddingId, category)
     if (!categoryConfig) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'Vendor category config not found',
-      })
+      throw new NotFoundError('Vendor category config not found')
     }
 
     return categoryConfig
@@ -369,10 +364,9 @@ export class VendorService {
     // Enforce total file count per quote (existing + new)
     const existingCount = await this.vendorRepository.countFilesByQuoteId(data.quoteId)
     if (existingCount + data.files.length > MAX_FILES_PER_QUOTE) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: `A quote can have at most ${MAX_FILES_PER_QUOTE} files (currently ${existingCount})`,
-      })
+      throw new ValidationError(
+        `A quote can have at most ${MAX_FILES_PER_QUOTE} files (currently ${existingCount})`
+      )
     }
 
     return this.vendorRepository.createQuoteFiles(data.quoteId, data.files)
@@ -416,10 +410,9 @@ export class VendorService {
     const vendor = await this.vendorRepository.findByIdWithQuotes(vendorId)
     const existingCount = vendor?.images.length ?? 0
     if (existingCount + data.images.length > MAX_IMAGES_PER_VENDOR) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: `A vendor can have at most ${MAX_IMAGES_PER_VENDOR} images (currently ${existingCount})`,
-      })
+      throw new ValidationError(
+        `A vendor can have at most ${MAX_IMAGES_PER_VENDOR} images (currently ${existingCount})`
+      )
     }
 
     return this.vendorRepository.saveImages(vendorId, data.images)
@@ -470,10 +463,7 @@ export class VendorService {
 
     const vendor = await this.vendorRepository.findByIdWithQuotes(vendorId)
     if (!vendor?.website) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Vendor does not have a website URL',
-      })
+      throw new ValidationError('Vendor does not have a website URL')
     }
 
     return fetchWebsiteImages(vendor.website)
@@ -501,30 +491,21 @@ export class VendorService {
   private async assertVendorOwnership(vendorId: string, weddingId: string): Promise<void> {
     const belongs = await this.vendorRepository.belongsToWedding(vendorId, weddingId)
     if (!belongs) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to modify this vendor',
-      })
+      throw new ForbiddenError('You do not have permission to modify this vendor')
     }
   }
 
   private async assertQuoteOwnership(quoteId: string, vendorId: string): Promise<void> {
     const belongs = await this.vendorRepository.quoteBelongsToVendor(quoteId, vendorId)
     if (!belongs) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to modify this quote',
-      })
+      throw new ForbiddenError('You do not have permission to modify this quote')
     }
   }
 
   private async assertFileOwnership(fileId: string, quoteId: string): Promise<void> {
     const belongs = await this.vendorRepository.fileBelongsToQuote(fileId, quoteId)
     if (!belongs) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to modify this file',
-      })
+      throw new ForbiddenError('You do not have permission to modify this file')
     }
   }
 

@@ -8,14 +8,13 @@
  * - Timeline sorting (newest first)
  */
 
-import { TRPCError } from '@trpc/server'
-
 jest.mock('~/server/authz/permission-checker', () => ({
   requirePermission: jest.fn(),
 }))
 
 import { requirePermission } from '~/server/authz/permission-checker'
 import { CommunicationLogService } from '~/server/domains/communication-log/communication-log.service'
+import { DomainError } from '~/server/domains/shared/domain-error'
 
 const mockRequirePermission = requirePermission as jest.Mock
 
@@ -63,7 +62,7 @@ describe('CommunicationLogService', () => {
 
       await expect(
         service.getTimelineForHousehold(actorContext, 'wedding-1', 'household-wrong')
-      ).rejects.toThrow(TRPCError)
+      ).rejects.toThrow(DomainError)
 
       await expect(
         service.getTimelineForHousehold(actorContext, 'wedding-1', 'household-wrong')
@@ -250,7 +249,7 @@ describe('CommunicationLogService', () => {
       mockBelongsToWedding.mockResolvedValue(false)
 
       await expect(service.deleteNote(actorContext, 'wedding-1', 'note-wrong')).rejects.toThrow(
-        TRPCError
+        DomainError
       )
 
       expect(mockDelete).not.toHaveBeenCalled()

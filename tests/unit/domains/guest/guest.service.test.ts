@@ -246,7 +246,7 @@ describe('GuestService', () => {
 
       await expect(
         guestService.updateGuest(actorContext, 'wedding-123', 1, { firstName: 'Jane' })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
       expect(mockUpdateFn).not.toHaveBeenCalled()
     })

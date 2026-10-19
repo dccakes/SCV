@@ -1,6 +1,5 @@
-import { TRPCError } from '@trpc/server'
-
 import type { ActiveOrganization } from '~/server/authz/authorization.types'
+import { ForbiddenError, PreconditionFailedError } from '~/server/domains/shared/domain-error'
 
 export type OrganizationScopeEntityName = 'event' | 'guest' | 'invitation'
 
@@ -47,14 +46,11 @@ type AssertInvitationInActiveOrganizationInput = {
 }
 
 const preconditionFailed = (message: string): never => {
-  throw new TRPCError({ code: 'PRECONDITION_FAILED', message })
+  throw new PreconditionFailedError(message)
 }
 
 const permissionDenied = (entityName: OrganizationScopeEntityName, entityId: string): never => {
-  throw new TRPCError({
-    code: 'FORBIDDEN',
-    message: `${entityName} ${entityId} is outside the active organization scope`,
-  })
+  throw new ForbiddenError(`${entityName} ${entityId} is outside the active organization scope`)
 }
 
 export const assertEntityInActiveOrganization = (

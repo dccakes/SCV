@@ -1,5 +1,3 @@
-import { TRPCError } from '@trpc/server'
-
 jest.mock('~/server/authz/permission-checker', () => ({
   requirePermission: jest.fn(),
 }))
@@ -17,6 +15,7 @@ import {
   mockFindByWeddingIdWithQuestions,
   resetMocks as resetEventRepoMocks,
 } from '~/server/domains/event/event.repository'
+import { DomainError } from '~/server/domains/shared/domain-error'
 import {
   mockFindBySubUrl,
   mockFindBySubUrlWithQuestions,
@@ -158,7 +157,7 @@ describe('WebsiteManagementService', () => {
           email: 'john@example.com',
         })
       ).rejects.toMatchObject({
-        code: 'NOT_FOUND',
+        kind: 'NOT_FOUND',
       })
 
       expect(mockUpsertWebsiteByWeddingIdFn).not.toHaveBeenCalled()
@@ -177,7 +176,7 @@ describe('WebsiteManagementService', () => {
           email: 'john@example.com',
         })
       ).rejects.toMatchObject({
-        code: 'CONFLICT',
+        kind: 'CONFLICT',
       })
 
       expect(mockUpsertWebsiteByWeddingIdFn).not.toHaveBeenCalled()
@@ -195,7 +194,7 @@ describe('WebsiteManagementService', () => {
           email: 'john@example.com',
         })
       ).rejects.toMatchObject({
-        code: 'CONFLICT',
+        kind: 'CONFLICT',
       })
     })
   })
@@ -296,7 +295,7 @@ describe('WebsiteManagementService', () => {
     it('throws when website does not exist', async () => {
       mockFindBySubUrlWithQuestionsFn.mockResolvedValue(null)
 
-      await expect(service.fetchWeddingData('missing-site', undefined)).rejects.toThrow(TRPCError)
+      await expect(service.fetchWeddingData('missing-site', undefined)).rejects.toThrow(DomainError)
     })
 
     it('throws forbidden when protected website access token is invalid', async () => {
@@ -310,7 +309,7 @@ describe('WebsiteManagementService', () => {
       await expect(
         service.fetchWeddingData('johndoeandjanesmith', undefined)
       ).rejects.toMatchObject({
-        code: 'FORBIDDEN',
+        kind: 'FORBIDDEN',
       })
     })
 
@@ -345,7 +344,7 @@ describe('WebsiteManagementService', () => {
       await expect(
         service.fetchWeddingData('johndoeandjanesmith', undefined, 'other-wedding-code')
       ).rejects.toMatchObject({
-        code: 'FORBIDDEN',
+        kind: 'FORBIDDEN',
       })
     })
 
@@ -354,12 +353,12 @@ describe('WebsiteManagementService', () => {
       mockFindWeddingByIdFn.mockResolvedValue(null)
 
       await expect(service.fetchWeddingData('johndoeandjanesmith', undefined)).rejects.toThrow(
-        TRPCError
+        DomainError
       )
       await expect(
         service.fetchWeddingData('johndoeandjanesmith', undefined)
       ).rejects.toMatchObject({
-        code: 'INTERNAL_SERVER_ERROR',
+        kind: 'INVARIANT_VIOLATION',
       })
     })
   })

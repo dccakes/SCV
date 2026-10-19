@@ -2,11 +2,10 @@
  * Tests for User Domain Service
  */
 
-import { TRPCError } from '@trpc/server'
-
 // Must mock before importing the service
 jest.mock('~/server/domains/user/user.repository')
 
+import { DomainError } from '~/server/domains/shared/domain-error'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   mockExists,
@@ -67,18 +66,18 @@ describe('UserService', () => {
     })
 
     it('should throw FORBIDDEN when user tries to access another user', async () => {
-      await expect(userService.getById('user-123', 'other-user')).rejects.toThrow(TRPCError)
+      await expect(userService.getById('user-123', 'other-user')).rejects.toThrow(DomainError)
       await expect(userService.getById('user-123', 'other-user')).rejects.toMatchObject({
-        code: 'FORBIDDEN',
+        kind: 'FORBIDDEN',
       })
     })
 
     it('should throw NOT_FOUND when user does not exist', async () => {
       mockFindByIdFn.mockResolvedValue(null)
 
-      await expect(userService.getById('user-123', 'user-123')).rejects.toThrow(TRPCError)
+      await expect(userService.getById('user-123', 'user-123')).rejects.toThrow(DomainError)
       await expect(userService.getById('user-123', 'user-123')).rejects.toMatchObject({
-        code: 'NOT_FOUND',
+        kind: 'NOT_FOUND',
       })
     })
   })
@@ -100,10 +99,10 @@ describe('UserService', () => {
     it('should throw FORBIDDEN when user tries to update another user', async () => {
       await expect(
         userService.updateProfile('user-123', 'other-user', { name: 'Test' })
-      ).rejects.toThrow(TRPCError)
+      ).rejects.toThrow(DomainError)
       await expect(
         userService.updateProfile('user-123', 'other-user', { name: 'Test' })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
     })
 
     it('should throw NOT_FOUND when user does not exist', async () => {
@@ -111,10 +110,10 @@ describe('UserService', () => {
 
       await expect(
         userService.updateProfile('user-123', 'user-123', { name: 'Test' })
-      ).rejects.toThrow(TRPCError)
+      ).rejects.toThrow(DomainError)
       await expect(
         userService.updateProfile('user-123', 'user-123', { name: 'Test' })
-      ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+      ).rejects.toMatchObject({ kind: 'NOT_FOUND' })
     })
   })
 

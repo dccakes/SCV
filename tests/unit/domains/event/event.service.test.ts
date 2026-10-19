@@ -2,8 +2,6 @@
  * Tests for Event Domain Service
  */
 
-import { TRPCError } from '@trpc/server'
-
 // Must mock before importing the service
 jest.mock('server/authz/permission-checker', () => ({
   requirePermission: jest.fn(),
@@ -39,6 +37,7 @@ import {
   mockInvitationDeleteMany,
   resetMocks as resetDbMocks,
 } from 'server/infrastructure/database/client'
+import { DomainError, ForbiddenError } from '~/server/domains/shared/domain-error'
 
 // Create typed aliases for mocked functions
 const mockBelongsToWeddingFn = mockBelongsToWedding as jest.Mock
@@ -192,14 +191,14 @@ describe('EventService', () => {
 
     it('should reject create when actor lacks event create permission', async () => {
       mockRequirePermission.mockImplementation(() => {
-        throw new TRPCError({ code: 'FORBIDDEN' })
+        throw new ForbiddenError()
       })
 
       await expect(
         eventService.createEvent(actorContext, 'wedding-123', {
           eventName: 'Blocked Event',
         })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
       expect(mockEventCreateFn).not.toHaveBeenCalled()
     })
@@ -291,18 +290,18 @@ describe('EventService', () => {
     it('should throw NOT_FOUND when event does not exist', async () => {
       mockFindByIdFn.mockResolvedValue(null)
 
-      await expect(eventService.getById('event-123', 'wedding-123')).rejects.toThrow(TRPCError)
+      await expect(eventService.getById('event-123', 'wedding-123')).rejects.toThrow(DomainError)
       await expect(eventService.getById('event-123', 'wedding-123')).rejects.toMatchObject({
-        code: 'NOT_FOUND',
+        kind: 'NOT_FOUND',
       })
     })
 
     it('should throw FORBIDDEN when wedding does not own event', async () => {
       mockFindByIdFn.mockResolvedValue(mockEvent)
 
-      await expect(eventService.getById('event-123', 'other-wedding')).rejects.toThrow(TRPCError)
+      await expect(eventService.getById('event-123', 'other-wedding')).rejects.toThrow(DomainError)
       await expect(eventService.getById('event-123', 'other-wedding')).rejects.toMatchObject({
-        code: 'FORBIDDEN',
+        kind: 'FORBIDDEN',
       })
     })
   })
@@ -407,7 +406,7 @@ describe('EventService', () => {
 
     it('should reject update when actor lacks event update permission', async () => {
       mockRequirePermission.mockImplementation(() => {
-        throw new TRPCError({ code: 'FORBIDDEN' })
+        throw new ForbiddenError()
       })
 
       await expect(
@@ -415,7 +414,7 @@ describe('EventService', () => {
           eventId: 'event-123',
           eventName: 'Test',
         })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
     })
   })
 
@@ -444,19 +443,19 @@ describe('EventService', () => {
 
       await expect(
         eventService.updateCollectRsvp(actorContext, 'wedding-123', 'event-123', false)
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
       expect(mockUpdateCollectRsvpFn).not.toHaveBeenCalled()
     })
 
     it('should reject update collect RSVP when actor lacks permission', async () => {
       mockRequirePermission.mockImplementation(() => {
-        throw new TRPCError({ code: 'FORBIDDEN' })
+        throw new ForbiddenError()
       })
 
       await expect(
         eventService.updateCollectRsvp(actorContext, 'wedding-123', 'event-123', false)
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
       expect(mockUpdateCollectRsvpFn).not.toHaveBeenCalled()
     })
@@ -481,20 +480,20 @@ describe('EventService', () => {
 
       await expect(
         eventService.deleteEvent(actorContext, 'wedding-123', 'event-123')
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
       expect(mockDeleteFn).not.toHaveBeenCalled()
     })
 
     it('should reject delete when actor lacks event delete permission', async () => {
       mockRequirePermission.mockImplementation(() => {
-        throw new TRPCError({ code: 'FORBIDDEN' })
+        throw new ForbiddenError()
       })
 
       await expect(
         eventService.deleteEvent(actorContext, 'wedding-123', 'event-123')
       ).rejects.toMatchObject({
-        code: 'FORBIDDEN',
+        kind: 'FORBIDDEN',
       })
     })
   })

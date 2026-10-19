@@ -11,7 +11,6 @@
 
 // biome-ignore lint/style/noRestrictedImports: Application services use PrismaClient for cross-domain transactions
 import type { PrismaClient } from '@prisma/client'
-import { TRPCError } from '@trpc/server'
 
 import { RSVP_STATUS } from '~/lib/constants'
 import type { AuthzContext } from '~/server/authz/authorization.types'
@@ -20,6 +19,7 @@ import { checklistSeedingService } from '~/server/domains/checklist'
 import type { EventRepository } from '~/server/domains/event/event.repository'
 import type { Event } from '~/server/domains/event/event.types'
 import type { CreateEventInput, UpdateEventInput } from '~/server/domains/event/event.validator'
+import { ForbiddenError } from '~/server/domains/shared/domain-error'
 
 export class EventManagementService {
   constructor(
@@ -98,10 +98,7 @@ export class EventManagementService {
 
     const belongsToWedding = await this.eventRepo.belongsToWedding(data.eventId, weddingId)
     if (!belongsToWedding) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to update this event',
-      })
+      throw new ForbiddenError('You do not have permission to update this event')
     }
 
     return this.db.$transaction(async (tx) => {
@@ -159,10 +156,7 @@ export class EventManagementService {
 
     const belongsToWedding = await this.eventRepo.belongsToWedding(eventId, weddingId)
     if (!belongsToWedding) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to delete this event',
-      })
+      throw new ForbiddenError('You do not have permission to delete this event')
     }
 
     const deleted = await this.eventRepo.delete(eventId)

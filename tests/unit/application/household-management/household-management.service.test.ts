@@ -2,8 +2,6 @@
  * Tests for Household Management Application Service
  */
 
-import { TRPCError } from '@trpc/server'
-
 jest.mock('~/server/authz/permission-checker', () => ({
   requirePermission: jest.fn(),
 }))
@@ -50,6 +48,7 @@ import {
   mockUpdate as mockInvitationUpdate,
   resetMocks as resetInvitationMocks,
 } from '~/server/domains/invitation/invitation.repository'
+import { ForbiddenError } from '~/server/domains/shared/domain-error'
 import { WebsiteRepository } from '~/server/domains/website/website.repository'
 
 const mockRequirePermission = requirePermission as jest.Mock
@@ -146,14 +145,14 @@ describe('HouseholdManagementService', () => {
 
   it('rejects create when actor lacks guest create permission', async () => {
     mockRequirePermission.mockImplementation(() => {
-      throw new TRPCError({ code: 'FORBIDDEN' })
+      throw new ForbiddenError()
     })
 
     await expect(
       service.createHouseholdWithGuests(actorContext, 'wedding-123', {
         guestParty: [{ firstName: 'John', lastName: 'Doe', invites: {} }],
       })
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
     expect(mockDb.$transaction).not.toHaveBeenCalled()
   })
@@ -165,7 +164,7 @@ describe('HouseholdManagementService', () => {
       service.createHouseholdWithGuests(actorContext, 'wedding-123', {
         guestParty: [{ firstName: 'John', lastName: 'Doe', invites: { 'event-out': 'Invited' } }],
       })
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
     expect(mockDb.$transaction).not.toHaveBeenCalled()
   })
@@ -312,13 +311,13 @@ describe('HouseholdManagementService', () => {
 
   it('bulk create rethrows authz errors', async () => {
     mockRequirePermission.mockReturnValue({ organizationId: 'org-1', role: 'admin' })
-    mockCreateWithGifts.mockRejectedValue(new TRPCError({ code: 'FORBIDDEN' }))
+    mockCreateWithGifts.mockRejectedValue(new ForbiddenError())
 
     await expect(
       service.bulkCreateHouseholds(actorContext, 'wedding-123', [
         { guestParty: [{ firstName: 'A', lastName: 'A', invites: {} }] },
       ])
-    ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
   })
 
   it('removes all invitations when tag-along has no allowed events', async () => {

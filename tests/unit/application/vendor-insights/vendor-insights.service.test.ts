@@ -1,6 +1,6 @@
-import { TRPCError } from '@trpc/server'
 import { VendorInsightsService } from '~/server/application/vendor-insights/vendor-insights.service'
 import type { AuthzContext } from '~/server/authz/authorization.types'
+import { DomainError } from '~/server/domains/shared/domain-error'
 
 jest.mock('~/lib/auth-permissions', () => require('~/lib/__mocks__/auth-permissions'))
 
@@ -33,7 +33,9 @@ describe('VendorInsightsService', () => {
   })
 
   it('rejects vendor list for viewer role', async () => {
-    await expect(service.listVendors(buildAuthz('viewer'), 'wedding-1')).rejects.toThrow(TRPCError)
+    await expect(service.listVendors(buildAuthz('viewer'), 'wedding-1')).rejects.toThrow(
+      DomainError
+    )
   })
 
   it('reads quote for member role', async () => {

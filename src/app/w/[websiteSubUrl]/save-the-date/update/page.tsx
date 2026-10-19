@@ -1,4 +1,3 @@
-import { TRPCError } from '@trpc/server'
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
@@ -8,6 +7,11 @@ import { InvalidHouseholdInvite } from '~/components/website/household-invite/in
 import { householdInviteCookieName } from '~/lib/website/cookies'
 import { householdInviteService } from '~/server/application/household-invite'
 import type { UpdateHouseholdInviteInput } from '~/server/application/household-invite/household-invite.service'
+import {
+  ConflictError,
+  ForbiddenError,
+  ValidationError,
+} from '~/server/domains/shared/domain-error'
 
 export const metadata: Metadata = {
   robots: {
@@ -94,11 +98,11 @@ export default async function HouseholdSaveTheDateUpdatePage({
         parseUpdateFormData(formData)
       )
     } catch (error) {
-      if (error instanceof TRPCError && error.code === 'FORBIDDEN') {
+      if (error instanceof ForbiddenError) {
         redirect(`/w/${websiteSubUrl}/save-the-date/update?error=expired`)
       }
 
-      if (error instanceof TRPCError && ['BAD_REQUEST', 'CONFLICT'].includes(error.code)) {
+      if (error instanceof ValidationError || error instanceof ConflictError) {
         redirect(`/w/${websiteSubUrl}/save-the-date/update?error=validation`)
       }
 

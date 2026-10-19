@@ -8,8 +8,6 @@
  * - A question must belong to either an Event OR a Website (not both, not neither)
  */
 
-import { TRPCError } from '@trpc/server'
-
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { QuestionRepository } from '~/server/domains/question/question.repository'
@@ -22,6 +20,11 @@ import type {
   UpsertQuestionInput,
   WebsiteQuestions,
 } from '~/server/domains/question/question.types'
+import {
+  ForbiddenError,
+  PreconditionFailedError,
+  ValidationError,
+} from '~/server/domains/shared/domain-error'
 
 const buildGuestName = (firstName: string | null, lastName: string | null): string | null => {
   const name = [firstName, lastName].filter((part) => part && part.trim().length > 0).join(' ')
@@ -39,17 +42,11 @@ export class QuestionService {
     const hasWebsite = !!websiteId
 
     if (!hasEvent && !hasWebsite) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Question must belong to either Event or Website',
-      })
+      throw new ValidationError('Question must belong to either Event or Website')
     }
 
     if (hasEvent && hasWebsite) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Question cannot belong to both Event and Website',
-      })
+      throw new ValidationError('Question cannot belong to both Event and Website')
     }
   }
 
@@ -70,10 +67,9 @@ export class QuestionService {
     const { ctx, weddingId, organizationId, data } = input
 
     if (!organizationId) {
-      throw new TRPCError({
-        code: 'PRECONDITION_FAILED',
-        message: 'Wedding must be linked to an organization before question updates are allowed',
-      })
+      throw new PreconditionFailedError(
+        'Wedding must be linked to an organization before question updates are allowed'
+      )
     }
 
     let permissionScope: 'event' | 'website'
@@ -84,24 +80,19 @@ export class QuestionService {
       permissionScope = existingQuestion.eventId ? 'event' : 'website'
 
       if (permissionScope === 'event' && data.websiteId) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Question update context must match existing event question scope',
-        })
+        throw new ValidationError(
+          'Question update context must match existing event question scope'
+        )
       }
 
       if (permissionScope === 'website' && data.eventId) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Question update context must match existing website question scope',
-        })
+        throw new ValidationError(
+          'Question update context must match existing website question scope'
+        )
       }
 
       if (data.eventId && existingQuestion.eventId && data.eventId !== existingQuestion.eventId) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Question event context does not match existing question scope',
-        })
+        throw new ValidationError('Question event context does not match existing question scope')
       }
 
       if (
@@ -109,10 +100,7 @@ export class QuestionService {
         existingQuestion.websiteId &&
         data.websiteId !== existingQuestion.websiteId
       ) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Question website context does not match existing question scope',
-        })
+        throw new ValidationError('Question website context does not match existing question scope')
       }
     } else {
       // Validate context - must have Event OR Website
@@ -136,10 +124,7 @@ export class QuestionService {
     // Delete removed options first
     if (data.deletedOptions && data.deletedOptions.length > 0) {
       if (!data.questionId) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Question ID is required when deleting options',
-        })
+        throw new ValidationError('Question ID is required when deleting options')
       }
 
       await this.questionRepository.deleteOptionsForQuestion(data.questionId, data.deletedOptions)
@@ -169,10 +154,9 @@ export class QuestionService {
     const { ctx, weddingId, organizationId, data } = input
 
     if (!organizationId) {
-      throw new TRPCError({
-        code: 'PRECONDITION_FAILED',
-        message: 'Wedding must be linked to an organization before question updates are allowed',
-      })
+      throw new PreconditionFailedError(
+        'Wedding must be linked to an organization before question updates are allowed'
+      )
     }
 
     const question = await this.getScopedQuestionOrDeny(data.questionId, weddingId)
@@ -240,7 +224,7 @@ export class QuestionService {
 
     const inScope = await this.questionRepository.householdBelongsToWedding(householdId, weddingId)
     if (!inScope) {
-      throw new TRPCError({ code: 'FORBIDDEN' })
+      throw new ForbiddenError()
     }
 
     const { answers, optionResponses } =
@@ -306,12 +290,12 @@ export class QuestionService {
   private async getScopedQuestionOrDeny(questionId: string, weddingId: string): Promise<Question> {
     const question = await this.questionRepository.findById(questionId)
     if (!question) {
-      throw new TRPCError({ code: 'FORBIDDEN' })
+      throw new ForbiddenError()
     }
 
     const inScope = await this.questionRepository.belongsToWedding(questionId, weddingId)
     if (!inScope) {
-      throw new TRPCError({ code: 'FORBIDDEN' })
+      throw new ForbiddenError()
     }
 
     return question
@@ -320,14 +304,14 @@ export class QuestionService {
   private async assertEventInWeddingScope(eventId: string, weddingId: string): Promise<void> {
     const inScope = await this.questionRepository.eventBelongsToWedding(eventId, weddingId)
     if (!inScope) {
-      throw new TRPCError({ code: 'FORBIDDEN' })
+      throw new ForbiddenError()
     }
   }
 
   private async assertWebsiteInWeddingScope(websiteId: string, weddingId: string): Promise<void> {
     const inScope = await this.questionRepository.websiteBelongsToWedding(websiteId, weddingId)
     if (!inScope) {
-      throw new TRPCError({ code: 'FORBIDDEN' })
+      throw new ForbiddenError()
     }
   }
 }

@@ -1,9 +1,8 @@
-import { TRPCError } from '@trpc/server'
-
 jest.mock('~/server/domains/website-section/website-section.repository', () =>
   require('~/server/domains/website-section/__mocks__/website-section.repository')
 )
 
+import { DomainError } from '~/server/domains/shared/domain-error'
 import {
   mockCreate,
   mockFindByWebsiteId,
@@ -74,7 +73,7 @@ describe('WebsiteSectionService', () => {
         service.updateHomeSection('website-123', {
           introText: 'a'.repeat(2001),
         })
-      ).rejects.toThrow(TRPCError)
+      ).rejects.toThrow(DomainError)
 
       expect(mockUpsertHomeSection).not.toHaveBeenCalled()
     })

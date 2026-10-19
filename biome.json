@@ -106,7 +106,37 @@
               "options": {
                 "paths": {
                   "@prisma/client": "Services must not import PrismaClient directly. Use repositories instead.",
-                  "~/server/infrastructure/database": "Services must not import database client directly. Use repositories instead."
+                  "~/server/infrastructure/database": "Services must not import database client directly. Use repositories instead.",
+                  "@trpc/server": "Services throw DomainError subclasses from ~/server/domains/shared/domain-error. Only routers and src/server/api use tRPC."
+                },
+                "patterns": [
+                  {
+                    "group": ["../**", "./**"],
+                    "message": "Relative imports are not allowed. Use absolute imports with '~/' prefix."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/server/domains/**/*.ts",
+        "src/server/application/**/*.ts",
+        "src/server/authz/**/*.ts",
+        "!**/*.service.ts",
+        "!**/*.router.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@trpc/server": "Domain, application and authz code throws DomainError subclasses from ~/server/domains/shared/domain-error. Only routers and src/server/api use tRPC."
                 },
                 "patterns": [
                   {

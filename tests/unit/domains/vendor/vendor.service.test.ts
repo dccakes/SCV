@@ -3,7 +3,6 @@
  */
 
 import { VendorCategory, VendorStatus } from '@prisma/client'
-import { TRPCError } from '@trpc/server'
 
 jest.mock('~/server/authz/permission-checker', () => ({
   requirePermission: jest.fn(),
@@ -18,6 +17,7 @@ jest.mock('~/server/infrastructure/scraper/website-images')
 import { del } from '@vercel/blob'
 
 import { requirePermission } from '~/server/authz/permission-checker'
+import { DomainError } from '~/server/domains/shared/domain-error'
 // @ts-expect-error - Importing mock functions from mocked module
 import {
   mockBelongsToWedding,
@@ -228,10 +228,10 @@ describe('VendorService', () => {
 
       await expect(
         vendorService.getVendorWithQuotes(actorContext, 'vendor-123', 'wedding-123')
-      ).rejects.toThrow(TRPCError)
+      ).rejects.toThrow(DomainError)
       await expect(
         vendorService.getVendorWithQuotes(actorContext, 'vendor-123', 'wedding-123')
-      ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+      ).rejects.toMatchObject({ kind: 'NOT_FOUND' })
     })
 
     it('should throw FORBIDDEN when vendor belongs to a different wedding', async () => {
@@ -239,7 +239,7 @@ describe('VendorService', () => {
 
       await expect(
         vendorService.getVendorWithQuotes(actorContext, 'vendor-123', 'other-wedding')
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
     })
 
     it('sets currentUserRating from submitted ratings for getById', async () => {
@@ -290,7 +290,7 @@ describe('VendorService', () => {
 
       await expect(
         vendorService.getQuote(actorContext, 'quote-123', 'vendor-123', 'wedding-123')
-      ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+      ).rejects.toMatchObject({ kind: 'NOT_FOUND' })
     })
   })
 
@@ -341,7 +341,7 @@ describe('VendorService', () => {
           vendorId: 'vendor-123',
           name: 'Test',
         })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
     })
 
     it('normalizes empty-string notes to null and shallow-merges custom fields', async () => {
@@ -429,7 +429,7 @@ describe('VendorService', () => {
           'other-wedding',
           'Sent first outreach email'
         )
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
     })
   })
 
@@ -497,7 +497,7 @@ describe('VendorService', () => {
           'other-wedding',
           VendorStatus.SELECTED
         )
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
     })
   })
 
@@ -563,7 +563,7 @@ describe('VendorService', () => {
       await expect(
         vendorService.deleteVendor(actorContext, 'vendor-123', 'other-wedding')
       ).rejects.toMatchObject({
-        code: 'FORBIDDEN',
+        kind: 'FORBIDDEN',
       })
     })
   })
@@ -629,7 +629,7 @@ describe('VendorService', () => {
           price: 500,
           quoteDate: '2026-03-01',
         })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
     })
   })
 
@@ -682,7 +682,7 @@ describe('VendorService', () => {
           quoteId: 'quote-123',
           vendorId: 'vendor-123',
         })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
     })
 
     it('should throw FORBIDDEN when quote does not belong to vendor', async () => {
@@ -694,7 +694,7 @@ describe('VendorService', () => {
           quoteId: 'quote-123',
           vendorId: 'vendor-123',
         })
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
     })
   })
 
@@ -754,7 +754,7 @@ describe('VendorService', () => {
 
       await expect(
         vendorService.deleteQuote(actorContext, 'quote-123', 'vendor-123', 'other-wedding')
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
       expect(mockQuoteBelongsToVendorFn).not.toHaveBeenCalled()
     })
 
@@ -764,7 +764,7 @@ describe('VendorService', () => {
 
       await expect(
         vendorService.deleteQuote(actorContext, 'quote-123', 'vendor-123', 'wedding-123')
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
     })
   })
 
@@ -856,7 +856,7 @@ describe('VendorService', () => {
       mockCountFilesByQuoteIdFn.mockResolvedValue(10)
       await expect(
         vendorService.saveQuoteFiles(actorContext, 'vendor-123', 'wedding-123', fileInput)
-      ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+      ).rejects.toMatchObject({ kind: 'VALIDATION' })
     })
 
     it('should throw FORBIDDEN when vendor does not belong to wedding', async () => {
@@ -864,7 +864,7 @@ describe('VendorService', () => {
 
       await expect(
         vendorService.saveQuoteFiles(actorContext, 'vendor-123', 'other-wedding', fileInput)
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
     })
 
     it('should throw FORBIDDEN when quote does not belong to vendor', async () => {
@@ -873,7 +873,7 @@ describe('VendorService', () => {
 
       await expect(
         vendorService.saveQuoteFiles(actorContext, 'vendor-123', 'wedding-123', fileInput)
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
     })
   })
 
@@ -915,7 +915,7 @@ describe('VendorService', () => {
 
         await expect(
           vendorService.saveImages(actorContext, 'vendor-123', 'other-wedding', imageInput)
-        ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+        ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
       })
 
       it('should throw BAD_REQUEST when adding images would exceed the limit', async () => {
@@ -955,7 +955,7 @@ describe('VendorService', () => {
 
         await expect(
           vendorService.saveImages(actorContext, 'vendor-123', 'wedding-123', threeImages)
-        ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+        ).rejects.toMatchObject({ kind: 'VALIDATION' })
 
         expect(mockSaveImagesFn).not.toHaveBeenCalled()
       })
@@ -1022,7 +1022,7 @@ describe('VendorService', () => {
 
         await expect(
           vendorService.deleteImage(actorContext, 'vendor-123', 'other-wedding', 'image-123')
-        ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+        ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
       })
     })
 
@@ -1048,7 +1048,7 @@ describe('VendorService', () => {
 
         await expect(
           vendorService.setCoverImage(actorContext, 'vendor-123', 'other-wedding', 'image-123')
-        ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+        ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
       })
     })
 
@@ -1078,7 +1078,7 @@ describe('VendorService', () => {
 
         await expect(
           vendorService.fetchVendorWebsiteImages(actorContext, 'vendor-123', 'wedding-123')
-        ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+        ).rejects.toMatchObject({ kind: 'VALIDATION' })
 
         expect(mockFetchWebsiteImages).not.toHaveBeenCalled()
       })
@@ -1088,7 +1088,7 @@ describe('VendorService', () => {
 
         await expect(
           vendorService.fetchVendorWebsiteImages(actorContext, 'vendor-123', 'other-wedding')
-        ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+        ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
       })
     })
   })
@@ -1118,7 +1118,7 @@ describe('VendorService', () => {
 
       await expect(
         vendorService.setVendorRating(actorContext, 'vendor-123', 'other-wedding', 5)
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
       expect(mockSetRatingForUserFn).not.toHaveBeenCalled()
     })
   })
@@ -1172,7 +1172,7 @@ describe('VendorService', () => {
 
       await expect(
         vendorService.deleteQuoteFile(actorContext, 'vendor-123', 'other-wedding', deleteInput)
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
     })
 
     it('should throw FORBIDDEN when quote does not belong to vendor', async () => {
@@ -1181,7 +1181,7 @@ describe('VendorService', () => {
 
       await expect(
         vendorService.deleteQuoteFile(actorContext, 'vendor-123', 'wedding-123', deleteInput)
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
     })
 
     it('should throw FORBIDDEN when file does not belong to quote', async () => {
@@ -1191,7 +1191,7 @@ describe('VendorService', () => {
 
       await expect(
         vendorService.deleteQuoteFile(actorContext, 'vendor-123', 'wedding-123', deleteInput)
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
     })
   })
 })

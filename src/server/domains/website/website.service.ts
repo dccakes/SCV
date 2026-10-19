@@ -5,10 +5,9 @@
  * Cross-domain orchestration lives in application services.
  */
 
-import { TRPCError } from '@trpc/server'
-
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
+import { ForbiddenError, ValidationError } from '~/server/domains/shared/domain-error'
 import type { WebsiteRepository } from '~/server/domains/website/website.repository'
 import type {
   PublicWebsite,
@@ -39,10 +38,7 @@ export class WebsiteService {
       data.password !== undefined || data.isPasswordEnabled !== undefined
 
     if (!updateRequiresContentPermission && !updateRequiresPasswordPermission) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'At least one website setting must be provided',
-      })
+      throw new ValidationError('At least one website setting must be provided')
     }
 
     if (updateRequiresContentPermission) {
@@ -77,10 +73,7 @@ export class WebsiteService {
 
     const belongsToWedding = await this.websiteRepository.belongsToWedding(websiteId, weddingId)
     if (!belongsToWedding) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to modify this website',
-      })
+      throw new ForbiddenError('You do not have permission to modify this website')
     }
 
     return this.websiteRepository.updateRsvpEnabled(websiteId, isRsvpEnabled)
@@ -132,10 +125,7 @@ export class WebsiteService {
     this.requireWebsitePermission(ctx, 'update')
 
     if (!isKnownTemplateId(templateId)) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: 'Unknown wedding website template',
-      })
+      throw new ValidationError('Unknown wedding website template')
     }
 
     return this.websiteRepository.updateTemplate(weddingId, templateId)

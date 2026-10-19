@@ -1,4 +1,3 @@
-import { TRPCError } from '@trpc/server'
 import { RSVP_STATUS } from '~/lib/constants/rsvp'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
@@ -7,6 +6,7 @@ import type { GuestService } from '~/server/domains/guest/guest.service'
 import type { Guest, GuestWithInvitations } from '~/server/domains/guest/guest.types'
 import type { InvitationService } from '~/server/domains/invitation/invitation.service'
 import type { Invitation } from '~/server/domains/invitation/invitation.types'
+import { ForbiddenError } from '~/server/domains/shared/domain-error'
 
 const normalizeSearchValue = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase()
@@ -58,10 +58,7 @@ export class GuestInsightsService {
     const guests = await this.guestService.getAllByHouseholdId(householdId)
     const inScope = guests.every((guest) => guest.weddingId === weddingId)
     if (!inScope) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to access this household',
-      })
+      throw new ForbiddenError('You do not have permission to access this household')
     }
     return { id: householdId, guests }
   }
