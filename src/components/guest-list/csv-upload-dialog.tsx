@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from '~/components/ui/dialog'
 import { FileDropzone } from '~/components/ui/file-dropzone'
+import { RSVP_STATUS, type RsvpStatus } from '~/lib/constants/rsvp'
 import { api } from '~/trpc/react'
 
 // ---------------------------------------------------------------------------
@@ -148,7 +149,9 @@ export function CsvUploadDialog({ open, onOpenChange, events }: CsvUploadDialogP
 
   const handleImport = () => {
     if (validRows.length === 0) return
-    const invites = Object.fromEntries(events.map((e) => [e.id, 'Not Invited']))
+    const invites: Record<string, RsvpStatus> = Object.fromEntries(
+      events.map((e) => [e.id, RSVP_STATUS.NOT_INVITED])
+    )
     const households = validRows.map(({ data }) => ({
       address1: data.address1,
       address2: data.address2,

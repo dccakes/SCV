@@ -3,6 +3,7 @@
  *
  * Types for the guest-facing RSVP submission flow.
  */
+import type { RsvpStatus } from '~/server/domains/invitation/rsvp-status'
 
 /**
  * RSVP response for a single guest/event combination
@@ -10,7 +11,7 @@
 export type RsvpResponse = {
   guestId: number
   eventId: string
-  rsvp: string
+  rsvp: RsvpStatus
 }
 
 /**

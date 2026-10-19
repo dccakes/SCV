@@ -1,19 +1,14 @@
 /**
  * RSVP Status Constants
  *
- * Defines the possible RSVP statuses used throughout the application.
+ * The canonical list lives in the invitation domain so server validation and
+ * the UI cannot drift apart. Re-exported here for client components.
  */
 
-export const RSVP_STATUS = {
-  NOT_INVITED: 'Not Invited',
-  INVITED: 'Invited',
-  ATTENDING: 'Attending',
-  DECLINED: 'Declined',
-} as const
-
-export type RsvpStatus = (typeof RSVP_STATUS)[keyof typeof RSVP_STATUS]
-
-/**
- * Array of all RSVP statuses for iteration/validation
- */
-export const RSVP_STATUS_VALUES = Object.values(RSVP_STATUS)
+export {
+  isRsvpStatus,
+  RSVP_STATUS,
+  RSVP_STATUS_VALUES,
+  type RsvpStatus,
+  toRsvpStatus,
+} from '~/server/domains/invitation/rsvp-status'

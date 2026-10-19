@@ -4,6 +4,7 @@
  * Type definitions for the Invitation domain entity.
  * Invitations track event invitations and RSVP responses.
  */
+import type { RsvpStatus } from '~/server/domains/invitation/rsvp-status'
 
 /**
  * Core Invitation entity type
@@ -28,7 +29,7 @@ export type Invitation = {
 export type CreateInvitationInput = {
   guestId: number
   eventId: string
-  rsvp: string
+  rsvp: RsvpStatus
 }
 
 /**
@@ -37,7 +38,7 @@ export type CreateInvitationInput = {
 export type UpdateInvitationInput = {
   guestId: number
   eventId: string
-  rsvp: string
+  rsvp: RsvpStatus
 }
 
 /**

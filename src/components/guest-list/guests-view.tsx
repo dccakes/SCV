@@ -41,6 +41,7 @@ import {
 import { AsyncState } from '~/components/ui/async-state'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
+import { toRsvpStatus } from '~/lib/constants/rsvp'
 import { normalizePhoneToE164 } from '~/lib/phone/phone-validator'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 import { api } from '~/trpc/react'
@@ -249,7 +250,7 @@ export default function GuestsView({
     const guestParty = selectedCanonicalHousehold.guests.map((guest) => {
       const invites: FormInvites = {}
       guest.invitations.forEach((invitation) => {
-        invites[invitation.eventId] = invitation.rsvp ?? 'Not Invited'
+        invites[invitation.eventId] = toRsvpStatus(invitation.rsvp, 'Not Invited')
       })
 
       return {
@@ -344,7 +345,7 @@ export default function GuestsView({
         const invites: FormInvites = {}
         if (canonicalGuest) {
           canonicalGuest.invitations.forEach((invitation) => {
-            invites[invitation.eventId] = invitation.rsvp ?? 'Not Invited'
+            invites[invitation.eventId] = toRsvpStatus(invitation.rsvp, 'Not Invited')
           })
         } else {
           events.forEach((event) => {
@@ -376,7 +377,7 @@ export default function GuestsView({
         .map((guest) => {
           const invites: FormInvites = {}
           guest.invitations.forEach((invitation) => {
-            invites[invitation.eventId] = invitation.rsvp ?? 'Not Invited'
+            invites[invitation.eventId] = toRsvpStatus(invitation.rsvp, 'Not Invited')
           })
 
           return {

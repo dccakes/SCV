@@ -24,7 +24,7 @@ import {
 } from '~/components/ui/select'
 import { Slider } from '~/components/ui/slider'
 import { LIKELIHOOD_LABELS } from '~/lib/constants'
-import { RSVP_STATUS_VALUES } from '~/lib/constants/rsvp'
+import { isRsvpStatus, RSVP_STATUS_VALUES } from '~/lib/constants/rsvp'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 import type { CommunicationLogEntry } from '~/server/domains/communication-log/communication-log.types'
 import { api } from '~/trpc/react'
@@ -457,7 +457,7 @@ function InvitationRsvpSelect(props: Readonly<InvitationRsvpSelectProps>) {
       value={value}
       disabled={updateInvitation.isPending}
       onValueChange={(nextValue) => {
-        if (nextValue === value) return
+        if (nextValue === value || !isRsvpStatus(nextValue)) return
         setValue(nextValue)
         updateInvitation.mutate({ guestId, eventId, rsvp: nextValue })
       }}

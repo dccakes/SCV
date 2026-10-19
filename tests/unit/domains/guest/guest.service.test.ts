@@ -82,6 +82,19 @@ describe('GuestService', () => {
       expect(result).toEqual([mockGuestWithInvitations])
       expect(mockFindByHouseholdIdWithInvitationsFn).toHaveBeenCalledWith('household-123')
     })
+
+    // openspec rsvp-status: only writes are validated, legacy stored values still load
+    it('returns invitations whose stored RSVP is outside the allowed list', async () => {
+      const legacyGuest = {
+        ...mockGuestWithInvitations,
+        invitations: [{ ...mockGuestWithInvitations.invitations[0], rsvp: 'Maybe' }],
+      }
+      mockFindByHouseholdIdWithInvitationsFn.mockResolvedValue([legacyGuest])
+
+      const [guest] = await guestService.getAllByHouseholdId('household-123')
+
+      expect(guest?.invitations[0]?.rsvp).toBe('Maybe')
+    })
   })
 
   describe('getById', () => {

@@ -5,6 +5,7 @@
  */
 
 import { z } from 'zod'
+import { rsvpStatusSchema } from '~/server/domains/invitation/rsvp-status'
 
 /**
  * Schema for creating an invitation
@@ -12,7 +13,7 @@ import { z } from 'zod'
 export const createInvitationSchema = z.object({
   guestId: z.number(),
   eventId: z.string().min(1, 'Event ID is required'),
-  rsvp: z.string(),
+  rsvp: rsvpStatusSchema,
 })
 
 /**
@@ -21,7 +22,7 @@ export const createInvitationSchema = z.object({
 export const updateInvitationSchema = z.object({
   guestId: z.number(),
   eventId: z.string().min(1, 'Event ID is required'),
-  rsvp: z.string(),
+  rsvp: rsvpStatusSchema,
 })
 
 /**

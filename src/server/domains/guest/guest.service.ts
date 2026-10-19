@@ -9,6 +9,7 @@ import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { GuestRepository } from '~/server/domains/guest/guest.repository'
 import type { Guest, GuestWithInvitations } from '~/server/domains/guest/guest.types'
+import type { RsvpStatus } from '~/server/domains/invitation/rsvp-status'
 import { ForbiddenError } from '~/server/domains/shared/domain-error'
 
 export class GuestService {
@@ -87,7 +88,7 @@ export class GuestService {
       isPrimaryContact?: boolean
       invitations: Array<{
         eventId: string
-        rsvp: string
+        rsvp: RsvpStatus
       }>
     }
   ): Promise<Guest> {
@@ -124,7 +125,7 @@ export class GuestService {
     },
     invitations?: Array<{
       eventId: string
-      rsvp: string
+      rsvp: RsvpStatus
     }>
   ): Promise<Guest> {
     this.requireGuestPermission(ctx, data.guestId ? 'update' : 'create')

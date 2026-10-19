@@ -7,6 +7,7 @@
 import { z } from 'zod'
 
 import { optionalPhoneSchema } from '~/lib/phone/phone-validator'
+import { rsvpStatusSchema } from '~/server/domains/invitation/rsvp-status'
 
 /**
  * Guest party input schema for household creation/update
@@ -20,7 +21,7 @@ export const guestPartyInputSchema = z.object({
   isPrimaryContact: z.boolean().optional(),
   ageGroup: z.enum(['INFANT', 'CHILD', 'TEEN', 'ADULT']).default('ADULT'),
   tagIds: z.array(z.guid()).max(10, 'Maximum 10 tags allowed').default([]),
-  invites: z.record(z.string(), z.string()), // eventId -> rsvp status
+  invites: z.record(z.string(), rsvpStatusSchema), // eventId -> rsvp status
 })
 
 export type GuestPartyInputSchemaInput = z.infer<typeof guestPartyInputSchema>

@@ -5,6 +5,7 @@
  */
 
 import { z } from 'zod'
+import { rsvpStatusSchema } from '~/server/domains/invitation/rsvp-status'
 
 /**
  * Schema for RSVP response (guest/event combination)
@@ -12,7 +13,7 @@ import { z } from 'zod'
 export const rsvpResponseSchema = z.object({
   eventId: z.string(),
   guestId: z.number(),
-  rsvp: z.string(),
+  rsvp: rsvpStatusSchema,
 })
 
 export type RsvpResponseSchemaInput = z.infer<typeof rsvpResponseSchema>

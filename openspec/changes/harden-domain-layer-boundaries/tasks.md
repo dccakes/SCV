@@ -36,12 +36,14 @@ Groups 1 to 4 are PR 1, group 5 is PR 2, groups 6 to 10 are PR 3 (see design.md,
 ## 5. RSVP status value (PR 2)
 
 - [ ] 5.1 Run `SELECT rsvp, COUNT(*) FROM "Invitation" GROUP BY rsvp;` against production, record the result in the PR description, and stop to decide on normalization if any value is outside the four allowed
-- [ ] 5.2 Add `src/server/domains/invitation/rsvp-status.ts` (D4) with tests for `isRsvpStatus` (exact case only) and `rsvpStatusSchema`, plus a test that the file imports only `zod`
-- [ ] 5.3 Make `src/lib/constants/rsvp.ts` re-export from the domain module, and verify `npx tsc --noEmit` passes with no client file changes
-- [ ] 5.4 Swap `z.string()` for `rsvpStatusSchema` in `invitation.validator.ts`, `website.validator.ts`, `rsvp-submission.validator.ts` and the `invites` record in `household-management.validator.ts`, and verify with validator tests for each scenario in the `rsvp-status` spec (casing, mixed valid and invalid submission, household create, bulk import)
-- [ ] 5.5 Narrow repository and service write inputs for `rsvp` to `RsvpStatus` while read types stay `string`, and verify with a test that loading a guest list containing a legacy value succeeds
-- [ ] 5.6 Add a test in `tests/unit/domains/website/website.router.public-rsvp.test.ts` that an invalid status returns `BAD_REQUEST` and that no invitation or answer write is called
-- [ ] 5.7 Run lint, typecheck and unit tests, and verify they are clean before opening PR 2
+  - Not run: this session has no production database access. Reads stay lenient, so it doesn't block merging. Household edit flows now map an unknown stored value to `Not Invited` via `toRsvpStatus` (the same fallback they already used for null), so run this before deploying.
+- [x] 5.2 Add `src/server/domains/invitation/rsvp-status.ts` (D4) with tests for `isRsvpStatus` (exact case only) and `rsvpStatusSchema`, plus a test that the file imports only `zod`
+- [x] 5.3 Make `src/lib/constants/rsvp.ts` re-export from the domain module, and verify `npx tsc --noEmit` passes with no client file changes
+- [x] 5.4 Swap `z.string()` for `rsvpStatusSchema` in `invitation.validator.ts`, `website.validator.ts`, `rsvp-submission.validator.ts` and the `invites` record in `household-management.validator.ts`, and verify with validator tests for each scenario in the `rsvp-status` spec (casing, mixed valid and invalid submission, household create, bulk import)
+- [x] 5.5 Narrow repository and service write inputs for `rsvp` to `RsvpStatus` while read types stay `string`, and verify with a test that loading a guest list containing a legacy value succeeds
+  - Narrowing reached the UI: `FormInvites` and `RsvpFormResponse` now use `RsvpStatus`, CSV import uses `RSVP_STATUS.NOT_INVITED`, the guest panel's select ignores non-RSVP values, and edit flows use `toRsvpStatus(stored, 'Not Invited')`.
+- [x] 5.6 Add a test in `tests/unit/domains/website/website.router.public-rsvp.test.ts` that an invalid status returns `BAD_REQUEST` and that no invitation or answer write is called
+- [x] 5.7 Run lint, typecheck and unit tests, and verify they are clean before opening PR 2
 
 ## 6. Transaction runner and query moves (PR 3)
 

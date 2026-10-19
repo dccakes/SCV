@@ -7,6 +7,8 @@
 
 import { z } from 'zod'
 
+import type { RsvpStatus } from '~/lib/constants/rsvp'
+
 import {
   baseHouseholdFields,
   giftInputSchema,
@@ -55,7 +57,7 @@ export type GiftFormData = z.infer<typeof giftInputSchema>
  * Constructs default form data without validation (validation happens on submit)
  */
 export const getDefaultHouseholdFormData = (events: Array<{ id: string }>): HouseholdFormData => {
-  const invites: Record<string, string> = {}
+  const invites: Record<string, RsvpStatus> = {}
   const gifts: GiftFormData[] = []
 
   events.forEach((event) => {

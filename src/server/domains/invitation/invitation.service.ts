@@ -15,6 +15,7 @@ import type {
   RsvpStats,
   UpdateInvitationInput,
 } from '~/server/domains/invitation/invitation.types'
+import { RSVP_STATUS, type RsvpStatus } from '~/server/domains/invitation/rsvp-status'
 import { ForbiddenError } from '~/server/domains/shared/domain-error'
 
 export class InvitationService {
@@ -148,7 +149,7 @@ export class InvitationService {
     guestId: number,
     eventIds: string[],
     weddingId: string,
-    defaultRsvp = 'Not Invited'
+    defaultRsvp: RsvpStatus = RSVP_STATUS.NOT_INVITED
   ): Promise<{ count: number }> {
     return this.invitationRepository.createMany(
       eventIds.map((eventId) => ({
@@ -167,7 +168,7 @@ export class InvitationService {
     guests: Array<{ id: number }>,
     events: Array<{ id: string }>,
     weddingId: string,
-    defaultRsvp = 'Not Invited'
+    defaultRsvp: RsvpStatus = RSVP_STATUS.NOT_INVITED
   ): Promise<{ count: number }> {
     const invitations = guests.flatMap((guest) =>
       events.map((event) => ({

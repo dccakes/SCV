@@ -8,6 +8,7 @@
 import type { GuestAgeGroup, Prisma, PrismaClient } from '@prisma/client'
 
 import type { Guest, GuestWithInvitations } from '~/server/domains/guest/guest.types'
+import type { RsvpStatus } from '~/server/domains/invitation/rsvp-status'
 
 export class GuestRepository {
   constructor(private db: PrismaClient | Prisma.TransactionClient) {}
@@ -83,7 +84,7 @@ export class GuestRepository {
     isTagAlong?: boolean
     invitations?: Array<{
       eventId: string
-      rsvp: string
+      rsvp: RsvpStatus
       weddingId: string
     }>
     tagIds?: string[]
@@ -165,7 +166,7 @@ export class GuestRepository {
     },
     invitations?: Array<{
       eventId: string
-      rsvp: string
+      rsvp: RsvpStatus
       weddingId: string
     }>,
     tagIds?: string[]

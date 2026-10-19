@@ -7,6 +7,7 @@
 import { z } from 'zod'
 
 import { optionalPhoneSchema } from '~/lib/phone/phone-validator'
+import { rsvpStatusSchema } from '~/server/domains/invitation/rsvp-status'
 
 const GUEST_AGE_GROUP_VALUES = ['INFANT', 'CHILD', 'TEEN', 'ADULT'] as const
 
@@ -74,7 +75,7 @@ export const guestPartySchema = z.object({
   ageGroup: z.enum(GUEST_AGE_GROUP_VALUES).default('ADULT'),
   isTagAlong: z.boolean().default(false),
   tagIds: z.array(z.guid()).max(10, 'Maximum 10 tags allowed').default([]),
-  invites: z.record(z.string(), z.string()),
+  invites: z.record(z.string(), rsvpStatusSchema),
 })
 
 // Export inferred types

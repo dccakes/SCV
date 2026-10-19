@@ -8,6 +8,7 @@
 import type { Prisma, PrismaClient } from '@prisma/client'
 
 import type { Invitation } from '~/server/domains/invitation/invitation.types'
+import type { RsvpStatus } from '~/server/domains/invitation/rsvp-status'
 
 export class InvitationRepository {
   constructor(private db: PrismaClient | Prisma.TransactionClient) {}
@@ -76,7 +77,7 @@ export class InvitationRepository {
   async create(data: {
     guestId: number
     eventId: string
-    rsvp: string
+    rsvp: RsvpStatus
     weddingId: string
   }): Promise<Invitation> {
     return this.db.invitation.create({
@@ -96,7 +97,7 @@ export class InvitationRepository {
     data: Array<{
       guestId: number
       eventId: string
-      rsvp: string
+      rsvp: RsvpStatus
       weddingId: string
     }>
   ): Promise<{ count: number }> {
@@ -117,7 +118,7 @@ export class InvitationRepository {
     guestId: number,
     eventId: string,
     data: {
-      rsvp?: string
+      rsvp?: RsvpStatus
       submittedAt?: Date
     }
   ): Promise<Invitation> {
@@ -139,7 +140,7 @@ export class InvitationRepository {
    * Update multiple invitations at once (atomic transaction)
    */
   async updateMany(
-    data: Array<{ guestId: number; eventId: string; rsvp: string }>
+    data: Array<{ guestId: number; eventId: string; rsvp: RsvpStatus }>
   ): Promise<Invitation[]> {
     return this.db.$transaction(
       data.map((inv) =>

@@ -28,27 +28,15 @@ jest.mock('~/server/application/website-management', () => ({
   },
 }))
 
-jest.mock('~/server/application/rsvp-submission', () => {
-  const { z } = require('zod')
-
-  return {
-    submitPublicRsvpSchema: z.object({
-      subUrl: z.string().min(1),
-      token: z.string().min(1),
-      rsvpResponses: z.array(
-        z.object({
-          guestId: z.number(),
-          eventId: z.string(),
-          rsvp: z.string(),
-        })
-      ),
-      answersToQuestions: z.array(z.object({}).passthrough()),
-    }),
-    rsvpSubmissionService: {
-      submitPublicRsvp: jest.fn(),
-    },
-  }
-})
+jest.mock('~/server/application/rsvp-submission', () => ({
+  // Real schema, so the router boundary is tested with production validation.
+  submitPublicRsvpSchema: jest.requireActual(
+    '~/server/application/rsvp-submission/rsvp-submission.validator'
+  ).submitPublicRsvpSchema,
+  rsvpSubmissionService: {
+    submitPublicRsvp: jest.fn(),
+  },
+}))
 
 // @ts-expect-error - mocked module
 import { rsvpSubmissionService } from '~/server/application/rsvp-submission'
@@ -98,5 +86,23 @@ describe('websiteRouter public RSVP boundary', () => {
       code: 'FORBIDDEN',
       message: 'Invalid or expired RSVP token',
     })
+  })
+
+  // openspec rsvp-status: public submission rejects unknown values before any write
+  it.each([
+    'Maybe',
+    'attending',
+  ])('rejects a submission containing RSVP status %p without calling the service', async (rsvp) => {
+    await expect(
+      makePublicCaller().submitPublicRsvpForm({
+        ...validInput,
+        rsvpResponses: [
+          { guestId: 1, eventId: 'event-1', rsvp: 'Attending' },
+          { guestId: 2, eventId: 'event-1', rsvp: rsvp as 'Attending' },
+        ],
+      })
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' })
+
+    expect(mockSubmitPublicRsvp).not.toHaveBeenCalled()
   })
 })

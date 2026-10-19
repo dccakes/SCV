@@ -1,6 +1,7 @@
 import type { inferRouterOutputs } from '@trpc/server'
 import type { FileWithPath } from 'react-dropzone'
 
+import type { RsvpStatus } from '~/lib/constants/rsvp'
 import type { AppRouter } from '~/server/api/root'
 import type { Event as ServerEvent } from '~/server/domains/event/event.types'
 
@@ -123,7 +124,7 @@ type EventFormData = {
 }
 
 type EventId = string
-type RSVP = string
+type RSVP = RsvpStatus
 type FormInvites = Record<EventId, RSVP>
 
 type GuestFormData = {
@@ -188,7 +189,7 @@ type StepFormProps = {
 type RsvpFormResponse = {
   eventId: string
   guestId: number
-  rsvp: string
+  rsvp: RsvpStatus
   guestName: string
 }
 

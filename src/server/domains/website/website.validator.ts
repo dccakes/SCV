@@ -6,6 +6,7 @@
 
 import { z } from 'zod'
 import { reservedWebsiteRootSegmentsSet } from '~/lib/website/reserved-root-segments'
+import { rsvpStatusSchema } from '~/server/domains/invitation/rsvp-status'
 import { isKnownTemplateId } from '~/templates/catalog'
 
 const subUrlSchema = z
@@ -39,7 +40,7 @@ export const submitRsvpSchema = z.object({
     z.object({
       eventId: z.string(),
       guestId: z.number(),
-      rsvp: z.string(),
+      rsvp: rsvpStatusSchema,
     })
   ),
   answersToQuestions: z.array(
