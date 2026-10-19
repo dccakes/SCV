@@ -9,6 +9,7 @@ import ReactPhoneNumberInput from 'react-phone-number-input/input'
 import { Input } from '~/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import { toIntlLocale } from '~/lib/locale/intl-format'
+import type { Locale } from '~/lib/locale/locale-detection'
 import { cn } from '~/lib/utils'
 
 export type PhoneInputProps = {
@@ -24,7 +25,7 @@ export type PhoneInputProps = {
   'aria-describedby'?: string
   'aria-label'?: string
   /** Language for country names; defaults to English. */
-  locale?: 'en' | 'es'
+  locale?: Locale
   /** Picker copy, for guest-facing screens shown in another language. */
   labels?: Partial<PhoneInputLabels>
 }
@@ -53,7 +54,7 @@ type CountryOption = {
   label: string
 }
 
-const displayNamesFor = (locale: 'en' | 'es') =>
+const displayNamesFor = (locale: Locale) =>
   typeof Intl !== 'undefined'
     ? new Intl.DisplayNames([toIntlLocale(locale)], { type: 'region' })
     : null

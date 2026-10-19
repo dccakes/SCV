@@ -17,6 +17,7 @@ const wedding = {
     {
       id: 'evt-1',
       name: 'Wedding Day',
+      isWeddingDay: true,
       date: new Date('2027-05-30T00:00:00.000Z'),
       startTime: '5:00 PM',
       endTime: null,

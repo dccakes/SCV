@@ -133,7 +133,7 @@ export class WebsiteManagementService {
     return this.websiteSectionRepository.upsertHomeSection(
       website.id,
       content,
-      translations?.es ? { es: translations.es } : undefined
+      translations?.es ? translations : undefined
     )
   }
 
@@ -245,11 +245,11 @@ export class WebsiteManagementService {
       })
     }
     // Match the wedding day on its English name before any translation applies.
-    const weddingDate = rawEvents.find((event) => event.name === WEDDING_DAY_EVENT_NAME)?.date
     const events = rawEvents.map((event) => ({
       ...localizeEvent(event, locale),
       isWeddingDay: event.name === WEDDING_DAY_EVENT_NAME,
     }))
+    const weddingDate = events.find((event) => event.isWeddingDay)?.date
     const sections = rawSections.map(
       (section) => localizeSection(section, locale) as WebsiteSection
     )
@@ -355,7 +355,9 @@ export class WebsiteManagementService {
     headline?: string
     headlineAccent?: string
   } {
-    const { password: _password, ...publicWebsite } = website
+    // Sections (with their stored translations) are already localized into the
+    // page data, so the raw rows are not sent on to the browser.
+    const { password: _password, websiteSections: _websiteSections, ...publicWebsite } = website
     return {
       ...publicWebsite,
       url: computeWebsiteUrl(website.subUrl),

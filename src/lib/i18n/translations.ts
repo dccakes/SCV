@@ -9,7 +9,6 @@ import type { Locale } from '~/lib/locale/locale-detection'
  * field, so anything the couple has not translated yet falls back to English.
  * Links and images always come from English: the overlay only carries words.
  */
-export type Translations<T> = { es?: T }
 
 /** Keys whose values are never translated (links and media). */
 const NON_TRANSLATABLE_KEYS = new Set(['url', 'imageUrl', 'ctaUrl'])
@@ -56,6 +55,8 @@ function overlayRecord(
 
 /** Apply a translation overlay to English content, falling back to English per field. */
 export function overlayTranslation<T>(base: T, overlay: unknown): T {
+  // Nothing to apply (English, or untranslated): skip the deep copy.
+  if (overlay === undefined) return base
   return overlayValue(base, overlay) as T
 }
 

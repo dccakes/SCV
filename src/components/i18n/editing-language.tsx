@@ -4,6 +4,7 @@ import { createContext, type ReactNode, useContext, useState } from 'react'
 
 import { Input } from '~/components/ui/input'
 import { Textarea } from '~/components/ui/textarea'
+import type { Locale } from '~/lib/locale/locale-detection'
 import { cn } from '~/lib/utils'
 
 /**
@@ -11,7 +12,7 @@ import { cn } from '~/lib/utils'
  * the source content; Spanish is a translation layered on top of it, so rows,
  * photos and links are managed in English and only text is edited in Spanish.
  */
-export type EditingLanguage = 'en' | 'es'
+export type EditingLanguage = Locale
 
 type EditingLanguageContextValue = {
   language: EditingLanguage

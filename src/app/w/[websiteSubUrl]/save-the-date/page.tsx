@@ -9,7 +9,7 @@ import { AddToCalendarButtons } from '~/components/website/add-to-calendar-butto
 import { EnvelopeReveal } from '~/components/website/household-invite/envelope-reveal'
 import { InvalidHouseholdInvite } from '~/components/website/household-invite/invalid-household-invite'
 import { SiteLocaleToggle } from '~/components/website/site-locale-toggle'
-import { formatLongDate, toIntlLocale } from '~/lib/locale/intl-format'
+import { formatLongDate } from '~/lib/locale/intl-format'
 import { toLocale } from '~/lib/locale/locale-detection'
 import { buildSaveTheDateCalendarLinks } from '~/lib/website/calendar'
 import { householdInviteCookieName } from '~/lib/website/cookies'
@@ -35,20 +35,10 @@ const formatGuestName = (guest: { firstName: string; lastName: string }) =>
   [guest.firstName, guest.lastName].filter(Boolean).join(' ')
 
 /** Display the event span as a single day or an inclusive date range. */
-const formatEventDateRange = (first: Date, last: Date, locale: string) => {
-  // Event dates come from a `@db.Date` column (midnight UTC), so format in UTC to
-  // show the day the couple entered regardless of the viewer's timezone.
-  const dateFormatter = new Intl.DateTimeFormat(toIntlLocale(locale), {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    timeZone: 'UTC',
-  })
-
-  return first.getTime() === last.getTime()
-    ? dateFormatter.format(first)
-    : `${dateFormatter.format(first)} – ${dateFormatter.format(last)}`
-}
+const formatEventDateRange = (first: Date, last: Date, locale: string) =>
+  first.getTime() === last.getTime()
+    ? formatLongDate(first, locale)
+    : `${formatLongDate(first, locale)} – ${formatLongDate(last, locale)}`
 
 export async function generateMetadata({ params }: SaveTheDatePageProps): Promise<Metadata> {
   const { websiteSubUrl } = await params

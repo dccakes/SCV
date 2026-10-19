@@ -63,7 +63,7 @@ export class EventManagementService {
           description,
           collectRsvp: collectRsvp ?? false,
           allowTagAlongs: allowTagAlongs ?? false,
-          ...(translations ? { translations } : {}),
+          translations,
         },
       })
 

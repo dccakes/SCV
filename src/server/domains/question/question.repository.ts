@@ -101,10 +101,7 @@ export class QuestionRepository {
     translations?: { es?: { text?: string } }
     options?: OptionInput[]
   }): Promise<Question> {
-    // Omitted translations keep what is already stored.
-    const questionTranslations = data.translations ? { translations: data.translations } : {}
-    const optionTranslations = (option: OptionInput) =>
-      option.translations ? { translations: option.translations } : {}
+    // Omitted (undefined) translations keep what is already stored.
     // Build upsert options for Option type questions
     const upsertOptions =
       data.type === 'Option' && data.options
@@ -116,13 +113,13 @@ export class QuestionRepository {
               update: {
                 text: option.text ?? undefined,
                 description: option.description ?? undefined,
-                ...optionTranslations(option),
+                translations: option.translations,
               },
               create: {
                 text: option.text,
                 description: option.description ?? '',
                 responseCount: 0,
-                ...optionTranslations(option),
+                translations: option.translations,
               },
             })),
           }
@@ -135,7 +132,7 @@ export class QuestionRepository {
               text: option.text,
               description: option.description ?? '',
               responseCount: 0,
-              ...optionTranslations(option),
+              translations: option.translations,
             })),
           }
         : undefined
@@ -149,7 +146,7 @@ export class QuestionRepository {
         type: data.type,
         isRequired: data.isRequired,
         allowOther: data.type === 'Option' ? (data.allowOther ?? false) : false,
-        ...questionTranslations,
+        translations: data.translations,
         options: upsertOptions,
       },
       create: {
@@ -159,7 +156,7 @@ export class QuestionRepository {
         type: data.type,
         isRequired: data.isRequired,
         allowOther: data.type === 'Option' ? (data.allowOther ?? false) : false,
-        ...questionTranslations,
+        translations: data.translations,
         options: createOptions,
       },
     })

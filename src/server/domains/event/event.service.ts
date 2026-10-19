@@ -77,7 +77,7 @@ export class EventService {
           description,
           collectRsvp: collectRsvp ?? false,
           allowTagAlongs: allowTagAlongs ?? false,
-          ...(translations ? { translations } : {}),
+          translations,
         },
       })
 

@@ -80,7 +80,7 @@ export class WebsiteSectionRepository {
       update: {
         content,
         isEnabled,
-        ...(translations ? { translations } : {}),
+        translations,
       },
       create: {
         websiteId,
@@ -88,7 +88,7 @@ export class WebsiteSectionRepository {
         isEnabled,
         position: getSectionPosition(type),
         content,
-        ...(translations ? { translations } : {}),
+        translations,
       },
     })
 

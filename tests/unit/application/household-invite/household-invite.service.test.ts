@@ -272,6 +272,7 @@ describe('HouseholdInviteService', () => {
         date: new Date('2027-05-30T12:00:00.000Z'),
         venue: 'Jardín',
         isCeremony: false,
+        isWeddingDay: true,
       },
     ])
     // The wedding day is still found by its English name.
@@ -284,6 +285,7 @@ describe('HouseholdInviteService', () => {
       date: new Date('2027-05-30T12:00:00.000Z'),
       venue: 'Garden',
       isCeremony: false,
+      isWeddingDay: true,
     })
   })
 

@@ -598,8 +598,9 @@ export class HouseholdInviteService {
     const events = rawEvents.map((event) => ({
       ...localizeEvent(event, locale),
       isCeremony: event.name === CEREMONY_EVENT_NAME,
+      isWeddingDay: event.name === WEDDING_DAY_EVENT_NAME,
     }))
-    const weddingDayEvent = events[rawEvents.findIndex((e) => e.name === WEDDING_DAY_EVENT_NAME)]
+    const weddingDayEvent = events.find((event) => event.isWeddingDay)
 
     // Mirror the website surfaces: only enabled Save the Date copy overrides the
     // template defaults, and malformed stored content is ignored rather than thrown.

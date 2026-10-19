@@ -102,7 +102,7 @@ describe('QuestionRepository scope helpers', () => {
     expect(args.update.translations).toEqual({ es: { text: '¿Platillo?' } })
     expect(args.create.translations).toEqual({ es: { text: '¿Platillo?' } })
     expect(args.update.options.upsert[0].update.translations).toEqual({ es: { text: 'Pollo' } })
-    expect(args.update.options.upsert[1].update).not.toHaveProperty('translations')
+    expect(args.update.options.upsert[1].update.translations).toBeUndefined()
 
     await repository.upsert({
       questionId: 'question-1',
@@ -110,6 +110,6 @@ describe('QuestionRepository scope helpers', () => {
       type: 'Text',
       isRequired: false,
     })
-    expect(mockQuestionUpsert.mock.lastCall?.[0].update).not.toHaveProperty('translations')
+    expect(mockQuestionUpsert.mock.lastCall?.[0].update.translations).toBeUndefined()
   })
 })

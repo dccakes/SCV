@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
-import { formatEventTime, toIntlLocale } from '~/lib/locale/intl-format'
+import { formatEventTime, formatLongDate } from '~/lib/locale/intl-format'
 import { findWeddingDay } from '~/templates/shared/wedding-day'
 import type { TemplateSurfaceProps } from '~/templates/types'
 import {
@@ -58,12 +58,7 @@ export function VoyageInvitation({ weddingData, path }: Readonly<TemplateSurface
             </p>
             {weddingEvent?.date ? (
               <p className={`${bodyFont} text-[#6F675D] text-sm`}>
-                {new Intl.DateTimeFormat(toIntlLocale(locale), {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                  timeZone: 'UTC',
-                }).format(weddingEvent.date)}
+                {formatLongDate(weddingEvent.date, locale)}
                 {weddingEvent.startTime
                   ? ` · ${formatEventTime(weddingEvent.startTime, locale)}`
                   : ''}

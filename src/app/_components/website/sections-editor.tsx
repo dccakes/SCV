@@ -2,7 +2,7 @@
 
 import { Plus, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { SingleImageUpload } from '~/app/_components/website/image-upload'
 import {
@@ -89,6 +89,10 @@ type SectionCardProps = {
   initialEnabled: boolean
 }
 
+// Spanish is compared aligned to the English rows, the way it is saved.
+const snapshot = (en: WebsiteSectionContent, alignedEs: WebsiteSectionContent, enabled: boolean) =>
+  JSON.stringify({ en, es: alignedEs, enabled })
+
 function SectionCard({ entry, initialContent, initialSpanish, initialEnabled }: SectionCardProps) {
   const router = useRouter()
   const { language } = useEditingLanguage()
@@ -98,14 +102,12 @@ function SectionCard({ entry, initialContent, initialSpanish, initialEnabled }: 
     alignTranslation(initialContent, initialSpanish)
   )
   const [isEnabled, setIsEnabled] = useState(initialEnabled)
-  // Spanish is compared aligned to the English rows, the way it is saved.
-  const snapshot = (
-    en: WebsiteSectionContent,
-    alignedEs: WebsiteSectionContent,
-    enabled: boolean
-  ) => JSON.stringify({ en, es: alignedEs, enabled })
   const [baseline, setBaseline] = useState(() => snapshot(initialContent, spanish, initialEnabled))
-  const alignedSpanish = alignTranslation(content, spanish)
+  const alignedSpanish = useMemo(() => alignTranslation(content, spanish), [content, spanish])
+  const currentSnapshot = useMemo(
+    () => snapshot(content, alignedSpanish, isEnabled),
+    [content, alignedSpanish, isEnabled]
+  )
 
   const changeContent = (next: WebsiteSectionContent) => {
     if (language === 'es') {
@@ -127,11 +129,11 @@ function SectionCard({ entry, initialContent, initialSpanish, initialEnabled }: 
     },
   })
 
-  const hasChanges = baseline !== snapshot(content, alignedSpanish, isEnabled)
+  const hasChanges = baseline !== currentSnapshot
 
   const save = () => {
     // Mark what was sent as saved; edits made while saving stay dirty.
-    const sent = snapshot(content, alignedSpanish, isEnabled)
+    const sent = currentSnapshot
     upsertSection.mutate(
       { type: entry.type, content, isEnabled, translations: { es: alignedSpanish } },
       { onSuccess: () => setBaseline(sent) }

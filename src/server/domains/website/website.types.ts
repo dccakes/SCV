@@ -147,7 +147,7 @@ export type WeddingPageData = {
      * Whether this is the main "Wedding Day" event. Set on the server from the
      * English name so templates can find it even after names are translated.
      */
-    isWeddingDay?: boolean
+    isWeddingDay: boolean
     weddingId: string
     collectRsvp: boolean
     questions: Question[]

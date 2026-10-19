@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { readTranslation } from '~/lib/i18n/translations'
+
 import {
   type SectionContentByType,
   type SectionTranslations,
@@ -202,8 +204,7 @@ export function parseSectionTranslations<T extends WebsiteSectionType>(
   type: T,
   translations: unknown
 ): SectionTranslations<SectionContentByType[T]> | undefined {
-  if (typeof translations !== 'object' || translations === null) return undefined
-  const es = (translations as { es?: unknown }).es
+  const es = readTranslation(translations, 'es')
   if (es === undefined) return undefined
   const result = sectionContentSchemaByType[type].safeParse(es)
   return result.success ? { es: result.data as SectionContentByType[T] } : undefined
@@ -217,12 +218,13 @@ export function isValidSectionContent(type: WebsiteSectionType, content: unknown
 const attachContentIssues = (
   type: WebsiteSectionType,
   content: unknown,
-  ctx: z.RefinementCtx
+  ctx: z.RefinementCtx,
+  path: readonly PropertyKey[] = ['content']
 ): void => {
   const result = sectionContentSchemaByType[type].safeParse(content)
   if (!result.success) {
     for (const issue of result.error.issues) {
-      ctx.addIssue({ ...issue, path: ['content', ...issue.path] })
+      ctx.addIssue({ ...issue, path: [...path, ...issue.path] })
     }
   }
 }
@@ -259,12 +261,7 @@ export const updateSectionSchema = z
   .superRefine((value, ctx) => {
     attachContentIssues(value.type, value.content, ctx)
     if (value.translations?.es !== undefined) {
-      const result = sectionContentSchemaByType[value.type].safeParse(value.translations.es)
-      if (!result.success) {
-        for (const issue of result.error.issues) {
-          ctx.addIssue({ ...issue, path: ['translations', 'es', ...issue.path] })
-        }
-      }
+      attachContentIssues(value.type, value.translations.es, ctx, ['translations', 'es'])
     }
   })
 
