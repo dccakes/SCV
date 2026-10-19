@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { getLocaleFromCountry, type Locale } from '~/lib/locale/locale-detection'
 import { POSTHOG_PROXY_PATH } from '~/lib/observability/config'
+import { reservedWebsiteRootSegmentsSet } from '~/lib/website/reserved-root-segments'
 import { isVoyagePage } from '~/templates/voyage/site'
 
 // PostHog reverse proxy (see rewrites in next.config.js). Middleware runs before
@@ -36,26 +37,9 @@ const isPublicTrpcPath = (pathname: string): boolean => {
   )
 }
 const PUBLIC_EXACT_PATHS = ['/', '/api/blob/upload', '/api/locale', '/pricing', '/open-source']
-const RESERVED_ROOT_SEGMENTS = new Set([
-  '',
-  'api',
-  'auth',
-  'budget',
-  'checklist',
-  'dashboard',
-  'design-system',
-  'events',
-  'guest-list',
-  'join',
-  'old_dashboard',
-  'settings',
-  'vendors',
-  'w',
-  'website',
-])
 
 const isReservedSlug = (slug: string): boolean =>
-  RESERVED_ROOT_SEGMENTS.has(slug) || slug.startsWith('auth') || slug.startsWith('join')
+  reservedWebsiteRootSegmentsSet.has(slug) || slug.startsWith('auth') || slug.startsWith('join')
 
 const isPublicWebsitePath = (pathname: string): boolean => {
   const segments = pathname.split('/').filter(Boolean)

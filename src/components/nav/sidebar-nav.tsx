@@ -1,6 +1,7 @@
 'use client'
 
 import {
+  Armchair,
   CalendarDays,
   Globe,
   LayoutDashboard,
@@ -32,7 +33,10 @@ const SIDEBAR_SECTIONS: readonly SidebarSection[] = [
   },
   {
     title: 'Guests',
-    items: [{ label: 'Guest List', href: '/guest-list', icon: Users }],
+    items: [
+      { label: 'Guest List', href: '/guest-list', icon: Users },
+      { label: 'Seating Chart', href: '/seating', icon: Armchair },
+    ],
   },
   {
     title: 'Settings',

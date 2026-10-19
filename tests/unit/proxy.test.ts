@@ -311,6 +311,16 @@ describe('proxy', () => {
     )
   })
 
+  it('treats /seating as a protected app route, not a website slug', async () => {
+    mockGetSessionCookie.mockReturnValue(null)
+
+    const response = await proxy(createRequest('/seating'))
+
+    expect(response.headers.get('location')).toBe(
+      'https://example.com/auth/sign-in?callbackUrl=%2Fseating'
+    )
+  })
+
   it('allows authenticated users to access protected routes', async () => {
     mockGetSessionCookie.mockReturnValue('session-token')
     const response = await proxy(createRequest('/events', 'session-token'))

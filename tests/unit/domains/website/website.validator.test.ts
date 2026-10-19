@@ -110,6 +110,10 @@ describe('updateWebsiteSchema', () => {
     expect(result.success).toBe(false)
   })
 
+  it.each(['budget', 'seating'])('should reject app route %s as a subUrl', (subUrl) => {
+    expect(updateWebsiteSchema.safeParse({ subUrl }).success).toBe(false)
+  })
+
   it('should reject empty update', () => {
     const result = updateWebsiteSchema.safeParse({})
     expect(result.success).toBe(false)
