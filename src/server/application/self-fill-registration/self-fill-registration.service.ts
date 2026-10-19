@@ -10,11 +10,7 @@
  * Duplicate check is inside the transaction to reduce the TOCTOU window
  * (a DB-level @@unique([weddingId, email]) constraint is the final guard).
  *
- * @see ARCHITECTURAL_VIOLATIONS.md — cross-domain orchestration is expected here
  */
-
-// biome-ignore lint/style/noRestrictedImports: application service, cross-domain orchestration is expected
-import type { PrismaClient } from '@prisma/client'
 
 import { logger } from '~/lib/observability/logger'
 
@@ -32,6 +28,12 @@ import {
   InvariantViolationError,
   NotFoundError,
 } from '~/server/domains/shared/domain-error'
+import type { UnitOfWork } from '~/server/infrastructure/database/unit-of-work'
+
+export type SelfFillRegistrationRepos = {
+  household: HouseholdRepository
+  guest: GuestRepository
+}
 
 const log = logger.child({ component: 'self-fill-registration' })
 
@@ -42,10 +44,8 @@ const DEFAULT_IS_PRIMARY_CONTACT = true
 
 export class SelfFillRegistrationService implements ISelfFillRegistration {
   constructor(
-    private db: PrismaClient,
-    private selfFillRepo: SelfFillRepository,
-    private householdRepo: HouseholdRepository,
-    private guestRepo: GuestRepository
+    private unitOfWork: UnitOfWork<SelfFillRegistrationRepos>,
+    private selfFillRepo: SelfFillRepository
   ) {}
 
   /**
@@ -83,46 +83,48 @@ export class SelfFillRegistrationService implements ISelfFillRegistration {
 
     // 3. Transactional: duplicate check + create household + guest + invitations (P2)
     try {
-      const { householdId, guestId } = await this.db.$transaction(async () => {
-        // Duplicate check inside transaction to reduce TOCTOU window (P2)
-        if (normalizedEmail) {
-          const existing = await this.guestRepo.findByEmailAndWeddingId(normalizedEmail, weddingId)
-          if (existing) {
-            throw new ConflictError('You are already registered for this wedding.')
+      const { householdId, guestId } = await this.unitOfWork(
+        async ({ household: householdRepo, guest: guestRepo }) => {
+          // Duplicate check inside transaction to reduce TOCTOU window (P2)
+          if (normalizedEmail) {
+            const existing = await guestRepo.findByEmailAndWeddingId(normalizedEmail, weddingId)
+            if (existing) {
+              throw new ConflictError('You are already registered for this wedding.')
+            }
           }
+
+          const household = await householdRepo.createWithGifts(
+            {
+              weddingId,
+              address1: data.address1 ?? null,
+              address2: data.address2 ?? null,
+              city: data.city ?? null,
+              state: data.state ?? null,
+              zipCode: data.zipCode ?? null,
+              country: data.country ?? null,
+            },
+            eventIds
+          )
+
+          const guest = await guestRepo.create({
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: normalizedEmail,
+            phone: data.phone ?? null,
+            weddingId,
+            householdId: household.id,
+            isPrimaryContact: DEFAULT_IS_PRIMARY_CONTACT,
+            ageGroup: DEFAULT_AGE_GROUP,
+            invitations: eventIds.map((eventId) => ({
+              eventId,
+              rsvp: DEFAULT_RSVP_STATUS,
+              weddingId,
+            })),
+          })
+
+          return { householdId: household.id, guestId: guest.id }
         }
-
-        const household = await this.householdRepo.createWithGifts(
-          {
-            weddingId,
-            address1: data.address1 ?? null,
-            address2: data.address2 ?? null,
-            city: data.city ?? null,
-            state: data.state ?? null,
-            zipCode: data.zipCode ?? null,
-            country: data.country ?? null,
-          },
-          eventIds
-        )
-
-        const guest = await this.guestRepo.create({
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: normalizedEmail,
-          phone: data.phone ?? null,
-          weddingId,
-          householdId: household.id,
-          isPrimaryContact: DEFAULT_IS_PRIMARY_CONTACT,
-          ageGroup: DEFAULT_AGE_GROUP,
-          invitations: eventIds.map((eventId) => ({
-            eventId,
-            rsvp: DEFAULT_RSVP_STATUS,
-            weddingId,
-          })),
-        })
-
-        return { householdId: household.id, guestId: guest.id }
-      })
+      )
 
       log.info('Self-fill guest registered', {
         wedding_id: weddingId,

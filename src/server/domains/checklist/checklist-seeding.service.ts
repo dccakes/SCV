@@ -1,13 +1,9 @@
-// biome-ignore lint/style/noRestrictedImports: cross-domain seeding requires direct Prisma access
-import type { Prisma, PrismaClient } from '@prisma/client'
-
+import type { ChecklistSeedingRepository } from '~/server/domains/checklist/checklist-seeding.repository'
 import {
   type CanonicalMilestoneKey,
   getCanonicalMilestoneSeed,
 } from '~/server/domains/milestone/milestone.seed'
 import { getCanonicalTaskSeed } from '~/server/domains/task/task.seed'
-
-type DbClient = PrismaClient | Prisma.TransactionClient
 
 export type ChecklistSeedResult = {
   eventId: string | null
@@ -17,29 +13,24 @@ export type ChecklistSeedResult = {
 }
 
 export class ChecklistSeedingService {
-  constructor(private db: DbClient) {}
+  constructor(private repository: ChecklistSeedingRepository) {}
 
+  /**
+   * Idempotently seed canonical milestones and tasks against the wedding's
+   * first event. Pass a transaction-bound repository to join a unit of work.
+   */
   async ensureSeeded(
     weddingId: string,
-    dbClient: DbClient = this.db
+    repository: ChecklistSeedingRepository = this.repository
   ): Promise<ChecklistSeedResult> {
-    const wedding = await dbClient.wedding.findUnique({
-      where: { id: weddingId },
-      select: {
-        events: {
-          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-          take: 1,
-          select: { id: true },
-        },
-      },
-    })
+    const wedding = await repository.findFirstEventId(weddingId)
 
     if (!wedding) {
       throw new Error(`Cannot seed checklist for missing wedding ${weddingId}`)
     }
 
-    const firstEvent = wedding.events[0]
-    if (!firstEvent) {
+    const firstEventId = wedding.firstEventId
+    if (!firstEventId) {
       return {
         eventId: null,
         seededMilestoneCount: 0,
@@ -48,52 +39,33 @@ export class ChecklistSeedingService {
       }
     }
 
-    const enabledAddOnsResult = await dbClient.wedding.updateMany({
-      where: {
-        id: weddingId,
-        NOT: {
-          enabledAddOns: {
-            has: 'tasks',
-          },
-        },
-      },
-      data: {
-        enabledAddOns: {
-          push: 'tasks',
-        },
-      },
-    })
-    const enabledAddOnsUpdated = enabledAddOnsResult.count > 0
+    const enabledAddOnsUpdated = await repository.enableTasksAddOn(weddingId)
 
     const milestoneSeed = getCanonicalMilestoneSeed()
-    const milestoneInsert = await dbClient.milestone.createMany({
-      data: milestoneSeed.map((milestone) => ({
+    const seededMilestoneCount = await repository.insertMilestones(
+      milestoneSeed.map((milestone) => ({
         weddingId,
         key: milestone.key,
         title: milestone.title,
         category: milestone.category,
         position: milestone.position,
         targetDate: null,
-      })),
-      skipDuplicates: true,
-    })
+      }))
+    )
 
-    const milestoneRows = await dbClient.milestone.findMany({
-      where: {
-        weddingId,
-        key: { in: milestoneSeed.map((milestone) => milestone.key) },
-      },
-      select: { id: true, key: true },
-    })
+    const milestoneRows = await repository.findMilestoneIdsByKey(
+      weddingId,
+      milestoneSeed.map((milestone) => milestone.key)
+    )
 
     const milestoneIdByKey = new Map<CanonicalMilestoneKey, string>(
       milestoneRows.map((milestone) => [milestone.key as CanonicalMilestoneKey, milestone.id])
     )
 
-    const taskInsert = await dbClient.task.createMany({
-      data: getCanonicalTaskSeed().map((task) => ({
+    const seededTaskCount = await repository.insertTasks(
+      getCanonicalTaskSeed().map((task) => ({
         weddingId,
-        eventId: firstEvent.id,
+        eventId: firstEventId,
         milestoneId: task.milestoneKey
           ? requireMilestoneId(milestoneIdByKey, task.milestoneKey, weddingId)
           : null,
@@ -106,14 +78,13 @@ export class ChecklistSeedingService {
         position: task.position,
         completed: false,
         completedAt: null,
-      })),
-      skipDuplicates: true,
-    })
+      }))
+    )
 
     return {
-      eventId: firstEvent.id,
-      seededMilestoneCount: milestoneInsert.count,
-      seededTaskCount: taskInsert.count,
+      eventId: firstEventId,
+      seededMilestoneCount,
+      seededTaskCount,
       enabledAddOnsUpdated,
     }
   }

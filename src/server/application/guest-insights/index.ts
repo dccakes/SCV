@@ -10,7 +10,7 @@ import { db } from '~/server/infrastructure/database'
 export const guestInsightsService = new GuestInsightsService(
   new GuestService(new GuestRepository(db)),
   new InvitationService(new InvitationRepository(db)),
-  new EventService(new EventRepository(db), db)
+  new EventService(new EventRepository(db))
 )
 
 export { GuestInsightsService } from '~/server/application/guest-insights/guest-insights.service'

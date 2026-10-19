@@ -2,7 +2,7 @@
 
 ## Quick Reference
 
-**Architecture (see DOMAIN_MIGRATION_PLAN.md for details):**
+**Architecture:**
 
 ```
 server/
@@ -14,8 +14,9 @@ server/
 │       ├── event.types.ts        ← Domain types
 │       └── event.router.ts       ← tRPC router (THIN - orchestration only)
 │
+├── domains/shared/       ← Shared kernel (DomainError hierarchy)
 ├── application/          ← Cross-domain orchestration (Dashboard, RSVP flow)
-└── infrastructure/       ← Technical services (Database, S3, Email)
+└── infrastructure/       ← Technical services (Database, UnitOfWork, S3, Email)
 ```
 
 **Non-Negotiables:**
@@ -75,24 +76,23 @@ npm run test:unit       # run unit tests
 
 ### Domain-Driven Structure
 
-See `DOMAIN_MIGRATION_PLAN.md` for complete architecture details.
+**Domains** (`src/server/domains/`): budget, checklist, communication-log, event,
+gift, guest, guest-tag, household, invitation, messaging, milestone, question,
+self-fill, task, user, vendor, website, website-section, wedding.
+`domains/shared/` holds the shared kernel (`domain-error.ts`).
 
-**8 Core Domains:**
+**Application services** (`src/server/application/`): dashboard, event-insights,
+event-management, guest-insights, household-invite, household-management,
+member-management, messaging, rsvp-submission, self-fill-registration,
+vendor-insights, website-management, wedding-provisioning (plus
+authenticated-route and workspace helpers).
 
-1. **Event** - Wedding events/ceremonies
-2. **Guest** - Individual guests
-3. **Household** - Guest groups/addresses
-4. **Invitation** - Event invitations & RSVPs
-5. **Gift** - Gift tracking
-6. **Question** - RSVP questions (Event + Website)
-7. **Website** - Wedding website config
-8. **User** - User accounts
+Check the folders when in doubt; this list is a convenience, the code is the source of truth.
 
-**3 Application Services:**
-
-1. **Dashboard** - Multi-domain aggregation
-2. **RSVP Submission** - Guest RSVP flow
-3. **Household Management** - Complex household operations
+**Domain values:** RSVP status is one of `Not Invited`, `Invited`, `Attending`,
+`Declined` (`domains/invitation/rsvp-status.ts`). Write schemas use
+`rsvpStatusSchema`; read types stay `string` because older rows may hold other
+values. Client code imports the same list from `~/lib/constants/rsvp`.
 
 ---
 
@@ -294,6 +294,35 @@ export class HouseholdManagementService {
   }
 }
 ```
+
+**Transactions:** services never touch Prisma. When several repository calls
+must commit together, inject a `UnitOfWork<R>`
+(`~/server/infrastructure/database/unit-of-work`) and let the barrel decide
+which repositories are bound to the transaction:
+
+```typescript
+// barrel (index.ts) - the only place that sees `db`
+const unitOfWork = createUnitOfWork(db, (tx) => ({
+  event: new EventRepository(tx),
+  invitation: new InvitationRepository(tx),
+}))
+export const eventManagementService = new EventManagementService(eventRepo, unitOfWork)
+
+// service
+return this.unitOfWork(async ({ event, invitation }) => {
+  const created = await event.create(data)
+  await invitation.createMany(rows)
+  return created
+})
+```
+
+Queries shaped for one flow that span several tables (read models) live in a
+repository beside the service that uses them, for example
+`application/household-invite/household-invite.repository.ts`.
+
+**Wiring:** when a router needs a service instance, build it once in a
+`*.wiring.ts` file and import that from both the router and the barrel (see
+`application/dashboard/dashboard.wiring.ts`). Routers never construct repositories.
 
 ---
 
@@ -1342,7 +1371,7 @@ After tests pass, ask:
 8. **Test behavior** - Not implementation
 
 **When in doubt:**
-- Check `DOMAIN_MIGRATION_PLAN.md` for architecture
+- Check `src/server/domains` and `src/server/application` for architecture
 - Business logic? → Service
 - Database query? → Repository
 - Multiple domains? → Application Service

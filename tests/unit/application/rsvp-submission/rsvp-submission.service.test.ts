@@ -49,14 +49,20 @@ import {
 
 const mockRequirePermission = requirePermission as jest.Mock
 
-const createMockDb = () => ({
-  $transaction: jest.fn().mockImplementation(async (fn: (tx: unknown) => unknown) => {
-    return fn({ __tx: true })
-  }),
-  website: {
-    findFirst: jest.fn().mockResolvedValue({ weddingId: 'wedding-123', isRsvpEnabled: true }),
-  },
-})
+const createMockDb = () => {
+  const repos = {
+    invitation: new InvitationRepository({} as never),
+    question: new QuestionRepository({} as never),
+  }
+  return {
+    unitOfWork: jest.fn((work: (r: typeof repos) => unknown) => work(repos)),
+    websiteRepo: {
+      findRsvpAccessBySubUrl: jest
+        .fn()
+        .mockResolvedValue({ weddingId: 'wedding-123', isRsvpEnabled: true }),
+    },
+  }
+}
 
 describe('RsvpSubmissionService', () => {
   let service: RsvpSubmissionService
@@ -99,7 +105,8 @@ describe('RsvpSubmissionService', () => {
       guestRepo,
       householdRepo,
       weddingRepo,
-      mockDb as never
+      mockDb.websiteRepo as never,
+      mockDb.unitOfWork as never
     )
   })
 
@@ -124,7 +131,7 @@ describe('RsvpSubmissionService', () => {
       })
     ).rejects.toThrow('forbidden')
 
-    expect(mockDb.$transaction).not.toHaveBeenCalled()
+    expect(mockDb.unitOfWork).not.toHaveBeenCalled()
   })
 
   it('updates invitations and question answers via repositories inside transaction', async () => {
@@ -149,7 +156,7 @@ describe('RsvpSubmissionService', () => {
     })
 
     expect(result).toEqual({ success: true })
-    expect(mockDb.$transaction).toHaveBeenCalledTimes(1)
+    expect(mockDb.unitOfWork).toHaveBeenCalledTimes(1)
     expect(mockUpdate).toHaveBeenCalledWith(1, 'event-123', {
       rsvp: 'Attending',
       submittedAt: expect.any(Date),
@@ -291,16 +298,16 @@ describe('RsvpSubmissionService', () => {
     })
 
     expect(result).toEqual({ success: true })
-    expect(mockDb.website.findFirst).toHaveBeenCalledWith({
-      where: { subUrl: 'ash-and-jamie' },
-      select: { weddingId: true, isRsvpEnabled: true },
-    })
+    expect(mockDb.websiteRepo.findRsvpAccessBySubUrl).toHaveBeenCalledWith('ash-and-jamie')
     // subUrl resolution succeeded, so the token path is not used.
     expect(mockFindWeddingIdByValidTokenAndSubUrl).not.toHaveBeenCalled()
   })
 
   it('falls back to a valid token when the site has RSVP disabled', async () => {
-    mockDb.website.findFirst.mockResolvedValue({ weddingId: 'wedding-123', isRsvpEnabled: false })
+    mockDb.websiteRepo.findRsvpAccessBySubUrl.mockResolvedValue({
+      weddingId: 'wedding-123',
+      isRsvpEnabled: false,
+    })
 
     const result = await service.submitPublicRsvp({
       subUrl: 'ash-and-jamie',
@@ -317,7 +324,7 @@ describe('RsvpSubmissionService', () => {
   })
 
   it('rejects when the site is unknown or RSVP is disabled and no token is supplied', async () => {
-    mockDb.website.findFirst.mockResolvedValue(null)
+    mockDb.websiteRepo.findRsvpAccessBySubUrl.mockResolvedValue(null)
 
     await expect(
       service.submitPublicRsvp({
@@ -332,7 +339,10 @@ describe('RsvpSubmissionService', () => {
   })
 
   it('rejects a fallback token that is invalid or expired', async () => {
-    mockDb.website.findFirst.mockResolvedValue({ weddingId: 'wedding-123', isRsvpEnabled: false })
+    mockDb.websiteRepo.findRsvpAccessBySubUrl.mockResolvedValue({
+      weddingId: 'wedding-123',
+      isRsvpEnabled: false,
+    })
     mockFindWeddingIdByValidTokenAndSubUrl.mockResolvedValue(null)
 
     await expect(
@@ -358,7 +368,7 @@ describe('RsvpSubmissionService', () => {
       })
     ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
-    expect(mockDb.$transaction).not.toHaveBeenCalled()
+    expect(mockDb.unitOfWork).not.toHaveBeenCalled()
   })
 
   it('rejects when guest or household ids are outside wedding scope', async () => {

@@ -8,8 +8,6 @@
  * - Wedding domain (public token validation)
  */
 
-// biome-ignore lint/style/noRestrictedImports: Application services use PrismaClient for cross-domain transactions
-import type { PrismaClient } from '@prisma/client'
 import type {
   SubmitPublicRsvpSchemaInput,
   SubmitRsvpSchemaInput,
@@ -18,10 +16,17 @@ import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { GuestRepository } from '~/server/domains/guest/guest.repository'
 import type { HouseholdRepository } from '~/server/domains/household/household.repository'
-import { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
-import { QuestionRepository } from '~/server/domains/question/question.repository'
+import type { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
+import type { QuestionRepository } from '~/server/domains/question/question.repository'
 import { ForbiddenError } from '~/server/domains/shared/domain-error'
+import type { WebsiteRepository } from '~/server/domains/website/website.repository'
 import type { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
+import type { UnitOfWork } from '~/server/infrastructure/database/unit-of-work'
+
+export type RsvpSubmissionRepos = {
+  invitation: InvitationRepository
+  question: QuestionRepository
+}
 
 // Re-use types from validator for internal use
 type RsvpResponse = SubmitRsvpSchemaInput['rsvpResponses'][number]
@@ -34,7 +39,8 @@ export class RsvpSubmissionService {
     private guestRepo: GuestRepository,
     private householdRepo: HouseholdRepository,
     private weddingRepo: WeddingRepository,
-    private db: PrismaClient
+    private websiteRepo: WebsiteRepository,
+    private unitOfWork: UnitOfWork<RsvpSubmissionRepos>
   ) {}
 
   async submitManagedRsvp(
@@ -70,10 +76,7 @@ export class RsvpSubmissionService {
     subUrl: string,
     token: string | undefined
   ): Promise<string> {
-    const website = await this.db.website.findFirst({
-      where: { subUrl },
-      select: { weddingId: true, isRsvpEnabled: true },
-    })
+    const website = await this.websiteRepo.findRsvpAccessBySubUrl(subUrl)
 
     if (website?.isRsvpEnabled) {
       return website.weddingId
@@ -87,9 +90,9 @@ export class RsvpSubmissionService {
   }
 
   async submitRsvp(data: SubmitRsvpSchemaInput): Promise<{ success: boolean }> {
-    await this.db.$transaction(async (tx) => {
-      const txInvitationRepo = new InvitationRepository(tx)
-      const txQuestionRepo = new QuestionRepository(tx)
+    await this.unitOfWork(async (repos) => {
+      const txInvitationRepo = repos.invitation
+      const txQuestionRepo = repos.question
 
       await Promise.all(
         data.rsvpResponses.map(async (response: RsvpResponse) => {

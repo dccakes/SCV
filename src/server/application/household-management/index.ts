@@ -5,12 +5,14 @@
  */
 
 import { HouseholdManagementService } from '~/server/application/household-management/household-management.service'
+import { EventRepository } from '~/server/domains/event/event.repository'
 import { GiftRepository } from '~/server/domains/gift/gift.repository'
 import { GuestRepository } from '~/server/domains/guest/guest.repository'
 import { HouseholdRepository } from '~/server/domains/household/household.repository'
 import { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
 import { WebsiteRepository } from '~/server/domains/website/website.repository'
 import { db } from '~/server/infrastructure/database'
+import { createUnitOfWork } from '~/server/infrastructure/database/unit-of-work'
 
 // Create repository instances
 const householdRepo = new HouseholdRepository(db)
@@ -26,7 +28,13 @@ export const householdManagementService = new HouseholdManagementService(
   invitationRepo,
   giftRepo,
   websiteRepo,
-  db
+  createUnitOfWork(db, (tx) => ({
+    household: new HouseholdRepository(tx),
+    guest: new GuestRepository(tx),
+    invitation: new InvitationRepository(tx),
+    gift: new GiftRepository(tx),
+    event: new EventRepository(tx),
+  }))
 )
 
 // Export classes for testing/DI

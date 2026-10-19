@@ -47,33 +47,38 @@ Groups 1 to 4 are PR 1, group 5 is PR 2, groups 6 to 10 are PR 3 (see design.md,
 
 ## 6. Transaction runner and query moves (PR 3)
 
-- [ ] 6.1 Add `src/server/infrastructure/database/transaction.ts` with `TransactionRunner` and `RepositoryFactory` (D6), and verify with a unit test that work runs inside one `$transaction` and that repositories receive the tx client
-- [ ] 6.2 Move the `event.service.ts` tx queries into `EventRepository` and `InvitationRepository` and inject `TransactionRunner` (D7), and verify the existing `event.service.test.ts` cases (tag-along toggling, scope check) pass
-- [ ] 6.3 Move the `communication-log.service.ts` household, invitation and gift queries into `communication-log.repository.ts`, and verify `communication-log.service.test.ts` passes against the repository mock
-- [ ] 6.4 Replace `tx.event.findMany` in `household-management.service.ts` with `EventRepository.findIdsByWeddingId` through `TransactionRunner`, and verify the household create tests for default "Not Invited" invites pass
-- [ ] 6.5 Add `ChecklistSeedingRepository` and move `checklist-seeding.service.ts` queries into it, and verify the seeding tests pass
-- [ ] 6.6 Apply the same change to the remaining services holding `PrismaClient` (`event-management`, `household-invite`, `rsvp-submission`, `self-fill-registration`), and verify with `grep -rl "@prisma/client" src/server --include=*.service.ts` returning nothing and lint passing with the fixed ban from 4.2
+- [x] 6.1 Add `src/server/infrastructure/database/transaction.ts` with `TransactionRunner` and `RepositoryFactory` (D6), and verify with a unit test that work runs inside one `$transaction` and that repositories receive the tx client
+  - Implemented as the generic `UnitOfWork<R>` / `createUnitOfWork` (see design D6, refined). `src/server/infrastructure/database/unit-of-work.ts`.
+- [x] 6.2 Move the `event.service.ts` tx queries into `EventRepository` and `InvitationRepository` and inject `TransactionRunner` (D7), and verify the existing `event.service.test.ts` cases (tag-along toggling, scope check) pass
+  - The `EventService` create/update copies were dead duplicates of `EventManagementService` and were deleted; their behavior tests were ported to the live service.
+- [x] 6.3 Move the `communication-log.service.ts` household, invitation and gift queries into `communication-log.repository.ts`, and verify `communication-log.service.test.ts` passes against the repository mock
+- [x] 6.4 Replace `tx.event.findMany` in `household-management.service.ts` with `EventRepository.findIdsByWeddingId` through `TransactionRunner`, and verify the household create tests for default "Not Invited" invites pass
+- [x] 6.5 Add `ChecklistSeedingRepository` and move `checklist-seeding.service.ts` queries into it, and verify the seeding tests pass
+- [x] 6.6 Apply the same change to the remaining services holding `PrismaClient` (`event-management`, `household-invite`, `rsvp-submission`, `self-fill-registration`), and verify with `grep -rl "@prisma/client" src/server --include=*.service.ts` returning nothing and lint passing with the fixed ban from 4.2
+  - `self-fill-registration` writes were not actually transactional before (the `$transaction` callback ignored the tx client); now they are, with a test. All eight `biome-ignore noRestrictedImports` suppressions are gone.
 
 ## 7. Wedding provisioning (PR 3)
 
-- [ ] 7.1 Add `src/server/application/wedding-provisioning/` (D8) with a test asserting call order (wedding, tags, event when details exist, checklist, Etta), that checklist failure is logged and doesn't fail creation, and that Etta failure doesn't fail creation
-- [ ] 7.2 Remove the `EventService` and `GuestTagService` dependencies from `WeddingService`, point `wedding.router.ts` `create` at the provisioning service, and verify `wedding.service.test.ts` and the router tests pass
+- [x] 7.1 Add `src/server/application/wedding-provisioning/` (D8) with a test asserting call order (wedding, tags, event when details exist, checklist, Etta), that checklist failure is logged and doesn't fail creation, and that Etta failure doesn't fail creation
+- [x] 7.2 Remove the `EventService` and `GuestTagService` dependencies from `WeddingService`, point `wedding.router.ts` `create` at the provisioning service, and verify `wedding.service.test.ts` and the router tests pass
 
 ## 8. Bulk import pre-check (PR 3)
 
-- [ ] 8.1 Add tests for the `household-bulk-import` spec scenarios (foreign event in the last household creates nothing, direct service call is also rejected, non-auth failure counted, missing permission rejected), and verify they fail before the change
-- [ ] 8.2 Move the whole-batch event check into `bulkCreateHouseholds` (D9) and delete the router loop and its `eventService` import, and verify the 8.1 tests and `household-management.bulk.test.ts` pass
+- [x] 8.1 Add tests for the `household-bulk-import` spec scenarios (foreign event in the last household creates nothing, direct service call is also rejected, non-auth failure counted, missing permission rejected), and verify they fail before the change
+- [x] 8.2 Move the whole-batch event check into `bulkCreateHouseholds` (D9) and delete the router loop and its `eventService` import, and verify the 8.1 tests and `household-management.bulk.test.ts` pass
 
 ## 9. Dashboard wiring (PR 3)
 
-- [ ] 9.1 Add `application/dashboard/dashboard.wiring.ts` exporting `dashboardService` and `dashboardOverviewUseCase` (D10), have the router and barrel import from it, and verify the router no longer imports any repository
-- [ ] 9.2 Run `npm run build` and load `/dashboard` locally, and verify there's no TDZ or circular import error
+- [x] 9.1 Add `application/dashboard/dashboard.wiring.ts` exporting `dashboardService` and `dashboardOverviewUseCase` (D10), have the router and barrel import from it, and verify the router no longer imports any repository
+- [x] 9.2 Run `npm run build` and load `/dashboard` locally, and verify there's no TDZ or circular import error
+  - Build passes. Started `next start` and rendered `/w/<sub>`, which loads the whole router tree through the tRPC server caller: no TDZ/ReferenceError (it failed only at the missing DB, as expected).
 
 ## 10. Docs and integration checks (PR 3)
 
-- [ ] 10.1 Update `claude.md` so the domain list matches `src/server/domains`, the reference to `DOMAIN_MIGRATION_PLAN.md` is removed, and the layer table mentions `TransactionRunner` and application-layer provisioning, and verify every path it names exists
-- [ ] 10.2 Run `npm run lint`, `npx tsc --noEmit`, `npm run test:unit` and `npm run test:e2e`, and verify all pass before opening PR 3
-- [ ] 10.3 Run `openspec validate harden-domain-layer-boundaries --strict` and verify it passes
+- [x] 10.1 Update `claude.md` so the domain list matches `src/server/domains`, the reference to `DOMAIN_MIGRATION_PLAN.md` is removed, and the layer table mentions `TransactionRunner` and application-layer provisioning, and verify every path it names exists
+- [x] 10.2 Run `npm run lint`, `npx tsc --noEmit`, `npm run test:unit` and `npm run test:e2e`, and verify all pass before opening PR 3
+  - Lint 0 errors (15 pre-existing warnings), `tsc` clean for src and tests, 2296 unit tests, `npm run format` clean, and all 130 Playwright e2e tests against a local Postgres 16 + pgvector seeded like CI.
+- [x] 10.3 Run `openspec validate harden-domain-layer-boundaries --strict` and verify it passes
 
 ## Workflow follow-up
 

@@ -24,22 +24,18 @@ const mockCreate = jest.fn()
 const mockDelete = jest.fn()
 const mockBelongsToWedding = jest.fn()
 
+const mockHouseholdBelongsToWedding = jest.fn()
+const mockInvitationFindMany = jest.fn()
+const mockGiftFindMany = jest.fn()
+
 const mockRepository = {
   findByHouseholdId: mockFindByHouseholdId,
   create: mockCreate,
   delete: mockDelete,
   belongsToWedding: mockBelongsToWedding,
-}
-
-// Mock PrismaClient
-const mockHouseholdFindFirst = jest.fn()
-const mockInvitationFindMany = jest.fn()
-const mockGiftFindMany = jest.fn()
-
-const mockDb = {
-  household: { findFirst: mockHouseholdFindFirst },
-  invitation: { findMany: mockInvitationFindMany },
-  gift: { findMany: mockGiftFindMany },
+  householdBelongsToWedding: mockHouseholdBelongsToWedding,
+  findInvitationEventsForHousehold: mockInvitationFindMany,
+  findThankYouGiftsForHousehold: mockGiftFindMany,
 }
 
 const actorContext = {
@@ -53,12 +49,12 @@ describe('CommunicationLogService', () => {
   beforeEach(() => {
     jest.resetAllMocks()
     mockRequirePermission.mockReturnValue(undefined)
-    service = new CommunicationLogService(mockRepository as never, mockDb as never)
+    service = new CommunicationLogService(mockRepository as never)
   })
 
   describe('getTimelineForHousehold', () => {
     it('rejects if household does not belong to wedding', async () => {
-      mockHouseholdFindFirst.mockResolvedValue(null)
+      mockHouseholdBelongsToWedding.mockResolvedValue(false)
 
       await expect(
         service.getTimelineForHousehold(actorContext, 'wedding-1', 'household-wrong')
@@ -70,7 +66,7 @@ describe('CommunicationLogService', () => {
     })
 
     it('returns empty array when household has no activity', async () => {
-      mockHouseholdFindFirst.mockResolvedValue({ id: 'household-1' })
+      mockHouseholdBelongsToWedding.mockResolvedValue(true)
       mockFindByHouseholdId.mockResolvedValue([])
       mockInvitationFindMany.mockResolvedValue([])
       mockGiftFindMany.mockResolvedValue([])
@@ -81,7 +77,7 @@ describe('CommunicationLogService', () => {
     })
 
     it('merges notes, invitations, RSVPs, and thank-yous into a sorted timeline', async () => {
-      mockHouseholdFindFirst.mockResolvedValue({ id: 'household-1' })
+      mockHouseholdBelongsToWedding.mockResolvedValue(true)
 
       // Note created at day 3
       mockFindByHouseholdId.mockResolvedValue([
@@ -128,7 +124,7 @@ describe('CommunicationLogService', () => {
     })
 
     it('includes RSVP_RECEIVED only when submittedAt is set', async () => {
-      mockHouseholdFindFirst.mockResolvedValue({ id: 'household-1' })
+      mockHouseholdBelongsToWedding.mockResolvedValue(true)
       mockFindByHouseholdId.mockResolvedValue([])
       mockGiftFindMany.mockResolvedValue([])
 
@@ -151,7 +147,7 @@ describe('CommunicationLogService', () => {
     })
 
     it('formats RSVP_RECEIVED message with guest name and status', async () => {
-      mockHouseholdFindFirst.mockResolvedValue({ id: 'household-1' })
+      mockHouseholdBelongsToWedding.mockResolvedValue(true)
       mockFindByHouseholdId.mockResolvedValue([])
       mockGiftFindMany.mockResolvedValue([])
 
@@ -177,7 +173,7 @@ describe('CommunicationLogService', () => {
     })
 
     it('checks guest:view permission', async () => {
-      mockHouseholdFindFirst.mockResolvedValue({ id: 'household-1' })
+      mockHouseholdBelongsToWedding.mockResolvedValue(true)
       mockFindByHouseholdId.mockResolvedValue([])
       mockInvitationFindMany.mockResolvedValue([])
       mockGiftFindMany.mockResolvedValue([])

@@ -4,37 +4,14 @@
  * Testing behavior, not implementation:
  * - Users can create weddings
  * - Users cannot create duplicate weddings
- * - Wedding creation with details creates default event
- * - User profile is updated with couple info
  */
 
 // Must mock before importing the service
 jest.mock('server/domains/wedding/wedding.repository')
-jest.mock('server/domains/event/event.service')
-jest.mock('server/domains/user/user.service')
-jest.mock('server/domains/guest-tag/guest-tag.service')
-jest.mock('~/server/domains/checklist')
 jest.mock('~/server/authz/permission-checker', () => ({
   requirePermission: jest.fn(),
 }))
-jest.mock('~/lib/etta/provision', () => ({
-  provisionEtta: jest.fn().mockResolvedValue(undefined),
-}))
 
-// @ts-expect-error - Importing mock functions from mocked module
-import {
-  EventService,
-  mockCreateEventSystem,
-  resetMocks as resetEventMocks,
-} from 'server/domains/event/event.service'
-// @ts-expect-error - Importing mock functions from mocked module
-import {
-  GuestTagService,
-  mockSeedInitialTags,
-  resetMocks as resetTagMocks,
-} from 'server/domains/guest-tag/guest-tag.service'
-// @ts-expect-error - Importing mock functions from mocked module
-import { mockUpdateProfile, resetMocks as resetUserMocks } from 'server/domains/user/user.service'
 import {
   mockCreate,
   mockExistsForUser,
@@ -48,8 +25,7 @@ import {
 } from 'server/domains/wedding/wedding.repository'
 import { WeddingService } from 'server/domains/wedding/wedding.service'
 import { requirePermission } from '~/server/authz/permission-checker'
-import { mockEnsureSeeded, resetMocks as resetChecklistMocks } from '~/server/domains/checklist'
-import { DomainError, ForbiddenError } from '~/server/domains/shared/domain-error'
+import { ForbiddenError, ValidationError } from '~/server/domains/shared/domain-error'
 
 // Create typed aliases for mock functions
 const mockCreateFn = mockCreate as jest.Mock
@@ -58,10 +34,6 @@ const _mockFindByIdFn = mockFindById as jest.Mock
 const mockFindByOrganizationIdFn = mockFindByOrganizationId as jest.Mock
 const mockFindByUserIdFn = mockFindByUserId as jest.Mock
 const mockUpdateFn = mockUpdate as jest.Mock
-const mockCreateEventFn = mockCreateEventSystem as jest.Mock
-const mockUpdateProfileFn = mockUpdateProfile as jest.Mock
-const mockSeedInitialTagsFn = mockSeedInitialTags as jest.Mock
-const mockEnsureSeededFn = mockEnsureSeeded as jest.Mock
 const mockRequirePermission = requirePermission as jest.Mock
 
 describe('WeddingService', () => {
@@ -73,30 +45,16 @@ describe('WeddingService', () => {
 
   beforeEach(() => {
     resetWeddingMocks()
-    resetEventMocks()
-    resetUserMocks()
-    resetTagMocks()
-    resetChecklistMocks()
     mockRequirePermission.mockReset()
     mockRequirePermission.mockReturnValue({ organizationId: 'org-123', role: 'owner' })
-    mockEnsureSeededFn.mockResolvedValue({
-      eventId: 'event-123',
-      seededMilestoneCount: 13,
-      seededTaskCount: 58,
-      enabledAddOnsUpdated: false,
-    })
     const mockRepository = new WeddingRepository({})
-    const mockEventSvc = new EventService({})
-    const mockGuestTagService = new GuestTagService({})
-    weddingService = new WeddingService(mockRepository, mockEventSvc, mockGuestTagService)
+    weddingService = new WeddingService(mockRepository)
   })
 
   describe('createWedding', () => {
-    it('should create wedding with couple names', async () => {
+    it('should create wedding with couple names and the tasks add-on', async () => {
       mockExistsForUserFn.mockResolvedValue(false)
       mockCreateFn.mockResolvedValue(mockWedding)
-      mockSeedInitialTagsFn.mockResolvedValue(undefined)
-      mockUpdateProfileFn.mockResolvedValue({})
 
       const result = await weddingService.createWedding('user-123', {
         userId: 'user-123',
@@ -117,28 +75,6 @@ describe('WeddingService', () => {
       })
     })
 
-    it('should seed default tags when creating wedding', async () => {
-      mockExistsForUserFn.mockResolvedValue(false)
-      mockCreateFn.mockResolvedValue(mockWedding)
-      mockSeedInitialTagsFn.mockResolvedValue(undefined)
-      mockUpdateProfileFn.mockResolvedValue({})
-
-      await weddingService.createWedding('user-123', {
-        userId: 'user-123',
-        groomFirstName: 'John',
-        groomLastName: 'Doe',
-        brideFirstName: 'Jane',
-        brideLastName: 'Smith',
-      })
-
-      expect(mockSeedInitialTagsFn).toHaveBeenCalledWith('wedding-123', [
-        { name: 'Family', color: '#3b82f6' },
-        { name: 'MutualFriends', color: '#10b981' },
-        { name: 'Coworkers', color: '#8b5cf6' },
-        { name: 'Plus One', color: '#f59e0b' },
-      ])
-    })
-
     it('should prevent creating duplicate wedding for same user', async () => {
       mockExistsForUserFn.mockResolvedValue(true)
 
@@ -150,98 +86,9 @@ describe('WeddingService', () => {
           brideFirstName: 'Jane',
           brideLastName: 'Smith',
         })
-      ).rejects.toThrow(DomainError)
+      ).rejects.toBeInstanceOf(ValidationError)
 
       expect(mockCreateFn).not.toHaveBeenCalled()
-    })
-
-    it('should create default "Wedding Day" event when date provided', async () => {
-      const weddingDate = '2025-06-15T00:00:00.000Z'
-      mockExistsForUserFn.mockResolvedValue(false)
-      mockCreateFn.mockResolvedValue(mockWedding)
-      mockSeedInitialTagsFn.mockResolvedValue(undefined)
-      mockCreateEventFn.mockResolvedValue({
-        id: 'event-123',
-        name: 'Ceremony',
-        date: new Date(weddingDate),
-        venue: 'Beach Resort',
-      })
-      mockUpdateProfileFn.mockResolvedValue({})
-
-      await weddingService.createWedding('user-123', {
-        userId: 'user-123',
-        groomFirstName: 'John',
-        groomLastName: 'Doe',
-        brideFirstName: 'Jane',
-        brideLastName: 'Smith',
-        hasWeddingDetails: true,
-        weddingDate,
-        weddingLocation: 'Beach Resort',
-      })
-
-      expect(mockCreateEventFn).toHaveBeenCalledWith('wedding-123', {
-        eventName: 'Ceremony',
-        date: weddingDate,
-        venue: 'Beach Resort',
-        collectRsvp: false,
-        allowTagAlongs: false,
-      })
-      expect(mockEnsureSeededFn).toHaveBeenCalledWith('wedding-123')
-    })
-
-    it('should not create event when wedding details not provided', async () => {
-      mockExistsForUserFn.mockResolvedValue(false)
-      mockCreateFn.mockResolvedValue(mockWedding)
-      mockSeedInitialTagsFn.mockResolvedValue(undefined)
-      mockUpdateProfileFn.mockResolvedValue({})
-
-      await weddingService.createWedding('user-123', {
-        userId: 'user-123',
-        groomFirstName: 'John',
-        groomLastName: 'Doe',
-        brideFirstName: 'Jane',
-        brideLastName: 'Smith',
-        hasWeddingDetails: false,
-      })
-
-      expect(mockCreateEventFn).not.toHaveBeenCalled()
-      expect(mockEnsureSeededFn).not.toHaveBeenCalled()
-    })
-
-    it('should preserve successful wedding creation when checklist seeding fails', async () => {
-      const weddingDate = '2025-06-15T00:00:00.000Z'
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
-      mockExistsForUserFn.mockResolvedValue(false)
-      mockCreateFn.mockResolvedValue(mockWedding)
-      mockSeedInitialTagsFn.mockResolvedValue(undefined)
-      mockCreateEventFn.mockResolvedValue({
-        id: 'event-123',
-        name: 'Ceremony',
-        date: new Date(weddingDate),
-        venue: 'Beach Resort',
-      })
-      mockEnsureSeededFn.mockRejectedValue(new Error('seed failed'))
-
-      await expect(
-        weddingService.createWedding('user-123', {
-          userId: 'user-123',
-          groomFirstName: 'John',
-          groomLastName: 'Doe',
-          brideFirstName: 'Jane',
-          brideLastName: 'Smith',
-          hasWeddingDetails: true,
-          weddingDate,
-          weddingLocation: 'Beach Resort',
-        })
-      ).resolves.toEqual(mockWedding)
-
-      const [line] = consoleErrorSpy.mock.calls[0] as [string]
-      expect(JSON.parse(line)).toMatchObject({
-        message: 'Checklist seeding failed on wedding create',
-        component: 'checklist',
-      })
-
-      consoleErrorSpy.mockRestore()
     })
   })
 

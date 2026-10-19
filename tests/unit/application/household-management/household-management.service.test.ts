@@ -73,25 +73,23 @@ const mockGuestWithInvitations = {
   guestTagAssignments: [],
 }
 
-const createMockDb = () => {
-  const tx = {
-    __tx: true,
+const createMockUnitOfWork = () => {
+  const repos = {
+    household: new HouseholdRepository({} as never),
+    guest: new GuestRepository({} as never),
+    invitation: new InvitationRepository({} as never),
+    gift: new GiftRepository({} as never),
     event: {
-      findMany: jest.fn().mockResolvedValue([{ id: 'event-123' }, { id: 'event-456' }]),
+      findIdsByWeddingId: jest.fn().mockResolvedValue(['event-123', 'event-456']),
     },
   }
-
-  return {
-    tx,
-    $transaction: jest.fn().mockImplementation(async (fn: (txArg: typeof tx) => unknown) => {
-      return fn(tx)
-    }),
-  }
+  const run = jest.fn((work: (r: typeof repos) => unknown) => work(repos))
+  return Object.assign(run, { repos })
 }
 
 describe('HouseholdManagementService', () => {
   let service: HouseholdManagementService
-  let mockDb: ReturnType<typeof createMockDb>
+  let unitOfWork: ReturnType<typeof createMockUnitOfWork>
 
   const actorContext = {
     userId: 'actor-1',
@@ -104,7 +102,7 @@ describe('HouseholdManagementService', () => {
     resetInvitationMocks()
     resetGiftMocks()
 
-    mockDb = createMockDb()
+    unitOfWork = createMockUnitOfWork()
     mockRequirePermission.mockReset()
     mockRequirePermission.mockReturnValue({ organizationId: 'org-1', role: 'admin' })
 
@@ -139,7 +137,7 @@ describe('HouseholdManagementService', () => {
       invitationRepo,
       giftRepo,
       websiteRepo,
-      mockDb as never
+      unitOfWork as never
     )
   })
 
@@ -154,7 +152,7 @@ describe('HouseholdManagementService', () => {
       })
     ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
-    expect(mockDb.$transaction).not.toHaveBeenCalled()
+    expect(unitOfWork).not.toHaveBeenCalled()
   })
 
   it('rejects create when invitation event is outside wedding scope', async () => {
@@ -166,7 +164,7 @@ describe('HouseholdManagementService', () => {
       })
     ).rejects.toMatchObject({ kind: 'FORBIDDEN' })
 
-    expect(mockDb.$transaction).not.toHaveBeenCalled()
+    expect(unitOfWork).not.toHaveBeenCalled()
   })
 
   it('creates household and guests using repositories inside a transaction', async () => {
@@ -184,7 +182,7 @@ describe('HouseholdManagementService', () => {
       ],
     })
 
-    expect(mockDb.$transaction).toHaveBeenCalledTimes(1)
+    expect(unitOfWork).toHaveBeenCalledTimes(1)
     expect(mockCreateWithGifts).toHaveBeenCalledWith(
       expect.objectContaining({ weddingId: 'wedding-123' }),
       ['event-123']
@@ -205,10 +203,7 @@ describe('HouseholdManagementService', () => {
       guestParty: [{ firstName: 'Taylor', lastName: 'Doe', invites: {} }],
     })
 
-    expect(mockDb.tx.event.findMany).toHaveBeenCalledWith({
-      where: { weddingId: 'wedding-123' },
-      select: { id: true },
-    })
+    expect(unitOfWork.repos.event.findIdsByWeddingId).toHaveBeenCalledWith('wedding-123')
     expect(mockGuestCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         firstName: 'Taylor',
@@ -238,7 +233,7 @@ describe('HouseholdManagementService', () => {
       gifts: [{ eventId: 'event-123', description: 'Toaster', thankyou: true }],
     })
 
-    expect(mockDb.$transaction).toHaveBeenCalledTimes(1)
+    expect(unitOfWork).toHaveBeenCalledTimes(1)
     expect(mockUpdate).toHaveBeenCalledWith('household-123', expect.any(Object))
     expect(mockGuestDeleteMany).toHaveBeenCalledWith([9, 10])
     expect(mockClearPrimaryContactsByHousehold).toHaveBeenCalledWith('household-123')
@@ -268,10 +263,7 @@ describe('HouseholdManagementService', () => {
       gifts: [],
     })
 
-    expect(mockDb.tx.event.findMany).toHaveBeenCalledWith({
-      where: { weddingId: 'wedding-123' },
-      select: { id: true },
-    })
+    expect(unitOfWork.repos.event.findIdsByWeddingId).toHaveBeenCalledWith('wedding-123')
     expect(mockGuestUpsert).toHaveBeenCalledWith(
       undefined,
       expect.objectContaining({

@@ -8,8 +8,6 @@
  * System events are read-only aggregations - never stored redundantly.
  */
 
-// biome-ignore lint/style/noRestrictedImports: cross-domain read-only aggregation requires direct DB access for derived timeline events
-import type { PrismaClient } from '@prisma/client'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { CommunicationLogRepository } from '~/server/domains/communication-log/communication-log.repository'
@@ -20,10 +18,7 @@ import type {
 import { ForbiddenError } from '~/server/domains/shared/domain-error'
 
 export class CommunicationLogService {
-  constructor(
-    private repository: CommunicationLogRepository,
-    private db: PrismaClient
-  ) {}
+  constructor(private repository: CommunicationLogRepository) {}
 
   /**
    * Build the unified timeline for a household.
@@ -37,18 +32,15 @@ export class CommunicationLogService {
     requirePermission(ctx, { guest: ['read'] })
 
     // Verify household belongs to the active wedding
-    const household = await this.db.household.findFirst({
-      where: { id: householdId, weddingId },
-      select: { id: true },
-    })
-    if (!household) {
+    const belongsToWedding = await this.repository.householdBelongsToWedding(householdId, weddingId)
+    if (!belongsToWedding) {
       throw new ForbiddenError('Household does not belong to your wedding')
     }
 
     const [notes, invitations, gifts] = await Promise.all([
       this.repository.findByHouseholdId(householdId),
-      this.getInvitationsForHousehold(householdId),
-      this.getThankYouGiftsForHousehold(householdId),
+      this.repository.findInvitationEventsForHousehold(householdId),
+      this.repository.findThankYouGiftsForHousehold(householdId),
     ])
 
     const entries: CommunicationLogEntry[] = []
@@ -143,41 +135,5 @@ export class CommunicationLogService {
     }
 
     return this.repository.delete(noteId)
-  }
-
-  /**
-   * Get all invitations for guests in a household, with event and guest details
-   */
-  private async getInvitationsForHousehold(householdId: string) {
-    return this.db.invitation.findMany({
-      where: {
-        guest: { householdId },
-      },
-      select: {
-        eventId: true,
-        rsvp: true,
-        invitedAt: true,
-        submittedAt: true,
-        event: { select: { name: true } },
-        guest: { select: { firstName: true, lastName: true } },
-      },
-    })
-  }
-
-  /**
-   * Get gifts with thank-you timestamps for a household
-   */
-  private async getThankYouGiftsForHousehold(householdId: string) {
-    return this.db.gift.findMany({
-      where: {
-        householdId,
-        thankYouSentAt: { not: null },
-      },
-      select: {
-        eventId: true,
-        thankYouSentAt: true,
-        event: { select: { name: true } },
-      },
-    })
   }
 }

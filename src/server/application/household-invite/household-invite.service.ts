@@ -1,12 +1,14 @@
-// biome-ignore lint/style/noRestrictedImports: Application service owns a cross-domain public flow.
-import { Prisma, type PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 
 import { ANALYTICS_ACTIONS, ANALYTICS_SCOPES, buildEventName } from '~/lib/analytics/events'
+import {
+  type HouseholdInviteRepository,
+  isUniqueConstraintError,
+  WEDDING_DAY_EVENT_NAME,
+} from '~/server/application/household-invite/household-invite.repository'
 import { createHouseholdInviteCode } from '~/server/application/household-invite/household-invite-code'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
-import { rsvpHouseholdSelect } from '~/server/domains/household/household.repository'
 import type { HouseholdSearchResult } from '~/server/domains/household/household.types'
 import {
   ConflictError,
@@ -17,15 +19,13 @@ import {
   PreconditionFailedError,
   ValidationError,
 } from '~/server/domains/shared/domain-error'
-import {
-  type SaveTheDateSectionContent,
-  WebsiteSectionType,
-} from '~/server/domains/website-section/website-section.types'
+import type { SaveTheDateSectionContent } from '~/server/domains/website-section/website-section.types'
 import { saveTheDateSectionContentSchema } from '~/server/domains/website-section/website-section.validator'
 import { captureServerEvent } from '~/server/infrastructure/analytics/capture'
 import { sanitizePayload } from '~/server/infrastructure/analytics/payload'
+import type { UnitOfWork } from '~/server/infrastructure/database/unit-of-work'
 
-type HouseholdInviteDb = Pick<PrismaClient, 'household' | 'website' | 'guest' | '$transaction'>
+export type HouseholdInviteRepos = { invite: HouseholdInviteRepository }
 
 export type HouseholdInviteGuestInput = {
   guestId: number
@@ -44,10 +44,6 @@ export type UpdateHouseholdInviteInput = {
   country: string | null
   guests: HouseholdInviteGuestInput[]
 }
-
-// The primary wedding date and venue live on the event named "Wedding Day"
-// (see website-management.service.ts), not on the Wedding record itself.
-const WEDDING_DAY_EVENT_NAME = 'Wedding Day'
 
 export type HouseholdInviteData = {
   weddingId: string
@@ -160,11 +156,11 @@ const normalizeBaseUrl = (baseUrl: string) => {
   }
 }
 
-const isUniqueConstraintError = (error: unknown) =>
-  error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002'
-
 export class HouseholdInviteService {
-  constructor(private db: HouseholdInviteDb) {}
+  constructor(
+    private repository: HouseholdInviteRepository,
+    private unitOfWork: UnitOfWork<HouseholdInviteRepos>
+  ) {}
 
   async generateInviteLink(
     ctx: AuthzContext,
@@ -173,27 +169,13 @@ export class HouseholdInviteService {
   ): Promise<{ url: string; expiresAt: Date }> {
     requirePermission(ctx, { guest_invitation: ['send'] })
 
-    const household = await this.db.household.findFirst({
-      where: { id: input.householdId, weddingId },
-      select: {
-        id: true,
-        weddingId: true,
-        guests: {
-          orderBy: { id: 'asc' },
-          take: 1,
-          select: { firstName: true, lastName: true },
-        },
-      },
-    })
+    const household = await this.repository.findHouseholdForInviteLink(input.householdId, weddingId)
 
     if (!household) {
       throw new NotFoundError('Household not found')
     }
 
-    const website = await this.db.website.findFirst({
-      where: { weddingId },
-      select: { subUrl: true },
-    })
+    const website = await this.repository.findWebsiteSubUrlByWeddingId(weddingId)
 
     if (!website) {
       throw new PreconditionFailedError(
@@ -225,15 +207,8 @@ export class HouseholdInviteService {
     const maxAttempts = 5
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const code = createHouseholdInviteCode(guests)
-      try {
-        await this.db.household.update({
-          where: { id: householdId },
-          data: { inviteCode: code, inviteCodeExpiresAt: expiresAt },
-        })
+      if (await this.repository.trySetInviteCode(householdId, code, expiresAt)) {
         return code
-      } catch (error) {
-        if (isUniqueConstraintError(error) && attempt < maxAttempts - 1) continue
-        throw error
       }
     }
 
@@ -246,23 +221,7 @@ export class HouseholdInviteService {
     date: Date | null
     venue: string | null
   } | null> {
-    const website = await this.db.website.findFirst({
-      where: { subUrl },
-      select: {
-        wedding: {
-          select: {
-            groomFirstName: true,
-            brideFirstName: true,
-            events: {
-              where: { name: WEDDING_DAY_EVENT_NAME },
-              orderBy: { date: 'asc' },
-              take: 1,
-              select: { date: true, venue: true },
-            },
-          },
-        },
-      },
-    })
+    const website = await this.repository.findWeddingSummaryBySubUrl(subUrl)
 
     if (!website) return null
 
@@ -300,10 +259,7 @@ export class HouseholdInviteService {
     const scopedInvite = await this.resolveInviteScope(subUrl, code)
     if (!scopedInvite) return null
 
-    return this.db.household.findFirst({
-      where: { id: scopedInvite.householdId, weddingId: scopedInvite.weddingId },
-      select: rsvpHouseholdSelect,
-    })
+    return this.repository.findRsvpHousehold(scopedInvite.householdId, scopedInvite.weddingId)
   }
 
   async updateHouseholdDetails(
@@ -339,59 +295,54 @@ export class HouseholdInviteService {
     }
 
     try {
-      await this.db.$transaction(async (tx) => {
+      await this.unitOfWork(async ({ invite }) => {
         const submittedEmails = normalizedInput.guests
           .map((guest) => guest.email)
           .filter((email): email is string => Boolean(email))
 
         if (submittedEmails.length > 0) {
-          const existingGuest = await tx.guest.findFirst({
-            where: {
-              weddingId: inviteData.weddingId,
-              email: { in: submittedEmails },
-              id: { notIn: normalizedInput.guests.map((guest) => guest.guestId) },
-            },
-            select: { id: true },
-          })
+          const emailTaken = await invite.emailTakenByOtherGuest(
+            inviteData.weddingId,
+            submittedEmails,
+            normalizedInput.guests.map((guest) => guest.guestId)
+          )
 
-          if (existingGuest) {
+          if (emailTaken) {
             throw new ConflictError('Each email address can only be used once for this wedding')
           }
         }
 
-        const householdUpdate = await tx.household.updateMany({
-          where: { id: inviteData.household.id, weddingId: inviteData.weddingId },
-          data: {
+        const householdUpdateCount = await invite.updateHouseholdAddress(
+          inviteData.household.id,
+          inviteData.weddingId,
+          {
             address1: normalizedInput.address1,
             address2: normalizedInput.address2,
             city: normalizedInput.city,
             state: normalizedInput.state,
             zipCode: normalizedInput.zipCode,
             country: normalizedInput.country,
-          },
-        })
+          }
+        )
 
-        if (householdUpdate.count !== 1) {
+        if (householdUpdateCount !== 1) {
           throw new ForbiddenError('Invalid or expired household invite')
         }
 
         await Promise.all(
           normalizedInput.guests.map(async (guest) => {
-            const guestUpdate = await tx.guest.updateMany({
-              where: {
-                id: guest.guestId,
-                householdId: inviteData.household.id,
-                weddingId: inviteData.weddingId,
-              },
-              data: {
+            const guestUpdateCount = await invite.updateGuestDetails(
+              guest.guestId,
+              { householdId: inviteData.household.id, weddingId: inviteData.weddingId },
+              {
                 firstName: guest.firstName,
                 lastName: guest.lastName ?? '',
                 email: guest.email,
                 phone: guest.phone,
-              },
-            })
+              }
+            )
 
-            if (guestUpdate.count !== 1) {
+            if (guestUpdateCount !== 1) {
               throw new ForbiddenError('Guest update is outside this household invite')
             }
           })
@@ -442,10 +393,7 @@ export class HouseholdInviteService {
   } | null> {
     if (!code) return null
 
-    const household = await this.db.household.findFirst({
-      where: { inviteCode: code },
-      select: { id: true, weddingId: true, inviteCodeExpiresAt: true },
-    })
+    const household = await this.repository.findHouseholdByInviteCode(code)
 
     if (!household?.inviteCodeExpiresAt) return null
     if (household.inviteCodeExpiresAt.getTime() <= Date.now()) return null
@@ -471,10 +419,7 @@ export class HouseholdInviteService {
     const household = await this.findActiveHouseholdByInviteCode(code)
     if (!household) return null
 
-    const website = await this.db.website.findFirst({
-      where: { subUrl },
-      select: { weddingId: true },
-    })
+    const website = await this.repository.findWeddingIdBySubUrl(subUrl)
 
     if (!website || website.weddingId !== household.weddingId) return null
 
@@ -490,55 +435,12 @@ export class HouseholdInviteService {
     householdId: string,
     expiresAt: Date
   ): Promise<HouseholdInviteData | null> {
+    // The selected template and Save the Date copy live on the website; load
+    // them so the invite card mirrors the public Save the Date / Invitation
+    // surfaces instead of falling back to the app's default look.
     const [household, website] = await Promise.all([
-      this.db.household.findFirst({
-        where: { id: householdId, weddingId },
-        select: {
-          id: true,
-          address1: true,
-          address2: true,
-          city: true,
-          state: true,
-          zipCode: true,
-          country: true,
-          wedding: {
-            select: {
-              groomFirstName: true,
-              groomLastName: true,
-              brideFirstName: true,
-              brideLastName: true,
-              events: {
-                orderBy: { date: 'asc' },
-                select: { name: true, date: true, venue: true },
-              },
-            },
-          },
-          guests: {
-            orderBy: { id: 'asc' },
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-              phone: true,
-              isTagAlong: true,
-            },
-          },
-        },
-      }),
-      // The selected template and Save the Date copy live on the website; load
-      // them so the invite card mirrors the public Save the Date / Invitation
-      // surfaces instead of falling back to the app's default look.
-      this.db.website.findFirst({
-        where: { weddingId },
-        select: {
-          templateId: true,
-          websiteSections: {
-            where: { type: WebsiteSectionType.SAVE_THE_DATE },
-            select: { isEnabled: true, content: true },
-          },
-        },
-      }),
+      this.repository.findHouseholdInviteDetails(householdId, weddingId),
+      this.repository.findWebsiteInviteTheme(weddingId),
     ])
 
     if (!household) return null

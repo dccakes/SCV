@@ -4,15 +4,13 @@
  * Exports all wedding domain components for use throughout the application.
  */
 
-import { eventService } from '~/server/domains/event'
-import { guestTagService } from '~/server/domains/guest-tag'
 import { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
 import { WeddingService } from '~/server/domains/wedding/wedding.service'
 import { db } from '~/server/infrastructure/database'
 
 // Create singleton instances
 const weddingRepository = new WeddingRepository(db)
-export const weddingService = new WeddingService(weddingRepository, eventService, guestTagService)
+export const weddingService = new WeddingService(weddingRepository)
 
 // Export classes for testing/DI
 export { WeddingRepository } from '~/server/domains/wedding/wedding.repository'

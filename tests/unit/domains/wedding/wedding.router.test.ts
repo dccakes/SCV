@@ -14,7 +14,11 @@ jest.mock('~/server/db', () => ({ db: {} }))
 
 jest.mock('~/server/domains/wedding')
 jest.mock('~/server/domains/event')
+jest.mock('~/server/application/wedding-provisioning', () => ({
+  weddingProvisioningService: { provisionWedding: jest.fn() },
+}))
 
+import { weddingProvisioningService } from '~/server/application/wedding-provisioning'
 // We need to mock eventService at the module level
 // @ts-expect-error - Importing mock from mocked module
 import { eventService } from '~/server/domains/event'
@@ -56,6 +60,26 @@ function makeAuthCaller(
 }
 
 describe('weddingRouter', () => {
+  describe('create', () => {
+    it('delegates onboarding to the wedding provisioning service', async () => {
+      const provisionWedding = weddingProvisioningService.provisionWedding as jest.Mock
+      provisionWedding.mockResolvedValue(mockWedding)
+      const input = {
+        groomFirstName: 'John',
+        groomLastName: 'Doe',
+        brideFirstName: 'Jane',
+        brideLastName: 'Smith',
+      }
+
+      await expect(makeAuthCaller('user-9').create(input)).resolves.toEqual(mockWedding)
+
+      expect(provisionWedding).toHaveBeenCalledWith(
+        'user-9',
+        expect.objectContaining({ ...input, userId: 'user-9' })
+      )
+    })
+  })
+
   beforeEach(() => {
     resetWeddingMocks()
     mockGetWeddingEvents.mockReset()

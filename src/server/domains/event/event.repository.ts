@@ -5,13 +5,13 @@
  * This layer handles all direct database access for events.
  */
 
-import type { PrismaClient } from '@prisma/client'
+import type { Prisma, PrismaClient } from '@prisma/client'
 
 import { DEFAULT_LIKELIHOOD_WEIGHT, LIKELIHOOD_WEIGHTS, RSVP_STATUS } from '~/lib/constants'
 import type { Event, EventWithQuestions, EventWithStats } from '~/server/domains/event/event.types'
 
 export class EventRepository {
-  constructor(private db: PrismaClient) {}
+  constructor(private db: PrismaClient | Prisma.TransactionClient) {}
 
   /**
    * Find an event by ID
@@ -151,6 +151,17 @@ export class EventRepository {
   }
 
   /**
+   * Ids of every event in a wedding
+   */
+  async findIdsByWeddingId(weddingId: string): Promise<string[]> {
+    const events = await this.db.event.findMany({
+      where: { weddingId },
+      select: { id: true },
+    })
+    return events.map((event) => event.id)
+  }
+
+  /**
    * Create a new event
    */
   async create(data: {
@@ -194,6 +205,7 @@ export class EventRepository {
       venue?: string
       attire?: string
       description?: string
+      collectRsvp?: boolean
       allowTagAlongs?: boolean
     }
   ): Promise<Event> {
@@ -207,6 +219,7 @@ export class EventRepository {
         venue: data.venue,
         attire: data.attire,
         description: data.description,
+        collectRsvp: data.collectRsvp,
         allowTagAlongs: data.allowTagAlongs,
       },
     })

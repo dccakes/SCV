@@ -43,6 +43,18 @@ export class WebsiteRepository {
   }
 
   /**
+   * Which wedding a website belongs to, and whether it accepts public RSVPs
+   */
+  async findRsvpAccessBySubUrl(
+    subUrl: string
+  ): Promise<{ weddingId: string; isRsvpEnabled: boolean } | null> {
+    return this.db.website.findFirst({
+      where: { subUrl },
+      select: { weddingId: true, isRsvpEnabled: true },
+    })
+  }
+
+  /**
    * Find a website by sub URL with general questions included
    */
   async findBySubUrlWithQuestions(subUrl: string): Promise<WebsiteWithQuestions | null> {

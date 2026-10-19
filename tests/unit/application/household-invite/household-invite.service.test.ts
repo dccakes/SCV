@@ -5,7 +5,15 @@ jest.mock('~/server/infrastructure/analytics/capture', () => ({
   captureServerEvent: (...args: unknown[]) => mockCaptureServerEvent(...args),
 }))
 
+import { HouseholdInviteRepository } from '~/server/application/household-invite/household-invite.repository'
 import { HouseholdInviteService } from '~/server/application/household-invite/household-invite.service'
+import { createUnitOfWork } from '~/server/infrastructure/database/unit-of-work'
+
+const createService = (db: ReturnType<typeof createDb>) =>
+  new HouseholdInviteService(
+    new HouseholdInviteRepository(db as never),
+    createUnitOfWork(db as never, (tx) => ({ invite: new HouseholdInviteRepository(tx) }))
+  )
 
 const authz = {
   userId: 'user-123',
@@ -96,7 +104,7 @@ describe('HouseholdInviteService', () => {
       guests: [{ firstName: 'Ada', lastName: 'Lovelace' }],
     })
     db.website.findFirst.mockResolvedValue({ subUrl: 'harry-and-hermione' })
-    const service = new HouseholdInviteService(db as never)
+    const service = createService(db)
 
     const result = await service.generateInviteLink(authz, 'wedding-123', {
       householdId: 'household-123',
@@ -138,7 +146,7 @@ describe('HouseholdInviteService', () => {
         events: [{ date: weddingDate, venue: 'Puebla, Mexico' }],
       },
     })
-    const service = new HouseholdInviteService(db as never)
+    const service = createService(db)
 
     await expect(service.getPublicWeddingSummary('harry-and-hermione')).resolves.toEqual({
       groomFirstName: 'Diego',
@@ -170,7 +178,7 @@ describe('HouseholdInviteService', () => {
     db.website.findFirst.mockResolvedValue({
       wedding: { groomFirstName: 'Diego', brideFirstName: 'Laura', events: [] },
     })
-    const service = new HouseholdInviteService(db as never)
+    const service = createService(db)
 
     await expect(service.getPublicWeddingSummary('harry-and-hermione')).resolves.toEqual({
       groomFirstName: 'Diego',
@@ -183,7 +191,7 @@ describe('HouseholdInviteService', () => {
   it('returns null public summary when no website matches the slug', async () => {
     const db = createDb()
     db.website.findFirst.mockResolvedValue(null)
-    const service = new HouseholdInviteService(db as never)
+    const service = createService(db)
 
     await expect(service.getPublicWeddingSummary('unknown-slug')).resolves.toBeNull()
   })
@@ -201,7 +209,7 @@ describe('HouseholdInviteService', () => {
       ],
     })
     db.household.findFirst.mockResolvedValue(inviteHousehold)
-    const service = new HouseholdInviteService(db as never)
+    const service = createService(db)
     const code = INVITE_CODE
 
     const inviteData = await service.getInviteData('harry-and-hermione', code)
@@ -221,7 +229,7 @@ describe('HouseholdInviteService', () => {
       websiteSections: [{ isEnabled: false, content: { eyebrow: 'Hidden' } }],
     })
     db.household.findFirst.mockResolvedValue(inviteHousehold)
-    const service = new HouseholdInviteService(db as never)
+    const service = createService(db)
     const code = INVITE_CODE
 
     const inviteData = await service.getInviteData('harry-and-hermione', code)
@@ -247,7 +255,7 @@ describe('HouseholdInviteService', () => {
         },
       ],
     })
-    const service = new HouseholdInviteService(db as never)
+    const service = createService(db)
 
     const inviteData = await service.getInviteData('harry-and-hermione', INVITE_CODE)
 
@@ -265,7 +273,7 @@ describe('HouseholdInviteService', () => {
       inviteCodeExpiresAt: INVITE_CODE_EXPIRES_AT,
     })
     db.website.findFirst.mockResolvedValue({ weddingId: 'different-wedding' })
-    const service = new HouseholdInviteService(db as never)
+    const service = createService(db)
 
     await expect(service.getInviteData('harry-and-hermione', INVITE_CODE)).resolves.toBeNull()
     expect(db.household.findFirst).toHaveBeenCalledTimes(1)
@@ -277,7 +285,7 @@ describe('HouseholdInviteService', () => {
 
   it('returns null for an unknown or expired invite code', async () => {
     const db = createDb()
-    const service = new HouseholdInviteService(db as never)
+    const service = createService(db)
 
     db.household.findFirst.mockResolvedValueOnce(null)
     await expect(service.getInviteData('harry-and-hermione', 'no-such-code')).resolves.toBeNull()
@@ -294,7 +302,7 @@ describe('HouseholdInviteService', () => {
 
   it('returns null when no code is supplied', async () => {
     const db = createDb()
-    const service = new HouseholdInviteService(db as never)
+    const service = createService(db)
 
     await expect(service.getInviteData('harry-and-hermione', undefined)).resolves.toBeNull()
     expect(db.household.findFirst).not.toHaveBeenCalled()
@@ -304,7 +312,7 @@ describe('HouseholdInviteService', () => {
     const db = createDb()
     db.website.findFirst.mockResolvedValue({ weddingId: 'wedding-123' })
     db.household.findFirst.mockResolvedValue(inviteHousehold)
-    const service = new HouseholdInviteService(db as never)
+    const service = createService(db)
     const code = INVITE_CODE
 
     await expect(
@@ -340,7 +348,7 @@ describe('HouseholdInviteService', () => {
     const db = createDb()
     db.website.findFirst.mockResolvedValue({ weddingId: 'wedding-123' })
     db.household.findFirst.mockResolvedValue(inviteHousehold)
-    const service = new HouseholdInviteService(db as never)
+    const service = createService(db)
     const code = INVITE_CODE
 
     await expect(
@@ -397,7 +405,7 @@ describe('HouseholdInviteService', () => {
     const db = createDb()
     db.website.findFirst.mockResolvedValue({ weddingId: 'wedding-123' })
     db.household.findFirst.mockResolvedValue(inviteHousehold)
-    const service = new HouseholdInviteService(db as never)
+    const service = createService(db)
     const code = INVITE_CODE
 
     mockCaptureServerEvent.mockClear()
@@ -454,7 +462,7 @@ describe('HouseholdInviteService', () => {
     const db = createDb()
     db.website.findFirst.mockResolvedValue({ weddingId: 'wedding-123' })
     db.household.findFirst.mockResolvedValue(inviteHousehold)
-    const service = new HouseholdInviteService(db as never)
+    const service = createService(db)
     const code = INVITE_CODE
 
     await expect(
@@ -495,7 +503,7 @@ describe('HouseholdInviteService', () => {
         },
       ],
     })
-    const service = new HouseholdInviteService(db as never)
+    const service = createService(db)
     const code = INVITE_CODE
 
     await expect(
@@ -553,7 +561,7 @@ describe('HouseholdInviteService', () => {
         })
         .mockResolvedValueOnce(rsvpHousehold)
       db.website.findFirst.mockResolvedValue({ weddingId: 'wedding-123' })
-      const service = new HouseholdInviteService(db as never)
+      const service = createService(db)
 
       const result = await service.getRecognizedRsvpHousehold('harry-and-hermione', INVITE_CODE)
 
@@ -573,7 +581,7 @@ describe('HouseholdInviteService', () => {
         inviteCodeExpiresAt: INVITE_CODE_EXPIRES_AT,
       })
       db.website.findFirst.mockResolvedValue({ weddingId: 'different-wedding' })
-      const service = new HouseholdInviteService(db as never)
+      const service = createService(db)
 
       await expect(
         service.getRecognizedRsvpHousehold('harry-and-hermione', INVITE_CODE)
@@ -584,7 +592,7 @@ describe('HouseholdInviteService', () => {
 
     it('returns null without any lookups when no code is present', async () => {
       const db = createDb()
-      const service = new HouseholdInviteService(db as never)
+      const service = createService(db)
 
       await expect(
         service.getRecognizedRsvpHousehold('harry-and-hermione', undefined)

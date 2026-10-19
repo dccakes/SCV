@@ -10,7 +10,7 @@ import { db } from '~/server/infrastructure/database'
 
 // Create singleton instances
 const communicationLogRepository = new CommunicationLogRepository(db)
-export const communicationLogService = new CommunicationLogService(communicationLogRepository, db)
+export const communicationLogService = new CommunicationLogService(communicationLogRepository)
 
 // Export classes for testing/DI
 export { CommunicationLogRepository } from '~/server/domains/communication-log/communication-log.repository'

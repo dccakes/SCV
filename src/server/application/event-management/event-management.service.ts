@@ -5,26 +5,34 @@
  * - Event creation with auto-invitation generation
  * - Event updates with tag-along invitation management
  *
- * Extracted from EventService to properly separate domain logic
- * from application-level orchestration.
+ * Multi-repository writes run through a UnitOfWork so they commit atomically
+ * without this service depending on Prisma.
  */
 
-// biome-ignore lint/style/noRestrictedImports: Application services use PrismaClient for cross-domain transactions
-import type { PrismaClient } from '@prisma/client'
-
-import { RSVP_STATUS } from '~/lib/constants'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import { checklistSeedingService } from '~/server/domains/checklist'
+import type { ChecklistSeedingRepository } from '~/server/domains/checklist/checklist-seeding.repository'
 import type { EventRepository } from '~/server/domains/event/event.repository'
 import type { Event } from '~/server/domains/event/event.types'
 import type { CreateEventInput, UpdateEventInput } from '~/server/domains/event/event.validator'
+import type { GuestRepository } from '~/server/domains/guest/guest.repository'
+import type { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
+import { RSVP_STATUS } from '~/server/domains/invitation/rsvp-status'
 import { ForbiddenError } from '~/server/domains/shared/domain-error'
+import type { UnitOfWork } from '~/server/infrastructure/database/unit-of-work'
+
+export type EventManagementRepos = {
+  event: EventRepository
+  guest: GuestRepository
+  invitation: InvitationRepository
+  checklist: ChecklistSeedingRepository
+}
 
 export class EventManagementService {
   constructor(
     private eventRepo: EventRepository,
-    private db: PrismaClient
+    private unitOfWork: UnitOfWork<EventManagementRepos>
   ) {}
 
   /**
@@ -33,57 +41,24 @@ export class EventManagementService {
    * Business rules:
    * - Auto-creates invitations for all existing guests with "Not Invited" status
    * - Tag-alongs only get invitations if the event allows them
+   * - Seeds the planning checklist against the first event, in the same transaction
    */
   async createEvent(ctx: AuthzContext, weddingId: string, data: CreateEventInput): Promise<Event> {
     this.requireEventPermission(ctx, 'create')
 
-    const {
-      eventName: name,
-      date,
-      startTime,
-      endTime,
-      venue,
-      attire,
-      description,
-      collectRsvp,
-      allowTagAlongs,
-    } = data
-
-    return this.db.$transaction(async (tx) => {
-      const newEvent = await tx.event.create({
-        data: {
-          name,
-          weddingId,
-          date: date ? new Date(date) : undefined,
-          startTime,
-          endTime,
-          venue,
-          attire,
-          description,
-          collectRsvp: collectRsvp ?? false,
-          allowTagAlongs: allowTagAlongs ?? false,
-        },
-      })
-
-      const guests = await tx.guest.findMany({
-        where: { weddingId, ...(allowTagAlongs ? {} : { isTagAlong: false }) },
-      })
-
-      if (guests.length > 0) {
-        await tx.invitation.createMany({
-          data: guests.map((guest) => ({
-            weddingId,
-            guestId: guest.id,
-            eventId: newEvent.id,
-            rsvp: RSVP_STATUS.NOT_INVITED,
-          })),
-        })
-      }
-
-      await checklistSeedingService.ensureSeeded(weddingId, tx)
-
-      return newEvent as Event
+    return this.unitOfWork(async (repos) => {
+      const event = await this.insertEventWithInvitations(repos, weddingId, data)
+      await checklistSeedingService.ensureSeeded(weddingId, repos.checklist)
+      return event
     })
+  }
+
+  /**
+   * Create an event on the system's behalf (wedding provisioning). No
+   * permission check and no checklist seeding: the caller seeds afterwards.
+   */
+  async createEventSystem(weddingId: string, data: CreateEventInput): Promise<Event> {
+    return this.unitOfWork((repos) => this.insertEventWithInvitations(repos, weddingId, data))
   }
 
   /**
@@ -101,48 +76,30 @@ export class EventManagementService {
       throw new ForbiddenError('You do not have permission to update this event')
     }
 
-    return this.db.$transaction(async (tx) => {
-      const currentEvent = await tx.event.findUnique({ where: { id: data.eventId } })
+    return this.unitOfWork(async (repos) => {
+      const currentEvent = await repos.event.findById(data.eventId)
       const wasAllowed = currentEvent?.allowTagAlongs ?? false
       const nowAllowed = data.allowTagAlongs ?? false
 
       if (!wasAllowed && nowAllowed) {
-        const tagAlongGuests = await tx.guest.findMany({
-          where: {
-            weddingId,
-            isTagAlong: true,
-            invitations: { none: { eventId: data.eventId } },
-          },
-        })
-
-        if (tagAlongGuests.length > 0) {
-          await tx.invitation.createMany({
-            data: tagAlongGuests.map((guest) => ({
-              weddingId,
-              guestId: guest.id,
-              eventId: data.eventId,
-              rsvp: RSVP_STATUS.NOT_INVITED,
-            })),
-          })
-        }
+        const tagAlongIds = await repos.guest.findTagAlongIdsWithoutInvitation(
+          weddingId,
+          data.eventId
+        )
+        await this.inviteAsNotInvited(repos, weddingId, data.eventId, tagAlongIds)
       }
 
-      const updated = await tx.event.update({
-        where: { id: data.eventId },
-        data: {
-          name: data.eventName,
-          date: data.date ? new Date(data.date) : undefined,
-          startTime: data.startTime,
-          endTime: data.endTime,
-          venue: data.venue,
-          attire: data.attire,
-          description: data.description,
-          collectRsvp: data.collectRsvp,
-          allowTagAlongs: data.allowTagAlongs,
-        },
+      return repos.event.update(data.eventId, {
+        name: data.eventName,
+        date: data.date ? new Date(data.date) : undefined,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        venue: data.venue,
+        attire: data.attire,
+        description: data.description,
+        collectRsvp: data.collectRsvp,
+        allowTagAlongs: data.allowTagAlongs,
       })
-
-      return updated as Event
     })
   }
 
@@ -161,6 +118,49 @@ export class EventManagementService {
 
     const deleted = await this.eventRepo.delete(eventId)
     return deleted.id
+  }
+
+  private async insertEventWithInvitations(
+    repos: EventManagementRepos,
+    weddingId: string,
+    data: CreateEventInput
+  ): Promise<Event> {
+    const event = await repos.event.create({
+      name: data.eventName,
+      weddingId,
+      date: data.date ? new Date(data.date) : undefined,
+      startTime: data.startTime,
+      endTime: data.endTime,
+      venue: data.venue,
+      attire: data.attire,
+      description: data.description,
+      collectRsvp: data.collectRsvp ?? false,
+      allowTagAlongs: data.allowTagAlongs ?? false,
+    })
+
+    const guestIds = await repos.guest.findIdsForNewEvent(weddingId, {
+      includeTagAlongs: data.allowTagAlongs ?? false,
+    })
+    await this.inviteAsNotInvited(repos, weddingId, event.id, guestIds)
+
+    return event
+  }
+
+  private async inviteAsNotInvited(
+    repos: EventManagementRepos,
+    weddingId: string,
+    eventId: string,
+    guestIds: number[]
+  ): Promise<void> {
+    if (guestIds.length === 0) return
+    await repos.invitation.createMany(
+      guestIds.map((guestId) => ({
+        guestId,
+        eventId,
+        rsvp: RSVP_STATUS.NOT_INVITED,
+        weddingId,
+      }))
+    )
   }
 
   private requireEventPermission(ctx: AuthzContext, action: 'create' | 'update' | 'delete'): void {

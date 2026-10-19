@@ -1,5 +1,6 @@
 import { MilestoneCategory, TaskCategory } from '@prisma/client'
 
+import { ChecklistSeedingRepository } from '~/server/domains/checklist/checklist-seeding.repository'
 import { ChecklistSeedingService } from '~/server/domains/checklist/checklist-seeding.service'
 import { getCanonicalMilestoneSeed } from '~/server/domains/milestone/milestone.seed'
 
@@ -23,7 +24,7 @@ describe('ChecklistSeedingService', () => {
 
   beforeEach(() => {
     mockDb = createMockDb()
-    service = new ChecklistSeedingService(mockDb as never)
+    service = new ChecklistSeedingService(new ChecklistSeedingRepository(mockDb as never))
   })
 
   it('returns without seeding when the wedding has no events yet', async () => {

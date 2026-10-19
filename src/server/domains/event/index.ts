@@ -10,7 +10,7 @@ import { db } from '~/server/infrastructure/database'
 
 // Create singleton instances
 const eventRepository = new EventRepository(db)
-export const eventService = new EventService(eventRepository, db)
+export const eventService = new EventService(eventRepository)
 
 // Export classes for testing/DI
 export { EventRepository } from '~/server/domains/event/event.repository'

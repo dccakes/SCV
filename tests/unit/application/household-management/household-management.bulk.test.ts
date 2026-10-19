@@ -77,20 +77,15 @@ const mockGuestWithInvitations = {
   guestTagAssignments: [],
 }
 
-const createMockDb = () => {
-  const tx = {
-    __tx: true,
-    event: {
-      findMany: jest.fn().mockResolvedValue([{ id: 'event-123' }]),
-    },
+const createMockUnitOfWork = () => {
+  const repos = {
+    household: new HouseholdRepository({} as never),
+    guest: new GuestRepository({} as never),
+    invitation: new InvitationRepository({} as never),
+    gift: new GiftRepository({} as never),
+    event: { findIdsByWeddingId: jest.fn().mockResolvedValue(['event-123']) },
   }
-
-  return {
-    tx,
-    $transaction: jest
-      .fn()
-      .mockImplementation(async (callback: (txArg: typeof tx) => unknown) => callback(tx)),
-  }
+  return jest.fn((work: (r: typeof repos) => unknown) => work(repos))
 }
 
 const SINGLE_GUEST_HOUSEHOLD = {
@@ -115,7 +110,7 @@ const SECOND_HOUSEHOLD = {
 
 describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
   let service: HouseholdManagementService
-  let mockDb: ReturnType<typeof createMockDb>
+  let unitOfWork: ReturnType<typeof createMockUnitOfWork>
 
   const actorContext = {
     userId: 'actor-1',
@@ -128,7 +123,7 @@ describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
     resetInvitationMocks()
     resetGiftMocks()
 
-    mockDb = createMockDb()
+    unitOfWork = createMockUnitOfWork()
 
     mockRequirePermission.mockReset()
     mockRequirePermission.mockReturnValue({ organizationId: 'org-1', role: 'admin' })
@@ -151,7 +146,7 @@ describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
       mockInvitationRepo,
       mockGiftRepo,
       mockWebsiteRepo,
-      mockDb as never
+      unitOfWork as never
     )
   })
 
@@ -233,7 +228,55 @@ describe('HouseholdManagementService.bulkCreateHouseholds()', () => {
     it('should not call the database when given an empty array', async () => {
       await service.bulkCreateHouseholds(actorContext, 'wedding-123', [])
 
-      expect(mockDb.$transaction).not.toHaveBeenCalled()
+      expect(unitOfWork).not.toHaveBeenCalled()
+    })
+  })
+
+  // openspec household-bulk-import: out-of-scope events reject before anything is saved
+  describe('event scope pre-check', () => {
+    const FOREIGN_EVENT_HOUSEHOLD = {
+      guestParty: [
+        {
+          firstName: 'Mallory',
+          lastName: 'Other',
+          invites: { 'event-foreign': 'Invited' as const },
+        },
+      ],
+    }
+
+    beforeEach(() => {
+      mockEventBelongsToWeddingFn.mockImplementation(
+        async (eventId: string) => eventId !== 'event-foreign'
+      )
+    })
+
+    it('rejects the whole import when only the last household references a foreign event', async () => {
+      await expect(
+        service.bulkCreateHouseholds(actorContext, 'wedding-123', [
+          SINGLE_GUEST_HOUSEHOLD,
+          SECOND_HOUSEHOLD,
+          FOREIGN_EVENT_HOUSEHOLD,
+        ])
+      ).rejects.toMatchObject({
+        kind: 'FORBIDDEN',
+        message: expect.stringContaining('event-foreign'),
+      })
+
+      expect(mockCreateWithGifts).not.toHaveBeenCalled()
+      expect(unitOfWork).not.toHaveBeenCalled()
+    })
+
+    it('runs the batch pre-check in addition to the per-household checks', async () => {
+      await service.bulkCreateHouseholds(actorContext, 'wedding-123', [
+        SINGLE_GUEST_HOUSEHOLD,
+        SECOND_HOUSEHOLD,
+      ])
+
+      const eventChecks = mockEventBelongsToWeddingFn.mock.calls.filter(
+        ([eventId]) => eventId === 'event-123'
+      )
+      // once in the batch pre-check, once per household in createHouseholdWithGuests
+      expect(eventChecks).toHaveLength(3)
     })
   })
 

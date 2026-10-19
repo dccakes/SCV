@@ -43,12 +43,16 @@ const mockCreateWithGiftsFn = mockCreateWithGifts as jest.Mock
 const mockCreateFn = mockCreate as jest.Mock
 const mockFindByEmailAndWeddingIdFn = mockFindByEmailAndWeddingId as jest.Mock
 
-// ── Mock db with $transaction ─────────────────────────────────────────────────
-const createMockDb = () => ({
-  $transaction: jest
-    .fn()
-    .mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => fn({})),
-})
+// ── Mock unit of work ─────────────────────────────────────────────────────────
+const createMockDb = () => {
+  const repos = {
+    household: new HouseholdRepository({}),
+    guest: new GuestRepository({}),
+  }
+  return {
+    $transaction: jest.fn((work: (r: typeof repos) => Promise<unknown>) => work(repos)),
+  }
+}
 
 const validToken = 'a'.repeat(32)
 const validGuestInput = {
@@ -69,16 +73,32 @@ describe('SelfFillRegistrationService', () => {
 
     mockDb = createMockDb()
     const selfFillRepo = new SelfFillRepository({})
-    const householdRepo = new HouseholdRepository({})
-    const guestRepo = new GuestRepository({})
 
-    service = new SelfFillRegistrationService(
-      // biome-ignore lint/suspicious/noExplicitAny: test mock
-      mockDb as any,
-      selfFillRepo,
-      householdRepo,
-      guestRepo
+    service = new SelfFillRegistrationService(mockDb.$transaction as never, selfFillRepo)
+  })
+
+  it('runs the duplicate check and all writes on the transaction-bound repositories', async () => {
+    mockFindByTokenFn.mockResolvedValue(mockSelfFillWeddingData)
+    const txRepos = {
+      household: { createWithGifts: jest.fn().mockResolvedValue({ id: 'tx-household' }) },
+      guest: {
+        findByEmailAndWeddingId: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockResolvedValue({ id: 99 }),
+      },
+    }
+    const txService = new SelfFillRegistrationService(
+      jest.fn((work: (r: typeof txRepos) => Promise<unknown>) => work(txRepos)) as never,
+      new SelfFillRepository({})
     )
+
+    const result = await txService.registerGuest(validToken, validGuestInput)
+
+    expect(result).toMatchObject({ success: true, guestId: 99, householdId: 'tx-household' })
+    expect(txRepos.guest.findByEmailAndWeddingId).toHaveBeenCalled()
+    expect(txRepos.household.createWithGifts).toHaveBeenCalled()
+    expect(txRepos.guest.create).toHaveBeenCalled()
+    expect(mockCreateWithGiftsFn).not.toHaveBeenCalled()
+    expect(mockCreateFn).not.toHaveBeenCalled()
   })
 
   // ─── Happy path ─────────────────────────────────────────────────────────────

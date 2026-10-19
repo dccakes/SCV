@@ -6,46 +6,7 @@
  */
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
-import { DashboardService } from '~/server/application/dashboard/dashboard.service'
-import { DashboardOverviewUseCase } from '~/server/application/dashboard/dashboard-overview.use-case'
-import { EventRepository } from '~/server/domains/event/event.repository'
-import { GuestRepository } from '~/server/domains/guest/guest.repository'
-import { HouseholdRepository } from '~/server/domains/household/household.repository'
-import { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
-import { MilestoneRepository } from '~/server/domains/milestone/milestone.repository'
-import { QuestionRepository } from '~/server/domains/question/question.repository'
-import { TaskRepository } from '~/server/domains/task/task.repository'
-import { UserRepository } from '~/server/domains/user/user.repository'
-import { WebsiteRepository } from '~/server/domains/website/website.repository'
-import { WeddingRepository } from '~/server/domains/wedding/wedding.repository'
-import { db } from '~/server/infrastructure/database'
-
-// Initialize repositories
-const householdRepo = new HouseholdRepository(db)
-const invitationRepo = new InvitationRepository(db)
-const eventRepo = new EventRepository(db)
-const userRepo = new UserRepository(db)
-const websiteRepo = new WebsiteRepository(db)
-const guestRepo = new GuestRepository(db)
-const questionRepo = new QuestionRepository(db)
-const weddingRepo = new WeddingRepository(db)
-const taskRepo = new TaskRepository(db)
-const milestoneRepo = new MilestoneRepository(db)
-
-// Initialize service with all repositories
-const dashboardService = new DashboardService(
-  householdRepo,
-  invitationRepo,
-  eventRepo,
-  userRepo,
-  websiteRepo,
-  guestRepo,
-  questionRepo,
-  weddingRepo,
-  taskRepo,
-  milestoneRepo
-)
-const dashboardOverviewUseCase = new DashboardOverviewUseCase(dashboardService)
+import { dashboardOverviewUseCase } from '~/server/application/dashboard/dashboard.wiring'
 
 export const dashboardRouter = createTRPCRouter({
   getForActiveWorkspace: protectedProcedure.query(async ({ ctx }) => {

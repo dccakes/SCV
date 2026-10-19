@@ -1,11 +1,16 @@
 import { z } from 'zod'
 import { env } from '~/env'
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
+import { HouseholdInviteRepository } from '~/server/application/household-invite/household-invite.repository'
 import { HouseholdInviteService } from '~/server/application/household-invite/household-invite.service'
 import { requireActiveWeddingId } from '~/server/authz/active-wedding'
 import { db } from '~/server/db'
+import { createUnitOfWork } from '~/server/infrastructure/database/unit-of-work'
 
-export const householdInviteService = new HouseholdInviteService(db)
+export const householdInviteService = new HouseholdInviteService(
+  new HouseholdInviteRepository(db),
+  createUnitOfWork(db, (tx) => ({ invite: new HouseholdInviteRepository(tx) }))
+)
 
 const getTrustedBaseUrl = (headers: Headers) => {
   if (env.NEXT_PUBLIC_APP_URL) return env.NEXT_PUBLIC_APP_URL

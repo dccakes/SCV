@@ -286,6 +286,36 @@ export class GuestRepository {
   }
 
   /**
+   * Guest ids to invite to a newly created event. Tag-alongs are only
+   * included when the event allows them.
+   */
+  async findIdsForNewEvent(
+    weddingId: string,
+    options: { includeTagAlongs: boolean }
+  ): Promise<number[]> {
+    const guests = await this.db.guest.findMany({
+      where: { weddingId, ...(options.includeTagAlongs ? {} : { isTagAlong: false }) },
+      select: { id: true },
+    })
+    return guests.map((guest) => guest.id)
+  }
+
+  /**
+   * Tag-along guest ids that have no invitation to the event yet.
+   */
+  async findTagAlongIdsWithoutInvitation(weddingId: string, eventId: string): Promise<number[]> {
+    const guests = await this.db.guest.findMany({
+      where: {
+        weddingId,
+        isTagAlong: true,
+        invitations: { none: { eventId } },
+      },
+      select: { id: true },
+    })
+    return guests.map((guest) => guest.id)
+  }
+
+  /**
    * Find a guest by email and wedding ID (used for duplicate self-fill registration checks)
    */
   async findByEmailAndWeddingId(email: string, weddingId: string): Promise<Guest | null> {

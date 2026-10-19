@@ -8,8 +8,6 @@
  * - Gift domain (gift tracking)
  */
 
-// biome-ignore lint/style/noRestrictedImports: Application services use PrismaClient for cross-domain transactions
-import type { PrismaClient } from '@prisma/client'
 import type {
   CreateHouseholdResult,
   CreateHouseholdWithGuestsInput,
@@ -18,17 +16,28 @@ import type {
 } from '~/server/application/household-management/household-management.types'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
-import { GiftRepository } from '~/server/domains/gift/gift.repository'
-import { GuestRepository } from '~/server/domains/guest/guest.repository'
-import { HouseholdRepository } from '~/server/domains/household/household.repository'
+import type { EventRepository } from '~/server/domains/event/event.repository'
+import type { GiftRepository } from '~/server/domains/gift/gift.repository'
+import type { GuestRepository } from '~/server/domains/guest/guest.repository'
+import type { HouseholdRepository } from '~/server/domains/household/household.repository'
 import type { Household, HouseholdSearchResult } from '~/server/domains/household/household.types'
-import { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
+import type { InvitationRepository } from '~/server/domains/invitation/invitation.repository'
+import { RSVP_STATUS } from '~/server/domains/invitation/rsvp-status'
 import {
   ForbiddenError,
   InvariantViolationError,
   NotFoundError,
 } from '~/server/domains/shared/domain-error'
 import type { WebsiteRepository } from '~/server/domains/website/website.repository'
+import type { UnitOfWork } from '~/server/infrastructure/database/unit-of-work'
+
+export type HouseholdManagementRepos = {
+  household: HouseholdRepository
+  guest: GuestRepository
+  invitation: InvitationRepository
+  gift: GiftRepository
+  event: EventRepository
+}
 
 export class HouseholdManagementService {
   constructor(
@@ -37,7 +46,7 @@ export class HouseholdManagementService {
     private invitationRepo: InvitationRepository,
     _giftRepo: GiftRepository,
     private websiteRepo: WebsiteRepository,
-    private db: PrismaClient
+    private unitOfWork: UnitOfWork<HouseholdManagementRepos>
   ) {}
 
   async createHouseholdWithGuests(
@@ -51,18 +60,13 @@ export class HouseholdManagementService {
       weddingId
     )
 
-    return this.db.$transaction(async (tx) => {
-      const txHouseholdRepo = new HouseholdRepository(tx)
-      const txGuestRepo = new GuestRepository(tx)
+    return this.unitOfWork(async (repos) => {
+      const txHouseholdRepo = repos.household
+      const txGuestRepo = repos.guest
 
       let defaultEventIds: string[] | undefined
       const getDefaultEventIds = async () => {
-        defaultEventIds ??= (
-          await tx.event.findMany({
-            where: { weddingId },
-            select: { id: true },
-          })
-        ).map((event) => event.id)
+        defaultEventIds ??= await repos.event.findIdsByWeddingId(weddingId)
         return defaultEventIds
       }
 
@@ -93,7 +97,9 @@ export class HouseholdManagementService {
           const inviteEntries = Object.entries(guest.invites)
           const defaultInviteEntries =
             inviteEntries.length === 0
-              ? (await getDefaultEventIds()).map((eventId) => [eventId, 'Not Invited'] as const)
+              ? (await getDefaultEventIds()).map(
+                  (eventId) => [eventId, RSVP_STATUS.NOT_INVITED] as const
+                )
               : inviteEntries
           const invitations = defaultInviteEntries.map(([eventId, rsvp]) => ({
             eventId,
@@ -156,19 +162,14 @@ export class HouseholdManagementService {
       weddingId
     )
 
-    return this.db.$transaction(async (tx) => {
-      const txHouseholdRepo = new HouseholdRepository(tx)
-      const txGuestRepo = new GuestRepository(tx)
-      const txInvitationRepo = new InvitationRepository(tx)
-      const txGiftRepo = new GiftRepository(tx)
+    return this.unitOfWork(async (repos) => {
+      const txHouseholdRepo = repos.household
+      const txGuestRepo = repos.guest
+      const txInvitationRepo = repos.invitation
+      const txGiftRepo = repos.gift
       let defaultEventIds: string[] | undefined
       const getDefaultEventIds = async () => {
-        defaultEventIds ??= (
-          await tx.event.findMany({
-            where: { weddingId },
-            select: { id: true },
-          })
-        ).map((event) => event.id)
+        defaultEventIds ??= await repos.event.findIdsByWeddingId(weddingId)
         return defaultEventIds
       }
 
@@ -195,7 +196,9 @@ export class HouseholdManagementService {
           const inviteEntries = Object.entries(guest.invites)
           const defaultInviteEntries =
             !guest.guestId && inviteEntries.length === 0
-              ? (await getDefaultEventIds()).map((eventId) => [eventId, 'Not Invited'] as const)
+              ? (await getDefaultEventIds()).map(
+                  (eventId) => [eventId, RSVP_STATUS.NOT_INVITED] as const
+                )
               : inviteEntries
           const invitations = defaultInviteEntries.map(([eventId, rsvp]) => ({
             eventId,
@@ -293,6 +296,15 @@ export class HouseholdManagementService {
     households: Parameters<HouseholdManagementService['createHouseholdWithGuests']>[2][]
   ): Promise<{ created: number; failed: number }> {
     requirePermission(ctx, { guest: ['import'] })
+
+    // Reject out-of-scope events for the whole batch before saving anything;
+    // the per-household check alone would abort after earlier households committed.
+    await this.assertEventIdsInWeddingScope(
+      households.flatMap((household) =>
+        household.guestParty.flatMap((guest) => Object.keys(guest.invites))
+      ),
+      weddingId
+    )
 
     let created = 0
     let failed = 0

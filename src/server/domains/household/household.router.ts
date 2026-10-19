@@ -8,12 +8,9 @@
  * to eliminate redundancy between HouseholdService and HouseholdManagementService.
  */
 
-import { TRPCError } from '@trpc/server'
-
 import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/api/trpc'
 import { householdManagementService } from '~/server/application/household-management'
 import { requireActiveWeddingId } from '~/server/authz/active-wedding'
-import { eventService } from '~/server/domains/event'
 import {
   bulkCreateHouseholdsSchema,
   createHouseholdSchema,
@@ -48,22 +45,7 @@ export const householdRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
 
-      // Validate that all invites event IDs belong to this wedding
-      const validEvents = await eventService.getWeddingEvents(weddingId)
-      const validEventIds = new Set((validEvents ?? []).map((e) => e.id))
-      for (const household of input.households) {
-        for (const guest of household.guestParty) {
-          for (const eventId of Object.keys(guest.invites)) {
-            if (!validEventIds.has(eventId)) {
-              throw new TRPCError({
-                code: 'FORBIDDEN',
-                message: `Event ${eventId} does not belong to your wedding`,
-              })
-            }
-          }
-        }
-      }
-
+      // Event scope for the whole batch is enforced by the service.
       return householdManagementService.bulkCreateHouseholds(ctx.authz, weddingId, input.households)
     }),
 

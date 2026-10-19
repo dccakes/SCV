@@ -7,6 +7,7 @@
 
 import { TRPCError } from '@trpc/server'
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
+import { weddingProvisioningService } from '~/server/application/wedding-provisioning'
 import { requireActiveWeddingId } from '~/server/authz/active-wedding'
 import { requirePermission } from '~/server/authz/permission-checker'
 import { readWorkspaceCapabilities } from '~/server/authz/workspace-capabilities'
@@ -25,7 +26,7 @@ export const weddingRouter = createTRPCRouter({
    * Creates wedding, UserWedding join entry, optional event, and updates user profile
    */
   create: protectedProcedure.input(createWeddingSchema).mutation(async ({ ctx, input }) => {
-    return weddingService.createWedding(ctx.auth.userId, {
+    return weddingProvisioningService.provisionWedding(ctx.auth.userId, {
       userId: ctx.auth.userId,
       ...input,
     })

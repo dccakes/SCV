@@ -40,7 +40,7 @@ const service = new HouseholdManagementService(
   invitationRepo,
   giftRepo,
   websiteRepo,
-  null as never // db - not needed for this test
+  null as never // unit of work - not needed for this test
 )
 
 const authz = { userId: 'user-1', activeOrganization: { organizationId: 'org-1', role: 'owner' } }

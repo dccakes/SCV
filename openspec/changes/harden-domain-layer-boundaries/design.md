@@ -69,25 +69,30 @@ Server actions and pages that call services directly replace `error instanceof T
 
 Every write schema swaps `z.string()` for `rsvpStatusSchema`, including the `invites` record values. Zod runs before any service code, which gives the all-or-nothing rejection the `rsvp-status` spec needs, with no changes to service logic. The `submitRsvp` transaction is untouched.
 
-### D6. Transactions through a `TransactionRunner` port
+### D6. Transactions through a `UnitOfWork<R>` port
 
-`src/server/infrastructure/database/transaction.ts` exports:
+`src/server/infrastructure/database/unit-of-work.ts` exports:
 
 ```ts
-type TransactionRunner = <T>(work: (repos: RepositoryFactory) => Promise<T>) => Promise<T>
+type UnitOfWork<R> = <T>(work: (repos: R) => Promise<T>) => Promise<T>
+function createUnitOfWork<R>(db: PrismaClient, build: (tx: TransactionClient) => R): UnitOfWork<R>
 ```
 
-`RepositoryFactory` builds tx-bound repositories (`repos.household()`, `repos.event()`, and so on). Services receive a `TransactionRunner` in their constructor in place of `PrismaClient`. The barrel files wire it from `db`. This removes every `PrismaClient` import from services while keeping today's transaction boundaries exactly the same.
+Each service declares the repositories it needs inside a transaction (for example `EventManagementRepos`), and its barrel binds them with `createUnitOfWork(db, (tx) => ({ ... }))`. Services receive a `UnitOfWork` in place of `PrismaClient`. This removes every `PrismaClient` import from services while keeping today's transaction boundaries exactly the same.
 
-- **Alternative: move all transactional flows into application services.** Rejected for now. `event.service.updateEvent` touches only Event and Invitation, so moving it would be churn without a clearer boundary.
+- **Refined during implementation:** the first draft had one central `RepositoryFactory` in infrastructure. That would have made infrastructure import every domain repository, inverting the dependency. A generic `UnitOfWork<R>` keeps the binding in each barrel, which already owns wiring.
+- **Alternative: move all transactional flows into application services.** Partly taken. `EventService.createEvent`/`updateEvent` were dead duplicates of `EventManagementService` (the router already used the latter), so they were deleted rather than ported. `EventManagementService.createEventSystem` now serves wedding provisioning.
 - **Alternative: keep `import type { PrismaClient }` and only ban value imports.** Rejected. The type still lets services call `db.household.findFirst`, which is the leak in `communication-log.service.ts`.
+- **Side effect, a fix:** `SelfFillRegistrationService` called `$transaction(async () => ...)` but ran its writes on the global client, so they were not transactional. Through the unit of work they now are.
 
 ### D7. Where moved queries go
 
 - `communication-log.service.ts` reads `household`, `invitation` and `gift` to build a timeline, which is a read model. Those queries move into `communication-log.repository.ts`. Moving them into each owning domain's repository was rejected, because the domain service would then depend on three other domains' repositories, which `claude.md` forbids.
 - `household-management.service.ts` `tx.event.findMany` becomes `EventRepository.findIdsByWeddingId`.
 - `checklist-seeding.service.ts` `wedding.findUnique` and related calls move into a `ChecklistSeedingRepository` in the checklist domain, which accepts a tx client like the other repositories.
-- `event.service.ts` tx queries move into `EventRepository` and `InvitationRepository` methods, called through `TransactionRunner`.
+- Event creation/update queries move into `EventRepository` (`create`, `update` gains `collectRsvp`, `findIdsByWeddingId`), `GuestRepository` (`findIdsForNewEvent`, `findTagAlongIdsWithoutInvitation`) and `InvitationRepository.createMany`, called through the unit of work.
+- `household-invite.service.ts` had about ten flow-specific queries. They move, verbatim, into `application/household-invite/household-invite.repository.ts`, the same read-model rule as communication log.
+- `rsvp-submission.service.ts` website lookup becomes `WebsiteRepository.findRsvpAccessBySubUrl`.
 
 ### D8. Wedding provisioning application service
 
@@ -97,9 +102,9 @@ type TransactionRunner = <T>(work: (repos: RepositoryFactory) => Promise<T>) => 
 
 `bulkCreateHouseholds` first collects every event id across the batch and runs `assertEventIdsInWeddingScope` once. Only then does it loop. The router's inline loop and its `eventService` import are deleted. The `FORBIDDEN` message becomes the service's existing one (`Event <id> is outside the requested wedding scope`), replacing the router's `Event <id> does not belong to your wedding`. That's the one deliberate message change, and the `household-bulk-import` spec only requires that the event is named.
 
-### D10. Dashboard wiring
+### D10. Dashboard (and RSVP submission) wiring
 
-`application/dashboard/index.ts` already builds `dashboardService`. It also builds and exports `dashboardOverviewUseCase`, and `dashboard.router.ts` imports both from a new `application/dashboard/dashboard.wiring.ts` rather than from the barrel, following the `root.ts` convention to avoid circular imports. `npm run build` proves there's no TDZ regression.
+`application/dashboard/index.ts` already builds `dashboardService`. It also builds and exports `dashboardOverviewUseCase`, and `dashboard.router.ts` imports both from a new `application/dashboard/dashboard.wiring.ts` rather than from the barrel, following the `root.ts` convention to avoid circular imports. `npm run build` proves there's no TDZ regression. `rsvp-submission.router.ts` had the same pattern and got the same `*.wiring.ts` treatment.
 
 ### D11. Lint enforcement
 

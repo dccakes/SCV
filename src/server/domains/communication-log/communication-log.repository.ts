@@ -63,4 +63,53 @@ export class CommunicationLogRepository {
     })
     return note !== null
   }
+
+  /**
+   * Whether the household belongs to the wedding
+   */
+  async householdBelongsToWedding(householdId: string, weddingId: string): Promise<boolean> {
+    const household = await this.db.household.findFirst({
+      where: { id: householdId, weddingId },
+      select: { id: true },
+    })
+    return household !== null
+  }
+
+  /**
+   * Invitations for guests in a household, with event and guest names.
+   * Read model for derived RSVP timeline entries.
+   */
+  async findInvitationEventsForHousehold(householdId: string) {
+    return this.db.invitation.findMany({
+      where: {
+        guest: { householdId },
+      },
+      select: {
+        eventId: true,
+        rsvp: true,
+        invitedAt: true,
+        submittedAt: true,
+        event: { select: { name: true } },
+        guest: { select: { firstName: true, lastName: true } },
+      },
+    })
+  }
+
+  /**
+   * Gifts with a thank-you timestamp for a household.
+   * Read model for derived thank-you timeline entries.
+   */
+  async findThankYouGiftsForHousehold(householdId: string) {
+    return this.db.gift.findMany({
+      where: {
+        householdId,
+        thankYouSentAt: { not: null },
+      },
+      select: {
+        eventId: true,
+        thankYouSentAt: true,
+        event: { select: { name: true } },
+      },
+    })
+  }
 }
