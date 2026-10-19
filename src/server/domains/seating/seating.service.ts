@@ -10,8 +10,8 @@ import type { SeatingRepository } from '~/server/domains/seating/seating.reposit
 import {
   getOpenSeats,
   getSeatsNeeded,
-  hasRoomForGuests,
   openSeatsMessage,
+  tableHasRoom,
 } from '~/server/domains/seating/seating.rules'
 import type {
   AssignGuestsInput,
@@ -39,47 +39,44 @@ const groupByHousehold = (records: SeatableGuestRecord[]): SeatingHousehold[] =>
   const households = new Map<string, SeatingHousehold>()
 
   for (const { rsvp, dietaryRestrictions, guest } of records) {
-    const existing = households.get(guest.householdId) ?? {
-      id: guest.household.id,
-      address: formatAddress(guest.household),
-      notes: guest.household.notes,
-      guests: [],
+    let household = households.get(guest.householdId)
+    if (!household) {
+      household = {
+        id: guest.household.id,
+        address: formatAddress(guest.household),
+        notes: guest.household.notes,
+        guests: [],
+      }
+      households.set(guest.householdId, household)
     }
-    households.set(guest.householdId, {
-      ...existing,
-      guests: [
-        ...existing.guests,
-        {
-          id: guest.id,
-          firstName: guest.firstName,
-          lastName: guest.lastName,
-          email: guest.email,
-          phone: guest.phone,
-          ageGroup: guest.ageGroup,
-          isPrimaryContact: guest.isPrimaryContact,
-          isTagAlong: guest.isTagAlong,
-          householdId: guest.householdId,
-          rsvp,
-          dietaryRestrictions,
-          tags: guest.guestTagAssignments.map((assignment) => assignment.guestTag.name),
-          tableId: guest.seatAssignments[0]?.tableId ?? null,
-        },
-      ],
+    household.guests.push({
+      id: guest.id,
+      firstName: guest.firstName,
+      lastName: guest.lastName,
+      email: guest.email,
+      phone: guest.phone,
+      ageGroup: guest.ageGroup,
+      isPrimaryContact: guest.isPrimaryContact,
+      isTagAlong: guest.isTagAlong,
+      householdId: guest.householdId,
+      rsvp,
+      dietaryRestrictions,
+      tags: guest.guestTagAssignments.map((assignment) => assignment.guestTag.name),
+      tableId: guest.seatAssignments[0]?.tableId ?? null,
     })
   }
 
-  return [...households.values()]
-    .map((household) => ({
-      ...household,
-      guests: [...household.guests].sort(
-        (a, b) => Number(b.isPrimaryContact) - Number(a.isPrimaryContact) || a.id - b.id
-      ),
-    }))
-    .sort((a, b) => {
-      const aName = `${a.guests[0]?.lastName ?? ''} ${a.guests[0]?.firstName ?? ''}`
-      const bName = `${b.guests[0]?.lastName ?? ''} ${b.guests[0]?.firstName ?? ''}`
-      return aName.localeCompare(bName)
-    })
+  const sorted = [...households.values()]
+  for (const household of sorted) {
+    household.guests.sort(
+      (a, b) => Number(b.isPrimaryContact) - Number(a.isPrimaryContact) || a.id - b.id
+    )
+  }
+  return sorted.sort((a, b) => {
+    const aName = `${a.guests[0]?.lastName ?? ''} ${a.guests[0]?.firstName ?? ''}`
+    const bName = `${b.guests[0]?.lastName ?? ''} ${b.guests[0]?.firstName ?? ''}`
+    return aName.localeCompare(bName)
+  })
 }
 
 export class SeatingService {
@@ -167,10 +164,11 @@ export class SeatingService {
     await this.withLockedTable(table, async (lock) => {
       const { capacity, name } = lock.table
       const seatedGuestIds = await lock.seatedGuestIds()
-      if (!hasRoomForGuests({ capacity, seatedGuestIds }, guestIds)) {
+      const seats = { capacity, guestIds: seatedGuestIds }
+      if (!tableHasRoom(seats, guestIds)) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
-          message: openSeatsMessage(name, getOpenSeats({ capacity, guestIds: seatedGuestIds })),
+          message: openSeatsMessage(name, getOpenSeats(seats)),
         })
       }
 

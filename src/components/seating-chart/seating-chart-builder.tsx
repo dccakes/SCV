@@ -33,7 +33,6 @@ import { SeatingTableNode } from '~/components/seating-chart/seating-table-node'
 import {
   ADD_TABLE_FOCUS_KEY,
   dialogAfterSave,
-  resolveTableSubmit,
   type TableDialogState,
   tableDialogFocusKey,
 } from '~/components/seating-chart/seating-table-submit'
@@ -67,6 +66,7 @@ import type {
   SeatingChart,
   SeatingGuest,
   SeatingTableView,
+  UpdateSeatingTableInput,
 } from '~/server/domains/seating/seating.types'
 import { api } from '~/trpc/react'
 
@@ -164,8 +164,11 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
     if (key) setPendingFocus({ key, chartAtDrop: chart })
   }
 
-  const chartInput = { eventId: eventId ?? '' }
-  const chartQuery = api.seating.getChart.useQuery(chartInput, { enabled: eventId !== null })
+  const chartEventId = eventId ?? ''
+  const chartQuery = api.seating.getChart.useQuery(
+    { eventId: chartEventId },
+    { enabled: eventId !== null }
+  )
   // Server data plus still-pending changes; everything below reads this chart
   const refetchChart = useCallback(
     (changeEventId: string) => utils.seating.getChart.invalidate({ eventId: changeEventId }),
@@ -180,9 +183,11 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
 
   const sensors = useSeatingSensors()
 
+  // Keyed on households, which table moves leave untouched
+  const households = chart?.households
   const allGuests = useMemo(
-    () => chart?.households.flatMap((household) => household.guests) ?? [],
-    [chart]
+    () => households?.flatMap((household) => household.guests) ?? [],
+    [households]
   )
   const guestsById = useMemo(
     () => new Map<number, SeatingGuest>(allGuests.map((guest) => [guest.id, guest])),
@@ -214,7 +219,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
 
   const assignGuests = api.seating.assignGuests.useMutation({
     onMutate: ({ tableId, guestIds }) =>
-      optimistic.begin(chartInput.eventId, (current) => seatGuests(current, tableId, guestIds)),
+      optimistic.begin(chartEventId, (current) => seatGuests(current, tableId, guestIds)),
     ...optimisticHandlers,
   })
   const unassignGuests = api.seating.unassignGuests.useMutation({
@@ -222,25 +227,12 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
       optimistic.begin(mutationEventId, (current) => seatGuests(current, null, guestIds)),
     ...optimisticHandlers,
   })
-  const applyTableUpdate = ({
-    id,
-    data,
-  }: {
-    id: string
-    data: Partial<Pick<SeatingTableView, 'name' | 'shape' | 'capacity' | 'positionX' | 'positionY'>>
-  }) =>
-    optimistic.begin(chartInput.eventId, (current) => ({
-      ...current,
-      tables: current.tables.map((table) => (table.id === id ? { ...table, ...data } : table)),
-    }))
-  // Saves from the edit dialog. Moves use their own mutation so a move
-  // finishing can never close a dialog the planner opened in the meantime
   const updateTable = api.seating.updateTable.useMutation({
-    onMutate: applyTableUpdate,
-    ...optimisticHandlers,
-  })
-  const moveTable = api.seating.updateTable.useMutation({
-    onMutate: applyTableUpdate,
+    onMutate: ({ id, data }: { id: string; data: UpdateSeatingTableInput }) =>
+      optimistic.begin(chartEventId, (current) => ({
+        ...current,
+        tables: current.tables.map((table) => (table.id === id ? { ...table, ...data } : table)),
+      })),
     ...optimisticHandlers,
   })
   const createTable = api.seating.createTable.useMutation({
@@ -250,7 +242,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
   })
   const deleteTable = api.seating.deleteTable.useMutation({
     onMutate: ({ id }) =>
-      optimistic.begin(chartInput.eventId, (current) => {
+      optimistic.begin(chartEventId, (current) => {
         const removed = current.tables.find((table) => table.id === id)
         const unseated = seatGuests(current, null, removed?.guestIds ?? [])
         return { ...unseated, tables: unseated.tables.filter((table) => table.id !== id) }
@@ -270,11 +262,11 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
     return () => cancelAnimationFrame(frame)
   }, [pendingFocus, chart])
 
-  const openGuestFrom = (source: 'sidebar' | 'seat') => (guestId: number) => {
+  const openGuestFrom = (keyPrefix: 'sidebar-guest' | 'seat-guest') => (guestId: number) => {
     // A guest who dropped off the chart leaves the drawer closed: a fresh open
     if (selectedGuest === null) {
       drawerOpener.current = {
-        key: `${source === 'sidebar' ? 'sidebar-guest' : 'seat-guest'}:${guestId}`,
+        key: `${keyPrefix}:${guestId}`,
         sidebarKeys: readSidebarFocusCandidates().map((candidate) => candidate.key),
         guestId,
       }
@@ -334,6 +326,13 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
     router.replace(`${pathname}?eventId=${nextEventId}`, { scroll: false })
   }
 
+  // Shared by drag drops and the drawer: explains a full table instead of seating
+  const canSeat = (table: SeatingTableView, guestIds: number[]) => {
+    if (tableHasRoom(table, guestIds)) return true
+    toast.error(openSeatsMessage(table.name, getOpenSeats(table)))
+    return false
+  }
+
   const handleDragStart = (event: DragStartEvent) => {
     const data = event.active.data.current as DragData | undefined
     setActiveDrag(data?.type === 'guests' ? data : null)
@@ -353,7 +352,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
         table.shape,
         table.capacity
       )
-      moveTable.mutate({ id: table.id, data: position })
+      updateTable.mutate({ id: table.id, data: position })
       return
     }
 
@@ -373,10 +372,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
     const table = tablesById.get(drop.tableId)
     if (!table) return
     if (data.guestIds.every((id) => table.guestIds.includes(id))) return
-    if (!tableHasRoom(table, data.guestIds)) {
-      toast.error(openSeatsMessage(table.name, getOpenSeats(table)))
-      return
-    }
+    if (!canSeat(table, data.guestIds)) return
     // Keyboard users keep their place: from the sidebar, focus the next
     // unseated guest; a seated guest moved to another table keeps focus
     if (isKeyboard) {
@@ -410,35 +406,34 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
     changed: Partial<SeatingTableFormValues>
   ) => {
     if (!eventId || !chart || !tableDialog) return
-    const action = resolveTableSubmit(tableDialog, chart.tables)
     const { openId } = tableDialog
     const closeIfStillOpen = () => setTableDialog((current) => dialogAfterSave(current, openId))
-    if (action.kind === 'missing') {
+    // An edit of a table someone else deleted must never turn into a create
+    if (tableDialog.mode === 'edit' && !editingTable) {
       toast.error('This table was deleted. Refresh to see the latest seating chart.')
       setTableDialog(null)
       return
     }
-    if (action.kind === 'update') {
+    if (editingTable) {
       // Send only what the planner changed, so a save never reverts fields
       // another planner edited while this dialog was open
       if (Object.keys(changed).length === 0) {
         closeIfStillOpen()
         return
       }
-      const table = tablesById.get(action.tableId)
       const resized = changed.shape !== undefined || changed.capacity !== undefined
-      const position =
-        table && resized
-          ? refitAfterResize(
-              table,
-              changed.shape ?? table.shape,
-              changed.capacity ?? table.capacity
-            )
-          : undefined
-      updateTable.mutate(
-        { id: action.tableId, data: { ...changed, ...position } },
-        { onSuccess: closeIfStillOpen }
-      )
+      const position = resized
+        ? refitAfterResize(
+            editingTable,
+            changed.shape ?? editingTable.shape,
+            changed.capacity ?? editingTable.capacity
+          )
+        : undefined
+      // The promise belongs to this call alone, so a table drag on the same
+      // mutation can never swallow or trigger this dialog's close
+      updateTable
+        .mutateAsync({ id: editingTable.id, data: { ...changed, ...position } })
+        .then(closeIfStillOpen, () => undefined)
       return
     }
     const position = getNextTablePosition(chart.tables, values)
@@ -455,11 +450,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
   // Seat one guest from the drawer, the non-drag path to the same mutation
   const handleSeatGuest = (guestId: number, tableId: string) => {
     const table = tablesById.get(tableId)
-    if (!table) return
-    if (!tableHasRoom(table, [guestId])) {
-      toast.error(`${table.name} is full`)
-      return
-    }
+    if (!table || !canSeat(table, [guestId])) return
     assignGuests.mutate({ tableId, guestIds: [guestId] })
   }
 
@@ -531,7 +522,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
               households={chart.households}
               totalGuests={allGuests.length}
               seatedGuests={seatedCount}
-              onSelectGuest={openGuestFrom('sidebar')}
+              onSelectGuest={openGuestFrom('sidebar-guest')}
             />
             <section
               aria-label='Floor plan'
@@ -559,7 +550,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
                     table={table}
                     guestsById={guestsById}
                     onEdit={(tableId) => openTableDialog({ mode: 'edit', tableId })}
-                    onSelectGuest={openGuestFrom('seat')}
+                    onSelectGuest={openGuestFrom('seat-guest')}
                   />
                 ))}
               </div>

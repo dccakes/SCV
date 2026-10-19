@@ -20,21 +20,13 @@ export const getSeatsNeeded = (
   return new Set(incomingGuestIds.filter((id) => !seated.has(id))).size
 }
 
-export const hasRoomForGuests = (
-  table: { capacity: number; seatedGuestIds: readonly number[] },
-  incomingGuestIds: readonly number[]
-): boolean =>
-  table.seatedGuestIds.length + getSeatsNeeded(table.seatedGuestIds, incomingGuestIds) <=
-  table.capacity
-
 type TableSeats = { capacity: number; guestIds: readonly number[] }
 
 export const getOpenSeats = (table: TableSeats): number =>
   Math.max(0, table.capacity - table.guestIds.length)
 
-// Client-side room check on a table as the chart returns it
 export const tableHasRoom = (table: TableSeats, incomingGuestIds: readonly number[]): boolean =>
-  hasRoomForGuests({ capacity: table.capacity, seatedGuestIds: table.guestIds }, incomingGuestIds)
+  table.guestIds.length + getSeatsNeeded(table.guestIds, incomingGuestIds) <= table.capacity
 
 export const openSeatsMessage = (tableName: string, openSeats: number): string =>
   `${tableName} only has ${openSeats} open seat${openSeats === 1 ? '' : 's'}`

@@ -10,7 +10,7 @@ export const tableNameSchema = z
   .min(1, 'Table name is required')
   .max(50, 'Table name must be 50 characters or less')
 
-export const capacitySchema = z
+const capacitySchema = z
   .number()
   .int()
   .min(MIN_TABLE_CAPACITY, `Tables need at least ${MIN_TABLE_CAPACITY} seat`)

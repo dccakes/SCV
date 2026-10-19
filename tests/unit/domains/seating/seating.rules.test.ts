@@ -1,7 +1,6 @@
 import {
   getOpenSeats,
   getSeatsNeeded,
-  hasRoomForGuests,
   NON_SEATABLE_RSVPS,
   openSeatsMessage,
   tableHasRoom,
@@ -39,17 +38,17 @@ describe('seating rules', () => {
     })
   })
 
-  describe('hasRoomForGuests', () => {
+  describe('tableHasRoom', () => {
     it('allows filling a table exactly to capacity', () => {
-      expect(hasRoomForGuests({ capacity: 4, seatedGuestIds: [1, 2] }, [3, 4])).toBe(true)
+      expect(tableHasRoom({ capacity: 4, guestIds: [1, 2] }, [3, 4])).toBe(true)
     })
 
     it('rejects a drop that would exceed capacity', () => {
-      expect(hasRoomForGuests({ capacity: 4, seatedGuestIds: [1, 2, 3] }, [4, 5])).toBe(false)
+      expect(tableHasRoom({ capacity: 4, guestIds: [1, 2, 3] }, [4, 5])).toBe(false)
     })
 
     it('allows re-dropping guests who are already seated at the table', () => {
-      expect(hasRoomForGuests({ capacity: 2, seatedGuestIds: [1, 2] }, [1, 2])).toBe(true)
+      expect(tableHasRoom({ capacity: 2, guestIds: [1, 2] }, [1, 2])).toBe(true)
     })
   })
 })

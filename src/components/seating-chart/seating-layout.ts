@@ -13,8 +13,8 @@ const PLACEMENT_MARGIN = 40
 const PLACEMENT_GAP = 16
 const PLACEMENT_STEP = 20
 
-export type Point = { x: number; y: number }
-export type Footprint = { width: number; height: number }
+type Point = { x: number; y: number }
+type Footprint = { width: number; height: number }
 
 const getRoundDiameter = (capacity: number): number =>
   Math.max(MIN_ROUND_DIAMETER, Math.ceil((capacity * SEAT_PITCH) / Math.PI) - SEAT_SIZE)

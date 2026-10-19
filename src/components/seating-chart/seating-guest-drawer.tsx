@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 
+import { getRsvpBadgeClassName } from '~/components/guest-list/guest-detail-panel-content'
 import { GuestDetailDrawer } from '~/components/guest-list/v2/drawer/guest-detail-drawer'
 import {
   GuestDetailSection,
@@ -18,6 +19,7 @@ import {
 } from '~/components/ui/select'
 import { AGE_GROUP_OPTIONS } from '~/lib/constants/guest'
 import { formatGuestName } from '~/lib/seating/guest-name'
+import { cn } from '~/lib/utils'
 import { getOpenSeats } from '~/server/domains/seating/seating.rules'
 import type {
   SeatingGuest,
@@ -64,7 +66,13 @@ export function SeatingGuestDrawer(props: Readonly<SeatingGuestDrawerProps>) {
       headerMeta={
         guest ? (
           <div className='flex flex-wrap gap-1.5'>
-            <Badge variant='outline' className='text-[0.58rem] uppercase tracking-wider'>
+            <Badge
+              variant='outline'
+              className={cn(
+                'text-[0.58rem] uppercase tracking-wider',
+                getRsvpBadgeClassName(guest.rsvp)
+              )}
+            >
               {guest.rsvp}
             </Badge>
             {guest.tags.map((tag) => (

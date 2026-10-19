@@ -27,6 +27,14 @@ type SeatingTableNodeProps = {
   onSelectGuest: (guestId: number) => void
 }
 
+// A seat is a SEAT_SIZE circle centred on its position
+const seatStyle = (x: number, y: number) => ({
+  left: x - SEAT_SIZE / 2,
+  top: y - SEAT_SIZE / 2,
+  width: SEAT_SIZE,
+  height: SEAT_SIZE,
+})
+
 function SeatedGuest(
   props: Readonly<{ guest: SeatingGuest; x: number; y: number; onSelect: () => void }>
 ) {
@@ -48,12 +56,7 @@ function SeatedGuest(
       onClick={onSelect}
       {...attributes}
       {...listeners}
-      style={{
-        left: x - SEAT_SIZE / 2,
-        top: y - SEAT_SIZE / 2,
-        width: SEAT_SIZE,
-        height: SEAT_SIZE,
-      }}
+      style={seatStyle(x, y)}
       className={cn(
         'absolute flex touch-manipulation items-center justify-center rounded-full border border-foreground/30 bg-card text-[0.6rem] text-foreground tabular-nums shadow-sm transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         isDragging && 'opacity-30'
@@ -130,12 +133,7 @@ export function SeatingTableNode(props: Readonly<SeatingTableNodeProps>) {
             key={`empty-${index}`}
             aria-hidden='true'
             className='absolute rounded-full border border-foreground/25 border-dashed'
-            style={{
-              left: seat.x - SEAT_SIZE / 2,
-              top: seat.y - SEAT_SIZE / 2,
-              width: SEAT_SIZE,
-              height: SEAT_SIZE,
-            }}
+            style={seatStyle(seat.x, seat.y)}
           />
         )
       })}

@@ -125,51 +125,44 @@ export class SeatingRepository {
     work: (lock: SeatingTableLock) => Promise<T>
   ): Promise<T> {
     try {
-      return await this.runLocked(table, work)
+      return await this.db.$transaction(async (tx) => {
+        const [locked] = await tx.$queryRaw<Array<{ name: string; capacity: number }>>`
+          SELECT "name", "capacity" FROM "SeatingTable" WHERE "id" = ${table.id} FOR UPDATE`
+        if (!locked) throw new SeatingTableNotFoundError()
+
+        await tx.seatAssignment.deleteMany({ where: staleAssignments(table.eventId) })
+
+        return work({
+          table: { name: locked.name, capacity: locked.capacity },
+          seatedGuestIds: async () => {
+            const seats = await tx.seatAssignment.findMany({
+              where: { tableId: table.id },
+              select: { guestId: true },
+            })
+            return seats.map((seat) => seat.guestId)
+          },
+          // Seats guests at the table, moving them off any other table for the event
+          replaceAssignments: async (guestIds) => {
+            await tx.seatAssignment.deleteMany({
+              where: { eventId: table.eventId, guestId: { in: guestIds } },
+            })
+            await tx.seatAssignment.createMany({
+              data: guestIds.map((guestId) => ({
+                eventId: table.eventId,
+                tableId: table.id,
+                guestId,
+              })),
+            })
+          },
+          updateTable: (data) => tx.seatingTable.update({ where: { id: table.id }, data }),
+        })
+      })
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         throw new SeatAlreadyTakenError()
       }
       throw error
     }
-  }
-
-  private runLocked<T>(
-    table: { id: string; eventId: string },
-    work: (lock: SeatingTableLock) => Promise<T>
-  ): Promise<T> {
-    return this.db.$transaction(async (tx) => {
-      const [locked] = await tx.$queryRaw<Array<{ name: string; capacity: number }>>`
-        SELECT "name", "capacity" FROM "SeatingTable" WHERE "id" = ${table.id} FOR UPDATE`
-      if (!locked) throw new SeatingTableNotFoundError()
-
-      await tx.seatAssignment.deleteMany({ where: staleAssignments(table.eventId) })
-
-      return work({
-        table: { name: locked.name, capacity: locked.capacity },
-        seatedGuestIds: async () => {
-          const seats = await tx.seatAssignment.findMany({
-            where: { tableId: table.id },
-            select: { guestId: true },
-          })
-          return seats.map((seat) => seat.guestId)
-        },
-        // Seats guests at the table, moving them off any other table for the event
-        replaceAssignments: async (guestIds) => {
-          await tx.seatAssignment.deleteMany({
-            where: { eventId: table.eventId, guestId: { in: guestIds } },
-          })
-          await tx.seatAssignment.createMany({
-            data: guestIds.map((guestId) => ({
-              eventId: table.eventId,
-              tableId: table.id,
-              guestId,
-            })),
-          })
-        },
-        updateTable: (data) => tx.seatingTable.update({ where: { id: table.id }, data }),
-      })
-    })
   }
 
   async deleteAssignments(eventId: string, guestIds: number[]): Promise<void> {

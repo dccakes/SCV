@@ -51,7 +51,7 @@ type SelectedEventResponse = {
 
 type DraftUpdater = <K extends keyof DrawerDraft>(key: K, value: DrawerDraft[K]) => void
 
-const getRsvpBadgeClassName = (rsvp: string) => {
+export const getRsvpBadgeClassName = (rsvp: string) => {
   if (rsvp === 'Attending') return 'border-success/35 bg-success/12 text-success'
   if (rsvp === 'Declined') return 'border-destructive/30 bg-destructive/10 text-destructive'
   return 'border-foreground/20 bg-gold/12 text-foreground/80'
