@@ -31,6 +31,7 @@ export const getEventFormDefaults = (): Partial<EventFormData> => {
     description: '',
     collectRsvp: false,
     allowTagAlongs: false,
+    translations: { es: { name: '', venue: '', attire: '', description: '' } },
   }
 }
 
@@ -51,5 +52,14 @@ export const transformToServerInput = (data: EventFormData): z.infer<typeof crea
     description: data.description || undefined,
     collectRsvp: data.collectRsvp ?? false,
     allowTagAlongs: data.allowTagAlongs ?? false,
+    // Always sent so clearing a Spanish field clears it on the website too.
+    translations: {
+      es: {
+        name: data.translations?.es?.name || undefined,
+        venue: data.translations?.es?.venue || undefined,
+        attire: data.translations?.es?.attire || undefined,
+        description: data.translations?.es?.description || undefined,
+      },
+    },
   }
 }

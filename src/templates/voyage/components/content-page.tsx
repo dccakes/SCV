@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { useLocale, useTranslations } from 'next-intl'
 import type { TemplateSurfaceProps } from '~/templates/types'
 import { VoyageMoments } from '~/templates/voyage/components/media'
 import { VoyageMexicoCity } from '~/templates/voyage/components/mexico-city'
@@ -28,15 +29,17 @@ import { VoyageDressCode, VoyageWeekend } from '~/templates/voyage/components/we
 import {
   coupleIdentity,
   eventDateRange,
+  identityCopy,
   sectionOf,
   type VoyagePage,
   voyagePages,
 } from '~/templates/voyage/site'
 
 function PageLinks({ path, items }: { path: string; items: { label: string; href: string }[] }) {
+  const t = useTranslations('voyage.content')
   return (
     <nav
-      aria-label='Related information'
+      aria-label={t('relatedAria')}
       className='mx-auto grid max-w-6xl grid-cols-2 justify-center gap-3 border-border border-b px-6 py-4 sm:flex sm:flex-wrap'
     >
       {items.map((item) => (
@@ -53,25 +56,27 @@ function PageLinks({ path, items }: { path: string; items: { label: string; href
 }
 
 export function VoyageContact({ weddingData }: Pick<TemplateSurfaceProps, 'weddingData'>) {
+  const t = useTranslations('voyage.content.contact')
+  const tIdentity = useTranslations('voyage.identity')
+  const { contactNames } = coupleIdentity(weddingData, identityCopy(tIdentity))
   return (
     <Band id='contact' tone='cream'>
       <div className='grid gap-8 md:grid-cols-2'>
         <div className='space-y-4'>
-          <Eyebrow>We’re here to help</Eyebrow>
-          <h2 className={`${headingFont} text-4xl`}>Have a question?</h2>
+          <Eyebrow>{t('eyebrow')}</Eyebrow>
+          <h2 className={`${headingFont} text-4xl`}>{t('heading')}</h2>
           <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
-            Please contact {coupleIdentity(weddingData).contactNames} with any questions—we’re happy
-            to help.
+            {t('body', { names: contactNames })}
           </p>
         </div>
         <div className='space-y-4 border-border border-t pt-8 md:border-t-0 md:border-l md:pt-0 md:pl-10'>
-          <Eyebrow>Stay in the loop</Eyebrow>
-          <h2 className={`${headingFont} text-3xl`}>Our WhatsApp community</h2>
+          <Eyebrow>{t('communityEyebrow')}</Eyebrow>
+          <h2 className={`${headingFont} text-3xl`}>{t('communityHeading')}</h2>
           <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
-            A place for wedding updates and questions as we get closer to the celebration.
+            {t('communityBody')}
           </p>
           <OutlineButton external href='https://chat.whatsapp.com/IOxwS7icvCoEclNlRBbvwa?mode=gi_t'>
-            Join the WhatsApp community
+            {t('communityCta')}
           </OutlineButton>
         </div>
       </div>
@@ -84,15 +89,22 @@ export function VoyageContentPage({
   path,
   page,
 }: TemplateSurfaceProps & { page: VoyagePage }) {
+  const tPages = useTranslations('voyage.pages')
   return (
     <VoyageSiteShell weddingData={weddingData} path={path} current={page}>
-      <VoyagePageHeading {...voyagePages[page]} path={path} />
+      <VoyagePageHeading
+        title={tPages(voyagePages[page].titleKey)}
+        description={tPages(voyagePages[page].descriptionKey)}
+        path={path}
+      />
       <PageContent weddingData={weddingData} path={path} page={page} />
     </VoyageSiteShell>
   )
 }
 
 function PageContent({ weddingData, path, page }: TemplateSurfaceProps & { page: VoyagePage }) {
+  const t = useTranslations('voyage.content')
+  const locale = useLocale()
   const { sections, events, website } = weddingData
   const travel = sectionOf(sections, 'TRAVEL')
   switch (page) {
@@ -102,24 +114,22 @@ function PageContent({ weddingData, path, page }: TemplateSurfaceProps & { page:
           <PageLinks
             path={path}
             items={[
-              { label: 'Schedule', href: '/weekend#schedule' },
-              { label: 'What to Wear', href: '/weekend#what-to-wear' },
-              { label: 'Wedding transport', href: '/weekend#wedding-transport' },
+              { label: t('weekend.links.schedule'), href: '/weekend#schedule' },
+              { label: t('weekend.links.wear'), href: '/weekend#what-to-wear' },
+              { label: t('weekend.links.transport'), href: '/weekend#wedding-transport' },
             ]}
           />
           <VoyageWeekend events={events} path={path} />
           <Band id='wedding-transport' tone='cream'>
             <div className='mx-auto max-w-3xl space-y-4'>
-              <h2 className={`${headingFont} text-4xl`}>Getting to the celebrations</h2>
+              <h2 className={`${headingFont} text-4xl`}>{t('weekend.transportHeading')}</h2>
               <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
-                We’ll provide transport from Puebla city centre to the ceremony venue and back, so
-                you won’t need to arrange your own journey. Pickup locations and times will be
-                shared here closer to the wedding.
+                {t('weekend.transportBody')}
               </p>
               <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
-                All other events will be within walking distance of Puebla city centre.
+                {t('weekend.walkingDistance')}
               </p>
-              <OutlineButton href={`${path}/weekend#schedule`}>Venues & directions</OutlineButton>
+              <OutlineButton href={`${path}/weekend#schedule`}>{t('weekend.venues')}</OutlineButton>
             </div>
           </Band>
           <VoyageDressCode events={events} />
@@ -132,9 +142,9 @@ function PageContent({ weddingData, path, page }: TemplateSurfaceProps & { page:
           <PageLinks
             path={path}
             items={[
-              { label: 'Getting here', href: '/travel' },
-              { label: 'Wedding schedule', href: '/weekend' },
-              { label: 'Questions? Contact us', href: '/faq#contact' },
+              { label: t('stay.links.gettingHere'), href: '/travel' },
+              { label: t('stay.links.schedule'), href: '/weekend' },
+              { label: t('stay.links.contact'), href: '/faq#contact' },
             ]}
           />
           <VoyageStays content={travel?.content} />
@@ -146,58 +156,53 @@ function PageContent({ weddingData, path, page }: TemplateSurfaceProps & { page:
           <PageLinks
             path={path}
             items={[
-              { label: 'Travel dates', href: '/travel#dates' },
-              { label: 'Transfers', href: '/travel#transfers' },
-              { label: 'Hotels', href: '/stay' },
-              { label: 'Explore Puebla', href: '/puebla' },
-              { label: 'Explore Mexico', href: '/mexico' },
+              { label: t('travel.links.dates'), href: '/travel#dates' },
+              { label: t('travel.links.transfers'), href: '/travel#transfers' },
+              { label: t('travel.links.hotels'), href: '/stay' },
+              { label: t('travel.links.puebla'), href: '/puebla' },
+              { label: t('travel.links.mexico'), href: '/mexico' },
             ]}
           />
           <Band id='dates'>
             <div className='mx-auto max-w-3xl space-y-5'>
-              <Eyebrow>Plan your journey</Eyebrow>
-              <h2 className={`${headingFont} text-4xl`}>When to travel</h2>
+              <Eyebrow>{t('travel.eyebrow')}</Eyebrow>
+              <h2 className={`${headingFont} text-4xl`}>{t('travel.heading')}</h2>
               <p className={`${bodyFont} text-xl`}>
-                {eventDateRange(events) || 'Event dates will be shared here once confirmed.'}
+                {eventDateRange(events, locale) || t('travel.datesFallback')}
               </p>
               <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
-                Allow time to settle in before your first event, and leave enough time for your
-                onward journey after the celebrations.
+                {t('travel.body')}
               </p>
-              <OutlineButton href={`${path}/weekend`}>Check the schedule</OutlineButton>
+              <OutlineButton href={`${path}/weekend`}>{t('travel.checkSchedule')}</OutlineButton>
             </div>
           </Band>
           <Band id='transfers' tone='cream'>
             <div className='mx-auto max-w-4xl space-y-8'>
               <div className='space-y-4'>
-                <Eyebrow>Getting to Puebla</Eyebrow>
-                <h2 className={`${headingFont} text-4xl sm:text-5xl`}>Mexico City to Puebla</h2>
+                <Eyebrow>{t('travel.transfersEyebrow')}</Eyebrow>
+                <h2 className={`${headingFont} text-4xl sm:text-5xl`}>
+                  {t('travel.transfersHeading')}
+                </h2>
                 <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
-                  If you’re arriving at Mexico City International Airport (MEX / AICM), you can
-                  continue directly to Puebla by bus or arrange a private transfer.
+                  {t('travel.transfersIntro')}
                 </p>
               </div>
               <div className='grid gap-10 md:grid-cols-2'>
                 <div className='space-y-4'>
-                  <h3 className={`${headingFont} text-3xl`}>By bus from the airport</h3>
+                  <h3 className={`${headingFont} text-3xl`}>{t('travel.busHeading')}</h3>
                   <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
-                    Estrella Roja runs hourly buses from Terminal 1 and Terminal 2 to Puebla.
-                    Tickets can be bought on site at the airport bus ticket counters. Check the
-                    Puebla drop-off point before arranging the final journey to your hotel. Allow
-                    time for immigration, baggage collection and traffic when planning your
-                    connection.
+                    {t('travel.busBody')}
                   </p>
                 </div>
                 <div className='space-y-4'>
-                  <h3 className={`${headingFont} text-3xl`}>Drivers & private transfers</h3>
+                  <h3 className={`${headingFont} text-3xl`}>{t('travel.driversHeading')}</h3>
                   <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
-                    We’ll add known driver contacts and private transfer options here closer to the
-                    wedding, including how to book and arrange your pickup.
+                    {t('travel.driversBody')}
                   </p>
                   <p
                     className={`${labelFont} text-[0.62rem] text-primary uppercase tracking-[0.2em]`}
                   >
-                    Contacts coming soon
+                    {t('travel.contactsSoon')}
                   </p>
                 </div>
               </div>
@@ -214,8 +219,8 @@ function PageContent({ weddingData, path, page }: TemplateSurfaceProps & { page:
           <PageLinks
             path={path}
             items={[
-              { label: 'Extending your trip? Explore Mexico', href: '/mexico' },
-              { label: 'Getting around', href: '/travel#transfers' },
+              { label: t('puebla.links.mexico'), href: '/mexico' },
+              { label: t('puebla.links.gettingAround'), href: '/travel#transfers' },
             ]}
           />
           <VoyageZocalo />
@@ -227,9 +232,9 @@ function PageContent({ weddingData, path, page }: TemplateSurfaceProps & { page:
           <PageLinks
             path={path}
             items={[
-              { label: 'Mexico City guide', href: '/mexico#mexico-city' },
-              { label: 'Staying nearby? Explore Puebla', href: '/puebla' },
-              { label: 'Travel information', href: '/travel' },
+              { label: t('mexico.links.cityGuide'), href: '/mexico#mexico-city' },
+              { label: t('mexico.links.puebla'), href: '/puebla' },
+              { label: t('mexico.links.travel'), href: '/travel' },
             ]}
           />
           <VoyageExploreMexico />
@@ -256,9 +261,7 @@ function PageContent({ weddingData, path, page }: TemplateSurfaceProps & { page:
           <VoyageMoments moments={moments} />
           {!story && !timeline && !party && !moments.length ? (
             <Band>
-              <p className={`${bodyFont} text-center text-lg`}>
-                Our story and favourite moments are coming soon.
-              </p>
+              <p className={`${bodyFont} text-center text-lg`}>{t('story.comingSoon')}</p>
             </Band>
           ) : null}
         </>
@@ -271,25 +274,29 @@ function PageContent({ weddingData, path, page }: TemplateSurfaceProps & { page:
           <PageLinks
             path={path}
             items={[
-              { label: 'What to Wear', href: '/weekend#what-to-wear' },
-              { label: 'Hotel booking details', href: '/stay' },
-              { label: 'Travel & transfers', href: '/travel' },
-              { label: 'Contact & WhatsApp', href: '/faq#contact' },
+              { label: t('faq.links.wear'), href: '/weekend#what-to-wear' },
+              { label: t('faq.links.hotels'), href: '/stay' },
+              { label: t('faq.links.travel'), href: '/travel' },
+              { label: t('faq.links.contact'), href: '/faq#contact' },
             ]}
           />
           {faq?.content.items.length ? (
             <Band id='questions'>
               <div className='mx-auto max-w-3xl space-y-4'>
-                <h2 className={`${headingFont} mb-8 text-4xl`}>Questions & Answers</h2>
+                <h2 className={`${headingFont} mb-8 text-4xl`}>{t('faq.heading')}</h2>
                 {faq.content.items.map((item) => {
                   // Keep authored answers intact; contextual links help guests find the full details.
-                  const destination = /dress code|what.*wear/i.test(item.question)
-                    ? '/weekend#what-to-wear'
-                    : /hotel.*(block|discount)|accommodation/i.test(item.question)
-                      ? '/stay'
-                      : /airport|shuttle/i.test(item.question)
-                        ? '/travel#transfers'
-                        : null
+                  // Questions may arrive in English or Spanish, so match both.
+                  const destination =
+                    /dress code|what.*wear|vestimenta|qu[eé].*(poner|vestir)/i.test(item.question)
+                      ? '/weekend#what-to-wear'
+                      : /hotel.*(block|discount|descuento|tarifa)|accommodation|hospedaje/i.test(
+                            item.question
+                          )
+                        ? '/stay'
+                        : /airport|shuttle|aeropuerto|traslado/i.test(item.question)
+                          ? '/travel#transfers'
+                          : null
                   return (
                     <details
                       key={item.question}
@@ -307,13 +314,11 @@ function PageContent({ weddingData, path, page }: TemplateSurfaceProps & { page:
                           href={`${path}${destination}`}
                           className={`${bodyFont} mt-3 inline-flex min-h-11 items-center text-lg text-primary underline underline-offset-4`}
                         >
-                          See{' '}
                           {destination.startsWith('/weekend')
-                            ? 'what to wear for each event'
+                            ? t('faq.seeWear')
                             : destination === '/stay'
-                              ? 'hotel rates and booking instructions'
-                              : 'travel and transfer details'}{' '}
-                          →
+                              ? t('faq.seeStay')
+                              : t('faq.seeTravel')}
                         </Link>
                       ) : null}
                     </details>
@@ -328,18 +333,21 @@ function PageContent({ weddingData, path, page }: TemplateSurfaceProps & { page:
     }
     case 'registry': {
       const registry = sectionOf(sections, 'REGISTRY')
-      const links = registry?.content.links.filter((link) => !/coming soon/i.test(link.label)) ?? []
+      const links =
+        registry?.content.links.filter(
+          (link) => !/coming soon|pr[oó]ximamente|muy pronto/i.test(link.label)
+        ) ?? []
       return (
         <Band>
           <div className='mx-auto max-w-3xl'>
             {registry ? (
               <VoyageRegistry content={{ ...registry.content, links }} />
             ) : (
-              <p className={`${bodyFont} text-lg`}>Your presence is the greatest gift.</p>
+              <p className={`${bodyFont} text-lg`}>{t('registry.fallback')}</p>
             )}
             {!links.length ? (
               <p className={`${bodyFont} mt-6 text-lg text-muted-foreground`}>
-                Details coming soon.
+                {t('registry.comingSoon')}
               </p>
             ) : null}
           </div>

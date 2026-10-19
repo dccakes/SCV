@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 
 import { resolveInvitedHousehold } from '~/app/w/[websiteSubUrl]/_lib/invited-household'
 import { loadVisitorWedding } from '~/app/w/[websiteSubUrl]/_lib/load-visitor-wedding'
@@ -16,6 +17,7 @@ type RootRouteHandlerProps = {
 export async function generateMetadata({ params }: RootRouteHandlerProps): Promise<Metadata> {
   const { websiteSubUrl } = await params
   const { loadResult } = await loadVisitorWedding(websiteSubUrl)
+  const t = await getTranslations('site.metadata')
 
   // Nested `icon.tsx` route conventions are silently dropped whenever an
   // ancestor layout (the root layout, here) sets `metadata.icons` explicitly —
@@ -26,7 +28,7 @@ export async function generateMetadata({ params }: RootRouteHandlerProps): Promi
 
   if (loadResult.status !== 'ready') {
     return {
-      title: 'Wedding Website',
+      title: t('websiteTitle'),
       icons: [{ rel: 'icon', url: iconUrl, type: 'image/png', sizes: '32x32' }],
     }
   }
@@ -41,8 +43,9 @@ export async function generateMetadata({ params }: RootRouteHandlerProps): Promi
 
   const brideName = brideFirstName && brideLastName ? `${brideFirstName} ${brideLastName}` : ''
   const groomName = groomFirstName && groomLastName ? `${groomFirstName} ${groomLastName}` : ''
-  const title = brideName && groomName ? `${brideName} & ${groomName} Wedding` : 'Wedding Website'
-  const description = introText || `Join us for the wedding of ${brideName} and ${groomName}.`
+  const title =
+    brideName && groomName ? t('weddingTitle', { brideName, groomName }) : t('websiteTitle')
+  const description = introText || t('weddingDescription', { brideName, groomName })
 
   const ogImageUrl = `/api/og/wedding/${websiteSubUrl}`
 
@@ -84,11 +87,8 @@ export default async function RootRouteHandler({ params }: RootRouteHandlerProps
   if (loadResult.status === 'not-found') return notFound()
 
   if (loadResult.status === 'password-required') {
-    return (
-      <main>
-        <PasswordPage verifyWebsitePassword={verifyWebsitePassword} />
-      </main>
-    )
+    // PasswordPage renders its own <main> landmark.
+    return <PasswordPage verifyWebsitePassword={verifyWebsitePassword} />
   }
 
   // The guest cleared the gate — greet them by name if we recognise their invite.

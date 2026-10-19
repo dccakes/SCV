@@ -1,5 +1,7 @@
+import { getLocale } from 'next-intl/server'
 import { cache } from 'react'
 
+import { type Locale, toLocale } from '~/lib/locale/locale-detection'
 import type { WeddingPageData } from '~/server/domains/website/website.types'
 import { api } from '~/trpc/server'
 
@@ -21,16 +23,25 @@ const isWebsiteNotFoundError = (error: unknown): boolean => {
 }
 
 export const loadWeddingBySubUrl = cache(
-  async (websiteSubUrl: string, accessToken?: string, inviteToken?: string) => {
+  async (
+    websiteSubUrl: string,
+    accessToken?: string,
+    inviteToken?: string,
+    /** Fixed language for shared outputs (e.g. cached OG images); defaults to the visitor's. */
+    fixedLocale?: Locale
+  ) => {
     if (!websiteSubUrl) {
       return { status: 'not-found' } as const
     }
 
     try {
+      // Couple-authored copy is served in the visitor's language (English fallback).
+      const locale: Locale = fixedLocale ?? toLocale(await getLocale())
       const weddingData = await api.website.fetchWeddingData({
         subUrl: websiteSubUrl,
         accessToken,
         inviteToken,
+        locale,
       })
       return {
         status: 'ready',

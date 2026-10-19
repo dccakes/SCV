@@ -23,6 +23,7 @@ export default function QuestionShortAnswer({
   question,
 }: QuestionShortAnswerProps) {
   const tCommon = useTranslations('common')
+  const tForm = useTranslations('site.rsvpForm')
   const rsvpFormData = useRsvpForm()
   const updateRsvpForm = useUpdateRsvpForm()
   const questionId = question.id ?? '-1'
@@ -50,6 +51,7 @@ export default function QuestionShortAnswer({
         </span>
       )}
       <textarea
+        aria-label={tForm('answerLabel')}
         value={answer}
         onChange={(e) => setAnswer(e.target.value)}
         className='h-40 border bg-white p-3 text-black placeholder:text-gray-500'

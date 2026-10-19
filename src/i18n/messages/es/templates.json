@@ -1,0 +1,52 @@
+{
+  "templateShared": {
+    "dateToBeAnnounced": "Fecha por confirmar",
+    "rsvp": "Confirmar asistencia",
+    "initials": {
+      "bride": "N",
+      "groom": "N"
+    },
+    "nav": {
+      "ariaLabel": "Sitio web de la boda",
+      "home": "Inicio",
+      "saveTheDate": "Reserva la fecha",
+      "invitation": "Invitación",
+      "rsvp": "Confirmar asistencia"
+    },
+    "images": {
+      "cover": "Foto de portada del sitio",
+      "header": "Imagen de encabezado de la boda",
+      "couple": "Los novios"
+    },
+    "invitation": {
+      "preface": "Junto con sus familias",
+      "and": "y",
+      "invitationLine": "tienen el honor de invitarte a celebrar su boda"
+    },
+    "saveTheDate": {
+      "eyebrow": "Reserva la fecha",
+      "footnote": "La invitación formal llegará pronto.",
+      "visitWebsite": "Visita nuestro sitio web",
+      "calendarTitle": "Boda de {coupleNames}",
+      "calendarDescription": "¡Reserva la fecha para la boda de {coupleNames}! La invitación formal llegará pronto. {url}"
+    }
+  },
+  "classic": {
+    "daysToGo": "{count, plural, one {¡Falta # día!} other {¡Faltan # días!}}",
+    "viewStay": "Ver hospedaje"
+  },
+  "aurelia": {
+    "gettingMarried": "¡Nos casamos!",
+    "daysToGo": "{count, plural, one {falta # día} other {faltan # días}}",
+    "viewStay": "Ver",
+    "eyebrows": {
+      "ourStory": "Nuestra historia",
+      "travel": "Cómo llegar",
+      "weddingParty": "A nuestro lado",
+      "destination": "El destino",
+      "experiences": "Experiencias especiales",
+      "faq": "Lo que debes saber",
+      "registry": "Con gratitud"
+    }
+  }
+}

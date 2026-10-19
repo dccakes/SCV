@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react'
-
+import { screen } from '@testing-library/react'
+import { renderWithIntl as render } from '~/../tests/unit/test-utils/intl'
 import type { WebsiteSection } from '~/server/domains/website-section/website-section.types'
 import { AureliaSections } from '~/templates/aurelia/components/sections'
 import { ClassicSections } from '~/templates/classic/components/sections'
@@ -84,5 +84,15 @@ describe('section layout differs by template', () => {
     expect(aureliaContainer.querySelector('.grid')).not.toBeNull()
     expect(classicContainer.querySelector('.grid')).toBeNull()
     expect(classicContainer.querySelector('ul')).not.toBeNull()
+  })
+})
+
+describe('section copy follows the visitor locale', () => {
+  it('Aurelia renders Spanish eyebrows for es visitors', () => {
+    render(<AureliaSections sections={[ourStory, registry]} />, { locale: 'es' })
+    expect(screen.getByText('Nuestra historia')).toBeInTheDocument()
+    expect(screen.getByText('Con gratitud')).toBeInTheDocument()
+    // Couple-authored content is left untouched.
+    expect(screen.getByText('We met in Rome.')).toBeInTheDocument()
   })
 })

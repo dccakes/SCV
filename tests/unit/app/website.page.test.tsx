@@ -185,6 +185,7 @@ describe('WebsitePage', () => {
       initialIntroText: '',
       initialHeadline: '',
       initialHeadlineAccent: '',
+      initialSpanish: { introText: '', headline: '', headlineAccent: '' },
     })
   })
 
@@ -209,6 +210,7 @@ describe('WebsitePage', () => {
         headline: 'Our Greatest\nAdventure\nBegins',
         headlineAccent: 'Here.',
       },
+      translations: { es: { introText: 'Bienvenidos a nuestra boda.' } },
     })
 
     const page = await WebsitePage()
@@ -219,6 +221,13 @@ describe('WebsitePage', () => {
       initialIntroText: 'Welcome to our wedding weekend.',
       initialHeadline: 'Our Greatest\nAdventure\nBegins',
       initialHeadlineAccent: 'Here.',
+      initialSpanish: {
+        introText: 'Bienvenidos a nuestra boda.',
+        headline: '',
+        headlineAccent: '',
+      },
     })
+    // The couple can switch the editors between English and Spanish.
+    expect(screen.getByRole('radiogroup', { name: 'Editing language' })).toBeInTheDocument()
   })
 })

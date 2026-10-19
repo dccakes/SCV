@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { SiteLocaleToggle } from '~/components/website/site-locale-toggle'
 import type { WeddingPageData } from '~/server/domains/website/website.types'
 import { resolveTemplate, TemplateThemeProvider } from '~/templates'
 
@@ -33,6 +34,8 @@ export default function WeddingSurface({
 
   return (
     <TemplateThemeProvider template={template}>
+      {/* Standalone surfaces render no template navbar, so offer the toggle here. */}
+      <SiteLocaleToggle />
       <Surface weddingData={weddingData} path={path} introText={introText} />
     </TemplateThemeProvider>
   )

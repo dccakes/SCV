@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { resolveInvitedHousehold } from '~/app/w/[websiteSubUrl]/_lib/invited-household'
 import { loadVisitorWedding } from '~/app/w/[websiteSubUrl]/_lib/load-visitor-wedding'
 import { grantWebsiteAccess } from '~/app/w/[websiteSubUrl]/_lib/website-access'
@@ -7,13 +8,15 @@ import PasswordPage from '~/components/website/password-page'
 import { PersonalizedWelcome } from '~/components/website/personalized-welcome'
 import { resolveTemplate, TemplateThemeProvider } from '~/templates'
 import { VoyageContentPage } from '~/templates/voyage/components/content-page'
-import { coupleIdentity, isVoyagePage, voyagePages } from '~/templates/voyage/site'
+import { coupleIdentity, identityCopy, isVoyagePage, voyagePages } from '~/templates/voyage/site'
 
 type Props = { params: Promise<{ websiteSubUrl: string; page: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { websiteSubUrl, page } = await params
-  if (!isVoyagePage(page)) return { title: 'Wedding Website' }
+  const t = await getTranslations('voyage.pages')
+  const fallback = { title: t('fallbackTitle') }
+  if (!isVoyagePage(page)) return fallback
   const { loadResult } = await loadVisitorWedding(websiteSubUrl)
   // Never put wedding data into metadata before the guest has cleared the gate.
   if (
@@ -21,11 +24,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     loadResult.weddingData.website.templateId !== 'voyage' ||
     !loadResult.weddingData.websiteBuilderEnabled
   ) {
-    return { title: 'Wedding Website' }
+    return fallback
   }
+  const { coupleNames } = coupleIdentity(
+    loadResult.weddingData,
+    identityCopy(await getTranslations('voyage.identity'))
+  )
   return {
-    title: `${voyagePages[page].title} — ${coupleIdentity(loadResult.weddingData).coupleNames}`,
-    description: voyagePages[page].description,
+    title: `${t(voyagePages[page].titleKey)} — ${coupleNames}`,
+    description: t(voyagePages[page].descriptionKey),
     icons: [{ rel: 'icon', url: `/w/${websiteSubUrl}/icon`, type: 'image/png', sizes: '32x32' }],
   }
 }

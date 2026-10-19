@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import { useTranslations } from 'next-intl'
 import type { TravelSectionContent } from '~/server/domains/website-section/website-section.types'
 import {
   BotanicalSprig,
@@ -12,10 +13,11 @@ import { VoyageStayDetails } from '~/templates/voyage/components/stay-details'
 
 /** Consistent compact cards with booking actions visible and expandable full details. */
 export function VoyageStays({ content }: { content?: TravelSectionContent }) {
+  const t = useTranslations('voyage.stays')
   return (
     <Band id='hotels' className='!py-10 sm:!py-14'>
       <div className='mb-10 max-w-3xl space-y-4'>
-        <Eyebrow>Make yourself at home</Eyebrow>
+        <Eyebrow>{t('eyebrow')}</Eyebrow>
         {content?.body ? (
           <LinkifiedBlurb
             text={content.body}
@@ -23,7 +25,7 @@ export function VoyageStays({ content }: { content?: TravelSectionContent }) {
           />
         ) : null}
         <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
-          Check each hotel’s instructions before booking to make sure you receive any wedding rates.
+          {t('checkInstructions')}
         </p>
       </div>
       <div className='grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3'>
@@ -67,13 +69,11 @@ export function VoyageStays({ content }: { content?: TravelSectionContent }) {
                     className={`${primaryButtonClass} mt-auto max-w-full shrink-0 px-5`}
                   >
                     <span className='line-clamp-2 break-words'>
-                      {stay.buttonLabel?.trim() || 'Visit Website'}
+                      {stay.buttonLabel?.trim() || t('visitWebsite')}
                     </span>
                   </a>
                 ) : (
-                  <p className={`${bodyFont} mt-auto text-muted-foreground`}>
-                    Booking link coming soon.
-                  </p>
+                  <p className={`${bodyFont} mt-auto text-muted-foreground`}>{t('bookingSoon')}</p>
                 )}
               </div>
               <VoyageStayDetails name={stay.name}>
@@ -97,19 +97,17 @@ export function VoyageStays({ content }: { content?: TravelSectionContent }) {
                         : { target: '_blank', rel: 'noreferrer' })}
                       className={`${primaryButtonClass} max-w-full text-center [overflow-wrap:anywhere]`}
                     >
-                      {stay.buttonLabel?.trim() || 'Visit Website'}
+                      {stay.buttonLabel?.trim() || t('visitWebsite')}
                     </a>
                   ) : (
-                    <p className={`${bodyFont} text-muted-foreground`}>Booking link coming soon.</p>
+                    <p className={`${bodyFont} text-muted-foreground`}>{t('bookingSoon')}</p>
                   )}
                 </div>
               </VoyageStayDetails>
             </article>
           ))
         ) : (
-          <p className={`${bodyFont} text-lg text-muted-foreground`}>
-            Our accommodation recommendations and booking details are coming soon.
-          </p>
+          <p className={`${bodyFont} text-lg text-muted-foreground`}>{t('empty')}</p>
         )}
       </div>
     </Band>

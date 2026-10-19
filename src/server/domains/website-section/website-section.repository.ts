@@ -3,6 +3,7 @@ import type { PrismaClient } from '@prisma/client'
 import { getSectionPosition } from '~/server/domains/website-section/website-section.catalog'
 import type {
   HomeSectionContent,
+  SectionTranslations,
   WebsiteSection,
   WebsiteSectionContent,
   WebsiteSectionType,
@@ -11,6 +12,7 @@ import { WebsiteSectionType as SectionType } from '~/server/domains/website-sect
 import {
   type CreateWebsiteSectionInput,
   parseSectionContent,
+  parseSectionTranslations,
 } from '~/server/domains/website-section/website-section.validator'
 
 export class WebsiteSectionRepository {
@@ -64,8 +66,10 @@ export class WebsiteSectionRepository {
     websiteId: string,
     type: WebsiteSectionType,
     content: WebsiteSectionContent,
-    isEnabled: boolean
+    isEnabled: boolean,
+    translations?: SectionTranslations<WebsiteSectionContent>
   ): Promise<WebsiteSection> {
+    // Leaving `translations` undefined keeps whatever is already stored.
     const section = await this.db.websiteSection.upsert({
       where: {
         websiteId_type: {
@@ -76,6 +80,7 @@ export class WebsiteSectionRepository {
       update: {
         content,
         isEnabled,
+        translations,
       },
       create: {
         websiteId,
@@ -83,14 +88,19 @@ export class WebsiteSectionRepository {
         isEnabled,
         position: getSectionPosition(type),
         content,
+        translations,
       },
     })
 
     return this.toWebsiteSection(section)
   }
 
-  async upsertHomeSection(websiteId: string, content: HomeSectionContent): Promise<WebsiteSection> {
-    return this.upsertByType(websiteId, SectionType.HOME, content, true)
+  async upsertHomeSection(
+    websiteId: string,
+    content: HomeSectionContent,
+    translations?: SectionTranslations<HomeSectionContent>
+  ): Promise<WebsiteSection> {
+    return this.upsertByType(websiteId, SectionType.HOME, content, true, translations)
   }
 
   private toWebsiteSection(section: {
@@ -100,13 +110,17 @@ export class WebsiteSectionRepository {
     isEnabled: boolean
     position: number
     content: unknown
+    translations?: unknown
     createdAt: Date
     updatedAt: Date
   }): WebsiteSection {
     // Content shape is keyed off `type`; parse it with the matching schema.
+    const { translations, ...rest } = section
+    const parsedTranslations = parseSectionTranslations(section.type, translations)
     return {
-      ...section,
+      ...rest,
       content: parseSectionContent(section.type, section.content),
+      ...(parsedTranslations ? { translations: parsedTranslations } : {}),
     } as WebsiteSection
   }
 }

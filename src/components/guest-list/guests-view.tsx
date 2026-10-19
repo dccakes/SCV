@@ -41,6 +41,7 @@ import {
 import { AsyncState } from '~/components/ui/async-state'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
+import { readEventTranslations } from '~/lib/i18n/translations'
 import { normalizePhoneToE164 } from '~/lib/phone/phone-validator'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 import { api } from '~/trpc/react'
@@ -960,6 +961,7 @@ const SelectedEventTableHeader = ({
       description: event.description ?? undefined,
       eventId: event.id,
       allowTagAlongs: event.allowTagAlongs ?? false,
+      translations: readEventTranslations(event.translations),
     })
     toggleEventForm()
   }

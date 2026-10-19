@@ -111,6 +111,22 @@ describe('EventService', () => {
       })
     })
 
+    it('stores Spanish translations of the event text', async () => {
+      mockEventCreateFn.mockResolvedValue(mockEvent)
+
+      await eventService.createEvent(actorContext, 'wedding-123', {
+        eventName: 'Welcome Dinner',
+        translations: { es: { name: 'Cena de bienvenida', venue: 'Casa Reyna' } },
+      } as Parameters<typeof eventService.createEvent>[2])
+
+      expect(mockEventCreateFn).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          name: 'Welcome Dinner',
+          translations: { es: { name: 'Cena de bienvenida', venue: 'Casa Reyna' } },
+        }),
+      })
+    })
+
     it('should create invitations for existing guests via createMany', async () => {
       mockEventCreateFn.mockResolvedValue(mockEvent)
       mockGuestFindManyFn.mockResolvedValue(mockGuests)
@@ -322,6 +338,28 @@ describe('EventService', () => {
       expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, {
         event: ['update'],
       })
+    })
+
+    it('updates Spanish translations when provided and leaves them alone otherwise', async () => {
+      mockEventFindUniqueFn.mockResolvedValue(mockEvent)
+      mockEventUpdateFn.mockResolvedValue(mockEvent)
+
+      await eventService.updateEvent(actorContext, 'wedding-123', {
+        eventId: 'event-123',
+        eventName: 'Wedding Day',
+        translations: { es: { name: 'Boda' } },
+      })
+      expect(mockEventUpdateFn).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ translations: { es: { name: 'Boda' } } }),
+        })
+      )
+
+      await eventService.updateEvent(actorContext, 'wedding-123', {
+        eventId: 'event-123',
+        eventName: 'Wedding Day',
+      })
+      expect(mockEventUpdateFn.mock.lastCall?.[0].data.translations).toBeUndefined()
     })
 
     it('should create invitations only for tag-alongs without existing ones when toggled on', async () => {

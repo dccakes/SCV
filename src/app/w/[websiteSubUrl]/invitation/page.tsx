@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 
 import { loadVisitorWedding } from '~/app/w/[websiteSubUrl]/_lib/load-visitor-wedding'
 import { grantWebsiteAccess } from '~/app/w/[websiteSubUrl]/_lib/website-access'
@@ -15,12 +16,16 @@ type InvitationPageProps = {
 export async function generateMetadata({ params }: InvitationPageProps): Promise<Metadata> {
   const { websiteSubUrl } = await params
   const { loadResult } = await loadVisitorWedding(websiteSubUrl)
+  const t = await getTranslations('site.metadata')
 
   return {
     title:
       loadResult.status === 'ready'
-        ? `Invitation — ${loadResult.weddingData.groomFirstName} & ${loadResult.weddingData.brideFirstName}`
-        : 'Invitation',
+        ? t('invitationCoupleTitle', {
+            groomFirstName: loadResult.weddingData.groomFirstName ?? '',
+            brideFirstName: loadResult.weddingData.brideFirstName ?? '',
+          })
+        : t('invitationTitle'),
   }
 }
 

@@ -1,7 +1,10 @@
 import { z } from 'zod'
 
+import { readTranslation } from '~/lib/i18n/translations'
+
 import {
   type SectionContentByType,
+  type SectionTranslations,
   type WebsiteSectionContent,
   WebsiteSectionType,
 } from '~/server/domains/website-section/website-section.types'
@@ -192,6 +195,21 @@ export function parseSectionContent<T extends WebsiteSectionType>(
   return sectionContentSchemaByType[type].parse(content) as SectionContentByType[T]
 }
 
+/**
+ * Read stored translations leniently: a translation that no longer validates
+ * (e.g. after a schema change) is dropped so guests fall back to English rather
+ * than the page failing to load.
+ */
+export function parseSectionTranslations<T extends WebsiteSectionType>(
+  type: T,
+  translations: unknown
+): SectionTranslations<SectionContentByType[T]> | undefined {
+  const es = readTranslation(translations, 'es')
+  if (es === undefined) return undefined
+  const result = sectionContentSchemaByType[type].safeParse(es)
+  return result.success ? { es: result.data as SectionContentByType[T] } : undefined
+}
+
 /** Validate content against a type without throwing. */
 export function isValidSectionContent(type: WebsiteSectionType, content: unknown): boolean {
   return sectionContentSchemaByType[type].safeParse(content).success
@@ -200,12 +218,13 @@ export function isValidSectionContent(type: WebsiteSectionType, content: unknown
 const attachContentIssues = (
   type: WebsiteSectionType,
   content: unknown,
-  ctx: z.RefinementCtx
+  ctx: z.RefinementCtx,
+  path: readonly PropertyKey[] = ['content']
 ): void => {
   const result = sectionContentSchemaByType[type].safeParse(content)
   if (!result.success) {
     for (const issue of result.error.issues) {
-      ctx.addIssue({ ...issue, path: ['content', ...issue.path] })
+      ctx.addIssue({ ...issue, path: [...path, ...issue.path] })
     }
   }
 }
@@ -233,11 +252,23 @@ export const updateSectionSchema = z
     type: z.enum(WEBSITE_SECTION_TYPES),
     isEnabled: z.boolean().optional(),
     content: z.unknown(),
+    /**
+     * Optional Spanish copy in the same shape as `content`. Omit to keep the
+     * stored translation unchanged.
+     */
+    translations: z.object({ es: z.unknown().optional() }).optional(),
   })
-  .superRefine((value, ctx) => attachContentIssues(value.type, value.content, ctx))
+  .superRefine((value, ctx) => {
+    attachContentIssues(value.type, value.content, ctx)
+    if (value.translations?.es !== undefined) {
+      attachContentIssues(value.type, value.translations.es, ctx, ['translations', 'es'])
+    }
+  })
 
-/** Kept for the existing HOME-only editor endpoint. */
-export const updateHomeSectionSchema = homeSectionContentSchema
+/** Kept for the existing HOME-only editor endpoint, plus optional Spanish copy. */
+export const updateHomeSectionSchema = homeSectionContentSchema.extend({
+  translations: z.object({ es: homeSectionContentSchema.optional() }).optional(),
+})
 
 export type CreateWebsiteSectionInput = {
   websiteId: string

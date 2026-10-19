@@ -120,6 +120,10 @@ type EventFormData = {
   description: string | undefined
   eventId: string
   allowTagAlongs?: boolean
+  /** Spanish text for the wedding website; blank fields show the English. */
+  translations?: {
+    es?: { name?: string; venue?: string; attire?: string; description?: string }
+  }
 }
 
 type EventId = string
@@ -198,6 +202,7 @@ type Option = {
   text: string
   description: string
   questionId: string
+  translations?: unknown
 }
 
 type Question = {
@@ -208,6 +213,7 @@ type Question = {
   type: string
   isRequired: boolean
   allowOther?: boolean
+  translations?: unknown
   options?: Option[]
   answers?: Answer[]
   recentAnswer?: Answer | null

@@ -248,3 +248,21 @@ describe('deleteEventSchema', () => {
     expect(result.success).toBe(false)
   })
 })
+
+describe('event translations', () => {
+  it('accepts Spanish copy for the event text', () => {
+    const result = createEventSchema.safeParse({
+      eventName: 'Welcome Dinner',
+      translations: { es: { name: 'Cena', venue: '', attire: 'Formal', description: 'Hola' } },
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('applies the English length limit to the Spanish name', () => {
+    const result = createEventSchema.safeParse({
+      eventName: 'Dinner',
+      translations: { es: { name: 'x'.repeat(51) } },
+    })
+    expect(result.success).toBe(false)
+  })
+})

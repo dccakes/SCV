@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { useLocale, useTranslations } from 'next-intl'
+import { formatEventTime } from '~/lib/locale/intl-format'
 import { Decor } from '~/templates/voyage/components/decor'
 import {
   bodyFont,
@@ -20,6 +22,8 @@ export function VoyageWeekend({
   path: string
   summary?: boolean
 }) {
+  const t = useTranslations('voyage.weekend')
+  const locale = useLocale()
   const sorted = orderedEvents(events)
   return (
     <Band className='relative overflow-hidden' id={summary ? 'weekend-preview' : 'schedule'}>
@@ -28,19 +32,15 @@ export function VoyageWeekend({
         className='pointer-events-none absolute top-20 -left-14 hidden h-80 w-auto opacity-60 xl:block'
       />
       <div className='relative mb-10 flex flex-col items-center gap-4 text-center'>
-        <Eyebrow>Wedding Weekend</Eyebrow>
-        <h2 className={`${scriptFont} text-5xl text-primary sm:text-6xl`}>
-          Let’s Celebrate Together
-        </h2>
+        <Eyebrow>{t('eyebrow')}</Eyebrow>
+        <h2 className={`${scriptFont} text-5xl text-primary sm:text-6xl`}>{t('heading')}</h2>
         {!summary ? (
-          <p className={`${bodyFont} text-lg text-muted-foreground`}>
-            All times are local to the event venue.
-          </p>
+          <p className={`${bodyFont} text-lg text-muted-foreground`}>{t('localTimes')}</p>
         ) : null}
       </div>
       {sorted.length ? (
         <section
-          aria-label='Schedule'
+          aria-label={t('scheduleAria')}
           className={`relative grid gap-8 ${summary ? 'md:grid-cols-3' : ''}`}
         >
           {sorted.map((event) => (
@@ -53,29 +53,27 @@ export function VoyageWeekend({
                 <p className={`${labelFont} text-primary text-xs uppercase tracking-widest`}>
                   {event.date ? (
                     <time dateTime={event.date.toISOString().slice(0, 10)}>
-                      {eventDate(event.date)}
+                      {eventDate(event.date, locale)}
                     </time>
                   ) : (
-                    'Date to be announced'
+                    t('dateTba')
                   )}
                 </p>
                 <p className={`${headingFont} text-2xl`}>
                   {event.startTime
-                    ? `${event.startTime}${event.endTime ? `–${event.endTime}` : ''}`
-                    : 'Time to be announced'}
+                    ? `${formatEventTime(event.startTime, locale)}${event.endTime ? `–${formatEventTime(event.endTime, locale)}` : ''}`
+                    : t('timeTba')}
                 </p>
               </div>
               <div className='space-y-4'>
                 <h3 className={`${headingFont} text-3xl`}>{event.name}</h3>
-                <p className={`${bodyFont} text-lg`}>
-                  {event.venue || 'Venue details coming soon'}
-                </p>
+                <p className={`${bodyFont} text-lg`}>{event.venue || t('venueTba')}</p>
                 {summary ? (
                   <Link
                     href={`${path}/weekend#event-${event.id}`}
                     className={`${labelFont} inline-flex min-h-11 items-center text-primary text-xs underline underline-offset-4`}
                   >
-                    Event details →
+                    {t('eventDetails')}
                   </Link>
                 ) : (
                   <>
@@ -86,7 +84,7 @@ export function VoyageWeekend({
                         rel='noreferrer'
                         className={`${labelFont} inline-flex min-h-11 items-center text-primary text-xs underline underline-offset-4`}
                       >
-                        Get directions ↗
+                        {t('directions')}
                       </a>
                     ) : null}
                     {event.description ? (
@@ -96,8 +94,8 @@ export function VoyageWeekend({
                       />
                     ) : null}
                     <p className={`${bodyFont} border-border border-t pt-4 text-lg`}>
-                      <span className='font-semibold'>What to wear: </span>
-                      {event.attire || 'Dress code to be announced'}
+                      <span className='font-semibold'>{t('whatToWear')}</span>
+                      {event.attire || t('dressCodeTba')}
                     </p>
                   </>
                 )}
@@ -106,13 +104,11 @@ export function VoyageWeekend({
           ))}
         </section>
       ) : (
-        <p className={`${bodyFont} text-center text-lg text-muted-foreground`}>
-          The schedule will appear here as our plans are confirmed.
-        </p>
+        <p className={`${bodyFont} text-center text-lg text-muted-foreground`}>{t('empty')}</p>
       )}
       {summary ? (
         <div className='mt-8 flex justify-center'>
-          <OutlineButton href={`${path}/weekend`}>View the full weekend</OutlineButton>
+          <OutlineButton href={`${path}/weekend`}>{t('viewFull')}</OutlineButton>
         </div>
       ) : null}
     </Band>
@@ -120,29 +116,27 @@ export function VoyageWeekend({
 }
 
 export function VoyageDressCode({ events }: { events: VoyageEvent[] }) {
+  const t = useTranslations('voyage.weekend')
   return (
     <Band id='what-to-wear' tone='cream'>
       <div className='mx-auto max-w-3xl space-y-6'>
-        <Eyebrow>Dress code</Eyebrow>
-        <h2 className={`${headingFont} text-4xl sm:text-5xl`}>What to Wear</h2>
+        <Eyebrow>{t('dressCode.eyebrow')}</Eyebrow>
+        <h2 className={`${headingFont} text-4xl sm:text-5xl`}>{t('dressCode.heading')}</h2>
         <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
-          A little guidance for each celebration, so you can pack with confidence.
+          {t('dressCode.intro')}
         </p>
         {orderedEvents(events).map((event) => (
           <div key={event.id} className='border-border border-t pt-5'>
             <h3 className={`${headingFont} text-2xl`}>{event.name}</h3>
-            <p className={`${bodyFont} mt-2 text-lg`}>
-              {event.attire || 'Dress code to be announced'}
-            </p>
+            <p className={`${bodyFont} mt-2 text-lg`}>{event.attire || t('dressCodeTba')}</p>
           </div>
         ))}
         <div className='border-border border-t pt-6'>
           <p className={`${labelFont} mb-2 text-primary text-xs uppercase tracking-widest`}>
-            More guidance coming soon
+            {t('dressCode.moreSoon')}
           </p>
           <p className={`${bodyFont} text-lg text-muted-foreground leading-8`}>
-            Outfit suggestions, footwear advice and any finishing touches will appear here once the
-            details are confirmed.
+            {t('dressCode.moreSoonBody')}
           </p>
         </div>
       </div>

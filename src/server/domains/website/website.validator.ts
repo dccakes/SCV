@@ -129,6 +129,8 @@ export const getBySubUrlSchema = z.object({
  */
 export const fetchWeddingDataSchema = z.object({
   subUrl: z.string().min(1, 'Sub URL is required'),
+  /** Visitor language; couple-authored translations apply for 'es'. */
+  locale: z.enum(['en', 'es']).optional(),
   accessToken: z.string().optional(),
   /**
    * Household invite token held by guests who arrived via a save-the-date /

@@ -4,11 +4,18 @@ import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 
 import { ANALYTICS_ACTIONS, ANALYTICS_SCOPES, buildEventName } from '~/lib/analytics/events'
+import type { Locale } from '~/lib/locale/locale-detection'
 import { createHouseholdInviteCode } from '~/server/application/household-invite/household-invite-code'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
+import { CEREMONY_EVENT_NAME, WEDDING_DAY_EVENT_NAME } from '~/server/domains/event/event.types'
 import { rsvpHouseholdSelect } from '~/server/domains/household/household.repository'
 import type { HouseholdSearchResult } from '~/server/domains/household/household.types'
+import {
+  localizeEvent,
+  localizeFields,
+  localizeSection,
+} from '~/server/domains/website/website.localization'
 import {
   type SaveTheDateSectionContent,
   WebsiteSectionType,
@@ -37,10 +44,6 @@ export type UpdateHouseholdInviteInput = {
   guests: HouseholdInviteGuestInput[]
 }
 
-// The primary wedding date and venue live on the event named "Wedding Day"
-// (see website-management.service.ts), not on the Wedding record itself.
-const WEDDING_DAY_EVENT_NAME = 'Wedding Day'
-
 export type HouseholdInviteData = {
   weddingId: string
   expiresAt: Date
@@ -67,6 +70,8 @@ export type HouseholdInviteData = {
     name: string
     date: Date | null
     venue: string | null
+    /** The ceremony event, found on its English name before translation. */
+    isCeremony: boolean
   }>
   household: {
     id: string
@@ -251,7 +256,11 @@ export class HouseholdInviteService {
     })
   }
 
-  async getPublicWeddingSummary(subUrl: string): Promise<{
+  /** Public couple names, date and venue; the venue follows the visitor's language. */
+  async getPublicWeddingSummary(
+    subUrl: string,
+    locale: Locale = 'en'
+  ): Promise<{
     groomFirstName: string
     brideFirstName: string
     date: Date | null
@@ -268,7 +277,7 @@ export class HouseholdInviteService {
               where: { name: WEDDING_DAY_EVENT_NAME },
               orderBy: { date: 'asc' },
               take: 1,
-              select: { date: true, venue: true },
+              select: { date: true, venue: true, translations: true },
             },
           },
         },
@@ -277,7 +286,10 @@ export class HouseholdInviteService {
 
     if (!website) return null
 
-    const weddingDayEvent = website.wedding.events[0]
+    const rawWeddingDay = website.wedding.events[0]
+    const weddingDayEvent = rawWeddingDay
+      ? localizeFields(rawWeddingDay, ['venue'], locale)
+      : undefined
     return {
       groomFirstName: website.wedding.groomFirstName,
       brideFirstName: website.wedding.brideFirstName,
@@ -286,14 +298,19 @@ export class HouseholdInviteService {
     }
   }
 
-  async getInviteData(subUrl: string, code: string | null | undefined) {
+  /**
+   * Invite card data for a household. With `locale: 'es'` the couple's Spanish
+   * Save the Date copy and event text replace the English, field by field.
+   */
+  async getInviteData(subUrl: string, code: string | null | undefined, locale: Locale = 'en') {
     const scopedInvite = await this.resolveInviteScope(subUrl, code)
     if (!scopedInvite) return null
 
     return this.loadHouseholdInviteData(
       scopedInvite.weddingId,
       scopedInvite.householdId,
-      scopedInvite.expiresAt
+      scopedInvite.expiresAt,
+      locale
     )
   }
 
@@ -518,7 +535,8 @@ export class HouseholdInviteService {
   private async loadHouseholdInviteData(
     weddingId: string,
     householdId: string,
-    expiresAt: Date
+    expiresAt: Date,
+    locale: Locale
   ): Promise<HouseholdInviteData | null> {
     const [household, website] = await Promise.all([
       this.db.household.findFirst({
@@ -539,7 +557,7 @@ export class HouseholdInviteService {
               brideLastName: true,
               events: {
                 orderBy: { date: 'asc' },
-                select: { name: true, date: true, venue: true },
+                select: { name: true, date: true, venue: true, translations: true },
               },
             },
           },
@@ -565,7 +583,7 @@ export class HouseholdInviteService {
           templateId: true,
           websiteSections: {
             where: { type: WebsiteSectionType.SAVE_THE_DATE },
-            select: { isEnabled: true, content: true },
+            select: { isEnabled: true, content: true, translations: true },
           },
         },
       }),
@@ -573,10 +591,16 @@ export class HouseholdInviteService {
 
     if (!household) return null
 
-    const { events, ...weddingNames } = household.wedding
-    // The primary date/venue come from the "Wedding Day" event; the full event
-    // list drives the save-the-date calendar block.
-    const weddingDayEvent = events.find((event) => event.name === WEDDING_DAY_EVENT_NAME)
+    const { events: rawEvents, ...weddingNames } = household.wedding
+    // The primary date/venue come from the "Wedding Day" event, matched on its
+    // English name before translations apply; the full event list drives the
+    // save-the-date calendar block.
+    const events = rawEvents.map((event) => ({
+      ...localizeEvent(event, locale),
+      isCeremony: event.name === CEREMONY_EVENT_NAME,
+      isWeddingDay: event.name === WEDDING_DAY_EVENT_NAME,
+    }))
+    const weddingDayEvent = events.find((event) => event.isWeddingDay)
 
     // Mirror the website surfaces: only enabled Save the Date copy overrides the
     // template defaults, and malformed stored content is ignored rather than thrown.
@@ -584,7 +608,12 @@ export class HouseholdInviteService {
     const parsedSaveTheDate = saveTheDateSection?.isEnabled
       ? saveTheDateSectionContentSchema.safeParse(saveTheDateSection.content)
       : undefined
-    const saveTheDate = parsedSaveTheDate?.success ? parsedSaveTheDate.data : undefined
+    const saveTheDate = parsedSaveTheDate?.success
+      ? localizeSection(
+          { content: parsedSaveTheDate.data, translations: saveTheDateSection?.translations },
+          locale
+        ).content
+      : undefined
 
     return {
       weddingId,

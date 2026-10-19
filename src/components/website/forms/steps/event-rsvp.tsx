@@ -1,13 +1,13 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { useMemo, useState } from 'react'
 import { AiOutlineCalendar } from 'react-icons/ai'
 import { IoIosCheckmarkCircleOutline } from 'react-icons/io'
-import { formatDateStandard } from '~/app/utils/helpers'
 import type { Event, Guest, RsvpFormResponse, StepFormProps } from '~/app/utils/shared-types'
 import { useRsvpForm, useUpdateRsvpForm } from '~/components/contexts/rsvp-form-context'
 import { upsertRsvpResponses } from '~/components/website/forms/rsvp-state'
+import { formatEventTime, formatLongDate } from '~/lib/locale/intl-format'
 
 interface EventRsvpFormProps extends StepFormProps {
   event: Event
@@ -21,6 +21,8 @@ export default function EventRsvpForm({
   invitedGuests,
 }: EventRsvpFormProps) {
   const tCommon = useTranslations('common')
+  const t = useTranslations('site.rsvpForm')
+  const locale = useLocale()
   const rsvpFormData = useRsvpForm()
   const updateRsvpForm = useUpdateRsvpForm()
   const existingResponsesForEvent = useMemo(() => {
@@ -44,10 +46,14 @@ export default function EventRsvpForm({
       <h2 className='text-2xl tracking-widest'>{event.name}</h2>
       {!!event.date && (
         <div className='flex gap-2'>
-          <AiOutlineCalendar size={20} />
+          <AiOutlineCalendar aria-hidden size={20} />
           <span>
-            {formatDateStandard(event.date)}
-            {event.startTime && ` at ${event.startTime}`}
+            {event.startTime
+              ? t('eventDateTime', {
+                  date: formatLongDate(event.date, locale),
+                  time: formatEventTime(event.startTime, locale),
+                })
+              : formatLongDate(event.date, locale)}
           </span>
         </div>
       )}

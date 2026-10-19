@@ -2,15 +2,19 @@
 
 import { Plus, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
-
 import { SingleImageUpload } from '~/app/_components/website/image-upload'
+import {
+  TranslatableInput,
+  TranslatableTextarea,
+  useEditingLanguage,
+  useIsTranslating,
+} from '~/components/i18n/editing-language'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader } from '~/components/ui/card'
-import { Input } from '~/components/ui/input'
 import { Switch } from '~/components/ui/switch'
-import { Textarea } from '~/components/ui/textarea'
+import { alignTranslation, syncRemovedItems } from '~/lib/i18n/translations'
 import {
   SECTION_CATALOG,
   type SectionCatalogEntry,
@@ -67,6 +71,7 @@ export function SectionsEditor({ initialSections }: SectionsEditorProps) {
               key={entry.type}
               entry={entry}
               initialContent={(existing?.content as WebsiteSectionContent) ?? entry.defaultContent}
+              initialSpanish={existing?.translations?.es as WebsiteSectionContent | undefined}
               initialEnabled={existing?.isEnabled ?? entry.defaultEnabled}
             />
           )
@@ -79,14 +84,40 @@ export function SectionsEditor({ initialSections }: SectionsEditorProps) {
 type SectionCardProps = {
   entry: SectionCatalogEntry
   initialContent: WebsiteSectionContent
+  /** Stored Spanish translation, if any. */
+  initialSpanish?: WebsiteSectionContent
   initialEnabled: boolean
 }
 
-function SectionCard({ entry, initialContent, initialEnabled }: SectionCardProps) {
+// Spanish is compared aligned to the English rows, the way it is saved.
+const snapshot = (en: WebsiteSectionContent, alignedEs: WebsiteSectionContent, enabled: boolean) =>
+  JSON.stringify({ en, es: alignedEs, enabled })
+
+function SectionCard({ entry, initialContent, initialSpanish, initialEnabled }: SectionCardProps) {
   const router = useRouter()
+  const { language } = useEditingLanguage()
   const [content, setContent] = useState<WebsiteSectionContent>(initialContent)
+  // Spanish is kept shaped like the English content: same rows, same links/photos.
+  const [spanish, setSpanish] = useState<WebsiteSectionContent>(() =>
+    alignTranslation(initialContent, initialSpanish)
+  )
   const [isEnabled, setIsEnabled] = useState(initialEnabled)
-  const [baseline, setBaseline] = useState(() => JSON.stringify({ initialContent, initialEnabled }))
+  const [baseline, setBaseline] = useState(() => snapshot(initialContent, spanish, initialEnabled))
+  const alignedSpanish = useMemo(() => alignTranslation(content, spanish), [content, spanish])
+  const currentSnapshot = useMemo(
+    () => snapshot(content, alignedSpanish, isEnabled),
+    [content, alignedSpanish, isEnabled]
+  )
+
+  const changeContent = (next: WebsiteSectionContent) => {
+    if (language === 'es') {
+      setSpanish(next)
+      return
+    }
+    // Removing an English row removes its translation too, so rows stay paired.
+    setSpanish((current) => syncRemovedItems(content, next, current))
+    setContent(next)
+  }
 
   const upsertSection = api.websiteSection.upsertSection.useMutation({
     onError: (error) => {
@@ -94,20 +125,19 @@ function SectionCard({ entry, initialContent, initialEnabled }: SectionCardProps
     },
     onSuccess: () => {
       toast.success(`${entry.label} saved`)
-      setBaseline(JSON.stringify({ initialContent: content, initialEnabled: isEnabled }))
       router.refresh()
     },
   })
 
-  const hasChanges =
-    baseline !== JSON.stringify({ initialContent: content, initialEnabled: isEnabled })
+  const hasChanges = baseline !== currentSnapshot
 
   const save = () => {
-    upsertSection.mutate({
-      type: entry.type,
-      content,
-      isEnabled,
-    })
+    // Mark what was sent as saved; edits made while saving stay dirty.
+    const sent = currentSnapshot
+    upsertSection.mutate(
+      { type: entry.type, content, isEnabled, translations: { es: alignedSpanish } },
+      { onSuccess: () => setBaseline(sent) }
+    )
   }
 
   return (
@@ -127,7 +157,12 @@ function SectionCard({ entry, initialContent, initialEnabled }: SectionCardProps
         </div>
       </div>
 
-      <SectionFields type={entry.type} content={content} onChange={setContent} />
+      <SectionFields
+        type={entry.type}
+        content={language === 'es' ? alignedSpanish : content}
+        reference={language === 'es' ? content : undefined}
+        onChange={changeContent}
+      />
 
       <div className='flex justify-end'>
         <Button disabled={!hasChanges || upsertSection.isPending} onClick={save} size='sm'>
@@ -141,53 +176,116 @@ function SectionCard({ entry, initialContent, initialEnabled }: SectionCardProps
 type SectionFieldsProps = {
   type: WebsiteSectionType
   content: WebsiteSectionContent
+  /** English content, passed while editing the Spanish translation. */
+  reference?: WebsiteSectionContent
   onChange: (content: WebsiteSectionContent) => void
 }
 
-function SectionFields({ type, content, onChange }: SectionFieldsProps) {
+function SectionFields({ type, content, reference, onChange }: SectionFieldsProps) {
   switch (type) {
     case 'OUR_STORY':
-      return <ProseFields content={content as OurStorySectionContent} onChange={onChange} />
+      return (
+        <ProseFields
+          content={content as OurStorySectionContent}
+          reference={reference as OurStorySectionContent | undefined}
+          onChange={onChange}
+        />
+      )
     case 'TIMELINE':
-      return <TimelineFields content={content as TimelineSectionContent} onChange={onChange} />
+      return (
+        <TimelineFields
+          content={content as TimelineSectionContent}
+          reference={reference as TimelineSectionContent | undefined}
+          onChange={onChange}
+        />
+      )
     case 'DESTINATION':
       return (
-        <DestinationFields content={content as DestinationSectionContent} onChange={onChange} />
+        <DestinationFields
+          content={content as DestinationSectionContent}
+          reference={reference as DestinationSectionContent | undefined}
+          onChange={onChange}
+        />
       )
     case 'EXPERIENCES':
       return (
-        <ExperiencesFields content={content as ExperiencesSectionContent} onChange={onChange} />
+        <ExperiencesFields
+          content={content as ExperiencesSectionContent}
+          reference={reference as ExperiencesSectionContent | undefined}
+          onChange={onChange}
+        />
       )
     case 'TRAVEL':
-      return <TravelFields content={content as TravelSectionContent} onChange={onChange} />
+      return (
+        <TravelFields
+          content={content as TravelSectionContent}
+          reference={reference as TravelSectionContent | undefined}
+          onChange={onChange}
+        />
+      )
     case 'WEDDING_PARTY':
       return (
-        <WeddingPartyFields content={content as WeddingPartySectionContent} onChange={onChange} />
+        <WeddingPartyFields
+          content={content as WeddingPartySectionContent}
+          reference={reference as WeddingPartySectionContent | undefined}
+          onChange={onChange}
+        />
       )
     case 'FAQ':
-      return <FaqFields content={content as FaqSectionContent} onChange={onChange} />
+      return (
+        <FaqFields
+          content={content as FaqSectionContent}
+          reference={reference as FaqSectionContent | undefined}
+          onChange={onChange}
+        />
+      )
     case 'REGISTRY':
-      return <RegistryFields content={content as RegistrySectionContent} onChange={onChange} />
+      return (
+        <RegistryFields
+          content={content as RegistrySectionContent}
+          reference={reference as RegistrySectionContent | undefined}
+          onChange={onChange}
+        />
+      )
     case 'SAVE_THE_DATE':
       return (
-        <SaveTheDateFields content={content as SaveTheDateSectionContent} onChange={onChange} />
+        <SaveTheDateFields
+          content={content as SaveTheDateSectionContent}
+          reference={reference as SaveTheDateSectionContent | undefined}
+          onChange={onChange}
+        />
       )
     case 'INVITATION':
-      return <InvitationFields content={content as InvitationSectionContent} onChange={onChange} />
+      return (
+        <InvitationFields
+          content={content as InvitationSectionContent}
+          reference={reference as InvitationSectionContent | undefined}
+          onChange={onChange}
+        />
+      )
     default:
       return null
   }
 }
 
-function HeadingField({ value, onChange }: { value: string; onChange: (heading: string) => void }) {
+function HeadingField({
+  value,
+  onChange,
+  reference,
+}: {
+  value: string
+  onChange: (heading: string) => void
+  reference?: string
+}) {
   return (
     <div className='space-y-1.5'>
       <span className={labelClass}>Heading</span>
-      <Input
+      <TranslatableInput
         maxLength={120}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder='Section heading'
+        reference={reference}
       />
     </div>
   )
@@ -196,24 +294,29 @@ function HeadingField({ value, onChange }: { value: string; onChange: (heading: 
 function ProseFields({
   content,
   onChange,
+  reference,
 }: {
   content: OurStorySectionContent
   onChange: (content: WebsiteSectionContent) => void
+  /** English content, passed while translating. */
+  reference?: OurStorySectionContent
 }) {
   return (
     <div className='space-y-3'>
       <HeadingField
         value={content.heading}
+        reference={reference?.heading}
         onChange={(heading) => onChange({ ...content, heading })}
       />
       <div className='space-y-1.5'>
         <span className={labelClass}>Body</span>
-        <Textarea
+        <TranslatableTextarea
           maxLength={4000}
           rows={5}
           value={content.body}
           onChange={(event) => onChange({ ...content, body: event.target.value })}
           placeholder='Write a few paragraphs. Separate paragraphs with a blank line.'
+          reference={reference?.body}
         />
       </div>
     </div>
@@ -223,9 +326,12 @@ function ProseFields({
 function WeddingPartyFields({
   content,
   onChange,
+  reference,
 }: {
   content: WeddingPartySectionContent
   onChange: (content: WebsiteSectionContent) => void
+  /** English content, passed while translating. */
+  reference?: WeddingPartySectionContent
 }) {
   const updateMember = (
     index: number,
@@ -239,6 +345,7 @@ function WeddingPartyFields({
     <div className='space-y-3'>
       <HeadingField
         value={content.heading}
+        reference={reference?.heading}
         onChange={(heading) => onChange({ ...content, heading })}
       />
       <div className='space-y-3'>
@@ -249,17 +356,19 @@ function WeddingPartyFields({
             className='space-y-2 rounded-[8px] border border-border/70 p-3'
           >
             <div className='flex items-center gap-2'>
-              <Input
+              <TranslatableInput
                 value={member.name}
                 maxLength={120}
                 placeholder='Name'
                 onChange={(event) => updateMember(index, 'name', event.target.value)}
+                reference={reference?.members?.[index]?.name}
               />
-              <Input
+              <TranslatableInput
                 value={member.role}
                 maxLength={120}
                 placeholder='Role (e.g. Maid of Honor)'
                 onChange={(event) => updateMember(index, 'role', event.target.value)}
+                reference={reference?.members?.[index]?.role}
               />
               <RemoveRowButton
                 label='Remove member'
@@ -273,19 +382,20 @@ function WeddingPartyFields({
             </div>
             <div className='space-y-1.5'>
               <span className={labelClass}>Photo (optional)</span>
-              <SingleImageUpload
+              <SharedImageUpload
                 value={member.imageUrl ?? null}
                 onChange={(url) => updateMember(index, 'imageUrl', url ?? undefined)}
                 aspectClassName='aspect-square max-w-[8rem]'
                 label='Add photo'
               />
             </div>
-            <Textarea
+            <TranslatableTextarea
               value={member.blurb ?? ''}
               maxLength={1000}
               rows={3}
               placeholder='A short blurb about them and their relationship to the couple (optional)'
               onChange={(event) => updateMember(index, 'blurb', event.target.value || undefined)}
+              reference={reference?.members?.[index]?.blurb}
             />
           </div>
         ))}
@@ -304,9 +414,12 @@ function WeddingPartyFields({
 function FaqFields({
   content,
   onChange,
+  reference,
 }: {
   content: FaqSectionContent
   onChange: (content: WebsiteSectionContent) => void
+  /** English content, passed while translating. */
+  reference?: FaqSectionContent
 }) {
   const updateItem = (index: number, key: 'question' | 'answer', value: string) => {
     onChange({ ...content, items: updateAt(content.items, index, key, value) })
@@ -316,6 +429,7 @@ function FaqFields({
     <div className='space-y-3'>
       <HeadingField
         value={content.heading}
+        reference={reference?.heading}
         onChange={(heading) => onChange({ ...content, heading })}
       />
       <div className='space-y-3'>
@@ -326,11 +440,12 @@ function FaqFields({
             className='space-y-2 rounded-[8px] border border-border/70 p-3'
           >
             <div className='flex items-center gap-2'>
-              <Input
+              <TranslatableInput
                 value={item.question}
                 maxLength={300}
                 placeholder='Question'
                 onChange={(event) => updateItem(index, 'question', event.target.value)}
+                reference={reference?.items?.[index]?.question}
               />
               <RemoveRowButton
                 label='Remove question'
@@ -339,12 +454,13 @@ function FaqFields({
                 }
               />
             </div>
-            <Textarea
+            <TranslatableTextarea
               value={item.answer}
               maxLength={2000}
               rows={2}
               placeholder='Answer'
               onChange={(event) => updateItem(index, 'answer', event.target.value)}
+              reference={reference?.items?.[index]?.answer}
             />
           </div>
         ))}
@@ -363,9 +479,12 @@ function FaqFields({
 function RegistryFields({
   content,
   onChange,
+  reference,
 }: {
   content: RegistrySectionContent
   onChange: (content: WebsiteSectionContent) => void
+  /** English content, passed while translating. */
+  reference?: RegistrySectionContent
 }) {
   const updateLink = (index: number, key: 'label' | 'url', value: string) => {
     onChange({ ...content, links: updateAt(content.links, index, key, value) })
@@ -375,16 +494,18 @@ function RegistryFields({
     <div className='space-y-3'>
       <HeadingField
         value={content.heading}
+        reference={reference?.heading}
         onChange={(heading) => onChange({ ...content, heading })}
       />
       <div className='space-y-1.5'>
         <span className={labelClass}>Note</span>
-        <Textarea
+        <TranslatableTextarea
           maxLength={2000}
           rows={3}
           value={content.body}
           onChange={(event) => onChange({ ...content, body: event.target.value })}
           placeholder='A short note about gifts or registries.'
+          reference={reference?.body}
         />
       </div>
       <div className='space-y-2'>
@@ -394,17 +515,19 @@ function RegistryFields({
             key={index}
             className='flex items-center gap-2'
           >
-            <Input
+            <TranslatableInput
               value={link.label}
               maxLength={120}
               placeholder='Label (e.g. Amazon)'
               onChange={(event) => updateLink(index, 'label', event.target.value)}
+              reference={reference?.links?.[index]?.label}
             />
-            <Input
+            <TranslatableInput
               value={link.url}
               maxLength={500}
               placeholder='https://…'
               onChange={(event) => updateLink(index, 'url', event.target.value)}
+              shared
             />
             <RemoveRowButton
               label='Remove link'
@@ -430,21 +553,29 @@ function TextField({
   placeholder,
   maxLength,
   onChange,
+  reference,
+  shared,
 }: {
   label: string
   value: string
   placeholder?: string
   maxLength?: number
   onChange: (value: string) => void
+  /** English text, passed while translating. */
+  reference?: string
+  /** Same in every language (links): locked while translating. */
+  shared?: boolean
 }) {
   return (
     <div className='space-y-1.5'>
       <span className={labelClass}>{label}</span>
-      <Input
+      <TranslatableInput
         value={value}
         maxLength={maxLength}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
+        reference={reference}
+        shared={shared}
       />
     </div>
   )
@@ -453,9 +584,12 @@ function TextField({
 function TimelineFields({
   content,
   onChange,
+  reference,
 }: {
   content: TimelineSectionContent
   onChange: (content: WebsiteSectionContent) => void
+  /** English content, passed while translating. */
+  reference?: TimelineSectionContent
 }) {
   const updateMilestone = (
     index: number,
@@ -469,6 +603,7 @@ function TimelineFields({
     <div className='space-y-3'>
       <TextField
         label='Eyebrow (optional)'
+        reference={reference?.eyebrow}
         value={content.eyebrow ?? ''}
         maxLength={60}
         placeholder='Our Story'
@@ -476,6 +611,7 @@ function TimelineFields({
       />
       <HeadingField
         value={content.heading}
+        reference={reference?.heading}
         onChange={(heading) => onChange({ ...content, heading })}
       />
       <div className='space-y-3'>
@@ -485,26 +621,29 @@ function TimelineFields({
             key={index}
             className='flex items-center gap-2 rounded-[8px] border border-border/70 p-3'
           >
-            <Input
+            <TranslatableInput
               value={milestone.year}
               maxLength={40}
               placeholder='2018'
               className='max-w-[6rem]'
               onChange={(event) => updateMilestone(index, 'year', event.target.value)}
+              reference={reference?.milestones?.[index]?.year}
             />
-            <Input
+            <TranslatableInput
               value={milestone.title}
               maxLength={120}
               placeholder='First Meeting'
               onChange={(event) => updateMilestone(index, 'title', event.target.value)}
+              reference={reference?.milestones?.[index]?.title}
             />
-            <Input
+            <TranslatableInput
               value={milestone.location ?? ''}
               maxLength={120}
               placeholder='New York, USA'
               onChange={(event) =>
                 updateMilestone(index, 'location', event.target.value || undefined)
               }
+              reference={reference?.milestones?.[index]?.location}
             />
             <RemoveRowButton
               label='Remove milestone'
@@ -535,14 +674,18 @@ function TimelineFields({
 function DestinationFields({
   content,
   onChange,
+  reference,
 }: {
   content: DestinationSectionContent
   onChange: (content: WebsiteSectionContent) => void
+  /** English content, passed while translating. */
+  reference?: DestinationSectionContent
 }) {
   return (
     <div className='space-y-3'>
       <TextField
         label='Eyebrow (optional)'
+        reference={reference?.eyebrow}
         value={content.eyebrow ?? ''}
         maxLength={60}
         placeholder='The Destination'
@@ -550,20 +693,23 @@ function DestinationFields({
       />
       <HeadingField
         value={content.heading}
+        reference={reference?.heading}
         onChange={(heading) => onChange({ ...content, heading })}
       />
       <div className='space-y-1.5'>
         <span className={labelClass}>Description</span>
-        <Textarea
+        <TranslatableTextarea
           maxLength={2000}
           rows={4}
           value={content.body}
           onChange={(event) => onChange({ ...content, body: event.target.value })}
           placeholder='A few lines about the city, culture, and why you chose it.'
+          reference={reference?.body}
         />
       </div>
       <TextField
         label='Location (optional)'
+        reference={reference?.location}
         value={content.location ?? ''}
         maxLength={120}
         placeholder='Puebla, Mexico'
@@ -571,6 +717,7 @@ function DestinationFields({
       />
       <TextField
         label='Venue name (optional)'
+        reference={reference?.venueName}
         value={content.venueName ?? ''}
         maxLength={160}
         placeholder='Hacienda San José Actipan'
@@ -578,6 +725,7 @@ function DestinationFields({
       />
       <TextField
         label='Venue note (optional)'
+        reference={reference?.venueNote}
         value={content.venueNote ?? ''}
         maxLength={200}
         placeholder='Historic charm & exclusive experience.'
@@ -586,6 +734,7 @@ function DestinationFields({
       <div className='flex gap-2'>
         <TextField
           label='Button label (optional)'
+          reference={reference?.ctaLabel}
           value={content.ctaLabel ?? ''}
           maxLength={60}
           placeholder='Discover Puebla'
@@ -593,6 +742,7 @@ function DestinationFields({
         />
         <TextField
           label='Button URL (optional)'
+          shared
           value={content.ctaUrl ?? ''}
           maxLength={1000}
           placeholder='https://…'
@@ -601,7 +751,7 @@ function DestinationFields({
       </div>
       <div className='space-y-1.5'>
         <span className={labelClass}>Feature image (optional)</span>
-        <SingleImageUpload
+        <SharedImageUpload
           value={content.imageUrl ?? null}
           onChange={(url) => onChange({ ...content, imageUrl: url ?? undefined })}
           aspectClassName='aspect-[4/3] max-w-[18rem]'
@@ -615,9 +765,12 @@ function DestinationFields({
 function ExperiencesFields({
   content,
   onChange,
+  reference,
 }: {
   content: ExperiencesSectionContent
   onChange: (content: WebsiteSectionContent) => void
+  /** English content, passed while translating. */
+  reference?: ExperiencesSectionContent
 }) {
   const updateItem = (
     index: number,
@@ -631,6 +784,7 @@ function ExperiencesFields({
     <div className='space-y-3'>
       <TextField
         label='Eyebrow (optional)'
+        reference={reference?.eyebrow}
         value={content.eyebrow ?? ''}
         maxLength={60}
         placeholder='Curated Experiences'
@@ -638,6 +792,7 @@ function ExperiencesFields({
       />
       <HeadingField
         value={content.heading}
+        reference={reference?.heading}
         onChange={(heading) => onChange({ ...content, heading })}
       />
       <div className='space-y-3'>
@@ -648,11 +803,12 @@ function ExperiencesFields({
             className='space-y-2 rounded-[8px] border border-border/70 p-3'
           >
             <div className='flex items-center gap-2'>
-              <Input
+              <TranslatableInput
                 value={item.title}
                 maxLength={120}
                 placeholder='The Ceremony'
                 onChange={(event) => updateItem(index, 'title', event.target.value)}
+                reference={reference?.items?.[index]?.title}
               />
               <RemoveRowButton
                 label='Remove experience'
@@ -661,17 +817,18 @@ function ExperiencesFields({
                 }
               />
             </div>
-            <Input
+            <TranslatableInput
               value={item.description ?? ''}
               maxLength={300}
               placeholder='A moment we’ll never forget'
               onChange={(event) =>
                 updateItem(index, 'description', event.target.value || undefined)
               }
+              reference={reference?.items?.[index]?.description}
             />
             <div className='space-y-1.5'>
               <span className={labelClass}>Image (optional)</span>
-              <SingleImageUpload
+              <SharedImageUpload
                 value={item.imageUrl ?? null}
                 onChange={(url) => updateItem(index, 'imageUrl', url ?? undefined)}
                 aspectClassName='aspect-[4/3] max-w-[12rem]'
@@ -693,9 +850,12 @@ function ExperiencesFields({
 function TravelFields({
   content,
   onChange,
+  reference,
 }: {
   content: TravelSectionContent
   onChange: (content: WebsiteSectionContent) => void
+  /** English content, passed while translating. */
+  reference?: TravelSectionContent
 }) {
   const services = content.services ?? []
   const stays = content.stays ?? []
@@ -716,16 +876,18 @@ function TravelFields({
     <div className='space-y-3'>
       <HeadingField
         value={content.heading}
+        reference={reference?.heading}
         onChange={(heading) => onChange({ ...content, heading })}
       />
       <div className='space-y-1.5'>
         <span className={labelClass}>Intro</span>
-        <Textarea
+        <TranslatableTextarea
           maxLength={4000}
           rows={4}
           value={content.body}
           onChange={(event) => onChange({ ...content, body: event.target.value })}
           placeholder='Travel notes for guests. Separate paragraphs with a blank line.'
+          reference={reference?.body}
         />
       </div>
 
@@ -737,18 +899,20 @@ function TravelFields({
             key={index}
             className='flex items-center gap-2'
           >
-            <Input
+            <TranslatableInput
               value={service.title}
               maxLength={120}
               placeholder='Private Transfers'
               className='max-w-[12rem]'
               onChange={(event) => updateService(index, 'title', event.target.value)}
+              reference={reference?.services?.[index]?.title}
             />
-            <Input
+            <TranslatableInput
               value={service.description}
               maxLength={300}
               placeholder='Airport transfers throughout the weekend.'
               onChange={(event) => updateService(index, 'description', event.target.value)}
+              reference={reference?.services?.[index]?.description}
             />
             <RemoveRowButton
               label='Remove service'
@@ -776,55 +940,60 @@ function TravelFields({
             className='space-y-2 rounded-[8px] border border-border/70 p-3'
           >
             <div className='flex items-center gap-2'>
-              <Input
+              <TranslatableInput
                 value={stay.name}
                 maxLength={160}
                 placeholder='Quinta Real Puebla'
                 onChange={(event) => updateStay(index, 'name', event.target.value)}
+                reference={reference?.stays?.[index]?.name}
               />
               <RemoveRowButton
                 label='Remove stay'
                 onClick={() => onChange({ ...content, stays: stays.filter((_, i) => i !== index) })}
               />
             </div>
-            <Input
+            <TranslatableInput
               value={stay.description ?? ''}
               maxLength={300}
               placeholder='Colonial elegance & modern comfort'
               onChange={(event) =>
                 updateStay(index, 'description', event.target.value || undefined)
               }
+              reference={reference?.stays?.[index]?.description}
             />
             <div className='space-y-1.5'>
               <span className={labelClass}>Photo (optional)</span>
-              <SingleImageUpload
+              <SharedImageUpload
                 value={stay.imageUrl ?? null}
                 onChange={(url) => updateStay(index, 'imageUrl', url ?? undefined)}
                 aspectClassName='aspect-[4/3] max-w-[12rem]'
                 label='Add photo'
               />
             </div>
-            <Textarea
+            <TranslatableTextarea
               value={stay.blurb ?? ''}
               maxLength={1000}
               rows={3}
               placeholder='A longer blurb shown when guests click the card, e.g. why you recommend this stay (optional)'
               onChange={(event) => updateStay(index, 'blurb', event.target.value || undefined)}
+              reference={reference?.stays?.[index]?.blurb}
             />
             <div className='flex items-center gap-2'>
-              <Input
+              <TranslatableInput
                 value={stay.url ?? ''}
                 maxLength={1000}
                 placeholder='https://…'
                 onChange={(event) => updateStay(index, 'url', event.target.value || undefined)}
+                shared
               />
-              <Input
+              <TranslatableInput
                 value={stay.buttonLabel ?? ''}
                 maxLength={60}
                 placeholder='Button text (e.g. Visit Website)'
                 onChange={(event) =>
                   updateStay(index, 'buttonLabel', event.target.value || undefined)
                 }
+                reference={reference?.stays?.[index]?.buttonLabel}
               />
             </div>
           </div>
@@ -842,14 +1011,18 @@ function TravelFields({
 function SaveTheDateFields({
   content,
   onChange,
+  reference,
 }: {
   content: SaveTheDateSectionContent
   onChange: (content: WebsiteSectionContent) => void
+  /** English content, passed while translating. */
+  reference?: SaveTheDateSectionContent
 }) {
   return (
     <div className='space-y-3'>
       <TextField
         label='Label (optional)'
+        reference={reference?.eyebrow}
         value={content.eyebrow ?? ''}
         maxLength={60}
         placeholder='Save the Date'
@@ -857,16 +1030,18 @@ function SaveTheDateFields({
       />
       <div className='space-y-1.5'>
         <span className={labelClass}>Message (optional)</span>
-        <Textarea
+        <TranslatableTextarea
           maxLength={600}
           rows={3}
           value={content.message ?? ''}
           onChange={(event) => onChange({ ...content, message: event.target.value || undefined })}
           placeholder="A short note to your guests, e.g. “We can't wait to celebrate with you.”"
+          reference={reference?.message}
         />
       </div>
       <TextField
         label='Footnote (optional)'
+        reference={reference?.footnote}
         value={content.footnote ?? ''}
         maxLength={160}
         placeholder='Formal invitation to follow.'
@@ -879,14 +1054,18 @@ function SaveTheDateFields({
 function InvitationFields({
   content,
   onChange,
+  reference,
 }: {
   content: InvitationSectionContent
   onChange: (content: WebsiteSectionContent) => void
+  /** English content, passed while translating. */
+  reference?: InvitationSectionContent
 }) {
   return (
     <div className='space-y-3'>
       <TextField
         label='Opening line (optional)'
+        reference={reference?.preface}
         value={content.preface ?? ''}
         maxLength={160}
         placeholder='Together with their families'
@@ -894,6 +1073,7 @@ function InvitationFields({
       />
       <TextField
         label='Invitation line (optional)'
+        reference={reference?.invitationLine}
         value={content.invitationLine ?? ''}
         maxLength={200}
         placeholder='request the pleasure of your company'
@@ -903,12 +1083,13 @@ function InvitationFields({
       />
       <div className='space-y-1.5'>
         <span className={labelClass}>Message (optional)</span>
-        <Textarea
+        <TranslatableTextarea
           maxLength={600}
           rows={3}
           value={content.message ?? ''}
           onChange={(event) => onChange({ ...content, message: event.target.value || undefined })}
           placeholder='An optional closing note shown above the RSVP button.'
+          reference={reference?.message}
         />
       </div>
     </div>
@@ -924,6 +1105,8 @@ function AddRowButton({
   onClick: () => void
   disabled?: boolean
 }) {
+  // Rows are added in English; the Spanish view mirrors them.
+  if (useIsTranslating()) return null
   return (
     <Button type='button' variant='outline' size='sm' onClick={onClick} disabled={disabled}>
       <Plus aria-hidden='true' className='h-4 w-4' />
@@ -933,6 +1116,7 @@ function AddRowButton({
 }
 
 function RemoveRowButton({ label, onClick }: { label: string; onClick: () => void }) {
+  if (useIsTranslating()) return null
   return (
     <Button
       type='button'
@@ -944,5 +1128,17 @@ function RemoveRowButton({ label, onClick }: { label: string; onClick: () => voi
     >
       <Trash2 aria-hidden='true' className='h-4 w-4' />
     </Button>
+  )
+}
+
+/** Photos are shared by both languages, so they are only editable in English. */
+function SharedImageUpload(props: React.ComponentProps<typeof SingleImageUpload>) {
+  const translating = useIsTranslating()
+  if (!translating) return <SingleImageUpload {...props} />
+  return props.value ? (
+    // biome-ignore lint/performance/noImgElement: small read-only preview of an uploaded photo
+    <img src={props.value} alt='' className='h-16 w-16 rounded-[6px] object-cover opacity-70' />
+  ) : (
+    <p className='font-sans text-muted-foreground text-xs'>Add photos in English.</p>
   )
 }

@@ -1,0 +1,52 @@
+{
+  "templateShared": {
+    "dateToBeAnnounced": "Date To Be Announced",
+    "rsvp": "RSVP",
+    "initials": {
+      "bride": "B",
+      "groom": "G"
+    },
+    "nav": {
+      "ariaLabel": "Wedding website",
+      "home": "Home",
+      "saveTheDate": "Save the Date",
+      "invitation": "Invitation",
+      "rsvp": "RSVP"
+    },
+    "images": {
+      "cover": "Website cover photo",
+      "header": "Wedding header",
+      "couple": "The couple"
+    },
+    "invitation": {
+      "preface": "Together with their families",
+      "and": "and",
+      "invitationLine": "request the pleasure of your company"
+    },
+    "saveTheDate": {
+      "eyebrow": "Save the Date",
+      "footnote": "Formal invitation to follow.",
+      "visitWebsite": "Visit our website",
+      "calendarTitle": "{coupleNames} Wedding",
+      "calendarDescription": "Save the date for the wedding of {coupleNames}! Formal invitation to follow. {url}"
+    }
+  },
+  "classic": {
+    "daysToGo": "{count, plural, one {# Day To Go!} other {# Days To Go!}}",
+    "viewStay": "View stay"
+  },
+  "aurelia": {
+    "gettingMarried": "We're getting married",
+    "daysToGo": "{count, plural, one {# day to go} other {# days to go}}",
+    "viewStay": "View",
+    "eyebrows": {
+      "ourStory": "Our Story",
+      "travel": "Getting There",
+      "weddingParty": "By Our Side",
+      "destination": "The Destination",
+      "experiences": "Curated Experiences",
+      "faq": "Good to Know",
+      "registry": "With Gratitude"
+    }
+  }
+}

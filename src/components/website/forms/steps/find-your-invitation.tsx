@@ -9,6 +9,7 @@ import { api } from '~/trpc/react'
 export default function FindYourInvitationForm({ goNext }: StepFormProps) {
   const t = useTranslations('rsvp')
   const tCommon = useTranslations('common')
+  const tForm = useTranslations('site.rsvpForm')
   const { weddingData } = useRsvpForm()
   const updateRsvpForm = useUpdateRsvpForm()
   const [name, setName] = useState<string>('')
@@ -50,6 +51,8 @@ export default function FindYourInvitationForm({ goNext }: StepFormProps) {
       </h2>
       <p className='mb-3 font-thin'>{t('groupNote')}</p>
       <input
+        aria-label={tForm('nameLabel')}
+        autoComplete='name'
         placeholder={t('fullNamePlaceholder')}
         className='border border-gray-400 bg-white p-3 text-black placeholder:text-gray-500'
         onChange={(e) => {

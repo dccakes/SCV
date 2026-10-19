@@ -9,6 +9,7 @@
  * to Google Flights in a new tab.
  */
 
+import { useLocale, useTranslations } from 'next-intl'
 import { useMemo, useState } from 'react'
 import { buildGoogleFlightsUrl } from '~/app/utils/google-flights'
 import { searchOriginAirports } from '~/templates/voyage/components/flight-airports'
@@ -21,10 +22,18 @@ import {
   sectionHeadingClass,
 } from '~/templates/voyage/components/primitives'
 
-const DESTINATIONS = [
-  { code: 'MEX', label: 'Mexico City (MEX)' },
-  { code: 'PBC', label: 'Puebla (PBC)' },
-] as const
+const DESTINATIONS = ['MEX', 'PBC'] as const
+
+/** Region codes for the airport list's countries, so they can be named in the visitor's language. */
+const COUNTRY_REGIONS: Record<string, string> = {
+  'United Kingdom': 'GB',
+  'United States': 'US',
+  Mexico: 'MX',
+  Australia: 'AU',
+  'United Arab Emirates': 'AE',
+  Spain: 'ES',
+  Netherlands: 'NL',
+}
 
 const fieldLabelClass = `${labelFont} text-[#6F675D] text-[0.62rem] uppercase tracking-[0.22em]`
 const fieldClass =
@@ -37,7 +46,14 @@ export function VoyageFlightSearch({
   departPlaceholder: string | null
   returnPlaceholder: string | null
 }) {
-  const [destination, setDestination] = useState<string>(DESTINATIONS[0].code)
+  const t = useTranslations('voyage.flights')
+  const locale = useLocale()
+  const countryNames = useMemo(() => new Intl.DisplayNames([locale], { type: 'region' }), [locale])
+  const countryName = (country: string) => {
+    const region = COUNTRY_REGIONS[country]
+    return region ? (countryNames.of(region) ?? country) : country
+  }
+  const [destination, setDestination] = useState<string>(DESTINATIONS[0])
   const [origin, setOrigin] = useState('')
   const [isOriginFocused, setIsOriginFocused] = useState(false)
   const [departDate, setDepartDate] = useState(departPlaceholder ?? '')
@@ -63,38 +79,35 @@ export function VoyageFlightSearch({
     <section id='flights' className='w-full scroll-mt-24 bg-[#FBF8F2] px-6 py-20 sm:py-24 lg:px-10'>
       <div className='mx-auto max-w-4xl'>
         <div className='mb-12 flex flex-col items-center gap-4 text-center'>
-          <Eyebrow>Getting There</Eyebrow>
-          <h2 className={sectionHeadingClass}>Search Flights</h2>
+          <Eyebrow>{t('eyebrow')}</Eyebrow>
+          <h2 className={sectionHeadingClass}>{t('heading')}</h2>
           <GoldRule />
-          <p className={`${bodyFont} max-w-xl text-[#6F675D] text-lg leading-8`}>
-            We recommend flying to either Mexico City or Puebla — find a flight into whichever
-            airport suits your journey.
-          </p>
+          <p className={`${bodyFont} max-w-xl text-[#6F675D] text-lg leading-8`}>{t('intro')}</p>
         </div>
 
         <div className='rounded-[3px] border border-[#DDD2C0] bg-white/70 p-6 sm:p-8'>
           <div className='grid gap-5 sm:grid-cols-2 lg:grid-cols-4'>
             <label className='flex flex-col gap-2'>
-              <span className={fieldLabelClass}>Flying Into</span>
+              <span className={fieldLabelClass}>{t('flyingInto')}</span>
               <select
                 className={fieldClass}
                 value={destination}
                 onChange={(event) => setDestination(event.target.value)}
               >
-                {DESTINATIONS.map((airport) => (
-                  <option key={airport.code} value={airport.code}>
-                    {airport.label}
+                {DESTINATIONS.map((code) => (
+                  <option key={code} value={code}>
+                    {t(`destinations.${code}`)}
                   </option>
                 ))}
               </select>
             </label>
 
             <label className='relative flex flex-col gap-2'>
-              <span className={fieldLabelClass}>Flying From</span>
+              <span className={fieldLabelClass}>{t('flyingFrom')}</span>
               <input
                 className={fieldClass}
                 type='text'
-                placeholder='City or airport code, e.g. London'
+                placeholder={t('placeholder')}
                 autoComplete='off'
                 value={origin}
                 onChange={(event) => setOrigin(event.target.value.toUpperCase())}
@@ -117,7 +130,7 @@ export function VoyageFlightSearch({
                         <span className='flex flex-col'>
                           <span className='text-[#1D2320] text-sm'>{airport.name}</span>
                           <span className='text-[#6F675D] text-xs'>
-                            {airport.city}, {airport.country}
+                            {airport.city}, {countryName(airport.country)}
                           </span>
                         </span>
                         <span className={`${labelFont} text-primary text-xs tracking-[0.1em]`}>
@@ -131,7 +144,7 @@ export function VoyageFlightSearch({
             </label>
 
             <label className='flex flex-col gap-2'>
-              <span className={fieldLabelClass}>Depart</span>
+              <span className={fieldLabelClass}>{t('depart')}</span>
               <input
                 className={fieldClass}
                 type='date'
@@ -141,7 +154,7 @@ export function VoyageFlightSearch({
             </label>
 
             <label className='flex flex-col gap-2'>
-              <span className={fieldLabelClass}>Return</span>
+              <span className={fieldLabelClass}>{t('return')}</span>
               <input
                 className={fieldClass}
                 type='date'
@@ -158,7 +171,7 @@ export function VoyageFlightSearch({
               disabled={!canSearch}
               className={`${primaryButtonClass} disabled:cursor-not-allowed disabled:opacity-40`}
             >
-              Search Flights
+              {t('search')}
             </button>
           </div>
         </div>

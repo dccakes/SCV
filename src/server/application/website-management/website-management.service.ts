@@ -1,11 +1,19 @@
 import { TRPCError } from '@trpc/server'
 
 import { calculateDaysRemaining, formatDateNumber } from '~/app/utils/helpers'
+import { toIntlLocale } from '~/lib/locale/intl-format'
+import type { Locale } from '~/lib/locale/locale-detection'
 import { deriveWeddingSubUrl } from '~/lib/website-slug'
 import type { HouseholdInviteService } from '~/server/application/household-invite/household-invite.service'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { EventRepository } from '~/server/domains/event/event.repository'
+import { WEDDING_DAY_EVENT_NAME } from '~/server/domains/event/event.types'
+import {
+  localizeEvent,
+  localizeQuestion,
+  localizeSection,
+} from '~/server/domains/website/website.localization'
 import type { WebsiteRepository } from '~/server/domains/website/website.repository'
 import type {
   CreateWebsiteInput,
@@ -106,7 +114,11 @@ export class WebsiteManagementService {
     return this.websiteSectionRepository.findByWebsiteIdAndType(website.id, WebsiteSectionType.HOME)
   }
 
-  async updateHomeSection(ctx: AuthzContext, weddingId: string, input: HomeSectionContent) {
+  async updateHomeSection(
+    ctx: AuthzContext,
+    weddingId: string,
+    input: HomeSectionContent & { translations?: { es?: HomeSectionContent } }
+  ) {
     requirePermission(ctx, { website: ['update'] })
 
     const website = await this.websiteRepository.findByWeddingId(weddingId)
@@ -117,7 +129,12 @@ export class WebsiteManagementService {
       })
     }
 
-    return this.websiteSectionRepository.upsertHomeSection(website.id, input)
+    const { translations, ...content } = input
+    return this.websiteSectionRepository.upsertHomeSection(
+      website.id,
+      content,
+      translations?.es ? translations : undefined
+    )
   }
 
   /**
@@ -140,7 +157,12 @@ export class WebsiteManagementService {
   async upsertSection(
     ctx: AuthzContext,
     weddingId: string,
-    input: { type: WebsiteSectionType; content: unknown; isEnabled?: boolean }
+    input: {
+      type: WebsiteSectionType
+      content: unknown
+      isEnabled?: boolean
+      translations?: { es?: unknown }
+    }
   ): Promise<WebsiteSection> {
     requirePermission(ctx, { website: ['update'] })
 
@@ -153,8 +175,13 @@ export class WebsiteManagementService {
     }
 
     let content: WebsiteSection['content']
+    let translations: { es: WebsiteSection['content'] } | undefined
     try {
       content = parseSectionContent(input.type, input.content)
+      translations =
+        input.translations?.es === undefined
+          ? undefined
+          : { es: parseSectionContent(input.type, input.translations.es) }
     } catch (error) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
@@ -167,14 +194,16 @@ export class WebsiteManagementService {
       website.id,
       input.type,
       content,
-      input.isEnabled ?? true
+      input.isEnabled ?? true,
+      translations
     )
   }
 
   async fetchWeddingData(
     subUrl: string,
     accessToken: string | undefined,
-    inviteToken?: string | undefined
+    inviteToken?: string | undefined,
+    locale: Locale = 'en'
   ): Promise<WeddingPageData> {
     const website = await this.websiteRepository.findBySubUrlWithQuestions(subUrl)
     if (!website) {
@@ -204,7 +233,7 @@ export class WebsiteManagementService {
       }
     }
 
-    const [wedding, events, sections] = await Promise.all([
+    const [wedding, rawEvents, rawSections] = await Promise.all([
       this.weddingRepository.findById(website.weddingId),
       this.eventRepository.findByWeddingIdWithQuestions(website.weddingId),
       this.websiteSectionRepository.findByWebsiteId(website.id),
@@ -215,7 +244,15 @@ export class WebsiteManagementService {
         message: 'Failed to fetch wedding data.',
       })
     }
-    const weddingDate = events.find((event) => event.name === 'Wedding Day')?.date
+    // Match the wedding day on its English name before any translation applies.
+    const events = rawEvents.map((event) => ({
+      ...localizeEvent(event, locale),
+      isWeddingDay: event.name === WEDDING_DAY_EVENT_NAME,
+    }))
+    const weddingDate = events.find((event) => event.isWeddingDay)?.date
+    const sections = rawSections.map(
+      (section) => localizeSection(section, locale) as WebsiteSection
+    )
     const homeSection = sections.find((section) => section.type === WebsiteSectionType.HOME)
     const homeContent =
       homeSection?.isEnabled && homeSection.type === WebsiteSectionType.HOME
@@ -259,7 +296,7 @@ export class WebsiteManagementService {
       brideFirstName: wedding.brideFirstName,
       brideLastName: wedding.brideLastName,
       date: {
-        standardFormat: weddingDate?.toLocaleDateString('en-us', {
+        standardFormat: weddingDate?.toLocaleDateString(toIntlLocale(locale), {
           weekday: 'long',
           year: 'numeric',
           month: 'short',
@@ -268,11 +305,19 @@ export class WebsiteManagementService {
         numberFormat: formatDateNumber(weddingDate),
       },
       websiteBuilderEnabled: wedding.enabledAddOns.includes('website_builder'),
-      website: this.toPublicWebsiteWithQuestions(website, {
-        introText,
-        headline: homeContent?.headline,
-        headlineAccent: homeContent?.headlineAccent,
-      }),
+      website: this.toPublicWebsiteWithQuestions(
+        {
+          ...website,
+          generalQuestions: website.generalQuestions.map((question) =>
+            localizeQuestion(question, locale)
+          ),
+        },
+        {
+          introText,
+          headline: homeContent?.headline,
+          headlineAccent: homeContent?.headlineAccent,
+        }
+      ),
       sections: contentSections,
       saveTheDate,
       invitation,
@@ -286,6 +331,7 @@ export class WebsiteManagementService {
         venue: event.venue,
         attire: event.attire,
         description: event.description,
+        isWeddingDay: event.isWeddingDay,
         weddingId: event.weddingId,
         collectRsvp: event.collectRsvp,
         questions: event.questions,
@@ -309,7 +355,9 @@ export class WebsiteManagementService {
     headline?: string
     headlineAccent?: string
   } {
-    const { password: _password, ...publicWebsite } = website
+    // Sections (with their stored translations) are already localized into the
+    // page data, so the raw rows are not sent on to the browser.
+    const { password: _password, websiteSections: _websiteSections, ...publicWebsite } = website
     return {
       ...publicWebsite,
       url: computeWebsiteUrl(website.subUrl),

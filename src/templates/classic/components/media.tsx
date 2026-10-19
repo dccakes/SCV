@@ -5,8 +5,10 @@
  */
 
 import Image from 'next/image'
+import { useTranslations } from 'next-intl'
 
 export function ClassicHeaderImage({ url }: { url: string | null }) {
+  const t = useTranslations('templateShared.images')
   if (!url) {
     return null
   }
@@ -18,13 +20,14 @@ export function ClassicHeaderImage({ url }: { url: string | null }) {
         priority
         sizes='100vw'
         className='object-cover object-center'
-        alt='Wedding header'
+        alt={t('header')}
       />
     </div>
   )
 }
 
 export function ClassicCoupleGallery({ urls }: { urls: string[] }) {
+  const t = useTranslations('templateShared.images')
   if (urls.length === 0) {
     return null
   }
@@ -37,7 +40,7 @@ export function ClassicCoupleGallery({ urls }: { urls: string[] }) {
             fill
             sizes='(max-width: 768px) 50vw, 33vw'
             className='object-cover'
-            alt='The couple'
+            alt={t('couple')}
           />
         </div>
       ))}

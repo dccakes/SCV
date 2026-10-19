@@ -1,14 +1,18 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { formatDateStandard } from '~/app/utils/helpers'
+import { useTranslations } from 'next-intl'
 import { AureliaCoupleGallery, AureliaHeaderImage } from '~/templates/aurelia/components/media'
 import { AureliaNavbar } from '~/templates/aurelia/components/navbar'
 import { AureliaSections } from '~/templates/aurelia/components/sections'
+import { useTemplateDates } from '~/templates/shared/dates'
 import type { TemplateSurfaceProps } from '~/templates/types'
 
 const headingFont = 'font-[family-name:var(--tpl-heading-font)]'
 
 export function AureliaHome({ weddingData, path, introText }: Readonly<TemplateSurfaceProps>) {
+  const t = useTranslations('templateShared')
+  const tAurelia = useTranslations('aurelia')
+  const dates = useTemplateDates()
   const { website } = weddingData
 
   return (
@@ -24,7 +28,7 @@ export function AureliaHome({ weddingData, path, introText }: Readonly<TemplateS
           className='absolute top-10 left-1/2 -z-10 h-72 w-72 -translate-x-1/2 rounded-full bg-gradient-to-br from-primary/15 to-accent/15 blur-3xl'
         />
         <p className='text-[0.7rem] text-accent uppercase tracking-[0.45em]'>
-          We're getting married
+          {tAurelia('gettingMarried')}
         </p>
         <h1 className={`${headingFont} text-6xl text-foreground italic leading-tight sm:text-7xl`}>
           {weddingData.brideFirstName}
@@ -34,13 +38,13 @@ export function AureliaHome({ weddingData, path, introText }: Readonly<TemplateS
         <div className='flex items-center gap-4 text-muted-foreground'>
           <span className='h-px w-12 bg-border' />
           <span className='text-sm uppercase tracking-[0.3em]'>
-            {weddingData.date?.standardFormat ?? 'Date To Be Announced'}
+            {dates.weddingDate(weddingData.date) ?? t('dateToBeAnnounced')}
           </span>
           <span className='h-px w-12 bg-border' />
         </div>
         {weddingData.daysRemaining > 0 && (
           <p className='text-muted-foreground text-sm tracking-[0.2em]'>
-            {weddingData.daysRemaining} days to go
+            {tAurelia('daysToGo', { count: weddingData.daysRemaining })}
           </p>
         )}
         <AureliaNavbar path={path} isRsvpEnabled={website.isRsvpEnabled} />
@@ -49,7 +53,7 @@ export function AureliaHome({ weddingData, path, introText }: Readonly<TemplateS
             href={`${path}/rsvp`}
             className='mt-2 rounded-full bg-primary px-9 py-3 text-[0.72rem] text-primary-foreground uppercase tracking-[0.3em] shadow-sm transition-colors hover:bg-accent'
           >
-            RSVP
+            {t('rsvp')}
           </Link>
         )}
       </section>
@@ -62,7 +66,7 @@ export function AureliaHome({ weddingData, path, introText }: Readonly<TemplateS
             sizes='(max-width: 768px) 100vw, 80vw'
             priority
             className='object-cover'
-            alt='Website Cover Photo'
+            alt={t('images.cover')}
           />
         </div>
       )}
@@ -85,12 +89,12 @@ export function AureliaHome({ weddingData, path, introText }: Readonly<TemplateS
               <h3 className={`${headingFont} text-3xl text-primary italic`}>{event.name}</h3>
               {!!event.date && (
                 <span className='text-muted-foreground text-sm uppercase tracking-[0.2em]'>
-                  {formatDateStandard(event.date)}
+                  {dates.eventDate(event.date)}
                 </span>
               )}
               {!!event.startTime && (
                 <span className='text-muted-foreground text-sm'>
-                  {event.startTime}
+                  {dates.eventTime(event.startTime)}
                   {!!event.endTime && ` – ${event.endTime}`}
                 </span>
               )}
@@ -108,11 +112,12 @@ export function AureliaHome({ weddingData, path, introText }: Readonly<TemplateS
 
       <section className='flex flex-col items-center gap-3 text-center'>
         <p className={`${headingFont} text-5xl text-foreground italic`}>
-          {weddingData.brideFirstName?.[0] ?? 'B'} &amp; {weddingData.groomFirstName?.[0] ?? 'G'}
+          {weddingData.brideFirstName?.[0] ?? t('initials.bride')} &amp;{' '}
+          {weddingData.groomFirstName?.[0] ?? t('initials.groom')}
         </p>
         <span className='h-px w-16 bg-border' />
         <p className='text-muted-foreground text-sm tracking-[0.3em]'>
-          {weddingData.date.numberFormat?.toString() ?? 'Date To Be Announced'}
+          {dates.weddingDateNumeric(weddingData.date) ?? t('dateToBeAnnounced')}
         </p>
       </section>
     </main>

@@ -137,7 +137,8 @@ export const websiteRouter = createTRPCRouter({
     return websiteManagementService.fetchWeddingData(
       input.subUrl,
       input.accessToken,
-      input.inviteToken
+      input.inviteToken,
+      input.locale
     )
   }),
 

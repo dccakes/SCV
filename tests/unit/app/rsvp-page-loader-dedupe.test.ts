@@ -3,6 +3,13 @@ import { createElement, type ReactNode } from 'react'
 
 import RsvpPage, { generateMetadata } from '~/app/w/[websiteSubUrl]/rsvp/page'
 
+let mockLocale: 'en' | 'es' = 'en'
+jest.mock('next-intl/server', () =>
+  jest
+    .requireActual('~/../tests/unit/test-utils/intl-server')
+    .createIntlServerMock(() => mockLocale)
+)
+
 const mockFetchWeddingData = jest.fn()
 const mockCookiesGet = jest.fn()
 const mockNotFound = jest.fn()
@@ -80,14 +87,14 @@ describe('rsvp page loader', () => {
     )({ params })
 
     expect(mockFetchWeddingData).toHaveBeenCalledTimes(2)
-    expect(mockFetchWeddingData).toHaveBeenNthCalledWith(1, {
-      subUrl: 'john-and-jane',
-      accessToken: undefined,
-    })
-    expect(mockFetchWeddingData).toHaveBeenNthCalledWith(2, {
-      subUrl: 'john-and-jane',
-      accessToken: undefined,
-    })
+    expect(mockFetchWeddingData).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ subUrl: 'john-and-jane', accessToken: undefined })
+    )
+    expect(mockFetchWeddingData).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ subUrl: 'john-and-jane', accessToken: undefined })
+    )
   })
 
   it('reclaims the per-website favicon so the RSVP page inherits the wedding icon', async () => {
@@ -110,6 +117,28 @@ describe('rsvp page loader', () => {
     expect(metadata.icons).toEqual([
       { rel: 'icon', url: '/w/john-and-jane/icon', type: 'image/png', sizes: '32x32' },
     ])
+  })
+
+  it('localizes the RSVP page title for Spanish-speaking visitors', async () => {
+    mockLocale = 'es'
+    mockFetchWeddingData.mockResolvedValue({
+      groomFirstName: 'John',
+      groomLastName: 'Doe',
+      brideFirstName: 'Jane',
+      brideLastName: 'Smith',
+      website: {
+        isRsvpEnabled: true,
+      },
+    })
+
+    const metadata = await (
+      generateMetadata as (props: {
+        params: Promise<{ websiteSubUrl: string }>
+      }) => Promise<{ title?: string }>
+    )({ params: Promise.resolve({ websiteSubUrl: 'john-and-jane' }) })
+
+    expect(metadata.title).toBe('John Doe & Jane Smith — Confirma tu asistencia')
+    mockLocale = 'en'
   })
 
   it('renders the password page when RSVP access requires a website password', async () => {

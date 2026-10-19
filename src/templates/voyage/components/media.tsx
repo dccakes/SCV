@@ -6,6 +6,7 @@
  */
 
 import Image from 'next/image'
+import { useTranslations } from 'next-intl'
 import type { ReactNode } from 'react'
 import {
   BotanicalSprig,
@@ -68,6 +69,7 @@ export type VoyageMoment = {
  * visible so the details are never lost. Renders nothing without images.
  */
 export function VoyageMoments({ moments }: { moments: VoyageMoment[] }) {
+  const t = useTranslations('voyage.media')
   const shots = moments.filter((moment) => moment.imageUrl).slice(0, 6)
   if (shots.length === 0) {
     return null
@@ -76,7 +78,7 @@ export function VoyageMoments({ moments }: { moments: VoyageMoment[] }) {
   return (
     <section id='moments' className='w-full scroll-mt-24 bg-[#F7F3EC] pb-4'>
       <div className='mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 pt-16 pb-8 text-center sm:pt-20 lg:px-10'>
-        <Eyebrow>A Few of Our Favorite Moments</Eyebrow>
+        <Eyebrow>{t('moments')}</Eyebrow>
       </div>
       <div className='grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-6'>
         {shots.map((moment, index) => {
@@ -121,7 +123,7 @@ export function VoyageMoments({ moments }: { moments: VoyageMoment[] }) {
         <p
           className={`${labelFont} mx-auto hidden max-w-6xl px-6 pt-4 text-center text-[#6F675D]/70 text-[0.58rem] uppercase tracking-[0.24em] lg:block lg:px-10`}
         >
-          Hover a photo to relive the moment
+          {t('hoverHint')}
         </p>
       ) : null}
     </section>

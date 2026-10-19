@@ -2,10 +2,12 @@
 
 import { Lock } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
+import { SiteLocaleToggle } from '~/components/website/site-locale-toggle'
 
 type PasswordPageProps = {
   verifyWebsitePassword: (passwordInput: string) => Promise<boolean>
@@ -16,6 +18,7 @@ export default function PasswordPage({ verifyWebsitePassword }: PasswordPageProp
   const [showError, setShowError] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
+  const t = useTranslations('site.password')
 
   const verifyPassword = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -33,6 +36,7 @@ export default function PasswordPage({ verifyWebsitePassword }: PasswordPageProp
 
   return (
     <main className='relative flex min-h-screen items-center justify-center overflow-hidden bg-muted/30 px-6 py-12'>
+      <SiteLocaleToggle />
       {/* Soft, warm backdrop so the unlock card reads as the clear focal point. */}
       <div aria-hidden className='pointer-events-none absolute inset-0 -z-10'>
         <div className='absolute -top-32 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-primary/15 blur-3xl' />
@@ -57,14 +61,10 @@ export default function PasswordPage({ verifyWebsitePassword }: PasswordPageProp
 
         <div className='space-y-2'>
           <p className='font-mono text-[0.6rem] text-muted-foreground uppercase tracking-[0.28em]'>
-            Private Wedding Website
+            {t('eyebrow')}
           </p>
-          <h1 className='font-serif text-2xl text-foreground sm:text-3xl'>
-            This site is password protected
-          </h1>
-          <p className='text-muted-foreground text-sm leading-6'>
-            Enter the password shared by the couple to unlock their wedding website.
-          </p>
+          <h1 className='font-serif text-2xl text-foreground sm:text-3xl'>{t('title')}</h1>
+          <p className='text-muted-foreground text-sm leading-6'>{t('description')}</p>
         </div>
 
         <div className='space-y-2 text-left'>
@@ -72,7 +72,7 @@ export default function PasswordPage({ verifyWebsitePassword }: PasswordPageProp
             className='font-mono text-[0.62rem] uppercase tracking-[0.18em]'
             htmlFor='website-password'
           >
-            Password
+            {t('label')}
           </label>
           <Input
             aria-describedby={showError ? 'website-password-error' : undefined}
@@ -84,7 +84,7 @@ export default function PasswordPage({ verifyWebsitePassword }: PasswordPageProp
               setShowError(false)
               setPasswordInput(event.target.value)
             }}
-            placeholder='Enter password…'
+            placeholder={t('placeholder')}
             spellCheck={false}
             type='password'
             value={passwordInput}
@@ -92,7 +92,7 @@ export default function PasswordPage({ verifyWebsitePassword }: PasswordPageProp
         </div>
 
         <Button className='w-full' disabled={isSubmitting} size='lg' type='submit'>
-          {isSubmitting ? 'Unlocking…' : 'Unlock Site'}
+          {isSubmitting ? t('submitting') : t('submit')}
         </Button>
 
         <p
@@ -100,7 +100,7 @@ export default function PasswordPage({ verifyWebsitePassword }: PasswordPageProp
           className='min-h-5 text-destructive text-sm'
           id='website-password-error'
         >
-          {showError ? 'Incorrect password. Check the password and try again.' : null}
+          {showError ? t('error') : null}
         </p>
       </form>
     </main>

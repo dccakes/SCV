@@ -11,6 +11,7 @@
  */
 
 import Image from 'next/image'
+import { useTranslations } from 'next-intl'
 import type {
   DestinationSectionContent,
   ExperiencesSectionContent,
@@ -64,18 +65,20 @@ function ProseBlock({ text }: { text: string }) {
 }
 
 function OurStory({ content }: { content: OurStorySectionContent }) {
+  const t = useTranslations('aurelia')
   return (
-    <SectionShell id='our-story' eyebrow='Our Story' heading={content.heading}>
+    <SectionShell id='our-story' eyebrow={t('eyebrows.ourStory')} heading={content.heading}>
       <ProseBlock text={content.body} />
     </SectionShell>
   )
 }
 
 function Travel({ content }: { content: TravelSectionContent }) {
+  const t = useTranslations('aurelia')
   const services = content.services ?? []
   const stays = content.stays ?? []
   return (
-    <SectionShell id='travel' eyebrow='Getting There' heading={content.heading}>
+    <SectionShell id='travel' eyebrow={t('eyebrows.travel')} heading={content.heading}>
       <ProseBlock text={content.body} />
       {services.length > 0 ? (
         <div className='grid w-full max-w-3xl gap-4 sm:grid-cols-3'>
@@ -120,7 +123,7 @@ function Travel({ content }: { content: TravelSectionContent }) {
                     rel='noreferrer'
                     className='mt-1 text-[0.7rem] text-primary uppercase tracking-[0.2em] underline-offset-4 hover:underline'
                   >
-                    View
+                    {t('viewStay')}
                   </a>
                 ) : null}
               </div>
@@ -133,11 +136,12 @@ function Travel({ content }: { content: TravelSectionContent }) {
 }
 
 function WeddingParty({ content }: { content: WeddingPartySectionContent }) {
+  const t = useTranslations('aurelia')
   if (content.members.length === 0) {
     return null
   }
   return (
-    <SectionShell id='wedding-party' eyebrow='By Our Side' heading={content.heading}>
+    <SectionShell id='wedding-party' eyebrow={t('eyebrows.weddingParty')} heading={content.heading}>
       <div className='grid w-full gap-6 sm:grid-cols-2 md:grid-cols-3'>
         {content.members.map((member) => (
           <div
@@ -170,11 +174,16 @@ function WeddingParty({ content }: { content: WeddingPartySectionContent }) {
 }
 
 function Timeline({ content }: { content: TimelineSectionContent }) {
+  const t = useTranslations('aurelia')
   if (content.milestones.length === 0) {
     return null
   }
   return (
-    <SectionShell id='our-story' eyebrow={content.eyebrow ?? 'Our Story'} heading={content.heading}>
+    <SectionShell
+      id='our-story'
+      eyebrow={content.eyebrow ?? t('eyebrows.ourStory')}
+      heading={content.heading}
+    >
       <ol className='grid w-full gap-8 sm:grid-cols-2 lg:grid-cols-4'>
         {content.milestones.map((milestone) => (
           <li
@@ -196,13 +205,14 @@ function Timeline({ content }: { content: TimelineSectionContent }) {
 }
 
 function Destination({ content }: { content: DestinationSectionContent }) {
+  const t = useTranslations('aurelia')
   if (!content.body.trim() && !content.imageUrl) {
     return null
   }
   return (
     <SectionShell
       id='destination'
-      eyebrow={content.eyebrow ?? 'The Destination'}
+      eyebrow={content.eyebrow ?? t('eyebrows.destination')}
       heading={content.heading}
     >
       {content.imageUrl ? (
@@ -238,13 +248,14 @@ function Destination({ content }: { content: DestinationSectionContent }) {
 }
 
 function Experiences({ content }: { content: ExperiencesSectionContent }) {
+  const t = useTranslations('aurelia')
   if (content.items.length === 0) {
     return null
   }
   return (
     <SectionShell
       id='experiences'
-      eyebrow={content.eyebrow ?? 'Curated Experiences'}
+      eyebrow={content.eyebrow ?? t('eyebrows.experiences')}
       heading={content.heading}
     >
       <div className='grid w-full gap-6 sm:grid-cols-2 lg:grid-cols-4'>
@@ -278,11 +289,12 @@ function Experiences({ content }: { content: ExperiencesSectionContent }) {
 }
 
 function Faq({ content }: { content: FaqSectionContent }) {
+  const t = useTranslations('aurelia')
   if (content.items.length === 0) {
     return null
   }
   return (
-    <SectionShell id='faq' eyebrow='Good to Know' heading={content.heading}>
+    <SectionShell id='faq' eyebrow={t('eyebrows.faq')} heading={content.heading}>
       <dl className='w-full max-w-2xl space-y-4 text-left'>
         {content.items.map((item) => (
           <div
@@ -299,8 +311,9 @@ function Faq({ content }: { content: FaqSectionContent }) {
 }
 
 function Registry({ content }: { content: RegistrySectionContent }) {
+  const t = useTranslations('aurelia')
   return (
-    <SectionShell id='registry' eyebrow='With Gratitude' heading={content.heading}>
+    <SectionShell id='registry' eyebrow={t('eyebrows.registry')} heading={content.heading}>
       <ProseBlock text={content.body} />
       {content.links.length > 0 && (
         <div className='flex flex-wrap items-center justify-center gap-3'>

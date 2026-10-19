@@ -30,6 +30,7 @@ import {
 import {
   mockFindByWebsiteId,
   mockFindByWebsiteIdAndType,
+  mockUpsertByType,
   mockUpsertHomeSection,
   resetMocks as resetWebsiteSectionRepoMocks,
   WebsiteSectionRepository,
@@ -51,6 +52,7 @@ const mockFindByWeddingIdWithQuestionsFn = mockFindByWeddingIdWithQuestions as j
 const mockFindWebsiteSectionByTypeFn = mockFindByWebsiteIdAndType as jest.Mock
 const mockFindWebsiteSectionsFn = mockFindByWebsiteId as jest.Mock
 const mockUpsertHomeSectionFn = mockUpsertHomeSection as jest.Mock
+const mockUpsertByTypeFn = mockUpsertByType as jest.Mock
 
 const actorContext = {
   userId: 'actor-1',
@@ -238,9 +240,60 @@ describe('WebsiteManagementService', () => {
       expect(result).toMatchObject({
         content: { introText: 'Updated intro' },
       })
-      expect(mockUpsertHomeSectionFn).toHaveBeenCalledWith('website-123', {
-        introText: 'Updated intro',
+      expect(mockUpsertHomeSectionFn).toHaveBeenCalledWith(
+        'website-123',
+        { introText: 'Updated intro' },
+        undefined
+      )
+    })
+  })
+
+  describe('section translations', () => {
+    it('stores Spanish HOME copy alongside the English copy', async () => {
+      mockFindWebsiteByWeddingIdFn.mockResolvedValue(mockWebsite)
+      mockUpsertHomeSectionFn.mockResolvedValue({})
+
+      await service.updateHomeSection(actorContext, 'wedding-123', {
+        introText: 'Welcome',
+        translations: { es: { introText: 'Bienvenidos' } },
       })
+
+      expect(mockUpsertHomeSectionFn).toHaveBeenCalledWith(
+        'website-123',
+        { introText: 'Welcome' },
+        { es: { introText: 'Bienvenidos' } }
+      )
+    })
+
+    it('validates and stores Spanish section copy', async () => {
+      mockFindWebsiteByWeddingIdFn.mockResolvedValue(mockWebsite)
+      mockUpsertByTypeFn.mockResolvedValue({})
+
+      await service.upsertSection(actorContext, 'wedding-123', {
+        type: 'OUR_STORY',
+        content: { heading: 'Our Story', body: 'Hi' },
+        translations: { es: { heading: 'Nuestra historia', body: '' } },
+      })
+
+      expect(mockUpsertByTypeFn).toHaveBeenCalledWith(
+        'website-123',
+        'OUR_STORY',
+        { heading: 'Our Story', body: 'Hi' },
+        true,
+        { es: { heading: 'Nuestra historia', body: '' } }
+      )
+    })
+
+    it('rejects Spanish copy that does not fit the section shape', async () => {
+      mockFindWebsiteByWeddingIdFn.mockResolvedValue(mockWebsite)
+
+      await expect(
+        service.upsertSection(actorContext, 'wedding-123', {
+          type: 'OUR_STORY',
+          content: { heading: 'Our Story', body: 'Hi' },
+          translations: { es: { heading: 42 } },
+        })
+      ).rejects.toThrow(TRPCError)
     })
   })
 
@@ -291,6 +344,110 @@ describe('WebsiteManagementService', () => {
       // Only enabled, non-HOME sections are surfaced, in position order.
       expect(result.sections).toHaveLength(1)
       expect(result.sections[0]).toMatchObject({ type: 'OUR_STORY' })
+    })
+
+    it('serves Spanish content to Spanish visitors, falling back to English per field', async () => {
+      mockFindBySubUrlWithQuestionsFn.mockResolvedValue({
+        ...mockWebsiteWithQuestions,
+        generalQuestions: [
+          {
+            id: 'q-general',
+            eventId: null,
+            websiteId: 'website-123',
+            text: 'Any dietary needs?',
+            type: 'Option',
+            isRequired: false,
+            allowOther: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            translations: { es: { text: '¿Alguna restricción alimentaria?' } },
+            options: [
+              {
+                id: 'o1',
+                questionId: 'q-general',
+                text: 'Vegan',
+                description: 'No animal products',
+                responseCount: 0,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                translations: { es: { text: 'Vegana', description: '' } },
+              },
+            ],
+          },
+        ],
+      })
+      mockFindWeddingByIdFn.mockResolvedValue(mockWedding)
+      mockFindByWeddingIdWithQuestionsFn.mockResolvedValue([
+        {
+          ...mockEvent,
+          translations: { es: { name: 'Boda', venue: 'Jardín', description: '' } },
+          questions: [],
+        },
+      ])
+      mockFindWebsiteSectionsFn.mockResolvedValue([
+        {
+          id: 'section-home',
+          websiteId: 'website-123',
+          type: 'HOME',
+          isEnabled: true,
+          position: 0,
+          content: { introText: 'Welcome', headline: 'Hello' },
+          translations: { es: { introText: 'Bienvenidos', headline: '' } },
+        },
+        {
+          id: 'section-story',
+          websiteId: 'website-123',
+          type: 'OUR_STORY',
+          isEnabled: true,
+          position: 1,
+          content: { heading: 'Our Story', body: 'We met in Rome.' },
+          translations: { es: { heading: 'Nuestra historia', body: '' } },
+        },
+      ])
+
+      const result = await service.fetchWeddingData(
+        'johndoeandjanesmith',
+        undefined,
+        undefined,
+        'es'
+      )
+
+      expect(result.website.introText).toBe('Bienvenidos')
+      expect(result.website.headline).toBe('Hello')
+      expect(result.sections[0]?.content).toEqual({
+        heading: 'Nuestra historia',
+        body: 'We met in Rome.',
+      })
+      expect(result.sections[0]).not.toHaveProperty('translations')
+      expect(result.events[0]).toMatchObject({
+        name: 'Boda',
+        venue: 'Jardín',
+        attire: 'Formal',
+        description: 'Our special day!',
+      })
+      expect(result.events[0]).not.toHaveProperty('translations')
+      // The wedding date is still found by the English event name.
+      expect(result.date.standardFormat).toMatch(/ de jun/)
+      const question = result.website.generalQuestions[0]
+      expect(question?.text).toBe('¿Alguna restricción alimentaria?')
+      expect(question?.options[0]).toMatchObject({
+        text: 'Vegana',
+        description: 'No animal products',
+      })
+    })
+
+    it('ignores translations for English visitors', async () => {
+      mockFindBySubUrlWithQuestionsFn.mockResolvedValue(mockWebsiteWithQuestions)
+      mockFindWeddingByIdFn.mockResolvedValue(mockWedding)
+      mockFindByWeddingIdWithQuestionsFn.mockResolvedValue([
+        { ...mockEvent, translations: { es: { name: 'Boda' } }, questions: [] },
+      ])
+      mockFindWebsiteSectionsFn.mockResolvedValue([])
+
+      const result = await service.fetchWeddingData('johndoeandjanesmith', undefined)
+
+      expect(result.events[0]?.name).toBe('Wedding Day')
+      expect(result.date.standardFormat).toMatch(/Jun/)
     })
 
     it('throws when website does not exist', async () => {

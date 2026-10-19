@@ -1,10 +1,12 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { type ReactNode, useId, useRef } from 'react'
 import { headingFont, labelFont } from '~/templates/voyage/components/primitives'
 
 /** Native top-layer dialog keeps the card size and inherited Voyage theme intact. */
 export function VoyageStayDetails({ name, children }: { name: string; children: ReactNode }) {
+  const t = useTranslations('voyage.stays')
   const dialog = useRef<HTMLDialogElement>(null)
   const titleId = useId()
   return (
@@ -13,10 +15,10 @@ export function VoyageStayDetails({ name, children }: { name: string; children: 
         type='button'
         onClick={() => dialog.current?.showModal()}
         aria-haspopup='dialog'
-        aria-label={`View hotel details for ${name}`}
+        aria-label={t('viewDetailsAria', { name })}
         className={`${labelFont} flex h-14 w-full items-center justify-between gap-3 border-border border-t px-6 text-left text-[0.62rem] uppercase tracking-[0.2em] hover:text-primary`}
       >
-        View hotel details{' '}
+        {t('viewDetails')}{' '}
         <span aria-hidden='true' className='text-xl'>
           +
         </span>
@@ -35,7 +37,7 @@ export function VoyageStayDetails({ name, children }: { name: string; children: 
             onClick={() => dialog.current?.close()}
             className={`${labelFont} min-h-11 shrink-0 px-2 text-[0.62rem] uppercase tracking-[0.2em] hover:text-primary`}
           >
-            Close
+            {t('close')}
           </button>
         </div>
         {children}

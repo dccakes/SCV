@@ -101,7 +101,11 @@ export default function QuestionForm({
       eventId: question.eventId,
       websiteId: question.websiteId,
       questionId: question.id,
-      options: questionType === 'Option' ? questionOptions : undefined,
+      // Omit stored translations so this legacy form leaves Spanish copy untouched.
+      options:
+        questionType === 'Option'
+          ? questionOptions.map(({ id, text, description }) => ({ id, text, description }))
+          : undefined,
       deletedOptions: deleteOptions,
     })
   }

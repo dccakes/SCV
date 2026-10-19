@@ -98,8 +98,10 @@ export class QuestionRepository {
     type: string
     isRequired: boolean
     allowOther?: boolean
+    translations?: { es?: { text?: string } }
     options?: OptionInput[]
   }): Promise<Question> {
+    // Omitted (undefined) translations keep what is already stored.
     // Build upsert options for Option type questions
     const upsertOptions =
       data.type === 'Option' && data.options
@@ -111,11 +113,13 @@ export class QuestionRepository {
               update: {
                 text: option.text ?? undefined,
                 description: option.description ?? undefined,
+                translations: option.translations,
               },
               create: {
                 text: option.text,
                 description: option.description ?? '',
                 responseCount: 0,
+                translations: option.translations,
               },
             })),
           }
@@ -128,6 +132,7 @@ export class QuestionRepository {
               text: option.text,
               description: option.description ?? '',
               responseCount: 0,
+              translations: option.translations,
             })),
           }
         : undefined
@@ -141,6 +146,7 @@ export class QuestionRepository {
         type: data.type,
         isRequired: data.isRequired,
         allowOther: data.type === 'Option' ? (data.allowOther ?? false) : false,
+        translations: data.translations,
         options: upsertOptions,
       },
       create: {
@@ -150,6 +156,7 @@ export class QuestionRepository {
         type: data.type,
         isRequired: data.isRequired,
         allowOther: data.type === 'Option' ? (data.allowOther ?? false) : false,
+        translations: data.translations,
         options: createOptions,
       },
     })

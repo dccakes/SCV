@@ -15,6 +15,12 @@ export const optionInputSchema = z.object({
   responseCount: z.number().optional(),
   text: z.string().min(1, { message: 'Option should not be empty!' }),
   description: z.string().optional(),
+  /** Spanish label/description; blank falls back to English for guests. */
+  translations: z
+    .object({
+      es: z.object({ text: z.string().optional(), description: z.string().optional() }).optional(),
+    })
+    .optional(),
 })
 
 /**
@@ -28,6 +34,8 @@ export const upsertQuestionSchema = z.object({
   type: z.string(),
   isRequired: z.boolean().default(false),
   allowOther: z.boolean().default(false),
+  /** Spanish prompt; blank falls back to English for guests. Omit to keep stored. */
+  translations: z.object({ es: z.object({ text: z.string().optional() }).optional() }).optional(),
   options: z
     .array(optionInputSchema)
     .min(2, {

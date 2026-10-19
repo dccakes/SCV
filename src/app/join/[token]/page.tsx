@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/com
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
 import { PhoneInput } from '~/components/ui/phone-input'
+import { useGuestPhoneInput } from '~/components/website/use-guest-phone-input'
 import { optionalPhoneSchema } from '~/lib/phone/phone-validator'
 import { api } from '~/trpc/react'
 
@@ -31,6 +32,7 @@ type SelfFillFormData = {
 
 export default function SelfFillPage() {
   const t = useTranslations('join')
+  const phoneInput = useGuestPhoneInput()
   const params = useParams()
   const token = params.token as string
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -224,6 +226,7 @@ export default function SelfFillPage() {
                     placeholder='+1 234 567 8900'
                     error={Boolean(errors.phone)}
                     aria-describedby={errors.phone ? 'phone-error' : undefined}
+                    {...phoneInput}
                   />
                 )}
               />

@@ -1,13 +1,17 @@
 import { Clock } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Button } from '~/components/ui/button'
+import { SiteLocaleToggle } from '~/components/website/site-locale-toggle'
 
 type RsvpNotAcceptingMessageProps = {
   basePath: string
 }
 
 export default function RsvpNotAcceptingMessage({ basePath }: RsvpNotAcceptingMessageProps) {
+  const t = useTranslations('site.rsvpClosed')
   return (
     <main className='relative flex min-h-screen items-center justify-center overflow-hidden bg-muted/30 px-6 py-12'>
+      <SiteLocaleToggle />
       <div aria-hidden className='pointer-events-none absolute inset-0 -z-10'>
         <div className='absolute -top-32 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-primary/15 blur-3xl' />
         <div className='absolute right-0 bottom-0 h-72 w-72 translate-x-1/4 rounded-full bg-accent/20 blur-3xl' />
@@ -27,17 +31,15 @@ export default function RsvpNotAcceptingMessage({ basePath }: RsvpNotAcceptingMe
 
         <div className='space-y-2'>
           <p className='font-mono text-[0.6rem] text-muted-foreground uppercase tracking-[0.28em]'>
-            Coming Soon
+            {t('eyebrow')}
           </p>
-          <h1 className='font-serif text-2xl text-foreground sm:text-3xl'>RSVPs not yet open</h1>
-          <p className='text-muted-foreground text-sm leading-6'>
-            We&apos;re not quite ready to accept RSVPs yet. Check back soon!
-          </p>
+          <h1 className='font-serif text-2xl text-foreground sm:text-3xl'>{t('title')}</h1>
+          <p className='text-muted-foreground text-sm leading-6'>{t('description')}</p>
         </div>
 
         <div className='pt-4'>
           <Button asChild className='w-full' size='lg'>
-            <a href={basePath}>Back to Wedding</a>
+            <a href={basePath}>{t('backToWedding')}</a>
           </Button>
         </div>
       </div>

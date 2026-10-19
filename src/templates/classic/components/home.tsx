@@ -1,12 +1,16 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { formatDateStandard } from '~/app/utils/helpers'
+import { useTranslations } from 'next-intl'
 import { ClassicCoupleGallery, ClassicHeaderImage } from '~/templates/classic/components/media'
 import { ClassicNavbar } from '~/templates/classic/components/navbar'
 import { ClassicSections } from '~/templates/classic/components/sections'
+import { useTemplateDates } from '~/templates/shared/dates'
 import type { TemplateSurfaceProps } from '~/templates/types'
 
 export function ClassicHome({ weddingData, path, introText }: Readonly<TemplateSurfaceProps>) {
+  const t = useTranslations('templateShared')
+  const tClassic = useTranslations('classic')
+  const dates = useTemplateDates()
   const { website } = weddingData
 
   return (
@@ -17,10 +21,10 @@ export function ClassicHome({ weddingData, path, introText }: Readonly<TemplateS
           {weddingData.brideFirstName} & {weddingData.groomFirstName}
         </h1>
         <span className='text-lg'>
-          {weddingData.date?.standardFormat ?? 'Date To Be Announced'}
+          {dates.weddingDate(weddingData.date) ?? t('dateToBeAnnounced')}
         </span>
         {weddingData.daysRemaining > 0 && (
-          <p className='text-lg'>{weddingData.daysRemaining} Days To Go!</p>
+          <p className='text-lg'>{tClassic('daysToGo', { count: weddingData.daysRemaining })}</p>
         )}
         <ClassicNavbar path={path} isRsvpEnabled={website.isRsvpEnabled} />
         {website.isRsvpEnabled && (
@@ -28,7 +32,7 @@ export function ClassicHome({ weddingData, path, introText }: Readonly<TemplateS
             href={`${path}/rsvp`}
             className='rounded-sm bg-primary px-6 py-3 text-primary-foreground tracking-widest hover:bg-pink-500 hover:underline'
           >
-            RSVP
+            {t('rsvp')}
           </Link>
         )}
       </div>
@@ -41,7 +45,7 @@ export function ClassicHome({ weddingData, path, introText }: Readonly<TemplateS
             sizes='(max-width: 768px) 100vw, 80vw'
             priority
             className='object-contain'
-            alt='Website Cover Photo'
+            alt={t('images.cover')}
           />
         </div>
       )}
@@ -58,11 +62,11 @@ export function ClassicHome({ weddingData, path, introText }: Readonly<TemplateS
         <div key={event.id} className='flex flex-col gap-2'>
           <h3 className='text-4xl tracking-widest'>{event.name.toLowerCase()}</h3>
           {!!event.date && (
-            <span className='font-thin text-2xl'>{formatDateStandard(event.date)}</span>
+            <span className='font-thin text-2xl'>{dates.eventDate(event.date)}</span>
           )}
           {!!event.startTime && (
             <span className='font-thin text-2xl'>
-              {event.startTime}
+              {dates.eventTime(event.startTime)}
               {!!event.endTime && ` - ${event.endTime}`}
             </span>
           )}
@@ -73,10 +77,11 @@ export function ClassicHome({ weddingData, path, introText }: Readonly<TemplateS
 
       <div className='text-center'>
         <h2 className='border-black border-b px-5 pb-6 text-6xl'>
-          {weddingData.brideFirstName?.[0] ?? 'B'} & {weddingData.groomFirstName?.[0] ?? 'G'}
+          {weddingData.brideFirstName?.[0] ?? t('initials.bride')} &{' '}
+          {weddingData.groomFirstName?.[0] ?? t('initials.groom')}
         </h2>
         <p className='mt-4 text-lg tracking-widest'>
-          {weddingData.date.numberFormat?.toString() ?? 'Date To Be Announced'}
+          {dates.weddingDateNumeric(weddingData.date) ?? t('dateToBeAnnounced')}
         </p>
       </div>
     </main>

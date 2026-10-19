@@ -63,6 +63,7 @@ const ConfirmationListItem = ({
   rsvpResponses: RsvpFormResponse[]
 }) => {
   const tCommon = useTranslations('common')
+  const tForm = useTranslations('site.rsvpForm')
   return (
     <li className='flex flex-col gap-3 border-b-2 py-6'>
       <div className='flex items-start justify-between'>
@@ -76,10 +77,13 @@ const ConfirmationListItem = ({
           return (
             <div key={`${event.id}_${response.guestId}`} className='flex items-center gap-3'>
               {response.rsvp === 'Attending' ? (
-                <FaCircleCheck size={22} />
+                <FaCircleCheck aria-hidden size={22} />
               ) : (
-                <RxCrossCircled size={22} />
+                <RxCrossCircled aria-hidden size={22} />
               )}
+              <span className='sr-only'>
+                {response.rsvp === 'Attending' ? tForm('attending') : tForm('notAttending')}:
+              </span>
               {response.guestName}
             </div>
           )

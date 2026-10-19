@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react'
-
+import { screen } from '@testing-library/react'
+import { renderWithIntl } from '~/../tests/unit/test-utils/intl'
 import { EnvelopeReveal } from '~/components/website/household-invite/envelope-reveal'
 
 const setMatchMedia = (matches: boolean) => {
@@ -19,11 +19,16 @@ const setMatchMedia = (matches: boolean) => {
   })
 }
 
-const renderReveal = () =>
-  render(
-    <EnvelopeReveal coupleNames='Diego & Laura' websiteSubUrl='diego-and-laura'>
+const renderReveal = (locale: 'en' | 'es' = 'en') =>
+  renderWithIntl(
+    <EnvelopeReveal
+      coupleNames='Diego & Laura'
+      coupleNameClassName='font-serif'
+      websiteSubUrl='diego-and-laura'
+    >
       <div>Invite card body</div>
-    </EnvelopeReveal>
+    </EnvelopeReveal>,
+    { locale }
   )
 
 describe('EnvelopeReveal', () => {
@@ -43,6 +48,15 @@ describe('EnvelopeReveal', () => {
     expect(screen.getByText('Diego & Laura')).toBeInTheDocument()
     // The intro is recorded so it doesn't replay on the next render this session.
     expect(window.sessionStorage.getItem('household_invite_envelope_diego-and-laura')).toBe('1')
+  })
+
+  it('greets the household in Spanish for Spanish-speaking visitors', () => {
+    setMatchMedia(false)
+
+    renderReveal('es')
+
+    expect(screen.getByText('Te invitamos')).toBeInTheDocument()
+    expect(screen.queryByText("You're Invited")).not.toBeInTheDocument()
   })
 
   it('skips the intro when it has already played this session', () => {
