@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, type Page, test } from '@playwright/test'
 
 test.describe('Authentication Flow', () => {
   test('should show sign-in page with email and password fields', async ({ page }) => {
@@ -63,10 +63,19 @@ test.describe('Authentication Flow', () => {
     await expect(page.getByLabel('Email')).toBeVisible()
     await expect(page.getByLabel('Password')).toBeVisible()
   })
+})
 
-  test('should send new sign-ups to the email verification step', async ({ page }) => {
-    // Stub the API so no real account is created and no email is sent.
-    await page.route('**/api/auth/sign-up/email', (route) =>
+test.describe('Email verification flow', () => {
+  // These tests run signed out and stub the auth API, so no account is created and no email is sent.
+  test.use({ storageState: { cookies: [], origins: [] } })
+
+  const waitForHydration = (page: Page) =>
+    page.waitForFunction(() => document.querySelector('form')?.hasAttribute('novalidate'), {
+      timeout: 15_000,
+    })
+
+  const stubSignUp = (page: Page) =>
+    page.route('**/api/auth/sign-up/email', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -77,14 +86,60 @@ test.describe('Authentication Flow', () => {
       })
     )
 
-    await page.goto('/auth/sign-up')
-    await page.waitForLoadState('networkidle')
-
+  const submitSignUp = async (page: Page) => {
     await page.getByLabel('Name').fill('New User')
     await page.getByLabel('Email').fill('new-user@example.com')
     await page.getByLabel('Password').fill('a-strong-password-123')
     await page.getByRole('button', { name: 'Create an account' }).click()
+  }
 
+  test('should send new sign-ups to the email verification step', async ({ page }) => {
+    await stubSignUp(page)
+
+    await page.goto('/auth/sign-up')
+    await waitForHydration(page)
+
+    const requestPromise = page.waitForRequest('**/api/auth/sign-up/email')
+    await submitSignUp(page)
+    const request = await requestPromise
+
+    expect(request.postDataJSON()).toMatchObject({
+      name: 'New User',
+      email: 'new-user@example.com',
+    })
     await expect(page).toHaveURL(/\/auth\/email-verification\?email=new-user%40example\.com$/)
+  })
+
+  test('should keep redirectTo when sign-up continues to email verification', async ({ page }) => {
+    await stubSignUp(page)
+    const redirectTo = '/auth/accept-invitation?invitationId=inv_123'
+
+    await page.goto(`/auth/sign-up?redirectTo=${encodeURIComponent(redirectTo)}`)
+    await waitForHydration(page)
+    await submitSignUp(page)
+
+    await expect(page).toHaveURL(/\/auth\/email-verification\?/)
+    const url = new URL(page.url())
+    expect(url.searchParams.get('email')).toBe('new-user@example.com')
+    expect(url.searchParams.get('redirectTo')).toBe(redirectTo)
+  })
+
+  test('should send unverified sign-ins to the email verification step', async ({ page }) => {
+    await page.route('**/api/auth/sign-in/email', (route) =>
+      route.fulfill({
+        status: 403,
+        contentType: 'application/json',
+        body: JSON.stringify({ code: 'EMAIL_NOT_VERIFIED', message: 'Email not verified' }),
+      })
+    )
+
+    await page.goto('/auth/sign-in')
+    await waitForHydration(page)
+
+    await page.getByLabel('Email').fill('unverified@example.com')
+    await page.getByLabel('Password').fill('a-strong-password-123')
+    await page.getByRole('button', { name: 'Login' }).click()
+
+    await expect(page).toHaveURL(/\/auth\/email-verification\?email=unverified%40example\.com$/)
   })
 })

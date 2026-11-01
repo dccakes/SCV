@@ -136,6 +136,9 @@ export const auth = betterAuth({
       await sendResetPasswordEmail({ to: user.email, url, userName: user.name ?? undefined })
     },
   },
+  // TODO(review-quality): OTP rate limiting is per IP and in-memory (best effort on serverless),
+  // and OTPs are stored in plain text. Decide on `rateLimit.storage: 'database'` and
+  // `emailOTP({ storeOTP: 'hashed' })`; note 'hashed' is incompatible with `resendStrategy: 'reuse'`.
   emailVerification: {
     // Routed through the emailOTP plugin (overrideDefaultEmailVerification).
     // The plugin's own sendVerificationOnSignUp is ignored while that override is on.

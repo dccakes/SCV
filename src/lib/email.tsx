@@ -36,12 +36,19 @@ export async function sendOtpEmail({
 
   const html = await render(<OtpEmail otp={otp} type={templateType} />)
 
-  await getResend().emails.send({
+  // Resend returns `{ error }` instead of throwing on API failures. Throw so a rejected send
+  // is at least logged by Better Auth instead of leaving the user waiting for a code that
+  // was never sent.
+  const { error } = await getResend().emails.send({
     from: env.EMAIL_FROM,
     to,
     subject: OTP_SUBJECTS[type],
     html,
   })
+
+  if (error) {
+    throw new Error(`Failed to send ${type} OTP email: ${error.message}`)
+  }
 }
 
 export async function sendResetPasswordEmail({

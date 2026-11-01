@@ -82,6 +82,14 @@ describe('sendOtpEmail', () => {
     expect(element.props).toMatchObject({ otp: OTP, type: 'sign-in' })
   })
 
+  it('throws when Resend returns an error so the failure is not silent', async () => {
+    mockEmailsSend.mockResolvedValueOnce({ data: null, error: { message: 'domain not verified' } })
+
+    await expect(sendOtpEmail({ to: TO, otp: OTP, type: 'email-verification' })).rejects.toThrow(
+      'Failed to send email-verification OTP email: domain not verified'
+    )
+  })
+
   it('maps change-email type to email-verification template prop', async () => {
     await sendOtpEmail({ to: TO, otp: OTP, type: 'change-email' })
 

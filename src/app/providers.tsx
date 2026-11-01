@@ -10,6 +10,29 @@ import { PostHogProvider } from '~/lib/analytics/posthog-client'
 import { authClient } from '~/lib/auth-client'
 import { authUiCustomOrganizationRoles } from '~/lib/organization-roles'
 
+const EMAIL_VERIFICATION_PATH = '/auth/email-verification'
+
+// The auth UI navigates to the OTP step without the current query string, which drops
+// `redirectTo` (e.g. an organization invite to accept after sign-up). Carry it over so the
+// user still lands where they were headed once verification succeeds.
+function withRedirectTo(path: string): string {
+  if (typeof window === 'undefined' || !path.startsWith(EMAIL_VERIFICATION_PATH)) {
+    return path
+  }
+
+  const redirectTo = new URLSearchParams(window.location.search).get('redirectTo')
+  if (!redirectTo) {
+    return path
+  }
+
+  const url = new URL(path, window.location.origin)
+  if (!url.searchParams.has('redirectTo')) {
+    url.searchParams.set('redirectTo', redirectTo)
+  }
+
+  return `${url.pathname}${url.search}`
+}
+
 export function Providers({ children }: { children: ReactNode }) {
   const router = useRouter()
 
@@ -18,7 +41,7 @@ export function Providers({ children }: { children: ReactNode }) {
       <ThemeProvider attribute='class' defaultTheme='system' enableSystem disableTransitionOnChange>
         <AuthUIProvider
           authClient={authClient}
-          navigate={(path) => router.push(path)}
+          navigate={(path) => router.push(withRedirectTo(path))}
           replace={(path) => router.replace(path)}
           onSessionChange={() => {
             router.refresh()
