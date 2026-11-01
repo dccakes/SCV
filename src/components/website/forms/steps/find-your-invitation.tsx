@@ -13,6 +13,7 @@ export default function FindYourInvitationForm({ goNext }: StepFormProps) {
   const updateRsvpForm = useUpdateRsvpForm()
   const [name, setName] = useState<string>('')
   const [showError, setShowError] = useState<boolean>(false)
+  const [isRateLimited, setIsRateLimited] = useState<boolean>(false)
 
   const subUrl = weddingData.website?.subUrl ?? ''
 
@@ -32,6 +33,8 @@ export default function FindYourInvitationForm({ goNext }: StepFormProps) {
       // step showing the retry hint, instead of dropping the guest onto a blank
       // confirm screen with no names to pick.
       if (res.error || !res.data || res.data.length === 0) {
+        // A blocked search is not "name not found": don't tell a guest they are not on the list.
+        setIsRateLimited(res.error?.data?.code === 'TOO_MANY_REQUESTS')
         setShowError(true)
       } else {
         updateRsvpForm({ matchedHouseholds: res.data })
@@ -54,11 +57,14 @@ export default function FindYourInvitationForm({ goNext }: StepFormProps) {
         className='border border-gray-400 bg-white p-3 text-black placeholder:text-gray-500'
         onChange={(e) => {
           setShowError(false)
+          setIsRateLimited(false)
           setName(e.target.value)
         }}
         value={name}
       />
-      {showError && <p className='text-xs'>{t('notFound')}</p>}
+      {showError && (
+        <p className='text-xs'>{isRateLimited ? t('tooManyRequests') : t('notFound')}</p>
+      )}
       <button
         className={`mt-3 py-3 text-white text-xl tracking-wide ${name.length === 0 || isFetching ? 'cursor-not-allowed bg-stone-400' : 'bg-stone-700'}`}
         type='button'

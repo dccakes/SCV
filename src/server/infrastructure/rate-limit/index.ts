@@ -2,6 +2,10 @@
  * Rate Limit Infrastructure - Barrel Export
  */
 
+export {
+  getAuthRateLimitTarget,
+  SENSITIVE_AUTH_PATHS,
+} from '~/server/infrastructure/rate-limit/auth-paths'
 export { getClientIp } from '~/server/infrastructure/rate-limit/client-ip'
 export {
   type EnforceResult,

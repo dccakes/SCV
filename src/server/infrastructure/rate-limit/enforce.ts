@@ -2,9 +2,9 @@
  * Named rate limit policies plus a small enforcement helper shared by route handlers and
  * tRPC middleware.
  *
- * Fail-open: if the limiter's database call throws we log and let the request through.
- * Rate limiting is abuse protection, and an outage in this table should not take sign-in or
- * the public wedding sites down with it.
+ * Fail-open: if the limiter's database call throws or takes longer than LIMITER_TIMEOUT_MS we
+ * log and let the request through. Rate limiting is abuse protection, and an outage in this
+ * table should not take sign-in or the public wedding sites down with it.
  */
 
 import { logger } from '~/lib/observability/logger'
@@ -16,11 +16,14 @@ import {
 
 const MINUTE = 60_000
 
+/** A hung database must not hang every auth and public request behind it. */
+const LIMITER_TIMEOUT_MS = 2_000
+
 export const RATE_LIMIT_POLICIES = {
   /** Account creation, sign-in, OTP and password reset endpoints. Per IP and endpoint. */
   authSensitive: { limit: 10, windowMs: 10 * MINUTE },
-  /** Any other write call to the auth API. Per IP and endpoint. */
-  authDefault: { limit: 60, windowMs: MINUTE },
+  /** Every other write call to the auth API, pooled per IP (not per endpoint). */
+  authDefault: { limit: 300, windowMs: MINUTE },
   /** Unauthenticated tRPC procedures. Per IP and procedure. Generous: guests often share venue wifi. */
   publicTrpc: { limit: 120, windowMs: MINUTE },
   /** Guessable secrets on public procedures, such as the wedding website password. */
@@ -51,13 +54,24 @@ export interface EnforceResult {
   resetSeconds: number
 }
 
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`Rate limiter timed out after ${ms}ms`)), ms)
+  })
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer))
+}
+
 /** Counts one hit against `policy` for `key` (policy name is added to the key automatically). */
 export async function enforceRateLimit(
   policy: RateLimitPolicy,
   key: string
 ): Promise<EnforceResult> {
   try {
-    const result = await getLimiter(policy).consume(`${policy}:${key}`)
+    const result = await withTimeout(
+      getLimiter(policy).consume(`${policy}:${key}`),
+      LIMITER_TIMEOUT_MS
+    )
     return {
       allowed: result.allowed,
       retryAfterSeconds: Math.max(1, Math.ceil(result.retryAfterMs / 1000)),
@@ -97,9 +111,12 @@ export class RateLimitError extends Error {
   }
 }
 
+const TOO_MANY_REQUESTS_MESSAGE = 'Too many requests. Please try again later.'
+
 export function rateLimitedResponse(result: EnforceResult): Response {
   return Response.json(
-    { error: 'Too many requests. Please try again later.' },
+    // `message` is what Better Auth's client and UI read; `error` is kept for other callers.
+    { error: TOO_MANY_REQUESTS_MESSAGE, message: TOO_MANY_REQUESTS_MESSAGE },
     { status: 429, headers: rateLimitHeaders(result) }
   )
 }

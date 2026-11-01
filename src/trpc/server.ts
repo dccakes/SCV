@@ -13,7 +13,7 @@ import { createCallerFactory, createTRPCContext } from '~/server/api/trpc'
 const createContext = cache(async () => {
   const heads = new Headers(await headers())
   heads.set('x-trpc-source', 'rsc')
-  return createTRPCContext({ headers: heads })
+  return createTRPCContext({ headers: heads, source: 'rsc' })
 })
 
 const createCaller = createCallerFactory(appRouter)

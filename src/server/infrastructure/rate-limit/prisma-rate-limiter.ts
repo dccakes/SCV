@@ -1,10 +1,11 @@
 /**
- * Postgres-backed sliding window rate limiter.
+ * Postgres-backed fixed window rate limiter.
  *
- * Uses the `RateLimitBucket` table: one row per key, tracking a count and
- * the start of the current window. When a hit arrives after the window has
- * expired the row is reset; otherwise the count is atomically incremented
- * and compared against the configured limit.
+ * Uses the `RateLimitBucket` table: one row per key, tracking a count and the start of the
+ * current window. Every hit is a single `INSERT ... ON CONFLICT DO UPDATE` statement, so the
+ * create, reset-on-expiry and increment cases are one atomic operation: concurrent requests
+ * (many serverless instances) serialize on the row lock and each sees a distinct count.
+ * Time comes from the database clock, so instances with skewed clocks agree.
  */
 
 import { randomUUID } from 'node:crypto'
@@ -43,39 +44,43 @@ export class PrismaRateLimiter {
   /** Records a hit for the key and reports whether it is allowed plus when the window resets. */
   async consume(key: string): Promise<RateLimitResult> {
     const { windowMs, limit } = this.opts
-    const now = new Date()
-    const existing = await this.db.rateLimitBucket.findUnique({ where: { key } })
 
-    // No bucket yet — create it with this hit as the first entry.
-    if (!existing) {
-      await this.db.rateLimitBucket.upsert({
-        where: { key },
-        create: { id: randomUUID(), key, count: 1, windowStart: now },
-        update: {},
-      })
-      return { allowed: true, limit, remaining: limit - 1, resetMs: windowMs, retryAfterMs: 0 }
+    // window_start is TIMESTAMP(3) without time zone and Prisma stores UTC, hence AT TIME ZONE.
+    const rows = await this.db.$queryRaw<{ count: number; reset_ms: number }[]>`
+      INSERT INTO rate_limit_buckets (id, key, count, window_start)
+      VALUES (${randomUUID()}, ${key}, 1, now() AT TIME ZONE 'UTC')
+      ON CONFLICT (key) DO UPDATE SET
+        count = CASE
+          WHEN rate_limit_buckets.window_start
+            <= (now() AT TIME ZONE 'UTC') - make_interval(secs => ${windowMs}::double precision / 1000)
+          THEN 1
+          ELSE rate_limit_buckets.count + 1
+        END,
+        window_start = CASE
+          WHEN rate_limit_buckets.window_start
+            <= (now() AT TIME ZONE 'UTC') - make_interval(secs => ${windowMs}::double precision / 1000)
+          THEN now() AT TIME ZONE 'UTC'
+          ELSE rate_limit_buckets.window_start
+        END
+      RETURNING
+        count,
+        (EXTRACT(EPOCH FROM (
+          window_start + make_interval(secs => ${windowMs}::double precision / 1000)
+          - (now() AT TIME ZONE 'UTC')
+        )) * 1000)::int AS reset_ms
+    `
+
+    const row = rows[0]
+    if (!row) {
+      throw new Error('Rate limit upsert returned no row')
     }
 
-    // Window expired — reset atomically to a new window starting now.
-    if (now.getTime() - existing.windowStart.getTime() > windowMs) {
-      await this.db.rateLimitBucket.update({
-        where: { key },
-        data: { count: 1, windowStart: now },
-      })
-      return { allowed: true, limit, remaining: limit - 1, resetMs: windowMs, retryAfterMs: 0 }
-    }
-
-    // Live window — atomically increment and compare the returned count.
-    const updated = await this.db.rateLimitBucket.update({
-      where: { key },
-      data: { count: { increment: 1 } },
-    })
-    const allowed = updated.count <= limit
-    const resetMs = Math.max(0, existing.windowStart.getTime() + windowMs - now.getTime())
+    const allowed = row.count <= limit
+    const resetMs = Math.max(0, row.reset_ms)
     return {
       allowed,
       limit,
-      remaining: Math.max(0, limit - updated.count),
+      remaining: Math.max(0, limit - row.count),
       resetMs,
       retryAfterMs: allowed ? 0 : resetMs,
     }

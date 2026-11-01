@@ -53,7 +53,7 @@ export async function POST(req: Request) {
     if (ettaReq?.weddingId) {
       await logAudit({
         weddingId: ettaReq.weddingId,
-        actorId: ettaReq.authz?.userId ?? `guest:${ettaReq.weddingId}:${ettaReq.guestId}`,
+        actorId: ettaReq.authz?.userId ?? `guest:${ettaReq.guestId}`,
         actorType: ettaReq.actor === 'guest' ? 'guest' : 'couple',
         action: 'chat_error',
         resourceType: 'conversation',

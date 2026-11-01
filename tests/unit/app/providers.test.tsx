@@ -59,6 +59,22 @@ describe('Providers', () => {
     )
   })
 
+  it('shows sign up by default and when explicitly enabled', () => {
+    render(
+      <Providers>
+        <div>Child content</div>
+      </Providers>
+    )
+    expect(mockAuthUIProvider).toHaveBeenLastCalledWith(expect.objectContaining({ signUp: true }))
+
+    render(
+      <Providers signupsEnabled>
+        <div>Child content</div>
+      </Providers>
+    )
+    expect(mockAuthUIProvider).toHaveBeenLastCalledWith(expect.objectContaining({ signUp: true }))
+  })
+
   it('hides sign up in the auth UI when signups are disabled', () => {
     render(
       <Providers signupsEnabled={false}>

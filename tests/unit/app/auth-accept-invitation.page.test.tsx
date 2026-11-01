@@ -54,6 +54,7 @@ describe('AcceptInvitationPage', () => {
       'href',
       '/auth/sign-in?redirectTo=%2Fauth%2Faccept-invitation%3FinvitationId%3Dinv_123'
     )
+    expect(screen.getByText(/create an account to continue/i)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Create account to continue' })).toHaveAttribute(
       'href',
       '/auth/sign-up?redirectTo=%2Fauth%2Faccept-invitation%3FinvitationId%3Dinv_123'
@@ -104,6 +105,9 @@ describe('AcceptInvitationPage', () => {
 
       expect(screen.getByRole('link', { name: 'Sign in to continue' })).toBeInTheDocument()
       expect(screen.queryByRole('link', { name: 'Create account to continue' })).toBeNull()
+      // Tell the invitee what will work: the invited email, an existing account, who to ask.
+      expect(screen.getByText(/existing account with that email/i)).toBeInTheDocument()
+      expect(screen.getByText(/ask the person who invited you/i)).toBeInTheDocument()
     } finally {
       delete process.env.ALLOW_SIGNUPS
     }

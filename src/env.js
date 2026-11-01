@@ -21,7 +21,8 @@ export const env = createEnv({
     // Set to "false" to block all new account creation (email/password, email OTP, and any
     // other path that would create a user). Existing users can still sign in. Defaults to
     // "true". Only the exact strings "true" and "false" are accepted so a typo such as "0" or
-    // "False" fails loudly at boot instead of silently leaving signups open.
+    // "False" fails loudly at boot. (If validation is skipped, src/lib/signups.ts treats any
+    // value other than "true" as closed.)
     ALLOW_SIGNUPS: z.enum(['true', 'false']).default('true'),
     // Optional: AWS S3 Storage (can be disabled for local dev)
     AWS_S3_BUCKET_NAME: z.string().min(1).optional(),

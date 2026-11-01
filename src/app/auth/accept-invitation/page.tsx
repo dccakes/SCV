@@ -77,7 +77,7 @@ export default async function AcceptInvitationPage({ searchParams }: AcceptInvit
           description={
             signupsAllowed
               ? 'Sign in or create an account to continue with this invitation. Your created account email must match the invite email. We will bring you right back to accept it.'
-              : 'Sign in to continue with this invitation. New accounts are not being accepted right now. We will bring you right back to accept it.'
+              : 'Sign in with the email address this invitation was sent to. New accounts are not being accepted right now, so you need an existing account with that email. If you do not have one, ask the person who invited you for help.'
           }
         />
 

@@ -44,6 +44,7 @@
     "groupNote": "Enter your first and last name to find your invitation. If you're responding for you and a guest (or for your family), you'll be able to RSVP for your entire group.",
     "fullNamePlaceholder": "First and last name",
     "notFound": "Oops! We're having trouble finding your invite. Please enter your full first and last name, try another spelling, or contact the couple.",
+    "tooManyRequests": "Lots of people are searching right now. Please wait a few seconds and try again.",
     "findInvitation": "FIND YOUR INVITATION",
     "foundInGuestList": "we've found you in the guest list. please confirm your name below to continue with your rsvp",
     "recognizedInvitation": "we found your invitation. confirm it's you below to continue, or choose “not you” to search by name",

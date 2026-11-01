@@ -44,6 +44,7 @@
     "groupNote": "Ingresa tu nombre y apellido para encontrar tu invitación. Si vas a responder por ti y un acompañante (o por tu familia), podrás confirmar asistencia para todo tu grupo.",
     "fullNamePlaceholder": "Nombre y apellido",
     "notFound": "¡Ups! Tuvimos problemas para encontrar tu invitación. Ingresa tu nombre y apellido completos, prueba otra ortografía o contacta a la pareja.",
+    "tooManyRequests": "Hay mucha gente buscando en este momento. Espera unos segundos e inténtalo de nuevo.",
     "findInvitation": "BUSCAR MI INVITACIÓN",
     "foundInGuestList": "te encontramos en la lista de invitados. por favor confirma tu nombre para continuar con tu confirmación de asistencia",
     "recognizedInvitation": "encontramos tu invitación. confirma que eres tú para continuar o elige «¿no eres tú?» para buscar por nombre",

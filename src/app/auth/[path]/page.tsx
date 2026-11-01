@@ -3,19 +3,51 @@ import { redirect } from 'next/navigation'
 
 import { areSignupsAllowed } from '~/lib/signups'
 
-export default async function AuthPage({ params }: { params: Promise<{ path: string }> }) {
+type SearchParamValue = string | string[] | undefined
+
+const SIGNUPS_CLOSED_NOTICE = 'signups-closed'
+
+// Keep where the visitor was heading (e.g. an invitation) when sign up is closed.
+const HANDOFF_PARAMS = ['redirectTo', 'callbackUrl'] as const
+
+export default async function AuthPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ path: string }>
+  searchParams?: Promise<Record<string, SearchParamValue>>
+}) {
   const { path } = await params
+  const resolvedSearchParams = (await searchParams) ?? {}
 
   if (path === 'sign-up' && !areSignupsAllowed()) {
-    redirect('/auth/sign-in')
+    const next = new URLSearchParams({ notice: SIGNUPS_CLOSED_NOTICE })
+    for (const key of HANDOFF_PARAMS) {
+      const value = resolvedSearchParams[key]
+      const first = Array.isArray(value) ? value[0] : value
+      if (first) next.set(key, first)
+    }
+    redirect(`/auth/sign-in?${next.toString()}`)
   }
 
   const isSignInPath = path === 'sign-in'
   const showDemoAccounts = process.env.NODE_ENV !== 'production'
+  const showSignupsClosedNotice =
+    isSignInPath && resolvedSearchParams.notice === SIGNUPS_CLOSED_NOTICE
 
   return (
     <main className='flex min-h-screen items-center justify-center bg-background px-4 py-8'>
       <div className='w-full max-w-md space-y-4'>
+        {showSignupsClosedNotice ? (
+          <p
+            role='status'
+            className='rounded-2xl border border-border bg-card p-4 text-card-foreground text-sm shadow-sm'
+          >
+            New accounts are not being accepted right now. If you already have an account, sign in
+            below.
+          </p>
+        ) : null}
+
         <AuthView path={path} />
 
         {isSignInPath && showDemoAccounts ? (

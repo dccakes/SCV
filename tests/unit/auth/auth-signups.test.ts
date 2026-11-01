@@ -32,6 +32,9 @@ jest.mock('~/env', () => ({
   },
 }))
 jest.mock('~/server/db', () => ({ db: {} }))
+jest.mock('~/lib/observability/logger', () => ({
+  logger: { warn: jest.fn(), error: jest.fn(), info: jest.fn(), debug: jest.fn() },
+}))
 jest.mock('~/lib/email', () => ({
   sendOrganizationInvitationEmail: jest.fn(),
   sendOtpEmail: jest.fn(),
@@ -55,8 +58,12 @@ async function loadConfig(allowSignups: string | undefined): Promise<AuthConfig>
   return (auth as unknown as { config: AuthConfig }).config
 }
 
+const originalAllowSignups = process.env.ALLOW_SIGNUPS
+
 afterEach(() => {
-  delete process.env.ALLOW_SIGNUPS
+  if (originalAllowSignups === undefined) delete process.env.ALLOW_SIGNUPS
+  else process.env.ALLOW_SIGNUPS = originalAllowSignups
+  jest.resetModules()
 })
 
 describe('auth with ALLOW_SIGNUPS=false', () => {
@@ -74,6 +81,18 @@ describe('auth with ALLOW_SIGNUPS=false', () => {
     await expect(
       config.databaseHooks.user.create.before({ email: 'new@example.com' })
     ).rejects.toMatchObject({ status: 'FORBIDDEN', message: 'Sign ups are currently closed.' })
+  })
+})
+
+describe('blocked sign up logging', () => {
+  it('warns operators without logging any email address', async () => {
+    const config = await loadConfig('false')
+    const { logger } = await import('~/lib/observability/logger')
+
+    await config.databaseHooks.user.create.before({ email: 'new@example.com' }).catch(() => {})
+
+    expect(logger.warn).toHaveBeenCalledTimes(1)
+    expect(JSON.stringify((logger.warn as jest.Mock).mock.calls)).not.toContain('new@example.com')
   })
 })
 

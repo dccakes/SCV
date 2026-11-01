@@ -20,7 +20,7 @@ const router = createTRPCRouter({
   website: createTRPCRouter({ verifyWebsitePassword: publicProcedure.query(() => 'ok') }),
 })
 
-const makeCaller = (opts: { userId?: string | null; headers?: Headers }) =>
+const makeCaller = (opts: { userId?: string | null; headers?: Headers; source?: 'rsc' | 'http' }) =>
   router.createCaller({
     db: {},
     auth: {
@@ -30,6 +30,7 @@ const makeCaller = (opts: { userId?: string | null; headers?: Headers }) =>
       activeWeddingId: null,
     },
     headers: opts.headers,
+    source: opts.source,
   } as never)
 
 const withIp = (ip: string) => new Headers({ 'x-real-ip': ip })
@@ -57,9 +58,35 @@ describe('publicProcedure rate limiting', () => {
   it('throws TOO_MANY_REQUESTS when over the limit', async () => {
     mockEnforce.mockResolvedValue({ allowed: false, retryAfterSeconds: 30 })
 
+    // The route's responseMeta reads `cause.retryAfterSeconds` to set Retry-After.
     await expect(makeCaller({ headers: withIp('1.2.3.4') }).ping()).rejects.toMatchObject({
       code: 'TOO_MANY_REQUESTS',
+      cause: { name: 'RateLimitError', retryAfterSeconds: 30 },
     })
+  })
+
+  it('does not count in-process server-component reads against the guest IP', async () => {
+    await makeCaller({ headers: withIp('1.2.3.4'), source: 'rsc' }).ping()
+
+    expect(mockEnforce).not.toHaveBeenCalled()
+  })
+
+  it('still limits the password check from server components', async () => {
+    await makeCaller({ headers: withIp('1.2.3.4'), source: 'rsc' }).website.verifyWebsitePassword()
+
+    expect(mockEnforce).toHaveBeenCalledWith(
+      'publicTrpcStrict',
+      'website.verifyWebsitePassword:1.2.3.4'
+    )
+  })
+
+  it('limits http callers even if they send an x-trpc-source: rsc header', async () => {
+    const headers = withIp('1.2.3.4')
+    headers.set('x-trpc-source', 'rsc')
+
+    await makeCaller({ headers, source: 'http' }).ping()
+
+    expect(mockEnforce).toHaveBeenCalledWith('publicTrpc', 'ping:1.2.3.4')
   })
 
   it('skips signed-in users and callers without an IP', async () => {

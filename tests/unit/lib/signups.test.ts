@@ -9,26 +9,45 @@ jest.mock('~/env', () => ({
 import { areSignupsAllowed } from '~/lib/signups'
 
 describe('areSignupsAllowed', () => {
+  const original = process.env.ALLOW_SIGNUPS
+
   afterEach(() => {
+    if (original === undefined) delete process.env.ALLOW_SIGNUPS
+    else process.env.ALLOW_SIGNUPS = original
+  })
+
+  it('allows signups when the flag is unset or empty', () => {
     delete process.env.ALLOW_SIGNUPS
-  })
+    expect(areSignupsAllowed()).toBe(true)
 
-  it('allows signups when the flag is unset', () => {
+    process.env.ALLOW_SIGNUPS = ''
     expect(areSignupsAllowed()).toBe(true)
   })
 
-  it('allows signups when the flag is "true"', () => {
-    process.env.ALLOW_SIGNUPS = 'true'
+  it.each(['true', 'TRUE', ' true ', 'True\n'])('allows signups when the flag is %j', (value) => {
+    process.env.ALLOW_SIGNUPS = value
     expect(areSignupsAllowed()).toBe(true)
   })
 
-  it('blocks signups when the flag is "false"', () => {
-    process.env.ALLOW_SIGNUPS = 'false'
+  it.each([
+    'false',
+    'FALSE',
+    ' False ',
+    'false\n',
+  ])('blocks signups when the flag is %j', (value) => {
+    process.env.ALLOW_SIGNUPS = value
     expect(areSignupsAllowed()).toBe(false)
   })
 
-  it('normalizes case and whitespace when env validation was skipped', () => {
-    process.env.ALLOW_SIGNUPS = ' False '
+  it.each([
+    '0',
+    'no',
+    'off',
+    'disabled',
+    'yes',
+    '1',
+  ])('fails closed for the malformed value %j (validation skipped)', (value) => {
+    process.env.ALLOW_SIGNUPS = value
     expect(areSignupsAllowed()).toBe(false)
   })
 })

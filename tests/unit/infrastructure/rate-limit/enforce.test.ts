@@ -37,6 +37,22 @@ describe('enforceRateLimit', () => {
     })
   })
 
+  it('fails open when the limiter hangs instead of blocking the request', async () => {
+    jest.useFakeTimers()
+    try {
+      mockConsume.mockReturnValue(new Promise(() => {}))
+
+      const pending = enforceRateLimit('publicTrpc', 'hang')
+      await jest.advanceTimersByTimeAsync(2_000)
+      const result = await pending
+
+      expect(result.allowed).toBe(true)
+      expect(rateLimitHeaders(result)).toEqual({})
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
   it('fails open when the limiter throws', async () => {
     mockConsume.mockRejectedValue(new Error('db down'))
 
@@ -66,7 +82,7 @@ describe('rateLimitHeaders', () => {
 })
 
 describe('rateLimitedResponse', () => {
-  it('returns 429 with Retry-After and rate limit headers', () => {
+  it('returns 429 with Retry-After and rate limit headers', async () => {
     const response = rateLimitedResponse({
       allowed: false,
       limit: 10,
@@ -78,5 +94,9 @@ describe('rateLimitedResponse', () => {
     expect(response.status).toBe(429)
     expect(response.headers.get('Retry-After')).toBe('30')
     expect(response.headers.get('X-RateLimit-Limit')).toBe('10')
+    // Better Auth's client and UI read `message`; keep `error` for other callers.
+    const body = (await response.json()) as { error: string; message: string }
+    expect(body.message).toBe('Too many requests. Please try again later.')
+    expect(body.error).toBe(body.message)
   })
 })

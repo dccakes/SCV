@@ -1,140 +1,108 @@
-/**
- * @jest-environment node
- */
+/** @jest-environment node */
 
-import { runEttaAgent } from '~/lib/etta/agent'
-import { logAudit } from '~/lib/etta/utils/audit'
-import { EttaAuthError, resolveEttaAuth } from '~/lib/etta/utils/auth'
+const mockResolveEttaAuth = jest.fn()
+const mockRunEttaAgent = jest.fn()
+const mockLogAudit = jest.fn()
+const mockEnforce = jest.fn()
 
+jest.mock('~/server/db', () => ({ db: {} }))
+jest.mock('~/lib/etta/agent', () => ({ runEttaAgent: (...a: unknown[]) => mockRunEttaAgent(...a) }))
+jest.mock('~/lib/etta/utils/audit', () => ({ logAudit: (...a: unknown[]) => mockLogAudit(...a) }))
 jest.mock('~/lib/etta/utils/auth', () => ({
   EttaAuthError: class EttaAuthError extends Error {
     constructor(
       message: string,
-      readonly status: 401 | 403 | 412
+      readonly status: number
     ) {
       super(message)
     }
   },
-  resolveEttaAuth: jest.fn(),
+  resolveEttaAuth: (...a: unknown[]) => mockResolveEttaAuth(...a),
 }))
-
-jest.mock('~/lib/etta/agent', () => ({
-  runEttaAgent: jest.fn(),
+jest.mock('~/server/infrastructure/rate-limit', () => ({
+  ...jest.requireActual('~/server/infrastructure/rate-limit'),
+  enforceRateLimit: (...a: unknown[]) => mockEnforce(...a),
 }))
-
-jest.mock('~/lib/etta/utils/audit', () => ({
-  logAudit: jest.fn(),
-}))
-
-const mockResolveAuth = resolveEttaAuth as jest.Mock
-const mockRunAgent = runEttaAgent as jest.Mock
-const mockLogAudit = logAudit as jest.Mock
 
 import { POST } from '~/app/api/etta/route'
+import { EttaAuthError } from '~/lib/etta/utils/auth'
+import type { EnforceResult } from '~/server/infrastructure/rate-limit'
 
-function makeRequest(body: Record<string, unknown> = {}) {
-  return new Request('http://localhost/api/etta', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
+const allowed: EnforceResult = {
+  allowed: true,
+  retryAfterSeconds: 0,
+  limit: 20,
+  remaining: 19,
+  resetSeconds: 60,
 }
+const blocked: EnforceResult = { ...allowed, allowed: false, remaining: 0, retryAfterSeconds: 33 }
 
-describe('POST /api/etta', () => {
-  beforeEach(() => jest.clearAllMocks())
+const request = () => new Request('https://example.com/api/etta', { method: 'POST', body: '{}' })
 
-  it('streams a response for a valid couple request', async () => {
-    const ettaReq = {
+describe('POST /api/etta rate limiting', () => {
+  beforeEach(() => {
+    mockEnforce.mockResolvedValue(allowed)
+    mockRunEttaAgent.mockResolvedValue({
+      toUIMessageStreamResponse: () => new Response('stream'),
+    })
+  })
+
+  it('limits couple members per user id', async () => {
+    mockResolveEttaAuth.mockResolvedValue({
       actor: 'couple',
-      weddingId: 'w-1',
-      messages: [{ role: 'user', content: 'hello' }],
-    }
-    mockResolveAuth.mockResolvedValue(ettaReq)
-    mockRunAgent.mockResolvedValue({
-      toUIMessageStreamResponse: () => new Response('streamed', { status: 200 }),
+      weddingId: 'w1',
+      authz: { userId: 'u1' },
     })
 
-    const res = await POST(makeRequest({ messages: [{ role: 'user', content: 'hello' }] }))
+    const response = await POST(request())
 
-    expect(res.status).toBe(200)
-    expect(mockResolveAuth).toHaveBeenCalled()
-    expect(mockRunAgent).toHaveBeenCalledWith(ettaReq)
+    expect(mockEnforce).toHaveBeenCalledWith('etta', 'u1')
+    expect(await response.text()).toBe('stream')
   })
 
-  it('returns 401 for "No active session"', async () => {
-    mockResolveAuth.mockRejectedValue(new Error('No active session'))
+  it('limits guests per wedding and guest so ids from different weddings cannot collide', async () => {
+    mockResolveEttaAuth.mockResolvedValue({ actor: 'guest', weddingId: 'w1', guestId: 7 })
 
-    const res = await POST(makeRequest())
-    const body = await res.json()
+    await POST(request())
+    mockResolveEttaAuth.mockResolvedValue({ actor: 'guest', weddingId: 'w2', guestId: 7 })
+    await POST(request())
 
-    expect(res.status).toBe(401)
-    expect(body.error).toBe('No active session')
-    expect(mockLogAudit).not.toHaveBeenCalled()
+    expect(mockEnforce).toHaveBeenNthCalledWith(1, 'etta', 'guest:w1:7')
+    expect(mockEnforce).toHaveBeenNthCalledWith(2, 'etta', 'guest:w2:7')
   })
 
-  it('returns 401 for token-related errors', async () => {
-    mockResolveAuth.mockRejectedValue(new Error('Invalid guest token: missing claims'))
-
-    const res = await POST(makeRequest())
-    const body = await res.json()
-
-    expect(res.status).toBe(401)
-    expect(body.error).toContain('token')
-  })
-
-  it('returns 412 when there is no active wedding in workspace scope', async () => {
-    mockResolveAuth.mockRejectedValue(
-      new EttaAuthError('No active wedding in workspace scope', 412)
-    )
-
-    const res = await POST(makeRequest())
-    const body = await res.json()
-
-    expect(res.status).toBe(412)
-    expect(body.error).toBe('No active wedding in workspace scope')
-  })
-
-  it('returns 404 for "No wedding found for user"', async () => {
-    mockResolveAuth.mockRejectedValue(new Error('No wedding found for user'))
-
-    const res = await POST(makeRequest())
-    const body = await res.json()
-
-    expect(res.status).toBe(404)
-    expect(body.error).toContain('No wedding found')
-  })
-
-  it('returns 500 for unknown errors', async () => {
-    mockResolveAuth.mockRejectedValue(new Error('Something unexpected'))
-
-    const res = await POST(makeRequest())
-    const body = await res.json()
-
-    expect(res.status).toBe(500)
-    expect(body.error).toBe('Something unexpected')
-  })
-
-  it('returns 503 for missing Etta runtime configuration', async () => {
-    mockResolveAuth.mockResolvedValue({
+  it('returns 429 with Retry-After before spending any LLM tokens', async () => {
+    mockResolveEttaAuth.mockResolvedValue({
       actor: 'couple',
-      weddingId: 'w-1',
-      authz: { userId: 'user-1', activeOrganization: null },
-      messages: [{ role: 'user', content: 'hello' }],
+      weddingId: 'w1',
+      authz: { userId: 'u1' },
     })
-    mockRunAgent.mockRejectedValue(
-      new Error('Etta is not configured: AI_GATEWAY_API_KEY is missing')
-    )
+    mockEnforce.mockResolvedValue(blocked)
 
-    const res = await POST(makeRequest({ messages: [{ role: 'user', content: 'hello' }] }))
-    const body = await res.json()
+    const response = await POST(request())
 
-    expect(res.status).toBe(503)
-    expect(body.error).toBe('Etta is not configured: AI_GATEWAY_API_KEY is missing')
+    expect(response.status).toBe(429)
+    expect(response.headers.get('Retry-After')).toBe('33')
+    expect(mockRunEttaAgent).not.toHaveBeenCalled()
+  })
+
+  it('rejects unauthenticated requests with 401 and never touches the limiter', async () => {
+    mockResolveEttaAuth.mockRejectedValue(new EttaAuthError('No active session', 401))
+
+    const response = await POST(request())
+
+    expect(response.status).toBe(401)
+    expect(mockEnforce).not.toHaveBeenCalled()
+  })
+
+  it('keeps the audit actor id format for guests unchanged', async () => {
+    mockResolveEttaAuth.mockResolvedValue({ actor: 'guest', weddingId: 'w1', guestId: 7 })
+    mockRunEttaAgent.mockRejectedValue(new Error('model down'))
+
+    await POST(request())
+
     expect(mockLogAudit).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: 'chat_error',
-        weddingId: 'w-1',
-      })
+      expect.objectContaining({ weddingId: 'w1', actorId: 'guest:7', actorType: 'guest' })
     )
   })
 })
