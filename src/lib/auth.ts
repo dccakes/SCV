@@ -124,6 +124,8 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    // Users must verify their email (via OTP) before a session is created.
+    requireEmailVerification: true,
     sendResetPassword: async ({
       user,
       url,
@@ -133,6 +135,12 @@ export const auth = betterAuth({
     }) => {
       await sendResetPasswordEmail({ to: user.email, url, userName: user.name ?? undefined })
     },
+  },
+  emailVerification: {
+    // Routed through the emailOTP plugin (overrideDefaultEmailVerification).
+    // The plugin's own sendVerificationOnSignUp is ignored while that override is on.
+    sendOnSignUp: true,
+    sendOnSignIn: true,
   },
   socialProviders: {
     // Add social providers as needed

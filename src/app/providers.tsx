@@ -25,6 +25,7 @@ export function Providers({ children }: { children: ReactNode }) {
           }}
           Link={Link}
           emailOTP
+          emailVerification={{ otp: true }}
           organization={{
             customRoles: authUiCustomOrganizationRoles,
           }}

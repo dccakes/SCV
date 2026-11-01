@@ -63,4 +63,28 @@ test.describe('Authentication Flow', () => {
     await expect(page.getByLabel('Email')).toBeVisible()
     await expect(page.getByLabel('Password')).toBeVisible()
   })
+
+  test('should send new sign-ups to the email verification step', async ({ page }) => {
+    // Stub the API so no real account is created and no email is sent.
+    await page.route('**/api/auth/sign-up/email', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          token: null,
+          user: { id: 'stub', email: 'new-user@example.com', emailVerified: false },
+        }),
+      })
+    )
+
+    await page.goto('/auth/sign-up')
+    await page.waitForLoadState('networkidle')
+
+    await page.getByLabel('Name').fill('New User')
+    await page.getByLabel('Email').fill('new-user@example.com')
+    await page.getByLabel('Password').fill('a-strong-password-123')
+    await page.getByRole('button', { name: 'Create an account' }).click()
+
+    await expect(page).toHaveURL(/\/auth\/email-verification\?email=new-user%40example\.com$/)
+  })
 })
