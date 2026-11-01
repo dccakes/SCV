@@ -9,6 +9,7 @@ jest.mock('~/server/authz/permission-checker', () => ({ requirePermission: jest.
 const mockEnforce = jest.fn()
 jest.mock('~/server/infrastructure/rate-limit', () => ({
   ...jest.requireActual('~/server/infrastructure/rate-limit/client-ip'),
+  RateLimitError: jest.requireActual('~/server/infrastructure/rate-limit/enforce').RateLimitError,
   enforceRateLimit: (...args: unknown[]) => mockEnforce(...args),
 }))
 

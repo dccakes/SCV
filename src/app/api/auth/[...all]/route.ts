@@ -6,6 +6,7 @@ import {
   getClientIp,
   type RateLimitPolicy,
   rateLimitedResponse,
+  rateLimitHeaders,
 } from '~/server/infrastructure/rate-limit'
 
 const handlers = toNextJsHandler(auth.handler)
@@ -37,6 +38,7 @@ const AUTH_PREFIX = '/api/auth'
 
 export async function POST(req: Request): Promise<Response> {
   const ip = getClientIp(req.headers)
+  let limitHeaders: Record<string, string> = {}
 
   // No IP (local dev without a proxy): skip rather than share one bucket across everyone.
   if (ip) {
@@ -44,11 +46,22 @@ export async function POST(req: Request): Promise<Response> {
     const policy: RateLimitPolicy = SENSITIVE_AUTH_PATHS.has(authPath)
       ? 'authSensitive'
       : 'authDefault'
-    const { allowed, retryAfterSeconds } = await enforceRateLimit(policy, `${authPath}:${ip}`)
-    if (!allowed) {
-      return rateLimitedResponse(retryAfterSeconds)
+    const result = await enforceRateLimit(policy, `${authPath}:${ip}`)
+    if (!result.allowed) {
+      return rateLimitedResponse(result)
     }
+    limitHeaders = rateLimitHeaders(result)
   }
 
-  return handlers.POST(req)
+  const response = await handlers.POST(req)
+  if (Object.keys(limitHeaders).length === 0) return response
+
+  // Rebuild rather than mutate: handler responses may have immutable headers.
+  const headers = new Headers(response.headers)
+  for (const [name, value] of Object.entries(limitHeaders)) headers.set(name, value)
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  })
 }

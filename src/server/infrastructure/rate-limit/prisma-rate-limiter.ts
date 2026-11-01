@@ -19,7 +19,13 @@ export interface RateLimiterOptions {
 
 export interface RateLimitResult {
   allowed: boolean
-  /** Milliseconds until the current window ends. Only meaningful when `allowed` is false. */
+  /** Maximum hits per window. */
+  limit: number
+  /** Hits left in the current window (0 when blocked). */
+  remaining: number
+  /** Milliseconds until the current window ends. */
+  resetMs: number
+  /** Milliseconds the caller should wait before retrying. 0 when allowed. */
   retryAfterMs: number
 }
 
@@ -47,7 +53,7 @@ export class PrismaRateLimiter {
         create: { id: randomUUID(), key, count: 1, windowStart: now },
         update: {},
       })
-      return { allowed: true, retryAfterMs: 0 }
+      return { allowed: true, limit, remaining: limit - 1, resetMs: windowMs, retryAfterMs: 0 }
     }
 
     // Window expired — reset atomically to a new window starting now.
@@ -56,7 +62,7 @@ export class PrismaRateLimiter {
         where: { key },
         data: { count: 1, windowStart: now },
       })
-      return { allowed: true, retryAfterMs: 0 }
+      return { allowed: true, limit, remaining: limit - 1, resetMs: windowMs, retryAfterMs: 0 }
     }
 
     // Live window — atomically increment and compare the returned count.
@@ -65,7 +71,13 @@ export class PrismaRateLimiter {
       data: { count: { increment: 1 } },
     })
     const allowed = updated.count <= limit
-    const retryAfterMs = Math.max(0, existing.windowStart.getTime() + windowMs - now.getTime())
-    return { allowed, retryAfterMs: allowed ? 0 : retryAfterMs }
+    const resetMs = Math.max(0, existing.windowStart.getTime() + windowMs - now.getTime())
+    return {
+      allowed,
+      limit,
+      remaining: Math.max(0, limit - updated.count),
+      resetMs,
+      retryAfterMs: allowed ? 0 : resetMs,
+    }
   }
 }

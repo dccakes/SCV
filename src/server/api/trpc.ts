@@ -19,7 +19,7 @@ import { extractAnalyticsContext } from '~/server/infrastructure/analytics/analy
 import { captureServerEvent } from '~/server/infrastructure/analytics/capture'
 import { sanitizePayload } from '~/server/infrastructure/analytics/payload'
 import { withProcedureSpan } from '~/server/infrastructure/observability/trpc-tracing'
-import { enforceRateLimit, getClientIp } from '~/server/infrastructure/rate-limit'
+import { enforceRateLimit, getClientIp, RateLimitError } from '~/server/infrastructure/rate-limit'
 
 /**
  * 1. CONTEXT
@@ -181,10 +181,8 @@ const publicRateLimitMiddleware = t.middleware(async ({ ctx, path, next }) => {
       const policy = STRICT_PUBLIC_PROCEDURES.has(path) ? 'publicTrpcStrict' : 'publicTrpc'
       const { allowed, retryAfterSeconds } = await enforceRateLimit(policy, `${path}:${ip}`)
       if (!allowed) {
-        throw new TRPCError({
-          code: 'TOO_MANY_REQUESTS',
-          message: `Too many requests. Try again in ${retryAfterSeconds} seconds.`,
-        })
+        const cause = new RateLimitError(retryAfterSeconds)
+        throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: cause.message, cause })
       }
     }
   }

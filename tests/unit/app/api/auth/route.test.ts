@@ -10,8 +10,13 @@ jest.mock('better-auth/next-js', () => ({
 jest.mock('~/server/infrastructure/rate-limit', () => ({
   ...jest.requireActual('~/server/infrastructure/rate-limit/client-ip'),
   enforceRateLimit: (...args: unknown[]) => mockEnforce(...args),
-  rateLimitedResponse: (seconds: number) =>
-    new Response(null, { status: 429, headers: { 'Retry-After': String(seconds) } }),
+  rateLimitedResponse: (result: { retryAfterSeconds: number }) =>
+    new Response(null, {
+      status: 429,
+      headers: { 'Retry-After': String(result.retryAfterSeconds) },
+    }),
+  rateLimitHeaders: (result: { limit: number | null; remaining: number }) =>
+    result.limit === null ? {} : { 'X-RateLimit-Remaining': String(result.remaining) },
 }))
 
 import { POST } from '~/app/api/auth/[...all]/route'
@@ -22,7 +27,7 @@ const request = (path: string, headers: Record<string, string> = { 'x-real-ip': 
 describe('POST /api/auth/*', () => {
   beforeEach(() => {
     mockPost.mockResolvedValue(new Response('ok'))
-    mockEnforce.mockResolvedValue({ allowed: true, retryAfterSeconds: 0 })
+    mockEnforce.mockResolvedValue({ allowed: true, retryAfterSeconds: 0, limit: 10, remaining: 9 })
   })
 
   it('applies the strict policy to sign-up', async () => {
@@ -30,6 +35,13 @@ describe('POST /api/auth/*', () => {
 
     expect(mockEnforce).toHaveBeenCalledWith('authSensitive', '/sign-up/email:9.9.9.9')
     expect(mockPost).toHaveBeenCalled()
+  })
+
+  it('adds rate limit headers to allowed responses', async () => {
+    const response = await POST(request('/sign-in/email'))
+
+    expect(response.headers.get('X-RateLimit-Remaining')).toBe('9')
+    expect(await response.text()).toBe('ok')
   })
 
   it('applies the default policy to other endpoints', async () => {

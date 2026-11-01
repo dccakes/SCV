@@ -7,12 +7,17 @@ import createNextIntlPlugin from 'next-intl/plugin'
 // biome-ignore lint/style/noRestrictedImports: Next.js config requires relative import
 await import('./src/env.js')
 
+// biome-ignore lint/style/noRestrictedImports: Next.js config requires relative import
+import { buildSecurityHeaders } from './src/security-headers.js'
+
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
 
 /** @type {import("next").NextConfig} */
 const config = {
   // Enable standalone output for Docker deployments
   output: 'standalone',
+  // Don't advertise the framework in an X-Powered-By header.
+  poweredByHeader: false,
   typescript: {
     // Still type check during builds
     ignoreBuildErrors: false,
@@ -38,6 +43,14 @@ const config = {
         hostname: '*.public.blob.vercel-storage.com',
       },
     ],
+  },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: buildSecurityHeaders({ isDev: process.env.NODE_ENV !== 'production' }),
+      },
+    ]
   },
   async rewrites() {
     return [

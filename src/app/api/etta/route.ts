@@ -38,9 +38,9 @@ export async function POST(req: Request) {
 
     // Limit per authenticated identity (couple user or guest), not IP: each call costs LLM spend.
     const identity = ettaReq.authz?.userId ?? `guest:${ettaReq.weddingId}:${ettaReq.guestId}`
-    const { allowed, retryAfterSeconds } = await enforceRateLimit('etta', identity)
-    if (!allowed) {
-      return rateLimitedResponse(retryAfterSeconds)
+    const limit = await enforceRateLimit('etta', identity)
+    if (!limit.allowed) {
+      return rateLimitedResponse(limit)
     }
 
     const result = await runEttaAgent(ettaReq)

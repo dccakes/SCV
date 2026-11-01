@@ -150,8 +150,14 @@ describe('PrismaRateLimiter', () => {
       const { db } = buildMockDb()
       const limiter = new PrismaRateLimiter(db, { limit: 2, windowMs: 60_000 })
 
-      expect(await limiter.consume('user:1')).toEqual({ allowed: true, retryAfterMs: 0 })
-      expect(await limiter.consume('user:1')).toEqual({ allowed: true, retryAfterMs: 0 })
+      expect(await limiter.consume('user:1')).toEqual({
+        allowed: true,
+        limit: 2,
+        remaining: 1,
+        resetMs: 60_000,
+        retryAfterMs: 0,
+      })
+      expect(await limiter.consume('user:1')).toMatchObject({ allowed: true, remaining: 0 })
     })
 
     it('reports the time left in the window once blocked', async () => {
@@ -162,7 +168,13 @@ describe('PrismaRateLimiter', () => {
       jest.advanceTimersByTime(15_000)
       const result = await limiter.consume('user:1')
 
-      expect(result).toEqual({ allowed: false, retryAfterMs: 45_000 })
+      expect(result).toEqual({
+        allowed: false,
+        limit: 1,
+        remaining: 0,
+        resetMs: 45_000,
+        retryAfterMs: 45_000,
+      })
     })
   })
 })

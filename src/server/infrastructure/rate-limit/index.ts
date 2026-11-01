@@ -4,10 +4,13 @@
 
 export { getClientIp } from '~/server/infrastructure/rate-limit/client-ip'
 export {
+  type EnforceResult,
   enforceRateLimit,
   RATE_LIMIT_POLICIES,
+  RateLimitError,
   type RateLimitPolicy,
   rateLimitedResponse,
+  rateLimitHeaders,
 } from '~/server/infrastructure/rate-limit/enforce'
 export {
   PrismaRateLimiter,

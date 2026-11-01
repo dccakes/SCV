@@ -9,6 +9,7 @@ import { appRouter } from '~/server/api/root'
 import { createTRPCContext } from '~/server/api/trpc'
 import { captureServerException } from '~/server/infrastructure/observability/capture-exception'
 import { getProcedureSpanContext } from '~/server/infrastructure/observability/trpc-tracing'
+import { RateLimitError } from '~/server/infrastructure/rate-limit'
 
 /**
  * This wraps the `createTRPCContext` helper and provides the required context for the tRPC API when
@@ -26,6 +27,13 @@ const handler = (req: NextRequest) =>
     req,
     router: appRouter,
     createContext: () => createContext(req),
+    // tRPC only sets a status code for TOO_MANY_REQUESTS; add Retry-After so clients can back off.
+    responseMeta: ({ errors }) => {
+      const limited = errors.find((error) => error.cause instanceof RateLimitError)
+      const retryAfter =
+        limited?.cause instanceof RateLimitError ? limited.cause.retryAfterSeconds : 0
+      return retryAfter > 0 ? { headers: { 'Retry-After': String(retryAfter) } } : {}
+    },
     onError: ({ path, error, type, ctx }) => {
       const status = getHTTPStatusCodeFromError(error)
       const attributes = {

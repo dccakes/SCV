@@ -72,7 +72,9 @@ describe('POSTHOG_PROXY_PATH', () => {
       require('~/lib/observability/config') as typeof import('~/lib/observability/config')
     const nextConfig = readFileSync(join(process.cwd(), 'next.config.js'), 'utf8')
 
-    const sources = [...nextConfig.matchAll(/source: '([^']+)'/g)].map((match) => match[1])
+    // Only look inside rewrites(); headers() has its own catch-all source.
+    const rewritesBlock = nextConfig.slice(nextConfig.indexOf('async rewrites()'))
+    const sources = [...rewritesBlock.matchAll(/source: '([^']+)'/g)].map((match) => match[1])
     expect(sources).toEqual([
       `${POSTHOG_PROXY_PATH}/static/:path*`,
       `${POSTHOG_PROXY_PATH}/array/:path*`,
