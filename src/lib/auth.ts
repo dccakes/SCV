@@ -141,6 +141,8 @@ export const auth = betterAuth({
     // The plugin's own sendVerificationOnSignUp is ignored while that override is on.
     sendOnSignUp: true,
     sendOnSignIn: true,
+    // The OTP proves email ownership, so create the session right after it is verified.
+    autoSignInAfterVerification: true,
   },
   socialProviders: {
     // Add social providers as needed
