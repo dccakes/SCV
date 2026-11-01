@@ -17,6 +17,12 @@ export interface RateLimiterOptions {
   windowMs: number
 }
 
+export interface RateLimitResult {
+  allowed: boolean
+  /** Milliseconds until the current window ends. Only meaningful when `allowed` is false. */
+  retryAfterMs: number
+}
+
 export class PrismaRateLimiter {
   constructor(
     private readonly db: PrismaClient,
@@ -25,6 +31,12 @@ export class PrismaRateLimiter {
 
   /** Returns true if the request is allowed, false if the key is over limit. */
   async check(key: string): Promise<boolean> {
+    return (await this.consume(key)).allowed
+  }
+
+  /** Records a hit for the key and reports whether it is allowed plus when the window resets. */
+  async consume(key: string): Promise<RateLimitResult> {
+    const { windowMs, limit } = this.opts
     const now = new Date()
     const existing = await this.db.rateLimitBucket.findUnique({ where: { key } })
 
@@ -35,16 +47,16 @@ export class PrismaRateLimiter {
         create: { id: randomUUID(), key, count: 1, windowStart: now },
         update: {},
       })
-      return true
+      return { allowed: true, retryAfterMs: 0 }
     }
 
     // Window expired — reset atomically to a new window starting now.
-    if (now.getTime() - existing.windowStart.getTime() > this.opts.windowMs) {
+    if (now.getTime() - existing.windowStart.getTime() > windowMs) {
       await this.db.rateLimitBucket.update({
         where: { key },
         data: { count: 1, windowStart: now },
       })
-      return true
+      return { allowed: true, retryAfterMs: 0 }
     }
 
     // Live window — atomically increment and compare the returned count.
@@ -52,6 +64,8 @@ export class PrismaRateLimiter {
       where: { key },
       data: { count: { increment: 1 } },
     })
-    return updated.count <= this.opts.limit
+    const allowed = updated.count <= limit
+    const retryAfterMs = Math.max(0, existing.windowStart.getTime() + windowMs - now.getTime())
+    return { allowed, retryAfterMs: allowed ? 0 : retryAfterMs }
   }
 }

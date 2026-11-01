@@ -9,6 +9,7 @@ import { runEttaAgent } from '~/lib/etta/agent'
 import { logAudit } from '~/lib/etta/utils/audit'
 import { EttaAuthError, resolveEttaAuth } from '~/lib/etta/utils/auth'
 import { logger } from '~/lib/observability/logger'
+import { enforceRateLimit, rateLimitedResponse } from '~/server/infrastructure/rate-limit'
 
 const inferAuthStatus = (error: unknown, message: string): number => {
   if (error instanceof EttaAuthError) {
@@ -34,6 +35,14 @@ export async function POST(req: Request) {
 
   try {
     ettaReq = await resolveEttaAuth(req)
+
+    // Limit per authenticated identity (couple user or guest), not IP: each call costs LLM spend.
+    const identity = ettaReq.authz?.userId ?? `guest:${ettaReq.weddingId}:${ettaReq.guestId}`
+    const { allowed, retryAfterSeconds } = await enforceRateLimit('etta', identity)
+    if (!allowed) {
+      return rateLimitedResponse(retryAfterSeconds)
+    }
+
     const result = await runEttaAgent(ettaReq)
     return result.toUIMessageStreamResponse()
   } catch (error) {
@@ -44,7 +53,7 @@ export async function POST(req: Request) {
     if (ettaReq?.weddingId) {
       await logAudit({
         weddingId: ettaReq.weddingId,
-        actorId: ettaReq.authz?.userId ?? `guest:${ettaReq.guestId}`,
+        actorId: ettaReq.authz?.userId ?? `guest:${ettaReq.weddingId}:${ettaReq.guestId}`,
         actorType: ettaReq.actor === 'guest' ? 'guest' : 'couple',
         action: 'chat_error',
         resourceType: 'conversation',

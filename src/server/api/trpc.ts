@@ -19,6 +19,7 @@ import { extractAnalyticsContext } from '~/server/infrastructure/analytics/analy
 import { captureServerEvent } from '~/server/infrastructure/analytics/capture'
 import { sanitizePayload } from '~/server/infrastructure/analytics/payload'
 import { withProcedureSpan } from '~/server/infrastructure/observability/trpc-tracing'
+import { enforceRateLimit, getClientIp } from '~/server/infrastructure/rate-limit'
 
 /**
  * 1. CONTEXT
@@ -165,7 +166,32 @@ const baseProcedure = t.procedure.use(tracingMiddleware).use(analyticsMiddleware
  * guarantee that a user querying is authorized, but you can still access user session data if they
  * are logged in.
  */
-export const publicProcedure = baseProcedure
+/** Public procedures guarding a guessable secret get a much stricter limit. */
+const STRICT_PUBLIC_PROCEDURES = new Set(['website.verifyWebsitePassword'])
+
+/**
+ * Per-IP rate limit for unauthenticated callers. Signed-in users are skipped, since several
+ * public procedures (e.g. `user.get`) are polled by the logged-in app. Callers without
+ * headers or an IP (unit tests, local dev without a proxy) are skipped too.
+ */
+const publicRateLimitMiddleware = t.middleware(async ({ ctx, path, next }) => {
+  if (!ctx.auth?.userId) {
+    const ip = getClientIp(ctx.headers)
+    if (ip) {
+      const policy = STRICT_PUBLIC_PROCEDURES.has(path) ? 'publicTrpcStrict' : 'publicTrpc'
+      const { allowed, retryAfterSeconds } = await enforceRateLimit(policy, `${path}:${ip}`)
+      if (!allowed) {
+        throw new TRPCError({
+          code: 'TOO_MANY_REQUESTS',
+          message: `Too many requests. Try again in ${retryAfterSeconds} seconds.`,
+        })
+      }
+    }
+  }
+  return next()
+})
+
+export const publicProcedure = baseProcedure.use(publicRateLimitMiddleware)
 
 /**
  * Protected (authenticated) procedure

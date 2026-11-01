@@ -3,6 +3,7 @@ import { headers } from 'next/headers'
 import Link from 'next/link'
 
 import { auth } from '~/lib/auth'
+import { areSignupsAllowed } from '~/lib/signups'
 
 type AcceptInvitationPageProps = {
   searchParams?: Promise<{
@@ -68,11 +69,16 @@ export default async function AcceptInvitationPage({ searchParams }: AcceptInvit
   })
 
   if (!session) {
+    const signupsAllowed = areSignupsAllowed()
     return (
       <Shell>
         <Header
           title='You were invited to join a wedding workspace'
-          description='Sign in or create an account to continue with this invitation. Your created account email must match the invite email. We will bring you right back to accept it.'
+          description={
+            signupsAllowed
+              ? 'Sign in or create an account to continue with this invitation. Your created account email must match the invite email. We will bring you right back to accept it.'
+              : 'Sign in to continue with this invitation. New accounts are not being accepted right now. We will bring you right back to accept it.'
+          }
         />
 
         <div className='space-y-3'>
@@ -82,12 +88,14 @@ export default async function AcceptInvitationPage({ searchParams }: AcceptInvit
           >
             Sign in to continue
           </Link>
-          <Link
-            href={getAuthRedirectHref('/auth/sign-up', invitationId)}
-            className='inline-flex w-full items-center justify-center rounded-md border border-border bg-card px-4 py-2.5 font-medium text-card-foreground text-sm hover:bg-muted/40'
-          >
-            Create account to continue
-          </Link>
+          {signupsAllowed ? (
+            <Link
+              href={getAuthRedirectHref('/auth/sign-up', invitationId)}
+              className='inline-flex w-full items-center justify-center rounded-md border border-border bg-card px-4 py-2.5 font-medium text-card-foreground text-sm hover:bg-muted/40'
+            >
+              Create account to continue
+            </Link>
+          ) : null}
         </div>
       </Shell>
     )

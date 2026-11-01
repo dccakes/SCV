@@ -10,7 +10,14 @@ import { PostHogProvider } from '~/lib/analytics/posthog-client'
 import { authClient } from '~/lib/auth-client'
 import { authUiCustomOrganizationRoles } from '~/lib/organization-roles'
 
-export function Providers({ children }: { children: ReactNode }) {
+export function Providers({
+  children,
+  signupsEnabled = true,
+}: {
+  children: ReactNode
+  /** Server-resolved ALLOW_SIGNUPS flag; hides sign-up UI when false. */
+  signupsEnabled?: boolean
+}) {
   const router = useRouter()
 
   return (
@@ -25,6 +32,7 @@ export function Providers({ children }: { children: ReactNode }) {
           }}
           Link={Link}
           emailOTP
+          signUp={signupsEnabled}
           organization={{
             customRoles: authUiCustomOrganizationRoles,
           }}

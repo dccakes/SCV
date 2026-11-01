@@ -58,4 +58,14 @@ describe('Providers', () => {
       })
     )
   })
+
+  it('hides sign up in the auth UI when signups are disabled', () => {
+    render(
+      <Providers signupsEnabled={false}>
+        <div>Child content</div>
+      </Providers>
+    )
+
+    expect(mockAuthUIProvider).toHaveBeenCalledWith(expect.objectContaining({ signUp: false }))
+  })
 })

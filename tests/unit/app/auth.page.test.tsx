@@ -2,6 +2,19 @@ import { render, screen } from '@testing-library/react'
 
 import AuthPage from '~/app/auth/[path]/page'
 
+const mockRedirect = jest.fn()
+jest.mock('next/navigation', () => ({
+  redirect: (url: string) => mockRedirect(url),
+}))
+
+jest.mock('~/env', () => ({
+  env: {
+    get ALLOW_SIGNUPS() {
+      return process.env.ALLOW_SIGNUPS
+    },
+  },
+}))
+
 const mockAuthView = jest.fn(({ path }: { path: string }) => (
   <div data-testid='auth-view'>{path}</div>
 ))
@@ -34,5 +47,15 @@ describe('AuthPage', () => {
 
     expect(mockAuthView).toHaveBeenCalledWith({ path: 'sign-up' })
     expect(screen.queryByText('Demo Accounts')).not.toBeInTheDocument()
+  })
+
+  it('redirects /auth/sign-up to sign-in when signups are disabled', async () => {
+    process.env.ALLOW_SIGNUPS = 'false'
+    try {
+      await AuthPage({ params: Promise.resolve({ path: 'sign-up' }) })
+      expect(mockRedirect).toHaveBeenCalledWith('/auth/sign-in')
+    } finally {
+      delete process.env.ALLOW_SIGNUPS
+    }
   })
 })

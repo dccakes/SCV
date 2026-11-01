@@ -1,7 +1,7 @@
 // better-auth 1.5.6: OrganizationPlugin / StrictEndpoint no longer structurally satisfies
 // BetterAuthPlugin due to a Zod 4 migration type regression. The cast is safe —
 // plugins satisfy the interface at runtime. Track: https://github.com/better-auth/better-auth/issues/5637
-import { type BetterAuthPlugin, betterAuth } from 'better-auth'
+import { APIError, type BetterAuthPlugin, betterAuth } from 'better-auth'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { nextCookies } from 'better-auth/next-js'
 import { emailOTP, organization } from 'better-auth/plugins'
@@ -10,9 +10,12 @@ import { env } from '~/env'
 import { authOrganizationSchema } from '~/lib/auth-organization-schema'
 import { ac, organizationRoles } from '~/lib/auth-permissions'
 import { sendOrganizationInvitationEmail, sendOtpEmail, sendResetPasswordEmail } from '~/lib/email'
+import { areSignupsAllowed, SIGNUPS_DISABLED_MESSAGE } from '~/lib/signups'
 import { db } from '~/server/db'
 
 export const authOrganizationRoles = organizationRoles
+
+const signupsDisabled = !areSignupsAllowed()
 
 const appBaseUrl = env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${env.PORT ?? '3000'}`
 const localTrustedHostnames = new Set(['127.0.0.1', '::1', 'localhost'])
@@ -122,8 +125,23 @@ export const auth = betterAuth({
   database: prismaAdapter(db, {
     provider: 'postgresql',
   }),
+  // ALLOW_SIGNUPS=false: the per-method flags below give clean errors on the known entry
+  // points, and the databaseHooks guard is the backstop that blocks user creation from any
+  // path (current or future plugins, social providers, invitation flows).
+  databaseHooks: {
+    user: {
+      create: {
+        before: async () => {
+          if (!areSignupsAllowed()) {
+            throw new APIError('FORBIDDEN', { message: SIGNUPS_DISABLED_MESSAGE })
+          }
+        },
+      },
+    },
+  },
   emailAndPassword: {
     enabled: true,
+    disableSignUp: signupsDisabled,
     sendResetPassword: async ({
       user,
       url,
@@ -157,6 +175,7 @@ export const auth = betterAuth({
       otpLength: 6,
       expiresIn: 600,
       overrideDefaultEmailVerification: true,
+      disableSignUp: signupsDisabled,
     }) as unknown as BetterAuthPlugin,
   ],
 })

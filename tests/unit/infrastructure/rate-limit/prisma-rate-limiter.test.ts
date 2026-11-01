@@ -144,4 +144,25 @@ describe('PrismaRateLimiter', () => {
     expect(await limiter.check('a')).toBe(false)
     expect(await limiter.check('b')).toBe(false)
   })
+
+  describe('consume', () => {
+    it('reports no wait while under the limit', async () => {
+      const { db } = buildMockDb()
+      const limiter = new PrismaRateLimiter(db, { limit: 2, windowMs: 60_000 })
+
+      expect(await limiter.consume('user:1')).toEqual({ allowed: true, retryAfterMs: 0 })
+      expect(await limiter.consume('user:1')).toEqual({ allowed: true, retryAfterMs: 0 })
+    })
+
+    it('reports the time left in the window once blocked', async () => {
+      const { db } = buildMockDb()
+      const limiter = new PrismaRateLimiter(db, { limit: 1, windowMs: 60_000 })
+
+      await limiter.consume('user:1')
+      jest.advanceTimersByTime(15_000)
+      const result = await limiter.consume('user:1')
+
+      expect(result).toEqual({ allowed: false, retryAfterMs: 45_000 })
+    })
+  })
 })

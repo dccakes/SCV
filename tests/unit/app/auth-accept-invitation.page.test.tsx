@@ -23,6 +23,14 @@ jest.mock('~/lib/auth', () => ({
   },
 }))
 
+jest.mock('~/env', () => ({
+  env: {
+    get ALLOW_SIGNUPS() {
+      return process.env.ALLOW_SIGNUPS
+    },
+  },
+}))
+
 const mockGetSession = auth.api.getSession as jest.Mock
 
 describe('AcceptInvitationPage', () => {
@@ -82,5 +90,22 @@ describe('AcceptInvitationPage', () => {
       'href',
       '/auth/sign-in'
     )
+  })
+
+  it('hides the create account link when signups are disabled', async () => {
+    process.env.ALLOW_SIGNUPS = 'false'
+    mockGetSession.mockResolvedValue(null)
+
+    try {
+      const page = await AcceptInvitationPage({
+        searchParams: Promise.resolve({ invitationId: 'inv_123' }),
+      })
+      render(page)
+
+      expect(screen.getByRole('link', { name: 'Sign in to continue' })).toBeInTheDocument()
+      expect(screen.queryByRole('link', { name: 'Create account to continue' })).toBeNull()
+    } finally {
+      delete process.env.ALLOW_SIGNUPS
+    }
   })
 })

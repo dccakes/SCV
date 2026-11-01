@@ -1,7 +1,15 @@
 import { AuthView } from '@daveyplate/better-auth-ui'
+import { redirect } from 'next/navigation'
+
+import { areSignupsAllowed } from '~/lib/signups'
 
 export default async function AuthPage({ params }: { params: Promise<{ path: string }> }) {
   const { path } = await params
+
+  if (path === 'sign-up' && !areSignupsAllowed()) {
+    redirect('/auth/sign-in')
+  }
+
   const isSignInPath = path === 'sign-in'
   const showDemoAccounts = process.env.NODE_ENV !== 'production'
 
