@@ -41,7 +41,8 @@ export default async function AuthPage({
         {showSignupsClosedNotice ? (
           <p
             role='status'
-            className='rounded-2xl border border-border bg-card p-4 text-card-foreground text-sm shadow-sm'
+            // max-w-sm matches the width of the AuthView card below it, which is left-aligned.
+            className='w-full max-w-sm rounded-2xl border border-border bg-card p-4 text-card-foreground text-sm shadow-sm'
           >
             New accounts are not being accepted right now. If you already have an account, sign in
             below.
