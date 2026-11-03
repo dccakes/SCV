@@ -282,6 +282,17 @@ model Verification {
   @@unique([identifier, value])
 }
 
+// Better Auth rate limit storage (rateLimit.storage = 'database'). The model name must stay
+// `RateLimit` so the Prisma adapter resolves it; lastRequest is epoch milliseconds.
+model RateLimit {
+  id          String @id
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+
+  @@map("rate_limit")
+}
+
 // Core: Household groups guests together (families, couples, singles)
 model Household {
   id        String  @id @default(uuid())
