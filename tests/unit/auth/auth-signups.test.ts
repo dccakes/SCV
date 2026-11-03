@@ -84,6 +84,17 @@ describe('auth with ALLOW_SIGNUPS=false', () => {
   })
 })
 
+describe('auth with a malformed ALLOW_SIGNUPS (env validation skipped)', () => {
+  it.each(['0', 'no', 'False', ' false '])('fails closed for %j', async (value) => {
+    const config = await loadConfig(value)
+
+    expect(config.emailAndPassword.disableSignUp).toBe(true)
+    await expect(
+      config.databaseHooks.user.create.before({ email: 'new@example.com' })
+    ).rejects.toMatchObject({ status: 'FORBIDDEN' })
+  })
+})
+
 describe('blocked sign up logging', () => {
   it('warns operators without logging any email address', async () => {
     const config = await loadConfig('false')

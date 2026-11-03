@@ -77,6 +77,10 @@ jest.mock('~/components/website/rsvp-confirmation', () => {
   }
 })
 
+jest.mock('~/components/website/forms/submit-busy-message', () => ({
+  SubmitBusyMessage: () => <div data-testid='submit-busy-message'>busy</div>,
+}))
+
 jest.mock('~/trpc/react', () => ({
   api: {
     website: {
@@ -248,5 +252,58 @@ describe('Main RSVP layout', () => {
     expect(confirmSpy).toHaveBeenCalledWith('Are you sure? Your RSVP has not been sent.')
 
     confirmSpy.mockRestore()
+  })
+
+  describe('when the RSVP submit fails', () => {
+    const renderForm = () =>
+      render(
+        <MainRsvpForm
+          weddingData={{ events: [], website: { generalQuestions: [] } } as never}
+          basePath='/wedding'
+        />
+      )
+
+    it('shows the translated busy message, not the server English text, when rate limited', () => {
+      renderForm()
+
+      act(() => {
+        capturedOnError?.({
+          message: 'Too many requests. Please try again later.',
+          data: { code: 'TOO_MANY_REQUESTS' },
+        })
+      })
+
+      expect(screen.getByTestId('submit-busy-message')).toBeInTheDocument()
+      expect(screen.queryByText(/too many requests/i)).not.toBeInTheDocument()
+    })
+
+    it('still shows the error text for any other failure', () => {
+      renderForm()
+
+      act(() => {
+        capturedOnError?.({
+          message: 'RSVP service unavailable',
+          data: { code: 'INTERNAL_SERVER_ERROR' },
+        })
+      })
+
+      expect(screen.getByRole('alert')).toHaveTextContent('RSVP service unavailable')
+      expect(screen.queryByTestId('submit-busy-message')).not.toBeInTheDocument()
+    })
+
+    it('clears the busy message once a later submit succeeds', () => {
+      renderForm()
+
+      act(() => {
+        capturedOnError?.({ message: 'x', data: { code: 'TOO_MANY_REQUESTS' } })
+      })
+      expect(screen.getByTestId('submit-busy-message')).toBeInTheDocument()
+
+      act(() => {
+        capturedOnSuccess?.()
+      })
+
+      expect(screen.queryByTestId('submit-busy-message')).not.toBeInTheDocument()
+    })
   })
 })

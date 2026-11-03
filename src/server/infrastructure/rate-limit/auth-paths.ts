@@ -41,9 +41,18 @@ export interface AuthRateLimitTarget {
   key: string
 }
 
+/** Percent-decodes so an encoded variant (/sign-in/%65mail) cannot dodge the strict policy. */
+function safeDecode(value: string): string {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
+  }
+}
+
 export function getAuthRateLimitTarget(pathname: string): AuthRateLimitTarget {
   const authPath = pathname.startsWith(AUTH_PREFIX) ? pathname.slice(AUTH_PREFIX.length) : pathname
-  const normalized = authPath.toLowerCase()
+  const normalized = safeDecode(authPath).toLowerCase()
 
   if (SENSITIVE_AUTH_PATHS.has(normalized)) {
     return { policy: 'authSensitive', key: normalized }

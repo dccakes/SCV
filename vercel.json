@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/purge-rate-limits",
-      "schedule": "17 * * * *"
+      "schedule": "17 4 * * *"
     }
   ]
 }

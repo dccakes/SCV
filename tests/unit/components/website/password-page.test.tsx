@@ -45,4 +45,33 @@ describe('PasswordPage', () => {
 
     expect(screen.queryByText(/lots of guests are unlocking at once/i)).not.toBeInTheDocument()
   })
+
+  it('shows only the busy message, never both, after a wrong password then a blocked retry', async () => {
+    const verify = jest.fn().mockResolvedValueOnce(false).mockRejectedValueOnce(new Error('x'))
+    render(<PasswordPage verifyWebsitePassword={verify} />)
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'nope' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Unlock Site' }))
+    expect(await screen.findByText(/incorrect password/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Unlock Site' }))
+
+    expect(await screen.findByText(/lots of guests are unlocking at once/i)).toBeInTheDocument()
+    expect(screen.queryByText(/incorrect password/i)).not.toBeInTheDocument()
+  })
+
+  it('tells the guest roughly how long to wait', async () => {
+    submitPassword(jest.fn().mockRejectedValue(new Error('Too many requests')))
+
+    expect(await screen.findByText(/about a minute/i)).toBeInTheDocument()
+  })
+
+  it('points assistive technology at the busy message, not only at the wrong password one', async () => {
+    submitPassword(jest.fn().mockRejectedValue(new Error('Too many requests')))
+    await screen.findByText(/lots of guests are unlocking at once/i)
+
+    expect(screen.getByLabelText('Password')).toHaveAttribute(
+      'aria-describedby',
+      'website-password-error'
+    )
+  })
 })

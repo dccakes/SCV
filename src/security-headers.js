@@ -15,6 +15,8 @@
  *   host is listed.
  * - Vercel preview toolbar/comments (vercel.live) are not allowed and will be blocked on preview
  *   deployments.
+ * - Embeds (YouTube, Vimeo, Maps iframes) on a wedding website would be blocked by frame-src.
+ *   TODO(review-quality): add frame-src/media-src entries if couples should be able to embed media.
  */
 
 /**
@@ -45,7 +47,8 @@ export function buildContentSecurityPolicy({ isDev = false } = {}) {
     .map(([name, values]) => `${name} ${values.join(' ')}`)
     .join('; ')
 
-  // Only in production: upgrading would break plain-http localhost development.
+  // Not in `next dev`, which serves plain http. A production build run on http://localhost (e.g.
+  // `next start`, Playwright) still loads, because Chromium exempts localhost from the upgrade.
   return isDev ? policy : `${policy}; upgrade-insecure-requests`
 }
 

@@ -84,7 +84,7 @@ describe('publicProcedure rate limiting', () => {
     const headers = withIp('1.2.3.4')
     headers.set('x-trpc-source', 'rsc')
 
-    await makeCaller({ headers, source: 'http' }).ping()
+    await makeCaller({ headers }).ping()
 
     expect(mockEnforce).toHaveBeenCalledWith('publicTrpc', 'ping:1.2.3.4')
   })
@@ -95,5 +95,42 @@ describe('publicProcedure rate limiting', () => {
     await makeCaller({}).ping()
 
     expect(mockEnforce).not.toHaveBeenCalled()
+  })
+
+  it('applies the strict password limit to SIGNED-IN users too (accounts are cheap to create)', async () => {
+    await makeCaller({
+      userId: 'user-1',
+      headers: withIp('1.2.3.4'),
+    }).website.verifyWebsitePassword()
+
+    expect(mockEnforce).toHaveBeenCalledWith(
+      'publicTrpcStrict',
+      'website.verifyWebsitePassword:1.2.3.4'
+    )
+  })
+
+  it('still skips signed-in users for the generous limit', async () => {
+    await makeCaller({ userId: 'user-1', headers: withIp('1.2.3.4') }).ping()
+
+    expect(mockEnforce).not.toHaveBeenCalled()
+  })
+
+  it('skips even the strict limit for loopback clients (local dev and CI)', async () => {
+    await makeCaller({ headers: withIp('127.0.0.1') }).website.verifyWebsitePassword()
+    await makeCaller({ headers: withIp('::1') }).website.verifyWebsitePassword()
+
+    expect(mockEnforce).not.toHaveBeenCalled()
+  })
+
+  it('lets the request through when the limiter fails open', async () => {
+    mockEnforce.mockResolvedValue({
+      allowed: true,
+      retryAfterSeconds: 0,
+      limit: null,
+      remaining: 0,
+      resetSeconds: 0,
+    })
+
+    await expect(makeCaller({ headers: withIp('1.2.3.4') }).ping()).resolves.toBe('pong')
   })
 })

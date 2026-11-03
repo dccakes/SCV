@@ -42,4 +42,18 @@ describe('getAuthRateLimitTarget', () => {
     expect(getAuthRateLimitTarget(`/api/auth/${'x'.repeat(10_000)}`)).toEqual(expected)
     expect(getAuthRateLimitTarget('/api/auth/sign-in/email/')).toEqual(expected)
   })
+
+  it('decodes percent-encoding so an encoded variant cannot dodge the strict policy', () => {
+    expect(getAuthRateLimitTarget('/api/auth/sign-in/%65mail')).toEqual({
+      policy: 'authSensitive',
+      key: '/sign-in/email',
+    })
+  })
+
+  it('survives a malformed percent sequence without throwing', () => {
+    expect(getAuthRateLimitTarget('/api/auth/sign-in/%E0%A4%A')).toEqual({
+      policy: 'authDefault',
+      key: 'other',
+    })
+  })
 })

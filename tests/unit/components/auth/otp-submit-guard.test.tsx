@@ -1,144 +1,230 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import type { ReactNode } from 'react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import { OTPInput } from 'input-otp'
+import { useState } from 'react'
 
 import { DUPLICATE_SUBMIT_WINDOW_MS, OtpSubmitGuard } from '~/components/auth/otp-submit-guard'
 
 /**
- * Stand-in for Better Auth UI's verification form: an OTP input that submits itself when it is
- * full (like the library's onChange) plus a visible submit button.
+ * Uses the REAL `input-otp` component Better Auth UI is built on, not a stand-in. That matters:
+ * `input-otp` dispatches synthetic `input` events whenever the value changes AND whenever the
+ * field gains or loses focus, which the guard must not mistake for the code being completed.
  */
-function FakeOtpForm({
-  onAutoSubmit,
+function RealOtpForm({
   onFormSubmit,
-  otpAttribute = true,
+  onCodeChange,
 }: {
-  onAutoSubmit: () => void
   onFormSubmit: () => void
-  otpAttribute?: boolean
+  onCodeChange?: (value: string) => void
 }) {
+  const [value, setValue] = useState('')
   return (
     <form
+      aria-label='verify'
       onSubmit={(event) => {
         event.preventDefault()
         onFormSubmit()
       }}
     >
-      <input
+      <OTPInput
         aria-label='code'
         maxLength={6}
-        {...(otpAttribute ? { 'data-input-otp': 'true' } : {})}
-        onChange={(event) => {
-          if (event.target.value.length === 6) onAutoSubmit()
+        value={value}
+        onChange={(next) => {
+          setValue(next)
+          onCodeChange?.(next)
         }}
+        render={({ slots }) => (
+          <div>
+            {slots.map((slot, index) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: fixed length slots
+              <span key={index}>{slot.char}</span>
+            ))}
+          </div>
+        )}
       />
       <button type='submit'>Verify code</button>
     </form>
   )
 }
 
-function renderForm(children?: ReactNode) {
-  const onAutoSubmit = jest.fn()
+const otpInput = () => screen.getByLabelText('code')
+const typeCode = (value: string) => fireEvent.input(otpInput(), { target: { value } })
+const clickVerify = () => fireEvent.click(screen.getByRole('button', { name: 'Verify code' }))
+const advance = (ms: number) => act(() => void jest.advanceTimersByTime(ms))
+
+function renderGuarded(extra?: React.ReactNode) {
   const onFormSubmit = jest.fn()
+  const onCodeChange = jest.fn()
   render(
     <OtpSubmitGuard>
-      {children ?? <FakeOtpForm onAutoSubmit={onAutoSubmit} onFormSubmit={onFormSubmit} />}
+      <RealOtpForm onFormSubmit={onFormSubmit} onCodeChange={onCodeChange} />
+      {extra}
     </OtpSubmitGuard>
   )
-  return { onAutoSubmit, onFormSubmit }
+  return { onFormSubmit, onCodeChange }
 }
 
-const type = (value: string) =>
-  fireEvent.input(screen.getByLabelText('code'), { target: { value } })
-const clickVerify = () => fireEvent.click(screen.getByRole('button', { name: 'Verify code' }))
-
-describe('OtpSubmitGuard', () => {
+describe('OtpSubmitGuard with the real input-otp component', () => {
   beforeEach(() => {
-    jest.useFakeTimers().setSystemTime(new Date('2026-11-03T12:00:00Z'))
+    jest.useFakeTimers()
   })
 
   afterEach(() => {
     jest.useRealTimers()
   })
 
-  it('drops the second submit that follows the OTP input filling up (the double submit)', () => {
-    const { onAutoSubmit, onFormSubmit } = renderForm()
+  it('drops the click that follows the library auto submitting on the 6th digit', () => {
+    const { onFormSubmit, onCodeChange } = renderGuarded()
 
-    type('123456')
+    typeCode('123456')
+    advance(60) // flush input-otp's own synthetic input events
     clickVerify()
 
-    expect(onAutoSubmit).toHaveBeenCalledTimes(1)
+    expect(onCodeChange).toHaveBeenCalledWith('123456')
     expect(onFormSubmit).not.toHaveBeenCalled()
   })
 
-  it('never blocks the library own auto submit, which is not a DOM submit event', () => {
-    const { onAutoSubmit } = renderForm()
+  it('never blocks the library own onChange (the auto submit path)', () => {
+    const { onCodeChange } = renderGuarded()
 
-    type('123456')
+    typeCode('123456')
 
-    expect(onAutoSubmit).toHaveBeenCalledTimes(1)
+    expect(onCodeChange).toHaveBeenCalledTimes(1)
   })
 
-  it('does not block a submit when the code is not complete', () => {
-    const { onFormSubmit } = renderForm()
+  it('does not block a submit while the code is incomplete', () => {
+    const { onFormSubmit } = renderGuarded()
 
-    type('12345')
+    typeCode('12345')
+    advance(60)
     clickVerify()
 
     expect(onFormSubmit).toHaveBeenCalledTimes(1)
   })
 
-  it('does not block a submit when nothing was typed', () => {
-    const { onFormSubmit } = renderForm()
+  it('does NOT restart the window when the field is focused or blurred with a full code', () => {
+    // Regression: clicking "Verify" blurs the field, and input-otp answers focus changes with
+    // synthetic input events. Those must not count as the code being completed again.
+    const { onFormSubmit } = renderGuarded()
 
+    typeCode('123456')
+    advance(DUPLICATE_SUBMIT_WINDOW_MS - 100)
+    fireEvent.focus(otpInput())
+    fireEvent.blur(otpInput())
+    advance(100 + 600) // 600ms after the blur, past the window measured from the fill
     clickVerify()
 
     expect(onFormSubmit).toHaveBeenCalledTimes(1)
   })
 
-  it('lets a submit through again once the window has passed', () => {
-    const { onFormSubmit } = renderForm()
+  it('ignores a bare input event on an already-full field', () => {
+    const { onFormSubmit } = renderGuarded()
 
-    type('123456')
-    jest.advanceTimersByTime(DUPLICATE_SUBMIT_WINDOW_MS + 1)
+    typeCode('123456')
+    advance(DUPLICATE_SUBMIT_WINDOW_MS - 100)
+    fireEvent.input(otpInput())
+    advance(600)
     clickVerify()
 
     expect(onFormSubmit).toHaveBeenCalledTimes(1)
   })
 
-  it('still drops a duplicate just inside the window', () => {
-    const { onFormSubmit } = renderForm()
+  it('starts a new window when the code is cleared and completed again (retry after wrong)', () => {
+    const { onFormSubmit } = renderGuarded()
 
-    type('123456')
-    jest.advanceTimersByTime(DUPLICATE_SUBMIT_WINDOW_MS - 1)
+    typeCode('111111')
+    advance(5_000)
+    typeCode('')
+    advance(60)
+    typeCode('222222')
+    advance(60)
     clickVerify()
 
     expect(onFormSubmit).not.toHaveBeenCalled()
   })
 
-  it('protects a retry after a wrong code the same way (the window restarts)', () => {
-    const { onAutoSubmit, onFormSubmit } = renderForm()
+  it('lets a submit through exactly when the window has elapsed', () => {
+    const { onFormSubmit } = renderGuarded()
 
-    type('111111')
-    jest.advanceTimersByTime(5_000)
-    type('222222')
+    typeCode('123456')
+    advance(DUPLICATE_SUBMIT_WINDOW_MS)
     clickVerify()
 
-    expect(onAutoSubmit).toHaveBeenCalledTimes(2)
+    expect(onFormSubmit).toHaveBeenCalledTimes(1)
+  })
+
+  it('still drops a duplicate one millisecond inside the window', () => {
+    const { onFormSubmit } = renderGuarded()
+
+    typeCode('123456')
+    advance(DUPLICATE_SUBMIT_WINDOW_MS - 1)
+    clickVerify()
+
     expect(onFormSubmit).not.toHaveBeenCalled()
   })
 
-  it('ignores inputs that are not the OTP field', () => {
+  it('does not affect a different form on the same page', () => {
+    const otherSubmit = jest.fn()
+    const { onFormSubmit } = renderGuarded(
+      <form
+        aria-label='other'
+        onSubmit={(event) => {
+          event.preventDefault()
+          otherSubmit()
+        }}
+      >
+        <button type='submit'>Save profile</button>
+      </form>
+    )
+
+    typeCode('123456')
+    fireEvent.click(screen.getByRole('button', { name: 'Save profile' }))
+
+    expect(otherSubmit).toHaveBeenCalledTimes(1)
+    expect(onFormSubmit).not.toHaveBeenCalled()
+  })
+
+  it('ignores an input marked data-input-otp that has no maxLength', () => {
     const onFormSubmit = jest.fn()
     render(
       <OtpSubmitGuard>
-        <FakeOtpForm onAutoSubmit={jest.fn()} onFormSubmit={onFormSubmit} otpAttribute={false} />
+        <form
+          onSubmit={(event) => {
+            event.preventDefault()
+            onFormSubmit()
+          }}
+        >
+          <input aria-label='loose' data-input-otp='true' />
+          <button type='submit'>Go</button>
+        </form>
       </OtpSubmitGuard>
     )
 
-    type('123456')
-    clickVerify()
+    fireEvent.input(screen.getByLabelText('loose'), { target: { value: '123456' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Go' }))
 
-    // No data-input-otp attribute, so nothing was recorded and the submit goes through.
+    expect(onFormSubmit).toHaveBeenCalledTimes(1)
+  })
+
+  it('ignores inputs that are not an OTP field', () => {
+    const onFormSubmit = jest.fn()
+    render(
+      <OtpSubmitGuard>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault()
+            onFormSubmit()
+          }}
+        >
+          <input aria-label='plain' maxLength={6} />
+          <button type='submit'>Go</button>
+        </form>
+      </OtpSubmitGuard>
+    )
+
+    fireEvent.input(screen.getByLabelText('plain'), { target: { value: '123456' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Go' }))
+
     expect(onFormSubmit).toHaveBeenCalledTimes(1)
   })
 })

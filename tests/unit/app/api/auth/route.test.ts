@@ -109,6 +109,35 @@ describe('POST /api/auth/*', () => {
     ])
   })
 
+  it('handles a bodyless 204 response (a null body must stay null)', async () => {
+    mockPost.mockResolvedValue(new Response(null, { status: 204 }))
+
+    const response = await POST(request('/sign-out'))
+
+    expect(response.status).toBe(204)
+    expect(response.headers.get('X-RateLimit-Limit')).toBe('10')
+    expect(response.body).toBeNull()
+  })
+
+  it('keeps a redirect and its Location when it adds the headers', async () => {
+    mockPost.mockResolvedValue(
+      new Response(null, { status: 302, headers: { location: 'https://example.com/next' } })
+    )
+
+    const response = await POST(request('/sign-in/email'))
+
+    expect(response.status).toBe(302)
+    expect(response.headers.get('location')).toBe('https://example.com/next')
+  })
+
+  it('overrides rate limit headers an upstream response might carry', async () => {
+    mockPost.mockResolvedValue(new Response('ok', { headers: { 'x-ratelimit-limit': '999' } }))
+
+    const response = await POST(request('/sign-in/email'))
+
+    expect(response.headers.get('X-RateLimit-Limit')).toBe('10')
+  })
+
   it('returns the handler response untouched when the limiter failed open', async () => {
     const upstream = new Response('ok')
     mockPost.mockResolvedValue(upstream)

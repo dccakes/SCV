@@ -8,6 +8,7 @@
  */
 
 import { logger } from '~/lib/observability/logger'
+import { TOO_MANY_REQUESTS_MESSAGE } from '~/lib/rate-limit-message'
 import { db } from '~/server/db'
 import {
   PrismaRateLimiter,
@@ -110,8 +111,6 @@ export class RateLimitError extends Error {
     this.name = 'RateLimitError'
   }
 }
-
-const TOO_MANY_REQUESTS_MESSAGE = 'Too many requests. Please try again later.'
 
 export function rateLimitedResponse(result: EnforceResult): Response {
   return Response.json(

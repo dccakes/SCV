@@ -14,7 +14,7 @@ import type { PrismaClient } from '@prisma/client'
 export interface RateLimiterOptions {
   /** Maximum number of requests permitted inside one window. */
   limit: number
-  /** Rolling window length in milliseconds. */
+  /** Fixed window length in milliseconds. */
   windowMs: number
 }
 

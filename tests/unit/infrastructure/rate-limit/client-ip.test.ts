@@ -74,3 +74,42 @@ describe('normalizeIp', () => {
     expect(normalizeIp('1.2.3.4.5')).toBe('invalid')
   })
 })
+
+describe('getClientIp loopback precision', () => {
+  it.each([
+    '::8.8.8.8',
+    '::2',
+    '::ffff:0:1.2.3.4',
+    '::1:0',
+  ])('does not treat %s as loopback just because it shares the ::/64 prefix', (ip) => {
+    expect(getClientIp(new Headers({ 'x-real-ip': ip }))).not.toBeNull()
+  })
+
+  it.each([
+    '::ffff:7f00:1',
+    '::FFFF:127.0.0.1',
+    '0:0:0:0:0:ffff:7f00:1',
+    '0000:0000:0000:0000:0000:0000:0000:0001',
+    '0.0.0.0',
+    '127.255.255.254',
+  ])('treats loopback or unspecified %s as no client IP', (ip) => {
+    expect(getClientIp(new Headers({ 'x-real-ip': ip }))).toBeNull()
+  })
+})
+
+describe('getClientIp proxy formats', () => {
+  it('strips a :port suffix some proxies append', () => {
+    expect(getClientIp(new Headers({ 'x-forwarded-for': '203.0.113.9:51234' }))).toBe('203.0.113.9')
+  })
+
+  it('strips IPv6 brackets and port', () => {
+    expect(getClientIp(new Headers({ 'x-forwarded-for': '[2001:db8:1:2::9]:443' }))).toBe(
+      '2001:db8:1:2::/64'
+    )
+    expect(getClientIp(new Headers({ 'x-real-ip': '[::1]:443' }))).toBeNull()
+  })
+
+  it('does not let a port-suffixed client collapse into the shared invalid bucket', () => {
+    expect(getClientIp(new Headers({ 'x-real-ip': '198.51.100.7:80' }))).not.toBe('invalid')
+  })
+})

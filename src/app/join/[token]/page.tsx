@@ -49,9 +49,19 @@ export default function SelfFillPage() {
     country: z.string().trim().max(100).optional(),
   })
 
-  const { data: wedding, isLoading: isLoadingWedding } = api.selfFill.getByToken.useQuery(
+  const {
+    data: wedding,
+    isLoading: isLoadingWedding,
+    error: weddingError,
+    refetch: refetchWedding,
+  } = api.selfFill.getByToken.useQuery(
     { token },
-    { enabled: !!token }
+    {
+      enabled: !!token,
+      // Retrying a rate limited request only spends more of the budget everyone on this network
+      // shares. Other failures keep React Query's default of up to 3 retries.
+      retry: (failureCount, error) => error.data?.code !== 'TOO_MANY_REQUESTS' && failureCount < 3,
+    }
   )
 
   const [mutationError, setMutationError] = useState<string | null>(null)
@@ -68,6 +78,8 @@ export default function SelfFillPage() {
         setMutationError(t('errorInvalidLink'))
       } else if (error.data?.code === 'CONFLICT') {
         setMutationError(t('errorAlreadyRegistered'))
+      } else if (error.data?.code === 'TOO_MANY_REQUESTS') {
+        setMutationError(t('errorTooManyRequests'))
       } else {
         setMutationError(t('errorGeneric'))
       }
@@ -115,6 +127,25 @@ export default function SelfFillPage() {
     return (
       <div className='flex min-h-screen items-center justify-center bg-background'>
         <Loader2 className='h-8 w-8 animate-spin text-primary' />
+      </div>
+    )
+  }
+
+  // A rate limited lookup is not a bad link: say the page is busy and let the guest retry.
+  if (!wedding && weddingError?.data?.code === 'TOO_MANY_REQUESTS') {
+    return (
+      <div className='flex min-h-screen items-center justify-center bg-background p-4'>
+        <Card className='w-full max-w-md'>
+          <CardHeader className='text-center'>
+            <CardTitle className='text-2xl'>{t('busyTitle')}</CardTitle>
+            <CardDescription>{t('busyDescription')}</CardDescription>
+          </CardHeader>
+          <CardContent className='flex justify-center'>
+            <Button type='button' onClick={() => void refetchWedding()}>
+              {t('tryAgain')}
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     )
   }

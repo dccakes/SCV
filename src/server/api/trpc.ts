@@ -36,10 +36,10 @@ import { enforceRateLimit, getClientIp, RateLimitError } from '~/server/infrastr
 export const createTRPCContext = async (opts: {
   headers: Headers
   /**
-   * Where the call came from. 'rsc' marks in-process server-component callers (set only by
-   * `~/trpc/server`). Never derive this from a request header: those are client-controlled.
+   * 'rsc' marks in-process server-component callers (set only by `~/trpc/server`); HTTP requests
+   * leave it unset. Never derive this from a request header: those are client-controlled.
    */
-  source?: 'rsc' | 'http'
+  source?: 'rsc'
 }) => {
   const session = await auth.api.getSession({
     headers: opts.headers,
@@ -166,6 +166,35 @@ const tracingMiddleware = t.middleware(({ ctx, path, type, next }) =>
  */
 const baseProcedure = t.procedure.use(tracingMiddleware).use(analyticsMiddleware)
 
+/** Public procedures guarding a guessable secret get a much stricter limit. */
+const STRICT_PUBLIC_PROCEDURES = new Set(['website.verifyWebsitePassword'])
+
+/**
+ * Per-IP rate limit for public procedures.
+ *
+ * The generous `publicTrpc` limit skips signed-in users (several public procedures such as
+ * `user.get` are polled by the logged-in app) and in-process server-component reads (page loads
+ * are not an abuse vector, and counting them would turn a crowd on one venue wifi into error
+ * pages). The strict secret-guessing limit applies to EVERYONE, signed in or not, and to
+ * server-component calls: accounts are cheap to create, so a session must not be a way around it.
+ * Callers without headers or a usable IP (unit tests, loopback in local dev and CI) are skipped.
+ */
+const publicRateLimitMiddleware = t.middleware(async ({ ctx, path, next }) => {
+  const strict = STRICT_PUBLIC_PROCEDURES.has(path)
+  const exempt = !strict && (Boolean(ctx.auth?.userId) || ctx.source === 'rsc')
+  const ip = exempt ? null : getClientIp(ctx.headers)
+
+  if (ip) {
+    const policy = strict ? 'publicTrpcStrict' : 'publicTrpc'
+    const { allowed, retryAfterSeconds } = await enforceRateLimit(policy, `${path}:${ip}`)
+    if (!allowed) {
+      const cause = new RateLimitError(retryAfterSeconds)
+      throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: cause.message, cause })
+    }
+  }
+  return next()
+})
+
 /**
  * Public (unauthenticated) procedure
  *
@@ -173,34 +202,6 @@ const baseProcedure = t.procedure.use(tracingMiddleware).use(analyticsMiddleware
  * guarantee that a user querying is authorized, but you can still access user session data if they
  * are logged in.
  */
-/** Public procedures guarding a guessable secret get a much stricter limit. */
-const STRICT_PUBLIC_PROCEDURES = new Set(['website.verifyWebsitePassword'])
-
-/**
- * Per-IP rate limit for unauthenticated callers. Signed-in users are skipped, since several
- * public procedures (e.g. `user.get`) are polled by the logged-in app. Callers without
- * headers or an IP (unit tests, local dev without a proxy) are skipped too, as are in-process
- * server-component reads (see `skip` below).
- */
-const publicRateLimitMiddleware = t.middleware(async ({ ctx, path, next }) => {
-  if (!ctx.auth?.userId) {
-    const strict = STRICT_PUBLIC_PROCEDURES.has(path)
-    // Server-rendered page loads are not an abuse vector of their own, and counting them would
-    // turn a crowd on one venue wifi into error pages. Secret-guessing procedures stay limited.
-    const skip = ctx.source === 'rsc' && !strict
-    const ip = skip ? null : getClientIp(ctx.headers)
-    if (ip) {
-      const policy = strict ? 'publicTrpcStrict' : 'publicTrpc'
-      const { allowed, retryAfterSeconds } = await enforceRateLimit(policy, `${path}:${ip}`)
-      if (!allowed) {
-        const cause = new RateLimitError(retryAfterSeconds)
-        throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: cause.message, cause })
-      }
-    }
-  }
-  return next()
-})
-
 export const publicProcedure = baseProcedure.use(publicRateLimitMiddleware)
 
 /**

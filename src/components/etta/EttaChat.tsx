@@ -4,6 +4,8 @@ import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport, type UIMessage } from 'ai'
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 
+import { TOO_MANY_REQUESTS_MESSAGE } from '~/lib/rate-limit-message'
+
 const PLANNER_SUGGESTIONS = [
   "What's our biggest budget risk?",
   "Show me who hasn't RSVP'd yet",
@@ -111,7 +113,7 @@ function MessageParts({ parts }: { parts: Part[] }) {
 
 /** Plain-language text for a failed chat request. The transport surfaces the response body. */
 function getEttaErrorMessage(error: Error): string {
-  return /too many requests/i.test(error.message)
+  return error.message.includes(TOO_MANY_REQUESTS_MESSAGE)
     ? "You're sending messages quickly. Give Etta a moment, then try again."
     : "Etta couldn't respond just now. Please try again."
 }

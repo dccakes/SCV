@@ -11,6 +11,7 @@ jest.mock('~/lib/observability/logger', () => ({
 
 import {
   enforceRateLimit,
+  RATE_LIMIT_POLICIES,
   rateLimitedResponse,
   rateLimitHeaders,
 } from '~/server/infrastructure/rate-limit/enforce'
@@ -98,5 +99,59 @@ describe('rateLimitedResponse', () => {
     const body = (await response.json()) as { error: string; message: string }
     expect(body.message).toBe('Too many requests. Please try again later.')
     expect(body.error).toBe(body.message)
+  })
+})
+
+describe('RATE_LIMIT_POLICIES', () => {
+  it('pins the numbers the product and the tests rely on', () => {
+    expect(RATE_LIMIT_POLICIES).toEqual({
+      authSensitive: { limit: 10, windowMs: 600_000 },
+      authDefault: { limit: 300, windowMs: 60_000 },
+      publicTrpc: { limit: 120, windowMs: 60_000 },
+      publicTrpcStrict: { limit: 10, windowMs: 60_000 },
+      etta: { limit: 20, windowMs: 60_000 },
+    })
+  })
+})
+
+describe('enforceRateLimit result shaping', () => {
+  it('never reports a retry of less than one second', async () => {
+    mockConsume.mockResolvedValue({
+      allowed: false,
+      limit: 10,
+      remaining: 0,
+      resetMs: 1,
+      retryAfterMs: 1,
+    })
+
+    expect((await enforceRateLimit('publicTrpc', 'k')).retryAfterSeconds).toBe(1)
+  })
+
+  it('does not fail open for a limiter that answers just inside the timeout', async () => {
+    jest.useFakeTimers()
+    try {
+      mockConsume.mockReturnValue(
+        new Promise((resolve) =>
+          setTimeout(
+            () =>
+              resolve({
+                allowed: false,
+                limit: 10,
+                remaining: 0,
+                resetMs: 5_000,
+                retryAfterMs: 5_000,
+              }),
+            1_999
+          )
+        )
+      )
+
+      const pending = enforceRateLimit('publicTrpc', 'slow')
+      await jest.advanceTimersByTimeAsync(1_999)
+
+      expect(await pending).toMatchObject({ allowed: false, limit: 10 })
+    } finally {
+      jest.useRealTimers()
+    }
   })
 })

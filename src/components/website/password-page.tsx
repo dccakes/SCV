@@ -11,6 +11,8 @@ type PasswordPageProps = {
   verifyWebsitePassword: (passwordInput: string) => Promise<boolean>
 }
 
+// TODO(review-quality): this page's strings are hard-coded English (pre-existing); move them to
+// src/i18n/messages so Spanish-speaking guests see the wrong-password and busy messages in Spanish.
 export default function PasswordPage({ verifyWebsitePassword }: PasswordPageProps) {
   const [passwordInput, setPasswordInput] = useState('')
   const [showError, setShowError] = useState(false)
@@ -21,6 +23,7 @@ export default function PasswordPage({ verifyWebsitePassword }: PasswordPageProp
   const verifyPassword = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setIsSubmitting(true)
+    setShowError(false)
     setShowUnavailable(false)
 
     let isVerified = false
@@ -87,7 +90,7 @@ export default function PasswordPage({ verifyWebsitePassword }: PasswordPageProp
             Password
           </label>
           <Input
-            aria-describedby={showError ? 'website-password-error' : undefined}
+            aria-describedby={showError || showUnavailable ? 'website-password-error' : undefined}
             autoComplete='current-password'
             autoFocus
             id='website-password'
@@ -115,7 +118,7 @@ export default function PasswordPage({ verifyWebsitePassword }: PasswordPageProp
         >
           {showError ? 'Incorrect password. Check the password and try again.' : null}
           {showUnavailable
-            ? 'Lots of guests are unlocking at once, or something went wrong. Please wait a moment and try again.'
+            ? 'Lots of guests are unlocking at once, or something went wrong. Please wait about a minute and try again.'
             : null}
         </p>
       </form>
