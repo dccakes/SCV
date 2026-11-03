@@ -127,6 +127,14 @@ describe('POST /api/auth/*', () => {
     expect(mockPost).toHaveBeenCalled()
   })
 
+  it('does not limit loopback clients, which is every local developer and CI run', async () => {
+    await POST(request('/sign-in/email', { 'x-forwarded-for': '127.0.0.1' }))
+    await POST(request('/sign-in/email', { 'x-forwarded-for': '::1' }))
+
+    expect(mockEnforce).not.toHaveBeenCalled()
+    expect(mockPost).toHaveBeenCalledTimes(2)
+  })
+
   it('puts a malformed IP header in the shared invalid bucket instead of skipping limiting', async () => {
     await POST(request('/sign-up/email', { 'x-real-ip': 'garbage' }))
 

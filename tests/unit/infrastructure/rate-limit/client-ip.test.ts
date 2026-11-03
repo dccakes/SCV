@@ -21,6 +21,22 @@ describe('getClientIp', () => {
     expect(getClientIp(undefined)).toBeNull()
   })
 
+  it.each([
+    '127.0.0.1',
+    '127.5.5.5',
+    '::1',
+    '::',
+    '::ffff:127.0.0.1',
+  ])('treats loopback %s as no client IP so local dev and CI are not limited', (ip) => {
+    expect(getClientIp(new Headers({ 'x-real-ip': ip }))).toBeNull()
+    expect(getClientIp(new Headers({ 'x-forwarded-for': ip }))).toBeNull()
+  })
+
+  it('still limits a real client that is not loopback', () => {
+    expect(getClientIp(new Headers({ 'x-forwarded-for': '203.0.113.9' }))).toBe('203.0.113.9')
+    expect(getClientIp(new Headers({ 'x-real-ip': '2001:db8::1' }))).toBe('2001:db8:0:0::/64')
+  })
+
   it('maps a present but malformed header to the shared invalid bucket', () => {
     expect(getClientIp(new Headers({ 'x-real-ip': 'unknown' }))).toBe('invalid')
     expect(getClientIp(new Headers({ 'x-forwarded-for': 'a'.repeat(5_000) }))).toBe('invalid')

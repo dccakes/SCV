@@ -12,8 +12,12 @@
  * - A header that is present but not a valid IP maps to the shared bucket 'invalid' instead of
  *   being used verbatim (no unbounded keys, and garbage cannot opt out of limiting).
  *
- * Returns null only when no IP header is present (e.g. local dev without a proxy); callers
- * skip limiting in that case rather than lumping every request into one shared bucket.
+ * Returns null when there is no usable client IP: no header at all, or a loopback address.
+ * Next.js fills x-forwarded-for from the socket on every request, so local development and CI
+ * (Playwright) always arrive as 127.0.0.1 or ::1 and would otherwise share one bucket and get
+ * blocked after 10 sign-ins. Callers skip limiting on null. Vercel never presents a loopback
+ * client, so this does not weaken production. Self-hosting behind a same-host proxy that does
+ * not forward the client IP is therefore unlimited, as it would be with no header.
  */
 import { isIP } from 'node:net'
 
@@ -65,12 +69,18 @@ export function normalizeIp(raw: string): string {
     .join(':')}::/64`
 }
 
+/** normalizeIp() output for 127.0.0.0/8, ::1 and :: (all of ::/64 is reserved, in practice loopback). */
+function isLoopback(normalized: string): boolean {
+  return normalized.startsWith('127.') || normalized === '0:0:0:0::/64'
+}
+
 export function getClientIp(headers: Headers | undefined | null): string | null {
   if (!headers) return null
 
-  const realIp = headers.get('x-real-ip')?.trim()
-  if (realIp) return normalizeIp(realIp)
+  const raw =
+    headers.get('x-real-ip')?.trim() || headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+  if (!raw) return null
 
-  const forwardedFor = headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-  return forwardedFor ? normalizeIp(forwardedFor) : null
+  const ip = normalizeIp(raw)
+  return isLoopback(ip) ? null : ip
 }
