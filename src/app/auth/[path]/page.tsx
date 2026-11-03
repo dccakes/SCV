@@ -1,6 +1,7 @@
 import { AuthView } from '@daveyplate/better-auth-ui'
 import { redirect } from 'next/navigation'
 
+import { OtpSubmitGuard } from '~/components/auth/otp-submit-guard'
 import { areSignupsAllowed } from '~/lib/signups'
 
 type SearchParamValue = string | string[] | undefined
@@ -49,7 +50,9 @@ export default async function AuthPage({
           </p>
         ) : null}
 
-        <AuthView path={path} />
+        <OtpSubmitGuard>
+          <AuthView path={path} />
+        </OtpSubmitGuard>
 
         {isSignInPath && showDemoAccounts ? (
           <section className='rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm'>
