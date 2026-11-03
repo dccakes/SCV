@@ -49,6 +49,7 @@ describe('Providers', () => {
     expect(mockAuthUIProvider).toHaveBeenCalledWith(
       expect.objectContaining({
         emailOTP: true,
+        emailVerification: { otp: true },
         organization: {
           customRoles: [
             { role: 'member', label: 'Member' },
@@ -57,5 +58,53 @@ describe('Providers', () => {
         },
       })
     )
+  })
+
+  describe('navigate', () => {
+    const renderAndGetNavigate = () => {
+      render(
+        <Providers>
+          <div>Child content</div>
+        </Providers>
+      )
+      const props = mockAuthUIProvider.mock.calls[0]?.[0] as unknown as {
+        navigate: (path: string) => void
+      }
+      return props.navigate
+    }
+
+    afterEach(() => {
+      window.history.pushState({}, '', '/')
+    })
+
+    it('carries redirectTo over to the email verification step', () => {
+      window.history.pushState(
+        {},
+        '',
+        '/auth/sign-up?redirectTo=%2Fauth%2Faccept-invitation%3FinvitationId%3Dinv_1'
+      )
+
+      renderAndGetNavigate()('/auth/email-verification?email=a%40b.com')
+
+      expect(mockPush).toHaveBeenCalledWith(
+        '/auth/email-verification?email=a%40b.com&redirectTo=%2Fauth%2Faccept-invitation%3FinvitationId%3Dinv_1'
+      )
+    })
+
+    it('leaves the email verification path alone when there is no redirectTo', () => {
+      window.history.pushState({}, '', '/auth/sign-up')
+
+      renderAndGetNavigate()('/auth/email-verification?email=a%40b.com')
+
+      expect(mockPush).toHaveBeenCalledWith('/auth/email-verification?email=a%40b.com')
+    })
+
+    it('does not touch other paths', () => {
+      window.history.pushState({}, '', '/auth/sign-in?redirectTo=%2Fdashboard')
+
+      renderAndGetNavigate()('/dashboard')
+
+      expect(mockPush).toHaveBeenCalledWith('/dashboard')
+    })
   })
 })

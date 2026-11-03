@@ -1,6 +1,8 @@
 // better-auth 1.5.6: OrganizationPlugin / StrictEndpoint no longer structurally satisfies
 // BetterAuthPlugin due to a Zod 4 migration type regression. The cast is safe —
 // plugins satisfy the interface at runtime. Track: https://github.com/better-auth/better-auth/issues/5637
+import { createHmac } from 'node:crypto'
+
 import { type BetterAuthPlugin, betterAuth } from 'better-auth'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { nextCookies } from 'better-auth/next-js'
@@ -13,6 +15,22 @@ import { sendOrganizationInvitationEmail, sendOtpEmail, sendResetPasswordEmail }
 import { db } from '~/server/db'
 
 export const authOrganizationRoles = organizationRoles
+
+// OTPs are stored hashed. Better Auth's built-in 'hashed' mode is an unsalted SHA-256, and a
+// 6-digit code has only 1,000,000 possibilities, so anyone who can read the table could
+// reverse it instantly. Keying the hash with the auth secret keeps it one-way and means a
+// database-only leak can't be brute-forced. Rotating BETTER_AUTH_SECRET only invalidates
+// OTPs that are still within their 10 minute lifetime.
+export const hashOtp = async (otp: string): Promise<string> =>
+  createHmac('sha256', env.BETTER_AUTH_SECRET).update(otp).digest('base64url')
+
+// The emailOTP plugin is cast to BetterAuthPlugin (see top of file), so its endpoints are not
+// part of the inferred `auth.api` type.
+type EmailOtpApi = {
+  sendVerificationOTP: (input: {
+    body: { email: string; type: 'email-verification' }
+  }) => Promise<unknown>
+}
 
 const appBaseUrl = env.NEXT_PUBLIC_APP_URL ?? `http://localhost:${env.PORT ?? '3000'}`
 const localTrustedHostnames = new Set(['127.0.0.1', '::1', 'localhost'])
@@ -124,6 +142,22 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    // Users must verify their email (via OTP) before a session is created.
+    requireEmailVerification: true,
+    // Signing up again with an email that is already registered returns the same generic
+    // response as a new sign-up, so the form still moves to the OTP step. If that account
+    // never verified, send it a fresh OTP so the user is not left waiting for a code.
+    // The password submitted here is ignored, so this cannot be used to take over an
+    // account. Verified accounts get nothing, which avoids revealing that they exist.
+    onExistingUserSignUp: async ({ user }) => {
+      if (user.emailVerified) {
+        return
+      }
+
+      await (auth.api as unknown as EmailOtpApi).sendVerificationOTP({
+        body: { email: user.email, type: 'email-verification' },
+      })
+    },
     sendResetPassword: async ({
       user,
       url,
@@ -133,6 +167,14 @@ export const auth = betterAuth({
     }) => {
       await sendResetPasswordEmail({ to: user.email, url, userName: user.name ?? undefined })
     },
+  },
+  emailVerification: {
+    // Routed through the emailOTP plugin (overrideDefaultEmailVerification).
+    // The plugin's own sendVerificationOnSignUp is ignored while that override is on.
+    sendOnSignUp: true,
+    sendOnSignIn: true,
+    // The OTP proves email ownership, so create the session right after it is verified.
+    autoSignInAfterVerification: true,
   },
   socialProviders: {
     // Add social providers as needed
@@ -145,6 +187,12 @@ export const auth = betterAuth({
     //   clientSecret: env.GOOGLE_CLIENT_SECRET ?? "",
     // },
   },
+  // Persist rate limits in Postgres. The default in-memory store is per serverless instance
+  // and resets on cold start, so it can't meaningfully limit OTP sends or guesses on Vercel.
+  // Better Auth only enforces rate limits in production by default.
+  rateLimit: {
+    storage: 'database',
+  },
   experimental: {
     joins: true, // Enable joins for 2-3x performance improvement
   },
@@ -156,6 +204,7 @@ export const auth = betterAuth({
       },
       otpLength: 6,
       expiresIn: 600,
+      storeOTP: { hash: hashOtp },
       overrideDefaultEmailVerification: true,
     }) as unknown as BetterAuthPlugin,
   ],

@@ -509,6 +509,8 @@ test.describe('XSS Injection Prevention', () => {
   })
 })
 
+// TODO(review-quality): this no longer exercises an authenticated brand-new user, because
+// e2e has no DB helper to create a verified user. Add one to restore that coverage.
 test.describe('Multi-User Data Isolation', () => {
   test("should not show other users' vendors after signing up as a new user", async ({
     browser,
@@ -529,13 +531,13 @@ test.describe('Multi-User Data Isolation', () => {
     await page.getByLabel('Password').fill('securePassword123!')
     await signUpBtn.click()
 
-    // Wait until redirected away from /auth/* (may land on /, /dashboard, /onboarding, etc.)
-    await page.waitForURL((url) => !url.pathname.startsWith('/auth/'), { timeout: 15_000 })
+    // Sign-up now requires email verification, so the new user has no session yet and is
+    // sent to the OTP step instead of the app.
+    await expect(page).toHaveURL(/\/auth\/email-verification\?email=/)
 
-    // Navigate to vendors page
+    // Without a session they cannot reach /vendors; they are sent to sign-in instead.
     await page.goto('/vendors')
-    // New users without an organization are redirected away from /vendors (to / or /onboarding)
-    // Either way they cannot see Shrek's seeded vendors
+    await expect(page).toHaveURL(/\/auth\/sign-in/)
     await page.waitForLoadState('networkidle')
 
     // This new user should NOT see Shrek's seeded vendors (regardless of where they land)
