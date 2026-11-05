@@ -7,9 +7,8 @@ import { getRequiredWedding } from '~/server/application/authenticated-route/aut
 import { api } from '~/trpc/server'
 
 export const metadata: Metadata = {
-  title: 'Budget | Your Wedding Website',
+  title: 'Budget',
   description: 'Track your wedding budget, spend, and refundable deposits',
-  icons: [{ rel: 'icon', url: '/favicon.ico' }],
 }
 
 export default async function BudgetPage() {

@@ -18,9 +18,8 @@ import { listTemplateSummaries } from '~/templates/catalog'
 import { api } from '~/trpc/server'
 
 export const metadata: Metadata = {
-  title: 'Website | Your Wedding Website',
+  title: 'Website',
   description: 'Publish and manage your wedding website',
-  icons: [{ rel: 'icon', url: '/favicon.ico' }],
 }
 
 export const dynamic = 'force-dynamic'
