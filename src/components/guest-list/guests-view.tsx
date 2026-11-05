@@ -18,6 +18,7 @@ import {
   type DrawerDraft,
   GuestDetailPanelContent,
 } from '~/components/guest-list/guest-detail-panel-content'
+import { GuestExportMenu } from '~/components/guest-list/guest-export-menu'
 import GuestSearchFilter from '~/components/guest-list/guest-search-filter'
 import type { HouseholdMemberDraft } from '~/components/guest-list/household-members-modal'
 import { GuestDetailDrawer } from '~/components/guest-list/v2/drawer/guest-detail-drawer'
@@ -656,7 +657,8 @@ export default function GuestsView({
           events={events}
           selectedEventId={selectedEventId}
         />
-        <div className='flex shrink-0 gap-3'>
+        <div className='flex shrink-0 flex-wrap gap-3'>
+          <GuestExportMenu events={events} />
           <Button type='button' variant='outline' onClick={onImportClick}>
             Import Guests
           </Button>
