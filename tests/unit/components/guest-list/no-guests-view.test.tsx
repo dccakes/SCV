@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
+import { WorkspaceCapabilitiesProvider } from '~/components/contexts/workspace-capabilities-context'
 import NoGuestsView from '~/components/guest-list/no-guests-view'
 
 const mockToggleGuestForm = jest.fn()
@@ -26,5 +27,17 @@ describe('NoGuestsView', () => {
     expect(onImportClick).toHaveBeenCalledTimes(1)
     expect(setPrefillHousehold).toHaveBeenCalledWith(undefined)
     expect(mockToggleGuestForm).toHaveBeenCalledTimes(1)
+  })
+
+  it('hides add and import controls for viewers', () => {
+    render(
+      <WorkspaceCapabilitiesProvider canEditPlanning={false}>
+        <NoGuestsView onImportClick={jest.fn()} setPrefillHousehold={jest.fn()} />
+      </WorkspaceCapabilitiesProvider>
+    )
+
+    expect(screen.getByText('No guests yet')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Import from CSV' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Add your first guest' })).not.toBeInTheDocument()
   })
 })

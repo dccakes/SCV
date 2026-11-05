@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { type Dispatch, type SetStateAction, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import type { Event } from '~/app/utils/shared-types'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { AnswersSection } from '~/components/guest-list/answers-section'
 import {
   type HouseholdMemberDraft,
@@ -139,6 +140,7 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
     onDeleteNote,
     onRequestDelete,
   } = props
+  const canEdit = useCanEdit()
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false)
   const [copiedInviteLink, setCopiedInviteLink] = useState(false)
   const generateHouseholdInviteLink = api.householdInvite.generateLink.useMutation()
@@ -209,7 +211,8 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
 
       <GuestDetailSections>
         <ContactAddressSection
-          isEditing={editingSections.has('contactAddress')}
+          isEditing={canEdit && editingSections.has('contactAddress')}
+          canEdit={canEdit}
           onToggleEdit={() => toggleEditingSection('contactAddress')}
           drawerDraft={drawerDraft}
           updateDraft={updateDraft}
@@ -223,13 +226,15 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
           contentClassName='space-y-2'
           actionClassName='-mr-1'
           action={
-            <button
-              type='button'
-              onClick={() => setIsMembersModalOpen(true)}
-              className='rounded-md border border-border/70 px-2 py-1 font-medium text-primary text-xs hover:bg-primary/5'
-            >
-              Manage members
-            </button>
+            canEdit ? (
+              <button
+                type='button'
+                onClick={() => setIsMembersModalOpen(true)}
+                className='rounded-md border border-border/70 px-2 py-1 font-medium text-primary text-xs hover:bg-primary/5'
+              >
+                Manage members
+              </button>
+            ) : undefined
           }
         >
           <ul className='space-y-2'>
@@ -267,42 +272,45 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
           </ul>
         </GuestDetailSection>
 
-        <GuestDetailSection
-          title='Save the Date'
-          contentClassName='space-y-2'
-          action={
-            <button
-              type='button'
-              onClick={handleCopyHouseholdInviteLink}
-              disabled={generateHouseholdInviteLink.isPending || isWebsiteMissing}
-              className='inline-flex items-center gap-1.5 rounded-md border border-border/70 px-2 py-1 font-medium text-primary text-xs hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-50'
-            >
-              {copiedInviteLink ? (
-                <Check className='h-3.5 w-3.5' aria-hidden='true' />
-              ) : (
-                <Copy className='h-3.5 w-3.5' aria-hidden='true' />
-              )}
-              Copy link
-            </button>
-          }
-        >
-          {isWebsiteMissing ? (
-            <p className='text-foreground/75 text-sm leading-relaxed'>
-              Publish your wedding website first to share save-the-date links.{' '}
-              <Link href='/website' className='text-primary underline underline-offset-2'>
-                Publish your website
-              </Link>
-              .
-            </p>
-          ) : (
-            <p className='text-foreground/75 text-sm leading-relaxed'>
-              Share a household-specific link that opens the save-the-date and lets this party
-              update their mailing details.
-            </p>
-          )}
-        </GuestDetailSection>
+        {canEdit && (
+          <GuestDetailSection
+            title='Save the Date'
+            contentClassName='space-y-2'
+            action={
+              <button
+                type='button'
+                onClick={handleCopyHouseholdInviteLink}
+                disabled={generateHouseholdInviteLink.isPending || isWebsiteMissing}
+                className='inline-flex items-center gap-1.5 rounded-md border border-border/70 px-2 py-1 font-medium text-primary text-xs hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-50'
+              >
+                {copiedInviteLink ? (
+                  <Check className='h-3.5 w-3.5' aria-hidden='true' />
+                ) : (
+                  <Copy className='h-3.5 w-3.5' aria-hidden='true' />
+                )}
+                Copy link
+              </button>
+            }
+          >
+            {isWebsiteMissing ? (
+              <p className='text-foreground/75 text-sm leading-relaxed'>
+                Publish your wedding website first to share save-the-date links.{' '}
+                <Link href='/website' className='text-primary underline underline-offset-2'>
+                  Publish your website
+                </Link>
+                .
+              </p>
+            ) : (
+              <p className='text-foreground/75 text-sm leading-relaxed'>
+                Share a household-specific link that opens the save-the-date and lets this party
+                update their mailing details.
+              </p>
+            )}
+          </GuestDetailSection>
+        )}
 
         <AttendanceLikelihoodSection
+          canEdit={canEdit}
           value={drawerDraft.likelihoodOfAttending}
           onChange={(val) => updateDraft('likelihoodOfAttending', val)}
         />
@@ -317,7 +325,8 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
         <AnswersSection answers={householdAnswers} isLoading={isLoadingAnswers} />
 
         <NotesSection
-          isEditing={editingSections.has('notes')}
+          isEditing={canEdit && editingSections.has('notes')}
+          canEdit={canEdit}
           onToggleEdit={() => toggleEditingSection('notes')}
           notes={selectedHousehold.notes}
           draftNotes={drawerDraft.notes}
@@ -326,19 +335,21 @@ export function GuestDetailPanelContent(props: Readonly<GuestDetailPanelContentP
 
         <CommunicationLogSection
           entries={communicationLog}
-          onAddNote={onAddNote}
-          onDeleteNote={onDeleteNote}
+          onAddNote={canEdit ? onAddNote : undefined}
+          onDeleteNote={canEdit ? onDeleteNote : undefined}
         />
       </GuestDetailSections>
 
-      <HouseholdMembersModal
-        open={isMembersModalOpen}
-        onOpenChange={setIsMembersModalOpen}
-        members={partyMembers}
-        onSave={onSaveMembers}
-      />
+      {canEdit && (
+        <HouseholdMembersModal
+          open={isMembersModalOpen}
+          onOpenChange={setIsMembersModalOpen}
+          members={partyMembers}
+          onSave={onSaveMembers}
+        />
+      )}
 
-      {onRequestDelete ? (
+      {canEdit && onRequestDelete ? (
         <div className='border-border/70 border-t pt-4'>
           <button
             type='button'
@@ -362,6 +373,7 @@ type EventInvitationsSectionProps = {
 
 function EventInvitationsSection(props: Readonly<EventInvitationsSectionProps>) {
   const { selectedHousehold, selectedEventId, events, rsvpManageHref } = props
+  const canEdit = useCanEdit()
 
   const eventsToShow =
     selectedEventId === 'all' ? events : events.filter((event) => event.id === selectedEventId)
@@ -397,7 +409,14 @@ function EventInvitationsSection(props: Readonly<EventInvitationsSectionProps>) 
                       <span className='truncate text-foreground/85 text-sm'>
                         {guest.firstName} {guest.lastName}
                       </span>
-                      {invitation ? (
+                      {invitation && !canEdit ? (
+                        <Badge
+                          variant='outline'
+                          className={getRsvpBadgeClassName(invitation.rsvp ?? 'Not Invited')}
+                        >
+                          {invitation.rsvp ?? 'Not Invited'}
+                        </Badge>
+                      ) : invitation ? (
                         <InvitationRsvpSelect
                           guestId={guest.id}
                           eventId={event.id}
@@ -481,6 +500,7 @@ function InvitationRsvpSelect(props: Readonly<InvitationRsvpSelectProps>) {
 
 type ContactAddressSectionProps = {
   isEditing: boolean
+  canEdit: boolean
   onToggleEdit: () => void
   drawerDraft: DrawerDraft
   updateDraft: DraftUpdater
@@ -492,6 +512,7 @@ type ContactAddressSectionProps = {
 function ContactAddressSection(props: Readonly<ContactAddressSectionProps>) {
   const {
     isEditing,
+    canEdit,
     onToggleEdit,
     drawerDraft,
     updateDraft,
@@ -638,14 +659,16 @@ function ContactAddressSection(props: Readonly<ContactAddressSectionProps>) {
       title='Contact & Address'
       contentClassName='space-y-3'
       action={
-        <button
-          type='button'
-          onClick={onToggleEdit}
-          className='rounded-md border border-border/70 px-2 py-1 font-medium text-primary text-xs hover:bg-primary/5'
-          aria-label='Edit Contact & Address'
-        >
-          Edit
-        </button>
+        canEdit ? (
+          <button
+            type='button'
+            onClick={onToggleEdit}
+            className='rounded-md border border-border/70 px-2 py-1 font-medium text-primary text-xs hover:bg-primary/5'
+            aria-label='Edit Contact & Address'
+          >
+            Edit
+          </button>
+        ) : undefined
       }
     >
       <dl className='grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2'>
@@ -677,6 +700,7 @@ function ContactAddressSection(props: Readonly<ContactAddressSectionProps>) {
 
 type NotesSectionProps = {
   isEditing: boolean
+  canEdit: boolean
   onToggleEdit: () => void
   notes: string | null | undefined
   draftNotes: string
@@ -684,12 +708,13 @@ type NotesSectionProps = {
 }
 
 type AttendanceLikelihoodSectionProps = {
+  canEdit: boolean
   value: number | null
   onChange: (value: number | null) => void
 }
 
 function AttendanceLikelihoodSection(props: Readonly<AttendanceLikelihoodSectionProps>) {
-  const { value, onChange } = props
+  const { canEdit, value, onChange } = props
   const isUnset = value == null
   const currentValue = value ?? 3
 
@@ -701,6 +726,7 @@ function AttendanceLikelihoodSection(props: Readonly<AttendanceLikelihoodSection
           max={5}
           step={1}
           value={[currentValue]}
+          disabled={!canEdit}
           onValueChange={([val]) => onChange(val ?? null)}
         />
         <div className='flex justify-between'>
@@ -717,7 +743,7 @@ function AttendanceLikelihoodSection(props: Readonly<AttendanceLikelihoodSection
             </span>
           ))}
         </div>
-        {isUnset && (
+        {isUnset && canEdit && (
           <p className='font-mono text-[0.55rem] text-foreground/45 uppercase tracking-wider'>
             Drag slider to set likelihood
           </p>
@@ -728,20 +754,22 @@ function AttendanceLikelihoodSection(props: Readonly<AttendanceLikelihoodSection
 }
 
 function NotesSection(props: Readonly<NotesSectionProps>) {
-  const { isEditing, onToggleEdit, notes, draftNotes, updateDraft } = props
+  const { isEditing, canEdit, onToggleEdit, notes, draftNotes, updateDraft } = props
 
   return (
     <GuestDetailSection
       title='Notes'
       action={
-        <button
-          type='button'
-          onClick={onToggleEdit}
-          className='rounded-md border border-border/70 px-2 py-1 font-medium text-primary text-xs hover:bg-primary/5'
-          aria-label='Edit Notes'
-        >
-          {isEditing ? 'Done' : 'Edit'}
-        </button>
+        canEdit ? (
+          <button
+            type='button'
+            onClick={onToggleEdit}
+            className='rounded-md border border-border/70 px-2 py-1 font-medium text-primary text-xs hover:bg-primary/5'
+            aria-label='Edit Notes'
+          >
+            {isEditing ? 'Done' : 'Edit'}
+          </button>
+        ) : undefined
       }
     >
       {isEditing ? (

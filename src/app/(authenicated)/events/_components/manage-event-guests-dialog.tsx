@@ -4,6 +4,7 @@ import { Loader2, Search } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { Button } from '~/components/ui/button'
 import { Checkbox } from '~/components/ui/checkbox'
 import {
@@ -41,6 +42,7 @@ export function ManageEventGuestsDialog({
   open,
   onOpenChange,
 }: ManageEventGuestsDialogProps) {
+  const canEdit = useCanEdit()
   const utils = api.useUtils()
   const [search, setSearch] = useState('')
   const [guestStates, setGuestStates] = useState<Map<number, GuestInviteState>>(new Map())
@@ -145,7 +147,7 @@ export function ManageEventGuestsDialog({
   })
 
   const handleSave = () => {
-    if (changedInvitations.length === 0) {
+    if (!canEdit || changedInvitations.length === 0) {
       handleOpenChange(false)
       return
     }
@@ -167,9 +169,13 @@ export function ManageEventGuestsDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className='max-h-[80vh] sm:max-w-lg'>
         <DialogHeader>
-          <DialogTitle>Manage Guests — {event.name}</DialogTitle>
+          <DialogTitle>
+            {canEdit ? 'Manage Guests' : 'Guests'} — {event.name}
+          </DialogTitle>
           <DialogDescription>
-            Select which guests to add to this event. This does not send invitations.
+            {canEdit
+              ? 'Select which guests to add to this event. This does not send invitations.'
+              : 'Guests invited to this event.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -188,24 +194,26 @@ export function ManageEventGuestsDialog({
             <span className='text-muted-foreground text-xs sm:text-sm'>
               {invitedCount} of {guestStates.size} invited
             </span>
-            <div className='flex gap-1.5'>
-              <Button
-                variant='outline'
-                size='sm'
-                className='h-7 px-2 text-xs'
-                onClick={() => setAllRsvp(RSVP_STATUS.INVITED)}
-              >
-                Invite All
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                className='h-7 px-2 text-xs'
-                onClick={() => setAllRsvp(RSVP_STATUS.NOT_INVITED)}
-              >
-                Uninvite All
-              </Button>
-            </div>
+            {canEdit ? (
+              <div className='flex gap-1.5'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className='h-7 px-2 text-xs'
+                  onClick={() => setAllRsvp(RSVP_STATUS.INVITED)}
+                >
+                  Invite All
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className='h-7 px-2 text-xs'
+                  onClick={() => setAllRsvp(RSVP_STATUS.NOT_INVITED)}
+                >
+                  Uninvite All
+                </Button>
+              </div>
+            ) : null}
           </div>
 
           <div className='max-h-[40vh] space-y-1 overflow-y-auto rounded-md border p-2'>
@@ -219,7 +227,7 @@ export function ManageEventGuestsDialog({
               </p>
             ) : (
               filteredGuests.map((guest) => {
-                const locked = isRsvpLocked(guest.currentRsvp)
+                const locked = !canEdit || isRsvpLocked(guest.currentRsvp)
                 const invited = guest.newRsvp !== RSVP_STATUS.NOT_INVITED
                 const checkboxId = `guest-invite-${guest.guestId}`
                 return (
@@ -238,7 +246,11 @@ export function ManageEventGuestsDialog({
                       {guest.firstName} {guest.lastName}
                     </span>
                     {locked && (
-                      <span className='text-muted-foreground text-xs'>{guest.currentRsvp}</span>
+                      <span className='text-muted-foreground text-xs'>
+                        {canEdit || guest.currentRsvp !== RSVP_STATUS.NOT_INVITED
+                          ? guest.currentRsvp
+                          : 'Not invited'}
+                      </span>
                     )}
                   </label>
                 )
@@ -249,17 +261,19 @@ export function ManageEventGuestsDialog({
 
         <DialogFooter>
           <Button variant='outline' onClick={() => handleOpenChange(false)}>
-            Cancel
+            {canEdit ? 'Cancel' : 'Close'}
           </Button>
-          <Button
-            onClick={handleSave}
-            disabled={bulkUpdate.isPending || changedInvitations.length === 0}
-          >
-            {bulkUpdate.isPending && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-            {changedInvitations.length > 0
-              ? `Save (${changedInvitations.length} change${changedInvitations.length === 1 ? '' : 's'})`
-              : 'Save'}
-          </Button>
+          {canEdit ? (
+            <Button
+              onClick={handleSave}
+              disabled={bulkUpdate.isPending || changedInvitations.length === 0}
+            >
+              {bulkUpdate.isPending && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+              {changedInvitations.length > 0
+                ? `Save (${changedInvitations.length} change${changedInvitations.length === 1 ? '' : 's'})`
+                : 'Save'}
+            </Button>
+          ) : null}
         </DialogFooter>
       </DialogContent>
     </Dialog>

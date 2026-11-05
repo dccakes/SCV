@@ -13,6 +13,7 @@ import { formatDateStandard } from '~/app/utils/helpers'
 import type { Event, EventFormData, FormInvites } from '~/app/utils/shared-types'
 import { useToggleEventForm } from '~/components/contexts/event-form-context'
 import { useToggleGuestForm } from '~/components/contexts/guest-form-context'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import type { HouseholdFormData } from '~/components/forms/guest-form.schema'
 import {
   type DrawerDraft,
@@ -67,6 +68,7 @@ export default function GuestsView({
   const utils = api.useUtils()
   const { data: allTags = [] } = api.guestTag.getAll.useQuery()
   const toggleGuestForm = useToggleGuestForm()
+  const canEdit = useCanEdit()
   const [filteredHouseholds, setFilteredHouseholds] = useState(households)
   const [nameSort, setNameSort] = useState<'none' | 'ascending' | 'descending'>('none')
   const [partySort, setPartySort] = useState<'none' | 'ascending' | 'descending'>('none')
@@ -656,20 +658,22 @@ export default function GuestsView({
           events={events}
           selectedEventId={selectedEventId}
         />
-        <div className='flex shrink-0 gap-3'>
-          <Button type='button' variant='outline' onClick={onImportClick}>
-            Import Guests
-          </Button>
-          <Button
-            type='button'
-            onClick={() => {
-              setPrefillHousehold(undefined)
-              toggleGuestForm()
-            }}
-          >
-            Add Guest
-          </Button>
-        </div>
+        {canEdit && (
+          <div className='flex shrink-0 gap-3'>
+            <Button type='button' variant='outline' onClick={onImportClick}>
+              Import Guests
+            </Button>
+            <Button
+              type='button'
+              onClick={() => {
+                setPrefillHousehold(undefined)
+                toggleGuestForm()
+              }}
+            >
+              Add Guest
+            </Button>
+          </div>
+        )}
       </div>
       <div className='space-y-4'>
         <ListToolbar
@@ -735,7 +739,7 @@ export default function GuestsView({
           </div>
         }
         footer={
-          isDrawerDirty ? (
+          canEdit && isDrawerDirty ? (
             <div className='flex gap-2'>
               <Button
                 type='button'
@@ -914,6 +918,7 @@ const SelectedEventTableHeader = ({
   setPrefillEvent,
 }: SelectedEventTableHeaderProps) => {
   const toggleEventForm = useToggleEventForm()
+  const canEdit = useCanEdit()
   const guestResponses = useMemo(() => {
     const guestResponses = {
       attending: 0,
@@ -968,14 +973,16 @@ const SelectedEventTableHeader = ({
     <div className='py-8'>
       <div className='mb-4 flex items-center gap-2'>
         <h2 className='font-bold text-xl'>{selectedEvent.name}</h2>
-        <button
-          type='button'
-          aria-label='Edit event details'
-          className='rounded-sm text-primary transition-colors hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
-          onClick={() => handleEditEvent(selectedEvent)}
-        >
-          <BiPencil size={22} aria-hidden='true' />
-        </button>
+        {canEdit && (
+          <button
+            type='button'
+            aria-label='Edit event details'
+            className='rounded-sm text-primary transition-colors hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:ring-offset-2'
+            onClick={() => handleEditEvent(selectedEvent)}
+          >
+            <BiPencil size={22} aria-hidden='true' />
+          </button>
+        )}
       </div>
       <div className='flex flex-wrap items-center gap-4 md:gap-6'>
         <span className='font-semibold text-foreground'>{totalGuests} Guests Invited:</span>

@@ -13,6 +13,7 @@ type MilestoneDetailProps = Readonly<{
   onDismiss: (milestoneId: string) => void
   onClearOverride: (milestoneId: string) => void
   viewport?: 'desktop' | 'mobile'
+  readOnly?: boolean
 }>
 
 type MilestoneOverrideChoice = 'attested' | 'dismissed' | 'system'
@@ -46,6 +47,7 @@ export function MilestoneDetail({
   onDismiss,
   onClearOverride,
   viewport,
+  readOnly = false,
 }: MilestoneDetailProps) {
   const [open, setOpen] = useState(false)
   const isDesktop = useIsDesktopViewport(viewport)
@@ -53,6 +55,7 @@ export function MilestoneDetail({
   const content = (
     <MilestoneDetailContent
       milestone={milestone}
+      readOnly={readOnly}
       onAttest={onAttest}
       onDismiss={onDismiss}
       onClearOverride={onClearOverride}
@@ -85,11 +88,13 @@ export function MilestoneDetail({
 
 function MilestoneDetailContent({
   milestone,
+  readOnly,
   onAttest,
   onDismiss,
   onClearOverride,
 }: Readonly<{
   milestone: MilestoneWithEffectiveStatus
+  readOnly: boolean
   onAttest: (milestoneId: string) => void
   onDismiss: (milestoneId: string) => void
   onClearOverride: (milestoneId: string) => void
@@ -115,7 +120,9 @@ function MilestoneDetailContent({
       <div className='space-y-2 text-left'>
         <h2 className='font-display text-2xl italic'>{milestone.title}</h2>
         <p className='text-muted-foreground text-sm'>
-          Review the system-derived milestone status or override it manually.
+          {readOnly
+            ? 'Review the system-derived milestone status.'
+            : 'Review the system-derived milestone status or override it manually.'}
         </p>
       </div>
 
@@ -128,33 +135,35 @@ function MilestoneDetailContent({
         </p>
       </div>
 
-      <fieldset className='space-y-2'>
-        <legend className='font-mono text-[0.62rem] text-muted-foreground uppercase tracking-[0.12em]'>
-          Override
-        </legend>
+      {!readOnly && (
+        <fieldset className='space-y-2'>
+          <legend className='font-mono text-[0.62rem] text-muted-foreground uppercase tracking-[0.12em]'>
+            Override
+          </legend>
 
-        {OVERRIDE_OPTIONS.map((option) => (
-          <label
-            key={option.value}
-            className='flex cursor-pointer items-start gap-3 rounded-lg border border-border/70 px-4 py-3 hover:bg-muted/30'
-          >
-            <input
-              type='radio'
-              name={`milestone-${milestone.id}-override`}
-              aria-label={option.label}
-              value={option.value}
-              checked={selectedValue === option.value}
-              onChange={() => handleChange(option.value)}
-            />
-            <span>
-              <span className='block font-sans text-foreground text-sm'>{option.label}</span>
-              <span className='block font-serif text-muted-foreground text-sm'>
-                {option.description}
+          {OVERRIDE_OPTIONS.map((option) => (
+            <label
+              key={option.value}
+              className='flex cursor-pointer items-start gap-3 rounded-lg border border-border/70 px-4 py-3 hover:bg-muted/30'
+            >
+              <input
+                type='radio'
+                name={`milestone-${milestone.id}-override`}
+                aria-label={option.label}
+                value={option.value}
+                checked={selectedValue === option.value}
+                onChange={() => handleChange(option.value)}
+              />
+              <span>
+                <span className='block font-sans text-foreground text-sm'>{option.label}</span>
+                <span className='block font-serif text-muted-foreground text-sm'>
+                  {option.description}
+                </span>
               </span>
-            </span>
-          </label>
-        ))}
-      </fieldset>
+            </label>
+          ))}
+        </fieldset>
+      )}
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { EventQuestionFormDialog } from '~/app/(authenicated)/events/_components/event-question-form-dialog'
 import type { Question } from '~/app/utils/shared-types'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,6 +47,7 @@ export function ManageGeneralQuestionsDialog({
   open,
   onOpenChange,
 }: ManageGeneralQuestionsDialogProps) {
+  const canEdit = useCanEdit()
   const utils = api.useUtils()
   const [editingQuestion, setEditingQuestion] = useState<Question | undefined>(undefined)
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -92,7 +94,7 @@ export function ManageGeneralQuestionsDialog({
             </DialogDescription>
           </DialogHeader>
 
-          {!isRsvpEnabled ? (
+          {canEdit && !isRsvpEnabled ? (
             <div className='rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-900 text-sm'>
               Turn on <strong>online RSVP</strong> for your website to collect answers to these
               questions.
@@ -104,10 +106,12 @@ export function ManageGeneralQuestionsDialog({
               <p className='text-muted-foreground text-sm'>
                 {questionList.length} {questionList.length === 1 ? 'question' : 'questions'}
               </p>
-              <Button type='button' size='sm' onClick={openCreateForm} disabled={!isRsvpEnabled}>
-                <Plus className='mr-1 h-4 w-4' />
-                Add question
-              </Button>
+              {canEdit ? (
+                <Button type='button' size='sm' onClick={openCreateForm} disabled={!isRsvpEnabled}>
+                  <Plus className='mr-1 h-4 w-4' />
+                  Add question
+                </Button>
+              ) : null}
             </div>
             <p className='text-muted-foreground text-xs'>
               Multiple-choice questions can optionally include an <strong>Other</strong> write-in
@@ -143,26 +147,28 @@ export function ManageGeneralQuestionsDialog({
                         ) : null}
                       </div>
                     </div>
-                    <div className='flex items-center gap-1'>
-                      <Button
-                        type='button'
-                        size='icon'
-                        variant='ghost'
-                        onClick={() => openEditForm(question)}
-                        aria-label={`Edit question ${question.text}`}
-                      >
-                        <Pencil className='h-4 w-4' />
-                      </Button>
-                      <Button
-                        type='button'
-                        size='icon'
-                        variant='ghost'
-                        onClick={() => setDeletingQuestion(question)}
-                        aria-label={`Delete question ${question.text}`}
-                      >
-                        <Trash2 className='h-4 w-4 text-destructive' />
-                      </Button>
-                    </div>
+                    {canEdit ? (
+                      <div className='flex items-center gap-1'>
+                        <Button
+                          type='button'
+                          size='icon'
+                          variant='ghost'
+                          onClick={() => openEditForm(question)}
+                          aria-label={`Edit question ${question.text}`}
+                        >
+                          <Pencil className='h-4 w-4' />
+                        </Button>
+                        <Button
+                          type='button'
+                          size='icon'
+                          variant='ghost'
+                          onClick={() => setDeletingQuestion(question)}
+                          aria-label={`Delete question ${question.text}`}
+                        >
+                          <Trash2 className='h-4 w-4 text-destructive' />
+                        </Button>
+                      </div>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -177,42 +183,48 @@ export function ManageGeneralQuestionsDialog({
         </DialogContent>
       </Dialog>
 
-      <EventQuestionFormDialog
-        open={isFormOpen}
-        onOpenChange={setIsFormOpen}
-        websiteId={websiteId}
-        initialQuestion={editingQuestion}
-        onSaved={handleSaved}
-      />
+      {canEdit ? (
+        <>
+          <EventQuestionFormDialog
+            open={isFormOpen}
+            onOpenChange={setIsFormOpen}
+            websiteId={websiteId}
+            initialQuestion={editingQuestion}
+            onSaved={handleSaved}
+          />
 
-      <AlertDialog
-        open={deletingQuestion !== undefined}
-        onOpenChange={(open) => !open && setDeletingQuestion(undefined)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete general question?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete “{deletingQuestion?.text}” and any collected answers.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteQuestion.isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
-              disabled={deleteQuestion.isPending}
-              onClick={(eventAction) => {
-                eventAction.preventDefault()
-                if (!deletingQuestion?.id) return
-                deleteQuestion.mutate({ questionId: deletingQuestion.id })
-              }}
-            >
-              {deleteQuestion.isPending ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : null}
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          <AlertDialog
+            open={deletingQuestion !== undefined}
+            onOpenChange={(open) => !open && setDeletingQuestion(undefined)}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete general question?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete “{deletingQuestion?.text}” and any collected answers.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={deleteQuestion.isPending}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                  disabled={deleteQuestion.isPending}
+                  onClick={(eventAction) => {
+                    eventAction.preventDefault()
+                    if (!deletingQuestion?.id) return
+                    deleteQuestion.mutate({ questionId: deletingQuestion.id })
+                  }}
+                >
+                  {deleteQuestion.isPending ? (
+                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  ) : null}
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
+      ) : null}
     </>
   )
 }

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { getRsvpBadgeClassName } from '~/components/guest-list/guest-detail-panel-content'
 import { GuestDetailDrawer } from '~/components/guest-list/v2/drawer/guest-detail-drawer'
 import {
@@ -50,6 +51,7 @@ function DetailRow(props: Readonly<{ label: string; value: string | null }>) {
 export function SeatingGuestDrawer(props: Readonly<SeatingGuestDrawerProps>) {
   const { guest, household, tables, onClose, onSelectGuest, onUnseat, onSeat, onCloseAutoFocus } =
     props
+  const canEdit = useCanEdit()
   const tableName = (tableId: string | null) =>
     tables.find((table) => table.id === tableId)?.name ?? null
   const seatedAt = guest ? tableName(guest.tableId) : null
@@ -89,49 +91,55 @@ export function SeatingGuestDrawer(props: Readonly<SeatingGuestDrawerProps>) {
       }
       footer={
         <Button asChild variant='outline' className='w-full'>
-          <Link href='/guest-list'>Edit in Guest List</Link>
+          <Link href='/guest-list'>{canEdit ? 'Edit in Guest List' : 'View in Guest List'}</Link>
         </Button>
       }
     >
       {guest ? (
         <GuestDetailSections>
-          <GuestDetailSection
-            title='Seating'
-            action={
-              guest.tableId ? (
-                <Button size='sm' variant='ghost' onClick={() => onUnseat(guest.id)}>
-                  Remove from table
-                </Button>
-              ) : null
-            }
-          >
-            {/* Seating without dragging (keyboard, touch, screen readers). Always
-                controlled: '' shows the placeholder, so a previous guest's pick
-                never lingers in Radix's internal state */}
-            <Select
-              value={guest.tableId ?? ''}
-              onValueChange={(tableId) => {
-                if (tableId !== guest.tableId) onSeat(guest.id, tableId)
-              }}
+          {canEdit && (
+            <GuestDetailSection
+              title='Seating'
+              action={
+                guest.tableId ? (
+                  <Button size='sm' variant='ghost' onClick={() => onUnseat(guest.id)}>
+                    Remove from table
+                  </Button>
+                ) : null
+              }
             >
-              <SelectTrigger aria-label='Seat at table'>
-                <SelectValue
-                  placeholder={tables.length === 0 ? 'Add a table first' : 'Unassigned'}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {tables.map((table) => {
-                  const open = getOpenSeats(table)
-                  const isOwnTable = table.id === guest.tableId
-                  return (
-                    <SelectItem key={table.id} value={table.id} disabled={open <= 0 && !isOwnTable}>
-                      {table.name} ({open <= 0 ? 'full' : `${open} open`})
-                    </SelectItem>
-                  )
-                })}
-              </SelectContent>
-            </Select>
-          </GuestDetailSection>
+              {/* Seating without dragging (keyboard, touch, screen readers). Always
+                  controlled: '' shows the placeholder, so a previous guest's pick
+                  never lingers in Radix's internal state */}
+              <Select
+                value={guest.tableId ?? ''}
+                onValueChange={(tableId) => {
+                  if (tableId !== guest.tableId) onSeat(guest.id, tableId)
+                }}
+              >
+                <SelectTrigger aria-label='Seat at table'>
+                  <SelectValue
+                    placeholder={tables.length === 0 ? 'Add a table first' : 'Unassigned'}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {tables.map((table) => {
+                    const open = getOpenSeats(table)
+                    const isOwnTable = table.id === guest.tableId
+                    return (
+                      <SelectItem
+                        key={table.id}
+                        value={table.id}
+                        disabled={open <= 0 && !isOwnTable}
+                      >
+                        {table.name} ({open <= 0 ? 'full' : `${open} open`})
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
+            </GuestDetailSection>
+          )}
 
           <GuestDetailSection title='Guest' contentClassName='space-y-1.5'>
             <DetailRow label='Email' value={guest.email} />

@@ -5,6 +5,7 @@ import { Download, Plus } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import {
   createSeatingAnnouncements,
   SEATING_SCREEN_READER_INSTRUCTIONS,
@@ -138,6 +139,7 @@ const slugify = (value: string) =>
 export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
   const { events, initialEventId } = props
   const router = useRouter()
+  const canEdit = useCanEdit()
   const pathname = usePathname()
   const utils = api.useUtils()
 
@@ -340,7 +342,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
 
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveDrag(null)
-    if (!chart || !eventId) return
+    if (!canEdit || !chart || !eventId) return
     const data = event.active.data.current as DragData | undefined
     if (!data) return
 
@@ -405,7 +407,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
     values: SeatingTableFormValues,
     changed: Partial<SeatingTableFormValues>
   ) => {
-    if (!eventId || !chart || !tableDialog) return
+    if (!canEdit || !eventId || !chart || !tableDialog) return
     const { openId } = tableDialog
     const closeIfStillOpen = () => setTableDialog((current) => dialogAfterSave(current, openId))
     // An edit of a table someone else deleted must never turn into a create
@@ -449,6 +451,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
 
   // Seat one guest from the drawer, the non-drag path to the same mutation
   const handleSeatGuest = (guestId: number, tableId: string) => {
+    if (!canEdit) return
     const table = tablesById.get(tableId)
     if (!table || !canSeat(table, [guestId])) return
     assignGuests.mutate({ tableId, guestIds: [guestId] })
@@ -489,14 +492,16 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
             <Download className='mr-2 h-4 w-4' aria-hidden='true' />
             Export CSV
           </Button>
-          <Button
-            data-seating-focus-key={ADD_TABLE_FOCUS_KEY}
-            onClick={() => openTableDialog({ mode: 'create' })}
-            disabled={!chart}
-          >
-            <Plus className='mr-2 h-4 w-4' aria-hidden='true' />
-            Add table
-          </Button>
+          {canEdit && (
+            <Button
+              data-seating-focus-key={ADD_TABLE_FOCUS_KEY}
+              onClick={() => openTableDialog({ mode: 'create' })}
+              disabled={!chart}
+            >
+              <Plus className='mr-2 h-4 w-4' aria-hidden='true' />
+              Add table
+            </Button>
+          )}
         </div>
       </div>
 
@@ -540,8 +545,9 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
               >
                 {chart.tables.length === 0 ? (
                   <p className='absolute top-10 left-10 max-w-xs text-muted-foreground text-sm'>
-                    Add a table to start your floor plan. Drag tables to arrange the room, then drag
-                    guests or whole households onto them.
+                    {canEdit
+                      ? 'Add a table to start your floor plan. Drag tables to arrange the room, then drag guests or whole households onto them.'
+                      : 'No tables have been added to this floor plan yet.'}
                   </p>
                 ) : null}
                 {chart.tables.map((table) => (
@@ -566,27 +572,29 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
         </DndContext>
       )}
 
-      <SeatingTableDialog
-        onCloseAutoFocus={returnFocusFromTableDialog}
-        mode={tableDialog?.mode ?? 'create'}
-        open={tableDialog !== null}
-        defaultValues={dialogDefaults}
-        minCapacity={editingTable?.guestIds.length ?? 0}
-        isSubmitting={createTable.isPending || updateTable.isPending}
-        onOpenChange={(open) => {
-          if (!open) setTableDialog(null)
-        }}
-        onSubmit={handleTableSubmit}
-        onDelete={
-          editingTable
-            ? () => {
-                handingOffToDelete.current = true
-                setPendingDeleteId(editingTable.id)
-                setTableDialog(null)
-              }
-            : undefined
-        }
-      />
+      {canEdit && (
+        <SeatingTableDialog
+          onCloseAutoFocus={returnFocusFromTableDialog}
+          mode={tableDialog?.mode ?? 'create'}
+          open={tableDialog !== null}
+          defaultValues={dialogDefaults}
+          minCapacity={editingTable?.guestIds.length ?? 0}
+          isSubmitting={createTable.isPending || updateTable.isPending}
+          onOpenChange={(open) => {
+            if (!open) setTableDialog(null)
+          }}
+          onSubmit={handleTableSubmit}
+          onDelete={
+            editingTable
+              ? () => {
+                  handingOffToDelete.current = true
+                  setPendingDeleteId(editingTable.id)
+                  setTableDialog(null)
+                }
+              : undefined
+          }
+        />
+      )}
 
       <AlertDialog
         open={pendingDeleteId !== null}
@@ -623,7 +631,7 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
         onSelectGuest={switchDrawerGuest}
         onCloseAutoFocus={handleDrawerCloseAutoFocus}
         onUnseat={(guestId) => {
-          if (eventId) unassignGuests.mutate({ eventId, guestIds: [guestId] })
+          if (canEdit && eventId) unassignGuests.mutate({ eventId, guestIds: [guestId] })
         }}
         onSeat={handleSeatGuest}
       />

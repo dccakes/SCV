@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { sharedStyles } from '~/app/utils/shared-styles'
 import type { Website } from '~/app/utils/shared-types'
 import { useToggleEditRsvpSettingsForm } from '~/components/contexts/edit-rsvp-settings-form-context'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import SidePaneWrapper from '~/components/forms/wrapper'
 import { Switch } from '~/components/ui/switch'
 import { api } from '~/trpc/react'
@@ -17,6 +18,7 @@ type EditRsvpSettingsFormProps = {
 
 export default function EditRsvpSettingsForm({ website }: EditRsvpSettingsFormProps) {
   const router = useRouter()
+  const canEdit = useCanEdit()
   const toggleEditRsvpSettingsForm = useToggleEditRsvpSettingsForm()
   const [pageIsVisible, setPageIsVisible] = useState<boolean>(!!website?.isRsvpEnabled)
   const [rsvpAccess, setRsvpAccess] = useState<'Private' | 'Public'>('Private')
@@ -39,6 +41,7 @@ export default function EditRsvpSettingsForm({ website }: EditRsvpSettingsFormPr
       <form
         onSubmit={(e) => {
           e.preventDefault()
+          if (!canEdit) return
           updateIsRsvpEnabled.mutate({
             websiteId: website?.id ?? '',
             isRsvpEnabled: pageIsVisible,
@@ -62,6 +65,7 @@ export default function EditRsvpSettingsForm({ website }: EditRsvpSettingsFormPr
                 <Switch
                   id='rsvp-page-visibility-toggle'
                   checked={pageIsVisible}
+                  disabled={!canEdit}
                   onClick={() => setPageIsVisible((prev) => !prev)}
                 />
                 <span>{pageIsVisible ? 'Visible' : 'Hidden'}</span>
@@ -80,6 +84,7 @@ export default function EditRsvpSettingsForm({ website }: EditRsvpSettingsFormPr
                   type='radio'
                   className='h-6 w-6'
                   checked={rsvpAccess === 'Private'}
+                  disabled={!canEdit}
                   onClick={() => setRsvpAccess('Private')}
                 />
                 <label htmlFor='guest-list-only'>
@@ -95,6 +100,7 @@ export default function EditRsvpSettingsForm({ website }: EditRsvpSettingsFormPr
                   type='radio'
                   className='h-6 w-6'
                   checked={rsvpAccess === 'Public'}
+                  disabled={!canEdit}
                   onClick={() => setRsvpAccess('Public')}
                 />
                 <label htmlFor='public-rsvp'>
@@ -114,6 +120,7 @@ export default function EditRsvpSettingsForm({ website }: EditRsvpSettingsFormPr
               type='checkbox'
               className='h-7 w-7 accent-pink-400'
               checked={guestListIsVisible}
+              disabled={!canEdit}
               onChange={() => setGuestListIsVisible((prev) => !prev)}
             />
             <label htmlFor='guest-list-visibility'>
@@ -135,21 +142,23 @@ export default function EditRsvpSettingsForm({ website }: EditRsvpSettingsFormPr
                 isLoading: updateIsRsvpEnabled.isPending,
               })}`}
             >
-              Cancel
+              {canEdit ? 'Cancel' : 'Close'}
             </button>
-            <button
-              id='edit-save'
-              name='edit-button'
-              type='submit'
-              disabled={updateIsRsvpEnabled.isPending}
-              className={`w-1/2 ${sharedStyles.primaryButton({
-                px: 'px-2',
-                py: 'py-2',
-                isLoading: updateIsRsvpEnabled.isPending,
-              })}`}
-            >
-              {updateIsRsvpEnabled.isPending ? 'Processing...' : 'Save'}
-            </button>
+            {canEdit && (
+              <button
+                id='edit-save'
+                name='edit-button'
+                type='submit'
+                disabled={updateIsRsvpEnabled.isPending}
+                className={`w-1/2 ${sharedStyles.primaryButton({
+                  px: 'px-2',
+                  py: 'py-2',
+                  isLoading: updateIsRsvpEnabled.isPending,
+                })}`}
+              >
+                {updateIsRsvpEnabled.isPending ? 'Processing...' : 'Save'}
+              </button>
+            )}
           </div>
         </div>
       </form>

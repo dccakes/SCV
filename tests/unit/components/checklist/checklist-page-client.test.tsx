@@ -1,8 +1,8 @@
 import { TaskCategory } from '@prisma/client'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-
 import { ChecklistPageClient } from '~/app/(authenicated)/checklist/_components/checklist-page-client'
+import { WorkspaceCapabilitiesProvider } from '~/components/contexts/workspace-capabilities-context'
 import type { EventWithStats } from '~/server/domains/event'
 import type { MilestoneWithEffectiveStatus } from '~/server/domains/milestone'
 import type { Task } from '~/server/domains/task'
@@ -498,5 +498,42 @@ describe('ChecklistPageClient', () => {
     expect(mockTaskDeleteMutate).toHaveBeenCalledWith({
       taskId: 'task-legal',
     })
+  })
+
+  it('removes every write control for viewers while keeping data visible', () => {
+    render(
+      <WorkspaceCapabilitiesProvider canEditPlanning={false}>
+        <ChecklistPageClient
+          initialTasks={initialTasks}
+          initialMilestones={initialMilestones}
+          initialEvents={initialEvents}
+        />
+      </WorkspaceCapabilitiesProvider>
+    )
+
+    expect(screen.getByText('Mail the invitations')).toBeInTheDocument()
+    expect(screen.getByText('Invitations sent')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Add task' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Edit task/ })).not.toBeInTheDocument()
+
+    const checkbox = screen.getByRole('checkbox', { name: 'Toggle task Mail the invitations' })
+    expect(checkbox).toBeDisabled()
+    fireEvent.click(checkbox)
+    expect(mockTaskCompleteMutate).not.toHaveBeenCalled()
+  })
+
+  it('keeps write controls for editors', () => {
+    render(
+      <WorkspaceCapabilitiesProvider canEditPlanning>
+        <ChecklistPageClient
+          initialTasks={initialTasks}
+          initialMilestones={initialMilestones}
+          initialEvents={initialEvents}
+        />
+      </WorkspaceCapabilitiesProvider>
+    )
+
+    expect(screen.getByRole('button', { name: 'Add task' })).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Toggle task Mail the invitations' })).toBeEnabled()
   })
 })

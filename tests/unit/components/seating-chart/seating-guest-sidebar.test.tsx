@@ -1,5 +1,6 @@
 import { DndContext } from '@dnd-kit/core'
 import { fireEvent, render, screen, within } from '@testing-library/react'
+import { WorkspaceCapabilitiesProvider } from '~/components/contexts/workspace-capabilities-context'
 
 import { SeatingGuestSidebar } from '~/components/seating-chart/seating-guest-sidebar'
 import type { SeatingGuest, SeatingHousehold } from '~/server/domains/seating/seating.types'
@@ -135,5 +136,31 @@ describe('SeatingGuestSidebar', () => {
     const header = screen.getByRole('button', { name: /^Bear household, 3 unseated/ })
     expect(header).toHaveTextContent('3/4')
     expect(header).toHaveAttribute('data-seating-guest-ids', '21,22,23')
+  })
+
+  it('renders guests without drag affordances for viewers but still opens details', () => {
+    const onSelectGuest = jest.fn()
+    render(
+      <WorkspaceCapabilitiesProvider canEditPlanning={false}>
+        <DndContext>
+          <SeatingGuestSidebar
+            households={households}
+            totalGuests={3}
+            seatedGuests={1}
+            onSelectGuest={onSelectGuest}
+          />
+        </DndContext>
+      </WorkspaceCapabilitiesProvider>
+    )
+
+    const ann = screen.getByRole('button', { name: /Ann Smith/ })
+    expect(ann).not.toHaveAttribute('aria-roledescription')
+    expect(ann.getAttribute('aria-label')).not.toMatch(/Press Space/)
+    // Household headers are plain headings, not draggable buttons
+    expect(screen.queryByRole('button', { name: /household/ })).not.toBeInTheDocument()
+    expect(screen.getByText('Smith household')).toBeInTheDocument()
+
+    fireEvent.click(ann)
+    expect(onSelectGuest).toHaveBeenCalledWith(1)
   })
 })

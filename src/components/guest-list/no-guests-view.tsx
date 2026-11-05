@@ -1,5 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { useToggleGuestForm } from '~/components/contexts/guest-form-context'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import type { HouseholdFormData } from '~/components/forms/guest-form.schema'
 import { Button } from '~/components/ui/button'
 
@@ -10,6 +11,7 @@ type NoGuestsViewProps = {
 
 export default function NoGuestsView({ setPrefillHousehold, onImportClick }: NoGuestsViewProps) {
   const toggleGuestForm = useToggleGuestForm()
+  const canEdit = useCanEdit()
 
   return (
     <div className='flex flex-col items-center gap-6 py-16 text-center'>
@@ -21,30 +23,33 @@ export default function NoGuestsView({ setPrefillHousehold, onImportClick }: NoG
       <div className='max-w-sm'>
         <p className='font-serif text-xl text-foreground'>No guests yet</p>
         <p className='mt-2 font-mono text-[0.65rem] text-foreground/55 leading-relaxed tracking-wider'>
-          Add guests one by one or import from a CSV. Track RSVPs, contact details, and household
-          information all in one place.
+          {canEdit
+            ? 'Add guests one by one or import from a CSV. Track RSVPs, contact details, and household information all in one place.'
+            : 'No guests have been added to this guest list yet.'}
         </p>
       </div>
-      <div className='flex flex-wrap items-center justify-center gap-3'>
-        <Button
-          type='button'
-          variant='outline'
-          onClick={onImportClick}
-          className='font-mono text-[0.65rem] uppercase tracking-widest'
-        >
-          Import from CSV
-        </Button>
-        <Button
-          type='button'
-          onClick={() => {
-            setPrefillHousehold(undefined)
-            toggleGuestForm()
-          }}
-          className='font-mono text-[0.65rem] uppercase tracking-widest'
-        >
-          Add your first guest
-        </Button>
-      </div>
+      {canEdit && (
+        <div className='flex flex-wrap items-center justify-center gap-3'>
+          <Button
+            type='button'
+            variant='outline'
+            onClick={onImportClick}
+            className='font-mono text-[0.65rem] uppercase tracking-widest'
+          >
+            Import from CSV
+          </Button>
+          <Button
+            type='button'
+            onClick={() => {
+              setPrefillHousehold(undefined)
+              toggleGuestForm()
+            }}
+            className='font-mono text-[0.65rem] uppercase tracking-widest'
+          >
+            Add your first guest
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

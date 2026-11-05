@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import { WorkspaceCapabilitiesProvider } from '~/components/contexts/workspace-capabilities-context'
 
 import { SeatingGuestDrawer } from '~/components/seating-chart/seating-guest-drawer'
 import type { SeatingGuest, SeatingTableView } from '~/server/domains/seating/seating.types'
@@ -150,5 +151,27 @@ describe('SeatingGuestDrawer seat picker', () => {
     expect(screen.getByLabelText('Seat at table')).toHaveValue('')
     fireEvent.change(screen.getByLabelText('Seat at table'), { target: { value: 't1' } })
     expect(onSeat).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('SeatingGuestDrawer for viewers', () => {
+  it('hides the seat picker and unseat action', () => {
+    render(
+      <WorkspaceCapabilitiesProvider canEditPlanning={false}>
+        <SeatingGuestDrawer
+          guest={{ ...guest, tableId: 't1' }}
+          household={null}
+          tables={[table('t1', 'Head Table', 4, [1])]}
+          onClose={jest.fn()}
+          onSelectGuest={jest.fn()}
+          onUnseat={jest.fn()}
+          onSeat={jest.fn()}
+        />
+      </WorkspaceCapabilitiesProvider>
+    )
+
+    expect(screen.queryByLabelText('Seat at table')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Remove from table' })).not.toBeInTheDocument()
+    expect(screen.getByText('Seated at Head Table')).toBeInTheDocument()
   })
 })

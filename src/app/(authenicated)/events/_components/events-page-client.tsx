@@ -14,6 +14,7 @@ import { EventCard } from '~/app/(authenicated)/events/_components/event-card'
 import { ManageEventGuestsDialog } from '~/app/(authenicated)/events/_components/manage-event-guests-dialog'
 import { ManageEventQuestionsDialog } from '~/app/(authenicated)/events/_components/manage-event-questions-dialog'
 import { ManageGeneralQuestionsDialog } from '~/app/(authenicated)/events/_components/manage-general-questions-dialog'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import {
   type EventFormData,
   transformToServerInput,
@@ -39,6 +40,7 @@ type EventsPageClientProps = Readonly<{
 }>
 
 export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPageClientProps) {
+  const canEdit = useCanEdit()
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState<EventWithStats | undefined>(undefined)
   const [deletingEvent, setDeletingEvent] = useState<EventWithStats | undefined>(undefined)
@@ -202,13 +204,14 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
 
   const handleToggleCollectRsvp = useCallback(
     (eventId: string, collectRsvp: boolean) => {
+      if (!canEdit) return
       setTogglingRsvpEventId(eventId)
       updateCollectRsvp.mutate({
         eventId,
         collectRsvp,
       })
     },
-    [updateCollectRsvp]
+    [canEdit, updateCollectRsvp]
   )
 
   const generalQuestionsButton = (
@@ -219,7 +222,7 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
       onClick={() => setManagingGeneralQuestions(true)}
       disabled={websiteQuestions === null}
     >
-      General RSVP questions
+      {canEdit ? 'General RSVP questions' : 'View general RSVP questions'}
     </Button>
   )
 
@@ -255,23 +258,26 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
           <div className='max-w-sm'>
             <p className='font-serif text-xl text-foreground'>No events yet</p>
             <p className='mt-2 font-mono text-[0.65rem] text-foreground/55 leading-relaxed tracking-wider'>
-              Get started by creating your first wedding event. Add ceremonies, receptions,
-              rehearsal dinners, and more.
+              {canEdit
+                ? 'Get started by creating your first wedding event. Add ceremonies, receptions, rehearsal dinners, and more.'
+                : 'No events have been created for this wedding yet.'}
             </p>
           </div>
           <div className='flex flex-wrap items-center justify-center gap-2'>
-            <Button
-              type='button'
-              onClick={() => setIsCreateDialogOpen(true)}
-              className='font-mono text-[0.65rem] uppercase tracking-widest'
-            >
-              Create your first event
-            </Button>
+            {canEdit ? (
+              <Button
+                type='button'
+                onClick={() => setIsCreateDialogOpen(true)}
+                className='font-mono text-[0.65rem] uppercase tracking-widest'
+              >
+                Create your first event
+              </Button>
+            ) : null}
             {generalQuestionsButton}
           </div>
         </div>
 
-        {isCreateDialogOpen ? (
+        {canEdit && isCreateDialogOpen ? (
           <ModernEventForm
             mode='create'
             open={isCreateDialogOpen}
@@ -303,8 +309,8 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
       {initialRsvpEventId !== undefined ? (
         <div className='mb-4 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm md:mb-6'>
           {rsvpFocusEvent
-            ? `Managing RSVPs for "${rsvpFocusEvent.name}" — find the event card below.`
-            : 'Select an event below to manage RSVPs.'}
+            ? `${canEdit ? 'Managing' : 'Viewing'} RSVPs for "${rsvpFocusEvent.name}" — find the event card below.`
+            : `Select an event below to ${canEdit ? 'manage' : 'view'} RSVPs.`}
         </div>
       ) : null}
       <div className='mb-4 flex items-center justify-between md:mb-6'>
@@ -313,10 +319,12 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
         </p>
         <div className='flex items-center gap-2'>
           {generalQuestionsButton}
-          <Button onClick={() => setIsCreateDialogOpen(true)} size='sm'>
-            <Plus className='mr-2 h-4 w-4' />
-            Create Event
-          </Button>
+          {canEdit ? (
+            <Button onClick={() => setIsCreateDialogOpen(true)} size='sm'>
+              <Plus className='mr-2 h-4 w-4' />
+              Create Event
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -335,7 +343,7 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
         ))}
       </div>
 
-      {isCreateDialogOpen ? (
+      {canEdit && isCreateDialogOpen ? (
         <ModernEventForm
           mode='create'
           open={isCreateDialogOpen}
@@ -345,7 +353,7 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
         />
       ) : null}
 
-      {editingEvent ? (
+      {canEdit && editingEvent ? (
         <ModernEventForm
           mode='edit'
           open
@@ -357,7 +365,7 @@ export function EventsPageClient({ initialEvents, initialRsvpEventId }: EventsPa
       ) : null}
 
       <AlertDialog
-        open={!!deletingEvent}
+        open={canEdit && !!deletingEvent}
         onOpenChange={(open) => !open && setDeletingEvent(undefined)}
       >
         <AlertDialogContent>

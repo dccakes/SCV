@@ -15,6 +15,7 @@ import {
 } from '~/components/checklist/checklist-view-model'
 import { MilestoneDetail } from '~/components/checklist/milestone-detail'
 import { TaskDialog } from '~/components/checklist/task-dialog'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,6 +57,7 @@ export function ChecklistPageClient({
   initialEvents,
 }: ChecklistPageClientProps) {
   const router = useRouter()
+  const canEdit = useCanEdit()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const filters = getChecklistFiltersFromSearchParams(searchParams)
@@ -201,6 +203,7 @@ export function ChecklistPageClient({
     <TaskRow
       key={task.id}
       task={task}
+      readOnly={!canEdit}
       onToggle={(completed) => completeTask.mutate({ taskId: task.id, completed })}
       onEdit={() => setEditingTask(task)}
     />
@@ -225,9 +228,11 @@ export function ChecklistPageClient({
             <p className='text-muted-foreground text-sm'>{completionPercent}% of tasks done</p>
           </div>
         </div>
-        <Button type='button' onClick={() => setIsCreateDialogOpen(true)}>
-          Add task
-        </Button>
+        {canEdit && (
+          <Button type='button' onClick={() => setIsCreateDialogOpen(true)}>
+            Add task
+          </Button>
+        )}
       </div>
 
       <div className='space-y-3 rounded-2xl border border-border/70 bg-card p-4 shadow-sm'>
@@ -290,27 +295,35 @@ export function ChecklistPageClient({
       ) : tasks.length === 0 && hasDefaultFilters ? (
         <ChecklistEmptyState
           title='No tasks added yet'
-          description='Start with one custom task, or let the default checklist grow from your first planning steps.'
-          action={{
-            label: 'Add task',
-            onClick: () => setIsCreateDialogOpen(true),
-          }}
+          description={
+            canEdit
+              ? 'Start with one custom task, or let the default checklist grow from your first planning steps.'
+              : 'No tasks have been added to this checklist yet.'
+          }
+          action={
+            canEdit ? { label: 'Add task', onClick: () => setIsCreateDialogOpen(true) } : undefined
+          }
         />
       ) : tasks.length > 0 && !hasActiveTasks && filters.status !== 'completed' ? (
         <ChecklistEmptyState
           title='Everything is checked off'
-          description='You are caught up for now. Switch to Completed to review what is already done, or add a new task.'
-          action={{
-            label: 'Add task',
-            onClick: () => setIsCreateDialogOpen(true),
-          }}
+          description={
+            canEdit
+              ? 'You are caught up for now. Switch to Completed to review what is already done, or add a new task.'
+              : 'You are caught up for now. Switch to Completed to review what is already done.'
+          }
+          action={
+            canEdit ? { label: 'Add task', onClick: () => setIsCreateDialogOpen(true) } : undefined
+          }
         />
       ) : buckets.every((bucket) => bucket.tasks.length === 0) ? (
         <ChecklistEmptyState
           title='Nothing in this view yet'
           description={
             hasDefaultFilters
-              ? 'Adjust the filters or add a task to start shaping the checklist.'
+              ? canEdit
+                ? 'Adjust the filters or add a task to start shaping the checklist.'
+                : 'Adjust the filters to see more tasks.'
               : 'No tasks match the current filters.'
           }
           action={
@@ -394,6 +407,7 @@ export function ChecklistPageClient({
               <MilestoneDetail
                 key={milestone.id}
                 milestone={milestone}
+                readOnly={!canEdit}
                 onAttest={(milestoneId) => attestMilestone.mutate({ milestoneId })}
                 onDismiss={(milestoneId) => dismissMilestone.mutate({ milestoneId })}
                 onClearOverride={(milestoneId) => clearMilestoneOverride.mutate({ milestoneId })}
@@ -443,7 +457,7 @@ export function ChecklistPageClient({
         onSubmit={(data) => createTask.mutate(data)}
       />
 
-      {editingTask ? (
+      {canEdit && editingTask ? (
         <TaskDialog
           mode='edit'
           open
@@ -569,10 +583,12 @@ function ChecklistEmptyState({
 
 function TaskRow({
   task,
+  readOnly,
   onToggle,
   onEdit,
 }: Readonly<{
   task: Task
+  readOnly: boolean
   onToggle: (completed: boolean) => void
   onEdit: () => void
 }>) {
@@ -588,6 +604,7 @@ function TaskRow({
         className='mt-0.5 rounded-full'
         aria-label={`Toggle task ${task.title}`}
         checked={task.completed}
+        disabled={readOnly}
         onCheckedChange={(checked) => onToggle(checked === true)}
       />
       <div className='flex min-w-0 flex-1 flex-col gap-1.5'>
@@ -609,16 +626,18 @@ function TaskRow({
           )}
         </span>
       </div>
-      <Button
-        type='button'
-        variant='ghost'
-        size='sm'
-        className='h-8 px-2 text-muted-foreground'
-        aria-label={`Edit task ${task.title}`}
-        onClick={onEdit}
-      >
-        Edit
-      </Button>
+      {!readOnly && (
+        <Button
+          type='button'
+          variant='ghost'
+          size='sm'
+          className='h-8 px-2 text-muted-foreground'
+          aria-label={`Edit task ${task.title}`}
+          onClick={onEdit}
+        >
+          Edit
+        </Button>
+      )}
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { useMemo } from 'react'
 
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import {
   type DragData,
   getInitials,
@@ -36,9 +37,15 @@ const seatStyle = (x: number, y: number) => ({
 })
 
 function SeatedGuest(
-  props: Readonly<{ guest: SeatingGuest; x: number; y: number; onSelect: () => void }>
+  props: Readonly<{
+    guest: SeatingGuest
+    x: number
+    y: number
+    canEdit: boolean
+    onSelect: () => void
+  }>
 ) {
-  const { guest, x, y, onSelect } = props
+  const { guest, x, y, canEdit, onSelect } = props
   const data = guestDragData(guest)
   const name = data.label
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -52,10 +59,13 @@ function SeatedGuest(
       data-seating-focus-key={`seat-guest:${guest.id}`}
       type='button'
       title={name}
-      aria-label={`${name}. Press Space to move, or Enter for details.`}
+      aria-label={
+        canEdit
+          ? `${name}. Press Space to move, or Enter for details.`
+          : `${name}. Press Enter for details.`
+      }
       onClick={onSelect}
-      {...attributes}
-      {...listeners}
+      {...(canEdit ? { ...attributes, ...listeners } : {})}
       style={seatStyle(x, y)}
       className={cn(
         'absolute flex touch-manipulation items-center justify-center rounded-full border border-foreground/30 bg-card text-[0.6rem] text-foreground tabular-nums shadow-sm transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
@@ -69,6 +79,7 @@ function SeatedGuest(
 
 export function SeatingTableNode(props: Readonly<SeatingTableNodeProps>) {
   const { table, guestsById, onEdit, onSelectGuest } = props
+  const canEdit = useCanEdit()
   const { footprint, surface, seats } = useMemo(
     () => ({
       footprint: getTableFootprint(table.shape, table.capacity),
@@ -81,6 +92,7 @@ export function SeatingTableNode(props: Readonly<SeatingTableNodeProps>) {
     .map((id) => guestsById.get(id))
     .filter((guest): guest is SeatingGuest => guest !== undefined)
 
+  const Surface = canEdit ? 'button' : 'div'
   const dragData: DragData = { type: 'table', tableId: table.id }
   const {
     attributes,
@@ -125,6 +137,7 @@ export function SeatingTableNode(props: Readonly<SeatingTableNodeProps>) {
             guest={guest}
             x={seat.x}
             y={seat.y}
+            canEdit={canEdit}
             onSelect={() => onSelectGuest(guest.id)}
           />
         ) : (
@@ -138,14 +151,21 @@ export function SeatingTableNode(props: Readonly<SeatingTableNodeProps>) {
         )
       })}
 
-      <button
-        ref={setDragRef}
+      <Surface
+        ref={canEdit ? setDragRef : undefined}
         data-seating-focus-key={`table:${table.id}`}
-        type='button'
-        aria-label={`${table.name}, ${table.guestIds.length} of ${table.capacity} seats filled. Press Space to move, or Enter to edit.`}
-        onClick={() => onEdit(table.id)}
-        {...attributes}
-        {...listeners}
+        {...(canEdit
+          ? {
+              type: 'button' as const,
+              'aria-label': `${table.name}, ${table.guestIds.length} of ${table.capacity} seats filled. Press Space to move, or Enter to edit.`,
+              onClick: () => onEdit(table.id),
+              ...attributes,
+              ...listeners,
+            }
+          : {
+              role: 'img',
+              'aria-label': `${table.name}, ${table.guestIds.length} of ${table.capacity} seats filled.`,
+            })}
         style={{
           width: surface.width,
           height: surface.height,
@@ -153,7 +173,9 @@ export function SeatingTableNode(props: Readonly<SeatingTableNodeProps>) {
           top: (footprint.height - surface.height) / 2,
         }}
         className={cn(
-          'absolute flex cursor-grab touch-manipulation flex-col items-center justify-center border-2 bg-card px-2 text-center shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing',
+          'absolute flex flex-col items-center justify-center border-2 bg-card px-2 text-center shadow-sm transition-colors',
+          canEdit &&
+            'cursor-grab touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing',
           table.shape === 'ROUND' ? 'rounded-full' : 'rounded-md',
           isGuestOver && fits && 'border-success bg-success/10',
           isGuestOver && !fits && 'border-destructive bg-destructive/10',
@@ -171,7 +193,7 @@ export function SeatingTableNode(props: Readonly<SeatingTableNodeProps>) {
         >
           {table.guestIds.length}/{table.capacity}
         </span>
-      </button>
+      </Surface>
     </div>
   )
 }

@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { formatCurrency } from '~/components/budget/format'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,6 +35,7 @@ export function VendorCard({
   onViewDetails,
   onDeleted,
 }: Readonly<VendorCardProps>) {
+  const canEdit = useCanEdit()
   const utils = api.useUtils()
   const [showRatingsBreakdown, setShowRatingsBreakdown] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -133,23 +135,25 @@ export function VendorCard({
 
       <div className='pointer-events-none relative z-10 flex flex-wrap items-center gap-3'>
         <StatusBadge status={vendor.status} />
-        <div className='pointer-events-auto flex items-center gap-1'>
-          {[1, 2, 3, 4, 5].map((star) => (
-            <button
-              key={star}
-              type='button'
-              className='text-sm leading-none'
-              aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
-              onClick={(event) => {
-                event.stopPropagation()
-                setRating.mutate({ vendorId: vendor.id, stars: star })
-              }}
-              disabled={setRating.isPending}
-            >
-              {star <= (vendor.ratingSummary.currentUserRating ?? 0) ? '★' : '☆'}
-            </button>
-          ))}
-        </div>
+        {canEdit && (
+          <div className='pointer-events-auto flex items-center gap-1'>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                type='button'
+                className='text-sm leading-none'
+                aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  setRating.mutate({ vendorId: vendor.id, stars: star })
+                }}
+                disabled={setRating.isPending}
+              >
+                {star <= (vendor.ratingSummary.currentUserRating ?? 0) ? '★' : '☆'}
+              </button>
+            ))}
+          </div>
+        )}
         {vendor.ratingSummary.ratings.length > 0 && (
           <div className='pointer-events-auto relative'>
             <button
@@ -184,17 +188,19 @@ export function VendorCard({
             {priceDisplay()}
           </span>
         )}
-        <button
-          type='button'
-          className='pointer-events-auto text-muted-foreground/50 transition-opacity hover:text-destructive'
-          onClick={handleDelete}
-          disabled={deleteVendor.isPending}
-          aria-label={`Remove ${vendor.name}`}
-        >
-          <X className='h-3.5 w-3.5' aria-hidden='true' />
-        </button>
+        {canEdit && (
+          <button
+            type='button'
+            className='pointer-events-auto text-muted-foreground/50 transition-opacity hover:text-destructive'
+            onClick={handleDelete}
+            disabled={deleteVendor.isPending}
+            aria-label={`Remove ${vendor.name}`}
+          >
+            <X className='h-3.5 w-3.5' aria-hidden='true' />
+          </button>
+        )}
       </div>
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <AlertDialog open={canEdit && showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove {vendor.name}?</AlertDialogTitle>

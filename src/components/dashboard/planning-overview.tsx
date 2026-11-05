@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import type { DashboardData, EventWithResponses } from '~/app/utils/shared-types'
 import { formatCurrency } from '~/components/budget/format'
 import { TaskDialog } from '~/components/checklist/task-dialog'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { TaskListItem } from '~/components/dashboard/planning-overview/task-list-item'
 import {
   type TaskItem,
@@ -83,6 +84,7 @@ function getCountdownHeading(days: number): { lead: string; tail: string } {
 }
 
 function TodayHero({ dashboardData }: { dashboardData: DashboardData | null }) {
+  const canEdit = useCanEdit()
   const weddingData = dashboardData?.weddingData
   const bride = weddingData?.brideFirstName ?? ''
   const groom = weddingData?.groomFirstName ?? ''
@@ -118,10 +120,14 @@ function TodayHero({ dashboardData }: { dashboardData: DashboardData | null }) {
       {!hasDate && (
         <p className='text-muted-foreground text-sm'>
           <span>{isPastDate ? 'This date has passed' : 'No date set'}</span>
-          {' · '}
-          <Link href='/settings' className='text-primary underline underline-offset-2'>
-            {isPastDate ? 'Update it in Settings' : 'Add it in Settings'}
-          </Link>
+          {canEdit && (
+            <>
+              {' · '}
+              <Link href='/settings' className='text-primary underline underline-offset-2'>
+                {isPastDate ? 'Update it in Settings' : 'Add it in Settings'}
+              </Link>
+            </>
+          )}
         </p>
       )}
       <div className='mt-1 flex items-center gap-3'>
@@ -140,9 +146,11 @@ function TodayHero({ dashboardData }: { dashboardData: DashboardData | null }) {
 
 function UpNextCard({
   task,
+  canEdit,
   onComplete,
 }: {
   task: TaskItem | undefined
+  canEdit: boolean
   onComplete: (taskId: string) => void
 }) {
   return (
@@ -170,13 +178,15 @@ function UpNextCard({
               You're all caught up
             </p>
             <EmptyNote>
-              No active tasks yet. Add your first task to start tracking your planning progress.
+              {canEdit
+                ? 'No active tasks yet. Add your first task to start tracking your planning progress.'
+                : 'No active tasks yet.'}
             </EmptyNote>
           </>
         )}
       </div>
       <div className='flex flex-wrap gap-2.5'>
-        {task && (
+        {task && canEdit && (
           <Button type='button' size='lg' className='px-5' onClick={() => onComplete(task.id)}>
             Mark done
           </Button>
@@ -193,9 +203,11 @@ function ComingUpCard({
   tasks,
   totalActive,
   dueThisMonth,
+  readOnly,
   onToggle,
 }: {
   tasks: TaskItem[]
+  readOnly: boolean
   totalActive: number
   dueThisMonth: number
   onToggle: (taskId: string) => void
@@ -211,7 +223,7 @@ function ComingUpCard({
       {tasks.length > 0 ? (
         <div className='-mx-2 flex flex-col'>
           {tasks.map((task) => (
-            <TaskListItem key={task.id} task={task} onToggle={onToggle} />
+            <TaskListItem key={task.id} task={task} readOnly={readOnly} onToggle={onToggle} />
           ))}
         </div>
       ) : (
@@ -225,6 +237,7 @@ function ComingUpCard({
 }
 
 function RsvpCard({ dashboardData }: { dashboardData: DashboardData | null }) {
+  const canEdit = useCanEdit()
   const rsvpSummary = (dashboardData?.events ?? []).reduce(
     (acc, event) => {
       const eventWithResponses = event as EventWithResponses
@@ -249,9 +262,11 @@ function RsvpCard({ dashboardData }: { dashboardData: DashboardData | null }) {
           <EmptyNote>
             Enable RSVP collection on one of your events to start tracking responses
           </EmptyNote>
-          <Link href='/events' className={`${outlineLinkClass} self-start`}>
-            Set up RSVPs →
-          </Link>
+          {canEdit && (
+            <Link href='/events' className={`${outlineLinkClass} self-start`}>
+              Set up RSVPs →
+            </Link>
+          )}
         </div>
       </Panel>
     )
@@ -290,6 +305,7 @@ function RsvpCard({ dashboardData }: { dashboardData: DashboardData | null }) {
 }
 
 function BudgetCard() {
+  const canEdit = useCanEdit()
   const { data: overview, isLoading } = api.budget.getOverview.useQuery()
 
   if (isLoading) {
@@ -314,9 +330,11 @@ function BudgetCard() {
         <div className='flex flex-col gap-3'>
           <p className='font-medium text-foreground text-sm'>No budget set up yet</p>
           <EmptyNote>Track your wedding spending against a target budget</EmptyNote>
-          <Link href='/budget' className={`${outlineLinkClass} self-start`}>
-            Set up your budget →
-          </Link>
+          {canEdit && (
+            <Link href='/budget' className={`${outlineLinkClass} self-start`}>
+              Set up your budget →
+            </Link>
+          )}
         </div>
       </Panel>
     )
@@ -362,6 +380,7 @@ function BudgetCard() {
 }
 
 function VendorsCard() {
+  const canEdit = useCanEdit()
   const { data: vendors } = api.vendor.getAll.useQuery({})
 
   const vendorCount = vendors?.length ?? 0
@@ -376,9 +395,11 @@ function VendorsCard() {
         <div className='flex flex-col gap-3'>
           <p className='font-medium text-foreground text-sm'>No vendors added yet</p>
           <EmptyNote>Track quotes, contacts, and contracts in one place</EmptyNote>
-          <Link href='/vendors' className={`${outlineLinkClass} self-start`}>
-            Add your first vendor →
-          </Link>
+          {canEdit && (
+            <Link href='/vendors' className={`${outlineLinkClass} self-start`}>
+              Add your first vendor →
+            </Link>
+          )}
         </div>
       </Panel>
     )
@@ -490,12 +511,14 @@ function MilestonesCard({ dashboardData }: { dashboardData: DashboardData | null
 
 function PlanningTasks({ dashboardData }: { dashboardData: DashboardData | null }) {
   const priorityQueue = dashboardData?.taskPriorityQueue
+  const canEdit = useCanEdit()
   const { tasks, toggleTask } = useTasksCardState(priorityQueue?.tasks ?? EMPTY_PRIORITY_TASKS)
   const completeTask = api.task.complete.useMutation({
     onError: () => toast.error('Failed to update task'),
   })
 
   const handleToggle = (taskId: string) => {
+    if (!canEdit) return
     toggleTask(taskId)
     const targetTask = tasks.find((task) => task.id === taskId)
 
@@ -510,12 +533,13 @@ function PlanningTasks({ dashboardData }: { dashboardData: DashboardData | null 
 
   return (
     <>
-      <UpNextCard task={upNext} onComplete={handleToggle} />
+      <UpNextCard task={upNext} canEdit={canEdit} onComplete={handleToggle} />
       {tasks.length > 0 && (
         <ComingUpCard
           tasks={rest}
           totalActive={priorityQueue?.totalActive ?? 0}
           dueThisMonth={dashboardData?.tasksDueThisMonth ?? 0}
+          readOnly={!canEdit}
           onToggle={handleToggle}
         />
       )}
@@ -524,6 +548,7 @@ function PlanningTasks({ dashboardData }: { dashboardData: DashboardData | null 
 }
 
 export default function PlanningOverview({ dashboardData }: PlanningOverviewProps) {
+  const canEdit = useCanEdit()
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const utils = api.useUtils()
   const events = useMemo(
@@ -544,6 +569,7 @@ export default function PlanningOverview({ dashboardData }: PlanningOverviewProp
   })
 
   useEffect(() => {
+    if (!canEdit) return
     const handleOpenCreateTask = () => {
       if (events.length === 0) {
         toast.error('Add an event before creating a task')
@@ -555,7 +581,7 @@ export default function PlanningOverview({ dashboardData }: PlanningOverviewProp
 
     window.addEventListener(DASHBOARD_ADD_TASK_EVENT, handleOpenCreateTask)
     return () => window.removeEventListener(DASHBOARD_ADD_TASK_EVENT, handleOpenCreateTask)
-  }, [events])
+  }, [events, canEdit])
 
   return (
     <>
@@ -575,14 +601,16 @@ export default function PlanningOverview({ dashboardData }: PlanningOverviewProp
         </div>
       </div>
 
-      <TaskDialog
-        mode='create'
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        events={events}
-        isSubmitting={createTask.isPending}
-        onSubmit={(data) => createTask.mutate(data)}
-      />
+      {canEdit && (
+        <TaskDialog
+          mode='create'
+          open={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
+          events={events}
+          isSubmitting={createTask.isPending}
+          onSubmit={(data) => createTask.mutate(data)}
+        />
+      )}
     </>
   )
 }

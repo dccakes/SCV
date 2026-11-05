@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
+import { WorkspaceCapabilitiesProvider } from '~/components/contexts/workspace-capabilities-context'
 import { InviteLinkPanel } from '~/components/guest-list/invite-link-panel'
 
 jest.mock('~/components/guest-list/self-invite-link-manager', () => ({
@@ -46,5 +47,14 @@ describe('InviteLinkPanel', () => {
     expect(screen.getByTestId('self-invite-link-manager')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Invite Link' }))
     expect(screen.queryByTestId('self-invite-link-manager')).not.toBeInTheDocument()
+  })
+
+  it('renders nothing for viewers', () => {
+    const { container } = render(
+      <WorkspaceCapabilitiesProvider canEditPlanning={false}>
+        <InviteLinkPanel />
+      </WorkspaceCapabilitiesProvider>
+    )
+    expect(container).toBeEmptyDOMElement()
   })
 })

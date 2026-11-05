@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { toast } from 'sonner'
 import { formatCurrency } from '~/components/budget/format'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import {
   SIDE_PANE_DIALOG_WIDTH_CLASS,
   SIDE_PANE_OVERLAY_CLASS,
@@ -46,7 +47,7 @@ import type {
 import { VendorForm } from '~/components/vendor/vendor-form'
 import { VendorImageGallery } from '~/components/vendor/vendor-image-gallery'
 import { VendorNoteTimeline } from '~/components/vendor/vendor-note-timeline'
-import { VendorStatusSelect } from '~/components/vendor/vendor-status-select'
+import { StatusBadge, VendorStatusSelect } from '~/components/vendor/vendor-status-select'
 import { uploadFiles } from '~/lib/blob'
 import {
   ACCEPTED_TYPES_LABEL,
@@ -286,6 +287,7 @@ function QuoteFileUploader({
 }
 
 export function VendorDetailPanel({ vendor, currency, onClose }: VendorDetailPanelProps) {
+  const canEdit = useCanEdit()
   const [showQuoteForm, setShowQuoteForm] = useState(false)
   const [showEditForm, setShowEditForm] = useState(false)
   const [editingQuoteId, setEditingQuoteId] = useState<string | null>(null)
@@ -454,61 +456,73 @@ export function VendorDetailPanel({ vendor, currency, onClose }: VendorDetailPan
               </DialogTitle>
               <DialogDescription className='sr-only'>Vendor details panel</DialogDescription>
               <div className='mt-2 flex flex-wrap items-center gap-x-4 gap-y-2'>
-                <VendorStatusSelect
-                  value={enrichedVendor.status}
-                  onChange={(status) =>
-                    updateStatus.mutate({ vendorId: enrichedVendor.id, status })
-                  }
-                  disabled={updateStatus.isPending}
-                />
-                <div className='flex shrink-0 items-center gap-2'>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type='button'
-                      className='text-base leading-none'
-                      aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
-                      onClick={() => setRating.mutate({ vendorId: vendorData.id, stars: star })}
-                      disabled={setRating.isPending}
-                    >
-                      {star <= (vendorData.ratingSummary.currentUserRating ?? 0) ? '★' : '☆'}
-                    </button>
-                  ))}
-                  {vendorData.ratingSummary.currentUserRating === null && (
-                    <span className='font-mono text-[0.58rem] text-muted-foreground uppercase tracking-wider'>
-                      Unrated
-                    </span>
-                  )}
-                </div>
-                <div className='flex items-center gap-2'>
-                  <Label
-                    htmlFor='vendor-contacted'
-                    className='font-mono text-[0.58rem] text-muted-foreground uppercase tracking-wider'
-                  >
-                    Contacted
-                  </Label>
-                  <Switch
-                    id='vendor-contacted'
-                    aria-label='Mark vendor as contacted'
-                    checked={enrichedVendor.contacted === true}
-                    onCheckedChange={(checked) =>
-                      persistVendorUpdate(
-                        {
-                          vendorId: enrichedVendor.id,
-                          contacted: checked,
-                        },
-                        checked ? 'Marked as contacted' : 'Marked as not contacted'
-                      )
+                {canEdit ? (
+                  <VendorStatusSelect
+                    value={enrichedVendor.status}
+                    onChange={(status) =>
+                      updateStatus.mutate({ vendorId: enrichedVendor.id, status })
                     }
-                    disabled={updateVendor.isPending}
+                    disabled={updateStatus.isPending}
                   />
-                </div>
+                ) : (
+                  <StatusBadge status={enrichedVendor.status} />
+                )}
+                {canEdit && (
+                  <div className='flex shrink-0 items-center gap-2'>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type='button'
+                        className='text-base leading-none'
+                        aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
+                        onClick={() => setRating.mutate({ vendorId: vendorData.id, stars: star })}
+                        disabled={setRating.isPending}
+                      >
+                        {star <= (vendorData.ratingSummary.currentUserRating ?? 0) ? '★' : '☆'}
+                      </button>
+                    ))}
+                    {vendorData.ratingSummary.currentUserRating === null && (
+                      <span className='font-mono text-[0.58rem] text-muted-foreground uppercase tracking-wider'>
+                        Unrated
+                      </span>
+                    )}
+                  </div>
+                )}
+                {canEdit ? (
+                  <div className='flex items-center gap-2'>
+                    <Label
+                      htmlFor='vendor-contacted'
+                      className='font-mono text-[0.58rem] text-muted-foreground uppercase tracking-wider'
+                    >
+                      Contacted
+                    </Label>
+                    <Switch
+                      id='vendor-contacted'
+                      aria-label='Mark vendor as contacted'
+                      checked={enrichedVendor.contacted === true}
+                      onCheckedChange={(checked) =>
+                        persistVendorUpdate(
+                          {
+                            vendorId: enrichedVendor.id,
+                            contacted: checked,
+                          },
+                          checked ? 'Marked as contacted' : 'Marked as not contacted'
+                        )
+                      }
+                      disabled={updateVendor.isPending}
+                    />
+                  </div>
+                ) : enrichedVendor.contacted === true ? (
+                  <span className='rounded-md bg-accent px-2 py-0.5 text-accent-foreground text-xs'>
+                    Contacted
+                  </span>
+                ) : null}
               </div>
             </header>
 
             <div className='flex min-h-0 flex-1 flex-col'>
               <div className='flex-1 overflow-y-auto overscroll-y-contain px-5 py-4 pb-20 md:px-6 md:pb-20'>
-                {showEditForm ? (
+                {canEdit && showEditForm ? (
                   <VendorForm
                     mode='edit'
                     vendor={enrichedVendor}
@@ -532,13 +546,15 @@ export function VendorDetailPanel({ vendor, currency, onClose }: VendorDetailPan
                     <section>
                       <SectionLabel
                         action={
-                          <button
-                            type='button'
-                            onClick={() => setShowEditForm(true)}
-                            className='font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:underline'
-                          >
-                            Edit
-                          </button>
+                          canEdit ? (
+                            <button
+                              type='button'
+                              onClick={() => setShowEditForm(true)}
+                              className='font-mono text-[0.58rem] text-primary uppercase tracking-wider hover:underline'
+                            >
+                              Edit
+                            </button>
+                          ) : null
                         }
                       >
                         Details
@@ -617,53 +633,65 @@ export function VendorDetailPanel({ vendor, currency, onClose }: VendorDetailPan
                       </section>
                     ) : null}
 
-                    <section>
-                      <SectionLabel icon={<Pencil className='h-3 w-3' />}>Scratchpad</SectionLabel>
-                      <div className='rounded-md bg-amber-50/50 p-3 dark:bg-amber-950/10 space-y-3'>
-                        <Textarea
-                          id='vendor-scratchpad'
-                          aria-label='Scratchpad notes'
-                          value={scratchpad}
-                          onChange={(event) => setScratchpad(event.target.value)}
-                          className='min-h-28 font-serif'
-                          placeholder='Capture impressions, constraints, and reminders.'
-                        />
-                        <Button
-                          type='button'
-                          variant='outline'
-                          onClick={handleSaveScratchpad}
-                          disabled={updateVendor.isPending}
-                        >
-                          {updateVendor.isPending ? 'Saving...' : 'Save Scratchpad'}
-                        </Button>
-                      </div>
-                    </section>
+                    {canEdit || enrichedVendor.notes?.trim() ? (
+                      <section>
+                        <SectionLabel icon={<Pencil className='h-3 w-3' />}>
+                          Scratchpad
+                        </SectionLabel>
+                        {canEdit ? (
+                          <div className='rounded-md bg-amber-50/50 p-3 dark:bg-amber-950/10 space-y-3'>
+                            <Textarea
+                              id='vendor-scratchpad'
+                              aria-label='Scratchpad notes'
+                              value={scratchpad}
+                              onChange={(event) => setScratchpad(event.target.value)}
+                              className='min-h-28 font-serif'
+                              placeholder='Capture impressions, constraints, and reminders.'
+                            />
+                            <Button
+                              type='button'
+                              variant='outline'
+                              onClick={handleSaveScratchpad}
+                              disabled={updateVendor.isPending}
+                            >
+                              {updateVendor.isPending ? 'Saving...' : 'Save Scratchpad'}
+                            </Button>
+                          </div>
+                        ) : (
+                          <p className='whitespace-pre-wrap rounded-md bg-amber-50/50 p-3 font-serif text-foreground/85 dark:bg-amber-950/10'>
+                            {enrichedVendor.notes}
+                          </p>
+                        )}
+                      </section>
+                    ) : null}
 
                     <section>
                       <SectionLabel icon={<Clock className='h-3 w-3' />}>
                         Interaction Log
                       </SectionLabel>
                       <div className='space-y-3'>
-                        <div className='flex gap-2'>
-                          <Input
-                            id='vendor-note-composer'
-                            aria-label='Add interaction note'
-                            value={newNote}
-                            onChange={(e) => setNewNote(e.target.value)}
-                            placeholder='Log outreach, follow-ups, and decisions.'
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && newNote.trim()) handleAddNote()
-                            }}
-                            className='flex-1'
-                          />
-                          <Button
-                            type='button'
-                            onClick={handleAddNote}
-                            disabled={addNote.isPending || newNote.trim().length === 0}
-                          >
-                            {addNote.isPending ? 'Adding...' : 'Add'}
-                          </Button>
-                        </div>
+                        {canEdit && (
+                          <div className='flex gap-2'>
+                            <Input
+                              id='vendor-note-composer'
+                              aria-label='Add interaction note'
+                              value={newNote}
+                              onChange={(e) => setNewNote(e.target.value)}
+                              placeholder='Log outreach, follow-ups, and decisions.'
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && newNote.trim()) handleAddNote()
+                              }}
+                              className='flex-1'
+                            />
+                            <Button
+                              type='button'
+                              onClick={handleAddNote}
+                              disabled={addNote.isPending || newNote.trim().length === 0}
+                            >
+                              {addNote.isPending ? 'Adding...' : 'Add'}
+                            </Button>
+                          </div>
+                        )}
                         <VendorNoteTimeline notes={noteTimeline} />
                       </div>
                     </section>
@@ -681,7 +709,7 @@ export function VendorDetailPanel({ vendor, currency, onClose }: VendorDetailPan
                     <section>
                       <SectionLabel
                         action={
-                          !showQuoteForm ? (
+                          canEdit && !showQuoteForm ? (
                             <button
                               type='button'
                               onClick={() => setShowQuoteForm(true)}
@@ -698,7 +726,7 @@ export function VendorDetailPanel({ vendor, currency, onClose }: VendorDetailPan
                           : ''}
                       </SectionLabel>
 
-                      {showQuoteForm ? (
+                      {canEdit && showQuoteForm ? (
                         <div className='mb-3'>
                           <QuoteForm
                             vendorId={enrichedVendor.id}
@@ -724,7 +752,7 @@ export function VendorDetailPanel({ vendor, currency, onClose }: VendorDetailPan
                               key={quote.id}
                               className='rounded-lg border border-border/90 bg-card/60 px-4 py-3'
                             >
-                              {editingQuoteId === quote.id ? (
+                              {canEdit && editingQuoteId === quote.id ? (
                                 <QuoteForm
                                   vendorId={enrichedVendor.id}
                                   mode='edit'
@@ -758,23 +786,25 @@ export function VendorDetailPanel({ vendor, currency, onClose }: VendorDetailPan
                                         </p>
                                       ) : null}
                                     </div>
-                                    <div className='ml-4 flex items-center gap-2'>
-                                      <button
-                                        type='button'
-                                        className='font-mono text-[0.58rem] text-muted-foreground uppercase tracking-wider hover:text-primary'
-                                        onClick={() => setEditingQuoteId(quote.id)}
-                                      >
-                                        Edit
-                                      </button>
-                                      <button
-                                        type='button'
-                                        className='font-mono text-[0.58rem] text-destructive/70 uppercase tracking-wider hover:text-destructive'
-                                        onClick={() => setDeletingQuoteId(quote.id)}
-                                        disabled={deleteQuote.isPending}
-                                      >
-                                        Remove
-                                      </button>
-                                    </div>
+                                    {canEdit && (
+                                      <div className='ml-4 flex items-center gap-2'>
+                                        <button
+                                          type='button'
+                                          className='font-mono text-[0.58rem] text-muted-foreground uppercase tracking-wider hover:text-primary'
+                                          onClick={() => setEditingQuoteId(quote.id)}
+                                        >
+                                          Edit
+                                        </button>
+                                        <button
+                                          type='button'
+                                          className='font-mono text-[0.58rem] text-destructive/70 uppercase tracking-wider hover:text-destructive'
+                                          onClick={() => setDeletingQuoteId(quote.id)}
+                                          disabled={deleteQuote.isPending}
+                                        >
+                                          Remove
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
 
                                   {quote.files.length > 0 ? (
@@ -810,28 +840,30 @@ export function VendorDetailPanel({ vendor, currency, onClose }: VendorDetailPan
                                             <span className='shrink-0 font-mono text-[0.55rem] text-muted-foreground lowercase tracking-wider'>
                                               {formatFileSize(file.size)}
                                             </span>
-                                            <button
-                                              type='button'
-                                              aria-label={`Remove ${file.name}`}
-                                              onClick={() =>
-                                                setDeletingFile({
-                                                  fileId: file.id,
-                                                  quoteId: quote.id,
-                                                  name: file.name,
-                                                })
-                                              }
-                                              disabled={deleteFile.isPending}
-                                              className='shrink-0 text-muted-foreground hover:text-destructive'
-                                            >
-                                              ✕
-                                            </button>
+                                            {canEdit && (
+                                              <button
+                                                type='button'
+                                                aria-label={`Remove ${file.name}`}
+                                                onClick={() =>
+                                                  setDeletingFile({
+                                                    fileId: file.id,
+                                                    quoteId: quote.id,
+                                                    name: file.name,
+                                                  })
+                                                }
+                                                disabled={deleteFile.isPending}
+                                                className='shrink-0 text-muted-foreground hover:text-destructive'
+                                              >
+                                                ✕
+                                              </button>
+                                            )}
                                           </div>
                                         )
                                       })}
                                     </div>
                                   ) : null}
 
-                                  {attachingQuoteId === quote.id ? (
+                                  {!canEdit ? null : attachingQuoteId === quote.id ? (
                                     <QuoteFileUploader
                                       quoteId={quote.id}
                                       vendorId={enrichedVendor.id}
@@ -873,7 +905,7 @@ export function VendorDetailPanel({ vendor, currency, onClose }: VendorDetailPan
       <FileViewerDrawer file={viewingPdf} onClose={() => setViewingPdf(null)} />
 
       <AlertDialog
-        open={!!deletingQuoteId}
+        open={canEdit && !!deletingQuoteId}
         onOpenChange={(open) => !open && setDeletingQuoteId(null)}
       >
         <AlertDialogContent>
@@ -901,7 +933,10 @@ export function VendorDetailPanel({ vendor, currency, onClose }: VendorDetailPan
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={!!deletingFile} onOpenChange={(open) => !open && setDeletingFile(null)}>
+      <AlertDialog
+        open={canEdit && !!deletingFile}
+        onOpenChange={(open) => !open && setDeletingFile(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove this file?</AlertDialogTitle>

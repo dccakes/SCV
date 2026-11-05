@@ -1,9 +1,9 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { AiOutlinePlusCircle } from 'react-icons/ai'
 import { BsPencil } from 'react-icons/bs'
-
 import { sharedStyles } from '~/app/utils/shared-styles'
 import type { Question, Website } from '~/app/utils/shared-types'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 
 type GeneralQuestionsSectionProps = {
   website: Website | undefined | null
@@ -18,6 +18,7 @@ export default function GeneralQuestionsSection({
   setPrefillQuestion,
   setShowQuestionForm,
 }: GeneralQuestionsSectionProps) {
+  const canEdit = useCanEdit()
   if (!website) return <div>Could not load questions. Please refresh the page.</div>
   const onAddQuestion = (websiteId: string) => {
     setUseEditMode(false)
@@ -43,29 +44,33 @@ export default function GeneralQuestionsSection({
             <li key={question.id} className='border-2 p-4'>
               <div className='flex justify-between'>
                 <p>{question.text}</p>
-                <BsPencil
-                  size={20}
-                  color={sharedStyles.primaryColorHex}
-                  className='cursor-pointer'
-                  onClick={() => {
-                    setUseEditMode(true)
-                    setPrefillQuestion(question)
-                    setShowQuestionForm(true)
-                  }}
-                />
+                {canEdit && (
+                  <BsPencil
+                    size={20}
+                    color={sharedStyles.primaryColorHex}
+                    className='cursor-pointer'
+                    onClick={() => {
+                      setUseEditMode(true)
+                      setPrefillQuestion(question)
+                      setShowQuestionForm(true)
+                    }}
+                  />
+                )}
               </div>
             </li>
           )
         })}
       </ul>
-      <button
-        type='button'
-        className='flex w-fit cursor-pointer gap-2 pt-5'
-        onClick={() => onAddQuestion(website.id)}
-      >
-        <AiOutlinePlusCircle size={25} color={sharedStyles.primaryColorHex} />
-        <span className={`text-${sharedStyles.primaryColor}`}>Add Another Question</span>
-      </button>
+      {canEdit && (
+        <button
+          type='button'
+          className='flex w-fit cursor-pointer gap-2 pt-5'
+          onClick={() => onAddQuestion(website.id)}
+        >
+          <AiOutlinePlusCircle size={25} color={sharedStyles.primaryColorHex} />
+          <span className={`text-${sharedStyles.primaryColor}`}>Add Another Question</span>
+        </button>
+      )}
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
 import type { DashboardData } from '~/app/utils/shared-types'
+import { WorkspaceCapabilitiesProvider } from '~/components/contexts/workspace-capabilities-context'
 import PlanningOverview from '~/components/dashboard/planning-overview'
 import { DASHBOARD_ADD_TASK_EVENT } from '~/components/dashboard/task-dialog-events'
 
@@ -498,5 +499,30 @@ describe('PlanningOverview', () => {
 
     expect(screen.getByText('Your Wedding')).toBeInTheDocument()
     expect(screen.getByText('No date set')).toBeInTheDocument()
+  })
+
+  it('is read only for viewers: no mark done, no toggles, no add-task dialog', () => {
+    render(
+      <WorkspaceCapabilitiesProvider canEditPlanning={false}>
+        <PlanningOverview dashboardData={mockDashboardData} />
+      </WorkspaceCapabilitiesProvider>
+    )
+
+    expect(screen.getByRole('region', { name: 'Up next' })).toHaveTextContent(
+      'Pay rehearsal dinner deposit'
+    )
+    expect(screen.queryByRole('button', { name: 'Mark done' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /confirm catering headcount/i })
+    ).not.toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Coming up' })).toHaveTextContent(
+      'Confirm catering headcount'
+    )
+
+    act(() => {
+      window.dispatchEvent(new Event(DASHBOARD_ADD_TASK_EVENT))
+    })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(mockMutate).not.toHaveBeenCalled()
   })
 })

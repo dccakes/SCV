@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { ANALYTICS_ACTIONS, ANALYTICS_SCOPES, buildEventName } from '~/lib/analytics/events'
 import { auth } from '~/lib/auth'
 import { ALLOWED_CONTENT_TYPES, MAX_FILE_SIZE } from '~/lib/upload-config'
+import { canEditActiveWorkspace } from '~/server/authz/editor-access'
 import { captureServerEvent } from '~/server/infrastructure/analytics/capture'
 
 export async function POST(request: Request): Promise<NextResponse> {
@@ -19,6 +20,9 @@ export async function POST(request: Request): Promise<NextResponse> {
 
         if (!session?.user?.id) {
           throw new Error('Unauthorized')
+        }
+        if (!(await canEditActiveWorkspace(session))) {
+          throw new Error('Forbidden')
         }
 
         captureServerEvent({
@@ -52,6 +56,9 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json(jsonResponse)
   } catch (error) {
     const message = (error as Error).message
+    if (message === 'Forbidden') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
     const isAuthError = message === 'Unauthorized'
     return NextResponse.json(
       { error: isAuthError ? 'Unauthorized' : 'Upload failed' },

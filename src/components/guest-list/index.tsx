@@ -7,6 +7,7 @@ import { sharedStyles } from '~/app/utils/shared-styles'
 import type { DashboardData, EventFormData } from '~/app/utils/shared-types'
 import { useEventForm } from '~/components/contexts/event-form-context'
 import { useGuestForm } from '~/components/contexts/guest-form-context'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import EventForm from '~/components/forms/event-form'
 import GuestForm from '~/components/forms/guest-form'
 import type { HouseholdFormData } from '~/components/forms/guest-form.schema'
@@ -24,6 +25,7 @@ const CsvUploadDialog = dynamic(
 )
 
 export default function GuestList({ dashboardData }: { dashboardData: DashboardData }) {
+  const canEdit = useCanEdit()
   const isEventFormOpen = useEventForm()
   const isGuestFormOpen = useGuestForm()
   const searchParams = useSearchParams()
@@ -76,11 +78,11 @@ export default function GuestList({ dashboardData }: { dashboardData: DashboardD
 
   return (
     <>
-      {isGuestFormOpen && (
+      {canEdit && isGuestFormOpen && (
         <GuestForm events={dashboardData?.events} prefillFormData={prefillHousehold} />
       )}
-      {isEventFormOpen && <EventForm prefillFormData={prefillEvent} />}
-      {csvDialogOpen && (
+      {canEdit && isEventFormOpen && <EventForm prefillFormData={prefillEvent} />}
+      {canEdit && csvDialogOpen && (
         <CsvUploadDialog
           open={csvDialogOpen}
           onOpenChange={setCsvDialogOpen}
@@ -88,9 +90,11 @@ export default function GuestList({ dashboardData }: { dashboardData: DashboardD
         />
       )}
       <EventsTabs events={dashboardData?.events} selectedEventId={selectedEventId} />
-      <div className={`${sharedStyles.desktopPaddingSidesGuestList} mb-4 flex justify-end`}>
-        <InviteLinkPanel />
-      </div>
+      {canEdit && (
+        <div className={`${sharedStyles.desktopPaddingSidesGuestList} mb-4 flex justify-end`}>
+          <InviteLinkPanel />
+        </div>
+      )}
       {hasAnyGuests ? (
         <GuestsView
           events={dashboardData.events}

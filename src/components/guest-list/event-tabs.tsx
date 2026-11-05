@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Event } from '~/app/utils/shared-types'
 import { useToggleEventForm } from '~/components/contexts/event-form-context'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { Button } from '~/components/ui/button'
 
 type EventsTabsProps = {
@@ -10,6 +11,7 @@ type EventsTabsProps = {
 
 export default function EventsTabs({ events, selectedEventId }: EventsTabsProps) {
   const toggleEventForm = useToggleEventForm()
+  const canEdit = useCanEdit()
 
   return (
     <>
@@ -41,14 +43,16 @@ export default function EventsTabs({ events, selectedEventId }: EventsTabsProps)
             </li>
           )
         })}
-        <Button
-          variant='ghost'
-          size='sm'
-          className='text-primary'
-          onClick={() => toggleEventForm()}
-        >
-          + New Event
-        </Button>
+        {canEdit && (
+          <Button
+            variant='ghost'
+            size='sm'
+            className='text-primary'
+            onClick={() => toggleEventForm()}
+          >
+            + New Event
+          </Button>
+        )}
       </ul>
       <div className='border-border border-t' />
     </>

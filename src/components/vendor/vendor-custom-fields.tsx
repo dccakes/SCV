@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { Button } from '~/components/ui/button'
 import { Checkbox } from '~/components/ui/checkbox'
 import { Input } from '~/components/ui/input'
@@ -43,6 +44,7 @@ export function VendorCustomFields({
   onSave,
   isSaving,
 }: VendorCustomFieldsProps) {
+  const canEdit = useCanEdit()
   const [draftValues, setDraftValues] = useState<VendorCustomFieldValues>(() =>
     normalizeValues(definitions, values)
   )
@@ -60,6 +62,39 @@ export function VendorCustomFields({
   }
 
   const sortedDefinitions = [...definitions].sort((a, b) => a.displayOrder - b.displayOrder)
+
+  if (!canEdit) {
+    const filled = sortedDefinitions.filter((definition) => {
+      const value = values?.[definition.key]
+      return definition.type === 'boolean' ? value != null : !!value?.trim()
+    })
+
+    if (filled.length === 0) {
+      return (
+        <p className='font-mono text-[0.68rem] text-muted-foreground uppercase tracking-wider'>
+          No custom field values
+        </p>
+      )
+    }
+
+    return (
+      <dl className='grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2'>
+        {filled.map((definition) => {
+          const value = values?.[definition.key] ?? ''
+          return (
+            <div key={definition.key}>
+              <dt className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
+                {definition.label}
+              </dt>
+              <dd className='font-sans text-[0.92rem] text-foreground'>
+                {definition.type === 'boolean' ? (value === 'true' ? 'Yes' : 'No') : value}
+              </dd>
+            </div>
+          )
+        })}
+      </dl>
+    )
+  }
 
   const handleSave = () => {
     const nextValues: VendorCustomFieldValues = {}

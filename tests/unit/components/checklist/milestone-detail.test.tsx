@@ -89,4 +89,25 @@ describe('MilestoneDetail', () => {
 
     expect(screen.getByRole('dialog', { name: 'Marriage license obtained' })).toBeInTheDocument()
   })
+
+  it('shows status but no override controls when read only', () => {
+    render(
+      <MilestoneDetail
+        milestone={milestone}
+        trigger={<button type='button'>Open milestone</button>}
+        onAttest={attestMilestone}
+        onDismiss={dismissMilestone}
+        onClearOverride={clearOverride}
+        viewport='desktop'
+        readOnly
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open milestone' }))
+
+    expect(screen.getByText('Effective status: pending')).toBeInTheDocument()
+    expect(screen.getByText('System status: pending')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Mark as done')).not.toBeInTheDocument()
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument()
+  })
 })

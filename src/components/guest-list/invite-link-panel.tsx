@@ -2,11 +2,16 @@
 
 import { useState } from 'react'
 
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { SelfInviteLinkManager } from '~/components/guest-list/self-invite-link-manager'
 import { Button } from '~/components/ui/button'
 
 export function InviteLinkPanel() {
   const [open, setOpen] = useState(false)
+  const canEdit = useCanEdit()
+
+  // Generating, resetting and revoking the link are writes, and the panel has nothing else to show.
+  if (!canEdit) return null
 
   return (
     <>

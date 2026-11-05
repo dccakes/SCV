@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { memo } from 'react'
 
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
@@ -43,6 +44,7 @@ function EventCardBase({
   onToggleCollectRsvp,
   isTogglingCollectRsvp = false,
 }: EventCardProps) {
+  const canEdit = useCanEdit()
   const { guestResponses } = event
   const totalGuests =
     guestResponses.attending +
@@ -70,21 +72,23 @@ function EventCardBase({
                 RSVPs
               </Badge>
             )}
-            <div className='flex items-center gap-2'>
-              <label
-                htmlFor={`${event.id}-collect-rsvp-toggle`}
-                className='font-mono text-[0.6rem] text-muted-foreground uppercase tracking-widest'
-              >
-                Collect RSVPs
-              </label>
-              <Switch
-                id={`${event.id}-collect-rsvp-toggle`}
-                aria-label={`Toggle RSVP collection for ${event.name}`}
-                checked={event.collectRsvp}
-                onCheckedChange={(checked) => onToggleCollectRsvp(event.id, checked)}
-                disabled={isTogglingCollectRsvp}
-              />
-            </div>
+            {canEdit ? (
+              <div className='flex items-center gap-2'>
+                <label
+                  htmlFor={`${event.id}-collect-rsvp-toggle`}
+                  className='font-mono text-[0.6rem] text-muted-foreground uppercase tracking-widest'
+                >
+                  Collect RSVPs
+                </label>
+                <Switch
+                  id={`${event.id}-collect-rsvp-toggle`}
+                  aria-label={`Toggle RSVP collection for ${event.name}`}
+                  checked={event.collectRsvp}
+                  onCheckedChange={(checked) => onToggleCollectRsvp(event.id, checked)}
+                  disabled={isTogglingCollectRsvp}
+                />
+              </div>
+            ) : null}
           </div>
         </div>
       </CardHeader>
@@ -153,39 +157,52 @@ function EventCardBase({
               onClick={() => onManageGuests(event.id)}
             >
               <Users className='h-3.5 w-3.5 md:mr-1' />
-              <span className='hidden md:inline'>Manage Guests</span>
+              <span className='hidden md:inline'>{canEdit ? 'Manage Guests' : 'View Guests'}</span>
               <span className='md:hidden'>Guests</span>
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant='ghost'
-                  size='sm'
-                  className='h-8 w-8 p-0'
-                  aria-label={`Event actions for ${event.name}`}
-                >
-                  <MoreHorizontal className='h-4 w-4' />
-                  <span className='sr-only'>Event actions</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align='end'>
-                <DropdownMenuItem onClick={() => onManageQuestions(event.id)}>
-                  <ClipboardList className='mr-2 h-3.5 w-3.5' />
-                  RSVP Questions
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onEdit(event.id)}>
-                  <Pencil className='mr-2 h-3.5 w-3.5' />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className='text-destructive focus:text-destructive'
-                  onClick={() => onDelete(event.id)}
-                >
-                  <Trash2 className='mr-2 h-3.5 w-3.5' />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {canEdit ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    className='h-8 w-8 p-0'
+                    aria-label={`Event actions for ${event.name}`}
+                  >
+                    <MoreHorizontal className='h-4 w-4' />
+                    <span className='sr-only'>Event actions</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end'>
+                  <DropdownMenuItem onClick={() => onManageQuestions(event.id)}>
+                    <ClipboardList className='mr-2 h-3.5 w-3.5' />
+                    RSVP Questions
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onEdit(event.id)}>
+                    <Pencil className='mr-2 h-3.5 w-3.5' />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className='text-destructive focus:text-destructive'
+                    onClick={() => onDelete(event.id)}
+                  >
+                    <Trash2 className='mr-2 h-3.5 w-3.5' />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button
+                variant='ghost'
+                size='sm'
+                className='text-xs md:text-sm'
+                onClick={() => onManageQuestions(event.id)}
+              >
+                <ClipboardList className='h-3.5 w-3.5 md:mr-1' />
+                <span className='hidden md:inline'>RSVP Questions</span>
+                <span className='md:hidden'>Questions</span>
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>

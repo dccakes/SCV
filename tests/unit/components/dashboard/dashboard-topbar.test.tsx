@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import { WorkspaceCapabilitiesProvider } from '~/components/contexts/workspace-capabilities-context'
 
 import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
 import { DASHBOARD_ADD_TASK_EVENT } from '~/components/dashboard/task-dialog-events'
@@ -103,5 +104,25 @@ describe('DashboardTopbar', () => {
   it('uses the warm translucent topbar styling', () => {
     render(<DashboardTopbar />)
     expect(screen.getByRole('banner')).toHaveClass('bg-card/70')
+  })
+
+  it('hides the add-task action for viewers but keeps the title and theme toggle', () => {
+    render(
+      <WorkspaceCapabilitiesProvider canEditPlanning={false}>
+        <DashboardTopbar />
+      </WorkspaceCapabilitiesProvider>
+    )
+    expect(screen.queryByRole('button', { name: /add task/i })).not.toBeInTheDocument()
+    expect(screen.getByText('Dashboard')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /toggle theme/i })).toBeInTheDocument()
+  })
+
+  it('shows the add-task action for editors', () => {
+    render(
+      <WorkspaceCapabilitiesProvider canEditPlanning>
+        <DashboardTopbar />
+      </WorkspaceCapabilitiesProvider>
+    )
+    expect(screen.getByRole('button', { name: /add task/i })).toBeInTheDocument()
   })
 })

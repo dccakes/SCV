@@ -6,6 +6,7 @@ import type { TaskItem } from '~/components/dashboard/planning-overview/use-task
 
 type TaskListItemProps = Readonly<{
   task: TaskItem
+  readOnly?: boolean
   onToggle: (taskId: string) => void
 }>
 
@@ -16,18 +17,29 @@ const tagClass: Record<string, string> = {
   Overdue: 'bg-destructive/10 text-destructive',
 }
 
-function TaskListItemBase({ task, onToggle }: TaskListItemProps) {
+function TaskListItemBase({ task, readOnly = false, onToggle }: TaskListItemProps) {
+  const Row = readOnly ? 'div' : 'button'
+  const interactiveProps = readOnly
+    ? {}
+    : {
+        type: 'button' as const,
+        onClick: () => onToggle(task.id),
+      }
+
   return (
-    <button
-      type='button'
-      onClick={() => onToggle(task.id)}
-      className='flex min-h-[52px] w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+    <Row
+      {...interactiveProps}
+      className={`flex min-h-[52px] w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left transition-colors ${
+        readOnly
+          ? ''
+          : 'hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+      }`}
     >
       <span
         className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-[1.5px] text-[0.65rem] transition-all ${
           task.done
             ? 'border-primary bg-primary text-primary-foreground'
-            : 'border-foreground/30 hover:border-primary'
+            : `border-foreground/30 ${readOnly ? '' : 'hover:border-primary'}`
         }`}
       >
         {task.done && '✓'}
@@ -49,7 +61,7 @@ function TaskListItemBase({ task, onToggle }: TaskListItemProps) {
       >
         {task.due}
       </span>
-    </button>
+    </Row>
   )
 }
 

@@ -6,6 +6,7 @@ import { GoArrowLeft } from 'react-icons/go'
 import { TiEyeOutline } from 'react-icons/ti'
 import type { DashboardData, EventWithResponses, Question } from '~/app/utils/shared-types'
 import { useToggleEditRsvpSettingsForm } from '~/components/contexts/edit-rsvp-settings-form-context'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import QuestionForm from '~/components/forms/question-form'
 import GeneralQuestionsSection from '~/components/forms/rsvp/general-questions-section'
 import NoRsvpView from '~/components/forms/rsvp/no-rsvp-view'
@@ -24,13 +25,14 @@ export default function RsvpFormSettings({
 }) {
   useScrollToTop()
   const toggleEditRsvpSettingsForm = useToggleEditRsvpSettingsForm()
+  const canEdit = useCanEdit()
   const [showQuestionForm, setShowQuestionForm] = useState<boolean>(false)
   const [prefillQuestion, setPrefillQuestion] = useState<Question>()
   const [useEditMode, setUseEditMode] = useState<boolean>(false)
 
   return (
     <>
-      {showQuestionForm && prefillQuestion && (
+      {canEdit && showQuestionForm && prefillQuestion && (
         <QuestionForm
           isEditMode={useEditMode}
           question={prefillQuestion}
@@ -101,6 +103,7 @@ const getMutationErrorMessage = (error: unknown, fallback: string): string => {
 
 const EventRsvpSection = ({ event, numGuests }: EventRsvpSectionProps) => {
   const router = useRouter()
+  const canEdit = useCanEdit()
   const [feedbackError, setFeedbackError] = useState<string | null>(null)
   const updateEventRsvpSetting = api.event.updateCollectRsvp.useMutation({
     onSuccess: () => {
@@ -124,6 +127,7 @@ const EventRsvpSection = ({ event, numGuests }: EventRsvpSectionProps) => {
             <Switch
               id={`${event.id}-rsvp-toggle`}
               checked={event.collectRsvp}
+              disabled={!canEdit}
               onClick={() =>
                 updateEventRsvpSetting.mutate({
                   eventId: event.id,

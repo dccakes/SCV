@@ -4,6 +4,7 @@ import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { GripVertical } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import {
   type GuestDragData,
   guestDragData,
@@ -22,8 +23,10 @@ type SeatingGuestSidebarProps = {
   onSelectGuest: (guestId: number) => void
 }
 
-function DraggableGuest(props: Readonly<{ guest: SeatingGuest; onSelect: () => void }>) {
-  const { guest, onSelect } = props
+function DraggableGuest(
+  props: Readonly<{ guest: SeatingGuest; canEdit: boolean; onSelect: () => void }>
+) {
+  const { guest, canEdit, onSelect } = props
   const data = guestDragData(guest)
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `sidebar-guest:${guest.id}`,
@@ -38,15 +41,20 @@ function DraggableGuest(props: Readonly<{ guest: SeatingGuest; onSelect: () => v
         data-seating-focus-key={`sidebar-guest:${guest.id}`}
         data-seating-guest-ids={guest.id}
         onClick={onSelect}
-        aria-label={`${formatGuestName(guest)}. Press Space to move onto a table, or Enter for details.`}
-        {...attributes}
-        {...listeners}
+        aria-label={
+          canEdit
+            ? `${formatGuestName(guest)}. Press Space to move onto a table, or Enter for details.`
+            : `${formatGuestName(guest)}. Press Enter for details.`
+        }
+        {...(canEdit ? { ...attributes, ...listeners } : {})}
         className={cn(
           'flex w-full touch-manipulation items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           isDragging && 'opacity-30'
         )}
       >
-        <GripVertical className='h-3.5 w-3.5 shrink-0 text-muted-foreground' aria-hidden='true' />
+        {canEdit && (
+          <GripVertical className='h-3.5 w-3.5 shrink-0 text-muted-foreground' aria-hidden='true' />
+        )}
         <span className='truncate'>{formatGuestName(guest)}</span>
         {guest.isTagAlong ? (
           <span className='ml-auto text-[0.6rem] text-muted-foreground'>+1</span>
@@ -63,10 +71,11 @@ function HouseholdGroup(
     unassigned: SeatingGuest[]
     // The unseated members matching the search: what is listed
     visible: SeatingGuest[]
+    canEdit: boolean
     onSelectGuest: (guestId: number) => void
   }>
 ) {
-  const { household, unassigned, visible, onSelectGuest } = props
+  const { household, unassigned, visible, canEdit, onSelectGuest } = props
   const lead = household.guests[0]
   const label = lead ? `${lead.lastName} household` : 'Household'
   const data: GuestDragData = {
@@ -74,6 +83,7 @@ function HouseholdGroup(
     guestIds: unassigned.map((guest) => guest.id),
     label: `${label} (${unassigned.length})`,
   }
+  const Header = canEdit ? 'button' : 'div'
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `household:${household.id}`,
     data,
@@ -81,27 +91,39 @@ function HouseholdGroup(
 
   return (
     <li className={cn('rounded-md border border-border/70 bg-card', isDragging && 'opacity-40')}>
-      <button
-        type='button'
-        ref={setNodeRef}
-        data-seating-focus-key={`household:${household.id}`}
-        data-seating-guest-ids={data.guestIds.join(',')}
-        {...attributes}
-        {...listeners}
-        aria-label={`${label}, ${unassigned.length} unseated. Press Space to move everyone together.`}
-        className='flex w-full cursor-grab touch-manipulation items-center justify-between gap-2 border-border/70 border-b px-2 py-1.5 active:cursor-grabbing'
+      <Header
+        {...(canEdit
+          ? {
+              type: 'button' as const,
+              ref: setNodeRef,
+              'data-seating-focus-key': `household:${household.id}`,
+              'data-seating-guest-ids': data.guestIds.join(','),
+              'aria-label': `${label}, ${unassigned.length} unseated. Press Space to move everyone together.`,
+              ...attributes,
+              ...listeners,
+            }
+          : {})}
+        className={cn(
+          'flex w-full items-center justify-between gap-2 border-border/70 border-b px-2 py-1.5',
+          canEdit && 'cursor-grab touch-manipulation active:cursor-grabbing'
+        )}
       >
         <span className='flex items-center gap-1.5 font-semibold text-[0.64rem] text-muted-foreground uppercase tracking-[0.1em]'>
-          <GripVertical className='h-3.5 w-3.5' aria-hidden='true' />
+          {canEdit && <GripVertical className='h-3.5 w-3.5' aria-hidden='true' />}
           {label}
         </span>
         <span className='text-[0.6rem] text-muted-foreground tabular-nums'>
           {unassigned.length}/{household.guests.length}
         </span>
-      </button>
+      </Header>
       <ul className='p-1'>
         {visible.map((guest) => (
-          <DraggableGuest key={guest.id} guest={guest} onSelect={() => onSelectGuest(guest.id)} />
+          <DraggableGuest
+            key={guest.id}
+            guest={guest}
+            canEdit={canEdit}
+            onSelect={() => onSelectGuest(guest.id)}
+          />
         ))}
       </ul>
     </li>
@@ -110,6 +132,7 @@ function HouseholdGroup(
 
 export function SeatingGuestSidebar(props: Readonly<SeatingGuestSidebarProps>) {
   const { households, totalGuests, seatedGuests, onSelectGuest } = props
+  const canEdit = useCanEdit()
   const [search, setSearch] = useState('')
   const dropData: UnassignedDropData = { type: 'unassigned' }
   const { setNodeRef, isOver } = useDroppable({ id: UNASSIGNED_DROP_ID, data: dropData })
@@ -160,7 +183,9 @@ export function SeatingGuestSidebar(props: Readonly<SeatingGuestSidebarProps>) {
               ? 'No invited guests for this event yet.'
               : search
                 ? 'No unseated guests match your search.'
-                : 'Everyone has a seat. Drag a guest here to unseat them.'}
+                : canEdit
+                  ? 'Everyone has a seat. Drag a guest here to unseat them.'
+                  : 'Everyone has a seat.'}
           </p>
         ) : (
           <ul className='space-y-2'>
@@ -170,6 +195,7 @@ export function SeatingGuestSidebar(props: Readonly<SeatingGuestSidebarProps>) {
                 household={group.household}
                 unassigned={group.unassigned}
                 visible={group.visible}
+                canEdit={canEdit}
                 onSelectGuest={onSelectGuest}
               />
             ))}

@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { WorkspaceCapabilitiesProvider } from '~/components/contexts/workspace-capabilities-context'
 import GuestsView from '~/components/guest-list/guests-view'
 import type { HouseholdWithGuests } from '~/server/application/dashboard/dashboard.types'
 
@@ -1381,5 +1382,64 @@ describe('GuestsView', () => {
     expect(slider).toHaveAttribute('aria-valuenow', '4')
     // "Drag slider to set likelihood" should NOT be shown when value is set
     expect(screen.queryByText('Drag slider to set likelihood')).not.toBeInTheDocument()
+  })
+})
+
+describe('GuestsView permissions', () => {
+  const renderView = (canEditPlanning: boolean, selectedEventId = 'all') =>
+    render(
+      <WorkspaceCapabilitiesProvider canEditPlanning={canEditPlanning}>
+        <GuestsView
+          events={events}
+          households={households}
+          selectedEventId={selectedEventId}
+          setPrefillHousehold={jest.fn()}
+          setPrefillEvent={jest.fn()}
+          onImportClick={jest.fn()}
+        />
+      </WorkspaceCapabilitiesProvider>
+    )
+
+  it('hides write controls for viewers but still shows household data in the drawer', () => {
+    renderView(false)
+
+    expect(screen.queryByRole('button', { name: 'Add Guest' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Import Guests' })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+
+    expect(screen.getByText('alex@example.com')).toBeInTheDocument()
+    expect(screen.getByText('Vegetarian meals only')).toBeInTheDocument()
+    expect(screen.getAllByText('Jamie Rivera').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Attending').length).toBeGreaterThan(0)
+
+    expect(screen.queryByRole('button', { name: 'Edit Contact & Address' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Edit Notes' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Manage members' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Copy link' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Delete party' })).not.toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('Add a note...')).not.toBeInTheDocument()
+    expect(screen.queryByText('Drag slider to set likelihood')).not.toBeInTheDocument()
+  })
+
+  it('hides the edit-event pencil for viewers when an event tab is selected', () => {
+    renderView(false, 'event-1')
+    expect(screen.queryByRole('button', { name: 'Edit event details' })).not.toBeInTheDocument()
+    expect(screen.getAllByText('Wedding Day').length).toBeGreaterThan(0)
+  })
+
+  it('keeps write controls for editors', () => {
+    renderView(true, 'event-1')
+
+    expect(screen.getByRole('button', { name: 'Add Guest' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Import Guests' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Edit event details' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+
+    expect(screen.getByRole('button', { name: 'Edit Contact & Address' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Edit Notes' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Manage members' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Delete party' })).toBeInTheDocument()
   })
 })

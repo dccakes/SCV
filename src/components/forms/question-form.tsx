@@ -5,6 +5,7 @@ import { type Dispatch, type SetStateAction, useState } from 'react'
 import { IoMdClose } from 'react-icons/io'
 import { sharedStyles } from '~/app/utils/shared-styles'
 import type { Question, TQuestionOption } from '~/app/utils/shared-types'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import AnimatedInputLabel from '~/components/forms/animated-input-label'
 import DeleteConfirmation from '~/components/forms/delete-confirmation'
 import QuestionOptionsForm from '~/components/forms/rsvp/question-option-form'
@@ -49,6 +50,7 @@ export default function QuestionForm({
   question,
   setShowQuestionForm,
 }: QuestionFormProps) {
+  const canEdit = useCanEdit()
   const router = useRouter()
   const [deletedOptions, setDeletedOptions] = useState<string[]>([])
   const [questionOptions, setQuestionOptions] = useState<TQuestionOption[]>(
@@ -107,6 +109,9 @@ export default function QuestionForm({
   }
 
   const isProcessing = upsertQuestion.isPending || deleteQuestion.isPending
+
+  // Viewers cannot create, edit or delete questions
+  if (!canEdit) return null
 
   if (showDeleteConfirmation) {
     return (

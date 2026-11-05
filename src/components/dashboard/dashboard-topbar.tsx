@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { dispatchDashboardAddTaskEvent } from '~/components/dashboard/task-dialog-events'
 import { useAuthenticatedSidebar } from '~/components/layout/authenticated-app-shell'
 import { ThemeToggle } from '~/components/theme-toggle'
@@ -16,6 +16,7 @@ type DashboardTopbarProps = {
 export default function DashboardTopbar(props: Readonly<DashboardTopbarProps>) {
   const { title = 'Dashboard', showManagementActions = true, onMenuToggle, onAddTask } = props
   const { openSidebar } = useAuthenticatedSidebar()
+  const canEdit = useCanEdit()
   const [today, setToday] = useState('')
 
   useEffect(() => {
@@ -63,7 +64,7 @@ export default function DashboardTopbar(props: Readonly<DashboardTopbarProps>) {
 
       <div className='flex items-center gap-2'>
         <ThemeToggle />
-        {showManagementActions && (
+        {showManagementActions && canEdit && (
           <button
             type='button'
             aria-label='Add task'

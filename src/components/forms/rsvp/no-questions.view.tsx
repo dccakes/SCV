@@ -1,7 +1,7 @@
 import { AiOutlinePlusCircle } from 'react-icons/ai'
-
 import { sharedStyles } from '~/app/utils/shared-styles'
 import type { EventWithResponses } from '~/app/utils/shared-types'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 
 export default function NoQuestionsView({
   event,
@@ -10,8 +10,17 @@ export default function NoQuestionsView({
   event: EventWithResponses
   onAddQuestion: (eventId: string) => void
 }) {
+  const canEdit = useCanEdit()
   const { attending, invited, declined } = event.guestResponses
   const numGuests = attending + invited + declined
+  if (!canEdit) {
+    return (
+      <div className='border-2 border-dashed p-5 text-muted-foreground'>
+        No follow-up questions have been added for <b>{event.name}</b>.
+      </div>
+    )
+  }
+
   return (
     <div className='flex flex-col gap-3 border-2 border-dashed p-5'>
       <b>Need to collect additional guest info?</b>

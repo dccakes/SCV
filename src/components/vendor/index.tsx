@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 import { VendorCategorySection } from '~/components/vendor/vendor-category-section'
@@ -26,7 +27,7 @@ type VendorListProps = {
 
 type CategoryFilter = VendorCategory | 'ALL'
 
-function VendorEmptyState({ onAdd }: { onAdd: () => void }) {
+function VendorEmptyState({ onAdd, canEdit }: { onAdd: () => void; canEdit: boolean }) {
   return (
     <div className='flex flex-col items-center gap-5 py-20 text-center'>
       <div className='max-w-sm'>
@@ -36,14 +37,17 @@ function VendorEmptyState({ onAdd }: { onAdd: () => void }) {
           other vendor in one place.
         </p>
       </div>
-      <Button type='button' size='lg' onClick={onAdd}>
-        Add your first vendor
-      </Button>
+      {canEdit && (
+        <Button type='button' size='lg' onClick={onAdd}>
+          Add your first vendor
+        </Button>
+      )}
     </div>
   )
 }
 
 export default function VendorList({ initialVendors }: VendorListProps) {
+  const canEdit = useCanEdit()
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('ALL')
@@ -85,7 +89,7 @@ export default function VendorList({ initialVendors }: VendorListProps) {
   return (
     <div className='mx-auto max-w-[1120px] pb-6'>
       {allVendors.length === 0 ? (
-        <VendorEmptyState onAdd={() => setShowAddForm(true)} />
+        <VendorEmptyState onAdd={() => setShowAddForm(true)} canEdit={canEdit} />
       ) : (
         <div className='flex flex-col gap-7'>
           <div className='flex flex-wrap items-end justify-between gap-4'>
@@ -96,9 +100,11 @@ export default function VendorList({ initialVendors }: VendorListProps) {
                 {summary.categoriesToFill === 1 ? 'category' : 'categories'} to fill
               </p>
             </div>
-            <Button type='button' onClick={() => setShowAddForm(true)}>
-              Add vendor
-            </Button>
+            {canEdit && (
+              <Button type='button' onClick={() => setShowAddForm(true)}>
+                Add vendor
+              </Button>
+            )}
           </div>
 
           <div className='-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 md:flex-wrap md:overflow-visible'>
@@ -138,11 +144,15 @@ export default function VendorList({ initialVendors }: VendorListProps) {
                 No {filterLabel.toLowerCase()} vendors yet
               </p>
               <p className='text-muted-foreground text-sm'>
-                Add the ones you are talking to and compare their quotes side by side.
+                {canEdit
+                  ? 'Add the ones you are talking to and compare their quotes side by side.'
+                  : 'Vendors in this category will appear here once they are added.'}
               </p>
-              <Button type='button' onClick={() => setShowAddForm(true)}>
-                Add {filterLabel.toLowerCase()} vendor
-              </Button>
+              {canEdit && (
+                <Button type='button' onClick={() => setShowAddForm(true)}>
+                  Add {filterLabel.toLowerCase()} vendor
+                </Button>
+              )}
             </div>
           ) : (
             <section
@@ -154,14 +164,16 @@ export default function VendorList({ initialVendors }: VendorListProps) {
                   {filterLabel} · {comparedVendors.length}{' '}
                   {comparedVendors.length === 1 ? 'option' : 'options'}
                 </h3>
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='sm'
-                  onClick={() => setShowAddForm(true)}
-                >
-                  Add {filterLabel.toLowerCase()} vendor
-                </Button>
+                {canEdit && (
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={() => setShowAddForm(true)}
+                  >
+                    Add {filterLabel.toLowerCase()} vendor
+                  </Button>
+                )}
               </div>
               <div className='flex flex-wrap gap-4'>
                 {comparedVendors.map((vendor) => (
@@ -178,7 +190,7 @@ export default function VendorList({ initialVendors }: VendorListProps) {
         </div>
       )}
 
-      <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
+      <Dialog open={canEdit && showAddForm} onOpenChange={setShowAddForm}>
         <DialogContent className='max-h-[85vh] overflow-y-auto sm:max-w-lg'>
           <DialogHeader>
             <DialogTitle className='font-display text-2xl'>

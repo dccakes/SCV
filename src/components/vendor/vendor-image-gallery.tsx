@@ -6,6 +6,7 @@ import { useCallback, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { toast } from 'sonner'
 
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { Button } from '~/components/ui/button'
 import { VendorImagePicker } from '~/components/vendor/vendor-image-picker'
 import { uploadFiles } from '~/lib/blob'
@@ -37,6 +38,7 @@ async function proxyDownloadImage(
 }
 
 export function VendorImageGallery({ images, vendorId, hasWebsite }: VendorImageGalleryProps) {
+  const canEdit = useCanEdit()
   const [isUploading, setIsUploading] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
   const utils = api.useUtils()
@@ -107,7 +109,7 @@ export function VendorImageGallery({ images, vendorId, hasWebsite }: VendorImage
     },
     noClick: true,
     noKeyboard: true,
-    disabled: isUploading,
+    disabled: isUploading || !canEdit,
   })
 
   const handleFindFromWebsite = async () => {
@@ -163,22 +165,30 @@ export function VendorImageGallery({ images, vendorId, hasWebsite }: VendorImage
           <p className='font-mono text-[10px] uppercase tracking-widest text-muted-foreground'>
             No photos yet
           </p>
-          <div className='flex gap-2'>
-            <Button type='button' variant='outline' size='sm' onClick={open} disabled={isUploading}>
-              Upload photos
-            </Button>
-            {hasWebsite && (
+          {canEdit && (
+            <div className='flex gap-2'>
               <Button
                 type='button'
                 variant='outline'
                 size='sm'
-                onClick={handleFindFromWebsite}
-                disabled={fetchWebsiteImages.isPending || isUploading}
+                onClick={open}
+                disabled={isUploading}
               >
-                {fetchWebsiteImages.isPending ? 'Finding...' : 'Find from website'}
+                Upload photos
               </Button>
-            )}
-          </div>
+              {hasWebsite && (
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  onClick={handleFindFromWebsite}
+                  disabled={fetchWebsiteImages.isPending || isUploading}
+                >
+                  {fetchWebsiteImages.isPending ? 'Finding...' : 'Find from website'}
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       ) : (
         <div className='space-y-2'>
@@ -202,33 +212,35 @@ export function VendorImageGallery({ images, vendorId, hasWebsite }: VendorImage
                     </span>
                   </div>
                 )}
-                <div className='absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity group-hover/img:opacity-100'>
-                  {!image.isPrimary && (
+                {canEdit && (
+                  <div className='absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity group-hover/img:opacity-100'>
+                    {!image.isPrimary && (
+                      <button
+                        type='button'
+                        aria-label='Set as cover image'
+                        onClick={() => setCoverImage.mutate({ vendorId, imageId: image.id })}
+                        disabled={setCoverImage.isPending}
+                        className='rounded-full bg-white/20 p-1.5 text-white transition-colors hover:bg-white/40'
+                      >
+                        <Star className='h-3.5 w-3.5' />
+                      </button>
+                    )}
                     <button
                       type='button'
-                      aria-label='Set as cover image'
-                      onClick={() => setCoverImage.mutate({ vendorId, imageId: image.id })}
-                      disabled={setCoverImage.isPending}
-                      className='rounded-full bg-white/20 p-1.5 text-white transition-colors hover:bg-white/40'
+                      aria-label={`Remove ${image.name}`}
+                      onClick={() => deleteImage.mutate({ imageId: image.id, vendorId })}
+                      disabled={deleteImage.isPending}
+                      className='rounded-full bg-white/20 p-1.5 text-white transition-colors hover:bg-destructive/80'
                     >
-                      <Star className='h-3.5 w-3.5' />
+                      <Trash2 className='h-3.5 w-3.5' />
                     </button>
-                  )}
-                  <button
-                    type='button'
-                    aria-label={`Remove ${image.name}`}
-                    onClick={() => deleteImage.mutate({ imageId: image.id, vendorId })}
-                    disabled={deleteImage.isPending}
-                    className='rounded-full bg-white/20 p-1.5 text-white transition-colors hover:bg-destructive/80'
-                  >
-                    <Trash2 className='h-3.5 w-3.5' />
-                  </button>
-                </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
 
-          {canAddMore && (
+          {canEdit && canAddMore && (
             <div className='flex gap-2'>
               <button
                 type='button'
@@ -254,7 +266,7 @@ export function VendorImageGallery({ images, vendorId, hasWebsite }: VendorImage
         </div>
       )}
 
-      {showPicker && (
+      {canEdit && showPicker && (
         <VendorImagePicker
           candidates={fetchWebsiteImages.data ?? []}
           maxSelect={MAX_IMAGES_PER_VENDOR - images.length}

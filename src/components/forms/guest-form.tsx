@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { getDirtyValues } from '~/app/utils/form-helpers'
 import type { Event, FormInvites } from '~/app/utils/shared-types'
 import { useToggleGuestForm } from '~/components/contexts/guest-form-context'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import AddFormButtons from '~/components/forms/guest/add-buttons'
 import ContactForm from '~/components/forms/guest/contact-form'
 import EditFormButtons from '~/components/forms/guest/edit-buttons'
@@ -47,7 +48,14 @@ type GuestFormProps = {
   prefillFormData: HouseholdFormData | undefined
 }
 
-export default function GuestForm({ events, prefillFormData }: GuestFormProps) {
+// The form only creates, edits and deletes households, so viewers never get it.
+export default function GuestForm(props: GuestFormProps) {
+  const canEdit = useCanEdit()
+  if (!canEdit) return null
+  return <EditableGuestForm {...props} />
+}
+
+function EditableGuestForm({ events, prefillFormData }: GuestFormProps) {
   const isEditMode = !!prefillFormData
   const router = useRouter()
   const toggleGuestForm = useToggleGuestForm()

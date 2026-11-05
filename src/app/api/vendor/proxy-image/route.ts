@@ -2,12 +2,16 @@ import { NextResponse } from 'next/server'
 
 import { auth } from '~/lib/auth'
 import { MAX_FILE_SIZE } from '~/lib/upload-config'
+import { canEditActiveWorkspace } from '~/server/authz/editor-access'
 import { putServerBlob } from '~/server/infrastructure/storage/blob-server'
 
 export async function POST(request: Request): Promise<NextResponse> {
   const session = await auth.api.getSession({ headers: request.headers })
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  if (!(await canEditActiveWorkspace(session))) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
   let body: { url?: string; vendorId?: string }
