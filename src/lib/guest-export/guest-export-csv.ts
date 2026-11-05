@@ -53,6 +53,8 @@ export type GuestExportAnswer = {
   guestId: number
   householdId: string
   response: string
+  /** When the answer was last saved; the newest answer wins when a household has several */
+  updatedAt: Date
 }
 
 export type GuestExportData = {
@@ -122,8 +124,14 @@ const buildIndex = (data: GuestExportData) => {
   }
 
   const generalQuestionIds = new Set(data.questions.filter(isGeneral).map((q) => q.id))
+  // A household can hold more than one saved answer to a general question
+  // (for example after its primary contact changed), so apply answers oldest
+  // first and let the most recent one win
+  const answersOldestFirst = [...data.answers].sort(
+    (a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()
+  )
   const answerByKey = new Map<string, string>()
-  for (const answer of data.answers) {
+  for (const answer of answersOldestFirst) {
     const owner = generalQuestionIds.has(answer.questionId)
       ? `h:${answer.householdId}`
       : `g:${answer.guestId}`
@@ -224,7 +232,8 @@ export const buildGuestListCsv = (data: GuestExportData): string => {
  * One event, for handing to a caterer or venue: only guests invited to that
  * event, their RSVP, and the answers to that event's questions plus the
  * general questions. Contact details and addresses are left out on purpose
- * because this file is meant to leave the couple's hands.
+ * because this file is meant to leave the couple's hands, and declined guests
+ * show no answers so their old choices are not counted.
  */
 export const buildEventGuestCsv = (data: GuestExportData, eventId: string): string => {
   const index = buildIndex(data)
@@ -254,15 +263,21 @@ export const buildEventGuestCsv = (data: GuestExportData, eventId: string): stri
     return rsvp !== undefined && rsvp !== RSVP_STATUS.NOT_INVITED
   })
 
-  const rows = sortRows(invited, index).map((guest) => [
-    guest.firstName,
-    guest.lastName,
-    index.householdLabel(guest),
-    ageGroupLabel(guest),
-    yesNo(guest.isTagAlong),
-    rsvpLabel(index.rsvp(guest, eventId)),
-    ...orderedQuestions.map((question) => index.answer(guest, question)),
-  ])
+  const rows = sortRows(invited, index).map((guest) => {
+    const rsvp = index.rsvp(guest, eventId)
+    // Answers stay saved after a guest declines (e.g. a meal choice made before
+    // changing their mind). Leaving them in a vendor file risks over-ordering.
+    const hasDeclined = rsvp === RSVP_STATUS.DECLINED
+    return [
+      guest.firstName,
+      guest.lastName,
+      index.householdLabel(guest),
+      ageGroupLabel(guest),
+      yesNo(guest.isTagAlong),
+      rsvpLabel(rsvp),
+      ...orderedQuestions.map((question) => (hasDeclined ? '' : index.answer(guest, question))),
+    ]
+  })
 
   return toCsv([header, ...rows])
 }

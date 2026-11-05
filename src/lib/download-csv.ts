@@ -1,6 +1,6 @@
 // Excel reads CSV as the system code page unless the file starts with a UTF-8
 // byte order mark, which turns accented names like "José" into mojibake.
-const UTF8_BOM = '﻿'
+const UTF8_BOM = '\uFEFF'
 
 /** Trigger a browser download of CSV text. Client only. */
 export const downloadCsv = (fileName: string, csv: string): void => {
@@ -9,7 +9,8 @@ export const downloadCsv = (fileName: string, csv: string): void => {
   link.href = url
   link.download = fileName
   link.click()
-  URL.revokeObjectURL(url)
+  // Revoking in the same tick can cancel the download in some browsers
+  setTimeout(() => URL.revokeObjectURL(url), 0)
 }
 
 /** Lowercase, hyphen separated, ASCII only text for use in a file name. */

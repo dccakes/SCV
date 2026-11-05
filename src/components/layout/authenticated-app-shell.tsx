@@ -77,9 +77,12 @@ export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppSh
   }, [showEttaPanel])
 
   const toggleEttaPanel = useCallback(() => {
+    // Opening or closing the full-screen overlay on a small screen is a one-off
+    // choice, so only the desktop side panel's state is remembered
+    const isSmallScreen = window.matchMedia(MOBILE_ETTA_QUERY).matches
     setIsEttaPanelOpen((prev) => {
       const next = !prev
-      localStorage.setItem('etta-panel-open', String(next))
+      if (!isSmallScreen) localStorage.setItem('etta-panel-open', String(next))
       return next
     })
   }, [])

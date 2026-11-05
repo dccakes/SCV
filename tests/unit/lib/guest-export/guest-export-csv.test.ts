@@ -69,12 +69,20 @@ const buildData = (): GuestExportData => ({
     { guestId: 4, eventId: 'reception', rsvp: 'Not Invited' },
   ],
   answers: [
-    { questionId: 'meal', guestId: 1, householdId: 'h1', response: 'Fish' },
-    { questionId: 'meal', guestId: 3, householdId: 'h1', response: 'Kids menu' },
+    { questionId: 'meal', guestId: 1, householdId: 'h1', response: 'Fish', updatedAt: SAVED },
+    { questionId: 'meal', guestId: 3, householdId: 'h1', response: 'Kids menu', updatedAt: SAVED },
     // General questions are answered once per household, saved on the primary contact
-    { questionId: 'diet', guestId: 1, householdId: 'h1', response: 'Nut allergy' },
+    {
+      questionId: 'diet',
+      guestId: 1,
+      householdId: 'h1',
+      response: 'Nut allergy',
+      updatedAt: SAVED,
+    },
   ],
 })
+
+const SAVED = new Date('2026-05-01T00:00:00Z')
 
 const parse = (csv: string) => csv.split('\r\n').map((line) => line.split(','))
 
@@ -178,5 +186,58 @@ describe('buildEventGuestCsv', () => {
 
   it('returns only the header when nobody is invited', () => {
     expect(buildEventGuestCsv(buildData(), 'missing').split('\r\n')).toHaveLength(1)
+  })
+
+  it('blanks answers for guests who declined so their old choices are not counted', () => {
+    const data = buildData()
+    // Ana picked a meal, then declined the reception
+    data.invitations = data.invitations.map((invitation) =>
+      invitation.guestId === 2 && invitation.eventId === 'reception'
+        ? { ...invitation, rsvp: 'Declined' }
+        : invitation
+    )
+    data.answers.push({
+      questionId: 'meal',
+      guestId: 2,
+      householdId: 'h1',
+      response: 'Fish',
+      updatedAt: SAVED,
+    })
+
+    const ana = parse(buildEventGuestCsv(data, 'reception')).find((row) => row[0] === 'Ana')
+
+    expect(ana).toEqual(['Ana', 'Ruiz', 'José Ruiz', 'Adult', 'No', 'Declined', '', ''])
+    // The full guest list keeps the saved answer as a record
+    const fullRow = parse(buildGuestListCsv(data)).find((row) => row[0] === 'Ana')
+    expect(fullRow?.at(-3)).toBe('Fish')
+  })
+})
+
+describe('guest export edge cases', () => {
+  it('uses the most recent answer when a household saved a general answer twice', () => {
+    const data = buildData()
+    // An older answer saved under a former primary contact, listed after the newer one
+    data.answers.push({
+      questionId: 'diet',
+      guestId: 2,
+      householdId: 'h1',
+      response: 'None',
+      updatedAt: new Date('2026-01-01T00:00:00Z'),
+    })
+
+    const rows = parse(buildGuestListCsv(data)).slice(1)
+
+    for (const row of rows.filter((r) => r[1] === 'Ruiz')) {
+      expect(row.at(-1)).toBe('Nut allergy')
+    }
+  })
+
+  it('exports phone numbers as typed, without a formula guard apostrophe', () => {
+    const data = buildData()
+    data.guests = data.guests.map((g) => (g.id === 1 ? { ...g, phone: '+15551234567' } : g))
+
+    const jose = parse(buildGuestListCsv(data)).find((row) => row[0] === 'José')
+
+    expect(jose?.[8]).toBe('+15551234567')
   })
 })

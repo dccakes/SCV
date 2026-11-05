@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import AuthenticatedAppShell from '~/components/layout/authenticated-app-shell'
 
@@ -6,8 +6,13 @@ const mockEttaChat = jest.fn(() => <div data-testid='etta-chat' />)
 
 jest.mock('~/components/nav/sidebar-nav', () => ({
   __esModule: true,
-  default: ({ isOpen }: { isOpen: boolean }) => (
-    <div data-testid='sidebar-state'>{isOpen ? 'open' : 'closed'}</div>
+  default: ({ isOpen, onToggleEttaPanel }: { isOpen: boolean; onToggleEttaPanel?: () => void }) => (
+    <div>
+      <div data-testid='sidebar-state'>{isOpen ? 'open' : 'closed'}</div>
+      <button type='button' onClick={onToggleEttaPanel}>
+        Toggle Etta
+      </button>
+    </div>
   ),
 }))
 
@@ -61,6 +66,30 @@ describe('AuthenticatedAppShell', () => {
     expect(screen.queryByRole('dialog', { name: 'Etta AI assistant' })).not.toBeInTheDocument()
     // The desktop preference is left alone
     expect(localStorage.getItem('etta-panel-open')).toBe('true')
+  })
+
+  it('does not remember opening or closing Etta on a small screen', async () => {
+    emulateScreen(true)
+    localStorage.setItem('etta-panel-open', 'false')
+
+    renderShell()
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle Etta' }))
+
+    await waitFor(() =>
+      expect(screen.getByRole('dialog', { name: 'Etta AI assistant' })).toBeInTheDocument()
+    )
+    expect(localStorage.getItem('etta-panel-open')).toBe('false')
+  })
+
+  it('remembers closing Etta on a large screen', async () => {
+    emulateScreen(false)
+
+    renderShell()
+    await waitFor(() => expect(screen.getAllByTestId('etta-chat')).toHaveLength(2))
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle Etta' }))
+
+    await waitFor(() => expect(screen.queryByTestId('etta-chat')).not.toBeInTheDocument())
+    expect(localStorage.getItem('etta-panel-open')).toBe('false')
   })
 
   it('keeps the saved open state on large screens', async () => {

@@ -64,7 +64,13 @@ export class PrismaGuestExportReader implements GuestExportReader {
         }),
         this.db.answer.findMany({
           where: { question: inWedding },
-          select: { questionId: true, guestId: true, householdId: true, response: true },
+          select: {
+            questionId: true,
+            guestId: true,
+            householdId: true,
+            response: true,
+            updatedAt: true,
+          },
         }),
         this.db.optionResponse.findMany({
           where: { option: { question: inWedding } },
@@ -72,6 +78,7 @@ export class PrismaGuestExportReader implements GuestExportReader {
             questionId: true,
             guestId: true,
             householdId: true,
+            updatedAt: true,
             option: { select: { text: true } },
           },
         }),
@@ -84,6 +91,7 @@ export class PrismaGuestExportReader implements GuestExportReader {
         guestId: response.guestId,
         householdId: response.householdId,
         response: response.option.text,
+        updatedAt: response.updatedAt,
       })),
     ]
 
