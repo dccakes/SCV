@@ -76,7 +76,9 @@ test.describe('Permissions Matrix Smoke', () => {
     await context.close()
   })
 
-  test('viewer session is blocked from protected management pages', async ({ browser }) => {
+  test('viewer session can read planning pages but sees the view-only banner', async ({
+    browser,
+  }) => {
     test.setTimeout(60_000)
     const context = await browser.newContext({
       storageState: { cookies: [], origins: [] },
@@ -84,23 +86,17 @@ test.describe('Permissions Matrix Smoke', () => {
     const page = await context.newPage()
 
     await loginAsSeedUser(page, 'queen.lillian@swamp.wed')
-    await page.waitForURL('/', { timeout: 15_000 })
-    await expect(page).toHaveURL('/')
+    await page.waitForURL('/dashboard', { timeout: 15_000 })
+    await expect(page.getByRole('status')).toContainText('View-only access')
 
-    await page.goto('/dashboard')
-    await expect(page).toHaveURL('/')
-
-    await page.goto('/events')
-    await expect(page).toHaveURL('/')
-
-    await page.goto('/guest-list')
-    await expect(page).toHaveURL('/')
-
-    await page.goto('/vendors')
-    await expect(page).toHaveURL('/')
+    for (const path of ['/events', '/guest-list', '/vendors', '/budget', '/checklist']) {
+      await page.goto(path)
+      await expect(page).toHaveURL(path)
+      await expect(page.getByRole('status')).toContainText('View-only access')
+    }
 
     await page.goto('/settings', { waitUntil: 'domcontentloaded', timeout: 45_000 })
-    await expect(page).toHaveURL('/')
+    await expect(page).toHaveURL('/settings')
 
     await context.close()
   })

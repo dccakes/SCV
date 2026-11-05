@@ -41,9 +41,9 @@ describe('DashboardOverviewUseCase', () => {
     expect(dashboardService.getOverviewForScopedWedding).toHaveBeenCalledWith('user-1', 'wedding-1')
   })
 
-  it('rejects viewer access', async () => {
+  it('allows viewer access to the overview', async () => {
     const dashboardService = {
-      getOverviewForScopedWedding: jest.fn(),
+      getOverviewForScopedWedding: jest.fn().mockResolvedValue({ totalGuests: 3 }),
     }
     const useCase = new DashboardOverviewUseCase(dashboardService)
 
@@ -53,6 +53,6 @@ describe('DashboardOverviewUseCase', () => {
         authz: buildAuthz('viewer'),
         activeWeddingId: 'wedding-1',
       })
-    ).rejects.toThrow(TRPCError)
+    ).resolves.toEqual({ totalGuests: 3 })
   })
 })

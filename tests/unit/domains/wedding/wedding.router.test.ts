@@ -64,9 +64,12 @@ describe('weddingRouter', () => {
   })
 
   describe('getDetails', () => {
-    it('should throw FORBIDDEN for viewer role', async () => {
+    it('allows viewer role to read wedding details', async () => {
+      mockGetByIdFn.mockResolvedValue(mockWedding)
+      mockGetWeddingEvents.mockResolvedValue([])
+
       const caller = makeAuthCaller('user-123', 'wedding-123', 'viewer')
-      await expect(caller.getDetails()).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      await expect(caller.getDetails()).resolves.toMatchObject({ groomFirstName: 'John' })
     })
 
     it('should throw when active wedding is missing', async () => {
@@ -186,9 +189,11 @@ describe('weddingRouter', () => {
   })
 
   describe('getActive', () => {
-    it('should throw FORBIDDEN for viewer role', async () => {
+    it('allows viewer role to read the active wedding', async () => {
+      mockGetByIdFn.mockResolvedValue(mockWedding)
+
       const caller = makeAuthCaller('user-123', 'wedding-123', 'viewer')
-      await expect(caller.getActive()).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      await expect(caller.getActive()).resolves.toEqual(mockWedding)
     })
   })
 
@@ -247,9 +252,9 @@ describe('weddingRouter', () => {
   })
 
   describe('getByUserId', () => {
-    it('should throw FORBIDDEN for viewer role', async () => {
+    it('allows viewer role to read the wedding for their user', async () => {
       const caller = makeAuthCaller('user-123', 'wedding-123', 'viewer')
-      await expect(caller.getByUserId()).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      await expect(caller.getByUserId()).resolves.not.toThrow
     })
   })
 
@@ -266,11 +271,12 @@ describe('weddingRouter', () => {
           canManageMembers: true,
           canSendInvites: true,
           canViewPlanning: true,
+          canEditPlanning: true,
         },
       })
     })
 
-    it('returns restricted capabilities for viewer role', async () => {
+    it('returns read-only capabilities for viewer role', async () => {
       const caller = makeAuthCaller('user-123', 'wedding-123', 'viewer')
 
       await expect(caller.getWorkspace()).resolves.toEqual({
@@ -281,7 +287,8 @@ describe('weddingRouter', () => {
           canInviteMembers: false,
           canManageMembers: false,
           canSendInvites: false,
-          canViewPlanning: false,
+          canViewPlanning: true,
+          canEditPlanning: false,
         },
       })
     })

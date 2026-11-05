@@ -102,9 +102,14 @@ describe('websiteRouter', () => {
   })
 
   describe('getByUserId', () => {
-    it('should throw FORBIDDEN for viewer role', async () => {
+    it('allows viewer role to read the website', async () => {
+      mockGetByWeddingId.mockResolvedValue({ id: 'website-123', weddingId: 'wedding-123' })
+
       const caller = makeAuthCaller('user-123', 'wedding-123', 'viewer')
-      await expect(caller.getByUserId()).rejects.toMatchObject({ code: 'FORBIDDEN' })
+      await expect(caller.getByUserId()).resolves.toEqual({
+        id: 'website-123',
+        weddingId: 'wedding-123',
+      })
     })
 
     it('returns the active wedding website for owner role', async () => {

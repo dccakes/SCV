@@ -12,6 +12,13 @@ export const dynamic = 'force-dynamic'
 export default async function SettingsPage() {
   const wedding = await getRequiredWedding()
 
+  let canEdit = false
+  try {
+    canEdit = (await api.wedding.getWorkspace()).capabilities.canEditPlanning
+  } catch {
+    canEdit = false
+  }
+
   let details: Awaited<ReturnType<typeof api.wedding.getDetails>> | null = null
   let weddingDetailsLoadFailed = false
 
@@ -29,7 +36,9 @@ export default async function SettingsPage() {
           <div className='mb-6'>
             <h2 className='font-serif text-foreground text-xl'>Wedding Details</h2>
             <p className='mt-1 font-mono text-[0.62rem] text-foreground/55 tracking-wider'>
-              Update your names. Ceremony date and location are managed from Events.
+              {canEdit
+                ? 'Update your names. Ceremony date and location are managed from Events.'
+                : 'Wedding details for this workspace. You have view-only access.'}
             </p>
           </div>
           <div className='space-y-6'>
@@ -58,7 +67,9 @@ export default async function SettingsPage() {
               <div>
                 <h3 className='font-serif text-foreground text-xl'>Plugins</h3>
                 <p className='mt-1 font-mono text-[0.62rem] text-foreground/55 tracking-wider'>
-                  Turn optional workspace features on and off for your wedding.
+                  {canEdit
+                    ? 'Turn optional workspace features on and off for your wedding.'
+                    : 'Optional workspace features and whether they are enabled.'}
                 </p>
               </div>
               <PluginsSettingsCard enabledAddOns={wedding.enabledAddOns} />
@@ -67,21 +78,25 @@ export default async function SettingsPage() {
               <div>
                 <h3 className='font-serif text-foreground text-xl'>Organization Members</h3>
                 <p className='mt-1 font-mono text-[0.62rem] text-foreground/55 tracking-wider'>
-                  Invite collaborators and manage access to this workspace.
+                  {canEdit
+                    ? 'Invite collaborators and manage access to this workspace.'
+                    : 'People with access to this workspace and their roles.'}
                 </p>
               </div>
               <OrganizationMembersSettingsCard />
               <OrganizationOutstandingInvitesCard />
             </div>
-            <div className='space-y-3'>
-              <div>
-                <h3 className='font-serif text-foreground text-xl'>Connected Apps</h3>
-                <p className='mt-1 font-mono text-[0.62rem] text-foreground/55 tracking-wider'>
-                  Chat with Etta from other apps.
-                </p>
+            {canEdit ? (
+              <div className='space-y-3'>
+                <div>
+                  <h3 className='font-serif text-foreground text-xl'>Connected Apps</h3>
+                  <p className='mt-1 font-mono text-[0.62rem] text-foreground/55 tracking-wider'>
+                    Chat with Etta from other apps.
+                  </p>
+                </div>
+                <TelegramConnectCard />
               </div>
-              <TelegramConnectCard />
-            </div>
+            ) : null}
           </div>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { formatCurrency } from '~/components/budget/format'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { Button } from '~/components/ui/button'
 import {
   Dialog,
@@ -183,6 +184,7 @@ export function BudgetSummary({ summary, currency }: Readonly<BudgetSummaryProps
   const pctOfTarget =
     targetTotal > 0 ? Math.min(100, Math.round((netSpend / targetTotal) * 100)) : 0
   const overBudget = targetTotal > 0 && netSpend > targetTotal
+  const canEdit = useCanEdit()
 
   return (
     <section className='mb-8'>
@@ -193,7 +195,9 @@ export function BudgetSummary({ summary, currency }: Readonly<BudgetSummaryProps
             Net spend excludes refundable deposits since that money comes back to you.
           </p>
         </div>
-        <BudgetSettingsDialog currentTarget={targetTotal} currentCurrency={currency} />
+        {canEdit ? (
+          <BudgetSettingsDialog currentTarget={targetTotal} currentCurrency={currency} />
+        ) : null}
       </div>
 
       {targetTotal > 0 ? (
@@ -244,7 +248,9 @@ export function BudgetSummary({ summary, currency }: Readonly<BudgetSummaryProps
               ? remaining < 0
                 ? 'Over target budget'
                 : 'Left under target'
-              : 'Set a target to track remaining'
+              : canEdit
+                ? 'Set a target to track remaining'
+                : 'No target set'
           }
         />
       </div>

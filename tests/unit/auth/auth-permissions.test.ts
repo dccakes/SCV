@@ -138,12 +138,43 @@ describe('auth permission matrix', () => {
     expect(can('member', { member: ['update'] })).toBe(false)
   })
 
-  it('keeps viewer fully restricted and admin/owner invitation delivery-capable', () => {
+  it('gives viewer read access to planning resources', () => {
+    expect(can('viewer', { wedding: ['read'] })).toBe(true)
+    expect(can('viewer', { event: ['read'] })).toBe(true)
+    expect(can('viewer', { guest: ['read'] })).toBe(true)
+    expect(can('viewer', { guest_event: ['read'] })).toBe(true)
+    expect(can('viewer', { guest_invitation: ['read'] })).toBe(true)
+    expect(can('viewer', { rsvp: ['read_responses'] })).toBe(true)
+    expect(can('viewer', { vendor: ['read'] })).toBe(true)
+    expect(can('viewer', { vendor_quote: ['read'] })).toBe(true)
+    expect(can('viewer', { budget: ['read'] })).toBe(true)
+    expect(can('viewer', { website: ['read'] })).toBe(true)
+  })
+
+  it('denies viewer every action that is not a read, across every resource', () => {
+    const readActions = new Set(['read', 'read_responses'])
+    const resources = Object.entries(authzStatement) as [string, readonly string[]][]
+
+    const unexpectedlyAllowed: string[] = []
+    for (const [resource, actions] of resources) {
+      for (const action of actions) {
+        if (readActions.has(action)) continue
+        if (can('viewer', { [resource]: [action] } as PermissionRequest)) {
+          unexpectedlyAllowed.push(`${resource}:${action}`)
+        }
+      }
+    }
+
+    expect(unexpectedlyAllowed).toEqual([])
+  })
+
+  it('keeps viewer out of workspace management and outbound communication', () => {
     expect(can('viewer', { guest: ['create'] })).toBe(false)
-    expect(can('viewer', { event: ['read'] })).toBe(false)
-    expect(can('viewer', { rsvp: ['read_responses'] })).toBe(false)
-    expect(can('viewer', { wedding: ['read'] })).toBe(false)
     expect(can('viewer', { wedding: ['update'] })).toBe(false)
+    expect(can('viewer', { guest_invitation: ['send'] })).toBe(false)
+    expect(can('viewer', { invitation: ['create'] })).toBe(false)
+    expect(can('viewer', { member: ['update'] })).toBe(false)
+    expect(can('viewer', { organization: ['update'] })).toBe(false)
     expect(can('member', { wedding: ['update'] })).toBe(true)
     expect(can('admin', { guest_invitation: ['send', 'resend', 'cancel'] })).toBe(true)
     expect(can('owner', { guest_invitation: ['send', 'resend', 'cancel'] })).toBe(true)

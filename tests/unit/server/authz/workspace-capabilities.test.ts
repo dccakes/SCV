@@ -9,12 +9,14 @@ describe('readWorkspaceCapabilities', () => {
       canManageMembers: false,
       canSendInvites: false,
       canViewPlanning: false,
+      canEditPlanning: false,
     })
     expect(readWorkspaceCapabilities('nonexistent-role')).toEqual({
       canInviteMembers: false,
       canManageMembers: false,
       canSendInvites: false,
       canViewPlanning: false,
+      canEditPlanning: false,
     })
   })
 
@@ -24,12 +26,14 @@ describe('readWorkspaceCapabilities', () => {
       canManageMembers: true,
       canSendInvites: true,
       canViewPlanning: true,
+      canEditPlanning: true,
     })
     expect(readWorkspaceCapabilities('admin')).toEqual({
       canInviteMembers: true,
       canManageMembers: true,
       canSendInvites: true,
       canViewPlanning: true,
+      canEditPlanning: true,
     })
   })
 
@@ -39,15 +43,17 @@ describe('readWorkspaceCapabilities', () => {
       canManageMembers: false,
       canSendInvites: false,
       canViewPlanning: true,
+      canEditPlanning: true,
     })
   })
 
-  it('keeps viewer blocked from planning', () => {
+  it('gives viewer read access to planning but no edit, invite, or member capabilities', () => {
     expect(readWorkspaceCapabilities('viewer')).toEqual({
       canInviteMembers: false,
       canManageMembers: false,
       canSendInvites: false,
-      canViewPlanning: false,
+      canViewPlanning: true,
+      canEditPlanning: false,
     })
   })
 })

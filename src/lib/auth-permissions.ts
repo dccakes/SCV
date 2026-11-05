@@ -65,20 +65,20 @@ const member = ac.newRole({
   wedding: ['read', 'update'],
 })
 
+// Viewers are read-only collaborators: they can see every planning surface a member can,
+// but cannot change anything, send anything, or manage the workspace. Resources that are
+// not listed here (organization, member, invitation) are intentionally denied.
 const viewer = ac.newRole({
-  organization: [],
-  member: [],
-  invitation: [],
-  guest_invitation: [],
-  guest_event: [],
-  rsvp: [],
-  event: [],
-  guest: [],
-  vendor: [],
-  vendor_quote: [],
-  budget: [],
-  website: [],
-  wedding: [],
+  guest_invitation: ['read'],
+  guest_event: ['read'],
+  rsvp: ['read_responses'],
+  event: ['read'],
+  guest: ['read'],
+  vendor: ['read'],
+  vendor_quote: ['read'],
+  budget: ['read'],
+  website: ['read'],
+  wedding: ['read'],
 })
 
 export const organizationRoles = {

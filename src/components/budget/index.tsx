@@ -9,6 +9,7 @@ import { CategoryCard } from '~/components/budget/category-card'
 import { CategoryForm } from '~/components/budget/category-form'
 import { formatCurrency } from '~/components/budget/format'
 import { UpcomingPayments } from '~/components/budget/upcoming-payments'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { Button } from '~/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/ui/dialog'
 import type { BudgetOverview as BudgetOverviewData } from '~/server/domains/budget/budget.types'
@@ -18,7 +19,7 @@ type BudgetOverviewProps = {
   initialOverview: BudgetOverviewData
 }
 
-function BudgetEmptyState({ onAdd }: { onAdd: () => void }) {
+function BudgetEmptyState({ onAdd }: { onAdd?: () => void }) {
   return (
     <div className='flex flex-col items-center gap-5 py-20 text-center'>
       <div className='flex h-16 w-16 items-center justify-center rounded-full border border-border/80 bg-muted/50'>
@@ -33,13 +34,15 @@ function BudgetEmptyState({ onAdd }: { onAdd: () => void }) {
           including refundable deposits that come back after the event.
         </p>
       </div>
-      <Button
-        type='button'
-        onClick={onAdd}
-        className='font-mono text-[0.65rem] uppercase tracking-widest'
-      >
-        Add your first section
-      </Button>
+      {onAdd ? (
+        <Button
+          type='button'
+          onClick={onAdd}
+          className='font-mono text-[0.65rem] uppercase tracking-widest'
+        >
+          Add your first section
+        </Button>
+      ) : null}
     </div>
   )
 }
@@ -47,6 +50,7 @@ function BudgetEmptyState({ onAdd }: { onAdd: () => void }) {
 export default function BudgetOverview({ initialOverview }: Readonly<BudgetOverviewProps>) {
   const [showAddCategory, setShowAddCategory] = useState(false)
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
+  const canEdit = useCanEdit()
 
   const { data: overview } = api.budget.getOverview.useQuery(undefined, {
     initialData: initialOverview,
@@ -90,15 +94,17 @@ export default function BudgetOverview({ initialOverview }: Readonly<BudgetOverv
               aria-label='Budget sections'
               className='min-w-0 border-border/70 border-b bg-background/60 xl:border-r xl:border-b-0'
             >
-              <Button
-                type='button'
-                variant='ghost'
-                onClick={() => setShowAddCategory(true)}
-                className='h-14 w-full justify-start gap-2 rounded-none border-border/70 border-b px-5 text-primary hover:bg-primary/5 hover:text-primary'
-              >
-                <Plus className='h-4 w-4' aria-hidden='true' />
-                Add section
-              </Button>
+              {canEdit ? (
+                <Button
+                  type='button'
+                  variant='ghost'
+                  onClick={() => setShowAddCategory(true)}
+                  className='h-14 w-full justify-start gap-2 rounded-none border-border/70 border-b px-5 text-primary hover:bg-primary/5 hover:text-primary'
+                >
+                  <Plus className='h-4 w-4' aria-hidden='true' />
+                  Add section
+                </Button>
+              ) : null}
               <div className='flex overflow-x-auto xl:block'>
                 {categories.map((category) => {
                   const selected = category.id === selectedCategory?.id
@@ -145,10 +151,10 @@ export default function BudgetOverview({ initialOverview }: Readonly<BudgetOverv
           </div>
         </>
       ) : (
-        <BudgetEmptyState onAdd={() => setShowAddCategory(true)} />
+        <BudgetEmptyState onAdd={canEdit ? () => setShowAddCategory(true) : undefined} />
       )}
 
-      <Dialog open={showAddCategory} onOpenChange={setShowAddCategory}>
+      <Dialog open={canEdit && showAddCategory} onOpenChange={setShowAddCategory}>
         <DialogContent className='sm:max-w-md'>
           <DialogHeader>
             <DialogTitle className='font-display text-xl italic'>Add section</DialogTitle>

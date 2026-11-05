@@ -34,6 +34,10 @@ export async function AuthenticatedLayoutFrame(props: Readonly<AuthenticatedLayo
     redirect('/')
   }
 
+  const canEditPlanning = workspaceCapabilities.canEditPlanning
+  // Etta's tools are overwhelmingly write actions, so viewers don't get the panel.
+  const ettaPanelVisible = showEttaPanel && canEditPlanning
+
   let coupleName: string | undefined
   let weddingDate: string | undefined
   let weddingLocation: string | undefined
@@ -62,7 +66,7 @@ export async function AuthenticatedLayoutFrame(props: Readonly<AuthenticatedLayo
   const currentUserInitials = getUserInitials(session?.user?.name, session?.user?.email)
 
   let weddingId: string | undefined
-  if (showEttaPanel) {
+  if (ettaPanelVisible) {
     try {
       const wedding = await api.wedding.getActive()
       weddingId = wedding?.id
@@ -80,7 +84,8 @@ export async function AuthenticatedLayoutFrame(props: Readonly<AuthenticatedLayo
       currentUserInitials={currentUserInitials}
       weddingDate={weddingDate}
       weddingLocation={weddingLocation}
-      showEttaPanel={showEttaPanel}
+      showEttaPanel={ettaPanelVisible}
+      canEditPlanning={canEditPlanning}
       weddingId={weddingId}
       isEttaConfigured={isEttaConfigured}
     >

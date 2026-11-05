@@ -30,8 +30,12 @@ describe('EventInsightsService', () => {
     expect(result).toEqual([{ id: 'event-1' }])
   })
 
-  it('rejects event list for viewer role', async () => {
-    await expect(service.listEvents(buildAuthz('viewer'), 'wedding-1')).rejects.toThrow(TRPCError)
+  it('allows event list reads for viewer role', async () => {
+    eventService.getWeddingEvents.mockResolvedValue([{ id: 'event-1' }])
+
+    await expect(service.listEvents(buildAuthz('viewer'), 'wedding-1')).resolves.toEqual([
+      { id: 'event-1' },
+    ])
   })
 
   it('lists event stats with event.read permission', async () => {

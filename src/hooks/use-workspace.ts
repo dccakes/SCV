@@ -11,6 +11,7 @@ const fallbackWorkspace = {
     canManageMembers: false,
     canSendInvites: false,
     canViewPlanning: false,
+    canEditPlanning: false,
   },
 }
 

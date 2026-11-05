@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { CategoryForm } from '~/components/budget/category-form'
 import { ExpenseForm } from '~/components/budget/expense-form'
 import { formatCurrency } from '~/components/budget/format'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -65,13 +66,16 @@ function ExpenseTable({
   onEdit,
   onDelete,
   onAdd,
+  canEdit,
 }: {
   category: BudgetCategoryWithExpenses
   currency: string
   onEdit: (expense: BudgetExpense) => void
   onDelete: (id: string) => void
   onAdd: () => void
+  canEdit: boolean
 }) {
+  const columnCount = canEdit ? 5 : 4
   return (
     <div className='relative min-w-0 overflow-x-auto'>
       <table className='w-full min-w-[580px] border-collapse text-sm'>
@@ -90,16 +94,18 @@ function ExpenseTable({
             <th scope='col' className='px-3 py-4 font-normal'>
               Status / date
             </th>
-            <th scope='col' className='px-3 py-4 font-normal'>
-              <span className='sr-only'>Actions</span>
-            </th>
+            {canEdit ? (
+              <th scope='col' className='px-3 py-4 font-normal'>
+                <span className='sr-only'>Actions</span>
+              </th>
+            ) : null}
           </tr>
         </thead>
         <tbody>
           {category.expenses.length === 0 ? (
             <tr>
-              <td colSpan={5} className='px-5 py-12 text-center text-muted-foreground'>
-                No expenses recorded yet. Add your first expense below.
+              <td colSpan={columnCount} className='px-5 py-12 text-center text-muted-foreground'>
+                No expenses recorded yet.{canEdit ? ' Add your first expense below.' : ''}
               </td>
             </tr>
           ) : (
@@ -140,49 +146,53 @@ function ExpenseTable({
                 <td className='px-3 py-5'>
                   <TimingLine expense={expense} />
                 </td>
-                <td className='px-3 py-5'>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        type='button'
-                        variant='ghost'
-                        size='icon'
-                        aria-label={`Actions for ${expense.description}`}
-                      >
-                        <MoreHorizontal className='h-4 w-4' aria-hidden='true' />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end'>
-                      <DropdownMenuItem onSelect={() => onEdit(expense)}>
-                        <Pencil aria-hidden='true' />
-                        Edit expense
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onSelect={() => onDelete(expense.id)}
-                        className='text-destructive'
-                      >
-                        <Trash2 aria-hidden='true' />
-                        Delete expense
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </td>
+                {canEdit ? (
+                  <td className='px-3 py-5'>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type='button'
+                          variant='ghost'
+                          size='icon'
+                          aria-label={`Actions for ${expense.description}`}
+                        >
+                          <MoreHorizontal className='h-4 w-4' aria-hidden='true' />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align='end'>
+                        <DropdownMenuItem onSelect={() => onEdit(expense)}>
+                          <Pencil aria-hidden='true' />
+                          Edit expense
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() => onDelete(expense.id)}
+                          className='text-destructive'
+                        >
+                          <Trash2 aria-hidden='true' />
+                          Delete expense
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
+                ) : null}
               </tr>
             ))
           )}
-          <tr>
-            <td colSpan={5} className='border-border/60 border-b'>
-              <Button
-                type='button'
-                variant='ghost'
-                onClick={onAdd}
-                className='h-14 w-full justify-start gap-2 rounded-none px-5 text-primary hover:bg-primary/5 hover:text-primary'
-              >
-                <Plus className='h-4 w-4' aria-hidden='true' />
-                Add new expense
-              </Button>
-            </td>
-          </tr>
+          {canEdit ? (
+            <tr>
+              <td colSpan={columnCount} className='border-border/60 border-b'>
+                <Button
+                  type='button'
+                  variant='ghost'
+                  onClick={onAdd}
+                  className='h-14 w-full justify-start gap-2 rounded-none px-5 text-primary hover:bg-primary/5 hover:text-primary'
+                >
+                  <Plus className='h-4 w-4' aria-hidden='true' />
+                  Add new expense
+                </Button>
+              </td>
+            </tr>
+          ) : null}
         </tbody>
         <tfoot>
           <tr className='bg-muted/40 font-mono text-xs'>
@@ -195,7 +205,7 @@ function ExpenseTable({
             <td className='whitespace-nowrap px-3 py-5 text-right tabular-nums'>
               {formatCurrency(category.totals.actualSpend, currency)}
             </td>
-            <td colSpan={2} className='px-3 py-5 text-success'>
+            <td colSpan={canEdit ? 2 : 1} className='px-3 py-5 text-success'>
               {formatCurrency(category.totals.netSpend, currency)} net spend
             </td>
           </tr>
@@ -211,6 +221,7 @@ export function CategoryCard({ category, currency }: Readonly<CategoryCardProps>
   const [showEditCategory, setShowEditCategory] = useState(false)
   const [confirmDeleteCategory, setConfirmDeleteCategory] = useState(false)
   const [deleteExpenseId, setDeleteExpenseId] = useState<string | null>(null)
+  const canEdit = useCanEdit()
   const utils = api.useUtils()
 
   const invalidate = () => utils.budget.getOverview.invalidate()
@@ -263,25 +274,27 @@ export function CategoryCard({ category, currency }: Readonly<CategoryCardProps>
               {formatCurrency(totals.actualSpend, currency)} paid so far
             </p>
           </div>
-          <div className='flex gap-2'>
-            <Button
-              type='button'
-              variant='outline'
-              size='sm'
-              onClick={() => setShowEditCategory(true)}
-            >
-              Edit section
-            </Button>
-            <Button
-              type='button'
-              variant='ghost'
-              size='sm'
-              onClick={() => setConfirmDeleteCategory(true)}
-              className='text-muted-foreground hover:text-destructive'
-            >
-              Delete
-            </Button>
-          </div>
+          {canEdit ? (
+            <div className='flex gap-2'>
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                onClick={() => setShowEditCategory(true)}
+              >
+                Edit section
+              </Button>
+              <Button
+                type='button'
+                variant='ghost'
+                size='sm'
+                onClick={() => setConfirmDeleteCategory(true)}
+                className='text-muted-foreground hover:text-destructive'
+              >
+                Delete
+              </Button>
+            </div>
+          ) : null}
         </div>
         <div className='mt-5'>
           <div className='mb-2 flex flex-wrap justify-between gap-2 font-mono text-xs'>
@@ -323,108 +336,116 @@ export function CategoryCard({ category, currency }: Readonly<CategoryCardProps>
         onEdit={setEditExpense}
         onDelete={setDeleteExpenseId}
         onAdd={() => setShowAddExpense(true)}
+        canEdit={canEdit}
       />
-      {/* Add expense */}
-      <Dialog open={showAddExpense} onOpenChange={setShowAddExpense}>
-        <DialogContent className='max-h-[85vh] overflow-y-auto sm:max-w-lg'>
-          <DialogHeader>
-            <DialogTitle className='font-display text-xl italic'>
-              Add expense · {category.name}
-            </DialogTitle>
-          </DialogHeader>
-          <ExpenseForm
-            mode='create'
-            categoryId={category.id}
-            currency={currency}
-            onSuccess={() => setShowAddExpense(false)}
-            onCancel={() => setShowAddExpense(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      {canEdit ? (
+        <>
+          {/* Add expense */}
+          <Dialog open={showAddExpense} onOpenChange={setShowAddExpense}>
+            <DialogContent className='max-h-[85vh] overflow-y-auto sm:max-w-lg'>
+              <DialogHeader>
+                <DialogTitle className='font-display text-xl italic'>
+                  Add expense · {category.name}
+                </DialogTitle>
+              </DialogHeader>
+              <ExpenseForm
+                mode='create'
+                categoryId={category.id}
+                currency={currency}
+                onSuccess={() => setShowAddExpense(false)}
+                onCancel={() => setShowAddExpense(false)}
+              />
+            </DialogContent>
+          </Dialog>
 
-      {/* Edit expense */}
-      <Dialog open={editExpense !== null} onOpenChange={(open) => !open && setEditExpense(null)}>
-        <DialogContent className='max-h-[85vh] overflow-y-auto sm:max-w-lg'>
-          <DialogHeader>
-            <DialogTitle className='font-display text-xl italic'>Edit expense</DialogTitle>
-          </DialogHeader>
-          {editExpense ? (
-            <ExpenseForm
-              mode='edit'
-              expense={editExpense}
-              currency={currency}
-              onSuccess={() => setEditExpense(null)}
-              onCancel={() => setEditExpense(null)}
-            />
-          ) : null}
-        </DialogContent>
-      </Dialog>
+          {/* Edit expense */}
+          <Dialog
+            open={editExpense !== null}
+            onOpenChange={(open) => !open && setEditExpense(null)}
+          >
+            <DialogContent className='max-h-[85vh] overflow-y-auto sm:max-w-lg'>
+              <DialogHeader>
+                <DialogTitle className='font-display text-xl italic'>Edit expense</DialogTitle>
+              </DialogHeader>
+              {editExpense ? (
+                <ExpenseForm
+                  mode='edit'
+                  expense={editExpense}
+                  currency={currency}
+                  onSuccess={() => setEditExpense(null)}
+                  onCancel={() => setEditExpense(null)}
+                />
+              ) : null}
+            </DialogContent>
+          </Dialog>
 
-      {/* Edit category */}
-      <Dialog open={showEditCategory} onOpenChange={setShowEditCategory}>
-        <DialogContent className='sm:max-w-md'>
-          <DialogHeader>
-            <DialogTitle className='font-display text-xl italic'>Edit section</DialogTitle>
-          </DialogHeader>
-          <CategoryForm
-            mode='edit'
-            category={category}
-            currency={currency}
-            onSuccess={() => setShowEditCategory(false)}
-            onCancel={() => setShowEditCategory(false)}
-          />
-        </DialogContent>
-      </Dialog>
+          {/* Edit category */}
+          <Dialog open={showEditCategory} onOpenChange={setShowEditCategory}>
+            <DialogContent className='sm:max-w-md'>
+              <DialogHeader>
+                <DialogTitle className='font-display text-xl italic'>Edit section</DialogTitle>
+              </DialogHeader>
+              <CategoryForm
+                mode='edit'
+                category={category}
+                currency={currency}
+                onSuccess={() => setShowEditCategory(false)}
+                onCancel={() => setShowEditCategory(false)}
+              />
+            </DialogContent>
+          </Dialog>
 
-      {/* Delete category confirm */}
-      <AlertDialog open={confirmDeleteCategory} onOpenChange={setConfirmDeleteCategory}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete “{category.name}”?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This removes the section and its {category.expenses.length}{' '}
-              {category.expenses.length === 1 ? 'expense' : 'expenses'}. This cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteCategory.isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault()
-                deleteCategory.mutate({ categoryId: category.id })
-              }}
-              disabled={deleteCategory.isPending}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          {/* Delete category confirm */}
+          <AlertDialog open={confirmDeleteCategory} onOpenChange={setConfirmDeleteCategory}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete “{category.name}”?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This removes the section and its {category.expenses.length}{' '}
+                  {category.expenses.length === 1 ? 'expense' : 'expenses'}. This cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={deleteCategory.isPending}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={(e) => {
+                    e.preventDefault()
+                    deleteCategory.mutate({ categoryId: category.id })
+                  }}
+                  disabled={deleteCategory.isPending}
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
 
-      {/* Delete expense confirm */}
-      <AlertDialog
-        open={deleteExpenseId !== null}
-        onOpenChange={(open) => !open && setDeleteExpenseId(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete this expense?</AlertDialogTitle>
-            <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteExpense.isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault()
-                if (deleteExpenseId) deleteExpense.mutate({ expenseId: deleteExpenseId })
-              }}
-              disabled={deleteExpense.isPending}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          {/* Delete expense confirm */}
+          <AlertDialog
+            open={deleteExpenseId !== null}
+            onOpenChange={(open) => !open && setDeleteExpenseId(null)}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this expense?</AlertDialogTitle>
+                <AlertDialogDescription>This cannot be undone.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={deleteExpense.isPending}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={(e) => {
+                    e.preventDefault()
+                    if (deleteExpenseId) deleteExpense.mutate({ expenseId: deleteExpenseId })
+                  }}
+                  disabled={deleteExpense.isPending}
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
+      ) : null}
     </section>
   )
 }

@@ -38,8 +38,12 @@ describe('GuestInsightsService', () => {
     expect(guestService.getAllByWeddingId).toHaveBeenCalledWith('wedding-1')
   })
 
-  it('rejects guest list reads for viewer role', async () => {
-    await expect(service.listGuests(buildAuthz('viewer'), 'wedding-1')).rejects.toThrow(TRPCError)
+  it('allows guest list reads for viewer role', async () => {
+    guestService.getAllByWeddingId.mockResolvedValue([{ id: 1 }])
+
+    await expect(service.listGuests(buildAuthz('viewer'), 'wedding-1')).resolves.toEqual([
+      { id: 1 },
+    ])
   })
 
   it('rejects household reads when household guests are outside wedding scope', async () => {

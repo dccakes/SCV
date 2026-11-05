@@ -2,7 +2,9 @@
 
 import type { ReactNode } from 'react'
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { WorkspaceCapabilitiesProvider } from '~/components/contexts/workspace-capabilities-context'
 import { EttaChat } from '~/components/etta/EttaChat'
+import { ViewOnlyBanner } from '~/components/layout/view-only-banner'
 import SidebarNavFrame from '~/components/nav/sidebar-nav'
 
 type AuthenticatedSidebarContextValue = {
@@ -27,6 +29,7 @@ type AuthenticatedAppShellProps = {
   showEttaPanel?: boolean
   weddingId?: string
   isEttaConfigured?: boolean
+  canEditPlanning?: boolean
 }
 
 export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppShellProps>) {
@@ -40,6 +43,7 @@ export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppSh
     showEttaPanel = false,
     weddingId,
     isEttaConfigured = false,
+    canEditPlanning = true,
   } = props
   const [isOpen, setIsOpen] = useState(false)
   const [isEttaPanelOpen, setIsEttaPanelOpen] = useState(showEttaPanel)
@@ -82,52 +86,57 @@ export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppSh
   }, [isEttaPanelOpen, toggleEttaPanel])
 
   return (
-    <AuthenticatedSidebarContext.Provider value={{ openSidebar: () => setIsOpen(true) }}>
-      <div className='flex h-screen overflow-hidden bg-background'>
-        <SidebarNavFrame
-          isOpen={isOpen}
-          setIsOpen={setIsOpen}
-          coupleName={coupleName}
-          ettaPanelOpen={isEttaPanelOpen}
-          onToggleEttaPanel={showEttaPanel ? toggleEttaPanel : undefined}
-          userFirstName={currentUserFirstName}
-          userInitials={currentUserInitials}
-          weddingDate={weddingDate}
-          weddingLocation={weddingLocation}
-        />
-        <div className='flex min-h-0 flex-1 overflow-hidden'>
-          <div className='flex min-h-0 flex-1 flex-col overflow-hidden'>{children}</div>
+    <WorkspaceCapabilitiesProvider canEditPlanning={canEditPlanning}>
+      <AuthenticatedSidebarContext.Provider value={{ openSidebar: () => setIsOpen(true) }}>
+        <div className='flex h-screen overflow-hidden bg-background'>
+          <SidebarNavFrame
+            isOpen={isOpen}
+            setIsOpen={setIsOpen}
+            coupleName={coupleName}
+            ettaPanelOpen={isEttaPanelOpen}
+            onToggleEttaPanel={showEttaPanel ? toggleEttaPanel : undefined}
+            userFirstName={currentUserFirstName}
+            userInitials={currentUserInitials}
+            weddingDate={weddingDate}
+            weddingLocation={weddingLocation}
+          />
+          <div className='flex min-h-0 flex-1 overflow-hidden'>
+            <div className='flex min-h-0 flex-1 flex-col overflow-hidden'>
+              {!canEditPlanning && <ViewOnlyBanner />}
+              {children}
+            </div>
+            {showEttaPanel && weddingId && isEttaPanelOpen && (
+              <aside className='hidden w-80 flex-shrink-0 border-white/10 border-l lg:flex lg:flex-col'>
+                <EttaChat weddingId={weddingId} persona='planner' isConfigured={isEttaConfigured} />
+              </aside>
+            )}
+          </div>
+
+          {/* Mobile Etta overlay — full-screen drawer from right */}
           {showEttaPanel && weddingId && isEttaPanelOpen && (
-            <aside className='hidden w-80 flex-shrink-0 border-white/10 border-l lg:flex lg:flex-col'>
-              <EttaChat weddingId={weddingId} persona='planner' isConfigured={isEttaConfigured} />
-            </aside>
+            <div
+              className='fixed inset-0 z-50 lg:hidden'
+              role='dialog'
+              aria-modal='true'
+              aria-label='Etta AI assistant'
+            >
+              <div
+                className='absolute inset-0 bg-black/60'
+                onClick={toggleEttaPanel}
+                aria-hidden='true'
+              />
+              <aside className='relative ml-auto flex h-full w-full max-w-sm flex-col overflow-hidden'>
+                <EttaChat
+                  weddingId={weddingId}
+                  persona='planner'
+                  isConfigured={isEttaConfigured}
+                  onClose={toggleEttaPanel}
+                />
+              </aside>
+            </div>
           )}
         </div>
-
-        {/* Mobile Etta overlay — full-screen drawer from right */}
-        {showEttaPanel && weddingId && isEttaPanelOpen && (
-          <div
-            className='fixed inset-0 z-50 lg:hidden'
-            role='dialog'
-            aria-modal='true'
-            aria-label='Etta AI assistant'
-          >
-            <div
-              className='absolute inset-0 bg-black/60'
-              onClick={toggleEttaPanel}
-              aria-hidden='true'
-            />
-            <aside className='relative ml-auto flex h-full w-full max-w-sm flex-col overflow-hidden'>
-              <EttaChat
-                weddingId={weddingId}
-                persona='planner'
-                isConfigured={isEttaConfigured}
-                onClose={toggleEttaPanel}
-              />
-            </aside>
-          </div>
-        )}
-      </div>
-    </AuthenticatedSidebarContext.Provider>
+      </AuthenticatedSidebarContext.Provider>
+    </WorkspaceCapabilitiesProvider>
   )
 }

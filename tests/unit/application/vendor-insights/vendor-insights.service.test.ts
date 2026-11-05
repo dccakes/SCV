@@ -32,8 +32,12 @@ describe('VendorInsightsService', () => {
     )
   })
 
-  it('rejects vendor list for viewer role', async () => {
-    await expect(service.listVendors(buildAuthz('viewer'), 'wedding-1')).rejects.toThrow(TRPCError)
+  it('allows vendor list reads for viewer role', async () => {
+    vendorService.getVendorsForWedding.mockResolvedValue([{ id: 'vendor-1' }])
+
+    await expect(service.listVendors(buildAuthz('viewer'), 'wedding-1')).resolves.toEqual([
+      { id: 'vendor-1' },
+    ])
   })
 
   it('reads quote for member role', async () => {

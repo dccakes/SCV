@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 
 import BudgetOverview from '~/components/budget'
+import { WorkspaceCapabilitiesProvider } from '~/components/contexts/workspace-capabilities-context'
 import type {
   BudgetCategoryWithExpenses,
   BudgetOverview as Overview,
@@ -112,4 +113,26 @@ it('opens the existing add-section dialog from the category rail', () => {
   render(<BudgetOverview initialOverview={mockOverview} />)
   fireEvent.click(screen.getByRole('button', { name: 'Add section' }))
   expect(within(screen.getByRole('dialog')).getByText('Category form')).toBeInTheDocument()
+})
+
+describe('viewer (read-only)', () => {
+  const renderViewer = () =>
+    render(
+      <WorkspaceCapabilitiesProvider canEditPlanning={false}>
+        <BudgetOverview initialOverview={mockOverview} />
+      </WorkspaceCapabilitiesProvider>
+    )
+
+  it('keeps sections navigable but hides add section', () => {
+    renderViewer()
+    expect(screen.getByRole('button', { name: /Venue/ })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Add section' })).not.toBeInTheDocument()
+  })
+
+  it('shows an empty state without a call to action', () => {
+    mockOverview = overview([])
+    renderViewer()
+    expect(screen.getByText('Start your budget')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Add your first section' })).not.toBeInTheDocument()
+  })
 })

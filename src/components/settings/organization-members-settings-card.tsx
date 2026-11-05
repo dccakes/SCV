@@ -4,6 +4,7 @@ import { AlertCircle, Loader2, MailPlus, RefreshCw, Trash2, X } from 'lucide-rea
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
@@ -192,6 +193,7 @@ async function fetchOrganizationState(): Promise<Omit<OrganizationState, 'error'
 }
 
 export function OrganizationMembersSettingsCard() {
+  const canEdit = useCanEdit()
   const [state, setState] = useState<OrganizationState>(initialState)
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false)
   const [roleDialogMember, setRoleDialogMember] = useState<Member | null>(null)
@@ -242,7 +244,9 @@ export function OrganizationMembersSettingsCard() {
             <div className='space-y-1'>
               <CardTitle className='font-serif text-foreground text-xl'>Members</CardTitle>
               <CardDescription className='text-foreground/70'>
-                Invite collaborators and manage who can access this wedding workspace.
+                {canEdit
+                  ? 'Invite collaborators and manage who can access this wedding workspace.'
+                  : 'See who has access to this wedding workspace.'}
               </CardDescription>
             </div>
             <div className='flex items-center gap-2'>
@@ -258,16 +262,18 @@ export function OrganizationMembersSettingsCard() {
                   Retry
                 </Button>
               ) : null}
-              <Button
-                className='gap-2'
-                disabled={!state.organization || !state.canInvite || state.isLoading}
-                onClick={() => setInviteDialogOpen(true)}
-                size='sm'
-                type='button'
-              >
-                <MailPlus className='h-4 w-4' />
-                Invite Member
-              </Button>
+              {canEdit ? (
+                <Button
+                  className='gap-2'
+                  disabled={!state.organization || !state.canInvite || state.isLoading}
+                  onClick={() => setInviteDialogOpen(true)}
+                  size='sm'
+                  type='button'
+                >
+                  <MailPlus className='h-4 w-4' />
+                  Invite Member
+                </Button>
+              ) : null}
             </div>
           </div>
         </CardHeader>
@@ -279,8 +285,8 @@ export function OrganizationMembersSettingsCard() {
           {!state.isLoading && !state.error ? (
             <div className='space-y-3'>
               <OrganizationMembersList
-                canRemoveMembers={state.canUpdateMembers}
-                canUpdateMembers={state.canUpdateMembers}
+                canRemoveMembers={canEdit && state.canUpdateMembers}
+                canUpdateMembers={canEdit && state.canUpdateMembers}
                 members={state.members}
                 onEditRole={setRoleDialogMember}
                 onRemoveMember={async (member) => {
@@ -304,29 +310,37 @@ export function OrganizationMembersSettingsCard() {
                   }
                 }}
               />
-              <PendingInvitationsList
-                canCancelInvitations={state.canInvite}
-                invitations={state.pendingInvitations}
-                onCancelInvitation={async (invitationId) => {
-                  try {
-                    await authPost(
-                      '/organization/cancel-invitation',
-                      { invitationId },
-                      'Unable to cancel invitation.'
-                    )
-                    toast.success('Invitation canceled')
-                    loadOrganizationState()
-                  } catch (error) {
-                    toast.error(
-                      error instanceof Error ? error.message : 'Unable to cancel invitation.'
-                    )
-                  }
-                }}
-              />
-              <OrganizationPermissionsHint
-                canInvite={state.canInvite}
-                canUpdateMembers={state.canUpdateMembers}
-              />
+              {canEdit ? (
+                <PendingInvitationsList
+                  canCancelInvitations={state.canInvite}
+                  invitations={state.pendingInvitations}
+                  onCancelInvitation={async (invitationId) => {
+                    try {
+                      await authPost(
+                        '/organization/cancel-invitation',
+                        { invitationId },
+                        'Unable to cancel invitation.'
+                      )
+                      toast.success('Invitation canceled')
+                      loadOrganizationState()
+                    } catch (error) {
+                      toast.error(
+                        error instanceof Error ? error.message : 'Unable to cancel invitation.'
+                      )
+                    }
+                  }}
+                />
+              ) : null}
+              {canEdit ? (
+                <OrganizationPermissionsHint
+                  canInvite={state.canInvite}
+                  canUpdateMembers={state.canUpdateMembers}
+                />
+              ) : (
+                <p className='text-foreground/60 text-sm'>
+                  You have view-only access, so you cannot invite or manage members.
+                </p>
+              )}
             </div>
           ) : null}
         </CardContent>

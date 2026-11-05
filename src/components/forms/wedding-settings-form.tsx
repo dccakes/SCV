@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import type { z } from 'zod'
 
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { LoadingSpinner } from '~/components/loaders'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
@@ -31,6 +32,7 @@ type WeddingSettingsFormProps = {
 
 export default function WeddingSettingsForm({ initialData }: WeddingSettingsFormProps) {
   const router = useRouter()
+  const canEdit = useCanEdit()
   const utils = api.useUtils()
 
   const updateDetails = api.wedding.updateDetails.useMutation({
@@ -75,6 +77,7 @@ export default function WeddingSettingsForm({ initialData }: WeddingSettingsForm
   return (
     <form
       onSubmit={handleSubmit((data: WeddingSettingsFormData) => {
+        if (!canEdit) return
         updateDetails.mutate(data)
       })}
       className='flex flex-col gap-6'
@@ -90,9 +93,9 @@ export default function WeddingSettingsForm({ initialData }: WeddingSettingsForm
             <Label htmlFor='groomFirstName'>First Name</Label>
             <Input
               id='groomFirstName'
-              placeholder='Enter first name'
+              placeholder={canEdit ? 'Enter first name' : undefined}
               {...register('groomFirstName')}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !canEdit}
             />
             {errors.groomFirstName && (
               <p className='text-destructive text-sm'>{errors.groomFirstName.message}</p>
@@ -102,9 +105,9 @@ export default function WeddingSettingsForm({ initialData }: WeddingSettingsForm
             <Label htmlFor='groomLastName'>Last Name</Label>
             <Input
               id='groomLastName'
-              placeholder='Enter last name'
+              placeholder={canEdit ? 'Enter last name' : undefined}
               {...register('groomLastName')}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !canEdit}
             />
             {errors.groomLastName && (
               <p className='text-destructive text-sm'>{errors.groomLastName.message}</p>
@@ -121,9 +124,9 @@ export default function WeddingSettingsForm({ initialData }: WeddingSettingsForm
             <Label htmlFor='brideFirstName'>First Name</Label>
             <Input
               id='brideFirstName'
-              placeholder='Enter first name'
+              placeholder={canEdit ? 'Enter first name' : undefined}
               {...register('brideFirstName')}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !canEdit}
             />
             {errors.brideFirstName && (
               <p className='text-destructive text-sm'>{errors.brideFirstName.message}</p>
@@ -133,9 +136,9 @@ export default function WeddingSettingsForm({ initialData }: WeddingSettingsForm
             <Label htmlFor='brideLastName'>Last Name</Label>
             <Input
               id='brideLastName'
-              placeholder='Enter last name'
+              placeholder={canEdit ? 'Enter last name' : undefined}
               {...register('brideLastName')}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !canEdit}
             />
             {errors.brideLastName && (
               <p className='text-destructive text-sm'>{errors.brideLastName.message}</p>
@@ -174,20 +177,24 @@ export default function WeddingSettingsForm({ initialData }: WeddingSettingsForm
             Ceremony details are managed from the Events page.
           </p>
           <Button asChild variant='outline' className='w-full sm:w-auto'>
-            <Link href={ceremonyHref}>Edit Ceremony in Events</Link>
+            <Link href={ceremonyHref}>
+              {canEdit ? 'Edit Ceremony in Events' : 'View Ceremony in Events'}
+            </Link>
           </Button>
         </div>
       </div>
 
-      <Button type='submit' disabled={isSubmitting || updateDetails.isPending} className='w-full'>
-        {updateDetails.isPending ? (
-          <span className='flex items-center gap-2'>
-            <LoadingSpinner size={16} /> Saving...
-          </span>
-        ) : (
-          'Save Changes'
-        )}
-      </Button>
+      {canEdit ? (
+        <Button type='submit' disabled={isSubmitting || updateDetails.isPending} className='w-full'>
+          {updateDetails.isPending ? (
+            <span className='flex items-center gap-2'>
+              <LoadingSpinner size={16} /> Saving...
+            </span>
+          ) : (
+            'Save Changes'
+          )}
+        </Button>
+      ) : null}
     </form>
   )
 }

@@ -36,6 +36,7 @@ const ownerGrants: PermissionMap = {
   guest: ['read', 'create', 'update', 'delete', 'import'],
   vendor: ['read', 'create', 'update', 'delete'],
   vendor_quote: ['read', 'create', 'update', 'delete'],
+  budget: ['read', 'create', 'update', 'delete'],
   website: ['read', 'update', 'publish', 'password_update'],
   wedding: ['read', 'update'],
 }
@@ -53,23 +54,22 @@ const memberGrants: PermissionMap = {
   guest: ['read', 'create', 'update', 'delete', 'import'],
   vendor: ['read', 'create', 'update', 'delete'],
   vendor_quote: ['read', 'create', 'update', 'delete'],
+  budget: ['read', 'create', 'update', 'delete'],
   website: ['read', 'update', 'publish', 'password_update'],
   wedding: ['read', 'update'],
 }
 
 const viewerGrants: PermissionMap = {
-  organization: [],
-  member: [],
-  invitation: [],
-  guest_invitation: [],
-  guest_event: [],
-  rsvp: [],
-  event: [],
-  guest: [],
-  vendor: [],
-  vendor_quote: [],
-  website: [],
-  wedding: [],
+  guest_invitation: ['read'],
+  guest_event: ['read'],
+  rsvp: ['read_responses'],
+  event: ['read'],
+  guest: ['read'],
+  vendor: ['read'],
+  vendor_quote: ['read'],
+  budget: ['read'],
+  website: ['read'],
+  wedding: ['read'],
 }
 
 export const organizationRoles = {

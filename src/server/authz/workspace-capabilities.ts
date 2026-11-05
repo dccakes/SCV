@@ -6,6 +6,7 @@ export type WorkspaceCapabilities = {
   canManageMembers: boolean
   canSendInvites: boolean
   canViewPlanning: boolean
+  canEditPlanning: boolean
 }
 
 const EMPTY_CAPABILITIES: WorkspaceCapabilities = {
@@ -13,6 +14,7 @@ const EMPTY_CAPABILITIES: WorkspaceCapabilities = {
   canManageMembers: false,
   canSendInvites: false,
   canViewPlanning: false,
+  canEditPlanning: false,
 }
 
 export function readWorkspaceCapabilities(role: string | null | undefined): WorkspaceCapabilities {
@@ -32,5 +34,6 @@ export function readWorkspaceCapabilities(role: string | null | undefined): Work
     canManageMembers: can({ member: ['update'] }),
     canSendInvites: can({ guest_invitation: ['send'] }),
     canViewPlanning: can({ wedding: ['read'] }),
+    canEditPlanning: can({ wedding: ['update'] }),
   }
 }

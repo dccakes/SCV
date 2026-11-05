@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
+import { Badge } from '~/components/ui/badge'
 import { Card, CardContent } from '~/components/ui/card'
 import { Switch } from '~/components/ui/switch'
 import { api } from '~/trpc/react'
@@ -14,6 +16,7 @@ type PluginsSettingsCardProps = Readonly<{
 
 export function PluginsSettingsCard({ enabledAddOns }: PluginsSettingsCardProps) {
   const router = useRouter()
+  const canEdit = useCanEdit()
   const [isPending, startTransition] = useTransition()
   const [isEnabled, setIsEnabled] = useState(enabledAddOns.includes('website_builder'))
 
@@ -52,12 +55,16 @@ export function PluginsSettingsCard({ enabledAddOns }: PluginsSettingsCardProps)
               shareable page for your guests. RSVP remains available separately.
             </p>
           </div>
-          <Switch
-            aria-label='Toggle Public Wedding Website plugin'
-            checked={isEnabled}
-            disabled={toggleAddOn.isPending || isPending}
-            onCheckedChange={handleCheckedChange}
-          />
+          {canEdit ? (
+            <Switch
+              aria-label='Toggle Public Wedding Website plugin'
+              checked={isEnabled}
+              disabled={toggleAddOn.isPending || isPending}
+              onCheckedChange={handleCheckedChange}
+            />
+          ) : (
+            <Badge variant='outline'>{isEnabled ? 'Enabled' : 'Disabled'}</Badge>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 
 import { CategoryCard } from '~/components/budget/category-card'
+import { WorkspaceCapabilitiesProvider } from '~/components/contexts/workspace-capabilities-context'
 import type { BudgetCategoryWithExpenses } from '~/server/domains/budget/budget.types'
 
 const mockDeleteCategory = jest.fn()
@@ -99,4 +100,30 @@ it('keeps add expense available when the category has no expenses', () => {
   render(<CategoryCard category={{ ...category, expenses: [] }} currency='GBP' />)
   expect(screen.getByText(/No expenses recorded yet/)).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Add new expense' })).toBeInTheDocument()
+})
+
+describe('viewer (read-only)', () => {
+  const renderViewer = (cat = category) =>
+    render(
+      <WorkspaceCapabilitiesProvider canEditPlanning={false}>
+        <CategoryCard category={cat} currency='GBP' />
+      </WorkspaceCapabilitiesProvider>
+    )
+
+  it('shows expenses and totals but no write controls', () => {
+    renderViewer()
+    expect(screen.getByText('Security deposit')).toBeInTheDocument()
+    expect(screen.getByText('£0 net of £1,000')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Edit section' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Add new expense' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Actions for/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: 'Actions' })).not.toBeInTheDocument()
+  })
+
+  it('does not tell viewers to add an expense when the section is empty', () => {
+    renderViewer({ ...category, expenses: [] })
+    expect(screen.getByText('No expenses recorded yet.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Add new expense' })).not.toBeInTheDocument()
+  })
 })

@@ -93,7 +93,7 @@ describe('dashboardRouter authz context plumbing', () => {
     await expect(caller.getForActiveWorkspace()).rejects.toMatchObject({ code: 'UNAUTHORIZED' })
   })
 
-  it('rejects viewer dashboard reads with FORBIDDEN', async () => {
+  it('allows viewer dashboard reads', async () => {
     const caller = dashboardRouter.createCaller({
       auth: {
         session: { user: { id: 'user-123' } },
@@ -109,6 +109,8 @@ describe('dashboardRouter authz context plumbing', () => {
       headers: new Headers(),
     })
 
-    await expect(caller.getForActiveWorkspace()).rejects.toMatchObject({ code: 'FORBIDDEN' })
+    await caller.getForActiveWorkspace()
+
+    expect(mockGetOverviewForScopedWedding).toHaveBeenCalledWith('user-123', 'wedding-123')
   })
 })

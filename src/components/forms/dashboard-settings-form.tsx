@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { sharedStyles } from '~/app/utils/shared-styles'
 import type { Website } from '~/app/utils/shared-types'
 import { computePublicWebsiteUrl } from '~/app/utils/website'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import EditUrlView from '~/components/forms/website-settings/edit-url'
 import SetPasswordView from '~/components/forms/website-settings/set-password'
 import SidePaneWrapper from '~/components/forms/wrapper'
@@ -63,6 +64,7 @@ const Main = ({
   setShowEditUrlView,
 }: MainProps) => {
   const router = useRouter()
+  const canEdit = useCanEdit()
   const [appearInSearchEngines, setAppearInSearchEngines] = useState<boolean>(false)
 
   const updateWebsite = api.website.update.useMutation({
@@ -130,6 +132,7 @@ const Main = ({
             <Switch
               id='password-toggle'
               checked={website?.isPasswordEnabled}
+              disabled={!canEdit}
               onClick={() => handleChange(!website?.isPasswordEnabled)}
             />
           )}
@@ -143,13 +146,15 @@ const Main = ({
           <div className='pt-5'>
             <div className='flex justify-between pb-2'>
               <span>Guest Password</span>
-              <button
-                type='button'
-                className={`text-${sharedStyles.primaryColor}`}
-                onClick={() => setShowPasswordView(true)}
-              >
-                Edit Password
-              </button>
+              {canEdit ? (
+                <button
+                  type='button'
+                  className={`text-${sharedStyles.primaryColor}`}
+                  onClick={() => setShowPasswordView(true)}
+                >
+                  Edit Password
+                </button>
+              ) : null}
             </div>
             <span className='font-thin'>{website?.password}</span>
           </div>
@@ -158,13 +163,15 @@ const Main = ({
       <div className='px-8 pb-5'>
         <div className='flex justify-between'>
           <h2 className='my-4 font-bold text-2xl'>Your URL</h2>
-          <button
-            type='button'
-            className={`text-${sharedStyles.primaryColor}`}
-            onClick={() => setShowEditUrlView(true)}
-          >
-            Edit URL
-          </button>
+          {canEdit ? (
+            <button
+              type='button'
+              className={`text-${sharedStyles.primaryColor}`}
+              onClick={() => setShowEditUrlView(true)}
+            >
+              Edit URL
+            </button>
+          ) : null}
         </div>
         <span>{website?.subUrl ? computePublicWebsiteUrl(website.subUrl) : ''}</span>
       </div>
