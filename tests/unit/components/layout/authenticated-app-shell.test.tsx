@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { renderToString } from 'react-dom/server'
 
 import AuthenticatedAppShell from '~/components/layout/authenticated-app-shell'
 
@@ -66,6 +67,37 @@ describe('AuthenticatedAppShell', () => {
     expect(screen.queryByRole('dialog', { name: 'Etta AI assistant' })).not.toBeInTheDocument()
     // The desktop preference is left alone
     expect(localStorage.getItem('etta-panel-open')).toBe('true')
+  })
+
+  it('never includes the full-screen overlay in the first (server) render', () => {
+    emulateScreen(true)
+    localStorage.setItem('etta-panel-open', 'true')
+
+    const html = renderToString(
+      <AuthenticatedAppShell showEttaPanel weddingId='wedding-1' isEttaConfigured>
+        <div>Content</div>
+      </AuthenticatedAppShell>
+    )
+
+    expect(html).not.toContain('role="dialog"')
+  })
+
+  it('does not save the setting when Etta is opened and closed on a small screen', async () => {
+    emulateScreen(true)
+    localStorage.setItem('etta-panel-open', 'true')
+    const setItem = jest.spyOn(Storage.prototype, 'setItem')
+
+    renderShell()
+    const toggle = screen.getByRole('button', { name: 'Toggle Etta' })
+    fireEvent.click(toggle)
+    await screen.findByRole('dialog', { name: 'Etta AI assistant' })
+    fireEvent.click(toggle)
+
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog', { name: 'Etta AI assistant' })).not.toBeInTheDocument()
+    )
+    expect(setItem).not.toHaveBeenCalled()
+    setItem.mockRestore()
   })
 
   it('does not remember opening or closing Etta on a small screen', async () => {

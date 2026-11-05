@@ -3,6 +3,7 @@ import {
   buildGuestListCsv,
   type GuestExportData,
   type GuestExportGuest,
+  summarizeEventExport,
 } from '~/lib/guest-export/guest-export-csv'
 
 const guest = (overrides: Partial<GuestExportGuest> & Pick<GuestExportGuest, 'id'>) => ({
@@ -30,8 +31,8 @@ const household = (id: string, city: string | null = null) => ({
 
 const buildData = (): GuestExportData => ({
   events: [
-    { id: 'ceremony', name: 'Ceremony' },
-    { id: 'reception', name: 'Reception' },
+    { id: 'ceremony', name: 'Ceremony', collectRsvp: true },
+    { id: 'reception', name: 'Reception', collectRsvp: true },
   ],
   questions: [
     { id: 'meal', text: 'Meal choice', eventId: 'reception' },
@@ -173,7 +174,7 @@ describe('buildEventGuestCsv', () => {
         'Last Name',
         'Household',
         'Age Group',
-        'Tag-along',
+        'Plus-one',
         'RSVP',
         'Meal choice',
         'Dietary needs (household)',
@@ -239,5 +240,102 @@ describe('guest export edge cases', () => {
     const jose = parse(buildGuestListCsv(data)).find((row) => row[0] === 'José')
 
     expect(jose?.[8]).toBe('+15551234567')
+  })
+})
+
+describe('guest export review cases', () => {
+  const emptyData = (): GuestExportData => ({
+    events: [],
+    questions: [],
+    households: [],
+    guests: [],
+    invitations: [],
+    answers: [],
+  })
+
+  it('exports only the header when there are no guests', () => {
+    const csv = buildGuestListCsv(emptyData())
+
+    expect(csv.split('\r\n')).toHaveLength(1)
+    expect(csv).not.toContain('RSVP:')
+  })
+
+  it('lets a newer blank answer replace an older filled one', () => {
+    const data = buildData()
+    data.answers.push({
+      questionId: 'diet',
+      guestId: 2,
+      householdId: 'h1',
+      response: '   ',
+      updatedAt: new Date('2026-09-01T00:00:00Z'),
+    })
+
+    const jose = parse(buildGuestListCsv(data)).find((row) => row[0] === 'José')
+
+    expect(jose?.at(-1)).toBe('')
+  })
+
+  it('labels guests of events that do not collect RSVPs as invited, not as not responding', () => {
+    const data = buildData()
+    data.events = data.events.map((event) =>
+      event.id === 'ceremony' ? { ...event, collectRsvp: false } : event
+    )
+    data.invitations.push({ guestId: 3, eventId: 'ceremony', rsvp: 'Invited' })
+
+    const leo = parse(buildGuestListCsv(data)).find((row) => row[0] === 'Leo')
+    const eventLeo = parse(buildEventGuestCsv(data, 'ceremony')).find((row) => row[0] === 'Leo')
+
+    expect(leo?.[15]).toBe('Invited')
+    expect(eventLeo?.[5]).toBe('Invited')
+  })
+
+  it('makes repeated headers unique', () => {
+    const data = buildData()
+    data.events.push({ id: 'ceremony-2', name: 'Ceremony', collectRsvp: true })
+    data.questions.push({ id: 'diet-2', text: 'Dietary needs', eventId: null })
+
+    const [header] = parse(buildGuestListCsv(data))
+
+    expect(header).toContain('RSVP: Ceremony')
+    expect(header).toContain('RSVP: Ceremony (2)')
+    expect(header).toContain('Dietary needs (household) (2)')
+  })
+
+  it('does not mark a question as household when its event is missing', () => {
+    const data = buildData()
+    data.questions.push({ id: 'orphan', text: 'Parking needed?', eventId: 'deleted-event' })
+
+    const [header] = parse(buildGuestListCsv(data))
+
+    expect(header?.at(-1)).toBe('Parking needed?')
+  })
+
+  it('handles guests with no invitations, no primary contact, no saved household and odd values', () => {
+    const data = buildData()
+    data.guests.push(
+      guest({ id: 7, householdId: 'h9', firstName: 'Zed', lastName: 'Young', ageGroup: null }),
+      guest({ id: 8, householdId: 'h9', firstName: 'Amy', lastName: 'Young', isTagAlong: true })
+    )
+    data.invitations.push({ guestId: 8, eventId: 'ceremony', rsvp: 'Maybe' })
+
+    const rows = parse(buildGuestListCsv(data))
+    const zed = rows.find((row) => row[0] === 'Zed')
+    const amy = rows.find((row) => row[0] === 'Amy')
+
+    // No primary contact: named after the first member by name
+    expect(zed?.[2]).toBe('Amy Young')
+    // Age group unknown, household has no saved address
+    expect(zed?.[4]).toBe('')
+    expect(zed?.slice(9, 15)).toEqual(['', '', '', '', '', ''])
+    // No invitations at all
+    expect(zed?.slice(15, 17)).toEqual(['Not invited', 'Not invited'])
+    // Tag-along flag and an unknown RSVP value passes through unchanged
+    expect(amy?.[5]).toBe('Yes')
+    expect(amy?.[15]).toBe('Maybe')
+  })
+
+  it('counts invited and attending guests for one event', () => {
+    expect(summarizeEventExport(buildData(), 'reception')).toEqual({ invited: 3, attending: 2 })
+    expect(summarizeEventExport(buildData(), 'missing')).toEqual({ invited: 0, attending: 0 })
   })
 })

@@ -16,6 +16,15 @@ export const downloadCsv = (fileName: string, csv: string): void => {
 /** Lowercase, hyphen separated, ASCII only text for use in a file name. */
 export const slugify = (value: string, fallback = 'export'): string =>
   value
+    // Fold accents ("Cérémonie" -> "ceremonie") instead of dropping the letter
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '') || fallback
+
+/** Today's date in the viewer's own time zone, as YYYY-MM-DD, for file names. */
+export const localDateStamp = (date: Date = new Date()): string => {
+  const pad = (value: number) => String(value).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}

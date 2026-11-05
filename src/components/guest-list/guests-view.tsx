@@ -104,6 +104,12 @@ export default function GuestsView({
   })
   const initializedDrawerHouseholdIdRef = useRef<string | undefined>(undefined)
 
+  // The export always covers every guest, so its count ignores list filters
+  const allGuestCount = useMemo(
+    () => allHouseholds.reduce((count, household) => count + household.guests.length, 0),
+    [allHouseholds]
+  )
+
   const { totalGuests, totalTagAlongs } = useMemo(() => {
     let guests = 0
     let tagAlongs = 0
@@ -658,7 +664,7 @@ export default function GuestsView({
           selectedEventId={selectedEventId}
         />
         <div className='flex shrink-0 flex-wrap gap-3'>
-          <GuestExportMenu events={events} />
+          <GuestExportMenu events={events} guestCount={allGuestCount} />
           <Button type='button' variant='outline' onClick={onImportClick}>
             Import Guests
           </Button>

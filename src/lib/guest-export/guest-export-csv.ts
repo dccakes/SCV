@@ -1,4 +1,5 @@
-import { RSVP_STATUS } from '~/lib/constants/rsvp'
+import type { GuestAgeGroup } from '@prisma/client'
+import { RSVP_STATUS, type RsvpStatus } from '~/lib/constants/rsvp'
 import { toCsv } from '~/lib/csv'
 
 /**
@@ -8,7 +9,12 @@ import { toCsv } from '~/lib/csv'
  * through their own RSVP questions, so every question becomes a column.
  */
 
-export type GuestExportEvent = { id: string; name: string }
+export type GuestExportEvent = {
+  id: string
+  name: string
+  /** false when the event does not ask guests to RSVP */
+  collectRsvp: boolean
+}
 
 export type GuestExportQuestion = {
   id: string
@@ -34,12 +40,13 @@ export type GuestExportGuest = {
   lastName: string
   email: string | null
   phone: string | null
-  ageGroup: 'INFANT' | 'CHILD' | 'TEEN' | 'ADULT' | null
+  ageGroup: GuestAgeGroup | null
   isTagAlong: boolean
   isPrimaryContact: boolean
   tags: string[]
 }
 
+/** rsvp is stored as free text; known values are RsvpStatus */
 export type GuestExportInvitation = { guestId: number; eventId: string; rsvp: string }
 
 /**
@@ -73,22 +80,42 @@ const HOUSEHOLD_SUFFIX = ' (household)'
 
 const isGeneral = (question: GuestExportQuestion): boolean => question.eventId === null
 
-const AGE_GROUP_LABELS: Record<NonNullable<GuestExportGuest['ageGroup']>, string> = {
+const AGE_GROUP_LABELS: Record<GuestAgeGroup, string> = {
   INFANT: 'Infant',
   CHILD: 'Child',
   TEEN: 'Teen',
   ADULT: 'Adult',
 }
 
-const RSVP_LABELS: Record<string, string> = {
+const RSVP_LABELS: Record<RsvpStatus, string> = {
   [RSVP_STATUS.ATTENDING]: 'Attending',
   [RSVP_STATUS.DECLINED]: 'Declined',
   [RSVP_STATUS.INVITED]: 'No response',
   [RSVP_STATUS.NOT_INVITED]: 'Not invited',
 }
 
-const rsvpLabel = (rsvp: string | undefined): string =>
-  rsvp === undefined ? 'Not invited' : (RSVP_LABELS[rsvp] ?? rsvp)
+const isRsvpStatus = (value: string): value is RsvpStatus => Object.hasOwn(RSVP_LABELS, value)
+
+const rsvpLabel = (rsvp: string | undefined, event: GuestExportEvent | undefined): string => {
+  if (rsvp === undefined) return RSVP_LABELS[RSVP_STATUS.NOT_INVITED]
+  // Events that do not collect RSVPs never get a response, so "No response"
+  // would read as guests ignoring the couple
+  if (rsvp === RSVP_STATUS.INVITED && event && !event.collectRsvp) return 'Invited'
+  return isRsvpStatus(rsvp) ? RSVP_LABELS[rsvp] : rsvp
+}
+
+/**
+ * Spreadsheet importers that read columns by name need unique headers, so a
+ * repeated header gets " (2)", " (3)" and so on.
+ */
+const uniqueHeaders = (headers: readonly string[]): string[] => {
+  const seen = new Map<string, number>()
+  return headers.map((header) => {
+    const count = (seen.get(header) ?? 0) + 1
+    seen.set(header, count)
+    return count === 1 ? header : `${header} (${count})`
+  })
+}
 
 const yesNo = (value: boolean): string => (value ? 'Yes' : 'No')
 
@@ -128,7 +155,7 @@ const buildIndex = (data: GuestExportData) => {
   // (for example after its primary contact changed), so apply answers oldest
   // first and let the most recent one win
   const answersOldestFirst = [...data.answers].sort(
-    (a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()
+    (a, b) => a.updatedAt.getTime() - b.updatedAt.getTime()
   )
   const answerByKey = new Map<string, string>()
   for (const answer of answersOldestFirst) {
@@ -145,13 +172,16 @@ const buildIndex = (data: GuestExportData) => {
     household: (guest: GuestExportGuest) => householdById.get(guest.householdId),
     rsvp: (guest: GuestExportGuest, eventId: string) =>
       rsvpByGuestEvent.get(`${guest.id}:${eventId}`),
-    // General answers repeat on every member of the household
+    // General answers repeat on every member of the household. A newer blank
+    // answer has already replaced any older one, and shows as empty.
     answer: (guest: GuestExportGuest, question: GuestExportQuestion) =>
-      answerByKey.get(
-        isGeneral(question)
-          ? `${question.id}:h:${guest.householdId}`
-          : `${question.id}:g:${guest.id}`
-      ) ?? '',
+      (
+        answerByKey.get(
+          isGeneral(question)
+            ? `${question.id}:h:${guest.householdId}`
+            : `${question.id}:g:${guest.id}`
+        ) ?? ''
+      ).trim(),
   }
 }
 
@@ -178,11 +208,12 @@ export const buildGuestListCsv = (data: GuestExportData): string => {
   const index = buildIndex(data)
   const eventNameById = new Map(data.events.map((event) => [event.id, event.name]))
   const questionHeader = (question: GuestExportQuestion): string => {
+    if (isGeneral(question)) return `${question.text}${HOUSEHOLD_SUFFIX}`
     const eventName = question.eventId ? eventNameById.get(question.eventId) : undefined
-    return eventName ? `${eventName}: ${question.text}` : `${question.text}${HOUSEHOLD_SUFFIX}`
+    return eventName ? `${eventName}: ${question.text}` : question.text
   }
 
-  const header = [
+  const header = uniqueHeaders([
     'First Name',
     'Last Name',
     'Household',
@@ -200,7 +231,7 @@ export const buildGuestListCsv = (data: GuestExportData): string => {
     'Country',
     ...data.events.map((event) => `RSVP: ${event.name}`),
     ...data.questions.map(questionHeader),
-  ]
+  ])
 
   const rows = sortRows(data.guests, index).map((guest) => {
     const household = index.household(guest)
@@ -220,7 +251,7 @@ export const buildGuestListCsv = (data: GuestExportData): string => {
       household?.state ?? '',
       household?.zipCode ?? '',
       household?.country ?? '',
-      ...data.events.map((event) => rsvpLabel(index.rsvp(guest, event.id))),
+      ...data.events.map((event) => rsvpLabel(index.rsvp(guest, event.id), event)),
       ...data.questions.map((question) => index.answer(guest, question)),
     ]
   })
@@ -246,17 +277,19 @@ export const buildEventGuestCsv = (data: GuestExportData, eventId: string): stri
     ...questions.filter((question) => question.eventId === null),
   ]
 
-  const header = [
+  const event = data.events.find((candidate) => candidate.id === eventId)
+  const header = uniqueHeaders([
     'First Name',
     'Last Name',
     'Household',
     'Age Group',
-    'Tag-along',
+    // "Tag-along" is app vocabulary; vendors know it as a plus-one
+    'Plus-one',
     'RSVP',
     ...orderedQuestions.map((question) =>
       isGeneral(question) ? `${question.text}${HOUSEHOLD_SUFFIX}` : question.text
     ),
-  ]
+  ])
 
   const invited = data.guests.filter((guest) => {
     const rsvp = index.rsvp(guest, eventId)
@@ -274,10 +307,24 @@ export const buildEventGuestCsv = (data: GuestExportData, eventId: string): stri
       index.householdLabel(guest),
       ageGroupLabel(guest),
       yesNo(guest.isTagAlong),
-      rsvpLabel(rsvp),
+      rsvpLabel(rsvp, event),
       ...orderedQuestions.map((question) => (hasDeclined ? '' : index.answer(guest, question))),
     ]
   })
 
   return toCsv([header, ...rows])
+}
+
+/** Headcount for one event, for confirming an export to the couple. */
+export const summarizeEventExport = (
+  data: GuestExportData,
+  eventId: string
+): { invited: number; attending: number } => {
+  const forEvent = data.invitations.filter(
+    (invitation) => invitation.eventId === eventId && invitation.rsvp !== RSVP_STATUS.NOT_INVITED
+  )
+  return {
+    invited: forEvent.length,
+    attending: forEvent.filter((invitation) => invitation.rsvp === RSVP_STATUS.ATTENDING).length,
+  }
 }

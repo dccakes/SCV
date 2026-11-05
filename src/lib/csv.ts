@@ -1,12 +1,12 @@
-// Phone numbers and plain numbers like "+15551234567" or "-12.5" start with a
-// formula character but cannot run anything, so they are left as typed.
-// Prefixing them would put a visible apostrophe in every phone cell and stop
-// the file from being re-imported.
-const PLAIN_NUMBER = /^[+-]?[\d\s().-]+$/
+// A single number such as a stored phone number "+15551234567" or "-12.5"
+// starts with a formula character but cannot run anything, so it is left as
+// typed. Anything longer, like "+1-555-0100", is still prefixed: a spreadsheet
+// would otherwise evaluate it as arithmetic and silently change the value.
+const SINGLE_NUMBER = /^[+-]?\d+(\.\d+)?$/
 
 // Prefix values a spreadsheet would evaluate as a formula
 const neutralizeFormula = (value: string): string =>
-  /^[=+\-@\t\r]/.test(value) && !PLAIN_NUMBER.test(value) ? `'${value}` : value
+  /^[=+\-@\t\r]/.test(value) && !SINGLE_NUMBER.test(value) ? `'${value}` : value
 
 /** Escape one cell: neutralize formulas, then quote when it holds a comma, quote or newline. */
 export const escapeCsvValue = (raw: string): string => {
