@@ -35,9 +35,13 @@ Role intent:
   - Cannot send communications out of the platform
   - Cannot delete the wedding organization
 - `viewer`
-  - Final behavior must be enforced explicitly in the permission matrix
-  - If the product expectation is that Fiona should not see planning surfaces, `viewer` should have
-    no planning read permissions
+  - **Decided (2026-11): read-only.** Can read every planning resource a member can (wedding,
+    events, guests, guest events, invitation status, RSVP responses, vendors, vendor quotes,
+    budget, website). Cannot write, send invitations, or manage members or the organization.
+  - Enforced in `src/lib/auth-permissions.ts`; `canEditPlanning` (`wedding:update`) drives the UI
+    via `useCanEdit()`. Etta is hidden for viewers. The website password is not returned to
+    viewers. Upload routes require edit access.
+  - Supersedes the earlier "no planning read permissions" option below.
 
 ## Permission Model Rules
 

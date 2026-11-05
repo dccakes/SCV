@@ -25,6 +25,21 @@ const mockEvent = {
   questions: [{ id: 'q1', text: 'Meal choice?', type: 'Text', options: [] }],
 } as unknown as EventWithStats
 
+const mockDashboardData = {
+  households: [
+    {
+      guests: [
+        {
+          id: 1,
+          firstName: 'Ann',
+          lastName: 'Lee',
+          invitations: [{ eventId: 'evt-1', rsvp: 'Invited' }],
+        },
+      ],
+    },
+  ],
+}
+
 jest.mock('~/components/forms/event/modern-event-form', () => ({
   ModernEventForm: () => <div data-testid='event-form' />,
 }))
@@ -54,20 +69,7 @@ jest.mock('~/trpc/react', () => {
       dashboard: {
         getForActiveWorkspace: {
           useQuery: () => ({
-            data: {
-              households: [
-                {
-                  guests: [
-                    {
-                      id: 1,
-                      firstName: 'Ann',
-                      lastName: 'Lee',
-                      invitations: [{ eventId: 'evt-1', rsvp: 'Invited' }],
-                    },
-                  ],
-                },
-              ],
-            },
+            data: mockDashboardData,
             isLoading: false,
           }),
         },
@@ -123,14 +125,14 @@ describe('events page: viewer vs editor', () => {
   it('viewer guest dialog lists guests without invite or save controls', () => {
     asViewer(<ManageEventGuestsDialog event={mockEvent} open onOpenChange={jest.fn()} />)
     expect(screen.getByText('Ann Lee')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /invite all/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^invite all$/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^save/i })).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /close/i })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /close/i }).length).toBeGreaterThan(0)
   })
 
   it('editor guest dialog shows invite and save controls', () => {
     render(<ManageEventGuestsDialog event={mockEvent} open onOpenChange={jest.fn()} />)
-    expect(screen.getByRole('button', { name: /invite all/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^invite all$/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^save/i })).toBeInTheDocument()
   })
 

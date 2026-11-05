@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import SettingsPage from '~/app/(authenicated)/settings/page'
 
 const mockGetDetails = jest.fn()
+const mockGetWorkspace = jest.fn()
 const mockGetRequiredWedding = jest.fn()
 const mockDashboardTopbar = jest.fn(
   (_props: { title?: string; showManagementActions?: boolean }) => (
@@ -29,6 +30,7 @@ jest.mock('~/trpc/server', () => ({
   api: {
     wedding: {
       getDetails: () => mockGetDetails(),
+      getWorkspace: () => mockGetWorkspace(),
       getActive: jest.fn().mockResolvedValue({
         id: 'wedding-123',
         enabledAddOns: ['website_builder'],
@@ -75,6 +77,8 @@ jest.mock('~/components/settings/telegram-connect-card', () => ({
 describe('SettingsPage', () => {
   beforeEach(() => {
     mockGetDetails.mockReset()
+    mockGetWorkspace.mockReset()
+    mockGetWorkspace.mockResolvedValue({ capabilities: { canEditPlanning: true } })
     mockGetRequiredWedding.mockReset()
     mockGetRequiredWedding.mockResolvedValue({
       id: 'wedding-123',
@@ -128,5 +132,34 @@ describe('SettingsPage', () => {
     expect(mockOrganizationMembersSettingsCard).toHaveBeenCalledTimes(1)
     expect(mockOrganizationOutstandingInvitesCard).toHaveBeenCalledTimes(1)
     expect(mockTelegramConnectCard).toHaveBeenCalledTimes(1)
+  })
+
+  it('hides the Connected Apps section and uses view-only copy for viewers', async () => {
+    mockGetWorkspace.mockResolvedValue({ capabilities: { canEditPlanning: false } })
+    mockGetDetails.mockResolvedValue({
+      groomFirstName: 'John',
+      groomLastName: 'Doe',
+      brideFirstName: 'Jane',
+      brideLastName: 'Smith',
+      weddingDate: null,
+      weddingLocation: null,
+      primaryEventId: null,
+    })
+
+    render(await SettingsPage())
+
+    expect(screen.queryByTestId('telegram-connect-card')).not.toBeInTheDocument()
+    expect(screen.queryByText('Connected Apps')).not.toBeInTheDocument()
+    expect(screen.getByText(/view-only access/i)).toBeInTheDocument()
+    expect(screen.getByTestId('organization-members-settings-card')).toBeInTheDocument()
+  })
+
+  it('fails closed (hides Connected Apps) when the workspace lookup errors', async () => {
+    mockGetWorkspace.mockRejectedValue(new Error('boom'))
+    mockGetDetails.mockRejectedValue(new Error('No wedding'))
+
+    render(await SettingsPage())
+
+    expect(mockTelegramConnectCard).not.toHaveBeenCalled()
   })
 })
