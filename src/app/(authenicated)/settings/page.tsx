@@ -56,7 +56,7 @@ export default async function SettingsPage() {
             )}
             <div className='space-y-3'>
               <div>
-                <h3 className='font-serif text-foreground text-xl'>Plugins</h3>
+                <h3 className='font-serif text-foreground text-lg'>Plugins</h3>
                 <p className='mt-1 font-mono text-[0.62rem] text-foreground/55 tracking-wider'>
                   Turn optional workspace features on and off for your wedding.
                 </p>
@@ -65,7 +65,7 @@ export default async function SettingsPage() {
             </div>
             <div className='space-y-3'>
               <div>
-                <h3 className='font-serif text-foreground text-xl'>Organization Members</h3>
+                <h3 className='font-serif text-foreground text-lg'>Organization Members</h3>
                 <p className='mt-1 font-mono text-[0.62rem] text-foreground/55 tracking-wider'>
                   Invite collaborators and manage access to this workspace.
                 </p>
@@ -75,7 +75,7 @@ export default async function SettingsPage() {
             </div>
             <div className='space-y-3'>
               <div>
-                <h3 className='font-serif text-foreground text-xl'>Connected Apps</h3>
+                <h3 className='font-serif text-foreground text-lg'>Connected Apps</h3>
                 <p className='mt-1 font-mono text-[0.62rem] text-foreground/55 tracking-wider'>
                   Chat with Etta from other apps.
                 </p>
