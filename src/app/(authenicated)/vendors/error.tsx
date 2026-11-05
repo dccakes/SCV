@@ -1,5 +1,7 @@
 'use client'
 
+import { Button } from '~/components/ui/button'
+
 type VendorsErrorProps = {
   error: Error & { digest?: string }
   reset: () => void
@@ -17,13 +19,9 @@ export default function VendorsError({ error, reset }: Readonly<VendorsErrorProp
           Error ID: {error.digest}
         </p>
       ) : null}
-      <button
-        type='button'
-        className='rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground text-sm transition-colors hover:opacity-90'
-        onClick={reset}
-      >
+      <Button type='button' onClick={reset}>
         Try again
-      </button>
+      </Button>
     </div>
   )
 }
