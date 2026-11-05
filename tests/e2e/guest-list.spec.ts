@@ -47,6 +47,7 @@ test.describe('Guest List', () => {
     await expect(page.getByRole('button', { name: 'Card view' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Table view' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Import Guests' })).toBeVisible()
+    await expect(page.getByRole('button', { name: /^Export/ })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Add Guest' })).toBeVisible()
   })
 })

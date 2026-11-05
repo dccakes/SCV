@@ -1,18 +1,10 @@
+import { escapeCsvValue } from '~/lib/csv'
 import { formatGuestName } from '~/lib/seating/guest-name'
 
 type CsvTable = { id: string; name: string }
 type CsvGuest = { firstName: string; lastName: string; tableId: string | null }
 
 const UNASSIGNED = 'Unassigned'
-
-// Prefix values a spreadsheet would evaluate as a formula
-const neutralizeFormula = (value: string): string =>
-  /^[=+\-@\t\r]/.test(value) ? `'${value}` : value
-
-const escapeCsvValue = (raw: string): string => {
-  const value = neutralizeFormula(raw)
-  return /[",\r\n]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value
-}
 
 /**
  * One row per guest with their table. Seated guests come first, ordered by

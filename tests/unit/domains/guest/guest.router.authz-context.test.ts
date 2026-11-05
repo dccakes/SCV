@@ -16,12 +16,18 @@ jest.mock('server/application/guest-insights', () => ({
   },
 }))
 
+jest.mock('server/application/guest-export', () => ({
+  guestExportService: { getExportData: jest.fn() },
+}))
+
+import { guestExportService } from 'server/application/guest-export'
 import { guestInsightsService } from 'server/application/guest-insights'
 import { guestRouter } from 'server/domains/guest/guest.router'
 
 const mockListEventInvitations = guestInsightsService.listEventInvitations as jest.Mock
 const mockListHouseholdGuests = guestInsightsService.listHouseholdGuests as jest.Mock
 const mockListGuests = guestInsightsService.listGuests as jest.Mock
+const mockGetExportData = guestExportService.getExportData as jest.Mock
 
 describe('guestRouter authz context plumbing', () => {
   const activeOrganization = {
@@ -138,5 +144,38 @@ describe('guestRouter authz context plumbing', () => {
     await expect(viewerCaller.getAllByUserId()).rejects.toMatchObject({
       code: 'FORBIDDEN',
     })
+  })
+
+  it('scopes the guest export to the active wedding', async () => {
+    mockGetExportData.mockResolvedValue({ guests: [] })
+
+    await expect(caller.getExportData()).resolves.toEqual({ guests: [] })
+    expect(mockGetExportData).toHaveBeenCalledWith(
+      { userId: 'user-123', activeOrganization },
+      'wedding-123'
+    )
+  })
+
+  it('passes a FORBIDDEN export through to the client', async () => {
+    mockGetExportData.mockRejectedValue(new TRPCError({ code: 'FORBIDDEN' }))
+
+    await expect(caller.getExportData()).rejects.toMatchObject({ code: 'FORBIDDEN' })
+  })
+
+  it('rejects the guest export when there is no active wedding', async () => {
+    const noWeddingCaller = guestRouter.createCaller({
+      auth: {
+        session: { user: { id: 'user-123' } },
+        activeOrganization,
+        activeWeddingId: null,
+        userId: 'user-123',
+      },
+      authz: { userId: 'user-123', activeOrganization },
+      db: {} as never,
+      headers: new Headers(),
+    })
+
+    await expect(noWeddingCaller.getExportData()).rejects.toBeInstanceOf(TRPCError)
+    expect(mockGetExportData).not.toHaveBeenCalled()
   })
 })

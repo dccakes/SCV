@@ -6,6 +6,7 @@
  */
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc'
+import { guestExportService } from '~/server/application/guest-export'
 import { guestInsightsService } from '~/server/application/guest-insights'
 import { requireActiveWeddingId } from '~/server/authz/active-wedding'
 import { getByEventSchema, getByHouseholdSchema } from '~/server/domains/guest/guest.validator'
@@ -36,5 +37,14 @@ export const guestRouter = createTRPCRouter({
   getAllByUserId: protectedProcedure.query(async ({ ctx }) => {
     const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
     return guestInsightsService.listGuests(ctx.authz, weddingId)
+  }),
+
+  /**
+   * Everything needed to build the guest list CSV exports (whole wedding or
+   * one event): guests, households, RSVPs and RSVP question answers
+   */
+  getExportData: protectedProcedure.query(async ({ ctx }) => {
+    const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+    return guestExportService.getExportData(ctx.authz, weddingId)
   }),
 })
