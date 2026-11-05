@@ -13,6 +13,7 @@ import FindYourInvitationForm from '~/components/website/forms/steps/find-your-i
 import QuestionMultipleChoice from '~/components/website/forms/steps/question-multiple-choice'
 import QuestionShortAnswer from '~/components/website/forms/steps/question-short-answer'
 import SendRsvp from '~/components/website/forms/steps/send-rsvp'
+import { SubmitBusyMessage } from '~/components/website/forms/submit-busy-message'
 import RsvpConfirmation from '~/components/website/rsvp-confirmation'
 import { ANALYTICS_ACTIONS, ANALYTICS_SCOPES, buildEventName } from '~/lib/analytics/events'
 import { track } from '~/lib/analytics/track'
@@ -68,6 +69,7 @@ export default function MainRsvpForm({
   // search and lands on the confirm step (step 2).
   const [currentStep, setCurrentStep] = useState<number>(rsvpFormData.recognized ? 2 : 1)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [isSubmitRateLimited, setIsSubmitRateLimited] = useState(false)
   useConfirmReloadPage(currentStep > 1 && currentStep < numSteps.current)
   useEffect(() => {
     updateRsvpForm({ weddingData })
@@ -77,10 +79,19 @@ export default function MainRsvpForm({
   const submitRsvpForm = api.website.submitPublicRsvpForm.useMutation({
     onSuccess: () => {
       setSubmitError(null)
+      setIsSubmitRateLimited(false)
       setCurrentStep((prev) => prev + 1)
     },
     onError: (err) => {
-      setSubmitError(getMutationErrorMessage(err, 'Failed to submit RSVP. Please try again.'))
+      // A blocked submit is not a failed one: the answers are still in the form, so say so
+      // (translated) instead of showing the server's English text.
+      const rateLimited = err.data?.code === 'TOO_MANY_REQUESTS'
+      setIsSubmitRateLimited(rateLimited)
+      setSubmitError(
+        rateLimited
+          ? null
+          : getMutationErrorMessage(err, 'Failed to submit RSVP. Please try again.')
+      )
     },
   })
   const progress = (currentStep / numSteps.current) * 100
@@ -197,6 +208,7 @@ export default function MainRsvpForm({
         }}
       >
         <AsyncState error={submitError} className='mb-4 text-center' />
+        {isSubmitRateLimited && <SubmitBusyMessage />}
         <MultistepRsvpForm currentStep={currentStep} setCurrentStep={setCurrentStep}>
           <FindYourInvitationForm />
           <ConfirmNameForm />

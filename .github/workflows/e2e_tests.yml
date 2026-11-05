@@ -60,6 +60,13 @@ jobs:
       - name: Seed database
         run: node prisma/seed.mjs
 
+      - name: Rate limiter integration test
+        # The mocked unit tests cannot prove the atomic SQL; this runs it against the real Postgres.
+        run: npx jest tests/unit/infrastructure/rate-limit/prisma-rate-limiter.integration.test.ts --ci
+        env:
+          SKIP_ENV_VALIDATION: "true"
+          RATE_LIMIT_TEST_DATABASE_URL: ${{ env.DATABASE_URL }}
+
       - name: Build Next.js app
         run: npm run build
         env:

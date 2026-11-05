@@ -3,7 +3,7 @@
 // plugins satisfy the interface at runtime. Track: https://github.com/better-auth/better-auth/issues/5637
 import { createHmac } from 'node:crypto'
 
-import { type BetterAuthPlugin, betterAuth } from 'better-auth'
+import { APIError, type BetterAuthPlugin, betterAuth } from 'better-auth'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { nextCookies } from 'better-auth/next-js'
 import { emailOTP, organization } from 'better-auth/plugins'
@@ -12,9 +12,13 @@ import { env } from '~/env'
 import { authOrganizationSchema } from '~/lib/auth-organization-schema'
 import { ac, organizationRoles } from '~/lib/auth-permissions'
 import { sendOrganizationInvitationEmail, sendOtpEmail, sendResetPasswordEmail } from '~/lib/email'
+import { logger } from '~/lib/observability/logger'
+import { areSignupsAllowed, SIGNUPS_DISABLED_MESSAGE } from '~/lib/signups'
 import { db } from '~/server/db'
 
 export const authOrganizationRoles = organizationRoles
+
+const signupsDisabled = !areSignupsAllowed()
 
 // OTPs are stored hashed. Better Auth's built-in 'hashed' mode is an unsalted SHA-256, and a
 // 6-digit code has only 1,000,000 possibilities, so anyone who can read the table could
@@ -140,8 +144,26 @@ export const auth = betterAuth({
   database: prismaAdapter(db, {
     provider: 'postgresql',
   }),
+  // ALLOW_SIGNUPS=false: the per-method flags below stop the known entry points early (email
+  // OTP reports "invalid code" rather than "closed", so no new information leaks), and the
+  // databaseHooks guard is the backstop: every creation path goes through the internal adapter's
+  // createUser, so it blocks email, OTP, social and plugin sign ups, including future ones.
+  databaseHooks: {
+    user: {
+      create: {
+        before: async () => {
+          if (!areSignupsAllowed()) {
+            // No email or other PII: this only tells operators attempts are being blocked.
+            logger.warn('Blocked sign up because ALLOW_SIGNUPS is false', { component: 'auth' })
+            throw new APIError('FORBIDDEN', { message: SIGNUPS_DISABLED_MESSAGE })
+          }
+        },
+      },
+    },
+  },
   emailAndPassword: {
     enabled: true,
+    disableSignUp: signupsDisabled,
     // Users must verify their email (via OTP) before a session is created.
     requireEmailVerification: true,
     // Signing up again with an email that is already registered returns the same generic
@@ -206,6 +228,7 @@ export const auth = betterAuth({
       expiresIn: 600,
       storeOTP: { hash: hashOtp },
       overrideDefaultEmailVerification: true,
+      disableSignUp: signupsDisabled,
     }) as unknown as BetterAuthPlugin,
   ],
 })

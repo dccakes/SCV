@@ -23,4 +23,40 @@ describe('EttaChat', () => {
 
     expect(screen.getByText('offline')).toBeInTheDocument()
   })
+
+  it('tells the user to slow down when the request was rate limited', async () => {
+    mockUseChat.mockReturnValue({
+      messages: [],
+      sendMessage: jest.fn(),
+      status: 'error',
+      error: new Error('{"error":"Too many requests. Please try again later."}'),
+    })
+    const { EttaChat } = await import('~/components/etta/EttaChat')
+
+    render(<EttaChat weddingId='wedding-1' persona='planner' />)
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/sending messages quickly/i)
+  })
+
+  it('shows a plain retry message for any other failure instead of staying silent', async () => {
+    mockUseChat.mockReturnValue({
+      messages: [],
+      sendMessage: jest.fn(),
+      status: 'error',
+      error: new Error('Internal server error'),
+    })
+    const { EttaChat } = await import('~/components/etta/EttaChat')
+
+    render(<EttaChat weddingId='wedding-1' persona='planner' />)
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/couldn't respond just now/i)
+  })
+
+  it('shows no error banner while the chat is healthy', async () => {
+    const { EttaChat } = await import('~/components/etta/EttaChat')
+
+    render(<EttaChat weddingId='wedding-1' persona='planner' />)
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
 })

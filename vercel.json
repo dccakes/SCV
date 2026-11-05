@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/summarize-stale-sessions",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/purge-rate-limits",
+      "schedule": "17 4 * * *"
     }
   ]
 }

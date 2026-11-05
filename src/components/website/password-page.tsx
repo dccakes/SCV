@@ -11,16 +11,31 @@ type PasswordPageProps = {
   verifyWebsitePassword: (passwordInput: string) => Promise<boolean>
 }
 
+// TODO(review-quality): this page's strings are hard-coded English (pre-existing); move them to
+// src/i18n/messages so Spanish-speaking guests see the wrong-password and busy messages in Spanish.
 export default function PasswordPage({ verifyWebsitePassword }: PasswordPageProps) {
   const [passwordInput, setPasswordInput] = useState('')
   const [showError, setShowError] = useState(false)
+  const [showUnavailable, setShowUnavailable] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
 
   const verifyPassword = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setIsSubmitting(true)
-    const isVerified = await verifyWebsitePassword(passwordInput)
+    setShowError(false)
+    setShowUnavailable(false)
+
+    let isVerified = false
+    try {
+      isVerified = await verifyWebsitePassword(passwordInput)
+    } catch {
+      // The server action throws when rate limited (many guests on one network unlocking at
+      // once) or on a transient failure; Next hides the details in production, so keep it generic.
+      setShowUnavailable(true)
+      setIsSubmitting(false)
+      return
+    }
 
     if (!isVerified) {
       setShowError(true)
@@ -75,13 +90,14 @@ export default function PasswordPage({ verifyWebsitePassword }: PasswordPageProp
             Password
           </label>
           <Input
-            aria-describedby={showError ? 'website-password-error' : undefined}
+            aria-describedby={showError || showUnavailable ? 'website-password-error' : undefined}
             autoComplete='current-password'
             autoFocus
             id='website-password'
             name='password'
             onChange={(event) => {
               setShowError(false)
+              setShowUnavailable(false)
               setPasswordInput(event.target.value)
             }}
             placeholder='Enter password…'
@@ -101,6 +117,9 @@ export default function PasswordPage({ verifyWebsitePassword }: PasswordPageProp
           id='website-password-error'
         >
           {showError ? 'Incorrect password. Check the password and try again.' : null}
+          {showUnavailable
+            ? 'Lots of guests are unlocking at once, or something went wrong. Please wait about a minute and try again.'
+            : null}
         </p>
       </form>
     </main>

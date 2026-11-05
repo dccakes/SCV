@@ -6,6 +6,7 @@ import { Toaster as SonnerToaster } from 'sonner'
 
 import { Providers } from '~/app/providers'
 import { Toaster } from '~/components/ui/toaster'
+import { areSignupsAllowed } from '~/lib/signups'
 import { TRPCReactProvider } from '~/trpc/react'
 
 // Design fonts matching the HTML prototype
@@ -91,7 +92,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${cormorantGaramond.variable} ${dmMono.variable} ${instrumentSerif.variable} font-serif antialiased`}
     >
       <body className='bg-background font-serif text-foreground antialiased'>
-        <Providers>
+        <Providers signupsEnabled={areSignupsAllowed()}>
           <TRPCReactProvider>
             {children}
             <Toaster />

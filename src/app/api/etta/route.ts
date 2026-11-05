@@ -9,6 +9,7 @@ import { runEttaAgent } from '~/lib/etta/agent'
 import { logAudit } from '~/lib/etta/utils/audit'
 import { EttaAuthError, resolveEttaAuth } from '~/lib/etta/utils/auth'
 import { logger } from '~/lib/observability/logger'
+import { enforceRateLimit, rateLimitedResponse } from '~/server/infrastructure/rate-limit'
 
 const inferAuthStatus = (error: unknown, message: string): number => {
   if (error instanceof EttaAuthError) {
@@ -34,6 +35,14 @@ export async function POST(req: Request) {
 
   try {
     ettaReq = await resolveEttaAuth(req)
+
+    // Limit per authenticated identity (couple user or guest), not IP: each call costs LLM spend.
+    const identity = ettaReq.authz?.userId ?? `guest:${ettaReq.weddingId}:${ettaReq.guestId}`
+    const limit = await enforceRateLimit('etta', identity)
+    if (!limit.allowed) {
+      return rateLimitedResponse(limit)
+    }
+
     const result = await runEttaAgent(ettaReq)
     return result.toUIMessageStreamResponse()
   } catch (error) {
