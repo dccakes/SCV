@@ -94,6 +94,12 @@ const deleteImage = async (imageKey: string): Promise<{ ok: boolean }> => {
 export default async function DashboardPage() {
   headers() // Make this page dynamic (requires authentication)
 
+  // Legacy page with many inline write controls. View-only users use the current dashboard.
+  const workspace = await api.wedding.getWorkspace()
+  if (!workspace.capabilities.canEditPlanning) {
+    redirect('/dashboard')
+  }
+
   const dashboardData = await api.dashboard.getForActiveWorkspace()
 
   if (dashboardData === null) {
