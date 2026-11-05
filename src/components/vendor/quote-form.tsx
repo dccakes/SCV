@@ -15,6 +15,7 @@ import {
 } from '~/components/ui/select'
 import { Textarea } from '~/components/ui/textarea'
 import { uploadFiles } from '~/lib/blob'
+import { DEFAULT_CURRENCY } from '~/lib/budget/currency'
 import {
   ACCEPTED_TYPES_LABEL,
   DROPZONE_ACCEPT,
@@ -44,6 +45,7 @@ function toDateInputValue(date: Date | string) {
 
 type QuoteFormProps = {
   vendorId: string
+  currency?: string
   onSuccess: () => void
   onCancel: () => void
   mode?: 'create' | 'edit'
@@ -52,6 +54,7 @@ type QuoteFormProps = {
 
 export function QuoteForm({
   vendorId,
+  currency = DEFAULT_CURRENCY,
   onSuccess,
   onCancel,
   mode = 'create',
@@ -182,7 +185,7 @@ export function QuoteForm({
       <div className='grid grid-cols-1 gap-3 sm:grid-cols-3'>
         <label className='space-y-1' htmlFor='quote-price'>
           <span className='font-mono text-[0.55rem] text-muted-foreground uppercase tracking-widest'>
-            Price ($)
+            Price ({currency})
           </span>
           <Input
             id='quote-price'
