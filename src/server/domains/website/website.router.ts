@@ -9,7 +9,7 @@ import { createTRPCRouter, protectedProcedure, publicProcedure } from '~/server/
 import { rsvpSubmissionService, submitPublicRsvpSchema } from '~/server/application/rsvp-submission'
 import { websiteManagementService } from '~/server/application/website-management'
 import { requireActiveWeddingId } from '~/server/authz/active-wedding'
-import { requirePermission } from '~/server/authz/permission-checker'
+import { hasPermission, requirePermission } from '~/server/authz/permission-checker'
 import { websiteService } from '~/server/domains/website'
 import {
   createWebsiteSchema,
@@ -110,7 +110,14 @@ export const websiteRouter = createTRPCRouter({
   getByUserId: protectedProcedure.query(async ({ ctx }) => {
     requirePermission(ctx.authz, { website: ['read'] })
     const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
-    return websiteService.getByWeddingId(weddingId)
+    const website = await websiteService.getByWeddingId(weddingId)
+
+    // The plaintext site password is a secret: only roles that may change it (not viewers)
+    // receive it. The password-enabled flag is still returned so the UI can show the state.
+    if (website && !hasPermission(ctx.authz, { website: ['password_update'] })) {
+      return { ...website, password: null }
+    }
+    return website
   }),
 
   /**

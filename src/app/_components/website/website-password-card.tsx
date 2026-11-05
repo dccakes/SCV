@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Input } from '~/components/ui/input'
@@ -25,6 +26,7 @@ type WebsitePasswordCardProps = Readonly<{
  */
 export function WebsitePasswordCard({ initialIsPasswordEnabled }: WebsitePasswordCardProps) {
   const router = useRouter()
+  const canEdit = useCanEdit()
   const [isEnabled, setIsEnabled] = useState(initialIsPasswordEnabled)
   const [password, setPassword] = useState('')
 
@@ -81,19 +83,30 @@ export function WebsitePasswordCard({ initialIsPasswordEnabled }: WebsitePasswor
         </p>
       </CardHeader>
       <CardContent className='space-y-5'>
-        <div className='flex items-center justify-between gap-4'>
-          <Label htmlFor='website-password-toggle' className='font-medium text-foreground text-sm'>
-            Require a password
-          </Label>
-          <Switch
-            id='website-password-toggle'
-            checked={isEnabled}
-            disabled={isSaving}
-            onCheckedChange={handleToggle}
-          />
-        </div>
+        {canEdit ? (
+          <div className='flex items-center justify-between gap-4'>
+            <Label
+              htmlFor='website-password-toggle'
+              className='font-medium text-foreground text-sm'
+            >
+              Require a password
+            </Label>
+            <Switch
+              id='website-password-toggle'
+              checked={isEnabled}
+              disabled={isSaving}
+              onCheckedChange={handleToggle}
+            />
+          </div>
+        ) : null}
 
-        {isEnabled ? (
+        {!canEdit ? (
+          <p className='font-sans text-muted-foreground text-sm'>
+            {initialIsPasswordEnabled
+              ? 'Your site is password protected.'
+              : 'Anyone with the link can currently view your site.'}
+          </p>
+        ) : isEnabled ? (
           <div className='space-y-2'>
             <Label htmlFor='website-password-input' className='text-foreground/80 text-sm'>
               {initialIsPasswordEnabled ? 'Update guest password' : 'Set a guest password'}

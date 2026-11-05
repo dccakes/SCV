@@ -16,6 +16,7 @@ import Image from 'next/image'
 import { useId, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { Button } from '~/components/ui/button'
 import { MAX_FILE_SIZE } from '~/lib/upload-config'
 
@@ -59,6 +60,7 @@ export function SingleImageUpload({
   label = 'Upload image',
   disabled = false,
 }: SingleImageUploadProps) {
+  const canEdit = useCanEdit()
   const inputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
 
@@ -100,17 +102,19 @@ export function SingleImageUpload({
             className='object-cover'
             sizes='(max-width: 768px) 100vw, 600px'
           />
-          <button
-            type='button'
-            aria-label='Remove image'
-            disabled={disabled || isUploading}
-            onClick={() => onChange(null)}
-            className='absolute top-2 right-2 rounded-full bg-background/85 p-1.5 text-foreground shadow-sm transition-colors hover:bg-destructive hover:text-destructive-foreground'
-          >
-            <X aria-hidden='true' className='h-4 w-4' />
-          </button>
+          {canEdit ? (
+            <button
+              type='button'
+              aria-label='Remove image'
+              disabled={disabled || isUploading}
+              onClick={() => onChange(null)}
+              className='absolute top-2 right-2 rounded-full bg-background/85 p-1.5 text-foreground shadow-sm transition-colors hover:bg-destructive hover:text-destructive-foreground'
+            >
+              <X aria-hidden='true' className='h-4 w-4' />
+            </button>
+          ) : null}
         </div>
-      ) : (
+      ) : canEdit ? (
         <button
           type='button'
           disabled={disabled || isUploading}
@@ -124,8 +128,10 @@ export function SingleImageUpload({
           )}
           <span className='font-sans text-sm'>{isUploading ? 'Uploading…' : label}</span>
         </button>
+      ) : (
+        <p className='font-sans text-muted-foreground text-sm'>No image</p>
       )}
-      {value ? (
+      {value && canEdit ? (
         <Button
           type='button'
           variant='outline'
@@ -154,6 +160,7 @@ export function ImageGalleryUpload({
   maxImages,
   disabled = false,
 }: ImageGalleryUploadProps) {
+  const canEdit = useCanEdit()
   const inputRef = useRef<HTMLInputElement>(null)
   const inputId = useId()
   const [isUploading, setIsUploading] = useState(false)
@@ -205,35 +212,39 @@ export function ImageGalleryUpload({
               className='relative aspect-square overflow-hidden rounded-[10px] border border-border'
             >
               <Image src={url} alt='' fill className='object-cover' sizes='200px' />
-              <button
-                type='button'
-                aria-label='Remove photo'
-                disabled={disabled || isUploading}
-                onClick={() => removeAt(index)}
-                className='absolute top-1.5 right-1.5 rounded-full bg-background/85 p-1 text-foreground shadow-sm transition-colors hover:bg-destructive hover:text-destructive-foreground'
-              >
-                <X aria-hidden='true' className='h-3.5 w-3.5' />
-              </button>
+              {canEdit ? (
+                <button
+                  type='button'
+                  aria-label='Remove photo'
+                  disabled={disabled || isUploading}
+                  onClick={() => removeAt(index)}
+                  className='absolute top-1.5 right-1.5 rounded-full bg-background/85 p-1 text-foreground shadow-sm transition-colors hover:bg-destructive hover:text-destructive-foreground'
+                >
+                  <X aria-hidden='true' className='h-3.5 w-3.5' />
+                </button>
+              ) : null}
             </div>
           ))}
         </div>
       )}
-      <Button
-        type='button'
-        variant='outline'
-        size='sm'
-        disabled={disabled || isUploading || atCapacity}
-        onClick={() => inputRef.current?.click()}
-      >
-        {isUploading ? (
-          <Loader2 aria-hidden='true' className='h-4 w-4 animate-spin' />
-        ) : (
-          <ImagePlus aria-hidden='true' className='h-4 w-4' />
-        )}
-        {atCapacity ? 'Gallery full' : isUploading ? 'Uploading…' : 'Add photos'}
-      </Button>
+      {canEdit ? (
+        <Button
+          type='button'
+          variant='outline'
+          size='sm'
+          disabled={disabled || isUploading || atCapacity}
+          onClick={() => inputRef.current?.click()}
+        >
+          {isUploading ? (
+            <Loader2 aria-hidden='true' className='h-4 w-4 animate-spin' />
+          ) : (
+            <ImagePlus aria-hidden='true' className='h-4 w-4' />
+          )}
+          {atCapacity ? 'Gallery full' : isUploading ? 'Uploading…' : 'Add photos'}
+        </Button>
+      ) : null}
       <p className='font-mono text-[0.58rem] text-foreground/45 tracking-wider'>
-        {values.length}/{maxImages} photos
+        {canEdit ? `${values.length}/${maxImages} photos` : `${values.length} photos`}
       </p>
     </div>
   )

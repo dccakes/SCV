@@ -4,6 +4,7 @@ import { AlertCircle, Check, Copy, ExternalLink } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
@@ -30,6 +31,7 @@ const copyToClipboard = async (value: string) => {
 
 export function WebsiteManager({ initialWebsite, userEmail, defaultSubUrl }: WebsiteManagerProps) {
   const router = useRouter()
+  const canEdit = useCanEdit()
   const utils = api.useUtils()
   const { data: website } = api.website.getByUserId.useQuery(undefined, {
     initialData: initialWebsite,
@@ -89,6 +91,19 @@ export function WebsiteManager({ initialWebsite, userEmail, defaultSubUrl }: Web
             </a>
           </Button>
         </div>
+      </div>
+    )
+  }
+
+  if (!canEdit) {
+    return (
+      <div className='rounded-md border border-border/70 bg-card p-5'>
+        <span className='inline-flex items-center rounded-full bg-muted px-2 py-0.5 font-mono text-[0.58rem] text-foreground/60 uppercase tracking-widest'>
+          Not published
+        </span>
+        <p className='mt-3 text-foreground/75 text-sm leading-relaxed'>
+          The wedding website has not been published yet.
+        </p>
       </div>
     )
   }

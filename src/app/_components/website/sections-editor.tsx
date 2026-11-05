@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { SingleImageUpload } from '~/app/_components/website/image-upload'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader } from '~/components/ui/card'
 import { Input } from '~/components/ui/input'
@@ -84,6 +85,7 @@ type SectionCardProps = {
 
 function SectionCard({ entry, initialContent, initialEnabled }: SectionCardProps) {
   const router = useRouter()
+  const canEdit = useCanEdit()
   const [content, setContent] = useState<WebsiteSectionContent>(initialContent)
   const [isEnabled, setIsEnabled] = useState(initialEnabled)
   const [baseline, setBaseline] = useState(() => JSON.stringify({ initialContent, initialEnabled }))
@@ -119,21 +121,28 @@ function SectionCard({ entry, initialContent, initialEnabled }: SectionCardProps
         </div>
         <div className='flex shrink-0 items-center gap-2'>
           <span className={labelClass}>{isEnabled ? 'On' : 'Off'}</span>
-          <Switch
-            aria-label={`Enable ${entry.label} section`}
-            checked={isEnabled}
-            onCheckedChange={setIsEnabled}
-          />
+          {canEdit ? (
+            <Switch
+              aria-label={`Enable ${entry.label} section`}
+              checked={isEnabled}
+              onCheckedChange={setIsEnabled}
+            />
+          ) : null}
         </div>
       </div>
 
-      <SectionFields type={entry.type} content={content} onChange={setContent} />
+      {/* Viewers see the saved content read-only: the fieldset disables every field. */}
+      <fieldset disabled={!canEdit} className='contents'>
+        <SectionFields type={entry.type} content={content} onChange={setContent} />
+      </fieldset>
 
-      <div className='flex justify-end'>
-        <Button disabled={!hasChanges || upsertSection.isPending} onClick={save} size='sm'>
-          {upsertSection.isPending ? 'Saving…' : 'Save'}
-        </Button>
-      </div>
+      {canEdit ? (
+        <div className='flex justify-end'>
+          <Button disabled={!hasChanges || upsertSection.isPending} onClick={save} size='sm'>
+            {upsertSection.isPending ? 'Saving…' : 'Save'}
+          </Button>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -924,6 +933,10 @@ function AddRowButton({
   onClick: () => void
   disabled?: boolean
 }) {
+  const canEdit = useCanEdit()
+  if (!canEdit) {
+    return null
+  }
   return (
     <Button type='button' variant='outline' size='sm' onClick={onClick} disabled={disabled}>
       <Plus aria-hidden='true' className='h-4 w-4' />
@@ -933,6 +946,10 @@ function AddRowButton({
 }
 
 function RemoveRowButton({ label, onClick }: { label: string; onClick: () => void }) {
+  const canEdit = useCanEdit()
+  if (!canEdit) {
+    return null
+  }
   return (
     <Button
       type='button'

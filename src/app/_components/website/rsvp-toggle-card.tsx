@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Label } from '~/components/ui/label'
 import { Switch } from '~/components/ui/switch'
@@ -17,6 +18,7 @@ type RsvpToggleCardProps = Readonly<{
 
 export function RsvpToggleCard({ websiteId, initialIsRsvpEnabled }: RsvpToggleCardProps) {
   const router = useRouter()
+  const canEdit = useCanEdit()
   const [isRsvpEnabled, setIsRsvpEnabled] = useState(initialIsRsvpEnabled)
 
   const updateIsRsvpEnabled = api.website.updateIsRsvpEnabled.useMutation({
@@ -58,17 +60,19 @@ export function RsvpToggleCard({ websiteId, initialIsRsvpEnabled }: RsvpToggleCa
         </p>
       </CardHeader>
       <CardContent className='space-y-3'>
-        <div className='flex items-center justify-between gap-4'>
-          <Label htmlFor='rsvp-toggle' className='font-medium text-foreground text-sm'>
-            Enable RSVP buttons
-          </Label>
-          <Switch
-            id='rsvp-toggle'
-            checked={isRsvpEnabled}
-            disabled={isSaving}
-            onCheckedChange={handleToggle}
-          />
-        </div>
+        {canEdit ? (
+          <div className='flex items-center justify-between gap-4'>
+            <Label htmlFor='rsvp-toggle' className='font-medium text-foreground text-sm'>
+              Enable RSVP buttons
+            </Label>
+            <Switch
+              id='rsvp-toggle'
+              checked={isRsvpEnabled}
+              disabled={isSaving}
+              onCheckedChange={handleToggle}
+            />
+          </div>
+        ) : null}
 
         <p className='font-sans text-muted-foreground text-sm'>
           {isRsvpEnabled

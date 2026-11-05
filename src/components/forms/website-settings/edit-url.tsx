@@ -5,6 +5,7 @@ import { type Dispatch, type SetStateAction, useState } from 'react'
 import { GoArrowLeft } from 'react-icons/go'
 import { toast } from 'sonner'
 import { sharedStyles } from '~/app/utils/shared-styles'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import AnimatedInputLabel from '~/components/forms/animated-input-label'
 import { api } from '~/trpc/react'
 
@@ -16,6 +17,7 @@ type EditUrlViewProps = {
 export default function EditUrlView({ setShowEditUrlView, websiteUrl }: EditUrlViewProps) {
   const [urlInput, setUrlInput] = useState(websiteUrl ?? '')
   const router = useRouter()
+  const canEdit = useCanEdit()
 
   const updateWebsite = api.website.update.useMutation({
     onSuccess: () => {
@@ -58,25 +60,27 @@ export default function EditUrlView({ setShowEditUrlView, websiteUrl }: EditUrlV
         />
       </div>
 
-      <div
-        className={`fixed bottom-0 flex flex-col gap-3 border-t px-8 py-5 ${sharedStyles.sidebarFormWidth}`}
-      >
-        <button
-          type='button'
-          disabled={updateWebsite.isPending}
-          className={`w-[100%] ${sharedStyles.primaryButton({
-            py: 'py-2',
-            isLoading: updateWebsite.isPending,
-          })}`}
-          onClick={() =>
-            updateWebsite.mutate({
-              subUrl: urlInput,
-            })
-          }
+      {canEdit ? (
+        <div
+          className={`fixed bottom-0 flex flex-col gap-3 border-t px-8 py-5 ${sharedStyles.sidebarFormWidth}`}
         >
-          {updateWebsite.isPending ? 'Processing...' : 'Save'}
-        </button>
-      </div>
+          <button
+            type='button'
+            disabled={updateWebsite.isPending}
+            className={`w-[100%] ${sharedStyles.primaryButton({
+              py: 'py-2',
+              isLoading: updateWebsite.isPending,
+            })}`}
+            onClick={() =>
+              updateWebsite.mutate({
+                subUrl: urlInput,
+              })
+            }
+          >
+            {updateWebsite.isPending ? 'Processing...' : 'Save'}
+          </button>
+        </div>
+      ) : null}
     </div>
   )
 }

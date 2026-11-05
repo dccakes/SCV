@@ -14,6 +14,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { ImageGalleryUpload, SingleImageUpload } from '~/app/_components/website/image-upload'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader } from '~/components/ui/card'
 import { api } from '~/trpc/react'
@@ -31,6 +32,7 @@ export function WebsiteMediaEditor({
   initialCoupleImageUrls,
 }: WebsiteMediaEditorProps) {
   const router = useRouter()
+  const canEdit = useCanEdit()
   const [headerImageUrl, setHeaderImageUrl] = useState(initialHeaderImageUrl)
   const [coupleImageUrls, setCoupleImageUrls] = useState(initialCoupleImageUrls)
 
@@ -73,15 +75,17 @@ export function WebsiteMediaEditor({
             label='Upload header image'
             disabled={updateHeaderImage.isPending}
           />
-          <div className='flex justify-end'>
-            <Button
-              size='sm'
-              disabled={!headerChanged || updateHeaderImage.isPending}
-              onClick={() => updateHeaderImage.mutate({ headerImageUrl })}
-            >
-              {updateHeaderImage.isPending ? 'Saving…' : 'Save header'}
-            </Button>
-          </div>
+          {canEdit ? (
+            <div className='flex justify-end'>
+              <Button
+                size='sm'
+                disabled={!headerChanged || updateHeaderImage.isPending}
+                onClick={() => updateHeaderImage.mutate({ headerImageUrl })}
+              >
+                {updateHeaderImage.isPending ? 'Saving…' : 'Save header'}
+              </Button>
+            </div>
+          ) : null}
         </div>
 
         <div className='space-y-2'>
@@ -92,15 +96,17 @@ export function WebsiteMediaEditor({
             maxImages={MAX_COUPLE_IMAGES}
             disabled={updateCoupleImages.isPending}
           />
-          <div className='flex justify-end'>
-            <Button
-              size='sm'
-              disabled={!galleryChanged || updateCoupleImages.isPending}
-              onClick={() => updateCoupleImages.mutate({ coupleImageUrls })}
-            >
-              {updateCoupleImages.isPending ? 'Saving…' : 'Save photos'}
-            </Button>
-          </div>
+          {canEdit ? (
+            <div className='flex justify-end'>
+              <Button
+                size='sm'
+                disabled={!galleryChanged || updateCoupleImages.isPending}
+                onClick={() => updateCoupleImages.mutate({ coupleImageUrls })}
+              >
+                {updateCoupleImages.isPending ? 'Saving…' : 'Save photos'}
+              </Button>
+            </div>
+          ) : null}
         </div>
       </CardContent>
     </Card>

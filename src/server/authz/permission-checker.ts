@@ -36,3 +36,13 @@ export const requirePermission = (
 
   return { organizationId, role }
 }
+
+/** Non-throwing variant of requirePermission, for shaping responses by role. */
+export const hasPermission = (ctx: AuthzContext, permissions: PermissionInput): boolean => {
+  try {
+    requirePermission(ctx, permissions)
+    return true
+  } catch {
+    return false
+  }
+}

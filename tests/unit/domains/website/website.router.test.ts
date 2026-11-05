@@ -102,14 +102,28 @@ describe('websiteRouter', () => {
   })
 
   describe('getByUserId', () => {
-    it('allows viewer role to read the website', async () => {
-      mockGetByWeddingId.mockResolvedValue({ id: 'website-123', weddingId: 'wedding-123' })
+    it('allows viewer role to read the website without the plaintext password', async () => {
+      mockGetByWeddingId.mockResolvedValue({
+        id: 'website-123',
+        weddingId: 'wedding-123',
+        isPasswordEnabled: true,
+        password: 'secret',
+      })
 
       const caller = makeAuthCaller('user-123', 'wedding-123', 'viewer')
       await expect(caller.getByUserId()).resolves.toEqual({
         id: 'website-123',
         weddingId: 'wedding-123',
+        isPasswordEnabled: true,
+        password: null,
       })
+    })
+
+    it('still returns the password to roles that can change it', async () => {
+      mockGetByWeddingId.mockResolvedValue({ id: 'website-123', password: 'secret' })
+
+      const caller = makeAuthCaller('user-123', 'wedding-123', 'member')
+      await expect(caller.getByUserId()).resolves.toMatchObject({ password: 'secret' })
     })
 
     it('returns the active wedding website for owner role', async () => {

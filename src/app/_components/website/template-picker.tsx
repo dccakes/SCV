@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { cn } from '~/lib/utils'
 import { DEFAULT_TEMPLATE_ID, type TemplateMeta } from '~/templates/catalog'
@@ -17,6 +18,7 @@ type TemplatePickerProps = Readonly<{
 
 export function TemplatePicker({ templates, currentTemplateId }: TemplatePickerProps) {
   const router = useRouter()
+  const canEdit = useCanEdit()
   const [selectedId, setSelectedId] = useState(currentTemplateId ?? DEFAULT_TEMPLATE_ID)
 
   const updateTemplate = api.website.updateTemplate.useMutation({
@@ -57,6 +59,34 @@ export function TemplatePicker({ templates, currentTemplateId }: TemplatePickerP
         <div className='grid gap-4 sm:grid-cols-2'>
           {templates.map((template) => {
             const isSelected = template.id === selectedId
+            if (!canEdit) {
+              // Viewers only see the template currently in use.
+              return isSelected ? (
+                <div
+                  key={template.id}
+                  className='relative flex flex-col gap-3 rounded-[10px] border border-primary bg-background/70 p-4 ring-1 ring-primary'
+                >
+                  <div className='flex gap-1.5' aria-hidden='true'>
+                    {template.swatches.map((swatch) => (
+                      <span
+                        key={`${template.id}-${swatch}`}
+                        className='h-7 w-7 rounded-full border border-black/5'
+                        style={{ backgroundColor: swatch }}
+                      />
+                    ))}
+                  </div>
+                  <div className='space-y-1'>
+                    <p className='font-serif text-foreground text-lg'>{template.name}</p>
+                    <p className='font-sans text-muted-foreground text-sm leading-6'>
+                      {template.description}
+                    </p>
+                  </div>
+                  <span className='font-mono text-[0.58rem] text-foreground/45 uppercase tracking-[0.18em]'>
+                    Current template
+                  </span>
+                </div>
+              ) : null
+            }
             return (
               <button
                 key={template.id}

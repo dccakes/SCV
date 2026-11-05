@@ -4,8 +4,8 @@ import { useRouter } from 'next/navigation'
 import { type Dispatch, type SetStateAction, useState } from 'react'
 import { GoArrowLeft } from 'react-icons/go'
 import { toast } from 'sonner'
-
 import { sharedStyles } from '~/app/utils/shared-styles'
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { api } from '~/trpc/react'
 
 type SetPasswordViewProps = {
@@ -14,7 +14,9 @@ type SetPasswordViewProps = {
 }
 
 export default function SetPasswordView({ setShowPasswordView, password }: SetPasswordViewProps) {
-  const [passwordInput, setPasswordInput] = useState(password ?? '')
+  const canEdit = useCanEdit()
+  // Never load the real password into the form for viewers.
+  const [passwordInput, setPasswordInput] = useState(canEdit ? (password ?? '') : '')
   const router = useRouter()
 
   const updateWebsite = api.website.update.useMutation({
@@ -45,37 +47,45 @@ export default function SetPasswordView({ setShowPasswordView, password }: SetPa
         </div>
       </div>
       <div className='px-5 py-7'>
-        <p className='mb-5 font-thin tracking-tight'>
-          Know who&apos;s in on your wedding plans by adding a password to your site. Make sure
-          it&apos;s easy for guests to remember (and for you to share!).
-        </p>
-        <input
-          placeholder='Guest Password'
-          className='w-[100%] border p-3'
-          value={passwordInput}
-          onChange={(e) => setPasswordInput(e.target.value)}
-        />
+        {canEdit ? (
+          <>
+            <p className='mb-5 font-thin tracking-tight'>
+              Know who&apos;s in on your wedding plans by adding a password to your site. Make sure
+              it&apos;s easy for guests to remember (and for you to share!).
+            </p>
+            <input
+              placeholder='Guest Password'
+              className='w-[100%] border p-3'
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+            />
+          </>
+        ) : (
+          <p className='font-thin tracking-tight'>Your site is password protected.</p>
+        )}
       </div>
-      <div
-        className={`fixed bottom-0 flex flex-col gap-3 border-t px-8 py-5 ${sharedStyles.sidebarFormWidth}`}
-      >
-        <button
-          type='button'
-          disabled={updateWebsite.isPending}
-          className={`w-[100%] ${sharedStyles.primaryButton({
-            py: 'py-2',
-            isLoading: updateWebsite.isPending,
-          })}`}
-          onClick={() =>
-            updateWebsite.mutate({
-              isPasswordEnabled: true,
-              password: passwordInput,
-            })
-          }
+      {canEdit ? (
+        <div
+          className={`fixed bottom-0 flex flex-col gap-3 border-t px-8 py-5 ${sharedStyles.sidebarFormWidth}`}
         >
-          {updateWebsite.isPending ? 'Processing...' : 'Save Changes'}
-        </button>
-      </div>
+          <button
+            type='button'
+            disabled={updateWebsite.isPending}
+            className={`w-[100%] ${sharedStyles.primaryButton({
+              py: 'py-2',
+              isLoading: updateWebsite.isPending,
+            })}`}
+            onClick={() =>
+              updateWebsite.mutate({
+                isPasswordEnabled: true,
+                password: passwordInput,
+              })
+            }
+          >
+            {updateWebsite.isPending ? 'Processing...' : 'Save Changes'}
+          </button>
+        </div>
+      ) : null}
     </div>
   )
 }

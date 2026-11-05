@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
+import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Input } from '~/components/ui/input'
@@ -25,6 +26,7 @@ export function WebsiteEditor({
   publicUrl,
 }: WebsiteEditorProps) {
   const router = useRouter()
+  const canEdit = useCanEdit()
   const [introText, setIntroText] = useState(initialIntroText)
   const [headline, setHeadline] = useState(initialHeadline)
   const [headlineAccent, setHeadlineAccent] = useState(initialHeadlineAccent)
@@ -142,6 +144,7 @@ export function WebsiteEditor({
               <Textarea
                 id='website-hero-headline'
                 maxLength={160}
+                readOnly={!canEdit}
                 name='headline'
                 rows={3}
                 onChange={(event) => setHeadline(event.target.value)}
@@ -163,6 +166,7 @@ export function WebsiteEditor({
               <Input
                 id='website-hero-accent'
                 maxLength={40}
+                readOnly={!canEdit}
                 name='headlineAccent'
                 onChange={(event) => setHeadlineAccent(event.target.value)}
                 placeholder='Here.'
@@ -183,6 +187,7 @@ export function WebsiteEditor({
             <Textarea
               id='website-intro-text'
               maxLength={2000}
+              readOnly={!canEdit}
               name='introText'
               onChange={(event) => setIntroText(event.target.value)}
               placeholder='Welcome guests with a short introduction, weekend note, or practical overview…'
@@ -197,18 +202,20 @@ export function WebsiteEditor({
               </span>
             </div>
           </div>
-          <div className='flex items-center justify-between gap-4 rounded-[8px] border border-border/80 border-dashed bg-muted/20 px-4 py-3'>
-            <div className='flex items-start gap-3'>
-              <Info aria-hidden='true' className='mt-0.5 h-4 w-4 text-foreground/55' />
-              <p className='font-sans text-muted-foreground text-sm leading-6'>
-                Only the hero and intro are saved here. Use the Sections card below to add your
-                story, travel info, registry links, and more.
-              </p>
+          {canEdit ? (
+            <div className='flex items-center justify-between gap-4 rounded-[8px] border border-border/80 border-dashed bg-muted/20 px-4 py-3'>
+              <div className='flex items-start gap-3'>
+                <Info aria-hidden='true' className='mt-0.5 h-4 w-4 text-foreground/55' />
+                <p className='font-sans text-muted-foreground text-sm leading-6'>
+                  Only the hero and intro are saved here. Use the Sections card below to add your
+                  story, travel info, registry links, and more.
+                </p>
+              </div>
+              <Button disabled={!hasChanges || updateHomeSection.isPending} onClick={saveIntro}>
+                {updateHomeSection.isPending ? 'Saving…' : 'Save'}
+              </Button>
             </div>
-            <Button disabled={!hasChanges || updateHomeSection.isPending} onClick={saveIntro}>
-              {updateHomeSection.isPending ? 'Saving…' : 'Save'}
-            </Button>
-          </div>
+          ) : null}
         </CardContent>
       </Card>
     </div>
