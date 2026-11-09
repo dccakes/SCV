@@ -151,6 +151,26 @@ describe('CommunicationLogService', () => {
       expect(result[0].type).toBe('INVITATION_SENT')
     })
 
+    it('omits INVITATION_SENT for auto-created Not Invited placeholder rows', async () => {
+      mockHouseholdFindFirst.mockResolvedValue({ id: 'household-1' })
+      mockFindByHouseholdId.mockResolvedValue([])
+      mockGiftFindMany.mockResolvedValue([])
+      mockInvitationFindMany.mockResolvedValue([
+        {
+          eventId: 'event-1',
+          rsvp: 'Not Invited',
+          invitedAt: new Date('2026-01-01'),
+          submittedAt: null,
+          event: { name: 'Ceremony' },
+          guest: { firstName: 'Jane', lastName: 'Doe' },
+        },
+      ])
+
+      const result = await service.getTimelineForHousehold(actorContext, 'wedding-1', 'household-1')
+
+      expect(result.some((e) => e.type === 'INVITATION_SENT')).toBe(false)
+    })
+
     it('formats RSVP_RECEIVED message with guest name and status', async () => {
       mockHouseholdFindFirst.mockResolvedValue({ id: 'household-1' })
       mockFindByHouseholdId.mockResolvedValue([])

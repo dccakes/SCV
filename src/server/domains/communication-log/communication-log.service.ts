@@ -11,6 +11,7 @@
 // biome-ignore lint/style/noRestrictedImports: cross-domain read-only aggregation requires direct DB access for derived timeline events
 import type { PrismaClient } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
+import { RSVP_STATUS } from '~/lib/constants/rsvp'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 import { requirePermission } from '~/server/authz/permission-checker'
 import type { CommunicationLogRepository } from '~/server/domains/communication-log/communication-log.repository'
@@ -72,13 +73,17 @@ export class CommunicationLogService {
       const eventName = inv.event.name
       const guestName = `${inv.guest.firstName} ${inv.guest.lastName}`
 
-      entries.push({
-        type: 'INVITATION_SENT',
-        message: `Invitation sent for ${eventName}`,
-        date: inv.invitedAt,
-        eventId: inv.eventId,
-        eventName,
-      })
+      // Rows are auto-created as 'Not Invited' placeholders whenever a guest or
+      // event is added, so only rows that moved past that state count as sent.
+      if (inv.rsvp !== RSVP_STATUS.NOT_INVITED) {
+        entries.push({
+          type: 'INVITATION_SENT',
+          message: `Invitation sent for ${eventName}`,
+          date: inv.invitedAt,
+          eventId: inv.eventId,
+          eventName,
+        })
+      }
 
       if (inv.submittedAt) {
         entries.push({
