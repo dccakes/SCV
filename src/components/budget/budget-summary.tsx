@@ -88,6 +88,11 @@ function BudgetSettingsDialog({
       return
     }
 
+    if (currency === currentCurrency && parsed === currentTarget) {
+      setOpen(false)
+      return
+    }
+
     try {
       if (currency !== currentCurrency) {
         await setCurrencyMutation.mutateAsync({ currency })
@@ -185,6 +190,7 @@ export function BudgetSummary({ summary, currency }: Readonly<BudgetSummaryProps
     targetTotal > 0 ? Math.min(100, Math.round((netSpend / targetTotal) * 100)) : 0
   const overBudget = targetTotal > 0 && netSpend > targetTotal
   const canEdit = useCanEdit()
+  const overPlanned = targetTotal > 0 && totalPlanned > targetTotal
 
   return (
     <section className='mb-8'>
@@ -213,7 +219,7 @@ export function BudgetSummary({ summary, currency }: Readonly<BudgetSummaryProps
               className={`h-full rounded-full transition-all ${
                 overBudget ? 'bg-destructive' : 'bg-primary'
               }`}
-              style={{ width: `${Math.max(2, pctOfTarget)}%` }}
+              style={{ width: `${pctOfTarget}%` }}
             />
           </div>
         </div>
@@ -254,6 +260,22 @@ export function BudgetSummary({ summary, currency }: Readonly<BudgetSummaryProps
           }
         />
       </div>
+
+      {overPlanned && (
+        <div className='mt-4 flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2.5'>
+          <span className='mt-0.5 shrink-0 text-destructive text-sm' aria-hidden='true'>
+            ⚠
+          </span>
+          <p className='text-destructive text-xs'>
+            <span className='font-medium'>
+              Section budgets total {formatCurrency(totalPlanned, currency)}
+            </span>
+            {' — '}
+            {formatCurrency(totalPlanned - targetTotal, currency)} over your target.
+            {canEdit && ' Adjust section budgets or increase your target to stay on track.'}
+          </p>
+        </div>
+      )}
     </section>
   )
 }

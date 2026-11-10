@@ -7,6 +7,9 @@ import { EttaChat } from '~/components/etta/EttaChat'
 import { ViewOnlyBanner } from '~/components/layout/view-only-banner'
 import SidebarNavFrame from '~/components/nav/sidebar-nav'
 
+// Below Tailwind's lg breakpoint, Etta renders as a full-screen overlay
+const MOBILE_ETTA_QUERY = '(max-width: 1023px)'
+
 type AuthenticatedSidebarContextValue = {
   openSidebar: () => void
 }
@@ -47,6 +50,10 @@ export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppSh
   } = props
   const [isOpen, setIsOpen] = useState(false)
   const [isEttaPanelOpen, setIsEttaPanelOpen] = useState(showEttaPanel)
+  // The mobile overlay covers the whole page, so it only renders once the
+  // initial open state has been decided on the client. Otherwise it would
+  // flash over the page on every load before the effect below closes it.
+  const [hasResolvedEttaState, setHasResolvedEttaState] = useState(false)
 
   useEffect(() => {
     document.body.classList.add('overflow-hidden')
@@ -54,7 +61,17 @@ export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppSh
   }, [])
 
   useEffect(() => {
+    setHasResolvedEttaState(true)
+
     if (!showEttaPanel) {
+      setIsEttaPanelOpen(false)
+      return
+    }
+
+    // On small screens Etta is a full-screen overlay, so it always starts
+    // closed. The saved preference only applies to the desktop side panel and
+    // is not overwritten here.
+    if (window.matchMedia(MOBILE_ETTA_QUERY).matches) {
       setIsEttaPanelOpen(false)
       return
     }
@@ -64,9 +81,12 @@ export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppSh
   }, [showEttaPanel])
 
   const toggleEttaPanel = useCallback(() => {
+    // Opening or closing the full-screen overlay on a small screen is a one-off
+    // choice, so only the desktop side panel's state is remembered
+    const isSmallScreen = window.matchMedia(MOBILE_ETTA_QUERY).matches
     setIsEttaPanelOpen((prev) => {
       const next = !prev
-      localStorage.setItem('etta-panel-open', String(next))
+      if (!isSmallScreen) localStorage.setItem('etta-panel-open', String(next))
       return next
     })
   }, [])
@@ -76,7 +96,7 @@ export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppSh
     if (!isEttaPanelOpen) return
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && window.matchMedia('(max-width: 1023px)').matches) {
+      if (e.key === 'Escape' && window.matchMedia(MOBILE_ETTA_QUERY).matches) {
         toggleEttaPanel()
       }
     }
@@ -113,7 +133,7 @@ export default function AuthenticatedAppShell(props: Readonly<AuthenticatedAppSh
           </div>
 
           {/* Mobile Etta overlay — full-screen drawer from right */}
-          {showEttaPanel && weddingId && isEttaPanelOpen && (
+          {showEttaPanel && weddingId && isEttaPanelOpen && hasResolvedEttaState && (
             <div
               className='fixed inset-0 z-50 lg:hidden'
               role='dialog'

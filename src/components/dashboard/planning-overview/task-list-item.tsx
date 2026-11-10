@@ -23,6 +23,7 @@ function TaskListItemBase({ task, readOnly = false, onToggle }: TaskListItemProp
     ? {}
     : {
         type: 'button' as const,
+        'aria-pressed': task.done,
         onClick: () => onToggle(task.id),
       }
 

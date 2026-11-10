@@ -25,7 +25,14 @@ jest.mock('next/image', () => ({
   default: ({ src, alt }: { src: string; alt: string }) => <img src={src} alt={alt} />,
 }))
 
+// Mock the blob client and our wrapper so the real @vercel/blob (ESM-only deps) isn't loaded.
 jest.mock('@vercel/blob/client', () => ({ upload: jest.fn() }))
+jest.mock('~/lib/blob', () => ({
+  uploadFiles: jest.fn(),
+  describeUploadError: jest.fn(),
+  describeUploadFailures: jest.fn(),
+  partitionUploadResults: jest.fn(),
+}))
 
 jest.mock('sonner', () => ({ toast: { success: jest.fn(), error: jest.fn() } }))
 

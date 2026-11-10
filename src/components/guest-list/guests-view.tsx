@@ -19,6 +19,7 @@ import {
   type DrawerDraft,
   GuestDetailPanelContent,
 } from '~/components/guest-list/guest-detail-panel-content'
+import { GuestExportMenu } from '~/components/guest-list/guest-export-menu'
 import GuestSearchFilter from '~/components/guest-list/guest-search-filter'
 import type { HouseholdMemberDraft } from '~/components/guest-list/household-members-modal'
 import { GuestDetailDrawer } from '~/components/guest-list/v2/drawer/guest-detail-drawer'
@@ -105,6 +106,12 @@ export default function GuestsView({
   })
   const initializedDrawerHouseholdIdRef = useRef<string | undefined>(undefined)
 
+  // The export always covers every guest, so its count ignores list filters
+  const allGuestCount = useMemo(
+    () => allHouseholds.reduce((count, household) => count + household.guests.length, 0),
+    [allHouseholds]
+  )
+
   const { totalGuests, totalTagAlongs } = useMemo(() => {
     let guests = 0
     let tagAlongs = 0
@@ -146,8 +153,11 @@ export default function GuestsView({
     if (nameSort !== 'none') {
       const direction = nameSort === 'ascending' ? 1 : -1
       return [...filteredHouseholds].sort((a, b) => {
-        const first = (a.guests[0]?.firstName ?? '').localeCompare(b.guests[0]?.firstName ?? '')
-        return first * direction
+        const aFirst =
+          a.guests.find((g) => g.isPrimaryContact)?.firstName ?? a.guests[0]?.firstName ?? ''
+        const bFirst =
+          b.guests.find((g) => g.isPrimaryContact)?.firstName ?? b.guests[0]?.firstName ?? ''
+        return aFirst.localeCompare(bFirst) * direction
       })
     }
 
@@ -659,7 +669,9 @@ export default function GuestsView({
           selectedEventId={selectedEventId}
         />
         {canEdit && (
-          <div className='flex shrink-0 gap-3'>
+          <div className='flex shrink-0 flex-wrap gap-3'>
+            {/* Export needs rsvp:export, which viewers don't have, so it's hidden with the rest. */}
+            <GuestExportMenu events={events} guestCount={allGuestCount} />
             <Button type='button' variant='outline' onClick={onImportClick}>
               Import Guests
             </Button>
@@ -711,11 +723,12 @@ export default function GuestsView({
       <GuestDetailDrawer
         open={isDrawerOpen && selectedHousehold !== undefined}
         onOpenChange={handleDrawerOpenChange}
-        title={
-          selectedHousehold?.guests[0]
-            ? `${selectedHousehold.guests[0].firstName} ${selectedHousehold.guests[0].lastName}`
-            : 'Guest details'
-        }
+        title={(() => {
+          const primary =
+            selectedHousehold?.guests.find((g) => g.isPrimaryContact) ??
+            selectedHousehold?.guests[0]
+          return primary ? `${primary.firstName} ${primary.lastName}` : 'Guest details'
+        })()}
         subtitle={selectedEventId === 'all' ? 'Across all events' : selectedEvent?.name}
         headerMeta={
           <div className='flex flex-wrap gap-1.5'>

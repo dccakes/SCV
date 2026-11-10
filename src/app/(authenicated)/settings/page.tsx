@@ -1,3 +1,5 @@
+import type { Metadata } from 'next'
+
 import { PluginsSettingsCard } from '~/app/_components/settings/plugins-settings-card'
 import DashboardTopbar from '~/components/dashboard/dashboard-topbar'
 import WeddingSettingsForm from '~/components/forms/wedding-settings-form'
@@ -6,6 +8,11 @@ import { OrganizationOutstandingInvitesCard } from '~/components/settings/organi
 import { TelegramConnectCard } from '~/components/settings/telegram-connect-card'
 import { getRequiredWedding } from '~/server/application/authenticated-route/authenticated-route-data'
 import { api } from '~/trpc/server'
+
+export const metadata: Metadata = {
+  title: 'Settings',
+  description: 'Manage your wedding details, plugins, members, and connected apps',
+}
 
 export const dynamic = 'force-dynamic'
 
@@ -65,7 +72,7 @@ export default async function SettingsPage() {
             )}
             <div className='space-y-3'>
               <div>
-                <h3 className='font-serif text-foreground text-xl'>Plugins</h3>
+                <h3 className='font-serif text-foreground text-lg'>Plugins</h3>
                 <p className='mt-1 font-mono text-[0.62rem] text-foreground/55 tracking-wider'>
                   {canEdit
                     ? 'Turn optional workspace features on and off for your wedding.'
@@ -76,7 +83,7 @@ export default async function SettingsPage() {
             </div>
             <div className='space-y-3'>
               <div>
-                <h3 className='font-serif text-foreground text-xl'>Organization Members</h3>
+                <h3 className='font-serif text-foreground text-lg'>Organization Members</h3>
                 <p className='mt-1 font-mono text-[0.62rem] text-foreground/55 tracking-wider'>
                   {canEdit
                     ? 'Invite collaborators and manage access to this workspace.'
@@ -89,7 +96,7 @@ export default async function SettingsPage() {
             {canEdit ? (
               <div className='space-y-3'>
                 <div>
-                  <h3 className='font-serif text-foreground text-xl'>Connected Apps</h3>
+                  <h3 className='font-serif text-foreground text-lg'>Connected Apps</h3>
                   <p className='mt-1 font-mono text-[0.62rem] text-foreground/55 tracking-wider'>
                     Chat with Etta from other apps.
                   </p>

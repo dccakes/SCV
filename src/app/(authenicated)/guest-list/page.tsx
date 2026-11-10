@@ -6,12 +6,11 @@ import { GuestListSkeleton } from '~/components/guest-list/guest-list-skeleton'
 import { getRequiredDashboardOverview } from '~/server/application/authenticated-route/authenticated-route-data'
 
 export const metadata: Metadata = {
-  title: 'Guest List | Your Wedding Website',
+  title: 'Guest List',
   description: 'Manage guests, households, and RSVP details',
-  icons: [{ rel: 'icon', url: '/favicon.ico' }],
 }
 
-export default async function DashboardPage() {
+export default async function GuestListPage() {
   const dashboardData = await getRequiredDashboardOverview()
 
   return (

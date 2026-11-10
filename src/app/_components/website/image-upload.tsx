@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 
 import { useCanEdit } from '~/components/contexts/workspace-capabilities-context'
 import { Button } from '~/components/ui/button'
+import { describeUploadError, describeUploadFailures, partitionUploadResults } from '~/lib/blob'
 import { MAX_FILE_SIZE } from '~/lib/upload-config'
 
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -72,8 +73,8 @@ export function SingleImageUpload({
     try {
       const url = await uploadImage(file)
       onChange(url)
-    } catch {
-      toast.error('Upload failed. Please try again.')
+    } catch (error) {
+      toast.error(describeUploadError(file.name, error))
     } finally {
       setIsUploading(false)
       if (inputRef.current) {
@@ -177,10 +178,15 @@ export function ImageGalleryUpload({
     }
     setIsUploading(true)
     try {
-      const uploaded = await Promise.all(files.map(uploadImage))
-      onChange([...values, ...uploaded])
-    } catch {
-      toast.error('One or more uploads failed. Please try again.')
+      const results = await Promise.allSettled(files.map(uploadImage))
+      const { fulfilled, duplicates, failed } = partitionUploadResults(files, results)
+      if (fulfilled.length > 0) {
+        onChange([...values, ...fulfilled])
+      }
+      const message = describeUploadFailures(duplicates, failed)
+      if (message) {
+        toast.error(message)
+      }
     } finally {
       setIsUploading(false)
       if (inputRef.current) {

@@ -203,6 +203,10 @@ export function TaskDialog({
                 {...register('monthsBeforeWedding')}
                 placeholder='3'
               />
+              <p className='text-muted-foreground text-xs'>
+                How many months before the wedding this task should be done. Use 0 for the wedding
+                month, or −1 for wedding-day tasks.
+              </p>
               {errors.monthsBeforeWedding ? (
                 <p className='text-destructive text-sm'>{errors.monthsBeforeWedding.message}</p>
               ) : null}
@@ -247,7 +251,7 @@ export function TaskDialog({
               Cancel
             </Button>
             <Button type='submit' disabled={isSubmitting}>
-              {mode === 'create' ? 'Save task' : 'Save changes'}
+              {isSubmitting ? 'Saving…' : mode === 'create' ? 'Save task' : 'Save changes'}
             </Button>
           </DialogFooter>
         </form>

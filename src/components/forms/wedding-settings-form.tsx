@@ -35,18 +35,6 @@ export default function WeddingSettingsForm({ initialData }: WeddingSettingsForm
   const canEdit = useCanEdit()
   const utils = api.useUtils()
 
-  const updateDetails = api.wedding.updateDetails.useMutation({
-    onSuccess: () => {
-      toast.success('Names updated successfully.')
-      void utils.dashboard.getForActiveWorkspace.invalidate()
-      void utils.wedding.getDetails.invalidate()
-      router.refresh()
-    },
-    onError: () => {
-      toast.error('Failed to update names. Please try again.')
-    },
-  })
-
   const form = useForm<WeddingSettingsFormData>({
     resolver: zodResolver(updateWeddingDetailsSchema),
     defaultValues: {
@@ -58,7 +46,20 @@ export default function WeddingSettingsForm({ initialData }: WeddingSettingsForm
   })
 
   const { register, handleSubmit, formState } = form
-  const { errors, isSubmitting } = formState
+  const { errors, isSubmitting, isDirty } = formState
+
+  const updateDetails = api.wedding.updateDetails.useMutation({
+    onSuccess: (_data, variables) => {
+      toast.success('Names updated successfully.')
+      form.reset(variables)
+      void utils.dashboard.getForActiveWorkspace.invalidate()
+      void utils.wedding.getDetails.invalidate()
+      router.refresh()
+    },
+    onError: () => {
+      toast.error('Failed to update names. Please try again.')
+    },
+  })
 
   const parsedCeremonyDate = initialData.weddingDate ? new Date(initialData.weddingDate) : null
   const ceremonyDateLabel =
@@ -169,7 +170,7 @@ export default function WeddingSettingsForm({ initialData }: WeddingSettingsForm
               </p>
               <p className='flex items-center gap-2 text-sm'>
                 <MapPin className='h-4 w-4 text-foreground/60' />
-                {initialData.weddingLocation ?? 'No location set'}
+                {initialData.weddingLocation || 'No location set'}
               </p>
             </div>
           </div>
@@ -185,7 +186,11 @@ export default function WeddingSettingsForm({ initialData }: WeddingSettingsForm
       </div>
 
       {canEdit ? (
-        <Button type='submit' disabled={isSubmitting || updateDetails.isPending} className='w-full'>
+        <Button
+          type='submit'
+          disabled={!isDirty || isSubmitting || updateDetails.isPending}
+          className='w-full'
+        >
           {updateDetails.isPending ? (
             <span className='flex items-center gap-2'>
               <LoadingSpinner size={16} /> Saving...

@@ -57,6 +57,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+import { downloadCsv, slugify } from '~/lib/download-csv'
 import { buildSeatingCsv } from '~/lib/seating/seating-csv'
 import {
   getOpenSeats,
@@ -120,21 +121,6 @@ const focusFirstPresent = (keys: ReadonlyArray<string | null>): boolean => {
   }
   return false
 }
-
-const downloadCsv = (fileName: string, csv: string) => {
-  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
-  const link = document.createElement('a')
-  link.href = url
-  link.download = fileName
-  link.click()
-  URL.revokeObjectURL(url)
-}
-
-const slugify = (value: string) =>
-  value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '') || 'event'
 
 export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
   const { events, initialEventId } = props
@@ -465,7 +451,10 @@ export function SeatingChartBuilder(props: Readonly<SeatingChartBuilderProps>) {
   const handleExport = () => {
     if (!chart) return
     const eventName = events.find((event) => event.id === eventId)?.name ?? 'event'
-    downloadCsv(`seating-${slugify(eventName)}.csv`, buildSeatingCsv(chart.tables, allGuests))
+    downloadCsv(
+      `seating-${slugify(eventName, 'event')}.csv`,
+      buildSeatingCsv(chart.tables, allGuests)
+    )
   }
 
   if (events.length === 0) {
