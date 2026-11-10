@@ -205,7 +205,8 @@ async function seed() {
         organizationId: fixture.wedding.organizationId ?? fixture.organization?.id ?? null,
         enabledAddOns: fixture.wedding.enabledAddOns,
         selfFillToken: fixture.wedding.selfFillToken,
-        selfFillTokenGeneratedAt: new Date(fixture.wedding.selfFillTokenGeneratedAt),
+        // Stamp at seed time: tokens expire after 90 days, so a fixed date goes stale.
+        selfFillTokenGeneratedAt: new Date(),
       },
     })
 
