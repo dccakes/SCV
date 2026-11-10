@@ -209,6 +209,35 @@ describe('proxy', () => {
     expect(batchedResponse.headers.get('location')).toBeNull()
   })
 
+  it('allows the /join self-registration tRPC procedures without a session', async () => {
+    mockGetSessionCookie.mockReturnValue(null)
+
+    // /join/[token] is a public page; its lookup and submit calls must not be
+    // redirected to sign-in, or guests see "Link Not Found".
+    const responses = await Promise.all([
+      proxy(createRequest('/api/trpc/selfFill.getByToken', undefined, '?batch=1')),
+      proxy(createRequest('/api/trpc/selfFill.registerGuest', undefined, '?batch=1')),
+      proxy(
+        createRequest('/api/trpc/selfFill.getByToken,selfFill.registerGuest', undefined, '?batch=1')
+      ),
+    ])
+
+    for (const response of responses) {
+      expect(response.headers.get('location')).toBeNull()
+    }
+  })
+
+  it.each([
+    'selfFill.generateToken',
+    'selfFill.revokeToken',
+    'selfFill.getToken',
+  ])('keeps the couple-only %s procedure behind the session', async (procedure) => {
+    mockGetSessionCookie.mockReturnValue(null)
+
+    const response = await proxy(createRequest(`/api/trpc/${procedure}`, undefined, '?batch=1'))
+    expect(response.headers.get('location')).toContain('/auth/sign-in')
+  })
+
   it.each([
     'weekend',
     'stay',
