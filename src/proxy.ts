@@ -15,13 +15,16 @@ const isPostHogProxyPath = (pathname: string): boolean =>
 const PUBLIC_PREFIXES = ['/auth', '/api/auth', '/join', '/blog', '/api/webhooks', '/api/cron']
 
 // Guest-facing tRPC procedures that must be reachable without a session. The
-// wedding-website RSVP flow calls these from the browser; gating them would
-// redirect the request to the sign-in HTML page, which the tRPC client can't
-// parse as JSON. Everything else under /api/trpc stays behind the session gate,
-// and each procedure still enforces its own authorization server-side.
+// wedding-website RSVP flow and the /join/[token] self-registration page call
+// these from the browser; gating them would redirect the request to the sign-in
+// HTML page, which the tRPC client can't parse as JSON. Everything else under
+// /api/trpc stays behind the session gate, and each procedure still enforces its
+// own authorization (and public rate limit) server-side.
 const PUBLIC_TRPC_PROCEDURES = new Set([
   'household.findBySearchPublic',
   'website.submitPublicRsvpForm',
+  'selfFill.getByToken',
+  'selfFill.registerGuest',
 ])
 
 const TRPC_PREFIX = '/api/trpc/'
