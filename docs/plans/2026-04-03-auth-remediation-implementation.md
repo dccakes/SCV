@@ -40,7 +40,9 @@ Role intent:
     budget, website). Cannot write, send invitations, or manage members or the organization.
   - Enforced in `src/lib/auth-permissions.ts`; `canEditPlanning` (`wedding:update`) drives the UI
     via `useCanEdit()`. Etta is hidden for viewers. The website password is not returned to
-    viewers. Upload routes require edit access.
+    viewers. Upload routes require edit access. Pending invitations (invitee emails) are only
+    returned to roles that can invite (owner, admin): Better Auth's list endpoints only check
+    membership, so `src/lib/auth-invitation-privacy.ts` enforces it server-side.
   - Supersedes the earlier "no planning read permissions" option below.
 
 ## Permission Model Rules

@@ -24,6 +24,8 @@ const config: Config = {
   moduleNameMapper: {
     '^~/(.*)$': '<rootDir>/src/$1',
     '^@/(.*)$': '<rootDir>/src/$1',
+    // ESM-only; see the stub for why.
+    '^better-auth/api$': '<rootDir>/tests/unit/stubs/better-auth-api.ts',
   },
 }
 

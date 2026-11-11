@@ -9,6 +9,7 @@ import { nextCookies } from 'better-auth/next-js'
 import { emailOTP, organization } from 'better-auth/plugins'
 
 import { env } from '~/env'
+import { invitationPrivacyPlugin } from '~/lib/auth-invitation-privacy'
 import { authOrganizationSchema } from '~/lib/auth-organization-schema'
 import { ac, organizationRoles } from '~/lib/auth-permissions'
 import { sendOrganizationInvitationEmail, sendOtpEmail, sendResetPasswordEmail } from '~/lib/email'
@@ -134,6 +135,7 @@ export const authPlugins: BetterAuthPlugin[] = [
       })
     },
   }) as unknown as BetterAuthPlugin,
+  invitationPrivacyPlugin,
   nextCookies(),
 ]
 

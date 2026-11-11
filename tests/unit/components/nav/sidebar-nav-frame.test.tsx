@@ -112,7 +112,9 @@ describe('SidebarNavFrame', () => {
   it('hides planning navigation when workspace cannot view planning', () => {
     useWorkspace.mockReturnValue({
       workspace: {
-        role: 'viewer',
+        // A workspace role with no planning access. Real viewers can read planning, so this is
+        // deliberately not 'viewer'.
+        role: 'legacy-role',
         capabilities: {
           canViewPlanning: false,
         },
