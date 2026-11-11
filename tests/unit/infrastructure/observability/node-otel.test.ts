@@ -86,7 +86,7 @@ describe('buildNodeOTelConfig', () => {
     expect(config.spanProcessors?.[1]).toBe('auto')
   })
 
-  it('sends AI SDK spans to PostHog AI observability with content redacted', () => {
+  it('sends AI SDK spans, prompts and outputs included, to PostHog AI observability', () => {
     const config = buildNodeOTelConfig({
       POSTHOG_KEY: 'phc_test',
       POSTHOG_HOST: 'https://posthog.internal.example',
@@ -95,8 +95,6 @@ describe('buildNodeOTelConfig', () => {
     expect(PostHogSpanProcessor).toHaveBeenCalledWith({
       projectToken: 'phc_test',
       host: 'https://posthog.internal.example',
-      // Etta prompts and tool results hold guest PII.
-      privacyMode: true,
     })
     expect(config.spanProcessors).toHaveLength(3)
     // After redaction, so URL scrubbing still runs before every exporter.

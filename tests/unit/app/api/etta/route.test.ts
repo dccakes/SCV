@@ -48,7 +48,14 @@ describe('POST /api/etta rate limiting', () => {
   beforeEach(() => {
     mockEnforce.mockResolvedValue(allowed)
     mockRunEttaAgent.mockResolvedValue({
-      toUIMessageStreamResponse: () => new Response('stream'),
+      stream: new ReadableStream({
+        start(controller) {
+          controller.enqueue({ type: 'text-start', id: 't1' })
+          controller.enqueue({ type: 'text-delta', id: 't1', text: 'streamed reply' })
+          controller.enqueue({ type: 'text-end', id: 't1' })
+          controller.close()
+        },
+      }),
     })
   })
 
@@ -62,7 +69,9 @@ describe('POST /api/etta rate limiting', () => {
     const response = await POST(request())
 
     expect(mockEnforce).toHaveBeenCalledWith('etta', 'u1')
-    expect(await response.text()).toBe('stream')
+    // v7 stateless helpers: the stream is sent as a UI message SSE stream.
+    expect(response.headers.get('x-vercel-ai-ui-message-stream')).toBe('v1')
+    expect(await response.text()).toContain('streamed reply')
   })
 
   it('limits guests per wedding and guest so ids from different weddings cannot collide', async () => {

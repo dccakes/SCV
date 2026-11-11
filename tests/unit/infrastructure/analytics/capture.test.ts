@@ -67,4 +67,8 @@ describe('buildEventProperties', () => {
     ).toBe('sess_1')
     expect(buildEventProperties({ context: anonContext })).not.toHaveProperty('$session_id')
   })
+
+  it('tags the deployment environment so preview traffic can be filtered out', () => {
+    expect(buildEventProperties({ context: anonContext }).environment).toBe('test')
+  })
 })

@@ -1,4 +1,5 @@
 import {
+  deploymentProperties,
   parseSampleRate,
   posthogOtlpUrl,
   resolveServerPostHogTarget,
@@ -80,5 +81,23 @@ describe('POSTHOG_PROXY_PATH', () => {
       `${POSTHOG_PROXY_PATH}/array/:path*`,
       `${POSTHOG_PROXY_PATH}/:path*`,
     ])
+  })
+})
+
+describe('deploymentProperties', () => {
+  it('tags telemetry with the Vercel environment and the deployed commit', () => {
+    expect(
+      deploymentProperties({
+        VERCEL_ENV: 'preview',
+        NODE_ENV: 'production',
+        VERCEL_GIT_COMMIT_SHA: 'abc',
+      })
+    ).toEqual({ environment: 'preview', app_version: 'abc' })
+  })
+
+  it('falls back to NODE_ENV and omits an unknown version', () => {
+    expect(deploymentProperties({ NODE_ENV: 'development' })).toEqual({
+      environment: 'development',
+    })
   })
 })

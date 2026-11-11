@@ -16,8 +16,13 @@ if (token) {
     posthog.init(token, {
       api_host: POSTHOG_PROXY_PATH,
       ui_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
-      defaults: '2026-05-30',
+      // Latest config snapshot. Bump deliberately: each date changes defaults
+      // (see ConfigDefaults in posthog-js).
+      defaults: '2026-08-30',
       capture_exceptions: true,
+      // Explicit, not just the SDK default: anonymous guests must never get a
+      // person profile (the same rule the server applies).
+      person_profiles: 'identified_only',
       // Adds X-POSTHOG-DISTINCT-ID / X-POSTHOG-SESSION-ID to same-origin
       // requests so server spans and errors join this person and replay.
       tracing_headers: [window.location.hostname],
@@ -28,6 +33,9 @@ if (token) {
       },
       debug: process.env.NODE_ENV === 'development',
     })
+    // Same keys the server sets (see deploymentProperties), on every browser
+    // event and exception, so preview traffic can be filtered from production.
+    posthog.register({ environment, app_version: version })
   } catch {
     // Analytics failing to start must not stop hydration.
   }

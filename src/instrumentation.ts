@@ -12,6 +12,11 @@ export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     const { buildNodeOTelConfig } = await import('~/server/infrastructure/observability/node-otel')
     registerOTel(buildNodeOTelConfig())
+    // AI SDK 7 emits no spans until an integration is registered (Etta is Node-only).
+    const { registerAiTelemetry } = await import(
+      '~/server/infrastructure/observability/ai-telemetry'
+    )
+    registerAiTelemetry()
     return
   }
   registerOTel({ serviceName: SERVICE_NAME })

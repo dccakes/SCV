@@ -2,6 +2,7 @@ import { convertToModelMessages } from 'ai'
 import { jwtVerify, SignJWT } from 'jose'
 import { auth } from '~/lib/auth'
 import type { EttaRequest } from '~/lib/etta/types'
+import { POSTHOG_SESSION_ID_HEADER } from '~/lib/observability/config'
 import { resolveWorkspaceScope } from '~/server/application/workspace/workspace-scope'
 import type { AuthzContext } from '~/server/authz/authorization.types'
 
@@ -102,16 +103,39 @@ export async function validateGuestToken(
 
 // ── Request Resolution ──────────────────────────────────────────────────────
 
+/** Client-sent ids only group telemetry, so anything unexpected is dropped, never rejected. */
+const TELEMETRY_ID = /^[A-Za-z0-9_-]{1,128}$/
+
+const telemetryId = (value: unknown): string | undefined =>
+  typeof value === 'string' && TELEMETRY_ID.test(value) ? value : undefined
+
+/**
+ * PostHog AI observability grouping: the `useChat` id (one per conversation)
+ * and the posthog-js session id header (links the trace to its replay).
+ */
+function resolveTelemetryIds(
+  req: Request,
+  body: { id?: unknown }
+): Pick<EttaRequest, 'conversationId' | 'browserSessionId'> {
+  const chatId = telemetryId(body.id)
+  const browserSessionId = telemetryId(req.headers.get(POSTHOG_SESSION_ID_HEADER))
+  return {
+    ...(chatId ? { conversationId: `web:${chatId}` } : {}),
+    ...(browserSessionId ? { browserSessionId } : {}),
+  }
+}
+
 export async function resolveEttaAuth(req: Request): Promise<EttaRequest> {
   const body = await req.json()
   const { messages, persona, guestToken } = body
   const modelMessages = await normalizeMessages(messages)
+  const telemetryIds = resolveTelemetryIds(req, body)
 
   if (persona === 'concierge' && guestToken) {
     const { weddingId, guestId } = await validateGuestToken(guestToken)
-    return { actor: 'guest', weddingId, guestId, messages: modelMessages }
+    return { actor: 'guest', weddingId, guestId, messages: modelMessages, ...telemetryIds }
   }
 
   const { weddingId, authz } = await validateCoupleSession(req.headers)
-  return { actor: 'couple', weddingId, authz, messages: modelMessages }
+  return { actor: 'couple', weddingId, authz, messages: modelMessages, ...telemetryIds }
 }

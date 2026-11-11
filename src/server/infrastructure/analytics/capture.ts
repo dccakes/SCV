@@ -12,6 +12,7 @@
 
 import 'server-only'
 
+import { deploymentProperties } from '~/lib/observability/config'
 import type { ResolvedAnalyticsContext } from '~/server/infrastructure/analytics/analytics-context'
 import { getPostHogServer } from '~/server/infrastructure/analytics/posthog-server'
 
@@ -41,6 +42,7 @@ export function buildEventProperties({
     website_sub_url: context.subUrl ?? null,
     is_authenticated: context.isAuthenticated,
     source: 'backend',
+    ...deploymentProperties(),
     // Don't create person profiles for anonymous guests.
     $process_person_profile: context.isAuthenticated,
     // Shows the event in the browser session's replay and timeline.

@@ -13,14 +13,21 @@
  */
 
 import { gateway } from '@ai-sdk/gateway'
-import { stepCountIs, streamText } from 'ai'
+import { TRPCError } from '@trpc/server'
+import { getHTTPStatusCodeFromError } from '@trpc/server/http'
+import { isStepCount, streamText } from 'ai'
 import { getConciergeTools } from '~/lib/etta/personas/concierge'
 import { getPlannerTools } from '~/lib/etta/personas/planner'
 import type { EttaRequest } from '~/lib/etta/types'
 import { logAudit } from '~/lib/etta/utils/audit'
 import { buildSystemPrompt } from '~/lib/etta/utils/build-system-prompt'
 import { resolveEttaContext } from '~/lib/etta/utils/resolve-context'
+import { deploymentProperties } from '~/lib/observability/config'
 import { logger } from '~/lib/observability/logger'
+import {
+  type AiTelemetryContext,
+  ETTA_TELEMETRY_CONTEXT,
+} from '~/server/infrastructure/observability/ai-telemetry'
 import { captureServerException } from '~/server/infrastructure/observability/capture-exception'
 
 const DEFAULT_MODEL = 'anthropic/claude-haiku-4.5'
@@ -56,7 +63,16 @@ const MEMORY_TOOL_NAMES = ['memory_read', 'memory_write'] as const
 export async function runEttaAgent(req: EttaRequest) {
   assertEttaRuntimeConfig()
 
-  const { actor, weddingId, guestId, authz, messages, toolsetMode = 'full' } = req
+  const {
+    actor,
+    weddingId,
+    guestId,
+    authz,
+    messages,
+    toolsetMode = 'full',
+    conversationId,
+    browserSessionId,
+  } = req
   const startTime = Date.now()
 
   const ctx = await resolveEttaContext({ actor, weddingId, guestId, authz })
@@ -103,29 +119,36 @@ export async function runEttaAgent(req: EttaRequest) {
 
   let stepCount = 0
 
+  // Who and what each AI span belongs to in PostHog (see ai-telemetry.ts).
+  const runtimeContext: AiTelemetryContext = {
+    // Only a verified user may be attached; anonymous guests stay person-less,
+    // matching the product analytics rule.
+    ...(authz?.userId ? { distinctId: authz.userId } : {}),
+    ...(conversationId ? { sessionId: conversationId } : {}),
+    ...(browserSessionId ? { browserSessionId } : {}),
+    properties: {
+      wedding_id: weddingId,
+      persona: actor,
+      model: modelId,
+      toolset_mode: toolsetMode,
+      ...deploymentProperties(),
+    },
+  }
+
   const result = streamText({
     model,
-    system,
+    instructions: system,
     messages,
     tools,
-    stopWhen: stepCountIs(10),
+    stopWhen: isStepCount(10),
     providerOptions,
-    // OpenTelemetry spans per generation, step, and tool call, nested in the
-    // request trace and sent to PostHog AI observability (see node-otel.ts).
-    // Prompts and completions hold guest PII, so only timing, model, token
-    // usage, cost, and tool names are recorded.
-    experimental_telemetry: {
-      isEnabled: true,
+    runtimeContext,
+    // Spans per generation, step, and tool call go to PostHog AI observability
+    // (registered in instrumentation.ts). Prompts, outputs, and tool calls are
+    // recorded (the v7 default) so traces can be read and evaluated.
+    telemetry: {
       functionId: `etta.${actor}`,
-      recordInputs: false,
-      recordOutputs: false,
-      metadata: {
-        wedding_id: weddingId,
-        persona: actor,
-        // PostHog reads this as the generation's person. Only a verified user
-        // may be attached; anonymous guests stay person-less (as in analytics).
-        ...(authz?.userId ? { posthog_distinct_id: authz.userId } : {}),
-      },
+      includeRuntimeContext: ETTA_TELEMETRY_CONTEXT,
     },
     // Errors mid-stream never reach the route's try/catch: the response is
     // already streaming. Without this they'd only hit the console.
@@ -134,7 +157,25 @@ export async function runEttaAgent(req: EttaRequest) {
       logger.error('Etta stream failed', { component: 'etta', ...attributes }, error)
       await captureServerException(error, { userId: authz?.userId, properties: attributes })
     },
-    onStepFinish: async ({ text, toolCalls, toolResults, usage, reasoning }) => {
+    // A throwing tool becomes a tool-error part the model reads and recovers
+    // from, so it never reaches onError. Report the ones that are bugs; expected
+    // 4xx outcomes (permission denied, not found) stay in the AI trace only.
+    onToolExecutionEnd: async ({ toolCall, toolOutput }) => {
+      if (toolOutput.type !== 'tool-error') return
+      const { error } = toolOutput
+      if (error instanceof TRPCError && getHTTPStatusCodeFromError(error) < 500) return
+      await captureServerException(error, {
+        userId: authz?.userId,
+        properties: {
+          source: 'etta-tool',
+          tool_name: toolCall.toolName,
+          persona: actor,
+          model: modelId,
+          wedding_id: weddingId,
+        },
+      })
+    },
+    onStepEnd: async ({ text, toolCalls, toolResults, usage, reasoning }) => {
       stepCount++
 
       // Log tool invocations
@@ -178,7 +219,7 @@ export async function runEttaAgent(req: EttaRequest) {
         },
       })
     },
-    onFinish: async ({ text, usage, steps }) => {
+    onEnd: async ({ text, usage, steps }) => {
       const durationMs = Date.now() - startTime
 
       await logAudit({

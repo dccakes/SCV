@@ -5,6 +5,8 @@
  * and streams a response via the Vercel AI SDK.
  */
 
+import { createUIMessageStreamResponse, toUIMessageStream } from 'ai'
+
 import { runEttaAgent } from '~/lib/etta/agent'
 import { logAudit } from '~/lib/etta/utils/audit'
 import { EttaAuthError, resolveEttaAuth } from '~/lib/etta/utils/auth'
@@ -45,7 +47,9 @@ export async function POST(req: Request) {
     }
 
     const result = await runEttaAgent(ettaReq)
-    return result.toUIMessageStreamResponse()
+    // Error parts are masked as "An error occurred."; the real error goes to
+    // error tracking from streamText's onError (see agent.ts).
+    return createUIMessageStreamResponse({ stream: toUIMessageStream({ stream: result.stream }) })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error'
     const status = inferAuthStatus(error, message)

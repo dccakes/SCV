@@ -30,7 +30,7 @@ jest.mock('@ai-sdk/gateway', () => ({
 }))
 
 jest.mock('ai', () => ({
-  stepCountIs: jest.fn(),
+  isStepCount: jest.fn(),
   streamText: (...args: unknown[]) => mockStreamText(...args),
 }))
 
@@ -44,10 +44,18 @@ jest.mock('~/server/infrastructure/observability/capture-exception', () => ({
   captureServerException: (...args: unknown[]) => mockCaptureServerException(...args),
 }))
 
+import { TRPCError } from '@trpc/server'
+
 import { runEttaAgent } from '~/lib/etta/agent'
 
 type StreamTextArgs = {
-  experimental_telemetry: { metadata: Record<string, unknown> }
+  onToolExecutionEnd: (event: {
+    toolCall: { toolName: string }
+    toolOutput: { type: 'tool-result'; output: unknown } | { type: 'tool-error'; error: unknown }
+  }) => Promise<void> | void
+  instructions: string
+  runtimeContext: Record<string, unknown>
+  telemetry: Record<string, unknown>
   onError: (event: { error: unknown }) => Promise<void> | void
 }
 
@@ -214,10 +222,11 @@ describe('runEttaAgent', () => {
   describe('PostHog AI observability', () => {
     beforeEach(() => {
       process.env.AI_GATEWAY_API_KEY = 'test-key'
+      delete process.env.ETTA_MODEL
       mockStreamText.mockReturnValue({ toUIMessageStreamResponse: jest.fn() })
     })
 
-    it('attributes generations to the signed-in user', async () => {
+    it('passes the system prompt as v7 instructions', async () => {
       await runEttaAgent({
         actor: 'couple',
         weddingId: 'wedding-1',
@@ -225,10 +234,53 @@ describe('runEttaAgent', () => {
         messages: [{ role: 'user', content: 'hi' }],
       })
 
-      expect(lastStreamTextArgs().experimental_telemetry.metadata).toEqual({
-        wedding_id: 'wedding-1',
-        persona: 'couple',
-        posthog_distinct_id: 'user-1',
+      expect(lastStreamTextArgs().instructions).toBe('prompt')
+      expect(lastStreamTextArgs()).not.toHaveProperty('system')
+    })
+
+    it('captures prompts and outputs and opts the PostHog context into telemetry', async () => {
+      await runEttaAgent({
+        actor: 'couple',
+        weddingId: 'wedding-1',
+        authz: { userId: 'user-1', activeOrganization: null },
+        messages: [{ role: 'user', content: 'hi' }],
+      })
+
+      const { telemetry } = lastStreamTextArgs()
+      expect(telemetry).toEqual({
+        functionId: 'etta.couple',
+        includeRuntimeContext: {
+          distinctId: true,
+          sessionId: true,
+          browserSessionId: true,
+          properties: true,
+        },
+      })
+      expect(telemetry).not.toHaveProperty('recordInputs')
+      expect(telemetry).not.toHaveProperty('recordOutputs')
+    })
+
+    it('attributes generations to the user, conversation, and replay session', async () => {
+      await runEttaAgent({
+        actor: 'couple',
+        weddingId: 'wedding-1',
+        authz: { userId: 'user-1', activeOrganization: null },
+        messages: [{ role: 'user', content: 'hi' }],
+        conversationId: 'chat-1',
+        browserSessionId: 'replay-1',
+      })
+
+      expect(lastStreamTextArgs().runtimeContext).toEqual({
+        distinctId: 'user-1',
+        sessionId: 'chat-1',
+        browserSessionId: 'replay-1',
+        properties: {
+          wedding_id: 'wedding-1',
+          persona: 'couple',
+          model: 'anthropic/claude-haiku-4.5',
+          toolset_mode: 'full',
+          environment: 'test',
+        },
       })
     })
 
@@ -236,13 +288,11 @@ describe('runEttaAgent', () => {
       await runEttaAgent({
         actor: 'guest',
         weddingId: 'wedding-1',
-        guestId: 'guest-9',
+        guestId: 9,
         messages: [{ role: 'user', content: 'hi' }],
       })
 
-      expect(lastStreamTextArgs().experimental_telemetry.metadata).not.toHaveProperty(
-        'posthog_distinct_id'
-      )
+      expect(lastStreamTextArgs().runtimeContext).not.toHaveProperty('distinctId')
     })
 
     it('reports stream failures to error tracking', async () => {
@@ -264,6 +314,49 @@ describe('runEttaAgent', () => {
           wedding_id: 'wedding-1',
         }),
       })
+    })
+  })
+
+  describe('tool failures', () => {
+    const run = async () => {
+      process.env.AI_GATEWAY_API_KEY = 'test-key'
+      mockStreamText.mockReturnValue({})
+      await runEttaAgent({
+        actor: 'couple',
+        weddingId: 'wedding-1',
+        authz: { userId: 'user-1', activeOrganization: null },
+        messages: [{ role: 'user', content: 'hi' }],
+      })
+      return lastStreamTextArgs().onToolExecutionEnd
+    }
+
+    beforeEach(() => mockCaptureServerException.mockClear())
+
+    it('reports unexpected tool errors, which the model would otherwise swallow', async () => {
+      const failure = new Error('database unavailable')
+      await (await run())({
+        toolCall: { toolName: 'guest_list' },
+        toolOutput: { type: 'tool-error', error: failure },
+      })
+
+      expect(mockCaptureServerException).toHaveBeenCalledWith(failure, {
+        userId: 'user-1',
+        properties: expect.objectContaining({ source: 'etta-tool', tool_name: 'guest_list' }),
+      })
+    })
+
+    it('skips expected outcomes such as permission denials and successful calls', async () => {
+      const onToolExecutionEnd = await run()
+      await onToolExecutionEnd({
+        toolCall: { toolName: 'budget_write' },
+        toolOutput: { type: 'tool-error', error: new TRPCError({ code: 'FORBIDDEN' }) },
+      })
+      await onToolExecutionEnd({
+        toolCall: { toolName: 'guest_list' },
+        toolOutput: { type: 'tool-result', output: [] },
+      })
+
+      expect(mockCaptureServerException).not.toHaveBeenCalled()
     })
   })
 })

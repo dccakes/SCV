@@ -14,8 +14,13 @@ spans stay local, and logs still go to the console.
 | --- | --- | --- |
 | Traces | Next.js routes and renders, `fetch`, Prisma queries, one span per tRPC procedure, AI SDK (Etta) generations and tool calls | Document load, every `fetch` (including tRPC) |
 | Logs | `logger` from `~/lib/observability/logger` | `posthog.logger` from `posthog-js` |
-| Errors | `onRequestError` (renders, route handlers, server actions), tRPC 5xx, Etta route 5xx and mid-stream failures, Telegram background handler failures | Unhandled errors and rejections, React error boundaries, fetch 5xx and network failures |
-| AI | Etta generations as `$ai_generation` events: model, tokens, cost, latency, tool names, per signed-in user | |
+| Errors | `onRequestError` (renders, route handlers, server actions), tRPC 5xx, Etta route 5xx, mid-stream failures, and unexpected tool errors, Telegram background handler failures | Unhandled errors and rejections, React error boundaries, fetch 5xx and network failures |
+| AI | Etta generations as `$ai_generation` events: prompts, outputs, tool calls and results, model, tokens, cost, latency; per signed-in user, grouped by conversation, linked to the replay | |
+
+Every server event, exception, and AI span carries `environment`
+(`VERCEL_ENV`, else `NODE_ENV`) and `app_version` (the deployed commit); the
+browser registers the same two keys as super properties. Preview and local
+traffic share the project with production, so filter on `environment`.
 
 ### One trace, browser to database
 
@@ -54,19 +59,37 @@ exporter is added alongside `@vercel/otel`'s defaults, not instead of them.
 
 ## AI observability (Etta)
 
-Etta runs on the Vercel AI SDK with `experimental_telemetry` on. Its spans go to
-two places:
+Etta runs on Vercel AI SDK 7. In v7 the `ai` package emits no spans on its own:
+`registerAiTelemetry()` (`ai-telemetry.ts`, called from `instrumentation.ts` in
+the Node runtime) registers the `@ai-sdk/otel` integration once, after which
+every AI SDK call is traced. Spans go to two places:
 
 - PostHog distributed tracing, as part of the request trace (like every span).
 - PostHog AI observability, through `PostHogSpanProcessor` from `@posthog/ai/otel`
-  in `node-otel.ts`. It only forwards AI spans (`ai.*`, `gen_ai.*`) to
-  `<host>/i/v0/ai/otel`, where PostHog turns them into `$ai_generation` events
-  with model, token usage, cost, and latency. The plain tracing endpoint does
-  not do that conversion, which is why this processor exists.
+  in `node-otel.ts`. It only forwards AI spans (`gen_ai.*`, `ai.*`) to
+  `<host>/i/v0/ai/otel`, where PostHog turns them into `$ai_generation` events.
+  The plain tracing endpoint does not do that conversion.
 
-Each generation is attributed to the signed-in user via the
-`posthog_distinct_id` telemetry metadata key. Anonymous guests get no person,
-matching the analytics rule. `wedding_id` and `persona` ride along as metadata.
+Prompts, outputs, tool arguments, and tool results are recorded (the v7
+default), so traces can be read, searched, and evaluated in PostHog.
+
+Each call passes a `runtimeContext` that `enrichAiSpan` maps onto the attributes
+PostHog reads. v7 drops runtime context from telemetry unless the call lists it
+in `telemetry.includeRuntimeContext` (`ETTA_TELEMETRY_CONTEXT`).
+
+| Context field | PostHog attribute | Source |
+| --- | --- | --- |
+| `distinctId` | `posthog.distinct_id` | Signed-in user id. Omitted for anonymous guests, so no person is attached. |
+| `sessionId` | `$ai_session_id` | Conversation: `web:<useChat id>` or `telegram:<identity id>`. Groups a chat's calls into one AI session. |
+| `browserSessionId` | `$session_id` | posthog-js `X-POSTHOG-SESSION-ID` header; links the trace to the session replay. |
+| `properties` | same keys | `wedding_id`, `persona`, `model`, `toolset_mode`, `environment`, `app_version`. |
+
+Trace names come from the root span, which is named after the function id
+(`invoke_agent etta.couple`, `etta.guest`, `etta.couple-bot`).
+
+Failures surface in error tracking as well as in the trace: `onError` reports
+mid-stream failures, and `onToolExecutionEnd` reports tools that threw, except
+expected 4xx outcomes such as a `FORBIDDEN` permission check.
 
 When `@vercel/otel` ends a sampled root span it flushes every span processor
 through `waitUntil`, so AI spans are not lost when a serverless function
@@ -120,11 +143,12 @@ control.
   (`/bot<id>:<secret>/`) becomes `/bot[REDACTED]/`. Add a pattern to
   `sanitizeTelemetryText` in `node-otel.ts` for any new client that puts
   credentials in a path.
-- Etta AI spans record model, timing, token usage, and tool names, but not
-  prompts or completions (`recordInputs`/`recordOutputs` are off). The AI
-  observability processor also runs in `privacyMode`, which strips tool
-  arguments, tool results, and error messages, so turning `recordInputs` on
-  later would not leak guest PII to PostHog by itself.
+- Etta AI spans **do** record prompts, completions, tool arguments, and tool
+  results, which include guest names, dietary answers, and other wedding data.
+  They go to PostHog (US cloud) like session replays do. To stop that for a
+  call, set `telemetry.recordInputs` / `recordOutputs` to `false` in
+  `agent.ts`; to strip content for every call, pass `privacyMode: true` to
+  `PostHogSpanProcessor` in `node-otel.ts`.
 - Prisma spans include SQL text with parameters as placeholders, not values.
 - Path segments are kept as-is (for example `/join/<token>`); PostHog pageviews
   already record the same URLs.
@@ -138,7 +162,8 @@ control.
 | `src/server/infrastructure/observability/trpc-tracing.ts` | Per-procedure tRPC spans |
 | `src/server/infrastructure/observability/capture-exception.ts` | Server exceptions to PostHog |
 | `src/server/infrastructure/observability/request-context.ts` | Serverless `waitUntil` lookup shared by log flushing and posthog-node |
-| `src/lib/etta/agent.ts` | Etta telemetry metadata (user, wedding) and mid-stream error capture |
+| `src/server/infrastructure/observability/ai-telemetry.ts` | Registers `@ai-sdk/otel`; maps call context to PostHog AI attributes |
+| `src/lib/etta/agent.ts` | Etta runtime context (user, conversation, replay, wedding); stream and tool error capture |
 | `src/posthog-sourcemaps.js` | Opt-in source map upload config for `withPostHogConfig` |
 | `src/lib/observability/logger.ts` | Server/Edge OTel logger |
 | `instrumentation-client.ts` | posthog-js init (errors, logs, tracing headers); lazy-loads browser tracing |
@@ -166,6 +191,9 @@ exceptions are flushed explicitly before returning.
    server route span, the `trpc <procedure>` span, and Prisma spans should share
    one trace.
 5. Check PostHog Logs for records carrying that trace id.
+6. Send Etta a message and check AI observability: a trace named
+   `invoke_agent etta.couple` with the prompt, reply, tool calls, cost, and
+   your user, in a session keyed `web:<chat id>`.
 
 posthog-js drops events from headless or automated browsers (bot filtering),
 so browser errors won't appear from a default Playwright run.

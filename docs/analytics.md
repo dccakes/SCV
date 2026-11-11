@@ -93,6 +93,10 @@ the app hydrates (the Next.js App Router client-instrumentation convention).
 It captures pageviews/pageleaves and exceptions via PostHog's bundled
 `defaults`, so no manual pageview wiring is needed.
 
+Every browser event also carries `environment` and `app_version` (registered
+as super properties at init) so preview traffic can be filtered from
+production; server events set the same two keys.
+
 `src/lib/analytics/posthog-client.tsx` (`PostHogProvider`, mounted once in the
 root layout, covering both the authenticated product and the public wedding
 templates) does **not** initialize the client — it only syncs PostHog identity

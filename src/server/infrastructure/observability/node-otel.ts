@@ -197,13 +197,11 @@ export function buildNodeOTelConfig(env: EnvLike = process.env): Configuration {
   // Only exports AI spans (`ai.*`, `gen_ai.*`); everything else is dropped.
   // `@vercel/otel` flushes every span processor through `waitUntil` when a
   // sampled root span ends, so serverless invocations don't lose them.
+  // Prompts, outputs, and tool calls are captured (AI SDK v7 records them by
+  // default); PostHog AI observability needs them for traces and evals.
   const aiObservability = new PostHogSpanProcessor({
     projectToken: target.token,
     host: target.host,
-    // Etta prompts, outputs, and tool results hold guest PII. The AI SDK
-    // already records no inputs/outputs; this also strips tool arguments,
-    // results, and error messages if that setting ever changes.
-    privacyMode: true,
   })
 
   return {

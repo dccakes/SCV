@@ -66,3 +66,23 @@ export function parseSampleRate(value: string | undefined, fallback = 1): number
   const rate = Number(value)
   return Number.isFinite(rate) && rate >= 0 && rate <= 1 ? rate : fallback
 }
+
+export interface DeploymentProperties {
+  environment?: string
+  app_version?: string
+}
+
+/**
+ * Deployment tags for server events, exceptions, and AI spans: the Vercel
+ * environment (`production`, `preview`, `development`) and the deployed commit.
+ * Lets one PostHog project hold preview and production traffic and still filter
+ * them apart. The browser registers the same keys as super properties.
+ */
+export function deploymentProperties(env: EnvLike = process.env): DeploymentProperties {
+  const environment = nonBlank(env.VERCEL_ENV) ?? nonBlank(env.NODE_ENV)
+  const appVersion = nonBlank(env.VERCEL_GIT_COMMIT_SHA)
+  return {
+    ...(environment ? { environment } : {}),
+    ...(appVersion ? { app_version: appVersion } : {}),
+  }
+}
