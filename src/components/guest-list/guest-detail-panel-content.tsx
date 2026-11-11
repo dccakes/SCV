@@ -444,6 +444,8 @@ function InvitationRsvpSelect(props: Readonly<InvitationRsvpSelectProps>) {
     onSuccess: () => {
       void utils.dashboard.getForActiveWorkspace.invalidate()
       void utils.event.getAllByUserIdWithStats.invalidate()
+      // The log's "Invitation sent" entries depend on RSVP status, so refresh it too.
+      void utils.communicationLog.getByHouseholdId.invalidate()
       router.refresh()
     },
     onError: () => {
