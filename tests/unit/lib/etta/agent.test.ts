@@ -295,6 +295,24 @@ describe('runEttaAgent', () => {
       expect(lastStreamTextArgs().runtimeContext).not.toHaveProperty('distinctId')
     })
 
+    it('links Etta errors to the session replay the chat came from', async () => {
+      await runEttaAgent({
+        actor: 'couple',
+        weddingId: 'wedding-1',
+        authz: { userId: 'user-1', activeOrganization: null },
+        messages: [{ role: 'user', content: 'hi' }],
+        browserSessionId: 'replay-1',
+      })
+      const failure = new Error('provider overloaded')
+
+      await lastStreamTextArgs().onError({ error: failure })
+
+      expect(mockCaptureServerException).toHaveBeenCalledWith(
+        failure,
+        expect.objectContaining({ userId: 'user-1', sessionId: 'replay-1' })
+      )
+    })
+
     it('reports stream failures to error tracking', async () => {
       await runEttaAgent({
         actor: 'couple',

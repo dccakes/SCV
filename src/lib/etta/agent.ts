@@ -155,7 +155,11 @@ export async function runEttaAgent(req: EttaRequest) {
     onError: async ({ error }) => {
       const attributes = { source: 'etta', persona: actor, model: modelId, wedding_id: weddingId }
       logger.error('Etta stream failed', { component: 'etta', ...attributes }, error)
-      await captureServerException(error, { userId: authz?.userId, properties: attributes })
+      await captureServerException(error, {
+        userId: authz?.userId,
+        sessionId: browserSessionId,
+        properties: attributes,
+      })
     },
     // A throwing tool becomes a tool-error part the model reads and recovers
     // from, so it never reaches onError. Report the ones that are bugs; expected
@@ -166,6 +170,7 @@ export async function runEttaAgent(req: EttaRequest) {
       if (error instanceof TRPCError && getHTTPStatusCodeFromError(error) < 500) return
       await captureServerException(error, {
         userId: authz?.userId,
+        sessionId: browserSessionId,
         properties: {
           source: 'etta-tool',
           tool_name: toolCall.toolName,

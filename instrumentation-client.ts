@@ -32,10 +32,13 @@ if (token) {
         serviceVersion: version,
       },
       debug: process.env.NODE_ENV === 'development',
+      // Same keys the server sets (see deploymentProperties), on every browser
+      // event and exception, so preview traffic can be filtered from production.
+      // `loaded` runs before posthog-js sends anything, so even the first event has them.
+      loaded: (instance) => {
+        instance.register({ environment, app_version: version })
+      },
     })
-    // Same keys the server sets (see deploymentProperties), on every browser
-    // event and exception, so preview traffic can be filtered from production.
-    posthog.register({ environment, app_version: version })
   } catch {
     // Analytics failing to start must not stop hydration.
   }

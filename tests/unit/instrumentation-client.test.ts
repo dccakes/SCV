@@ -1,10 +1,8 @@
 const mockInit = jest.fn()
-const mockRegister = jest.fn()
 jest.mock('posthog-js', () => ({
   __esModule: true,
   default: {
     init: (...a: unknown[]) => mockInit(...a),
-    register: (...a: unknown[]) => mockRegister(...a),
   },
 }))
 jest.mock('~/lib/observability/browser-tracing', () => ({ initBrowserTracing: jest.fn() }))
@@ -48,9 +46,13 @@ describe('instrumentation-client', () => {
     )
   })
 
-  it('tags every browser event with the deployment environment and version', () => {
+  it('tags every browser event, from the first one, with the deployment environment and version', () => {
     loadWithToken('phc_test')
-    expect(mockRegister).toHaveBeenCalledWith({
+    // Registered in `loaded`, which runs before posthog-js sends its first event.
+    const { loaded } = mockInit.mock.calls.at(-1)?.[1] as { loaded: (ph: unknown) => void }
+    const instance = { register: jest.fn() }
+    loaded(instance)
+    expect(instance.register).toHaveBeenCalledWith({
       environment: 'development',
       app_version: 'development',
     })
