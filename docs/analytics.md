@@ -74,8 +74,13 @@ successful mutation across every router** emits an event automatically:
   size is capped. (This can be removed later once testing is complete.)
 - Anonymous guests do **not** create person profiles
   (`$process_person_profile: false`).
+- `$session_id` from the posthog-js `X-POSTHOG-SESSION-ID` header, when the
+  browser sent one, so backend events appear in that session's replay. It is
+  client-sent, so it only links a session; it never picks the person.
 
 Capture is best-effort and never throws — analytics can never break a request.
+posthog-node is created with `waitUntil`, so on Vercel the invocation stays
+alive until queued events are sent instead of freezing mid-upload.
 
 The one guest-facing flow that does not go through tRPC (the household invite
 "update your details" **server action**) is instrumented directly in

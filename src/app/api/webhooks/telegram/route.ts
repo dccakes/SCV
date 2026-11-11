@@ -13,6 +13,7 @@ import { logger } from '~/lib/observability/logger'
 import type { TelegramUpdate } from '~/lib/telegram/types'
 import { getTelegramHandler, getTelegramRateLimiter } from '~/server/application/messaging'
 import { captureServerEvent } from '~/server/infrastructure/analytics/capture'
+import { captureServerException } from '~/server/infrastructure/observability/capture-exception'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -61,6 +62,10 @@ export async function POST(req: Request): Promise<Response> {
       await handler.handle(update)
     } catch (error) {
       logger.error('Telegram webhook handler failed', { component: 'telegram-webhook' }, error)
+      // The webhook already returned 200, so nothing else would surface this.
+      await captureServerException(error, {
+        properties: { source: 'telegram-webhook', update_id: update.update_id },
+      })
     }
   })
 

@@ -9,6 +9,7 @@ import { runEttaAgent } from '~/lib/etta/agent'
 import { logAudit } from '~/lib/etta/utils/audit'
 import { EttaAuthError, resolveEttaAuth } from '~/lib/etta/utils/auth'
 import { logger } from '~/lib/observability/logger'
+import { captureServerException } from '~/server/infrastructure/observability/capture-exception'
 import { enforceRateLimit, rateLimitedResponse } from '~/server/infrastructure/rate-limit'
 
 const inferAuthStatus = (error: unknown, message: string): number => {
@@ -48,6 +49,19 @@ export async function POST(req: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error'
     const status = inferAuthStatus(error, message)
+
+    // Auth, scope, and missing-config outcomes are expected; anything else is a bug.
+    if (status >= 500) {
+      await captureServerException(error, {
+        userId: ettaReq?.authz?.userId,
+        properties: {
+          source: 'etta-route',
+          status,
+          persona: ettaReq?.actor,
+          wedding_id: ettaReq?.weddingId,
+        },
+      })
+    }
 
     // Only write audit log if we have a valid weddingId (FK constraint)
     if (ettaReq?.weddingId) {

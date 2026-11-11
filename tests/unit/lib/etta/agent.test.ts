@@ -39,7 +39,20 @@ jest.mock('~/lib/etta/utils/audit', () => ({
   logAudit: (...args: unknown[]) => mockLogAudit(...args),
 }))
 
+const mockCaptureServerException = jest.fn()
+jest.mock('~/server/infrastructure/observability/capture-exception', () => ({
+  captureServerException: (...args: unknown[]) => mockCaptureServerException(...args),
+}))
+
 import { runEttaAgent } from '~/lib/etta/agent'
+
+type StreamTextArgs = {
+  experimental_telemetry: { metadata: Record<string, unknown> }
+  onError: (event: { error: unknown }) => Promise<void> | void
+}
+
+const lastStreamTextArgs = (): StreamTextArgs =>
+  mockStreamText.mock.calls.at(-1)?.[0] as StreamTextArgs
 
 describe('runEttaAgent', () => {
   const originalGatewayKey = process.env.AI_GATEWAY_API_KEY
@@ -195,6 +208,62 @@ describe('runEttaAgent', () => {
         expect.anything(),
         expect.objectContaining({ toolsetMode: 'memory-only' })
       )
+    })
+  })
+
+  describe('PostHog AI observability', () => {
+    beforeEach(() => {
+      process.env.AI_GATEWAY_API_KEY = 'test-key'
+      mockStreamText.mockReturnValue({ toUIMessageStreamResponse: jest.fn() })
+    })
+
+    it('attributes generations to the signed-in user', async () => {
+      await runEttaAgent({
+        actor: 'couple',
+        weddingId: 'wedding-1',
+        authz: { userId: 'user-1', activeOrganization: null },
+        messages: [{ role: 'user', content: 'hi' }],
+      })
+
+      expect(lastStreamTextArgs().experimental_telemetry.metadata).toEqual({
+        wedding_id: 'wedding-1',
+        persona: 'couple',
+        posthog_distinct_id: 'user-1',
+      })
+    })
+
+    it('never attaches a person to anonymous guest generations', async () => {
+      await runEttaAgent({
+        actor: 'guest',
+        weddingId: 'wedding-1',
+        guestId: 'guest-9',
+        messages: [{ role: 'user', content: 'hi' }],
+      })
+
+      expect(lastStreamTextArgs().experimental_telemetry.metadata).not.toHaveProperty(
+        'posthog_distinct_id'
+      )
+    })
+
+    it('reports stream failures to error tracking', async () => {
+      await runEttaAgent({
+        actor: 'couple',
+        weddingId: 'wedding-1',
+        authz: { userId: 'user-1', activeOrganization: null },
+        messages: [{ role: 'user', content: 'hi' }],
+      })
+      const failure = new Error('provider overloaded')
+
+      await lastStreamTextArgs().onError({ error: failure })
+
+      expect(mockCaptureServerException).toHaveBeenCalledWith(failure, {
+        userId: 'user-1',
+        properties: expect.objectContaining({
+          source: 'etta',
+          persona: 'couple',
+          wedding_id: 'wedding-1',
+        }),
+      })
     })
   })
 })

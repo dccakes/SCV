@@ -9,6 +9,9 @@
  * - an OTLP trace exporter to PostHog distributed tracing,
  * - an OTLP log exporter to PostHog Logs, registered as the global
  *   LoggerProvider used by `~/lib/observability/logger`,
+ * - PostHog AI observability: AI SDK (Etta) spans also go to PostHog's AI
+ *   endpoint, which turns them into `$ai_generation` events (cost, tokens,
+ *   latency per model call). The distributed-tracing endpoint does not.
  * - Prisma spans for every query,
  * - PostHog person/session attributes on root spans,
  * - redaction of URLs in span names and attributes before any exporter.
@@ -17,6 +20,7 @@
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http'
 import { BatchLogRecordProcessor, type LogRecordProcessor } from '@opentelemetry/sdk-logs'
 import type { ReadableSpan, SpanProcessor } from '@opentelemetry/sdk-trace-base'
+import { PostHogSpanProcessor } from '@posthog/ai/otel'
 import { PrismaInstrumentation } from '@prisma/instrumentation'
 import { type Configuration, OTLPHttpProtoTraceExporter } from '@vercel/otel'
 
@@ -29,27 +33,9 @@ import {
   resolveServerPostHogTarget,
   SERVICE_NAME,
 } from '~/lib/observability/config'
+import { currentRequestContext } from '~/server/infrastructure/observability/request-context'
 
 type EnvLike = Readonly<Record<string, string | undefined>>
-
-type WaitUntil = (promise: Promise<unknown>) => void
-
-const REQUEST_CONTEXT_SYMBOLS = [
-  Symbol.for('@vercel/request-context'), // Vercel functions (what @vercel/otel reads)
-  Symbol.for('@next/request-context'), // Next.js builtin context, when a host platform provides it
-]
-
-function currentRequestContext(): { waitUntil?: WaitUntil } | undefined {
-  const globals = globalThis as unknown as Record<
-    symbol,
-    { get?: () => { waitUntil?: WaitUntil } | undefined } | undefined
-  >
-  for (const symbol of REQUEST_CONTEXT_SYMBOLS) {
-    const context = globals[symbol]?.get?.()
-    if (context?.waitUntil) return context
-  }
-  return undefined
-}
 
 /**
  * Flushes logs before a serverless function freezes, independent of tracing.
@@ -208,8 +194,21 @@ export function buildNodeOTelConfig(env: EnvLike = process.env): Configuration {
     })
   )
 
+  // Only exports AI spans (`ai.*`, `gen_ai.*`); everything else is dropped.
+  // `@vercel/otel` flushes every span processor through `waitUntil` when a
+  // sampled root span ends, so serverless invocations don't lose them.
+  const aiObservability = new PostHogSpanProcessor({
+    projectToken: target.token,
+    host: target.host,
+    // Etta prompts, outputs, and tool results hold guest PII. The AI SDK
+    // already records no inputs/outputs; this also strips tool arguments,
+    // results, and error messages if that setting ever changes.
+    privacyMode: true,
+  })
+
   return {
     ...base,
+    spanProcessors: [...(base.spanProcessors ?? []), aiObservability],
     traceExporter: new OTLPHttpProtoTraceExporter({
       url: posthogOtlpUrl(target.host, 'traces'),
       headers,

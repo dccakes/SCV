@@ -1,3 +1,4 @@
+import { withPostHogConfig } from '@posthog/nextjs-config'
 import createNextIntlPlugin from 'next-intl/plugin'
 
 /**
@@ -7,6 +8,8 @@ import createNextIntlPlugin from 'next-intl/plugin'
 // biome-ignore lint/style/noRestrictedImports: Next.js config requires relative import
 await import('./src/env.js')
 
+// biome-ignore lint/style/noRestrictedImports: Next.js config requires relative import
+import { buildPostHogSourcemapConfig } from './src/posthog-sourcemaps.js'
 // biome-ignore lint/style/noRestrictedImports: Next.js config requires relative import
 import { buildSecurityHeaders } from './src/security-headers.js'
 
@@ -82,4 +85,10 @@ const config = {
   },
 }
 
-export default withNextIntl(config)
+// Opt-in PostHog error tracking source map upload (see src/posthog-sourcemaps.js).
+// Must stay the outermost wrapper, or its build hooks are dropped.
+const posthogSourcemaps = buildPostHogSourcemapConfig()
+
+export default posthogSourcemaps
+  ? withPostHogConfig(withNextIntl(config), posthogSourcemaps)
+  : withNextIntl(config)

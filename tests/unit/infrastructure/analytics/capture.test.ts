@@ -60,4 +60,11 @@ describe('buildEventProperties', () => {
     expect(props.guest_token).toBeNull()
     expect(props.household_id).toBeNull()
   })
+
+  it('links the event to the browser session replay when known', () => {
+    expect(
+      buildEventProperties({ context: { ...anonContext, sessionId: 'sess_1' } }).$session_id
+    ).toBe('sess_1')
+    expect(buildEventProperties({ context: anonContext })).not.toHaveProperty('$session_id')
+  })
 })

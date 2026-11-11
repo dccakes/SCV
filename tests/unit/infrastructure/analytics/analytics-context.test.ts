@@ -69,4 +69,15 @@ describe('extractAnalyticsContext', () => {
       })
     ).not.toThrow()
   })
+
+  describe('session replay link', () => {
+    it('reads the posthog-js session id header so backend events join the replay', () => {
+      const headers = new Headers({ 'x-posthog-session-id': 'sess_1' })
+      expect(extractAnalyticsContext({ ctx: { headers }, input: {} }).sessionId).toBe('sess_1')
+    })
+
+    it('omits the session when the browser sent none (server callers, SDK disabled)', () => {
+      expect(extractAnalyticsContext({ ctx: {}, input: {} })).not.toHaveProperty('sessionId')
+    })
+  })
 })

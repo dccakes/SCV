@@ -43,6 +43,8 @@ export function buildEventProperties({
     source: 'backend',
     // Don't create person profiles for anonymous guests.
     $process_person_profile: context.isAuthenticated,
+    // Shows the event in the browser session's replay and timeline.
+    ...(context.sessionId ? { $session_id: context.sessionId } : {}),
     ...properties,
   }
 }

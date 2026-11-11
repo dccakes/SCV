@@ -24,6 +24,11 @@ jest.mock('~/server/infrastructure/rate-limit', () => ({
   enforceRateLimit: (...a: unknown[]) => mockEnforce(...a),
 }))
 
+const mockCaptureServerException = jest.fn()
+jest.mock('~/server/infrastructure/observability/capture-exception', () => ({
+  captureServerException: (...a: unknown[]) => mockCaptureServerException(...a),
+}))
+
 import { POST } from '~/app/api/etta/route'
 import { EttaAuthError } from '~/lib/etta/utils/auth'
 import type { EnforceResult } from '~/server/infrastructure/rate-limit'
@@ -104,5 +109,39 @@ describe('POST /api/etta rate limiting', () => {
     expect(mockLogAudit).toHaveBeenCalledWith(
       expect.objectContaining({ weddingId: 'w1', actorId: 'guest:7', actorType: 'guest' })
     )
+  })
+})
+
+describe('POST /api/etta error tracking', () => {
+  beforeEach(() => {
+    mockCaptureServerException.mockReset()
+    mockEnforce.mockResolvedValue(allowed)
+    mockResolveEttaAuth.mockResolvedValue({
+      actor: 'couple',
+      weddingId: 'w1',
+      authz: { userId: 'u1' },
+    })
+  })
+
+  it('reports unexpected failures with the signed-in user', async () => {
+    const failure = new Error('gateway exploded')
+    mockRunEttaAgent.mockRejectedValue(failure)
+
+    const response = await POST(request())
+
+    expect(response.status).toBe(500)
+    expect(mockCaptureServerException).toHaveBeenCalledWith(failure, {
+      userId: 'u1',
+      properties: { source: 'etta-route', status: 500, persona: 'couple', wedding_id: 'w1' },
+    })
+  })
+
+  it('does not report expected auth failures', async () => {
+    mockResolveEttaAuth.mockRejectedValue(new EttaAuthError('No active session', 401))
+
+    const response = await POST(request())
+
+    expect(response.status).toBe(401)
+    expect(mockCaptureServerException).not.toHaveBeenCalled()
   })
 })

@@ -1,8 +1,9 @@
 # Observability (OpenTelemetry + PostHog)
 
-SCV sends distributed traces, structured logs, and errors to PostHog. Traces
-and logs use standard OpenTelemetry (OTLP over HTTP), so any OTLP backend can
-be swapped in or added. Errors use PostHog error tracking.
+SCV sends distributed traces, structured logs, errors, and AI (Etta) usage to
+PostHog. Traces and logs use standard OpenTelemetry (OTLP over HTTP), so any
+OTLP backend can be swapped in or added. Errors use PostHog error tracking.
+Etta's model calls show up in PostHog AI observability.
 
 Everything is **optional**. With no PostHog token the app runs unchanged:
 spans stay local, and logs still go to the console.
@@ -13,7 +14,8 @@ spans stay local, and logs still go to the console.
 | --- | --- | --- |
 | Traces | Next.js routes and renders, `fetch`, Prisma queries, one span per tRPC procedure, AI SDK (Etta) generations and tool calls | Document load, every `fetch` (including tRPC) |
 | Logs | `logger` from `~/lib/observability/logger` | `posthog.logger` from `posthog-js` |
-| Errors | `onRequestError` (renders, route handlers, server actions) and tRPC 5xx | Unhandled errors and rejections, React error boundaries, fetch 5xx and network failures |
+| Errors | `onRequestError` (renders, route handlers, server actions), tRPC 5xx, Etta route 5xx and mid-stream failures, Telegram background handler failures | Unhandled errors and rejections, React error boundaries, fetch 5xx and network failures |
+| AI | Etta generations as `$ai_generation` events: model, tokens, cost, latency, tool names, per signed-in user | |
 
 ### One trace, browser to database
 
@@ -45,9 +47,41 @@ spans stay local, and logs still go to the console.
 | `NEXT_PUBLIC_OTEL_SAMPLE_RATE` | build | Browser root-trace sample rate, 0..1. Default 1. |
 | `OTEL_TRACES_SAMPLER`, `OTEL_TRACES_SAMPLER_ARG` | runtime | Server sampling (standard OTel). Default: all requests. |
 | `OTEL_EXPORTER_OTLP_*` | runtime | Optional extra OTLP trace destination, picked up by `@vercel/otel`. |
+| `POSTHOG_PERSONAL_API_KEY`, `POSTHOG_PROJECT_ID` | build | Optional. Both set: upload source maps to error tracking on `next build`. Key scopes: `error tracking write`, `organization read`. |
 
 Vercel's own tracing integrations and log drains keep working: the PostHog
 exporter is added alongside `@vercel/otel`'s defaults, not instead of them.
+
+## AI observability (Etta)
+
+Etta runs on the Vercel AI SDK with `experimental_telemetry` on. Its spans go to
+two places:
+
+- PostHog distributed tracing, as part of the request trace (like every span).
+- PostHog AI observability, through `PostHogSpanProcessor` from `@posthog/ai/otel`
+  in `node-otel.ts`. It only forwards AI spans (`ai.*`, `gen_ai.*`) to
+  `<host>/i/v0/ai/otel`, where PostHog turns them into `$ai_generation` events
+  with model, token usage, cost, and latency. The plain tracing endpoint does
+  not do that conversion, which is why this processor exists.
+
+Each generation is attributed to the signed-in user via the
+`posthog_distinct_id` telemetry metadata key. Anonymous guests get no person,
+matching the analytics rule. `wedding_id` and `persona` ride along as metadata.
+
+When `@vercel/otel` ends a sampled root span it flushes every span processor
+through `waitUntil`, so AI spans are not lost when a serverless function
+freezes.
+
+## Source maps
+
+Without uploaded source maps, browser stack traces in PostHog error tracking
+are minified. `next.config.js` wraps the config with `withPostHogConfig` from
+`@posthog/nextjs-config` only when both `POSTHOG_PERSONAL_API_KEY` and
+`POSTHOG_PROJECT_ID` are set (see `src/posthog-sourcemaps.js`). Maps are
+uploaded as release `scv` at `VERCEL_GIT_COMMIT_SHA`, then deleted from the
+build output so they are never served. Set both only on the environment whose
+builds you want symbolicated (usually Vercel Production). With a bad key the
+build fails rather than shipping silently unmapped.
 
 ## Using the logger
 
@@ -87,7 +121,10 @@ control.
   `sanitizeTelemetryText` in `node-otel.ts` for any new client that puts
   credentials in a path.
 - Etta AI spans record model, timing, token usage, and tool names, but not
-  prompts or completions (`recordInputs`/`recordOutputs` are off).
+  prompts or completions (`recordInputs`/`recordOutputs` are off). The AI
+  observability processor also runs in `privacyMode`, which strips tool
+  arguments, tool results, and error messages, so turning `recordInputs` on
+  later would not leak guest PII to PostHog by itself.
 - Prisma spans include SQL text with parameters as placeholders, not values.
 - Path segments are kept as-is (for example `/join/<token>`); PostHog pageviews
   already record the same URLs.
@@ -100,6 +137,9 @@ control.
 | `src/server/infrastructure/observability/node-otel.ts` | Node config: PostHog OTLP exporters, Prisma, span name and URL redaction, per-request log flushing |
 | `src/server/infrastructure/observability/trpc-tracing.ts` | Per-procedure tRPC spans |
 | `src/server/infrastructure/observability/capture-exception.ts` | Server exceptions to PostHog |
+| `src/server/infrastructure/observability/request-context.ts` | Serverless `waitUntil` lookup shared by log flushing and posthog-node |
+| `src/lib/etta/agent.ts` | Etta telemetry metadata (user, wedding) and mid-stream error capture |
+| `src/posthog-sourcemaps.js` | Opt-in source map upload config for `withPostHogConfig` |
 | `src/lib/observability/logger.ts` | Server/Edge OTel logger |
 | `instrumentation-client.ts` | posthog-js init (errors, logs, tracing headers); lazy-loads browser tracing |
 | `src/lib/observability/browser-tracing.ts` | Browser OTel tracer, fetch + document load, fetch error reporting |

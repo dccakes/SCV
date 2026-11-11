@@ -4,6 +4,15 @@
 jest.mock('@vercel/otel', () => ({
   OTLPHttpProtoTraceExporter: jest.fn().mockImplementation((config: unknown) => ({ config })),
 }))
+jest.mock('@posthog/ai/otel', () => ({
+  PostHogSpanProcessor: jest.fn().mockImplementation((options: unknown) => ({
+    options,
+    onStart: jest.fn(),
+    onEnd: jest.fn(),
+    forceFlush: () => Promise.resolve(),
+    shutdown: () => Promise.resolve(),
+  })),
+}))
 jest.mock('@opentelemetry/exporter-logs-otlp-http', () => ({
   OTLPLogExporter: jest.fn().mockImplementation(() => ({
     export: (_logs: unknown, done: (result: { code: number }) => void) => done({ code: 0 }),
@@ -20,6 +29,7 @@ import {
   LoggerProvider,
   type LogRecordProcessor,
 } from '@opentelemetry/sdk-logs'
+import { PostHogSpanProcessor } from '@posthog/ai/otel'
 import { PrismaInstrumentation } from '@prisma/instrumentation'
 import { OTLPHttpProtoTraceExporter } from '@vercel/otel'
 
@@ -38,6 +48,8 @@ const isIgnored = (config: ReturnType<typeof buildNodeOTelConfig>, url: string) 
   )
 
 describe('buildNodeOTelConfig', () => {
+  beforeEach(() => jest.clearAllMocks())
+
   it('keeps @vercel/otel defaults and adds Prisma spans when PostHog is not configured', () => {
     const config = buildNodeOTelConfig({ VERCEL_GIT_COMMIT_SHA: 'abc123' })
 
@@ -71,8 +83,31 @@ describe('buildNodeOTelConfig', () => {
     })
     expect(config.logRecordProcessors).toHaveLength(1)
     // Log flushing no longer rides on span processing (sampled-out requests).
-    expect(config.spanProcessors).toHaveLength(2)
     expect(config.spanProcessors?.[1]).toBe('auto')
+  })
+
+  it('sends AI SDK spans to PostHog AI observability with content redacted', () => {
+    const config = buildNodeOTelConfig({
+      POSTHOG_KEY: 'phc_test',
+      POSTHOG_HOST: 'https://posthog.internal.example',
+    })
+
+    expect(PostHogSpanProcessor).toHaveBeenCalledWith({
+      projectToken: 'phc_test',
+      host: 'https://posthog.internal.example',
+      // Etta prompts and tool results hold guest PII.
+      privacyMode: true,
+    })
+    expect(config.spanProcessors).toHaveLength(3)
+    // After redaction, so URL scrubbing still runs before every exporter.
+    expect(config.spanProcessors?.[2]).toBe(
+      (PostHogSpanProcessor as unknown as jest.Mock).mock.results.at(-1)?.value
+    )
+  })
+
+  it('adds no AI observability processor without a PostHog token', () => {
+    buildNodeOTelConfig({})
+    expect(PostHogSpanProcessor).not.toHaveBeenCalled()
   })
 
   it('never traces its own telemetry uploads', () => {

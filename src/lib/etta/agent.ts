@@ -20,6 +20,8 @@ import type { EttaRequest } from '~/lib/etta/types'
 import { logAudit } from '~/lib/etta/utils/audit'
 import { buildSystemPrompt } from '~/lib/etta/utils/build-system-prompt'
 import { resolveEttaContext } from '~/lib/etta/utils/resolve-context'
+import { logger } from '~/lib/observability/logger'
+import { captureServerException } from '~/server/infrastructure/observability/capture-exception'
 
 const DEFAULT_MODEL = 'anthropic/claude-haiku-4.5'
 
@@ -109,14 +111,28 @@ export async function runEttaAgent(req: EttaRequest) {
     stopWhen: stepCountIs(10),
     providerOptions,
     // OpenTelemetry spans per generation, step, and tool call, nested in the
-    // request trace. Prompts and completions hold guest PII, so only timing,
-    // model, token usage, and tool names are recorded.
+    // request trace and sent to PostHog AI observability (see node-otel.ts).
+    // Prompts and completions hold guest PII, so only timing, model, token
+    // usage, cost, and tool names are recorded.
     experimental_telemetry: {
       isEnabled: true,
       functionId: `etta.${actor}`,
       recordInputs: false,
       recordOutputs: false,
-      metadata: { wedding_id: weddingId },
+      metadata: {
+        wedding_id: weddingId,
+        persona: actor,
+        // PostHog reads this as the generation's person. Only a verified user
+        // may be attached; anonymous guests stay person-less (as in analytics).
+        ...(authz?.userId ? { posthog_distinct_id: authz.userId } : {}),
+      },
+    },
+    // Errors mid-stream never reach the route's try/catch: the response is
+    // already streaming. Without this they'd only hit the console.
+    onError: async ({ error }) => {
+      const attributes = { source: 'etta', persona: actor, model: modelId, wedding_id: weddingId }
+      logger.error('Etta stream failed', { component: 'etta', ...attributes }, error)
+      await captureServerException(error, { userId: authz?.userId, properties: attributes })
     },
     onStepFinish: async ({ text, toolCalls, toolResults, usage, reasoning }) => {
       stepCount++
