@@ -2,6 +2,8 @@ jest.mock('~/server/db', () => ({
   db: {
     $queryRaw: jest.fn(),
     $executeRaw: jest.fn(),
+    $transaction: jest.fn(),
+    userWedding: { findFirst: jest.fn() },
   },
 }))
 
@@ -75,5 +77,101 @@ describe('WorkspaceScopeRepository', () => {
     await repository.setActiveOrganizationId('tok-1', 'org-1')
 
     expect(mockExecuteRaw).toHaveBeenCalledTimes(1)
+  })
+
+  describe('organization-less weddings', () => {
+    const mockFindFirst = db.userWedding.findFirst as unknown as jest.Mock
+    const mockTransaction = db.$transaction as unknown as jest.Mock
+
+    beforeEach(() => {
+      mockFindFirst.mockReset()
+      mockTransaction.mockReset()
+    })
+
+    it("finds the user's wedding that has no workspace, with everyone linked to it", async () => {
+      mockFindFirst.mockResolvedValue({
+        wedding: {
+          id: 'wedding-1',
+          groomFirstName: 'Sam',
+          brideFirstName: 'Alex',
+          userWeddings: [
+            { userId: 'user-1', role: 'owner' },
+            { userId: 'user-2', role: 'editor' },
+          ],
+        },
+      })
+
+      const result = await repository.findOrganizationlessWedding('user-1')
+
+      expect(mockFindFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId: 'user-1', wedding: { organizationId: null } },
+        })
+      )
+      expect(result).toEqual({
+        weddingId: 'wedding-1',
+        groomFirstName: 'Sam',
+        brideFirstName: 'Alex',
+        members: [
+          { userId: 'user-1', role: 'owner' },
+          { userId: 'user-2', role: 'editor' },
+        ],
+      })
+    })
+
+    it('returns null when every wedding of the user already has a workspace', async () => {
+      mockFindFirst.mockResolvedValue(null)
+      expect(await repository.findOrganizationlessWedding('user-1')).toBeNull()
+    })
+
+    const input = {
+      weddingId: 'wedding-1',
+      name: 'Sam & Alex',
+      slug: 'wedding-wedding-1',
+      members: [{ userId: 'user-1', role: 'owner' as const }],
+    }
+
+    const makeTx = (linked: number) => ({
+      organization: {
+        create: jest.fn().mockImplementation(({ data }) => Promise.resolve({ id: data.id })),
+      },
+      wedding: { updateMany: jest.fn().mockResolvedValue({ count: linked }) },
+    })
+
+    it('creates the workspace with its members and links it, in one transaction', async () => {
+      const tx = makeTx(1)
+      mockTransaction.mockImplementation((fn: (t: unknown) => unknown) => fn(tx))
+
+      await expect(repository.attachOrganization(input)).resolves.toBe(true)
+
+      const orgData = tx.organization.create.mock.calls[0][0].data
+      expect(orgData).toMatchObject({
+        name: 'Sam & Alex',
+        slug: 'wedding-wedding-1',
+        members: { create: [{ userId: 'user-1', role: 'owner' }] },
+      })
+      expect(tx.wedding.updateMany).toHaveBeenCalledWith({
+        where: { id: 'wedding-1', organizationId: null },
+        data: { organizationId: orgData.id },
+      })
+    })
+
+    it('rolls back and reports false when another request linked the wedding first', async () => {
+      const tx = makeTx(0)
+      mockTransaction.mockImplementation((fn: (t: unknown) => unknown) => fn(tx))
+      await expect(repository.attachOrganization(input)).resolves.toBe(false)
+    })
+
+    it('reports false on the workspace slug collision from a concurrent attach', async () => {
+      mockTransaction.mockRejectedValue(
+        Object.assign(new Error('Unique constraint'), { code: 'P2002' })
+      )
+      await expect(repository.attachOrganization(input)).resolves.toBe(false)
+    })
+
+    it('surfaces any other database failure', async () => {
+      mockTransaction.mockRejectedValue(new Error('connection lost'))
+      await expect(repository.attachOrganization(input)).rejects.toThrow('connection lost')
+    })
   })
 })

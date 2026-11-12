@@ -34,3 +34,22 @@ export function readWorkspaceCapabilities(role: string | null | undefined): Work
     canViewPlanning: can({ wedding: ['read'] }),
   }
 }
+
+export type HomeView = 'marketing' | 'app'
+
+/**
+ * What `/` shows. 'app' renders the signed-in home, which sends members with a
+ * wedding to the dashboard and shows onboarding (create your wedding) to
+ * everyone else, including fresh self-signups that have no workspace yet.
+ * Members whose role can't view planning (viewers) keep the marketing page.
+ */
+export function resolveHomeView(input: {
+  signedIn: boolean
+  activeOrganization: { organizationId: string; role: string | null } | null
+}): HomeView {
+  if (!input.signedIn) return 'marketing'
+  if (!input.activeOrganization) return 'app'
+  return readWorkspaceCapabilities(input.activeOrganization.role).canViewPlanning
+    ? 'app'
+    : 'marketing'
+}

@@ -6,7 +6,7 @@ import AuthenticatedView from '~/components/home/authenticated-view'
 import NonAuthenticatedView from '~/components/home/non-authenticated-view'
 import { auth } from '~/lib/auth'
 import { resolveWorkspaceScope } from '~/server/application/workspace/workspace-scope'
-import { readWorkspaceCapabilities } from '~/server/authz/workspace-capabilities'
+import { resolveHomeView } from '~/server/authz/workspace-capabilities'
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
@@ -137,18 +137,12 @@ export default async function Home() {
     headers: await headers(),
   })
 
-  let isSignedIn = !!session
-  if (session?.user?.id) {
-    const scope = await resolveWorkspaceScope({
-      session,
-      userId: session.user.id,
-    })
-
-    const capabilities = readWorkspaceCapabilities(scope.activeOrganization?.role)
-    if (!capabilities.canViewPlanning) {
-      isSignedIn = false
-    }
-  }
+  const userId = session?.user?.id
+  const scope = userId ? await resolveWorkspaceScope({ session, userId }) : null
+  const view = resolveHomeView({
+    signedIn: Boolean(userId),
+    activeOrganization: scope?.activeOrganization ?? null,
+  })
 
   return (
     <>
@@ -157,7 +151,7 @@ export default async function Home() {
         // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD structured data requires dangerouslySetInnerHTML per Next.js convention
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      {!isSignedIn ? <NonAuthenticatedView /> : <AuthenticatedView />}
+      {view === 'app' ? <AuthenticatedView /> : <NonAuthenticatedView />}
     </>
   )
 }

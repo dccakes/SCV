@@ -11,6 +11,8 @@ jest.mock('server/db', () => ({
     id: 'mock-db',
     $queryRaw: jest.fn(),
     $executeRaw: jest.fn(),
+    // No wedding predating workspaces, so nothing to repair (see WorkspaceScopeService).
+    userWedding: { findFirst: jest.fn().mockResolvedValue(null) },
   },
 }))
 
