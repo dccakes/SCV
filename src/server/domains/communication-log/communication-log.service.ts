@@ -69,6 +69,10 @@ export class CommunicationLogService {
     }
 
     // Invitations → INVITATION_SENT and RSVP_RECEIVED entries
+    // One INVITATION_SENT entry per event for the household, dated by the earliest
+    // invitation among its guests, rather than one entry per guest per event.
+    const invitationSentByEvent = new Map<string, { eventName: string; date: Date }>()
+
     for (const inv of invitations) {
       const eventName = inv.event.name
       const guestName = `${inv.guest.firstName} ${inv.guest.lastName}`
@@ -76,13 +80,10 @@ export class CommunicationLogService {
       // Rows are auto-created as 'Not Invited' placeholders whenever a guest or
       // event is added, so only rows that moved past that state count as sent.
       if (inv.rsvp !== RSVP_STATUS.NOT_INVITED) {
-        entries.push({
-          type: 'INVITATION_SENT',
-          message: `Invitation sent for ${eventName}`,
-          date: inv.invitedAt,
-          eventId: inv.eventId,
-          eventName,
-        })
+        const existing = invitationSentByEvent.get(inv.eventId)
+        if (!existing || inv.invitedAt < existing.date) {
+          invitationSentByEvent.set(inv.eventId, { eventName, date: inv.invitedAt })
+        }
       }
 
       if (inv.submittedAt) {
@@ -96,6 +97,16 @@ export class CommunicationLogService {
           guestName,
         })
       }
+    }
+
+    for (const [eventId, { eventName, date }] of invitationSentByEvent) {
+      entries.push({
+        type: 'INVITATION_SENT',
+        message: `Invitation sent for ${eventName}`,
+        date,
+        eventId,
+        eventName,
+      })
     }
 
     // Gifts with thank-you sent → THANK_YOU_SENT entries

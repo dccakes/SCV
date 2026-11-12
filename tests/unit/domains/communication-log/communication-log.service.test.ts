@@ -151,6 +151,55 @@ describe('CommunicationLogService', () => {
       expect(result[0].type).toBe('INVITATION_SENT')
     })
 
+    it('collapses INVITATION_SENT to one entry per event, using the earliest date', async () => {
+      mockHouseholdFindFirst.mockResolvedValue({ id: 'household-1' })
+      mockFindByHouseholdId.mockResolvedValue([])
+      mockGiftFindMany.mockResolvedValue([])
+
+      mockInvitationFindMany.mockResolvedValue([
+        {
+          eventId: 'event-1',
+          rsvp: 'Invited',
+          invitedAt: new Date('2026-01-03'),
+          submittedAt: null,
+          event: { name: 'Ceremony' },
+          guest: { firstName: 'Jane', lastName: 'Doe' },
+        },
+        {
+          eventId: 'event-1',
+          rsvp: 'Invited',
+          invitedAt: new Date('2026-01-01'),
+          submittedAt: null,
+          event: { name: 'Ceremony' },
+          guest: { firstName: 'John', lastName: 'Doe' },
+        },
+        {
+          eventId: 'event-2',
+          rsvp: 'Invited',
+          invitedAt: new Date('2026-01-02'),
+          submittedAt: null,
+          event: { name: 'Reception' },
+          guest: { firstName: 'Jane', lastName: 'Doe' },
+        },
+        {
+          // Placeholder must not create or affect an entry
+          eventId: 'event-2',
+          rsvp: 'Not Invited',
+          invitedAt: new Date('2025-12-01'),
+          submittedAt: null,
+          event: { name: 'Reception' },
+          guest: { firstName: 'John', lastName: 'Doe' },
+        },
+      ])
+
+      const result = await service.getTimelineForHousehold(actorContext, 'wedding-1', 'household-1')
+
+      const sent = result.filter((e) => e.type === 'INVITATION_SENT')
+      expect(sent).toHaveLength(2)
+      expect(sent.find((e) => e.eventName === 'Ceremony')?.date).toEqual(new Date('2026-01-01'))
+      expect(sent.find((e) => e.eventName === 'Reception')?.date).toEqual(new Date('2026-01-02'))
+    })
+
     it('omits INVITATION_SENT for auto-created Not Invited placeholder rows', async () => {
       mockHouseholdFindFirst.mockResolvedValue({ id: 'household-1' })
       mockFindByHouseholdId.mockResolvedValue([])
