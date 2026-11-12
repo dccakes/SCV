@@ -1,7 +1,7 @@
 import '~/styles/globals.css'
 
 import type { Metadata, Viewport } from 'next'
-import { Cormorant_Garamond, DM_Mono, Instrument_Serif } from 'next/font/google'
+import { DM_Mono, Instrument_Serif } from 'next/font/google'
 import { Toaster as SonnerToaster } from 'sonner'
 
 import { Providers } from '~/app/providers'
@@ -10,14 +10,6 @@ import { areSignupsAllowed } from '~/lib/signups'
 import { TRPCReactProvider } from '~/trpc/react'
 
 // Design fonts matching the HTML prototype
-const cormorantGaramond = Cormorant_Garamond({
-  subsets: ['latin'],
-  weight: ['300', '400', '600'],
-  style: ['normal', 'italic'],
-  variable: '--font-cormorant',
-  display: 'swap',
-})
-
 const dmMono = DM_Mono({
   subsets: ['latin'],
   weight: ['300', '400', '500'],
@@ -89,7 +81,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang='en'
       suppressHydrationWarning
-      className={`${cormorantGaramond.variable} ${dmMono.variable} ${instrumentSerif.variable} font-serif antialiased`}
+      className={`${dmMono.variable} ${instrumentSerif.variable} font-serif antialiased`}
     >
       <body className='bg-background font-serif text-foreground antialiased'>
         <Providers signupsEnabled={areSignupsAllowed()}>
