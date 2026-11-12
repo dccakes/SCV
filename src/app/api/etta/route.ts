@@ -54,8 +54,9 @@ export async function POST(req: Request) {
     const message = error instanceof Error ? error.message : 'Internal server error'
     const status = inferAuthStatus(error, message)
 
-    // Auth, scope, and missing-config outcomes are expected; anything else is a bug.
-    if (status >= 500) {
+    // Auth, scope, and missing-config (503) outcomes are expected; only an
+    // unexplained 500 is a bug worth an error-tracking issue.
+    if (status === 500) {
       await captureServerException(error, {
         userId: ettaReq?.authz?.userId,
         properties: {

@@ -80,7 +80,8 @@ const config = {
         ? `https://${process.env.VERCEL_BRANCH_URL}`
         : 'http://localhost:3000'),
     // Browser telemetry resource attributes (PostHog logs and traces).
-    NEXT_PUBLIC_APP_VERSION: process.env.VERCEL_GIT_COMMIT_SHA ?? 'development',
+    // Empty when unknown (local, Docker); instrumentation-client.ts falls back where it needs a value.
+    NEXT_PUBLIC_APP_VERSION: process.env.VERCEL_GIT_COMMIT_SHA ?? '',
     NEXT_PUBLIC_DEPLOYMENT_ENVIRONMENT: process.env.VERCEL_ENV ?? process.env.NODE_ENV,
   },
 }

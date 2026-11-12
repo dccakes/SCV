@@ -19,7 +19,7 @@
  * able to break a real request.
  */
 
-import { POSTHOG_SESSION_ID_HEADER } from '~/lib/observability/config'
+import { POSTHOG_SESSION_ID_HEADER, parseTelemetryId } from '~/lib/observability/config'
 
 const ANONYMOUS_DISTINCT_ID = 'anonymous'
 
@@ -95,7 +95,7 @@ export function extractAnalyticsContext({
 
   const distinctId = userId ?? token ?? ANONYMOUS_DISTINCT_ID
 
-  const sessionId = firstString(ctx?.headers?.get(POSTHOG_SESSION_ID_HEADER))
+  const sessionId = parseTelemetryId(ctx?.headers?.get(POSTHOG_SESSION_ID_HEADER))
 
   return {
     distinctId,

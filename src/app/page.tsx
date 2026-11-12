@@ -7,6 +7,7 @@ import NonAuthenticatedView from '~/components/home/non-authenticated-view'
 import { auth } from '~/lib/auth'
 import { resolveWorkspaceScope } from '~/server/application/workspace/workspace-scope'
 import { resolveHomeView } from '~/server/authz/workspace-capabilities'
+import { weddingService } from '~/server/domains/wedding'
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
@@ -139,10 +140,11 @@ export default async function Home() {
 
   const userId = session?.user?.id
   const scope = userId ? await resolveWorkspaceScope({ session, userId }) : null
-  const view = resolveHomeView({
-    signedIn: Boolean(userId),
-    activeOrganization: scope?.activeOrganization ?? null,
-  })
+  const activeOrganization = scope?.activeOrganization ?? null
+  // Only needed without a workspace: tells a fresh signup from a removed member.
+  const hasWeddingLink =
+    userId && !activeOrganization ? await weddingService.hasWedding(userId) : false
+  const view = resolveHomeView({ signedIn: Boolean(userId), activeOrganization, hasWeddingLink })
 
   return (
     <>

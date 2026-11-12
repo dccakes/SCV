@@ -26,6 +26,17 @@ export const POSTHOG_INGEST_HOST = 'https://us.i.posthog.com'
 export const POSTHOG_DISTINCT_ID_ATTRIBUTE = 'posthogDistinctId'
 export const POSTHOG_SESSION_ID_ATTRIBUTE = 'sessionId'
 
+const TELEMETRY_ID = /^[A-Za-z0-9_-]{1,128}$/
+
+/**
+ * Validates a client-sent telemetry id (posthog-js session id, useChat id).
+ * Any client can set these, so anything that isn't a plain short id is dropped
+ * rather than attached to events, exceptions, or spans. Never throws.
+ */
+export function parseTelemetryId(value: unknown): string | undefined {
+  return typeof value === 'string' && TELEMETRY_ID.test(value) ? value : undefined
+}
+
 /** Headers posthog-js adds to same-origin requests via `tracing_headers`. */
 export const POSTHOG_DISTINCT_ID_HEADER = 'x-posthog-distinct-id'
 export const POSTHOG_SESSION_ID_HEADER = 'x-posthog-session-id'

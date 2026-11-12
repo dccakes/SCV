@@ -9,7 +9,10 @@ import {
 // Next.js runs this before hydration, including when the root layout fails.
 const token = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
 const environment = process.env.NEXT_PUBLIC_DEPLOYMENT_ENVIRONMENT ?? 'development'
-const version = process.env.NEXT_PUBLIC_APP_VERSION ?? 'development'
+// The deployed commit; empty outside Vercel. Logs and traces need a value, but
+// analytics leave app_version out when unknown, exactly as server events do.
+const appVersion = process.env.NEXT_PUBLIC_APP_VERSION || undefined
+const version = appVersion ?? 'development'
 
 if (token) {
   try {
@@ -36,7 +39,7 @@ if (token) {
       // event and exception, so preview traffic can be filtered from production.
       // `loaded` runs before posthog-js sends anything, so even the first event has them.
       loaded: (instance) => {
-        instance.register({ environment, app_version: version })
+        instance.register({ environment, ...(appVersion ? { app_version: appVersion } : {}) })
       },
     })
   } catch {

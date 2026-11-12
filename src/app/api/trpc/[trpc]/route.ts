@@ -3,7 +3,11 @@ import { fetchRequestHandler } from '@trpc/server/adapters/fetch'
 import { getHTTPStatusCodeFromError } from '@trpc/server/http'
 import { after, type NextRequest } from 'next/server'
 
-import { POSTHOG_DISTINCT_ID_HEADER, POSTHOG_SESSION_ID_HEADER } from '~/lib/observability/config'
+import {
+  POSTHOG_DISTINCT_ID_HEADER,
+  POSTHOG_SESSION_ID_HEADER,
+  parseTelemetryId,
+} from '~/lib/observability/config'
 import { logger } from '~/lib/observability/logger'
 import { appRouter } from '~/server/api/root'
 import { createTRPCContext } from '~/server/api/trpc'
@@ -59,7 +63,7 @@ const handler = (req: NextRequest) =>
         captureServerException(cause, {
           userId: ctx?.auth?.userId,
           clientDistinctId: req.headers.get(POSTHOG_DISTINCT_ID_HEADER) ?? undefined,
-          sessionId: req.headers.get(POSTHOG_SESSION_ID_HEADER) ?? undefined,
+          sessionId: parseTelemetryId(req.headers.get(POSTHOG_SESSION_ID_HEADER)),
           properties: {
             ...attributes,
             source: 'trpc',

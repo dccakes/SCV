@@ -54,12 +54,16 @@ describe('readWorkspaceCapabilities', () => {
 
 describe('resolveHomeView', () => {
   it('shows marketing to signed-out visitors', () => {
-    expect(resolveHomeView({ signedIn: false, activeOrganization: null })).toBe('marketing')
+    expect(
+      resolveHomeView({ signedIn: false, activeOrganization: null, hasWeddingLink: false })
+    ).toBe('marketing')
   })
 
   it('sends signed-in users without a workspace to onboarding, not marketing', () => {
     // Self-signup: a fresh account has no workspace until it creates its wedding.
-    expect(resolveHomeView({ signedIn: true, activeOrganization: null })).toBe('app')
+    expect(
+      resolveHomeView({ signedIn: true, activeOrganization: null, hasWeddingLink: false })
+    ).toBe('app')
   })
 
   it('lets members who can view planning into the app', () => {
@@ -67,6 +71,7 @@ describe('resolveHomeView', () => {
       resolveHomeView({
         signedIn: true,
         activeOrganization: { organizationId: 'o', role: 'owner' },
+        hasWeddingLink: true,
       })
     ).toBe('app')
   })
@@ -76,7 +81,16 @@ describe('resolveHomeView', () => {
       resolveHomeView({
         signedIn: true,
         activeOrganization: { organizationId: 'o', role: 'viewer' },
+        hasWeddingLink: false,
       })
+    ).toBe('marketing')
+  })
+
+  it('keeps removed members with a leftover wedding link on marketing, not a form that would fail', () => {
+    // Removing a member deletes the membership but not the legacy UserWedding link,
+    // and wedding creation refuses users who already have one.
+    expect(
+      resolveHomeView({ signedIn: true, activeOrganization: null, hasWeddingLink: true })
     ).toBe('marketing')
   })
 })

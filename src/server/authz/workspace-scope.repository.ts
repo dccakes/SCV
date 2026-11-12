@@ -113,30 +113,56 @@ export class WorkspaceScopeRepository {
   }
 
   /**
-   * Creates the wedding's workspace and links it, atomically. Returns false,
-   * with nothing written, when a concurrent request linked the wedding first
-   * (wedding already linked, or the workspace slug already taken).
+   * Gives the wedding its workspace and links it, atomically. Adopts an
+   * organization that already has the wedding's slug (an interrupted migration
+   * creates it before linking), adding only users not already in it, so a
+   * partial run can't block the repair forever. Returns false, with nothing
+   * written, when a concurrent request linked the wedding first.
    */
   async attachOrganization(input: AttachOrganizationInput): Promise<boolean> {
     try {
       await db.$transaction(async (tx) => {
-        const organization = await tx.organization.create({
-          data: {
-            id: randomUUID(),
-            name: input.name,
-            slug: input.slug,
-            members: {
-              create: input.members.map((member) => ({
+        const existing = await tx.organization.findUnique({
+          where: { slug: input.slug },
+          select: { id: true, members: { select: { userId: true } } },
+        })
+
+        let organizationId: string
+        if (existing) {
+          organizationId = existing.id
+          const present = new Set(existing.members.map((member) => member.userId))
+          const missing = input.members.filter((member) => !present.has(member.userId))
+          if (missing.length > 0) {
+            await tx.member.createMany({
+              data: missing.map((member) => ({
                 id: randomUUID(),
+                organizationId,
                 userId: member.userId,
                 role: member.role,
               })),
+            })
+          }
+        } else {
+          const organization = await tx.organization.create({
+            data: {
+              id: randomUUID(),
+              name: input.name,
+              slug: input.slug,
+              members: {
+                create: input.members.map((member) => ({
+                  id: randomUUID(),
+                  userId: member.userId,
+                  role: member.role,
+                })),
+              },
             },
-          },
-        })
+          })
+          organizationId = organization.id
+        }
+
         const linked = await tx.wedding.updateMany({
           where: { id: input.weddingId, organizationId: null },
-          data: { organizationId: organization.id },
+          data: { organizationId },
         })
         if (linked.count === 0) throw new AlreadyLinkedError()
       })

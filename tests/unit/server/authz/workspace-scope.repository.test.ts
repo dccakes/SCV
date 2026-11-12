@@ -131,10 +131,15 @@ describe('WorkspaceScopeRepository', () => {
       members: [{ userId: 'user-1', role: 'owner' as const }],
     }
 
-    const makeTx = (linked: number) => ({
+    const makeTx = (
+      linked: number,
+      existing: { id: string; members: Array<{ userId: string }> } | null = null
+    ) => ({
       organization: {
+        findUnique: jest.fn().mockResolvedValue(existing),
         create: jest.fn().mockImplementation(({ data }) => Promise.resolve({ id: data.id })),
       },
+      member: { createMany: jest.fn().mockResolvedValue({ count: 1 }) },
       wedding: { updateMany: jest.fn().mockResolvedValue({ count: linked }) },
     })
 
@@ -156,13 +161,43 @@ describe('WorkspaceScopeRepository', () => {
       })
     })
 
+    it('adopts a workspace left unlinked by an interrupted migration instead of failing forever', async () => {
+      // The migration creates the organization, then links it in a separate step.
+      const tx = makeTx(1, { id: 'org-orphan', members: [{ userId: 'user-1' }] })
+      mockTransaction.mockImplementation((fn: (t: unknown) => unknown) => fn(tx))
+
+      await expect(
+        repository.attachOrganization({
+          ...input,
+          members: [
+            { userId: 'user-1', role: 'owner' },
+            { userId: 'user-2', role: 'member' },
+          ],
+        })
+      ).resolves.toBe(true)
+
+      expect(tx.organization.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { slug: 'wedding-wedding-1' } })
+      )
+      expect(tx.organization.create).not.toHaveBeenCalled()
+      // Only people not already in it are added; existing roles are left alone.
+      const added = tx.member.createMany.mock.calls[0][0].data
+      expect(added).toEqual([
+        expect.objectContaining({ organizationId: 'org-orphan', userId: 'user-2', role: 'member' }),
+      ])
+      expect(tx.wedding.updateMany).toHaveBeenCalledWith({
+        where: { id: 'wedding-1', organizationId: null },
+        data: { organizationId: 'org-orphan' },
+      })
+    })
+
     it('rolls back and reports false when another request linked the wedding first', async () => {
       const tx = makeTx(0)
       mockTransaction.mockImplementation((fn: (t: unknown) => unknown) => fn(tx))
       await expect(repository.attachOrganization(input)).resolves.toBe(false)
     })
 
-    it('reports false on the workspace slug collision from a concurrent attach', async () => {
+    it('reports false on a unique-key race with a concurrent attach', async () => {
       mockTransaction.mockRejectedValue(
         Object.assign(new Error('Unique constraint'), { code: 'P2002' })
       )

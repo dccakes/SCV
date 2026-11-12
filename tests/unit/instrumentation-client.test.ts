@@ -46,15 +46,26 @@ describe('instrumentation-client', () => {
     )
   })
 
-  it('tags every browser event, from the first one, with the deployment environment and version', () => {
-    loadWithToken('phc_test')
-    // Registered in `loaded`, which runs before posthog-js sends its first event.
+  const registeredProperties = () => {
     const { loaded } = mockInit.mock.calls.at(-1)?.[1] as { loaded: (ph: unknown) => void }
     const instance = { register: jest.fn() }
     loaded(instance)
-    expect(instance.register).toHaveBeenCalledWith({
-      environment: 'development',
-      app_version: 'development',
-    })
+    return instance.register.mock.calls[0]?.[0]
+  }
+
+  it('tags every browser event, from the first one, with the deployed version', () => {
+    // Registered in `loaded`, which runs before posthog-js sends its first event.
+    process.env.NEXT_PUBLIC_APP_VERSION = 'abc123'
+    try {
+      loadWithToken('phc_test')
+    } finally {
+      delete process.env.NEXT_PUBLIC_APP_VERSION
+    }
+    expect(registeredProperties()).toEqual({ environment: 'development', app_version: 'abc123' })
+  })
+
+  it('omits app_version when the commit is unknown, matching server events (Docker, self-hosted)', () => {
+    loadWithToken('phc_test')
+    expect(registeredProperties()).toEqual({ environment: 'development' })
   })
 })

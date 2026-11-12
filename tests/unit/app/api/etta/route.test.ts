@@ -153,4 +153,15 @@ describe('POST /api/etta error tracking', () => {
     expect(response.status).toBe(401)
     expect(mockCaptureServerException).not.toHaveBeenCalled()
   })
+
+  it('does not report a deployment without an AI Gateway key (an expected 503)', async () => {
+    mockRunEttaAgent.mockRejectedValue(
+      new Error('Etta is not configured: AI_GATEWAY_API_KEY is missing')
+    )
+
+    const response = await POST(request())
+
+    expect(response.status).toBe(503)
+    expect(mockCaptureServerException).not.toHaveBeenCalled()
+  })
 })

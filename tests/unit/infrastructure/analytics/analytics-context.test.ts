@@ -76,6 +76,13 @@ describe('extractAnalyticsContext', () => {
       expect(extractAnalyticsContext({ ctx: { headers }, input: {} }).sessionId).toBe('sess_1')
     })
 
+    it('ignores a malformed session header instead of attaching it to events', () => {
+      const headers = new Headers({ 'x-posthog-session-id': `${'x'.repeat(200)}<junk>` })
+      expect(extractAnalyticsContext({ ctx: { headers }, input: {} })).not.toHaveProperty(
+        'sessionId'
+      )
+    })
+
     it('omits the session when the browser sent none (server callers, SDK disabled)', () => {
       expect(extractAnalyticsContext({ ctx: {}, input: {} })).not.toHaveProperty('sessionId')
     })
