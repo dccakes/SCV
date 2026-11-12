@@ -86,7 +86,9 @@ export class CommunicationLogService {
         }
       }
 
-      if (inv.submittedAt) {
+      // The message shows the current status, so a guest later set back to
+      // 'Not Invited' would read "RSVP'd Not Invited". Skip those.
+      if (inv.submittedAt && inv.rsvp !== RSVP_STATUS.NOT_INVITED) {
         entries.push({
           type: 'RSVP_RECEIVED',
           message: `${guestName} RSVP'd ${inv.rsvp} for ${eventName}`,

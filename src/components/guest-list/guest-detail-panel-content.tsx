@@ -399,6 +399,7 @@ function EventInvitationsSection(props: Readonly<EventInvitationsSectionProps>) 
                       </span>
                       {invitation ? (
                         <InvitationRsvpSelect
+                          householdId={selectedHousehold.id}
                           guestId={guest.id}
                           eventId={event.id}
                           rsvp={invitation.rsvp ?? 'Not Invited'}
@@ -421,13 +422,14 @@ function EventInvitationsSection(props: Readonly<EventInvitationsSectionProps>) 
 }
 
 type InvitationRsvpSelectProps = {
+  householdId: string
   guestId: number
   eventId: string
   rsvp: string
 }
 
 function InvitationRsvpSelect(props: Readonly<InvitationRsvpSelectProps>) {
-  const { guestId, eventId, rsvp } = props
+  const { householdId, guestId, eventId, rsvp } = props
   const utils = api.useUtils()
   const router = useRouter()
 
@@ -445,7 +447,7 @@ function InvitationRsvpSelect(props: Readonly<InvitationRsvpSelectProps>) {
       void utils.dashboard.getForActiveWorkspace.invalidate()
       void utils.event.getAllByUserIdWithStats.invalidate()
       // The log's "Invitation sent" entries depend on RSVP status, so refresh it too.
-      void utils.communicationLog.getByHouseholdId.invalidate()
+      void utils.communicationLog.getByHouseholdId.invalidate({ householdId })
       router.refresh()
     },
     onError: () => {
