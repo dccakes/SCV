@@ -113,41 +113,48 @@ export class WorkspaceScopeRepository {
   }
 
   /**
-   * Gives the wedding its workspace and links it, atomically. Adopts an
-   * organization that already has the wedding's slug (an interrupted migration
-   * creates it before linking), adding only users not already in it, so a
-   * partial run can't block the repair forever. Returns false, with nothing
-   * written, when a concurrent request linked the wedding first.
+   * Gives the wedding its workspace and links it, atomically. Returns false,
+   * with nothing written, when a concurrent request linked the wedding first.
+   *
+   * An organization already on the wedding's slug is adopted only when it is
+   * empty and unlinked: the footprint of an interrupted migration, which
+   * creates the organization, links it, then adds members. Anything else on
+   * that slug is never adopted, because any signed-in user can create an
+   * organization with any slug and becomes its owner; adopting it would hand
+   * them the wedding. The wedding then gets a fresh workspace on a suffixed
+   * slug instead, so a squatted slug can't block the repair either.
    */
   async attachOrganization(input: AttachOrganizationInput): Promise<boolean> {
     try {
       await db.$transaction(async (tx) => {
         const existing = await tx.organization.findUnique({
           where: { slug: input.slug },
-          select: { id: true, members: { select: { userId: true } } },
+          select: {
+            id: true,
+            members: { select: { userId: true } },
+            weddings: { select: { id: true } },
+          },
         })
+        const adoptable =
+          existing !== null && existing.members.length === 0 && existing.weddings.length === 0
 
         let organizationId: string
-        if (existing) {
+        if (adoptable) {
           organizationId = existing.id
-          const present = new Set(existing.members.map((member) => member.userId))
-          const missing = input.members.filter((member) => !present.has(member.userId))
-          if (missing.length > 0) {
-            await tx.member.createMany({
-              data: missing.map((member) => ({
-                id: randomUUID(),
-                organizationId,
-                userId: member.userId,
-                role: member.role,
-              })),
-            })
-          }
+          await tx.member.createMany({
+            data: input.members.map((member) => ({
+              id: randomUUID(),
+              organizationId,
+              userId: member.userId,
+              role: member.role,
+            })),
+          })
         } else {
           const organization = await tx.organization.create({
             data: {
               id: randomUUID(),
               name: input.name,
-              slug: input.slug,
+              slug: existing ? `${input.slug}-${randomUUID().slice(0, 8)}` : input.slug,
               members: {
                 create: input.members.map((member) => ({
                   id: randomUUID(),

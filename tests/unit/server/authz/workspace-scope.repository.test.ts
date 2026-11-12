@@ -131,10 +131,13 @@ describe('WorkspaceScopeRepository', () => {
       members: [{ userId: 'user-1', role: 'owner' as const }],
     }
 
-    const makeTx = (
-      linked: number,
-      existing: { id: string; members: Array<{ userId: string }> } | null = null
-    ) => ({
+    type ExistingOrg = {
+      id: string
+      members: Array<{ userId: string }>
+      weddings: Array<{ id: string }>
+    }
+
+    const makeTx = (linked: number, existing: ExistingOrg | null = null) => ({
       organization: {
         findUnique: jest.fn().mockResolvedValue(existing),
         create: jest.fn().mockImplementation(({ data }) => Promise.resolve({ id: data.id })),
@@ -142,6 +145,14 @@ describe('WorkspaceScopeRepository', () => {
       member: { createMany: jest.fn().mockResolvedValue({ count: 1 }) },
       wedding: { updateMany: jest.fn().mockResolvedValue({ count: linked }) },
     })
+
+    const twoMembers = {
+      ...input,
+      members: [
+        { userId: 'user-1', role: 'owner' as const },
+        { userId: 'user-2', role: 'member' as const },
+      ],
+    }
 
     it('creates the workspace with its members and links it, in one transaction', async () => {
       const tx = makeTx(1)
@@ -161,34 +172,54 @@ describe('WorkspaceScopeRepository', () => {
       })
     })
 
-    it('adopts a workspace left unlinked by an interrupted migration instead of failing forever', async () => {
-      // The migration creates the organization, then links it in a separate step.
-      const tx = makeTx(1, { id: 'org-orphan', members: [{ userId: 'user-1' }] })
+    it('adopts the empty, unlinked workspace an interrupted migration leaves behind', async () => {
+      // The migration creates the organization, links it, then adds members.
+      const tx = makeTx(1, { id: 'org-orphan', members: [], weddings: [] })
       mockTransaction.mockImplementation((fn: (t: unknown) => unknown) => fn(tx))
 
-      await expect(
-        repository.attachOrganization({
-          ...input,
-          members: [
-            { userId: 'user-1', role: 'owner' },
-            { userId: 'user-2', role: 'member' },
-          ],
-        })
-      ).resolves.toBe(true)
+      await expect(repository.attachOrganization(twoMembers)).resolves.toBe(true)
 
-      expect(tx.organization.findUnique).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { slug: 'wedding-wedding-1' } })
-      )
       expect(tx.organization.create).not.toHaveBeenCalled()
-      // Only people not already in it are added; existing roles are left alone.
-      const added = tx.member.createMany.mock.calls[0][0].data
-      expect(added).toEqual([
+      expect(tx.member.createMany.mock.calls[0][0].data).toEqual([
+        expect.objectContaining({ organizationId: 'org-orphan', userId: 'user-1', role: 'owner' }),
         expect.objectContaining({ organizationId: 'org-orphan', userId: 'user-2', role: 'member' }),
       ])
       expect(tx.wedding.updateMany).toHaveBeenCalledWith({
         where: { id: 'wedding-1', organizationId: null },
         data: { organizationId: 'org-orphan' },
       })
+    })
+
+    it('never adopts a workspace someone else created on the slug (takeover guard)', async () => {
+      // Any signed-in user can create an organization with any slug and is its owner.
+      const tx = makeTx(1, { id: 'org-squatter', members: [{ userId: 'attacker' }], weddings: [] })
+      mockTransaction.mockImplementation((fn: (t: unknown) => unknown) => fn(tx))
+
+      await expect(repository.attachOrganization(twoMembers)).resolves.toBe(true)
+
+      expect(tx.member.createMany).not.toHaveBeenCalled()
+      const orgData = tx.organization.create.mock.calls[0][0].data
+      // A fresh workspace on a non-colliding slug, with only the wedding's own people.
+      expect(orgData.slug).toMatch(/^wedding-wedding-1-[0-9a-f]{8}$/)
+      expect(orgData.members.create.map((m: { userId: string }) => m.userId)).toEqual([
+        'user-1',
+        'user-2',
+      ])
+      expect(tx.wedding.updateMany).toHaveBeenCalledWith({
+        where: { id: 'wedding-1', organizationId: null },
+        data: { organizationId: orgData.id },
+      })
+    })
+
+    it('never adopts a workspace already linked to another wedding', async () => {
+      const tx = makeTx(1, { id: 'org-taken', members: [], weddings: [{ id: 'wedding-2' }] })
+      mockTransaction.mockImplementation((fn: (t: unknown) => unknown) => fn(tx))
+
+      await expect(repository.attachOrganization(input)).resolves.toBe(true)
+
+      expect(tx.organization.create.mock.calls[0][0].data.slug).toMatch(
+        /^wedding-wedding-1-[0-9a-f]{8}$/
+      )
     })
 
     it('rolls back and reports false when another request linked the wedding first', async () => {
