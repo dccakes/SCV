@@ -1,7 +1,7 @@
 import '~/styles/globals.css'
 
 import type { Metadata, Viewport } from 'next'
-import { DM_Mono, Instrument_Serif } from 'next/font/google'
+import localFont from 'next/font/local'
 import { Toaster as SonnerToaster } from 'sonner'
 
 import { Providers } from '~/app/providers'
@@ -9,20 +9,35 @@ import { Toaster } from '~/components/ui/toaster'
 import { areSignupsAllowed } from '~/lib/signups'
 import { TRPCReactProvider } from '~/trpc/react'
 
-// Design fonts matching the HTML prototype
-const dmMono = DM_Mono({
-  subsets: ['latin'],
-  weight: ['300', '400', '500'],
+// Design fonts matching the HTML prototype. Self-hosted (src/fonts) so builds
+// never depend on reaching Google Fonts; see src/templates/fonts.ts.
+const dmMono = localFont({
+  src: [
+    { path: '../fonts/dm-mono/dm-mono-300-normal.woff2', weight: '300', style: 'normal' },
+    { path: '../fonts/dm-mono/dm-mono-400-normal.woff2', weight: '400', style: 'normal' },
+    { path: '../fonts/dm-mono/dm-mono-500-normal.woff2', weight: '500', style: 'normal' },
+  ],
   variable: '--font-dm-mono',
   display: 'swap',
+  adjustFontFallback: 'Arial',
 })
 
-const instrumentSerif = Instrument_Serif({
-  subsets: ['latin'],
-  weight: ['400'],
-  style: ['normal', 'italic'],
+const instrumentSerif = localFont({
+  src: [
+    {
+      path: '../fonts/instrument-serif/instrument-serif-400-normal.woff2',
+      weight: '400',
+      style: 'normal',
+    },
+    {
+      path: '../fonts/instrument-serif/instrument-serif-400-italic.woff2',
+      weight: '400',
+      style: 'italic',
+    },
+  ],
   variable: '--font-instrument',
   display: 'swap',
+  adjustFontFallback: 'Times New Roman',
 })
 
 export const viewport: Viewport = {
