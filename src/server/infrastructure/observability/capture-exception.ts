@@ -8,6 +8,7 @@
 
 import { trace } from '@opentelemetry/api'
 
+import { deploymentProperties } from '~/lib/observability/config'
 import { getPostHogServer } from '~/server/infrastructure/analytics/posthog-server'
 
 export interface ServerExceptionContext {
@@ -32,6 +33,7 @@ export async function captureServerException(
     const spanContext = trace.getActiveSpan()?.spanContext()
     const distinctId = userId || clientDistinctId || undefined
     client.captureException(error, distinctId, {
+      ...deploymentProperties(),
       ...(spanContext ? { trace_id: spanContext.traceId, span_id: spanContext.spanId } : {}),
       // Explicit ids win: callers deferring capture (e.g. via `after()`) pass
       // the ids captured while the failing span was still active.

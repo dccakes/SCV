@@ -1,5 +1,7 @@
 import {
+  deploymentProperties,
   parseSampleRate,
+  parseTelemetryId,
   posthogOtlpUrl,
   resolveServerPostHogTarget,
 } from '~/lib/observability/config'
@@ -80,5 +82,40 @@ describe('POSTHOG_PROXY_PATH', () => {
       `${POSTHOG_PROXY_PATH}/array/:path*`,
       `${POSTHOG_PROXY_PATH}/:path*`,
     ])
+  })
+})
+
+describe('deploymentProperties', () => {
+  it('tags telemetry with the Vercel environment and the deployed commit', () => {
+    expect(
+      deploymentProperties({
+        VERCEL_ENV: 'preview',
+        NODE_ENV: 'production',
+        VERCEL_GIT_COMMIT_SHA: 'abc',
+      })
+    ).toEqual({ environment: 'preview', app_version: 'abc' })
+  })
+
+  it('falls back to NODE_ENV and omits an unknown version', () => {
+    expect(deploymentProperties({ NODE_ENV: 'development' })).toEqual({
+      environment: 'development',
+    })
+  })
+})
+
+describe('parseTelemetryId', () => {
+  it('accepts posthog-js session ids and useChat ids', () => {
+    expect(parseTelemetryId('01a1cb54-9e95-729c-b678-f88bbc554dbb')).toBe(
+      '01a1cb54-9e95-729c-b678-f88bbc554dbb'
+    )
+    expect(parseTelemetryId('chat_Ab-1')).toBe('chat_Ab-1')
+  })
+
+  it('drops anything a client could abuse: junk, markup, oversized, non-strings', () => {
+    expect(parseTelemetryId('a b<script>')).toBeUndefined()
+    expect(parseTelemetryId('x'.repeat(129))).toBeUndefined()
+    expect(parseTelemetryId('')).toBeUndefined()
+    expect(parseTelemetryId(null)).toBeUndefined()
+    expect(parseTelemetryId(42)).toBeUndefined()
   })
 })

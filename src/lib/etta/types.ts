@@ -18,6 +18,10 @@ export interface EttaRequest {
   authz?: AuthzContext
   messages: ModelMessage[]
   toolsetMode?: EttaToolsetMode
+  /** Stable id for one chat (web `useChat` id, Telegram identity). Groups AI traces. */
+  conversationId?: string
+  /** posthog-js session id from `X-POSTHOG-SESSION-ID`, linking traces to replays. */
+  browserSessionId?: string
 }
 
 export interface EttaContext {

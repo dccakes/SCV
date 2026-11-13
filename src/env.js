@@ -63,6 +63,10 @@ export const env = createEnv({
     // (same project) when a dedicated server key is not supplied.
     POSTHOG_KEY: z.string().min(1).optional(),
     POSTHOG_HOST: z.string().url().optional(),
+    // Optional, build only: uploads source maps to PostHog error tracking
+    // (see src/posthog-sourcemaps.js). Both are required to turn it on.
+    POSTHOG_PERSONAL_API_KEY: z.string().min(1).optional(),
+    POSTHOG_PROJECT_ID: z.string().min(1).optional(),
   },
 
   /**
@@ -140,6 +144,8 @@ export const env = createEnv({
     CRON_SECRET: process.env.CRON_SECRET,
     POSTHOG_KEY: process.env.POSTHOG_KEY,
     POSTHOG_HOST: process.env.POSTHOG_HOST,
+    POSTHOG_PERSONAL_API_KEY: process.env.POSTHOG_PERSONAL_API_KEY,
+    POSTHOG_PROJECT_ID: process.env.POSTHOG_PROJECT_ID,
     NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN,
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     NEXT_PUBLIC_OTEL_SAMPLE_RATE: process.env.NEXT_PUBLIC_OTEL_SAMPLE_RATE,

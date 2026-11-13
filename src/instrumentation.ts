@@ -4,6 +4,7 @@ import type { Instrumentation } from 'next'
 import {
   POSTHOG_DISTINCT_ID_HEADER,
   POSTHOG_SESSION_ID_HEADER,
+  parseTelemetryId,
   SERVICE_NAME,
 } from '~/lib/observability/config'
 import { logger } from '~/lib/observability/logger'
@@ -12,6 +13,11 @@ export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     const { buildNodeOTelConfig } = await import('~/server/infrastructure/observability/node-otel')
     registerOTel(buildNodeOTelConfig())
+    // AI SDK 7 emits no spans until an integration is registered (Etta is Node-only).
+    const { registerAiTelemetry } = await import(
+      '~/server/infrastructure/observability/ai-telemetry'
+    )
+    registerAiTelemetry()
     return
   }
   registerOTel({ serviceName: SERVICE_NAME })
@@ -41,7 +47,7 @@ export const onRequestError: Instrumentation.onRequestError = async (err, reques
     // onRequestError resolves no auth session, so only the client-sent id
     // exists; it links the replay but never updates a person profile.
     clientDistinctId: headerValue(request.headers[POSTHOG_DISTINCT_ID_HEADER]),
-    sessionId: headerValue(request.headers[POSTHOG_SESSION_ID_HEADER]),
+    sessionId: parseTelemetryId(headerValue(request.headers[POSTHOG_SESSION_ID_HEADER])),
     properties: { ...attributes, source: 'next-on-request-error' },
   })
 }

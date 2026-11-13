@@ -1,8 +1,9 @@
 # Observability (OpenTelemetry + PostHog)
 
-SCV sends distributed traces, structured logs, and errors to PostHog. Traces
-and logs use standard OpenTelemetry (OTLP over HTTP), so any OTLP backend can
-be swapped in or added. Errors use PostHog error tracking.
+SCV sends distributed traces, structured logs, errors, and AI (Etta) usage to
+PostHog. Traces and logs use standard OpenTelemetry (OTLP over HTTP), so any
+OTLP backend can be swapped in or added. Errors use PostHog error tracking.
+Etta's model calls show up in PostHog AI observability.
 
 Everything is **optional**. With no PostHog token the app runs unchanged:
 spans stay local, and logs still go to the console.
@@ -13,7 +14,13 @@ spans stay local, and logs still go to the console.
 | --- | --- | --- |
 | Traces | Next.js routes and renders, `fetch`, Prisma queries, one span per tRPC procedure, AI SDK (Etta) generations and tool calls | Document load, every `fetch` (including tRPC) |
 | Logs | `logger` from `~/lib/observability/logger` | `posthog.logger` from `posthog-js` |
-| Errors | `onRequestError` (renders, route handlers, server actions) and tRPC 5xx | Unhandled errors and rejections, React error boundaries, fetch 5xx and network failures |
+| Errors | `onRequestError` (renders, route handlers, server actions), tRPC 5xx, Etta route 5xx, mid-stream failures, and unexpected tool errors, Telegram background handler failures | Unhandled errors and rejections, React error boundaries, fetch 5xx and network failures |
+| AI | Etta generations as `$ai_generation` events: prompts, outputs, tool calls and results, model, tokens, cost, latency; per signed-in user, grouped by conversation, linked to the replay | |
+
+Every server event, exception, and AI span carries `environment`
+(`VERCEL_ENV`, else `NODE_ENV`) and `app_version` (the deployed commit); the
+browser registers the same two keys as super properties. Preview and local
+traffic share the project with production, so filter on `environment`.
 
 ### One trace, browser to database
 
@@ -45,9 +52,59 @@ spans stay local, and logs still go to the console.
 | `NEXT_PUBLIC_OTEL_SAMPLE_RATE` | build | Browser root-trace sample rate, 0..1. Default 1. |
 | `OTEL_TRACES_SAMPLER`, `OTEL_TRACES_SAMPLER_ARG` | runtime | Server sampling (standard OTel). Default: all requests. |
 | `OTEL_EXPORTER_OTLP_*` | runtime | Optional extra OTLP trace destination, picked up by `@vercel/otel`. |
+| `POSTHOG_PERSONAL_API_KEY`, `POSTHOG_PROJECT_ID` | build | Optional. Both set: upload source maps to error tracking on `next build`. Key scopes: `error tracking write`, `organization read`. |
 
 Vercel's own tracing integrations and log drains keep working: the PostHog
 exporter is added alongside `@vercel/otel`'s defaults, not instead of them.
+
+## AI observability (Etta)
+
+Etta runs on Vercel AI SDK 7. In v7 the `ai` package emits no spans on its own:
+`registerAiTelemetry()` (`ai-telemetry.ts`, called from `instrumentation.ts` in
+the Node runtime) registers the `@ai-sdk/otel` integration once, after which
+every AI SDK call is traced. Spans go to two places:
+
+- PostHog distributed tracing, as part of the request trace (like every span).
+- PostHog AI observability, through `PostHogSpanProcessor` from `@posthog/ai/otel`
+  in `node-otel.ts`. It only forwards AI spans (`gen_ai.*`, `ai.*`) to
+  `<host>/i/v0/ai/otel`, where PostHog turns them into `$ai_generation` events.
+  The plain tracing endpoint does not do that conversion.
+
+Prompts, outputs, tool arguments, and tool results are recorded (the v7
+default), so traces can be read, searched, and evaluated in PostHog.
+
+Each call passes a `runtimeContext` that `enrichAiSpan` maps onto the attributes
+PostHog reads. v7 drops runtime context from telemetry unless the call lists it
+in `telemetry.includeRuntimeContext` (`ETTA_TELEMETRY_CONTEXT`).
+
+| Context field | PostHog attribute | Source |
+| --- | --- | --- |
+| `distinctId` | `posthog.distinct_id` | Signed-in user id. Omitted for anonymous guests, so no person is attached. |
+| `sessionId` | `$ai_session_id` | Conversation: `web:<useChat id>` or `telegram:<identity id>`. Groups a chat's calls into one AI session. |
+| `browserSessionId` | `$session_id` | posthog-js `X-POSTHOG-SESSION-ID` header; links the trace to the session replay. |
+| `properties` | same keys | `wedding_id`, `persona`, `model`, `toolset_mode`, `environment`, `app_version`. |
+
+Trace names come from the root span, which is named after the function id
+(`invoke_agent etta.couple`, `etta.guest`, `etta.couple-bot`).
+
+Failures surface in error tracking as well as in the trace: `onError` reports
+mid-stream failures, and `onToolExecutionEnd` reports tools that threw, except
+expected 4xx outcomes such as a `FORBIDDEN` permission check.
+
+When `@vercel/otel` ends a sampled root span it flushes every span processor
+through `waitUntil`, so AI spans are not lost when a serverless function
+freezes.
+
+## Source maps
+
+Without uploaded source maps, browser stack traces in PostHog error tracking
+are minified. `next.config.js` wraps the config with `withPostHogConfig` from
+`@posthog/nextjs-config` only when both `POSTHOG_PERSONAL_API_KEY` and
+`POSTHOG_PROJECT_ID` are set (see `src/posthog-sourcemaps.js`). Maps are
+uploaded as release `scv` at `VERCEL_GIT_COMMIT_SHA`, then deleted from the
+build output so they are never served. Set both only on the environment whose
+builds you want symbolicated (usually Vercel Production). With a bad key the
+build fails rather than shipping silently unmapped.
 
 ## Using the logger
 
@@ -86,8 +143,12 @@ control.
   (`/bot<id>:<secret>/`) becomes `/bot[REDACTED]/`. Add a pattern to
   `sanitizeTelemetryText` in `node-otel.ts` for any new client that puts
   credentials in a path.
-- Etta AI spans record model, timing, token usage, and tool names, but not
-  prompts or completions (`recordInputs`/`recordOutputs` are off).
+- Etta AI spans **do** record prompts, completions, tool arguments, and tool
+  results, which include guest names, dietary answers, and other wedding data.
+  They go to PostHog (US cloud) like session replays do. To stop that for a
+  call, set `telemetry.recordInputs` / `recordOutputs` to `false` in
+  `agent.ts`; to strip content for every call, pass `privacyMode: true` to
+  `PostHogSpanProcessor` in `node-otel.ts`.
 - Prisma spans include SQL text with parameters as placeholders, not values.
 - Path segments are kept as-is (for example `/join/<token>`); PostHog pageviews
   already record the same URLs.
@@ -100,6 +161,10 @@ control.
 | `src/server/infrastructure/observability/node-otel.ts` | Node config: PostHog OTLP exporters, Prisma, span name and URL redaction, per-request log flushing |
 | `src/server/infrastructure/observability/trpc-tracing.ts` | Per-procedure tRPC spans |
 | `src/server/infrastructure/observability/capture-exception.ts` | Server exceptions to PostHog |
+| `src/server/infrastructure/observability/request-context.ts` | Serverless `waitUntil` lookup shared by log flushing and posthog-node |
+| `src/server/infrastructure/observability/ai-telemetry.ts` | Registers `@ai-sdk/otel`; maps call context to PostHog AI attributes |
+| `src/lib/etta/agent.ts` | Etta runtime context (user, conversation, replay, wedding); stream and tool error capture |
+| `src/posthog-sourcemaps.js` | Opt-in source map upload config for `withPostHogConfig` |
 | `src/lib/observability/logger.ts` | Server/Edge OTel logger |
 | `instrumentation-client.ts` | posthog-js init (errors, logs, tracing headers); lazy-loads browser tracing |
 | `src/lib/observability/browser-tracing.ts` | Browser OTel tracer, fetch + document load, fetch error reporting |
@@ -126,6 +191,9 @@ exceptions are flushed explicitly before returning.
    server route span, the `trpc <procedure>` span, and Prisma spans should share
    one trace.
 5. Check PostHog Logs for records carrying that trace id.
+6. Send Etta a message and check AI observability: a trace named
+   `invoke_agent etta.couple` with the prompt, reply, tool calls, cost, and
+   your user, in a session keyed `web:<chat id>`.
 
 posthog-js drops events from headless or automated browsers (bot filtering),
 so browser errors won't appear from a default Playwright run.

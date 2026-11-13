@@ -1,3 +1,4 @@
+import { withPostHogConfig } from '@posthog/nextjs-config'
 import createNextIntlPlugin from 'next-intl/plugin'
 
 /**
@@ -7,6 +8,8 @@ import createNextIntlPlugin from 'next-intl/plugin'
 // biome-ignore lint/style/noRestrictedImports: Next.js config requires relative import
 await import('./src/env.js')
 
+// biome-ignore lint/style/noRestrictedImports: Next.js config requires relative import
+import { buildPostHogSourcemapConfig } from './src/posthog-sourcemaps.js'
 // biome-ignore lint/style/noRestrictedImports: Next.js config requires relative import
 import { buildSecurityHeaders } from './src/security-headers.js'
 
@@ -77,9 +80,16 @@ const config = {
         ? `https://${process.env.VERCEL_BRANCH_URL}`
         : 'http://localhost:3000'),
     // Browser telemetry resource attributes (PostHog logs and traces).
-    NEXT_PUBLIC_APP_VERSION: process.env.VERCEL_GIT_COMMIT_SHA ?? 'development',
+    // Empty when unknown (local, Docker); instrumentation-client.ts falls back where it needs a value.
+    NEXT_PUBLIC_APP_VERSION: process.env.VERCEL_GIT_COMMIT_SHA ?? '',
     NEXT_PUBLIC_DEPLOYMENT_ENVIRONMENT: process.env.VERCEL_ENV ?? process.env.NODE_ENV,
   },
 }
 
-export default withNextIntl(config)
+// Opt-in PostHog error tracking source map upload (see src/posthog-sourcemaps.js).
+// Must stay the outermost wrapper, or its build hooks are dropped.
+const posthogSourcemaps = buildPostHogSourcemapConfig()
+
+export default posthogSourcemaps
+  ? withPostHogConfig(withNextIntl(config), posthogSourcemaps)
+  : withNextIntl(config)

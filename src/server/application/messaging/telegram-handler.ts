@@ -231,6 +231,7 @@ export class TelegramHandler {
       weddingId,
       authz,
       messages,
+      conversationId: `telegram:${identity.id}`,
     })
     const text = await result.text
 

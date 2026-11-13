@@ -43,6 +43,8 @@ export class SessionSummarizer {
       authz: opts.authz,
       messages,
       toolsetMode: 'memory-only',
+      // Groups the summary run with the Telegram chat it covers.
+      conversationId: `telegram:${block[0]?.identityId}`,
     })
     await result.text
 
