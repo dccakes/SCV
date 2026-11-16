@@ -33,6 +33,7 @@ describe('workspace scope resolver', () => {
   })
 
   it('resolves an explicit session organization when it has a linked wedding', async () => {
+    mockQueryRaw.mockResolvedValueOnce([])
     mockQueryRaw.mockResolvedValueOnce([
       {
         isPrimaryWedding: false,
@@ -51,10 +52,11 @@ describe('workspace scope resolver', () => {
       activeOrganization: { organizationId: 'org-1', role: 'admin' },
       activeWeddingId: 'wedding-1',
     })
-    expect(mockExecuteRaw).not.toHaveBeenCalled()
+    expect(mockExecuteRaw).toHaveBeenCalledTimes(1)
   })
 
   it('replaces an invalid session organization with the primary wedding organization', async () => {
+    mockQueryRaw.mockResolvedValueOnce([])
     mockQueryRaw.mockResolvedValueOnce([])
     mockQueryRaw.mockResolvedValueOnce([
       {
@@ -78,6 +80,7 @@ describe('workspace scope resolver', () => {
   })
 
   it('bootstraps from the primary wedding organization instead of the first member row', async () => {
+    mockQueryRaw.mockResolvedValueOnce([])
     mockQueryRaw.mockResolvedValueOnce([
       {
         isPrimaryWedding: true,
@@ -100,6 +103,7 @@ describe('workspace scope resolver', () => {
   })
 
   it('picks first candidate when multiple non-primary scopes exist and no active org', async () => {
+    mockQueryRaw.mockResolvedValueOnce([])
     mockQueryRaw.mockResolvedValueOnce([
       { isPrimaryWedding: false, organizationId: 'org-1', role: 'owner', weddingId: 'wedding-1' },
       { isPrimaryWedding: false, organizationId: 'org-2', role: 'admin', weddingId: 'wedding-2' },

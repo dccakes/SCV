@@ -1,4 +1,3 @@
-
 import { WorkspaceScopeService } from '~/server/authz/workspace-scope.service'
 import type { WorkspaceScopeRow } from '~/server/authz/workspace-scope-resolver'
 
@@ -190,6 +189,72 @@ describe('WorkspaceScopeService', () => {
     expect(result).toEqual({
       activeOrganization: { organizationId: 'org-1', role: 'owner' },
       activeWeddingId: 'wedding-1',
+    })
+  })
+  describe('switchWorkspace', () => {
+    it('switches to a workspace the user belongs to and persists the preference', async () => {
+      const repository = makeRepository()
+      repository.findScopeForOrganization.mockResolvedValue({
+        organizationId: 'org-2',
+        isPrimaryWedding: false,
+        role: 'admin',
+        weddingId: 'wedding-2',
+      } satisfies WorkspaceScopeRow)
+
+      const service = new WorkspaceScopeService(repository)
+
+      const result = await service.switchWorkspace({
+        userId: 'user-1',
+        sessionToken: 'tok-1',
+        organizationId: 'org-2',
+      })
+
+      expect(repository.findScopeForOrganization).toHaveBeenCalledWith('user-1', 'org-2')
+      expect(repository.setActiveOrganizationId).toHaveBeenCalledWith('tok-1', 'org-2')
+      expect(repository.setLastActiveOrganizationId).toHaveBeenCalledWith('user-1', 'org-2')
+      expect(result).toEqual({
+        activeOrganization: { organizationId: 'org-2', role: 'admin' },
+        activeWeddingId: 'wedding-2',
+      })
+    })
+
+    it('rejects a workspace the user does not belong to', async () => {
+      const repository = makeRepository()
+      repository.findScopeForOrganization.mockResolvedValue(undefined)
+
+      const service = new WorkspaceScopeService(repository)
+
+      const result = await service.switchWorkspace({
+        userId: 'user-1',
+        sessionToken: 'tok-1',
+        organizationId: 'org-unauthorized',
+      })
+
+      expect(result).toBeNull()
+      expect(repository.setActiveOrganizationId).not.toHaveBeenCalled()
+      expect(repository.setLastActiveOrganizationId).not.toHaveBeenCalled()
+    })
+
+    it('rejects a membership whose organization has no linked wedding', async () => {
+      const repository = makeRepository()
+      repository.findScopeForOrganization.mockResolvedValue({
+        organizationId: 'org-no-wedding',
+        isPrimaryWedding: false,
+        role: 'member',
+        weddingId: null,
+      } satisfies WorkspaceScopeRow)
+
+      const service = new WorkspaceScopeService(repository)
+
+      const result = await service.switchWorkspace({
+        userId: 'user-1',
+        sessionToken: 'tok-1',
+        organizationId: 'org-no-wedding',
+      })
+
+      expect(result).toBeNull()
+      expect(repository.setActiveOrganizationId).not.toHaveBeenCalled()
+      expect(repository.setLastActiveOrganizationId).not.toHaveBeenCalled()
     })
   })
 })
