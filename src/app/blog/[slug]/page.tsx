@@ -6,8 +6,9 @@ import remarkGfm from 'remark-gfm'
 
 import { mdxComponents } from '~/lib/blog/mdx-components'
 import { getAllPublishedSlugs, getPostBySlug } from '~/lib/blog/posts'
+import { getPublicWebsiteBaseUrl } from '~/lib/website/public-url'
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+const siteUrl = getPublicWebsiteBaseUrl()
 
 export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
   return getAllPublishedSlugs().map((slug) => ({ slug }))

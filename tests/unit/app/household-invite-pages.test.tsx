@@ -144,7 +144,7 @@ describe('household invite pages', () => {
     const { GET } = await import('~/app/w/[websiteSubUrl]/save-the-date/[code]/route')
 
     const response = await GET(
-      new Request('https://example.com/w/harry-and-hermione/save-the-date/code'),
+      new Request('http://localhost:3000/w/harry-and-hermione/save-the-date/code'),
       {
         params: Promise.resolve({
           websiteSubUrl: 'harry-and-hermione',
@@ -156,7 +156,7 @@ describe('household invite pages', () => {
     expect(mockGetInviteData).toHaveBeenCalledWith('harry-and-hermione', 'ab-4f9k2c')
     expect(response.status).toBe(307)
     expect(response.headers.get('location')).toBe(
-      'https://example.com/w/harry-and-hermione/save-the-date'
+      'http://localhost:3000/w/harry-and-hermione/save-the-date'
     )
     expect(response.headers.get('x-robots-tag')).toBe('noindex, nofollow')
     expect(response.headers.get('set-cookie')).toEqual(
@@ -206,7 +206,7 @@ describe('household invite pages', () => {
     const googleLink = screen.getByRole('link', { name: /google calendar/i })
     expect(googleLink).toHaveAttribute('href', expect.stringContaining('dates=20270530%2F20270601'))
     expect(screen.getByRole('link', { name: /outlook/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /apple calendar/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /download \.ics file/i })).toBeInTheDocument()
   })
 
   it('themes the invite card with the chosen template and the couple’s Save the Date copy', async () => {

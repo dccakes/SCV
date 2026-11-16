@@ -1,8 +1,9 @@
 import type { MetadataRoute } from 'next'
 
 import { getAllPublishedSlugs } from '~/lib/blog/posts'
+import { getPublicWebsiteBaseUrl } from '~/lib/website/public-url'
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+const siteUrl = getPublicWebsiteBaseUrl()
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date()

@@ -3,6 +3,8 @@ import '@testing-library/jest-dom'
 import { ReadableStream, TransformStream, WritableStream } from 'node:stream/web'
 import { TextDecoder, TextEncoder } from 'node:util'
 
+process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000'
+
 // Polyfill for Prisma client in Jest
 global.TextEncoder = TextEncoder
 global.TextDecoder = TextDecoder as typeof global.TextDecoder

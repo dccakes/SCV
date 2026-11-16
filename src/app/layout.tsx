@@ -7,6 +7,7 @@ import { Toaster as SonnerToaster } from 'sonner'
 import { Providers } from '~/app/providers'
 import { Toaster } from '~/components/ui/toaster'
 import { areSignupsAllowed } from '~/lib/signups'
+import { getPublicWebsiteBaseUrl } from '~/lib/website/public-url'
 import { TRPCReactProvider } from '~/trpc/react'
 
 // Design fonts matching the HTML prototype. Self-hosted (src/fonts) so builds
@@ -45,7 +46,7 @@ export const viewport: Viewport = {
   width: 'device-width',
 }
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+const siteUrl = getPublicWebsiteBaseUrl()
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

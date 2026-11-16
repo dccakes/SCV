@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 
 import OpenSourceSection from '~/components/marketing/open-source-section'
+import { getPublicWebsiteBaseUrl } from '~/lib/website/public-url'
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+const siteUrl = getPublicWebsiteBaseUrl()
 
 export const metadata: Metadata = {
   title: 'OSWP Open Source',

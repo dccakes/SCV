@@ -5,10 +5,11 @@ import { headers } from 'next/headers'
 import AuthenticatedView from '~/components/home/authenticated-view'
 import NonAuthenticatedView from '~/components/home/non-authenticated-view'
 import { auth } from '~/lib/auth'
+import { getPublicWebsiteBaseUrl } from '~/lib/website/public-url'
 import { resolveWorkspaceScope } from '~/server/application/workspace/workspace-scope'
 import { readWorkspaceCapabilities } from '~/server/authz/workspace-capabilities'
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+const siteUrl = getPublicWebsiteBaseUrl()
 
 export const metadata: Metadata = {
   title: {
@@ -137,18 +138,17 @@ export default async function Home() {
     headers: await headers(),
   })
 
-let isSignedIn = !!session
-if (session?.user?.id) {
-  const scope = await resolveWorkspaceScope({ session, userId: session.user.id })
-  const capabilities = readWorkspaceCapabilities(scope.activeOrganization?.role)
+  let isSignedIn = !!session
+  if (session?.user?.id) {
+    const scope = await resolveWorkspaceScope({ session, userId: session.user.id })
+    const capabilities = readWorkspaceCapabilities(scope.activeOrganization?.role)
 
-  // A signed-in user without a wedding must be allowed to complete setup.
-  // Users with an existing workspace still need planning permission.
-  if (scope.activeWeddingId && !capabilities.canViewPlanning) {
-    isSignedIn = false
+    // A signed-in user without a wedding must be allowed to complete setup.
+    // Users with an existing workspace still need planning permission.
+    if (scope.activeWeddingId && !capabilities.canViewPlanning) {
+      isSignedIn = false
+    }
   }
-}
-
 
   return (
     <>
