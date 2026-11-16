@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import type { Dispatch, SetStateAction } from 'react'
 import { FaCircleCheck } from 'react-icons/fa6'
@@ -24,12 +23,12 @@ export default function RsvpConfirmation({ basePath, setCurrentStep }: RsvpConfi
           brideFirstName: rsvpFormData.weddingData.brideFirstName ?? '',
         })}
       </h2>
-      <Link
+      <a
         className={`my-5 bg-gray-700 py-3 text-center text-white text-xl tracking-wide`}
         href={basePath}
       >
         {t('backToHomepage')}
-      </Link>
+      </a>
       <div className='flex justify-between border-b-2 py-4'>
         <h2 className='text-xl'>{t('yourRsvpResponse')}</h2>
         <button type='button' className='border-b-2 py-1' onClick={() => setCurrentStep(3)}>
