@@ -23,7 +23,10 @@ export const env = createEnv({
     // "true". Only the exact strings "true" and "false" are accepted so a typo such as "0" or
     // "False" fails loudly at boot. (If validation is skipped, src/lib/signups.ts treats any
     // value other than "true" as closed.)
-    BETTER_AUTH_URL: z.string().url().optional(),
+    BETTER_AUTH_URL: z.preprocess(
+      (val) => (val === '' ? undefined : val),
+      z.string().url().optional()
+    ),
     ALLOW_SIGNUPS: z.enum(['true', 'false']).default('true'),
     // Optional: AWS S3 Storage (can be disabled for local dev)
     AWS_S3_BUCKET_NAME: z.string().min(1).optional(),
@@ -76,11 +79,13 @@ export const env = createEnv({
     NEXT_PUBLIC_APP_URL: z
       .string()
       .optional()
-      .transform(
-        (val) =>
-          val ??
+      .transform((val) => {
+        const configuredUrl = val?.trim()
+        return (
+          configuredUrl ||
           (process.env.VERCEL_BRANCH_URL ? `https://${process.env.VERCEL_BRANCH_URL}` : undefined)
-      )
+        )
+      })
       .pipe(z.string().url().optional()),
     // Optional: PostHog client-side analytics (product + template instrumentation).
     NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: z.string().min(1).optional(),

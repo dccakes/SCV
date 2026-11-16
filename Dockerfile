@@ -44,7 +44,9 @@ ENV NODE_ENV=production
 
 # Build the application
 ARG NEXT_PUBLIC_APP_URL
+ARG VERCEL_BRANCH_URL
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV VERCEL_BRANCH_URL=$VERCEL_BRANCH_URL
 RUN npm run build
 
 # ==========================================
