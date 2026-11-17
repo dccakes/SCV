@@ -16,6 +16,7 @@ export const mockInvitation: Invitation = {
   submittedBy: null,
   submittedAt: null,
   invitedAt: new Date('2024-01-01'),
+  sentAt: null,
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
 }
@@ -48,6 +49,9 @@ export const mockUpdateMany = jest.fn()
 export const mockAllBelongToWedding = jest.fn()
 export const mockCountByWeddingAndGuestEventPairs = jest.fn()
 export const mockGetRsvpCountsByEventId = jest.fn()
+export const mockHouseholdAndEventBelongToWedding = jest.fn()
+export const mockMarkSentForHouseholdEvent = jest.fn()
+export const mockClearSentForHouseholdEvent = jest.fn()
 
 export const InvitationRepository = jest.fn().mockImplementation(() => ({
   findById: mockFindById,
@@ -71,6 +75,9 @@ export const InvitationRepository = jest.fn().mockImplementation(() => ({
   eventBelongsToWedding: mockEventBelongsToWedding,
   countByWeddingAndGuestEventPairs: mockCountByWeddingAndGuestEventPairs,
   getRsvpCountsByEventId: mockGetRsvpCountsByEventId,
+  householdAndEventBelongToWedding: mockHouseholdAndEventBelongToWedding,
+  markSentForHouseholdEvent: mockMarkSentForHouseholdEvent,
+  clearSentForHouseholdEvent: mockClearSentForHouseholdEvent,
 }))
 
 // Helper to reset all mocks
@@ -96,5 +103,8 @@ export const resetMocks = (): void => {
   mockEventBelongsToWedding.mockReset()
   mockCountByWeddingAndGuestEventPairs.mockReset()
   mockGetRsvpCountsByEventId.mockReset()
+  mockHouseholdAndEventBelongToWedding.mockReset()
+  mockMarkSentForHouseholdEvent.mockReset()
+  mockClearSentForHouseholdEvent.mockReset()
   InvitationRepository.mockClear()
 }

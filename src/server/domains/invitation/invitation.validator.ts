@@ -39,8 +39,18 @@ export const bulkUpdateInvitationsSchema = z.object({
   invitations: z.array(updateInvitationSchema).min(1),
 })
 
+/**
+ * Schema for marking a household's invitations to one event as sent (or not)
+ */
+export const setHouseholdInvitationSentSchema = z.object({
+  householdId: z.string().min(1, 'Household ID is required'),
+  eventId: z.string().min(1, 'Event ID is required'),
+  sent: z.boolean(),
+})
+
 // Export inferred types
 export type CreateInvitationSchemaInput = z.infer<typeof createInvitationSchema>
 export type UpdateInvitationSchemaInput = z.infer<typeof updateInvitationSchema>
 export type InvitationIdSchemaInput = z.infer<typeof invitationIdSchema>
 export type BulkUpdateInvitationsSchemaInput = z.infer<typeof bulkUpdateInvitationsSchema>
+export type SetHouseholdInvitationSentSchemaInput = z.infer<typeof setHouseholdInvitationSentSchema>

@@ -15,6 +15,7 @@ import type {
   CreateInvitationInput,
   Invitation,
   RsvpStats,
+  SetHouseholdInvitationSentInput,
   UpdateInvitationInput,
 } from '~/server/domains/invitation/invitation.types'
 
@@ -143,6 +144,41 @@ export class InvitationService {
         rsvp: inv.rsvp,
       }))
     )
+  }
+
+  /**
+   * Record (or undo) that a household's invitation to an event was sent.
+   * The app does not send invitations itself, so this is the only source of
+   * sentAt: the couple marks it once they have actually sent it.
+   */
+  async setHouseholdInvitationSent(
+    ctx: AuthzContext,
+    weddingId: string,
+    data: SetHouseholdInvitationSentInput
+  ): Promise<{ count: number }> {
+    requirePermission(ctx, { guest_invitation: ['send'] })
+
+    const inScope = await this.invitationRepository.householdAndEventBelongToWedding(
+      data.householdId,
+      data.eventId,
+      weddingId
+    )
+    if (!inScope) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Household or event is outside the requested wedding scope',
+      })
+    }
+
+    if (data.sent) {
+      return this.invitationRepository.markSentForHouseholdEvent(
+        data.householdId,
+        data.eventId,
+        new Date()
+      )
+    }
+
+    return this.invitationRepository.clearSentForHouseholdEvent(data.householdId, data.eventId)
   }
 
   /**

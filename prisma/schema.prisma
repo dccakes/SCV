@@ -534,7 +534,11 @@ model Invitation {
   // Tracking
   submittedBy Int? // Which guest actually submitted (usually primary contact)
   submittedAt DateTime?
+  // Row creation time, despite the name. Not when anything was sent.
   invitedAt   DateTime  @default(now())
+  // When the couple marked this invitation as sent. Null means no send was
+  // recorded; the RSVP status alone never implies one.
+  sentAt      DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

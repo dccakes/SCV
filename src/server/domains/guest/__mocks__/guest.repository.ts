@@ -34,6 +34,7 @@ export const mockGuestWithInvitations: GuestWithInvitations = {
       submittedBy: null,
       submittedAt: null,
       invitedAt: new Date('2024-01-01'),
+      sentAt: null,
       createdAt: new Date('2024-01-01'),
       updatedAt: new Date('2024-01-01'),
     },

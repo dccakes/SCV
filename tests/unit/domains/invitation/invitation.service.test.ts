@@ -17,6 +17,7 @@ import {
   mockAllBelongToWedding,
   mockBelongsToUser,
   mockBelongsToWedding,
+  mockClearSentForHouseholdEvent,
   mockCreate,
   mockCreateMany,
   mockEventBelongsToWedding,
@@ -25,7 +26,9 @@ import {
   mockFindByWeddingId,
   mockGetRsvpCountsByEventId,
   mockGuestBelongsToWedding,
+  mockHouseholdAndEventBelongToWedding,
   mockInvitation,
+  mockMarkSentForHouseholdEvent,
   mockRsvpStats,
   mockUpdate,
   mockUpdateMany,
@@ -48,6 +51,9 @@ const mockEventBelongsToWeddingFn = mockEventBelongsToWedding as jest.Mock
 const mockUpdateManyFn = mockUpdateMany as jest.Mock
 const mockAllBelongToWeddingFn = mockAllBelongToWedding as jest.Mock
 const mockRequirePermission = requirePermission as jest.Mock
+const mockHouseholdAndEventBelongToWeddingFn = mockHouseholdAndEventBelongToWedding as jest.Mock
+const mockMarkSentForHouseholdEventFn = mockMarkSentForHouseholdEvent as jest.Mock
+const mockClearSentForHouseholdEventFn = mockClearSentForHouseholdEvent as jest.Mock
 
 const actorContext = {
   userId: 'user-123',
@@ -395,6 +401,91 @@ describe('InvitationService', () => {
         ],
         'wedding-123'
       )
+    })
+  })
+
+  describe('setHouseholdInvitationSent', () => {
+    const input = { householdId: 'household-1', eventId: 'event-123' }
+
+    beforeEach(() => {
+      mockHouseholdAndEventBelongToWeddingFn.mockResolvedValue(true)
+      mockMarkSentForHouseholdEventFn.mockResolvedValue({ count: 2 })
+      mockClearSentForHouseholdEventFn.mockResolvedValue({ count: 2 })
+    })
+
+    it('requires the guest_invitation send permission', async () => {
+      await invitationService.setHouseholdInvitationSent(actorContext, 'wedding-123', {
+        ...input,
+        sent: true,
+      })
+
+      expect(mockRequirePermission).toHaveBeenCalledWith(actorContext, {
+        guest_invitation: ['send'],
+      })
+    })
+
+    it('rejects when the actor lacks the send permission', async () => {
+      mockRequirePermission.mockImplementation(() => {
+        throw new TRPCError({ code: 'FORBIDDEN' })
+      })
+
+      await expect(
+        invitationService.setHouseholdInvitationSent(actorContext, 'wedding-123', {
+          ...input,
+          sent: true,
+        })
+      ).rejects.toThrow(TRPCError)
+      expect(mockMarkSentForHouseholdEventFn).not.toHaveBeenCalled()
+    })
+
+    it('rejects when the household or event is outside the wedding', async () => {
+      mockHouseholdAndEventBelongToWeddingFn.mockResolvedValue(false)
+
+      await expect(
+        invitationService.setHouseholdInvitationSent(actorContext, 'wedding-123', {
+          ...input,
+          sent: true,
+        })
+      ).rejects.toThrow(TRPCError)
+      expect(mockHouseholdAndEventBelongToWeddingFn).toHaveBeenCalledWith(
+        'household-1',
+        'event-123',
+        'wedding-123'
+      )
+      expect(mockMarkSentForHouseholdEventFn).not.toHaveBeenCalled()
+      expect(mockClearSentForHouseholdEventFn).not.toHaveBeenCalled()
+    })
+
+    it('stamps the current time when marking sent', async () => {
+      const before = Date.now()
+
+      const result = await invitationService.setHouseholdInvitationSent(
+        actorContext,
+        'wedding-123',
+        { ...input, sent: true }
+      )
+
+      expect(result).toEqual({ count: 2 })
+      expect(mockMarkSentForHouseholdEventFn).toHaveBeenCalledTimes(1)
+      const [householdId, eventId, sentAt] = mockMarkSentForHouseholdEventFn.mock.calls[0]
+      expect(householdId).toBe('household-1')
+      expect(eventId).toBe('event-123')
+      expect(sentAt).toBeInstanceOf(Date)
+      expect(sentAt.getTime()).toBeGreaterThanOrEqual(before)
+      expect(sentAt.getTime()).toBeLessThanOrEqual(Date.now())
+      expect(mockClearSentForHouseholdEventFn).not.toHaveBeenCalled()
+    })
+
+    it('clears the sent timestamp when unmarking', async () => {
+      const result = await invitationService.setHouseholdInvitationSent(
+        actorContext,
+        'wedding-123',
+        { ...input, sent: false }
+      )
+
+      expect(result).toEqual({ count: 2 })
+      expect(mockClearSentForHouseholdEventFn).toHaveBeenCalledWith('household-1', 'event-123')
+      expect(mockMarkSentForHouseholdEventFn).not.toHaveBeenCalled()
     })
   })
 })

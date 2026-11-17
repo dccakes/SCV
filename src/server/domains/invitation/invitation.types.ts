@@ -18,6 +18,7 @@ export type Invitation = {
   submittedBy: number | null
   submittedAt: Date | null
   invitedAt: Date
+  sentAt: Date | null
   createdAt: Date
   updatedAt: Date
 }
@@ -38,6 +39,15 @@ export type UpdateInvitationInput = {
   guestId: number
   eventId: string
   rsvp: string
+}
+
+/**
+ * Input for marking (or unmarking) a household's invitations to one event as sent
+ */
+export type SetHouseholdInvitationSentInput = {
+  householdId: string
+  eventId: string
+  sent: boolean
 }
 
 /**

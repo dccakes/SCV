@@ -6,6 +6,7 @@ const mockToggleGuestForm = jest.fn()
 const mockRefresh = jest.fn()
 const mockHouseholdUpdateMutate = jest.fn()
 const mockDashboardInvalidate = jest.fn()
+const mockSetHouseholdSentMutate = jest.fn()
 let shouldMutationFail = false
 let deferMutationResolution = false
 let pendingMutationSuccess: (() => void) | undefined
@@ -147,6 +148,12 @@ jest.mock('~/trpc/react', () => ({
       update: {
         useMutation: () => ({ mutate: jest.fn(), isPending: false }),
       },
+      setHouseholdSent: {
+        useMutation: () => ({
+          mutate: (...args: unknown[]) => mockSetHouseholdSentMutate(...args),
+          isPending: false,
+        }),
+      },
     },
     householdInvite: {
       generateLink: {
@@ -236,6 +243,7 @@ const households: HouseholdWithGuests[] = [
             submittedBy: null,
             submittedAt: null,
             invitedAt: new Date('2026-01-01T00:00:00.000Z'),
+            sentAt: null,
             createdAt: new Date('2026-01-01T00:00:00.000Z'),
             updatedAt: new Date('2026-01-01T00:00:00.000Z'),
           },
@@ -249,6 +257,7 @@ const households: HouseholdWithGuests[] = [
             submittedBy: null,
             submittedAt: null,
             invitedAt: new Date('2026-01-01T00:00:00.000Z'),
+            sentAt: null,
             createdAt: new Date('2026-01-01T00:00:00.000Z'),
             updatedAt: new Date('2026-01-01T00:00:00.000Z'),
           },
@@ -278,6 +287,7 @@ const households: HouseholdWithGuests[] = [
             submittedBy: null,
             submittedAt: null,
             invitedAt: new Date('2026-01-01T00:00:00.000Z'),
+            sentAt: null,
             createdAt: new Date('2026-01-01T00:00:00.000Z'),
             updatedAt: new Date('2026-01-01T00:00:00.000Z'),
           },
@@ -350,6 +360,7 @@ const householdsWithSecondFamily: HouseholdWithGuests[] = [
             submittedBy: null,
             submittedAt: null,
             invitedAt: new Date('2026-01-02T00:00:00.000Z'),
+            sentAt: null,
             createdAt: new Date('2026-01-02T00:00:00.000Z'),
             updatedAt: new Date('2026-01-02T00:00:00.000Z'),
           },
@@ -399,6 +410,7 @@ const householdsWithFilteredGuests: {
               submittedBy: null,
               submittedAt: null,
               invitedAt: new Date('2026-01-03T00:00:00.000Z'),
+              sentAt: null,
               createdAt: new Date('2026-01-03T00:00:00.000Z'),
               updatedAt: new Date('2026-01-03T00:00:00.000Z'),
             },
@@ -1051,6 +1063,103 @@ describe('GuestsView', () => {
 
     const manageLink = screen.getByRole('link', { name: 'Manage in Events' })
     expect(manageLink).toHaveAttribute('href', '/events?eventId=event-1&tab=rsvps')
+  })
+
+  it('marks the household invitation to an event as sent', () => {
+    mockSetHouseholdSentMutate.mockClear()
+
+    render(
+      <GuestsView
+        events={events}
+        households={households}
+        selectedEventId='event-1'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+    fireEvent.click(screen.getByRole('button', { name: /mark wedding day invitation as sent/i }))
+
+    expect(mockSetHouseholdSentMutate).toHaveBeenCalledWith({
+      householdId: 'household-1',
+      eventId: 'event-1',
+      sent: true,
+    })
+  })
+
+  it('shows when the invitation was sent and lets the couple undo it', () => {
+    mockSetHouseholdSentMutate.mockClear()
+    const sentAt = new Date('2026-03-15T12:00:00.000Z')
+    const householdsSent: HouseholdWithGuests[] = [
+      {
+        ...households[0],
+        guests: households[0].guests.map((guest) => ({
+          ...guest,
+          invitations: guest.invitations.map((invitation) =>
+            invitation.eventId === 'event-1' ? { ...invitation, sentAt } : invitation
+          ),
+        })),
+      },
+    ]
+
+    render(
+      <GuestsView
+        events={events}
+        households={householdsSent}
+        selectedEventId='event-1'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+
+    expect(screen.getByText('Sent Mar 15, 2026')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /mark wedding day invitation as sent/i })
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /undo wedding day invitation sent/i }))
+
+    expect(mockSetHouseholdSentMutate).toHaveBeenCalledWith({
+      householdId: 'household-1',
+      eventId: 'event-1',
+      sent: false,
+    })
+  })
+
+  it('does not offer to mark sent when nobody in the household is invited to the event', () => {
+    const householdsNotInvited: HouseholdWithGuests[] = [
+      {
+        ...households[0],
+        guests: households[0].guests.map((guest) => ({
+          ...guest,
+          invitations: guest.invitations.map((invitation) =>
+            invitation.eventId === 'event-1' ? { ...invitation, rsvp: 'Not Invited' } : invitation
+          ),
+        })),
+      },
+    ]
+
+    render(
+      <GuestsView
+        events={events}
+        households={householdsNotInvited}
+        selectedEventId='event-1'
+        setPrefillHousehold={jest.fn()}
+        setPrefillEvent={jest.fn()}
+        onImportClick={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /select alex rivera household/i }))
+
+    expect(
+      screen.queryByRole('button', { name: /mark wedding day invitation as sent/i })
+    ).not.toBeInTheDocument()
   })
 
   it('should reset drawer values when drawer is discarded and closed', () => {

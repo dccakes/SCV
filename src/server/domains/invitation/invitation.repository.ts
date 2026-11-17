@@ -285,6 +285,55 @@ export class InvitationRepository {
     return guest !== null
   }
 
+  /**
+   * Check that both the household and the event belong to the wedding
+   */
+  async householdAndEventBelongToWedding(
+    householdId: string,
+    eventId: string,
+    weddingId: string
+  ): Promise<boolean> {
+    const [household, event] = await Promise.all([
+      this.db.household.findFirst({ where: { id: householdId, weddingId }, select: { id: true } }),
+      this.db.event.findFirst({ where: { id: eventId, weddingId }, select: { id: true } }),
+    ])
+
+    return household !== null && event !== null
+  }
+
+  /**
+   * Stamp sentAt on the household's invitations to an event. Skips guests marked
+   * "Not Invited" and keeps any timestamp already recorded.
+   */
+  async markSentForHouseholdEvent(
+    householdId: string,
+    eventId: string,
+    sentAt: Date
+  ): Promise<{ count: number }> {
+    return this.db.invitation.updateMany({
+      where: {
+        eventId,
+        guest: { householdId },
+        rsvp: { not: 'Not Invited' },
+        sentAt: null,
+      },
+      data: { sentAt },
+    })
+  }
+
+  /**
+   * Clear sentAt on all of the household's invitations to an event
+   */
+  async clearSentForHouseholdEvent(
+    householdId: string,
+    eventId: string
+  ): Promise<{ count: number }> {
+    return this.db.invitation.updateMany({
+      where: { eventId, guest: { householdId } },
+      data: { sentAt: null },
+    })
+  }
+
   async eventBelongsToWedding(eventId: string, weddingId: string): Promise<boolean> {
     const event = await this.db.event.findFirst({
       where: { id: eventId, weddingId },

@@ -12,6 +12,7 @@ import { invitationService } from '~/server/domains/invitation'
 import {
   bulkUpdateInvitationsSchema,
   createInvitationSchema,
+  setHouseholdInvitationSentSchema,
   updateInvitationSchema,
 } from '~/server/domains/invitation/invitation.validator'
 
@@ -40,6 +41,16 @@ export const invitationRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
       return invitationService.bulkUpdateInvitations(ctx.authz, weddingId, input)
+    }),
+
+  /**
+   * Mark (or unmark) a household's invitation to one event as sent
+   */
+  setHouseholdSent: protectedProcedure
+    .input(setHouseholdInvitationSentSchema)
+    .mutation(async ({ ctx, input }) => {
+      const weddingId = requireActiveWeddingId(ctx.auth.activeWeddingId)
+      return invitationService.setHouseholdInvitationSent(ctx.authz, weddingId, input)
     }),
 
   /**

@@ -101,7 +101,7 @@ describe('CommunicationLogService', () => {
         {
           eventId: 'event-1',
           rsvp: 'Attending',
-          invitedAt: new Date('2026-01-01'),
+          sentAt: new Date('2026-01-01'),
           submittedAt: new Date('2026-01-04'),
           event: { name: 'Reception' },
           guest: { firstName: 'John', lastName: 'Smith' },
@@ -138,7 +138,7 @@ describe('CommunicationLogService', () => {
         {
           eventId: 'event-1',
           rsvp: 'Invited',
-          invitedAt: new Date('2026-01-01'),
+          sentAt: new Date('2026-01-01'),
           submittedAt: null,
           event: { name: 'Ceremony' },
           guest: { firstName: 'Jane', lastName: 'Doe' },
@@ -160,7 +160,7 @@ describe('CommunicationLogService', () => {
         {
           eventId: 'event-1',
           rsvp: 'Declined',
-          invitedAt: new Date('2026-01-01'),
+          sentAt: new Date('2026-01-01'),
           submittedAt: new Date('2026-01-02'),
           event: { name: 'Reception' },
           guest: { firstName: 'Bob', lastName: 'Jones' },
@@ -175,6 +175,86 @@ describe('CommunicationLogService', () => {
         throw new Error('Expected RSVP_RECEIVED entry to be present')
       }
       expect(rsvpEntry.message).toBe("Bob Jones RSVP'd Declined for Reception")
+    })
+
+    it('omits INVITATION_SENT when the invitation was never marked sent', async () => {
+      mockHouseholdFindFirst.mockResolvedValue({ id: 'household-1' })
+      mockFindByHouseholdId.mockResolvedValue([])
+      mockGiftFindMany.mockResolvedValue([])
+
+      // Status says Invited, but nobody recorded a send
+      mockInvitationFindMany.mockResolvedValue([
+        {
+          eventId: 'event-1',
+          rsvp: 'Invited',
+          sentAt: null,
+          submittedAt: null,
+          event: { name: 'Ceremony' },
+          guest: { firstName: 'Jane', lastName: 'Doe' },
+        },
+      ])
+
+      const result = await service.getTimelineForHousehold(actorContext, 'wedding-1', 'household-1')
+
+      expect(result).toEqual([])
+    })
+
+    it('dates INVITATION_SENT by sentAt', async () => {
+      mockHouseholdFindFirst.mockResolvedValue({ id: 'household-1' })
+      mockFindByHouseholdId.mockResolvedValue([])
+      mockGiftFindMany.mockResolvedValue([])
+
+      const sentAt = new Date('2026-03-15T10:00:00.000Z')
+      mockInvitationFindMany.mockResolvedValue([
+        {
+          eventId: 'event-1',
+          rsvp: 'Invited',
+          sentAt,
+          submittedAt: null,
+          event: { name: 'Ceremony' },
+          guest: { firstName: 'Jane', lastName: 'Doe' },
+        },
+      ])
+
+      const result = await service.getTimelineForHousehold(actorContext, 'wedding-1', 'household-1')
+
+      expect(result).toHaveLength(1)
+      expect(result[0]).toMatchObject({
+        type: 'INVITATION_SENT',
+        message: 'Invitation sent for Ceremony',
+        date: sentAt,
+        eventId: 'event-1',
+      })
+    })
+
+    it('logs one INVITATION_SENT per event when the household was marked sent together', async () => {
+      mockHouseholdFindFirst.mockResolvedValue({ id: 'household-1' })
+      mockFindByHouseholdId.mockResolvedValue([])
+      mockGiftFindMany.mockResolvedValue([])
+
+      const sentAt = new Date('2026-03-15T10:00:00.000Z')
+      mockInvitationFindMany.mockResolvedValue([
+        {
+          eventId: 'event-1',
+          rsvp: 'Invited',
+          sentAt,
+          submittedAt: null,
+          event: { name: 'Ceremony' },
+          guest: { firstName: 'Jane', lastName: 'Doe' },
+        },
+        {
+          eventId: 'event-1',
+          rsvp: 'Invited',
+          sentAt: new Date(sentAt),
+          submittedAt: null,
+          event: { name: 'Ceremony' },
+          guest: { firstName: 'John', lastName: 'Doe' },
+        },
+      ])
+
+      const result = await service.getTimelineForHousehold(actorContext, 'wedding-1', 'household-1')
+
+      expect(result.filter((e) => e.type === 'INVITATION_SENT')).toHaveLength(1)
     })
 
     it('checks guest:view permission', async () => {

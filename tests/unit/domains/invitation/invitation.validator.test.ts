@@ -6,6 +6,7 @@ import {
   bulkUpdateInvitationsSchema,
   createInvitationSchema,
   invitationIdSchema,
+  setHouseholdInvitationSentSchema,
   updateInvitationSchema,
 } from '~/server/domains/invitation/invitation.validator'
 
@@ -186,6 +187,43 @@ describe('invitationIdSchema', () => {
     }
 
     const result = invitationIdSchema.safeParse(invalidInput)
+    expect(result.success).toBe(false)
+  })
+})
+
+describe('setHouseholdInvitationSentSchema', () => {
+  it('accepts a household, event, and sent flag', () => {
+    const input = { householdId: 'household-1', eventId: 'event-1', sent: true }
+
+    const result = setHouseholdInvitationSentSchema.safeParse(input)
+
+    expect(result.success).toBe(true)
+    expect(result.data).toEqual(input)
+  })
+
+  it('rejects an empty householdId', () => {
+    const result = setHouseholdInvitationSentSchema.safeParse({
+      householdId: '',
+      eventId: 'event-1',
+      sent: true,
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects an empty eventId', () => {
+    const result = setHouseholdInvitationSentSchema.safeParse({
+      householdId: 'household-1',
+      eventId: '',
+      sent: false,
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('requires the sent flag', () => {
+    const result = setHouseholdInvitationSentSchema.safeParse({
+      householdId: 'household-1',
+      eventId: 'event-1',
+    })
     expect(result.success).toBe(false)
   })
 })

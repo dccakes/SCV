@@ -45,6 +45,7 @@ const buildHousehold = (
           submittedBy: null,
           submittedAt: null,
           invitedAt: new Date('2026-01-01T00:00:00.000Z'),
+          sentAt: null,
           createdAt: new Date('2026-01-01T00:00:00.000Z'),
           updatedAt: new Date('2026-01-01T00:00:00.000Z'),
         },

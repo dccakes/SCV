@@ -37,6 +37,7 @@ type Invitation = {
   submittedBy: number | null
   submittedAt: Date | null
   invitedAt: Date
+  sentAt: Date | null
   createdAt: Date
   updatedAt: Date
 }

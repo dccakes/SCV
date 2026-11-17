@@ -67,18 +67,28 @@ export class CommunicationLogService {
       })
     }
 
-    // Invitations → INVITATION_SENT and RSVP_RECEIVED entries
+    // Invitations → INVITATION_SENT and RSVP_RECEIVED entries.
+    // INVITATION_SENT comes only from a recorded sentAt, never from RSVP status.
+    // A household is marked sent together, so its guests share one timestamp:
+    // log one entry per event and send time rather than one per guest.
+    const loggedSends = new Set<string>()
     for (const inv of invitations) {
       const eventName = inv.event.name
       const guestName = `${inv.guest.firstName} ${inv.guest.lastName}`
 
-      entries.push({
-        type: 'INVITATION_SENT',
-        message: `Invitation sent for ${eventName}`,
-        date: inv.invitedAt,
-        eventId: inv.eventId,
-        eventName,
-      })
+      if (inv.sentAt) {
+        const sendKey = `${inv.eventId}:${inv.sentAt.getTime()}`
+        if (!loggedSends.has(sendKey)) {
+          loggedSends.add(sendKey)
+          entries.push({
+            type: 'INVITATION_SENT',
+            message: `Invitation sent for ${eventName}`,
+            date: inv.sentAt,
+            eventId: inv.eventId,
+            eventName,
+          })
+        }
+      }
 
       if (inv.submittedAt) {
         entries.push({
@@ -162,7 +172,7 @@ export class CommunicationLogService {
       select: {
         eventId: true,
         rsvp: true,
-        invitedAt: true,
+        sentAt: true,
         submittedAt: true,
         event: { select: { name: true } },
         guest: { select: { firstName: true, lastName: true } },

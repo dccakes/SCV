@@ -387,7 +387,10 @@ function EventInvitationsSection(props: Readonly<EventInvitationsSectionProps>) 
         <ul className='space-y-3'>
           {eventsToShow.map((event) => (
             <li key={event.id} className='border-border/50 border-b pb-3 last:border-b-0'>
-              <p className='mb-2 font-medium text-foreground text-sm'>{event.name}</p>
+              <div className='mb-2 flex items-center justify-between gap-2'>
+                <p className='font-medium text-foreground text-sm'>{event.name}</p>
+                <InvitationSentControl selectedHousehold={selectedHousehold} event={event} />
+              </div>
               <ul className='space-y-1.5'>
                 {selectedHousehold.guests.map((guest) => {
                   const invitation = guest.invitations.find((inv) => inv.eventId === event.id)
@@ -417,6 +420,88 @@ function EventInvitationsSection(props: Readonly<EventInvitationsSectionProps>) 
         </ul>
       )}
     </GuestDetailSection>
+  )
+}
+
+const sentDateFormatter = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+})
+
+type InvitationSentControlProps = {
+  selectedHousehold: HouseholdWithGuests
+  event: Event
+}
+
+/**
+ * Lets the couple record that they sent this household's invitation to an
+ * event. The app does not send invitations itself, so this is the only thing
+ * that puts "Invitation sent" on the communication log.
+ */
+function InvitationSentControl(props: Readonly<InvitationSentControlProps>) {
+  const { selectedHousehold, event } = props
+  const utils = api.useUtils()
+  const router = useRouter()
+
+  const setHouseholdSent = api.invitation.setHouseholdSent.useMutation({
+    onSuccess: () => {
+      void utils.communicationLog.getByHouseholdId.invalidate({
+        householdId: selectedHousehold.id,
+      })
+      void utils.dashboard.getForActiveWorkspace.invalidate()
+      router.refresh()
+    },
+    onError: () => {
+      toast.error('Failed to update invitation. Please try again.')
+    },
+  })
+
+  const invitedInvitations = selectedHousehold.guests
+    .flatMap((guest) => guest.invitations)
+    .filter((invitation) => invitation.eventId === event.id && invitation.rsvp !== 'Not Invited')
+
+  if (invitedInvitations.length === 0) return null
+
+  const sentTimes = invitedInvitations.flatMap((invitation) =>
+    invitation.sentAt ? [new Date(invitation.sentAt).getTime()] : []
+  )
+  const isFullySent = sentTimes.length === invitedInvitations.length
+  const buttonClassName =
+    'rounded-md border border-border/70 px-2 py-1 font-medium text-primary text-xs hover:bg-primary/5 disabled:opacity-50'
+
+  const setSent = (sent: boolean) =>
+    setHouseholdSent.mutate({ householdId: selectedHousehold.id, eventId: event.id, sent })
+
+  if (isFullySent) {
+    return (
+      <div className='flex shrink-0 items-center gap-2'>
+        <span className='text-foreground/65 text-xs'>
+          Sent {sentDateFormatter.format(new Date(Math.min(...sentTimes)))}
+        </span>
+        <button
+          type='button'
+          onClick={() => setSent(false)}
+          disabled={setHouseholdSent.isPending}
+          aria-label={`Undo ${event.name} invitation sent`}
+          className={buttonClassName}
+        >
+          Undo
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <button
+      type='button'
+      onClick={() => setSent(true)}
+      disabled={setHouseholdSent.isPending}
+      aria-label={`Mark ${event.name} invitation as sent`}
+      className={`shrink-0 ${buttonClassName}`}
+    >
+      Mark sent
+    </button>
   )
 }
 
