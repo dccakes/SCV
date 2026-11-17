@@ -9,6 +9,10 @@ jest.mock('@vercel/otel', () => ({ registerOTel: jest.fn() }))
 jest.mock('~/server/infrastructure/observability/node-otel', () => ({
   buildNodeOTelConfig: () => mockBuildNodeOTelConfig(),
 }))
+const mockRegisterAiTelemetry = jest.fn()
+jest.mock('~/server/infrastructure/observability/ai-telemetry', () => ({
+  registerAiTelemetry: () => mockRegisterAiTelemetry(),
+}))
 jest.mock('~/server/infrastructure/observability/capture-exception', () => ({
   captureServerException: (...args: unknown[]) => mockCaptureServerException(...args),
 }))
@@ -52,6 +56,13 @@ describe('register', () => {
     process.env.NEXT_RUNTIME = 'nodejs'
     await register()
     expect(registerOTel).toHaveBeenCalledWith({ serviceName: 'scv', nodeConfig: true })
+  })
+
+  it('turns on AI SDK telemetry in the Node runtime, where Etta runs', async () => {
+    process.env.NEXT_RUNTIME = 'nodejs'
+    mockRegisterAiTelemetry.mockClear()
+    await register()
+    expect(mockRegisterAiTelemetry).toHaveBeenCalledTimes(1)
   })
 
   it('registers the default config in the Edge runtime', async () => {

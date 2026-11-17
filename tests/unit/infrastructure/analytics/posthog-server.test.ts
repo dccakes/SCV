@@ -61,4 +61,33 @@ describe('getPostHogServer', () => {
       expect.objectContaining({ host: 'https://eu.i.posthog.com' })
     )
   })
+
+  it('keeps serverless invocations alive until queued events are sent', () => {
+    process.env.POSTHOG_KEY = 'phc_server'
+    loadClient()
+    const options = mockPostHog.mock.calls.at(-1)?.[1] as {
+      waitUntil?: (promise: Promise<unknown>) => void
+    }
+    const waitUntil = jest.fn()
+    const symbol = Symbol.for('@vercel/request-context')
+    const globals = globalThis as unknown as Record<symbol, unknown>
+    const previous = globals[symbol]
+    globals[symbol] = { get: () => ({ waitUntil }) }
+    try {
+      const pending = Promise.resolve()
+      options.waitUntil?.(pending)
+      expect(waitUntil).toHaveBeenCalledWith(pending)
+    } finally {
+      globals[symbol] = previous
+    }
+  })
+
+  it('tolerates being called outside a request (long-lived servers, scripts)', () => {
+    process.env.POSTHOG_KEY = 'phc_server'
+    loadClient()
+    const options = mockPostHog.mock.calls.at(-1)?.[1] as {
+      waitUntil?: (promise: Promise<unknown>) => void
+    }
+    expect(() => options.waitUntil?.(Promise.resolve())).not.toThrow()
+  })
 })

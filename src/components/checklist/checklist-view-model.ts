@@ -72,11 +72,42 @@ export function filterTasks(tasks: Task[], filters: ChecklistFilters): Task[] {
   })
 }
 
-export function bucketTasks(tasks: Task[], now: Date = new Date()): TaskBucket[] {
+/** Event id mapped to that event's date, or null when the event has no date yet. */
+export type EventDates = ReadonlyMap<string, Date | string | null>
+
+/**
+ * `monthsBeforeWedding` is a lead time ("do this 6 months before the wedding"), not a
+ * distance from today. When the task's event has a date we turn it into a real due date
+ * (event date minus lead time) and bucket by how far that is from `now`. Without an event
+ * date we can only fall back to the raw lead time.
+ */
+export function getEffectiveDueDate(task: Task, eventDates?: EventDates): Date | null {
+  if (task.dueDate) {
+    return startOfUtcDay(task.dueDate)
+  }
+
+  const rawEventDate = eventDates?.get(task.eventId)
+  if (!rawEventDate) {
+    return null
+  }
+
+  const eventDate = new Date(rawEventDate)
+  if (Number.isNaN(eventDate.getTime())) {
+    return null
+  }
+
+  return addUtcMonths(startOfUtcDay(eventDate), -task.monthsBeforeWedding)
+}
+
+export function bucketTasks(
+  tasks: Task[],
+  now: Date = new Date(),
+  eventDates?: EventDates
+): TaskBucket[] {
   const grouped = new Map<TaskBucketKey, Task[]>()
 
   for (const task of tasks) {
-    const bucketKey = getTaskBucketKey(task, now)
+    const bucketKey = getTaskBucketKey(task, now, eventDates)
     const bucketTasks = grouped.get(bucketKey) ?? []
     bucketTasks.push(task)
     grouped.set(bucketKey, bucketTasks)
@@ -85,7 +116,7 @@ export function bucketTasks(tasks: Task[], now: Date = new Date()): TaskBucket[]
   return TASK_BUCKET_ORDER.map((bucket) => ({
     ...bucket,
     tasks: [...(grouped.get(bucket.key) ?? [])].sort((left, right) =>
-      compareBucketTasks(left, right, now)
+      compareBucketTasks(left, right, eventDates)
     ),
   }))
 }
@@ -155,17 +186,19 @@ export function hasMilestoneOverrideDivergence(milestone: MilestoneWithEffective
   )
 }
 
-function getTaskBucketKey(task: Task, now: Date): TaskBucketKey {
+function getTaskBucketKey(task: Task, now: Date, eventDates?: EventDates): TaskBucketKey {
   if (task.completed) {
     return 'done'
   }
 
-  if (task.dueDate) {
-    const dueDate = startOfUtcDay(task.dueDate)
+  const dueDate = getEffectiveDueDate(task, eventDates)
+
+  if (dueDate) {
     const today = startOfUtcDay(now)
     const weekEnd = endOfUtcWeek(today)
     const monthEnd = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 1))
 
+    // Overdue tasks are also <= weekEnd, so they surface in Now.
     if (dueDate <= weekEnd) {
       return 'this-week'
     }
@@ -173,8 +206,23 @@ function getTaskBucketKey(task: Task, now: Date): TaskBucketKey {
     if (dueDate < monthEnd) {
       return 'this-month'
     }
+
+    if (task.monthsBeforeWedding <= 0) {
+      return 'day-of'
+    }
+
+    if (dueDate <= addUtcMonths(today, 3)) {
+      return 'three-months'
+    }
+
+    if (dueDate <= addUtcMonths(today, 6)) {
+      return 'six-months'
+    }
+
+    return 'nine-plus-months'
   }
 
+  // No due date and no event date: all we have is the raw lead time.
   if (task.monthsBeforeWedding <= 0) {
     return 'day-of'
   }
@@ -190,30 +238,40 @@ function getTaskBucketKey(task: Task, now: Date): TaskBucketKey {
   return 'nine-plus-months'
 }
 
-function compareBucketTasks(left: Task, right: Task, now: Date): number {
-  if (left.dueDate && right.dueDate) {
-    const dueDateDifference =
-      startOfUtcDay(left.dueDate).getTime() - startOfUtcDay(right.dueDate).getTime()
+function compareBucketTasks(left: Task, right: Task, eventDates?: EventDates): number {
+  const leftDue = getEffectiveDueDate(left, eventDates)
+  const rightDue = getEffectiveDueDate(right, eventDates)
+
+  if (leftDue && rightDue) {
+    const dueDateDifference = leftDue.getTime() - rightDue.getTime()
     if (dueDateDifference !== 0) {
       return dueDateDifference
     }
-  } else if (left.dueDate || right.dueDate) {
-    return left.dueDate ? -1 : 1
+  } else if (leftDue || rightDue) {
+    return leftDue ? -1 : 1
   }
 
   if (left.completedAt && right.completedAt) {
     return right.completedAt.getTime() - left.completedAt.getTime()
   }
 
+  // A larger lead time means the task is due earlier, so it goes first.
   if (left.monthsBeforeWedding !== right.monthsBeforeWedding) {
-    return left.monthsBeforeWedding - right.monthsBeforeWedding
+    return right.monthsBeforeWedding - left.monthsBeforeWedding
   }
 
   if (left.position !== right.position) {
     return left.position - right.position
   }
 
-  return left.createdAt.getTime() - right.createdAt.getTime() + now.getTime() * 0
+  return left.createdAt.getTime() - right.createdAt.getTime()
+}
+
+function addUtcMonths(date: Date, months: number): Date {
+  const year = date.getUTCFullYear()
+  const month = date.getUTCMonth() + months
+  const lastDayOfTargetMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate()
+  return new Date(Date.UTC(year, month, Math.min(date.getUTCDate(), lastDayOfTargetMonth)))
 }
 
 function isTaskCategory(value: string | null): value is TaskCategoryValue {

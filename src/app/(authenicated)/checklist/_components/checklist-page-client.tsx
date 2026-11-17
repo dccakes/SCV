@@ -87,7 +87,14 @@ export function ChecklistPageClient({
   })
 
   const filteredTasks = useMemo(() => filterTasks(tasks, filters), [filters, tasks])
-  const buckets = useMemo(() => bucketTasks(filteredTasks), [filteredTasks])
+  const eventDates = useMemo(
+    () => new Map(events.map((event) => [event.id, event.date] as const)),
+    [events]
+  )
+  const buckets = useMemo(
+    () => bucketTasks(filteredTasks, new Date(), eventDates),
+    [filteredTasks, eventDates]
+  )
   const { horizons, done } = useMemo(() => groupBucketsIntoHorizons(buckets), [buckets])
   const completionPercent = getCompletionPercent(tasks)
   const hasDefaultFilters =

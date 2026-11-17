@@ -11,6 +11,7 @@ import 'server-only'
 import { PostHog } from 'posthog-node'
 
 import { resolveServerPostHogTarget } from '~/lib/observability/config'
+import { waitUntilCurrentRequest } from '~/server/infrastructure/observability/request-context'
 
 const ENABLE_EXCEPTION_AUTOCAPTURE = true
 
@@ -48,6 +49,9 @@ export function getPostHogServer(): PostHog | null {
     // events queued in memory that never get sent.
     flushAt: 1,
     flushInterval: 0,
+    // Sending is async and callers never await it, so hold the invocation
+    // open until it finishes; otherwise Vercel can freeze it mid-request.
+    waitUntil: waitUntilCurrentRequest,
   })
   return client
 }

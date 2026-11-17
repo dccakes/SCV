@@ -34,3 +34,29 @@ export function readWorkspaceCapabilities(role: string | null | undefined): Work
     canViewPlanning: can({ wedding: ['read'] }),
   }
 }
+
+export type HomeView = 'marketing' | 'app'
+
+/**
+ * What `/` shows. 'app' renders the signed-in home, which sends members with a
+ * wedding to the dashboard and shows onboarding (create your wedding) to
+ * fresh self-signups that have no workspace yet.
+ *
+ * Marketing for everyone else:
+ * - members whose role can't view planning (viewers);
+ * - users with no workspace who still have a wedding link (`UserWedding`), such
+ *   as a co-planner removed from the workspace: removal deletes the membership
+ *   but not the link, and wedding creation refuses users who already have one,
+ *   so the onboarding form would only fail.
+ */
+export function resolveHomeView(input: {
+  signedIn: boolean
+  activeOrganization: { organizationId: string; role: string | null } | null
+  hasWeddingLink: boolean
+}): HomeView {
+  if (!input.signedIn) return 'marketing'
+  if (!input.activeOrganization) return input.hasWeddingLink ? 'marketing' : 'app'
+  return readWorkspaceCapabilities(input.activeOrganization.role).canViewPlanning
+    ? 'app'
+    : 'marketing'
+}

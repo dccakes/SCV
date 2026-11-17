@@ -172,6 +172,8 @@ describe('TelegramHandler', () => {
             activeOrganization: { organizationId: 'org-1', role: 'owner' },
           },
           messages: [{ role: 'user', content: 'how many guests?' }],
+          // One Telegram chat = one AI session in PostHog.
+          conversationId: 'telegram:identity-123',
         })
       )
       expect(tg.sendMessage).toHaveBeenCalledWith(42, 'We have 120 guests.')

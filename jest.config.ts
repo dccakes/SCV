@@ -43,6 +43,11 @@ export default async () => {
     'libphonenumber-js',
     'posthog-node',
     'posthog-js',
+    // AI SDK 7 is ESM-only (`ai`, `@ai-sdk/*`) and loads `zod/v4` as ESM.
+    'ai',
+    '@ai-sdk',
+    'zod',
+    '@workflow',
     // ESM-only env builder. Transforming these lets `~/env` (src/env.js) be
     // imported transitively in tests — e.g. a client component that pulls in
     // `~/trpc/react` — without per-test mocking.

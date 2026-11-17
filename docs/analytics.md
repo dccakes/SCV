@@ -74,8 +74,13 @@ successful mutation across every router** emits an event automatically:
   size is capped. (This can be removed later once testing is complete.)
 - Anonymous guests do **not** create person profiles
   (`$process_person_profile: false`).
+- `$session_id` from the posthog-js `X-POSTHOG-SESSION-ID` header, when the
+  browser sent one, so backend events appear in that session's replay. It is
+  client-sent, so it only links a session; it never picks the person.
 
 Capture is best-effort and never throws — analytics can never break a request.
+posthog-node is created with `waitUntil`, so on Vercel the invocation stays
+alive until queued events are sent instead of freezing mid-upload.
 
 The one guest-facing flow that does not go through tRPC (the household invite
 "update your details" **server action**) is instrumented directly in
@@ -87,6 +92,10 @@ The one guest-facing flow that does not go through tRPC (the household invite
 the app hydrates (the Next.js App Router client-instrumentation convention).
 It captures pageviews/pageleaves and exceptions via PostHog's bundled
 `defaults`, so no manual pageview wiring is needed.
+
+Every browser event also carries `environment` and `app_version` (registered
+as super properties at init) so preview traffic can be filtered from
+production; server events set the same two keys.
 
 `src/lib/analytics/posthog-client.tsx` (`PostHogProvider`, mounted once in the
 root layout, covering both the authenticated product and the public wedding

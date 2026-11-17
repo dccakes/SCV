@@ -270,6 +270,27 @@ const renderChecklist = () =>
 
 describe('ChecklistPageClient', () => {
   beforeEach(() => {
+    // Buckets depend on today's date relative to the fixtures (events on 2026-10-10, one
+    // task due 2026-04-30), so fake only Date and leave timers real for the async tests.
+    jest.useFakeTimers({
+      now: new Date('2026-04-27T12:00:00.000Z'),
+      doNotFake: [
+        'setTimeout',
+        'clearTimeout',
+        'setInterval',
+        'clearInterval',
+        'setImmediate',
+        'clearImmediate',
+        'nextTick',
+        'queueMicrotask',
+        'requestAnimationFrame',
+        'cancelAnimationFrame',
+        'requestIdleCallback',
+        'cancelIdleCallback',
+        'performance',
+        'hrtime',
+      ],
+    })
     jest.clearAllMocks()
     ;(useRouter as jest.Mock).mockReturnValue({
       replace: mockReplace,
@@ -279,6 +300,10 @@ describe('ChecklistPageClient', () => {
     })
     ;(usePathname as jest.Mock).mockReturnValue('/checklist')
     ;(useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams())
+  })
+
+  afterEach(() => {
+    jest.useRealTimers()
   })
 
   it('renders milestone and task buckets from real data and keeps done collapsed by default', () => {

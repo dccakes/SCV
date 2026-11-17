@@ -16,6 +16,7 @@ import {
   POSTHOG_DISTINCT_ID_HEADER,
   POSTHOG_SESSION_ID_ATTRIBUTE,
   POSTHOG_SESSION_ID_HEADER,
+  parseTelemetryId,
 } from '~/lib/observability/config'
 
 const tracer = trace.getTracer('scv.trpc')
@@ -53,7 +54,7 @@ export function withProcedureSpan<TResult extends ProcedureResult>(
     async (span) => {
       // The header is client-controlled; the authenticated user always wins.
       const distinctId = userId ?? headers?.get(POSTHOG_DISTINCT_ID_HEADER)
-      const sessionId = headers?.get(POSTHOG_SESSION_ID_HEADER)
+      const sessionId = parseTelemetryId(headers?.get(POSTHOG_SESSION_ID_HEADER))
       if (distinctId) span.setAttribute(POSTHOG_DISTINCT_ID_ATTRIBUTE, distinctId)
       if (sessionId) span.setAttribute(POSTHOG_SESSION_ID_ATTRIBUTE, sessionId)
       if (userId) span.setAttribute('enduser.id', userId)
