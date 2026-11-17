@@ -27,6 +27,8 @@ describe('captureServerException', () => {
     })
 
     expect(mockCaptureException).toHaveBeenCalledWith(error, 'user_1', {
+      // Filters preview and local errors out of production issues.
+      environment: 'test',
       trace_id: 't1',
       span_id: 's1',
       source: 'trpc',

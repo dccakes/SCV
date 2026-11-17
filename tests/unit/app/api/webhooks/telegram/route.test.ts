@@ -27,6 +27,11 @@ jest.mock('~/server/application/messaging', () => ({
   getTelegramRateLimiter: () => ({ check: mockCheck }),
 }))
 
+const mockCaptureServerException = jest.fn()
+jest.mock('~/server/infrastructure/observability/capture-exception', () => ({
+  captureServerException: (...args: unknown[]) => mockCaptureServerException(...args),
+}))
+
 import { POST } from '~/app/api/webhooks/telegram/route'
 
 function buildRequest(opts: { secret?: string; body?: unknown; badJson?: boolean } = {}) {
@@ -87,5 +92,22 @@ describe('POST /api/webhooks/telegram', () => {
     const res = await POST(buildRequest({ secret: 'expected-secret', body: update }))
     expect(res.status).toBe(200)
     expect(scheduled).toHaveLength(0)
+  })
+
+  it('reports background handler failures to error tracking', async () => {
+    const failure = new Error('etta unavailable')
+    mockHandle.mockRejectedValue(failure)
+
+    await POST(
+      buildRequest({
+        secret: 'expected-secret',
+        body: { update_id: 7, message: { chat: { id: 1 } } },
+      })
+    )
+    await scheduled[0]?.()
+
+    expect(mockCaptureServerException).toHaveBeenCalledWith(failure, {
+      properties: { source: 'telegram-webhook', update_id: 7 },
+    })
   })
 })

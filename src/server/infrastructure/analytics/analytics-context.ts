@@ -11,10 +11,15 @@
  * - `token`       — invite / access / self-fill token, when present.
  * - `householdId` — resolved household, when known.
  * - `subUrl`      — public wedding website slug, when present.
+ * - `sessionId`   — posthog-js session (`X-POSTHOG-SESSION-ID`), so backend
+ *                   events show up in that session's replay. Client-sent, so
+ *                   it links a session only; it never picks the person.
  *
  * These are intentionally best-effort and never throw: analytics must not be
  * able to break a real request.
  */
+
+import { POSTHOG_SESSION_ID_HEADER, parseTelemetryId } from '~/lib/observability/config'
 
 const ANONYMOUS_DISTINCT_ID = 'anonymous'
 
@@ -39,6 +44,7 @@ export interface AnalyticsContextInput {
       userId?: string | null
       activeWeddingId?: string | null
     } | null
+    headers?: Headers
   }
   input: unknown
   result?: unknown
@@ -52,6 +58,7 @@ export interface ResolvedAnalyticsContext {
   token?: string
   householdId?: string
   subUrl?: string
+  sessionId?: string
 }
 
 /**
@@ -88,6 +95,8 @@ export function extractAnalyticsContext({
 
   const distinctId = userId ?? token ?? ANONYMOUS_DISTINCT_ID
 
+  const sessionId = parseTelemetryId(ctx?.headers?.get(POSTHOG_SESSION_ID_HEADER))
+
   return {
     distinctId,
     isAuthenticated: Boolean(userId),
@@ -96,5 +105,6 @@ export function extractAnalyticsContext({
     ...(token ? { token } : {}),
     ...(householdId ? { householdId } : {}),
     ...(subUrl ? { subUrl } : {}),
+    ...(sessionId ? { sessionId } : {}),
   }
 }

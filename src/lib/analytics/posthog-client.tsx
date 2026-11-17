@@ -1,24 +1,29 @@
 'use client'
 
 import posthog from 'posthog-js'
-import { type ReactNode, useEffect, useRef } from 'react'
+import { type ReactNode, useEffect } from 'react'
 
 import { useSession } from '~/lib/auth-client'
 
+/** posthog-js persists this as 'identified' once `identify()` has run in this browser. */
+const isIdentifiedInPostHog = (): boolean => posthog.get_property('$user_state') === 'identified'
+
 function PostHogIdentitySync(): null {
-  const { data: session, isPending } = useSession()
-  const lastDistinctIdRef = useRef<string | null>(null)
+  const { data: session, isPending, error } = useSession()
 
   useEffect(() => {
-    if (isPending || typeof window === 'undefined' || !posthog.__loaded) {
+    // A failed session lookup is not a sign-out; don't drop the identity on a network blip.
+    if (isPending || error || typeof window === 'undefined' || !posthog.__loaded) {
       return
     }
 
     const userId = session?.user?.id
     if (!userId) {
-      if (lastDistinctIdRef.current) {
+      // Read PostHog's own persisted state, not component memory: sign-out
+      // reloads the page, so only a fresh mount sees the signed-out session.
+      // Without this, the next person on the device inherits the old identity.
+      if (isIdentifiedInPostHog()) {
         posthog.reset()
-        lastDistinctIdRef.current = null
       }
       return
     }
@@ -27,8 +32,7 @@ function PostHogIdentitySync(): null {
       email: session.user.email,
       name: session.user.name,
     })
-    lastDistinctIdRef.current = userId
-  }, [isPending, session])
+  }, [isPending, error, session])
 
   return null
 }

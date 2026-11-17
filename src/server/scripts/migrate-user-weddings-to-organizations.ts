@@ -4,18 +4,14 @@ import { parseDryRunArgs } from '~/server/scripts/script-args'
 
 type DatabaseClient = Awaited<typeof import('~/server/db')>['db']
 
-type OrganizationRole = 'owner' | 'admin' | 'member' | 'viewer'
+import {
+  buildWeddingOrganizationName,
+  buildWeddingOrganizationSlug,
+  mapLegacyRole,
+  type OrganizationRole,
+} from '~/server/authz/wedding-organization'
 
-export const mapLegacyRole = (role: string): OrganizationRole => {
-  if (role === 'owner') return 'owner'
-  if (role === 'admin') return 'admin'
-  if (role === 'editor' || role === 'member') return 'member'
-  return 'viewer'
-}
-
-export const buildWeddingOrganizationSlug = (weddingId: string): string => {
-  return `wedding-${weddingId}`
-}
+export { buildWeddingOrganizationSlug, mapLegacyRole }
 
 type ParsedArgs = {
   dryRun: boolean
@@ -45,7 +41,7 @@ const hasTable = async (
 ): Promise<boolean> => {
   const qualified = `public.${tableName}`
   const result = await db.$queryRaw<Array<{ regclass: string | null }>>`
-    SELECT to_regclass(${qualified}) AS regclass
+    SELECT to_regclass(${qualified})::text AS regclass
   `
 
   return result[0]?.regclass !== null
@@ -165,7 +161,7 @@ const run = async (): Promise<void> => {
         continue
       }
 
-      const organizationName = `${wedding.groomFirstName} & ${wedding.brideFirstName}`
+      const organizationName = buildWeddingOrganizationName(wedding)
       if (!args.dryRun) {
         organizationId = await createOrganization(db, {
           weddingId: wedding.id,

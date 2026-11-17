@@ -246,3 +246,39 @@ describe('resolveEttaAuth', () => {
     expect(mockGetSession).not.toHaveBeenCalled()
   })
 })
+
+describe('resolveEttaAuth telemetry ids', () => {
+  const guestRequest = async (
+    body: Record<string, unknown>,
+    headers: Record<string, string> = {}
+  ) =>
+    new Request('http://localhost/api/etta', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: 'hello' }],
+        persona: 'concierge',
+        guestToken: await issueGuestToken('wedding-2', 99),
+        ...body,
+      }),
+    })
+
+  it('uses the useChat id as the conversation and the posthog-js header as the replay session', async () => {
+    const result = await resolveEttaAuth(
+      await guestRequest({ id: 'chat_Ab-1' }, { 'x-posthog-session-id': 'replay-1' })
+    )
+
+    expect(result.conversationId).toBe('web:chat_Ab-1')
+    expect(result.browserSessionId).toBe('replay-1')
+  })
+
+  it('ignores missing or malformed client ids instead of failing the chat', async () => {
+    const result = await resolveEttaAuth(await guestRequest({ id: 'x'.repeat(200) }))
+
+    expect(result).not.toHaveProperty('conversationId')
+    expect(result).not.toHaveProperty('browserSessionId')
+    expect((await resolveEttaAuth(await guestRequest({ id: 'a b<script>' }))).conversationId).toBe(
+      undefined
+    )
+  })
+})

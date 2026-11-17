@@ -52,6 +52,8 @@ describe('SessionSummarizer', () => {
             { role: 'user', content: 'hi' },
             { role: 'assistant', content: 'hello' },
           ],
+          // Same AI session as the chat it summarises.
+          conversationId: 'telegram:identity-1',
         })
       )
       expect(messaging.markSummarized).toHaveBeenCalledWith(['m1', 'm2'])
