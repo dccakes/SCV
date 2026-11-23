@@ -10,7 +10,7 @@ describe('getSidebarWeddingInfo', () => {
     })
 
     expect(info).toEqual({
-      coupleName: 'Holly & Diego',
+      coupleName: 'Diego & Holly',
       weddingDate: '17 May 2027',
       weddingLocation: 'Oaxaca, Mexico',
     })
@@ -49,7 +49,7 @@ describe('getSidebarWeddingInfo', () => {
     })
 
     expect(info).toEqual({
-      coupleName: 'Holly & Diego',
+      coupleName: 'Diego & Holly',
       weddingDate: '17 May 2027',
       weddingLocation: undefined,
     })
@@ -64,7 +64,7 @@ describe('getSidebarWeddingInfo', () => {
     })
 
     expect(info).toEqual({
-      coupleName: 'Holly & Diego',
+      coupleName: 'Diego & Holly',
       weddingDate: '17 May 2027',
       weddingLocation: 'Beach Resort',
     })

@@ -227,7 +227,7 @@ describe('WebsiteService', () => {
 
       expect(result).toEqual({
         ...mockWebsite,
-        url: 'https://oswp.example/w/johndoeandjanesmith',
+        url: 'http://localhost:3000/w/johndoeandjanesmith',
       })
       expect(mockFindByWeddingIdFn).toHaveBeenCalledWith('wedding-123')
     })
@@ -266,7 +266,7 @@ describe('WebsiteService', () => {
         coverPhotoUrl: mockWebsite.coverPhotoUrl,
         headerImageUrl: mockWebsite.headerImageUrl,
         coupleImageUrls: mockWebsite.coupleImageUrls,
-        url: 'https://oswp.example/w/johndoeandjanesmith',
+        url: 'http://localhost:3000/w/johndoeandjanesmith',
       })
       expect(result).not.toHaveProperty('password')
       expect(mockFindBySubUrlFn).toHaveBeenCalledWith('johndoeandjanesmith')

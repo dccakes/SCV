@@ -23,13 +23,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+import { authClient } from '~/lib/auth-client'
 import {
   getOrganizationRoleLabel,
   type OrganizationRoleOption,
   organizationRoleOptions,
 } from '~/lib/organization-roles'
 import { getUserInitials } from '~/lib/user-display'
-import { authClient, useSession } from '~/lib/auth-client'
 
 type Organization = {
   id: string
@@ -38,7 +38,6 @@ type Organization = {
 
 type Member = {
   id: string
-  userId: string
   role: string
   user?: {
     email?: string | null
@@ -68,6 +67,10 @@ type AuthFetchResult<T> = {
 
 type FullOrganizationResponse = Organization & {
   members?: Member[]
+}
+
+type HasPermissionResponse = {
+  success: boolean
 }
 
 type Invitation = {
@@ -126,39 +129,22 @@ async function authPost<T>(
       body,
       method: 'POST',
     })) as AuthFetchResult<T>
-  } catch (error) {
-    console.error('[Organization settings] Request threw an exception:', {
-      path,
-      body,
-      error,
-    })
+  } catch {
     throw new Error(fallbackMessage)
   }
 
   if (result.error) {
-    console.error('[Organization settings] Better Auth returned an error:', {
-      path,
-      body,
-      error: result.error,
-    })
     throw new Error(fallbackMessage)
   }
 
   if (!result.data) {
-    console.error('[Organization settings] Better Auth returned no data:', {
-      path,
-      body,
-      result,
-    })
     throw new Error(fallbackMessage)
   }
 
   return result.data
 }
 
-async function fetchOrganizationState(
-  userId: string
-): Promise<Omit<OrganizationState, 'error' | 'isLoading'>> {
+async function fetchOrganizationState(): Promise<Omit<OrganizationState, 'error' | 'isLoading'>> {
   const organization = await authGet<FullOrganizationResponse>(
     '/organization/get-full-organization',
     'Unable to load organization.'
@@ -168,12 +154,18 @@ async function fetchOrganizationState(
     throw new Error('No active organization found.')
   }
 
-  const currentMember = (organization.members ?? []).find(
-    (member) => member.userId === userId
-  )
-
-  const canManageMembers =
-    currentMember?.role === 'owner' || currentMember?.role === 'admin'
+  const [invitePermission, updateMemberPermission] = await Promise.all([
+    authPost<HasPermissionResponse>(
+      '/organization/has-permission',
+      { organizationId: organization.id, permissions: { invitation: ['create'] } },
+      'Unable to load invitation permissions.'
+    ),
+    authPost<HasPermissionResponse>(
+      '/organization/has-permission',
+      { organizationId: organization.id, permissions: { member: ['update'] } },
+      'Unable to load member permissions.'
+    ),
+  ])
 
   let pendingInvitations: Invitation[] = []
 
@@ -188,8 +180,8 @@ async function fetchOrganizationState(
   }
 
   return {
-    canInvite: canManageMembers,
-    canUpdateMembers: canManageMembers,
+    canInvite: invitePermission.success,
+    canUpdateMembers: updateMemberPermission.success,
     members: organization.members ?? [],
     organization,
     pendingInvitations,
@@ -200,17 +192,8 @@ export function OrganizationMembersSettingsCard() {
   const [state, setState] = useState<OrganizationState>(initialState)
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false)
   const [roleDialogMember, setRoleDialogMember] = useState<Member | null>(null)
-  const { data: session, isPending: isSessionLoading } = useSession()
-  const userId = session?.user?.id
-
   const loadOrganizationState = useCallback(() => {
     let isActive = true
-
-    if (isSessionLoading) {
-      return () => {
-        isActive = false
-      }
-    }
 
     setState((current) => ({
       ...current,
@@ -218,19 +201,7 @@ export function OrganizationMembersSettingsCard() {
       isLoading: true,
     }))
 
-    if (!userId) {
-      setState({
-        ...initialState,
-        error: 'Unable to identify the signed-in user.',
-        isLoading: false,
-      })
-
-      return () => {
-        isActive = false
-      }
-    }
-
-    void fetchOrganizationState(userId)
+    void fetchOrganizationState()
       .then((nextState) => {
         if (!isActive) return
         setState({
@@ -255,7 +226,7 @@ export function OrganizationMembersSettingsCard() {
     return () => {
       isActive = false
     }
-  }, [isSessionLoading, userId])
+  }, [])
 
   useEffect(() => loadOrganizationState(), [loadOrganizationState])
 

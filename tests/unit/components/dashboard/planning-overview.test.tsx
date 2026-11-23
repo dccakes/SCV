@@ -242,7 +242,7 @@ describe('PlanningOverview', () => {
 
   it('renders couple names in the countdown hero', () => {
     render(<PlanningOverview dashboardData={mockDashboardData} />)
-    expect(screen.getByText('Holly & Diego')).toBeInTheDocument()
+    expect(screen.getByText('Diego & Holly')).toBeInTheDocument()
   })
 
   it('renders the wedding date in the hero', () => {

@@ -79,7 +79,7 @@ describe('website suburl metadata + page wiring', () => {
       params: Promise.resolve({ websiteSubUrl: 'john-and-jane' }),
     })
 
-    expect(metadata.title).toBe('Jane Smith & John Doe Wedding')
+    expect(metadata.title).toBe('John Doe & Jane Smith Wedding')
     expect(mockLoadVisitorWedding).toHaveBeenCalledWith('john-and-jane')
   })
 

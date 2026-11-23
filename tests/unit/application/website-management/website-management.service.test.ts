@@ -283,7 +283,7 @@ describe('WebsiteManagementService', () => {
         id: 'website-123',
         subUrl: 'johndoeandjanesmith',
         introText: '',
-        url: 'https://oswp.example/w/johndoeandjanesmith',
+        url: 'http://localhost:3000/w/johndoeandjanesmith',
       })
       expect(result.websiteBuilderEnabled).toBe(false)
       expect(result.website).not.toHaveProperty('password')

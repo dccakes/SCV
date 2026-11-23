@@ -26,6 +26,17 @@ export const POSTHOG_INGEST_HOST = 'https://us.i.posthog.com'
 export const POSTHOG_DISTINCT_ID_ATTRIBUTE = 'posthogDistinctId'
 export const POSTHOG_SESSION_ID_ATTRIBUTE = 'sessionId'
 
+const TELEMETRY_ID = /^[A-Za-z0-9_-]{1,128}$/
+
+/**
+ * Validates a client-sent telemetry id (posthog-js session id, useChat id).
+ * Any client can set these, so anything that isn't a plain short id is dropped
+ * rather than attached to events, exceptions, or spans. Never throws.
+ */
+export function parseTelemetryId(value: unknown): string | undefined {
+  return typeof value === 'string' && TELEMETRY_ID.test(value) ? value : undefined
+}
+
 /** Headers posthog-js adds to same-origin requests via `tracing_headers`. */
 export const POSTHOG_DISTINCT_ID_HEADER = 'x-posthog-distinct-id'
 export const POSTHOG_SESSION_ID_HEADER = 'x-posthog-session-id'
@@ -65,4 +76,24 @@ export function parseSampleRate(value: string | undefined, fallback = 1): number
   if (value === undefined || value.trim() === '') return fallback
   const rate = Number(value)
   return Number.isFinite(rate) && rate >= 0 && rate <= 1 ? rate : fallback
+}
+
+export interface DeploymentProperties {
+  environment?: string
+  app_version?: string
+}
+
+/**
+ * Deployment tags for server events, exceptions, and AI spans: the Vercel
+ * environment (`production`, `preview`, `development`) and the deployed commit.
+ * Lets one PostHog project hold preview and production traffic and still filter
+ * them apart. The browser registers the same keys as super properties.
+ */
+export function deploymentProperties(env: EnvLike = process.env): DeploymentProperties {
+  const environment = nonBlank(env.VERCEL_ENV) ?? nonBlank(env.NODE_ENV)
+  const appVersion = nonBlank(env.VERCEL_GIT_COMMIT_SHA)
+  return {
+    ...(environment ? { environment } : {}),
+    ...(appVersion ? { app_version: appVersion } : {}),
+  }
 }

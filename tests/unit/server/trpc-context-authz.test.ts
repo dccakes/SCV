@@ -11,6 +11,8 @@ jest.mock('server/db', () => ({
     id: 'mock-db',
     $queryRaw: jest.fn(),
     $executeRaw: jest.fn(),
+    // No wedding predating workspaces, so nothing to repair (see WorkspaceScopeService).
+    userWedding: { findFirst: jest.fn().mockResolvedValue(null) },
   },
 }))
 
@@ -52,6 +54,7 @@ describe('createTRPCContext active organization resolution', () => {
       user: { id: 'user-1' },
       session: { token: 'tok-1' },
     })
+    mockQueryRaw.mockResolvedValueOnce([{ lastActiveOrganizationId: null }])
     mockQueryRaw.mockResolvedValueOnce([
       { isPrimaryWedding: true, organizationId: 'org-1', role: 'owner', weddingId: 'wedding-1' },
     ])
@@ -68,6 +71,7 @@ describe('createTRPCContext active organization resolution', () => {
       user: { id: 'user-1' },
       session: { token: 'tok-1' },
     })
+    mockQueryRaw.mockResolvedValueOnce([{ lastActiveOrganizationId: null }])
     mockQueryRaw.mockResolvedValueOnce([])
 
     const context = await createTRPCContext({ headers: new Headers() })
@@ -81,6 +85,7 @@ describe('createTRPCContext active organization resolution', () => {
       user: { id: 'user-1' },
       session: { activeOrganizationId: 'org-stale', token: 'tok-1' },
     })
+    mockQueryRaw.mockResolvedValueOnce([{ lastActiveOrganizationId: null }])
     mockQueryRaw.mockResolvedValueOnce([])
     mockQueryRaw.mockResolvedValueOnce([
       { isPrimaryWedding: true, organizationId: 'org-1', role: 'owner', weddingId: 'wedding-1' },

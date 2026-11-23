@@ -10,7 +10,7 @@ import {
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
-import { authClient, useSession } from '~/lib/auth-client'
+import { authClient } from '~/lib/auth-client'
 import { getOrganizationRoleLabel } from '~/lib/organization-roles'
 
 type AuthFetchError = {
@@ -22,14 +22,12 @@ type AuthFetchResult<T> = {
   error?: AuthFetchError | null
 }
 
-type OrganizationMember = {
-  role: string
-  userId: string
-}
-
 type FullOrganizationResponse = {
   id: string
-  members: OrganizationMember[]
+}
+
+type HasPermissionResponse = {
+  success: boolean
 }
 
 type OutstandingInvitesState = {
@@ -79,9 +77,9 @@ async function authPost<T>(
   return result.data
 }
 
-async function fetchOutstandingInvitesState(
-  userId: string
-): Promise<Omit<OutstandingInvitesState, 'error' | 'isLoading' | 'hasLoaded'>> {
+async function fetchOutstandingInvitesState(): Promise<
+  Omit<OutstandingInvitesState, 'error' | 'isLoading' | 'hasLoaded'>
+> {
   const organization = await authGet<FullOrganizationResponse>(
     '/organization/get-full-organization',
     'Unable to load organization.'
@@ -91,11 +89,21 @@ async function fetchOutstandingInvitesState(
     throw new Error('No active organization found.')
   }
 
-  const currentMember = organization.members.find((member) => member.userId === userId)
-  const canManageInvitations =
-    currentMember?.role === 'owner' || currentMember?.role === 'admin'
+  const [createPermission, cancelPermission] = await Promise.all([
+    authPost<HasPermissionResponse>(
+      '/organization/has-permission',
+      { organizationId: organization.id, permissions: { invitation: ['create'] } },
+      'Unable to load invitation permissions.'
+    ),
+    authPost<HasPermissionResponse>(
+      '/organization/has-permission',
+      { organizationId: organization.id, permissions: { invitation: ['cancel'] } },
+      'Unable to load invitation permissions.'
+    ),
+  ])
 
-  const invitations = canManageInvitations
+  const canCreate = createPermission.success
+  const invitations = canCreate
     ? await authGet<OrganizationInvitation[]>(
         '/organization/list-invitations',
         'Unable to load outstanding invitations.'
@@ -103,8 +111,8 @@ async function fetchOutstandingInvitesState(
     : []
 
   return {
-    canCancel: canManageInvitations,
-    canCreate: canManageInvitations,
+    canCancel: cancelPermission.success,
+    canCreate,
     invitations,
     organizationId: organization.id,
   }
@@ -126,23 +134,8 @@ export function OrganizationOutstandingInvitesCard() {
   const [resendingId, setResendingId] = useState<string | null>(null)
   const [cancelingId, setCancelingId] = useState<string | null>(null)
 
-  const { data: session, isPending: isSessionLoading } = useSession()
-  const userId = session?.user?.id
-
   const loadState = useCallback(() => {
-    if (isSessionLoading) return
-
     let isActive = true
-
-    if (!userId) {
-      setState({
-        ...initialState,
-        error: 'Unable to identify the current user.',
-        hasLoaded: true,
-        isLoading: false,
-      })
-      return
-    }
 
     setState((current) => ({
       ...current,
@@ -150,7 +143,7 @@ export function OrganizationOutstandingInvitesCard() {
       isLoading: true,
     }))
 
-    void fetchOutstandingInvitesState(userId)
+    void fetchOutstandingInvitesState()
       .then((next) => {
         if (!isActive) return
         setState({
@@ -176,7 +169,7 @@ export function OrganizationOutstandingInvitesCard() {
     return () => {
       isActive = false
     }
-  }, [isSessionLoading, userId])
+  }, [])
 
   useEffect(() => loadState(), [loadState])
 

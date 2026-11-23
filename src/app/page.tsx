@@ -7,7 +7,8 @@ import NonAuthenticatedView from '~/components/home/non-authenticated-view'
 import { auth } from '~/lib/auth'
 import { getPublicWebsiteBaseUrl } from '~/lib/website/public-url'
 import { resolveWorkspaceScope } from '~/server/application/workspace/workspace-scope'
-import { readWorkspaceCapabilities } from '~/server/authz/workspace-capabilities'
+import { resolveHomeView } from '~/server/authz/workspace-capabilities'
+import { weddingService } from '~/server/domains/wedding'
 
 const siteUrl = getPublicWebsiteBaseUrl()
 
@@ -138,17 +139,13 @@ export default async function Home() {
     headers: await headers(),
   })
 
-  let isSignedIn = !!session
-  if (session?.user?.id) {
-    const scope = await resolveWorkspaceScope({ session, userId: session.user.id })
-    const capabilities = readWorkspaceCapabilities(scope.activeOrganization?.role)
-
-    // A signed-in user without a wedding must be allowed to complete setup.
-    // Users with an existing workspace still need planning permission.
-    if (scope.activeWeddingId && !capabilities.canViewPlanning) {
-      isSignedIn = false
-    }
-  }
+  const userId = session?.user?.id
+  const scope = userId ? await resolveWorkspaceScope({ session, userId }) : null
+  const activeOrganization = scope?.activeOrganization ?? null
+  // Only needed without a workspace: tells a fresh signup from a removed member.
+  const hasWeddingLink =
+    userId && !activeOrganization ? await weddingService.hasWedding(userId) : false
+  const view = resolveHomeView({ signedIn: Boolean(userId), activeOrganization, hasWeddingLink })
 
   return (
     <>
@@ -157,7 +154,7 @@ export default async function Home() {
         // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD structured data requires dangerouslySetInnerHTML per Next.js convention
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      {!isSignedIn ? <NonAuthenticatedView /> : <AuthenticatedView />}
+      {view === 'app' ? <AuthenticatedView /> : <NonAuthenticatedView />}
     </>
   )
 }

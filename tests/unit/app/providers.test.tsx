@@ -49,7 +49,7 @@ describe('Providers', () => {
     expect(mockAuthUIProvider).toHaveBeenCalledWith(
       expect.objectContaining({
         emailOTP: true,
-        emailVerification: { otp: true },
+        emailVerification: true,
         organization: {
           customRoles: [
             { role: 'member', label: 'Member' },

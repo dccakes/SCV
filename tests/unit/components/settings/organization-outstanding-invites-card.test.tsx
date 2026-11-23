@@ -73,6 +73,10 @@ describe('OrganizationOutstandingInvitesCard', () => {
     await waitFor(() => {
       expect(screen.queryByText('Outstanding Invites')).not.toBeInTheDocument()
     })
+
+    expect(mockFetch.mock.calls.some(([path]) => path === '/organization/list-invitations')).toBe(
+      false
+    )
   })
 
   it('renders only pending unexpired invites and supports resend/cancel actions', async () => {
